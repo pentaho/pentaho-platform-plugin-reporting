@@ -1,0 +1,64 @@
+<!-- ======================================================================
+     description: main build file for mantle
+     ====================================================================== -->
+<project name="platform-plugin-report-viewer" default="compile-report-viewer">
+	<description>mantle build process..</description>
+
+	<property file="dev_override.properties" />
+	<property file="dev_build.properties" />
+
+	<propertyfile file="version.properties">
+		<entry pattern="####" key="release.build.number" type="int" operation="+" value="1" />
+	</propertyfile>
+
+	<property file="version.properties" />
+
+	<path id="classpath">
+		<fileset dir="lib" excludes="pentaho-gwt-widgets*.jar" includes="**/*.jar" />
+		<fileset dir="dev-lib" includes="**/*.jar" />
+		<fileset dir="codegen-lib" includes="**/*.jar" />
+	</path>
+
+	<!-- ===================================================================
+        target: clean              
+       =================================================================== -->
+	<target name="clean" depends="">
+		<delete dir="dist" />
+		<delete dir="${gwt.output.dir}" />
+	</target>
+
+
+	<!-- ===================================================================
+        target: init              
+       =================================================================== -->
+	<target name="init">
+	</target>
+
+	<target name="compile" depends="init">
+		<javac destdir="bin" debug="${debug}" optimize="${optimize}" deprecation="${deprecation}" compiler="modern" source="1.5" target="1.5" fork="true">
+			<src path="src" />
+			<classpath refid="classpath" />
+		</javac>
+	</target>
+
+	<target name="compile-report-viewer" depends="clean, compile">
+		<java classname="com.google.gwt.dev.Compiler" fork="true" failonerror="true" maxmemory="1024M">
+			<classpath>
+				<path refid="classpath" />
+				<pathelement location="src" />
+			</classpath>
+			<arg value="-localWorkers" />
+			<arg value="2" />
+			<arg value="-war" />
+			<arg value="${gwt.output.dir}" />
+			<arg value="${reportviewer.app}" />
+			<!--
+			<arg value="-logLevel" />
+			<arg value="TRACE" />
+			<arg value="-style" />
+			<arg value="PRETTY" />
+			-->
+		</java>
+	</target>
+
+</project>
