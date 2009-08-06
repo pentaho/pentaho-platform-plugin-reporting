@@ -27,7 +27,6 @@ public class DateParameterUI extends SimplePanel
 
     public void onValueChange(ValueChangeEvent<Date> event)
     {
-      // SuggestBox textBox = (SuggestBox) event.getSource();
       parameterSelections.clear();
       Date newDate = event.getValue();
       // add date as long
@@ -37,14 +36,20 @@ public class DateParameterUI extends SimplePanel
 
   }
 
-  public DateParameterUI(final ParameterControllerPanel controller, final List<String> parameterSelections,
-      final Element parameterElement)
+  public DateParameterUI(final ParameterControllerPanel controller, final List<String> parameterSelections, final Element parameterElement)
   {
     // selectionsList should only have 1 date
     Date date = new Date();
-    if (parameterSelections != null && parameterSelections.size() > 0)
+    if (parameterSelections.size() > 0)
     {
       date = new Date(Long.parseLong(parameterSelections.get(0)));
+    }
+    else
+    {
+      // add the current date as the default, otherwise, a submission of another parameter
+      // will not result in this parameter being submitted
+      parameterSelections.clear();
+      parameterSelections.add("" + date.getTime());
     }
 
     DefaultFormat format = new DefaultFormat(DateTimeFormat.getLongDateFormat());

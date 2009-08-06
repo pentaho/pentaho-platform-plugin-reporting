@@ -153,7 +153,7 @@ public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback
         continue;
       }
       String name = st2.tokenAt(0);
-      String value = st2.tokenAt(1);
+      String value = URL.decodeComponent(st2.tokenAt(1));
       List<String> paramValues = map.get(name);
       if (paramValues == null)
       {
@@ -184,7 +184,7 @@ public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback
         List<String> valueList = reportParameterMap.get(key);
         for (String value : valueList)
         {
-          parameters += "&" + key + "=" + value;
+          parameters += "&" + key + "=" + URL.encodeComponent(value);
         }
       }
     }
@@ -202,7 +202,7 @@ public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback
           if ((historyParams == null || historyParams.containsKey(key) == false)
               && (reportParameterMap == null || reportParameterMap.containsKey(key) == false))
           {
-            parameters += "&" + key + "=" + value;
+            parameters += "&" + key + "=" + URL.encodeComponent(value);
           }
         }
       }
@@ -220,7 +220,7 @@ public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback
           // only add new parameters (do not override reportParameterMap)
           if (reportParameterMap == null || reportParameterMap.containsKey(key) == false)
           {
-            parameters += "&" + key + "=" + value;
+            parameters += "&" + key + "=" + URL.encodeComponent(value);
           }
         }
       }
