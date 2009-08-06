@@ -19,6 +19,7 @@
         <description>Pentaho Report Bundle</description>
         <icon-url>content/reporting/reportviewer/prptFileType.png</icon-url>
         <operations>
+          <!-- for any of these urls, you can add layout=flow to the url -->
           <operation>
             <id>RUN</id>
             <command>content/reporting/reportviewer/report.html?solution={solution}&amp;path={path}&amp;name={name}</command>
