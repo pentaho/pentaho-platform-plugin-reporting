@@ -4,13 +4,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Array;
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.net.URL;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
 import java.util.Date;
 import java.util.Map;
+
 import javax.swing.table.TableModel;
 
 import org.apache.commons.logging.Log;
@@ -330,7 +327,10 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       {
         report = ReportCreator.createReport(reportDefinitionPath, session);
       }
+      report.setReportEnvironment(new PentahoReportEnvironment(report.getConfiguration()));
     }
+    
+    
     return report;
   }
 
