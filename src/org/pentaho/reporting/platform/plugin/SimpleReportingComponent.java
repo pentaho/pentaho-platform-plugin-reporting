@@ -561,11 +561,6 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    */
   public boolean validate() throws Exception
   {
-    if (StringUtils.isEmpty(outputType))
-    {
-      log.error("[input] The output type does not exist.");
-      return false;
-    }
     if (reportDefinition == null && reportDefinitionInputStream == null && reportDefinitionPath == null)
     {
       log.error("[input] A report-definition was not provided.");
