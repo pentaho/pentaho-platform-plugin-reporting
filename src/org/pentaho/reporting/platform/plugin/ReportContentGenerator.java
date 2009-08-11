@@ -70,306 +70,321 @@ public class ReportContentGenerator extends SimpleContentGenerator
 
   public void createContent(OutputStream outputStream) throws Exception
   {
-    IParameterProvider requestParams = getRequestParameters();
+    final IParameterProvider requestParams = getRequestParameters();
 
-    String solution = requestParams.getStringParameter("solution", null); //$NON-NLS-1$
-    String path = requestParams.getStringParameter("path", null); //$NON-NLS-1$
-    String name = requestParams.getStringParameter("name", requestParams.getStringParameter("action", null)); //$NON-NLS-1$
-    boolean subscribe = "true".equals(requestParams.getStringParameter("subscribe", "false"));
+    final String solution = requestParams.getStringParameter("solution", null); //$NON-NLS-1$
+    final String path = requestParams.getStringParameter("path", null); //$NON-NLS-1$
+    final String name = requestParams.getStringParameter("name", requestParams.getStringParameter("action", null)); //$NON-NLS-1$
+    final boolean subscribe = "true".equals(requestParams.getStringParameter("subscribe", "false"));
 
     renderMode = RENDER_TYPE.valueOf(requestParams.getStringParameter("renderMode", RENDER_TYPE.REPORT.toString()).toUpperCase());
 
-    String reportDefinitionPath = ActionInfo.buildSolutionPath(solution, path, name);
+    final String reportDefinitionPath = ActionInfo.buildSolutionPath(solution, path, name);
 
-    // create inputs from request parameters
-    Map<String, Object> inputs = createInputs(requestParams);
+    final long start = System.currentTimeMillis();
+    AuditHelper.audit(userSession.getId(), userSession.getName(), reportDefinitionPath, getObjectName(), getClass().getName(), MessageTypes.INSTANCE_START,
+        renderMode.name() + ": " + instanceId, "", 0, this); //$NON-NLS-1$
 
-    if (renderMode.equals(RENDER_TYPE.DOWNLOAD))
+    try
     {
-      ISolutionRepository repository = PentahoSystem.get(ISolutionRepository.class, userSession);
-      ISolutionFile file = repository.getSolutionFile(reportDefinitionPath, ISolutionRepository.ACTION_CREATE);
 
-      HttpServletResponse response = (HttpServletResponse) parameterProviders.get("path").getParameter("httpresponse");
-      response.setHeader("Content-Disposition", "attach; filename=\"" + file.getFileName() + "\"");
-      response.setHeader("Content-Description", file.getFileName());
-      response.setDateHeader("Last-Modified", file.getLastModified());
+      // create inputs from request parameters
+      final Map<String, Object> inputs = createInputs(requestParams);
 
-      // if the user has PERM_CREATE, we'll allow them to pull it for now, this is as relaxed
-      // as I am comfortable with but I can imagine a PERM_READ or PERM_EXECUTE being used
-      // in the future
-      if (repository.hasAccess(file, ISolutionRepository.ACTION_CREATE) || repository.hasAccess(file, ISolutionRepository.ACTION_UPDATE))
+      if (renderMode.equals(RENDER_TYPE.DOWNLOAD))
       {
-        IOUtils.getInstance().copyStreams(new ByteArrayInputStream(file.getData()), outputStream);
-      }
-    }
-    else if (renderMode.equals(RENDER_TYPE.REPORT))
-    {
-      long start = System.currentTimeMillis();
-      AuditHelper.audit(userSession.getId(), userSession.getName(), reportDefinitionPath, getObjectName(), getClass().getName(), MessageTypes.INSTANCE_START,
-          instanceId, "", 0, this); //$NON-NLS-1$
+        final ISolutionRepository repository = PentahoSystem.get(ISolutionRepository.class, userSession);
+        final ISolutionFile file = repository.getSolutionFile(reportDefinitionPath, ISolutionRepository.ACTION_CREATE);
 
-      ByteArrayOutputStream reportOutput = new ByteArrayOutputStream();
-      // produce rendered report
-      if (reportComponent == null)
-      {
-        reportComponent = new SimpleReportingComponent();
-      }
-      reportComponent.setSession(userSession);
-      reportComponent.setOutputStream(reportOutput);
-      reportComponent.setReportDefinitionPath(reportDefinitionPath);
+        final HttpServletResponse response = (HttpServletResponse) parameterProviders.get("path").getParameter("httpresponse");
+        response.setHeader("Content-Disposition", "attach; filename=\"" + file.getFileName() + "\"");
+        response.setHeader("Content-Description", file.getFileName());
+        response.setDateHeader("Last-Modified", file.getLastModified());
 
-      // the requested mime type can be null, in that case the report-component will resolve the desired
-      // type from the output-target.
-      final String mimeType = requestParams.getStringParameter(SimpleReportingComponent.OUTPUT_TYPE, null);
-      reportComponent.setOutputType(mimeType);
-
-      // add all inputs (request parameters) to report component
-      reportComponent.setInputs(inputs);
-
-      // If we haven't set an accepted page, -1 will be the default, which will give us a report
-      // with no pages. This default is used so that when we do our parameter interaction with the
-      // engine we can spend as little time as possible rendering unused pages, making it no pages.
-      // We are going to intentionally reset the accepted page to the first page, 0, at this point,
-      // if the accepted page is -1.
-      if (reportComponent.isPaginateOutput() && reportComponent.getAcceptedPage() < 0)
-      {
-        reportComponent.setAcceptedPage(0);
-      }
-
-      if (reportComponent.validate())
-      {
-        if (reportComponent.execute())
+        // if the user has PERM_CREATE, we'll allow them to pull it for now, this is as relaxed
+        // as I am comfortable with but I can imagine a PERM_READ or PERM_EXECUTE being used
+        // in the future
+        if (repository.hasAccess(file, ISolutionRepository.ACTION_CREATE) || repository.hasAccess(file, ISolutionRepository.ACTION_UPDATE))
         {
-          IOUtils.getInstance().copyStreams(new ByteArrayInputStream(reportOutput.toByteArray()), outputStream);
+          IOUtils.getInstance().copyStreams(new ByteArrayInputStream(file.getData()), outputStream);
+        }
+      }
+      else if (renderMode.equals(RENDER_TYPE.REPORT))
+      {
+        final ByteArrayOutputStream reportOutput = new ByteArrayOutputStream();
+        // produce rendered report
+        if (reportComponent == null)
+        {
+          reportComponent = new SimpleReportingComponent();
+        }
+        reportComponent.setSession(userSession);
+        reportComponent.setOutputStream(reportOutput);
+        reportComponent.setReportDefinitionPath(reportDefinitionPath);
+
+        // the requested mime type can be null, in that case the report-component will resolve the desired
+        // type from the output-target.
+        final String mimeType = requestParams.getStringParameter(SimpleReportingComponent.OUTPUT_TYPE, null);
+        reportComponent.setOutputType(mimeType);
+
+        // add all inputs (request parameters) to report component
+        reportComponent.setInputs(inputs);
+
+        // If we haven't set an accepted page, -1 will be the default, which will give us a report
+        // with no pages. This default is used so that when we do our parameter interaction with the
+        // engine we can spend as little time as possible rendering unused pages, making it no pages.
+        // We are going to intentionally reset the accepted page to the first page, 0, at this point,
+        // if the accepted page is -1.
+        if (reportComponent.isPaginateOutput() && reportComponent.getAcceptedPage() < 0)
+        {
+          reportComponent.setAcceptedPage(0);
+        }
+
+        if (reportComponent.validate())
+        {
+          if (reportComponent.execute())
+          {
+            IOUtils.getInstance().copyStreams(new ByteArrayInputStream(reportOutput.toByteArray()), outputStream);
+            outputStream.flush();
+          }
+        }
+        else
+        {
+          outputStream.write("Report validation failed.".getBytes());
           outputStream.flush();
         }
+
       }
-      else
+      else if (renderMode.equals(RENDER_TYPE.SUBSCRIBE))
       {
-        outputStream.write("Report validation failed.".getBytes());
+        if (reportComponent == null)
+        {
+          reportComponent = new SimpleReportingComponent();
+        }
+        reportComponent.setSession(userSession);
+        reportComponent.setReportDefinitionPath(reportDefinitionPath);
+        final MasterReport report = reportComponent.getReport();
+        final ParameterDefinitionEntry parameterDefinitions[] = report.getParameterDefinition().getParameterDefinitions();
+        final String result = saveSubscription(requestParams, parameterDefinitions, reportDefinitionPath, userSession);
+        outputStream.write(result.getBytes());
         outputStream.flush();
       }
-
-      long end = System.currentTimeMillis();
-      AuditHelper.audit(userSession.getId(), userSession.getName(), reportDefinitionPath, getObjectName(), getClass().getName(), MessageTypes.INSTANCE_END,
-          instanceId, "", ((float) (end - start) / 1000), this); //$NON-NLS-1$
-
-    }
-    else if (renderMode.equals(RENDER_TYPE.SUBSCRIBE))
-    {
-      if (reportComponent == null)
+      else if (renderMode.equals(RENDER_TYPE.XML))
       {
-        reportComponent = new SimpleReportingComponent();
-      }
-      reportComponent.setSession(userSession);
-      reportComponent.setReportDefinitionPath(reportDefinitionPath);
-      MasterReport report = reportComponent.getReport();
-      ParameterDefinitionEntry parameterDefinitions[] = report.getParameterDefinition().getParameterDefinitions();
-      String result = saveSubscription(requestParams, parameterDefinitions, reportDefinitionPath, userSession);
-      outputStream.write(result.getBytes());
-      outputStream.flush();
-    }
-    else if (renderMode.equals(RENDER_TYPE.XML))
-    {
-      // handle parameter feedback (XML) services
-      org.w3c.dom.Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
-      org.w3c.dom.Element parameters = document.createElement("parameters");
-      document.appendChild(parameters);
+        // handle parameter feedback (XML) services
+        org.w3c.dom.Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+        org.w3c.dom.Element parameters = document.createElement("parameters");
+        document.appendChild(parameters);
 
-      if (reportComponent == null)
-      {
-        reportComponent = new SimpleReportingComponent();
-      }
-      reportComponent.setSession(userSession);
-      reportComponent.setReportDefinitionPath(reportDefinitionPath);
-      reportComponent.setInputs(inputs);
-
-      MasterReport report = reportComponent.getReport();
-
-      ParameterContext parameterContext = new DefaultParameterContext(report);
-      // open parameter context
-      parameterContext.open();
-      // apply inputs to parameters
-      reportComponent.applyInputsToReportParameters(report, parameterContext);
-
-      ParameterDefinitionEntry parameterDefinitions[] = report.getParameterDefinition().getParameterDefinitions();
-      for (ParameterDefinitionEntry parameter : parameterDefinitions)
-      {
-        org.w3c.dom.Element parameterElement = document.createElement("parameter");
-        parameters.appendChild(parameterElement);
-        parameterElement.setAttribute("name", parameter.getName());
-        parameterElement.setAttribute("parameter-group", "parameters");
-        if (subscribe)
+        if (reportComponent == null)
         {
-          parameterElement.setAttribute("parameter-group-label", "Report Parameters");
+          reportComponent = new SimpleReportingComponent();
         }
-        parameterElement.setAttribute("type", parameter.getValueType().getName());
-        parameterElement.setAttribute("is-mandatory", "" + parameter.isMandatory());
+        reportComponent.setSession(userSession);
+        reportComponent.setReportDefinitionPath(reportDefinitionPath);
+        reportComponent.setInputs(inputs);
 
-        Object defaultValue = parameter.getDefaultValue(parameterContext);
-        if (defaultValue != null)
+        MasterReport report = reportComponent.getReport();
+
+        ParameterContext parameterContext = new DefaultParameterContext(report);
+        // open parameter context
+        parameterContext.open();
+        // apply inputs to parameters
+        reportComponent.applyInputsToReportParameters(report, parameterContext);
+
+        ParameterDefinitionEntry parameterDefinitions[] = report.getParameterDefinition().getParameterDefinitions();
+        for (ParameterDefinitionEntry parameter : parameterDefinitions)
         {
-          if (parameter.getValueType().isArray())
+          org.w3c.dom.Element parameterElement = document.createElement("parameter");
+          parameters.appendChild(parameterElement);
+          parameterElement.setAttribute("name", parameter.getName());
+          parameterElement.setAttribute("parameter-group", "parameters");
+          if (subscribe)
           {
-            for (int i = 0; i < Array.getLength(defaultValue); i++)
+            parameterElement.setAttribute("parameter-group-label", "Report Parameters");
+          }
+          parameterElement.setAttribute("type", parameter.getValueType().getName());
+          parameterElement.setAttribute("is-mandatory", "" + parameter.isMandatory());
+
+          Object defaultValue = parameter.getDefaultValue(parameterContext);
+          if (defaultValue != null)
+          {
+            if (parameter.getValueType().isArray())
+            {
+              for (int i = 0; i < Array.getLength(defaultValue); i++)
+              {
+                org.w3c.dom.Element defaultValueElement = document.createElement("default-value");
+                parameterElement.appendChild(defaultValueElement);
+                defaultValueElement.setAttribute("value", Array.get(defaultValue, i).toString());
+              }
+            }
+            else if (parameter.getValueType().isAssignableFrom(Date.class))
+            {
+              // dates are a special thing, in order to get the web (javascript) and the
+              // server to be happy about date formats, the best thing for us to do
+              // seems to be to convert to long (millis since epoch) since the javascript
+              // land doesn't have the same date time formatter
+              Date date = (Date) defaultValue;
+              org.w3c.dom.Element defaultValueElement = document.createElement("default-value");
+              parameterElement.appendChild(defaultValueElement);
+              defaultValueElement.setAttribute("value", "" + date.getTime());
+            }
+            else
             {
               org.w3c.dom.Element defaultValueElement = document.createElement("default-value");
               parameterElement.appendChild(defaultValueElement);
-              defaultValueElement.setAttribute("value", Array.get(defaultValue, i).toString());
+              defaultValueElement.setAttribute("value", "" + defaultValue);
             }
           }
-          else if (parameter.getValueType().isAssignableFrom(Date.class))
+
+          String attributeNames[] = parameter.getParameterAttributeNames(ParameterAttributeNames.Core.NAMESPACE);
+          for (String attributeName : attributeNames)
           {
-            // dates are a special thing, in order to get the web (javascript) and the
-            // server to be happy about date formats, the best thing for us to do
-            // seems to be to convert to long (millis since epoch) since the javascript
-            // land doesn't have the same date time formatter
-            Date date = (Date) defaultValue;
-            org.w3c.dom.Element defaultValueElement = document.createElement("default-value");
-            parameterElement.appendChild(defaultValueElement);
-            defaultValueElement.setAttribute("value", "" + date.getTime());
+            String attributeValue = parameter.getParameterAttribute(ParameterAttributeNames.Core.NAMESPACE, attributeName, parameterContext);
+            // expecting: label, parameter-render-type, parameter-layout
+            // but others possible as well, so we set them all
+            parameterElement.setAttribute(attributeName, attributeValue);
           }
-          else
+
+          Object selections = inputs.get(parameter.getName());
+          if (selections != null)
           {
-            org.w3c.dom.Element defaultValueElement = document.createElement("default-value");
-            parameterElement.appendChild(defaultValueElement);
-            defaultValueElement.setAttribute("value", "" + defaultValue);
-          }
-        }
+            org.w3c.dom.Element selectionsElement = document.createElement("selections");
+            parameterElement.appendChild(selectionsElement);
 
-        String attributeNames[] = parameter.getParameterAttributeNames(ParameterAttributeNames.Core.NAMESPACE);
-        for (String attributeName : attributeNames)
-        {
-          String attributeValue = parameter.getParameterAttribute(ParameterAttributeNames.Core.NAMESPACE, attributeName, parameterContext);
-          // expecting: label, parameter-render-type, parameter-layout
-          // but others possible as well, so we set them all
-          parameterElement.setAttribute(attributeName, attributeValue);
-        }
-
-        Object selections = inputs.get(parameter.getName());
-        if (selections != null)
-        {
-          org.w3c.dom.Element selectionsElement = document.createElement("selections");
-          parameterElement.appendChild(selectionsElement);
-
-          if (selections.getClass().isArray())
-          {
-            int length = Array.getLength(selections);
-            for (int i = 0; i < length; i++)
+            if (selections.getClass().isArray())
             {
-              Object value = Array.get(selections, i);
+              int length = Array.getLength(selections);
+              for (int i = 0; i < length; i++)
+              {
+                Object value = Array.get(selections, i);
+                org.w3c.dom.Element selectionElement = document.createElement("selection");
+                selectionElement.setAttribute("value", value.toString());
+                selectionsElement.appendChild(selectionElement);
+              }
+            }
+            else
+            {
               org.w3c.dom.Element selectionElement = document.createElement("selection");
-              selectionElement.setAttribute("value", value.toString());
+              selectionElement.setAttribute("value", selections.toString());
               selectionsElement.appendChild(selectionElement);
             }
           }
-          else
+
+          if (parameter instanceof ListParameter)
           {
-            org.w3c.dom.Element selectionElement = document.createElement("selection");
-            selectionElement.setAttribute("value", selections.toString());
-            selectionsElement.appendChild(selectionElement);
-          }
-        }
+            ListParameter asListParam = (ListParameter) parameter;
+            parameterElement.setAttribute("is-multi-select", "" + asListParam.isAllowMultiSelection());
+            parameterElement.setAttribute("is-strict", "" + asListParam.isStrictValueCheck());
 
-        if (parameter instanceof ListParameter)
-        {
-          ListParameter asListParam = (ListParameter) parameter;
-          parameterElement.setAttribute("is-multi-select", "" + asListParam.isAllowMultiSelection());
-          parameterElement.setAttribute("is-strict", "" + asListParam.isStrictValueCheck());
+            org.w3c.dom.Element valuesElement = document.createElement("value-choices");
+            parameterElement.appendChild(valuesElement);
 
-          org.w3c.dom.Element valuesElement = document.createElement("value-choices");
-          parameterElement.appendChild(valuesElement);
-
-          ParameterValues possibleValues = asListParam.getValues(parameterContext);
-          for (int i = 0; i < possibleValues.getRowCount(); i++)
-          {
-            Object key = possibleValues.getKeyValue(i);
-            Object value = possibleValues.getTextValue(i);
-
-            org.w3c.dom.Element valueElement = document.createElement("value-choice");
-            valuesElement.appendChild(valueElement);
-
-            // set
-            if (key != null && value != null)
+            ParameterValues possibleValues = asListParam.getValues(parameterContext);
+            for (int i = 0; i < possibleValues.getRowCount(); i++)
             {
-              valueElement.setAttribute("label", "" + value);
-              valueElement.setAttribute("value", "" + key);
-              valueElement.setAttribute("type", key.getClass().getName());
+              Object key = possibleValues.getKeyValue(i);
+              Object value = possibleValues.getTextValue(i);
+
+              org.w3c.dom.Element valueElement = document.createElement("value-choice");
+              valuesElement.appendChild(valueElement);
+
+              // set
+              if (key != null && value != null)
+              {
+                valueElement.setAttribute("label", "" + value);
+                valueElement.setAttribute("value", "" + key);
+                valueElement.setAttribute("type", key.getClass().getName());
+              }
             }
           }
+          else if (parameter instanceof PlainParameter)
+          {
+            // apply defaults, this is the easy case
+            parameterElement.setAttribute("is-multi-select", "false");
+            parameterElement.setAttribute("is-strict", "false");
+          }
         }
-        else if (parameter instanceof PlainParameter)
+        if (report.getParameterDefinition() instanceof DefaultParameterDefinition)
         {
-          // apply defaults, this is the easy case
-          parameterElement.setAttribute("is-multi-select", "false");
-          parameterElement.setAttribute("is-strict", "false");
+          ((DefaultParameterDefinition) report.getParameterDefinition()).setValidator(new DefaultReportParameterValidator());
         }
-      }
-      if (report.getParameterDefinition() instanceof DefaultParameterDefinition)
-      {
-        ((DefaultParameterDefinition) report.getParameterDefinition()).setValidator(new DefaultReportParameterValidator());
-      }
-      ValidationResult vr = report.getParameterDefinition().getValidator().validate(new ValidationResult(), report.getParameterDefinition(), parameterContext);
-      parameters.setAttribute("is-prompt-needed", "" + !vr.isEmpty());
-      parameters.setAttribute("subscribe", "" + subscribe);
+        ValidationResult vr = report.getParameterDefinition().getValidator()
+            .validate(new ValidationResult(), report.getParameterDefinition(), parameterContext);
+        parameters.setAttribute("is-prompt-needed", "" + !vr.isEmpty());
+        parameters.setAttribute("subscribe", "" + subscribe);
 
-      // now add output type chooser
-      addOutputParameter(report, parameters, inputs, subscribe);
+        // now add output type chooser
+        addOutputParameter(report, parameters, inputs, subscribe);
 
-      String mimeType = requestParams.getStringParameter(SimpleReportingComponent.OUTPUT_TYPE, SimpleReportingComponent.MIME_TYPE_HTML);
-      try
-      {
-        final String preferredOutputType = (String)
-            reportComponent.getReport().getAttribute(AttributeNames.Core.NAMESPACE,
-            AttributeNames.Core.PREFERRED_OUTPUT_TYPE);
-        if (HtmlTableModule.TABLE_HTML_FLOW_EXPORT_TYPE.equals(preferredOutputType) ||
-            HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE.equals(preferredOutputType) ||
-            HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE.equals(preferredOutputType))
+        String mimeType = requestParams.getStringParameter(SimpleReportingComponent.OUTPUT_TYPE, SimpleReportingComponent.MIME_TYPE_HTML);
+        try
         {
-          mimeType = SimpleReportingComponent.MIME_TYPE_HTML;
+          final String preferredOutputType = (String) reportComponent.getReport().getAttribute(AttributeNames.Core.NAMESPACE,
+              AttributeNames.Core.PREFERRED_OUTPUT_TYPE);
+          if (HtmlTableModule.TABLE_HTML_FLOW_EXPORT_TYPE.equals(preferredOutputType)
+              || HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE.equals(preferredOutputType)
+              || HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE.equals(preferredOutputType))
+          {
+            mimeType = SimpleReportingComponent.MIME_TYPE_HTML;
+          }
         }
-      } catch (Throwable t)
-      {
-        log.info(t.getMessage(), t);
-      }
-
-      // check if pagination is allowed and turned on
-      if (mimeType.equalsIgnoreCase(SimpleReportingComponent.MIME_TYPE_HTML) && vr.isEmpty()
-          && "true".equalsIgnoreCase(requestParams.getStringParameter(SimpleReportingComponent.PAGINATE_OUTPUT,
-          String.valueOf(reportComponent.isPaginateOutput()))))
-      {
-        ByteArrayOutputStream dontCareOutputStream = new ByteArrayOutputStream();
-        reportComponent.setOutputStream(dontCareOutputStream);
-        // pagination always uses HTML
-        reportComponent.setOutputType(SimpleReportingComponent.MIME_TYPE_HTML);
-
-        // so that we don't actually produce anything, we'll accept no pages in this mode
-        int acceptedPage = reportComponent.getAcceptedPage();
-        reportComponent.setAcceptedPage(-1);
-
-        // we can ONLY get the # of pages by asking the report to run
-        if (reportComponent.isPaginateOutput() && reportComponent.validate())
+        catch (Throwable t)
         {
-          reportComponent.execute();
-          parameters.setAttribute(SimpleReportingComponent.PAGINATE_OUTPUT, "true");
-          parameters.setAttribute("page-count", "" + reportComponent.getPageCount());
-          // use the saved value (we changed it to -1 for performance)
-          parameters.setAttribute(SimpleReportingComponent.ACCEPTED_PAGE, "" + acceptedPage);
+          log.info(t.getMessage(), t);
         }
-      }
 
-      // if we're going to attempt to handle subscriptions, add related choices as a parameter
-      if (subscribe)
-      {
-        // add subscription choices, as a parameter (last in list)
-        addSubscriptionParameter(reportDefinitionPath, parameters, inputs);
-      }
+        // check if pagination is allowed and turned on
+        if (mimeType.equalsIgnoreCase(SimpleReportingComponent.MIME_TYPE_HTML)
+            && vr.isEmpty()
+            && "true".equalsIgnoreCase(requestParams.getStringParameter(SimpleReportingComponent.PAGINATE_OUTPUT, String.valueOf(reportComponent
+                .isPaginateOutput()))))
+        {
+          ByteArrayOutputStream dontCareOutputStream = new ByteArrayOutputStream();
+          reportComponent.setOutputStream(dontCareOutputStream);
+          // pagination always uses HTML
+          reportComponent.setOutputType(SimpleReportingComponent.MIME_TYPE_HTML);
 
-      WebServiceUtil.writeDocument(outputStream, document, false);
-      // close parameter context
-      parameterContext.close();
+          // so that we don't actually produce anything, we'll accept no pages in this mode
+          int acceptedPage = reportComponent.getAcceptedPage();
+          reportComponent.setAcceptedPage(-1);
+
+          // we can ONLY get the # of pages by asking the report to run
+          if (reportComponent.isPaginateOutput() && reportComponent.validate())
+          {
+            reportComponent.execute();
+            parameters.setAttribute(SimpleReportingComponent.PAGINATE_OUTPUT, "true");
+            parameters.setAttribute("page-count", "" + reportComponent.getPageCount());
+            // use the saved value (we changed it to -1 for performance)
+            parameters.setAttribute(SimpleReportingComponent.ACCEPTED_PAGE, "" + acceptedPage);
+          }
+        }
+
+        // if we're going to attempt to handle subscriptions, add related choices as a parameter
+        if (subscribe)
+        {
+          // add subscription choices, as a parameter (last in list)
+          addSubscriptionParameter(reportDefinitionPath, parameters, inputs);
+        }
+
+        WebServiceUtil.writeDocument(outputStream, document, false);
+        // close parameter context
+        parameterContext.close();
+      }
+      reportComponent = null;
+
+      long end = System.currentTimeMillis();
+      AuditHelper.audit(userSession.getId(), userSession.getName(), reportDefinitionPath, getObjectName(), getClass().getName(), MessageTypes.INSTANCE_END,
+          renderMode.name() + ": " + instanceId, "", ((float) (end - start) / 1000), this); //$NON-NLS-1$
     }
-    reportComponent = null;
+    catch (Exception ex)
+    {
+      log.error(ex.getMessage(), ex);
+      long end = System.currentTimeMillis();
+      AuditHelper.audit(userSession.getId(), userSession.getName(), reportDefinitionPath, getObjectName(), getClass().getName(), MessageTypes.INSTANCE_FAILED,
+          renderMode.name() + ": " + instanceId, "", ((float) (end - start) / 1000), this); //$NON-NLS-1$
+      outputStream.write(ex.getMessage().getBytes("UTF-8"));
+      outputStream.flush();
+    }
   }
 
   private ISubscription getSubscription()
@@ -749,7 +764,8 @@ public class ReportContentGenerator extends SimpleContentGenerator
       }
       pojoComponent.addInput("outputType", "string");
 
-    } catch (Exception e)
+    }
+    catch (Exception e)
     {
       log.error(e.getMessage(), e);
     }
@@ -808,15 +824,15 @@ public class ReportContentGenerator extends SimpleContentGenerator
     String defaultOutputType = SimpleReportingComponent.MIME_TYPE_HTML;
     try
     {
-      final String preferredOutputTarget = (String)
-          reportComponent.getReport().getAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.PREFERRED_OUTPUT_TYPE);
+      final String preferredOutputTarget = (String) reportComponent.getReport().getAttribute(AttributeNames.Core.NAMESPACE,
+          AttributeNames.Core.PREFERRED_OUTPUT_TYPE);
       if (CSVTableModule.TABLE_CSV_STREAM_EXPORT_TYPE.equals(preferredOutputTarget))
       {
         defaultOutputType = "text/csv";
       }
-      else if (HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE.equals(preferredOutputTarget) ||
-          HtmlTableModule.TABLE_HTML_FLOW_EXPORT_TYPE.equals(preferredOutputTarget) ||
-          HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE.equals(preferredOutputTarget))
+      else if (HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE.equals(preferredOutputTarget)
+          || HtmlTableModule.TABLE_HTML_FLOW_EXPORT_TYPE.equals(preferredOutputTarget)
+          || HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE.equals(preferredOutputTarget))
       {
         defaultOutputType = "text/html";
       }
