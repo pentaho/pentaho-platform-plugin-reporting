@@ -4,6 +4,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Array;
+import java.net.URL;
+import java.net.URLDecoder;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -42,11 +44,11 @@ import org.pentaho.platform.util.UUIDUtil;
 import org.pentaho.platform.util.web.MimeHelper;
 import org.pentaho.reporting.engine.classic.core.AttributeNames;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
-import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlTableModule;
+import org.pentaho.reporting.engine.classic.core.modules.output.pageable.pdf.PdfPageableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.csv.CSVTableModule;
+import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlTableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.rtf.RTFTableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.xls.ExcelTableModule;
-import org.pentaho.reporting.engine.classic.core.modules.output.pageable.pdf.PdfPageableModule;
 import org.pentaho.reporting.engine.classic.core.parameters.DefaultParameterContext;
 import org.pentaho.reporting.engine.classic.core.parameters.DefaultParameterDefinition;
 import org.pentaho.reporting.engine.classic.core.parameters.DefaultReportParameterValidator;
@@ -72,9 +74,9 @@ public class ReportContentGenerator extends SimpleContentGenerator
   {
     final IParameterProvider requestParams = getRequestParameters();
 
-    final String solution = requestParams.getStringParameter("solution", null); //$NON-NLS-1$
-    final String path = requestParams.getStringParameter("path", null); //$NON-NLS-1$
-    final String name = requestParams.getStringParameter("name", requestParams.getStringParameter("action", null)); //$NON-NLS-1$
+    final String solution = URLDecoder.decode(requestParams.getStringParameter("solution", ""), "UTF-8"); //$NON-NLS-1$
+    final String path = URLDecoder.decode(requestParams.getStringParameter("path", ""), "UTF-8"); //$NON-NLS-1$
+    final String name = URLDecoder.decode(requestParams.getStringParameter("name", requestParams.getStringParameter("action", "")), "UTF-8"); //$NON-NLS-1$
     final boolean subscribe = "true".equals(requestParams.getStringParameter("subscribe", "false"));
 
     renderMode = RENDER_TYPE.valueOf(requestParams.getStringParameter("renderMode", RENDER_TYPE.REPORT.toString()).toUpperCase());
@@ -316,21 +318,29 @@ public class ReportContentGenerator extends SimpleContentGenerator
         // now add output type chooser
         addOutputParameter(report, parameters, inputs, subscribe);
 
-        String mimeType = requestParams.getStringParameter(SimpleReportingComponent.OUTPUT_TYPE, SimpleReportingComponent.MIME_TYPE_HTML);
-        try
+        String mimeType = requestParams.getStringParameter(SimpleReportingComponent.OUTPUT_TYPE, null);
+        if (StringUtils.isEmpty(mimeType))
         {
-          final String preferredOutputType = (String) reportComponent.getReport().getAttribute(AttributeNames.Core.NAMESPACE,
-              AttributeNames.Core.PREFERRED_OUTPUT_TYPE);
-          if (HtmlTableModule.TABLE_HTML_FLOW_EXPORT_TYPE.equals(preferredOutputType)
-              || HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE.equals(preferredOutputType)
-              || HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE.equals(preferredOutputType))
+          // set out default first, takes care of exception/else fall thru
+          mimeType = SimpleReportingComponent.MIME_TYPE_HTML;
+          try
           {
-            mimeType = SimpleReportingComponent.MIME_TYPE_HTML;
+            final String preferredOutputType = (String) reportComponent.getReport()
+            .getAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.PREFERRED_OUTPUT_TYPE);
+            if (HtmlTableModule.TABLE_HTML_FLOW_EXPORT_TYPE.equals(preferredOutputType)
+                || HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE.equals(preferredOutputType)
+                || HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE.equals(preferredOutputType))
+            {
+              mimeType = SimpleReportingComponent.MIME_TYPE_HTML;
+            }
+            else if (StringUtils.isEmpty(preferredOutputType) == false)
+            {
+              mimeType = preferredOutputType;
+            }
+          } catch (Exception e)
+          {
+            log.info(e.getMessage(), e);
           }
-        }
-        catch (Throwable t)
-        {
-          log.info(t.getMessage(), t);
         }
 
         // check if pagination is allowed and turned on
@@ -375,8 +385,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
       long end = System.currentTimeMillis();
       AuditHelper.audit(userSession.getId(), userSession.getName(), reportDefinitionPath, getObjectName(), getClass().getName(), MessageTypes.INSTANCE_END,
           renderMode.name() + ": " + instanceId, "", ((float) (end - start) / 1000), this); //$NON-NLS-1$
-    }
-    catch (Exception ex)
+    } catch (Exception ex)
     {
       log.error(ex.getMessage(), ex);
       long end = System.currentTimeMillis();
@@ -764,8 +773,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
       }
       pojoComponent.addInput("outputType", "string");
 
-    }
-    catch (Exception e)
+    } catch (Exception e)
     {
       log.error(e.getMessage(), e);
     }
@@ -848,8 +856,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
       {
         defaultOutputType = "application/vnd.ms-excel";
       }
-    }
-    catch (Throwable t)
+    } catch (Throwable t)
     {
       log.info(t.getMessage(), t);
       // we handle it

@@ -332,13 +332,6 @@ public class ParameterControllerPanel extends VerticalPanel
     {
       acceptedPage = Math.max(0, Integer.parseInt(parametersElement.getAttribute("accepted-page")));
     }
-    final int finalAcceptedPage = acceptedPage;
-
-    // add our default page, so we can keep this between selections of other parameters, otherwise it will not be on the
-    // set of params are default back to zero (page 1)
-    List<String> pageList = new ArrayList<String>();
-    pageList.add("" + (finalAcceptedPage));
-    parameterMap.put("accepted-page", pageList);
 
     int pageCount = 0;
     if (parametersElement.getAttribute("page-count") != null && !"".equals(parametersElement.getAttribute("page-count")))
@@ -347,6 +340,19 @@ public class ParameterControllerPanel extends VerticalPanel
     }
     final int finalPageCount = pageCount;
 
+    if (finalPageCount <= acceptedPage) {
+      // we can't accept pages out of range, this can happen if we are on a page and then change a parameter value
+      // resulting in a new report with less pages
+      // when this happens, we'll just reduce the accepted page
+      acceptedPage = Math.max(0, acceptedPage - 1);
+    }
+    final int finalAcceptedPage = acceptedPage;
+    // add our default page, so we can keep this between selections of other parameters, otherwise it will not be on the
+    // set of params are default back to zero (page 1)
+    List<String> pageList = new ArrayList<String>();
+    pageList.add("" + (finalAcceptedPage));
+    parameterMap.put("accepted-page", pageList);    
+    
     final Image backToFirstPage = PageImages.images.backToFirstPage().createImage();
     final Image backPage = PageImages.images.backButton().createImage();
     final Image forwardPage = PageImages.images.forwardButton().createImage();
