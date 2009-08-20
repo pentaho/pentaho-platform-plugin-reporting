@@ -336,12 +336,26 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
 
   private String computeEffectiveOutputTarget(final MasterReport report)
   {
+    if (Boolean.TRUE.equals
+        (report.getAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.LOCK_PREFERRED_OUTPUT_TYPE)))
+    {
+      final Object preferredOutputType = report.getAttribute
+          (AttributeNames.Core.NAMESPACE, AttributeNames.Core.PREFERRED_OUTPUT_TYPE);
+      if (preferredOutputType != null)
+      {
+        return String.valueOf(preferredOutputType);
+      }
+    }
 
     if (outputTarget != null)
     {
+      // if a engine-level output target is given, use it as it is. We can assume that the user knows how to
+      // map from that to a real mime-type.
       return outputTarget;
     }
 
+    // if the user has given a mime-type instead of a output-target, lets map it to the "best" choice. If the
+    // user wanted full control, he would have used the output-target property instead.
     if (MIME_TYPE_CSV.equals(outputType))
     {
       return CSVTableModule.TABLE_CSV_STREAM_EXPORT_TYPE;
