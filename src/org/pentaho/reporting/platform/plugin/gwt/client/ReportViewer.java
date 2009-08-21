@@ -198,11 +198,12 @@ public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback
         List<String> valueList = requestParams.get(key);
         for (String value : valueList)
         {
+          String decodedValue = URL.decodeComponent(value);
           // only add new parameters (do not override *ANYTHING*)
           if ((historyParams == null || historyParams.containsKey(key) == false)
               && (reportParameterMap == null || reportParameterMap.containsKey(key) == false))
           {
-            parameters += "&" + key + "=" + URL.encodeComponent(value);
+            parameters += "&" + key + "=" + URL.encodeComponent(decodedValue);
           }
         }
       }
