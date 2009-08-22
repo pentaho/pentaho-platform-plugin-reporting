@@ -2,17 +2,17 @@ package org.pentaho.reporting.platform.plugin;
 
 import java.net.URL;
 import java.util.List;
+import java.util.Locale;
 
 import org.pentaho.platform.api.engine.IUserDetailsRoleListService;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
-import org.pentaho.platform.engine.security.SecurityHelper;
+import org.pentaho.platform.util.messages.LocaleHelper;
 import org.pentaho.reporting.engine.classic.core.DefaultReportEnvironment;
 import org.pentaho.reporting.libraries.base.config.Configuration;
 
 public class PentahoReportEnvironment extends DefaultReportEnvironment
 {
-
   public PentahoReportEnvironment(Configuration configuration)
   {
     super(configuration);
@@ -78,7 +78,8 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
     {
       URL url = new URL(pentahoBaseURL);
       return url.getProtocol() + "://" + url.getHost() + ":" + url.getPort(); //$NON-NLS-1$ //$NON-NLS-2$
-    } catch (Exception e)
+    }
+    catch (Exception e)
     {
     }
     return pentahoBaseURL;
@@ -90,9 +91,15 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
     {
       URL url = new URL(pentahoBaseURL);
       return url.getHost() + ":" + url.getPort();//$NON-NLS-1$ 
-    } catch (Exception e)
+    }
+    catch (Exception e)
     {
     }
     return pentahoBaseURL;
+  }
+
+  public Locale getLocale()
+  {
+    return LocaleHelper.getLocale();
   }
 }
