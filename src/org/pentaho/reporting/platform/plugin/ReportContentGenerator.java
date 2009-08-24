@@ -4,7 +4,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Array;
-import java.net.URL;
 import java.net.URLDecoder;
 import java.util.Date;
 import java.util.HashMap;
@@ -125,7 +124,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
 
         // the requested mime type can be null, in that case the report-component will resolve the desired
         // type from the output-target.
-        final String mimeType = requestParams.getStringParameter(SimpleReportingComponent.OUTPUT_TYPE, null);
+        final String mimeType = getMimeType(requestParams);
         reportComponent.setOutputType(mimeType);
 
         // add all inputs (request parameters) to report component
@@ -318,36 +317,11 @@ public class ReportContentGenerator extends SimpleContentGenerator
         // now add output type chooser
         addOutputParameter(report, parameters, inputs, subscribe);
 
-        String mimeType = requestParams.getStringParameter(SimpleReportingComponent.OUTPUT_TYPE, null);
-        if (StringUtils.isEmpty(mimeType))
-        {
-          // set out default first, takes care of exception/else fall thru
-          mimeType = SimpleReportingComponent.MIME_TYPE_HTML;
-          try
-          {
-            final String preferredOutputType = (String) reportComponent.getReport()
-            .getAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.PREFERRED_OUTPUT_TYPE);
-            if (HtmlTableModule.TABLE_HTML_FLOW_EXPORT_TYPE.equals(preferredOutputType)
-                || HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE.equals(preferredOutputType)
-                || HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE.equals(preferredOutputType))
-            {
-              mimeType = SimpleReportingComponent.MIME_TYPE_HTML;
-            }
-            else if (StringUtils.isEmpty(preferredOutputType) == false)
-            {
-              mimeType = preferredOutputType;
-            }
-          } catch (Exception e)
-          {
-            log.info(e.getMessage(), e);
-          }
-        }
+        String mimeType = getMimeType(requestParams);
 
         // check if pagination is allowed and turned on
-        if (mimeType.equalsIgnoreCase(SimpleReportingComponent.MIME_TYPE_HTML)
-            && vr.isEmpty()
-            && "true".equalsIgnoreCase(requestParams.getStringParameter(SimpleReportingComponent.PAGINATE_OUTPUT, String.valueOf(reportComponent
-                .isPaginateOutput()))))
+        if (mimeType.equalsIgnoreCase(SimpleReportingComponent.MIME_TYPE_HTML) && vr.isEmpty()
+            && "true".equalsIgnoreCase(requestParams.getStringParameter(SimpleReportingComponent.PAGINATE_OUTPUT, "true")))
         {
           ByteArrayOutputStream dontCareOutputStream = new ByteArrayOutputStream();
           reportComponent.setOutputStream(dontCareOutputStream);
@@ -799,6 +773,77 @@ public class ReportContentGenerator extends SimpleContentGenerator
     return log;
   }
 
+  private String getMimeType(final IParameterProvider requestParams)
+  {
+    String mimeType = requestParams.getStringParameter(SimpleReportingComponent.OUTPUT_TYPE, null);
+    if (StringUtils.isEmpty(mimeType))
+    {
+      // set out default first, takes care of exception/else fall thru
+      mimeType = SimpleReportingComponent.MIME_TYPE_HTML;
+      try
+      {
+        final String preferredOutputTarget = (String) reportComponent.getReport().getAttribute(AttributeNames.Core.NAMESPACE,
+            AttributeNames.Core.PREFERRED_OUTPUT_TYPE);
+        if (HtmlTableModule.TABLE_HTML_FLOW_EXPORT_TYPE.equals(preferredOutputTarget)
+            || HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE.equals(preferredOutputTarget)
+            || HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE.equals(preferredOutputTarget))
+        {
+          mimeType = SimpleReportingComponent.MIME_TYPE_HTML;
+        }
+        else if (CSVTableModule.TABLE_CSV_STREAM_EXPORT_TYPE.equals(preferredOutputTarget))
+        {
+          mimeType = "text/csv";
+        }
+        else if (HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE.equals(preferredOutputTarget)
+            || HtmlTableModule.TABLE_HTML_FLOW_EXPORT_TYPE.equals(preferredOutputTarget)
+            || HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE.equals(preferredOutputTarget))
+        {
+          mimeType = "text/html";
+        }
+        else if (PdfPageableModule.PDF_EXPORT_TYPE.equals(preferredOutputTarget))
+        {
+          mimeType = "application/pdf";
+        }
+        else if (RTFTableModule.TABLE_RTF_FLOW_EXPORT_TYPE.equals(preferredOutputTarget))
+        {
+          mimeType = "application/rtf";
+        }
+        else if (ExcelTableModule.EXCEL_FLOW_EXPORT_TYPE.equals(preferredOutputTarget))
+        {
+          mimeType = "application/vnd.ms-excel";
+        }
+        else if (StringUtils.isEmpty(preferredOutputTarget) == false)
+        {
+          mimeType = preferredOutputTarget;
+        }
+      } catch (Exception e)
+      {
+        log.info(e.getMessage(), e);
+      }
+    }
+    if ("pdf".equalsIgnoreCase(mimeType))
+    {
+      mimeType = SimpleReportingComponent.MIME_TYPE_PDF;
+    }
+    else if ("html".equalsIgnoreCase(mimeType))
+    {
+      mimeType = SimpleReportingComponent.MIME_TYPE_HTML;
+    }
+    else if ("csv".equalsIgnoreCase(mimeType))
+    {
+      mimeType = SimpleReportingComponent.MIME_TYPE_CSV;
+    }
+    else if ("rtf".equalsIgnoreCase(mimeType))
+    {
+      mimeType = SimpleReportingComponent.MIME_TYPE_RTF;
+    }
+    else if ("xls".equalsIgnoreCase(mimeType))
+    {
+      mimeType = SimpleReportingComponent.MIME_TYPE_XLS;
+    }
+    return mimeType;
+  }
+
   public String getMimeType()
   {
     IParameterProvider requestParams = getRequestParameters();
@@ -829,44 +874,6 @@ public class ReportContentGenerator extends SimpleContentGenerator
     reportComponent.setSession(userSession);
     reportComponent.setReportDefinitionPath(reportDefinitionPath);
 
-    String defaultOutputType = SimpleReportingComponent.MIME_TYPE_HTML;
-    try
-    {
-      final String preferredOutputTarget = (String) reportComponent.getReport().getAttribute(AttributeNames.Core.NAMESPACE,
-          AttributeNames.Core.PREFERRED_OUTPUT_TYPE);
-      if (CSVTableModule.TABLE_CSV_STREAM_EXPORT_TYPE.equals(preferredOutputTarget))
-      {
-        defaultOutputType = "text/csv";
-      }
-      else if (HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE.equals(preferredOutputTarget)
-          || HtmlTableModule.TABLE_HTML_FLOW_EXPORT_TYPE.equals(preferredOutputTarget)
-          || HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE.equals(preferredOutputTarget))
-      {
-        defaultOutputType = "text/html";
-      }
-      else if (PdfPageableModule.PDF_EXPORT_TYPE.equals(preferredOutputTarget))
-      {
-        defaultOutputType = "application/pdf";
-      }
-      else if (RTFTableModule.TABLE_RTF_FLOW_EXPORT_TYPE.equals(preferredOutputTarget))
-      {
-        defaultOutputType = "application/rtf";
-      }
-      else if (ExcelTableModule.EXCEL_FLOW_EXPORT_TYPE.equals(preferredOutputTarget))
-      {
-        defaultOutputType = "application/vnd.ms-excel";
-      }
-    } catch (Throwable t)
-    {
-      log.info(t.getMessage(), t);
-      // we handle it
-    }
-    if (StringUtils.isEmpty(defaultOutputType))
-    {
-      defaultOutputType = SimpleReportingComponent.MIME_TYPE_HTML;
-    }
-    String mimeType = requestParams.getStringParameter(SimpleReportingComponent.OUTPUT_TYPE, defaultOutputType);
-    return mimeType;
+    return getMimeType(requestParams);
   }
-
 }
