@@ -20,6 +20,7 @@ import org.pentaho.platform.api.engine.IStreamingPojo;
 import org.pentaho.platform.api.repository.IContentRepository;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.plugin.action.jfreereport.helper.PentahoTableModel;
+import org.pentaho.platform.util.web.MimeHelper;
 import org.pentaho.reporting.engine.classic.core.AttributeNames;
 import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
@@ -122,8 +123,9 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
 
   /**
    * Sets the mime-type for determining which report output type to generate. This should be a mime-type for consistency with streaming output mime-types.
-   *
-   * @param outputType the desired output type (mime-type) for the report engine to generate
+   * 
+   * @param outputType
+   *          the desired output type (mime-type) for the report engine to generate
    */
   public void setOutputType(String outputType)
   {
@@ -132,7 +134,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
 
   /**
    * Gets the output type, this should be a mime-type for consistency with streaming output mime-types.
-   *
+   * 
    * @return the current output type for the report
    */
   public String getOutputType()
@@ -140,10 +142,9 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     return outputType;
   }
 
-
   /**
    * This method returns the resource for the report-definition, if available.
-   *
+   * 
    * @return the report-definition resource
    */
   public IActionSequenceResource getReportDefinition()
@@ -153,8 +154,9 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
 
   /**
    * Sets the report-definition if it is provided to us by way of an action-sequence resource. The name must be reportDefinition or report-definition.
-   *
-   * @param reportDefinition a report-definition as seen (wrapped) by an action-sequence
+   * 
+   * @param reportDefinition
+   *          a report-definition as seen (wrapped) by an action-sequence
    */
   public void setReportDefinition(IActionSequenceResource reportDefinition)
   {
@@ -164,8 +166,9 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   /**
    * This method will be called if an input is called reportDefinitionInputStream, or any variant of that with dashes report-definition-inputstream for example.
    * The primary purpose of this method is to facilitate unit testing.
-   *
-   * @param reportDefinitionInputStream any kind of InputStream which contains a valid report-definition
+   * 
+   * @param reportDefinitionInputStream
+   *          any kind of InputStream which contains a valid report-definition
    */
   public void setReportDefinitionInputStream(InputStream reportDefinitionInputStream)
   {
@@ -174,7 +177,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
 
   /**
    * Returns the path to the report definition (for platform use this is a path in the solution repository)
-   *
+   * 
    * @return reportdefinitionPath
    */
   public String getReportDefinitionPath()
@@ -184,7 +187,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
 
   /**
    * Sets the path to the report definition (platform path)
-   *
+   * 
    * @param reportDefinitionPath
    */
   public void setReportDefinitionPath(String reportDefinitionPath)
@@ -194,7 +197,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
 
   /**
    * Returns true if the report engine will be asked to use a paginated (HTML) output processor
-   *
+   * 
    * @return paginated
    */
   public boolean isPaginateOutput()
@@ -204,8 +207,9 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
 
   /**
    * Set the paging mode used by the reporting engine. This will also be set if an input
-   *
-   * @param paginateOutput page mode
+   * 
+   * @param paginateOutput
+   *          page mode
    */
   public void setPaginateOutput(boolean paginateOutput)
   {
@@ -224,8 +228,9 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
 
   /**
    * This method sets the IPentahoSession to use in order to access the pentaho platform file repository and content repository.
-   *
-   * @param session a valid pentaho session
+   * 
+   * @param session
+   *          a valid pentaho session
    */
   public void setSession(IPentahoSession session)
   {
@@ -234,7 +239,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
 
   /**
    * This method returns the output-type for the streaming output, it is the same as what is returned by getOutputType() for consistency.
-   *
+   * 
    * @return the mime-type for the streaming output
    */
   public String getMimeType()
@@ -244,8 +249,9 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
 
   /**
    * This method sets the OutputStream to write streaming content on.
-   *
-   * @param outputStream an OutputStream to write to
+   * 
+   * @param outputStream
+   *          an OutputStream to write to
    */
   public void setOutputStream(OutputStream outputStream)
   {
@@ -260,8 +266,9 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   /**
    * This method sets the map of *all* the inputs which are available to this component. This allows us to use action-sequence inputs as parameters for our
    * reports.
-   *
-   * @param inputs a Map containing inputs
+   * 
+   * @param inputs
+   *          a Map containing inputs
    */
   public void setInputs(Map<String, Object> inputs)
   {
@@ -303,7 +310,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
 
   /**
    * Get the MasterReport for the report-definition, the MasterReport object will be cached as needed, using the PentahoResourceLoader.
-   *
+   * 
    * @return a parsed MasterReport object
    * @throws ResourceException
    * @throws IOException
@@ -329,21 +336,22 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       }
       report.setReportEnvironment(new PentahoReportEnvironment(report.getConfiguration()));
     }
-    
-    
+
     return report;
   }
 
   private String computeEffectiveOutputTarget(final MasterReport report)
   {
-    if (Boolean.TRUE.equals
-        (report.getAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.LOCK_PREFERRED_OUTPUT_TYPE)))
+    if (Boolean.TRUE.equals(report.getAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.LOCK_PREFERRED_OUTPUT_TYPE)))
     {
-      final Object preferredOutputType = report.getAttribute
-          (AttributeNames.Core.NAMESPACE, AttributeNames.Core.PREFERRED_OUTPUT_TYPE);
+      final Object preferredOutputType = report.getAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.PREFERRED_OUTPUT_TYPE);
       if (preferredOutputType != null)
       {
-        return String.valueOf(preferredOutputType);
+        outputType = MimeHelper.getMimeTypeFromExtension("." + String.valueOf(preferredOutputType));
+        if (StringUtils.isEmpty(outputType))
+        {
+          outputType = String.valueOf(preferredOutputType);
+        }
       }
     }
 
@@ -393,9 +401,11 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
 
   /**
    * Apply inputs (if any) to corresponding report parameters, care is taken when checking parameter types to perform any necessary casting and conversion.
-   *
-   * @param report  a MasterReport object to apply parameters to
-   * @param context a ParameterContext for which the parameters will be under
+   * 
+   * @param report
+   *          a MasterReport object to apply parameters to
+   * @param context
+   *          a ParameterContext for which the parameters will be under
    */
   public void applyInputsToReportParameters(final MasterReport report, final ParameterContext context)
   {
@@ -436,8 +446,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       return rawValue;
     }
 
-    if (targetType.isAssignableFrom(TableModel.class) &&
-        IPentahoResultSet.class.isAssignableFrom(rawValue.getClass()))
+    if (targetType.isAssignableFrom(TableModel.class) && IPentahoResultSet.class.isAssignableFrom(rawValue.getClass()))
     {
       // wrap IPentahoResultSet to simulate TableModel
       return new PentahoTableModel((IPentahoResultSet) rawValue);
@@ -449,7 +458,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       return null;
     }
 
-   if (targetType.equals(Date.class))
+    if (targetType.equals(Date.class))
     {
       return new Date(new Long(valueAsString));
     }
@@ -461,8 +470,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
         try
         {
           return valueConverter.toPropertyValue(valueAsString);
-        }
-        catch (BeanException e)
+        } catch (BeanException e)
         {
           throw new RuntimeException("Unable to convert parameter from String to real value.");
         }
@@ -527,8 +535,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     {
       final String inputStringValue = (String) getInput(REPORTLOAD_RESURL, null);
       return new URL(inputStringValue);
-    }
-    catch (Exception e)
+    } catch (Exception e)
     {
       return defaultValue;
     }
@@ -555,7 +562,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   /**
    * This method returns the number of logical pages which make up the report. This results of this method are available only after validate/execute have been
    * successfully called. This field has no setter, as it should never be set by users.
-   *
+   * 
    * @return the number of logical pages in the report
    */
   public int getPageCount()
@@ -569,7 +576,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    * <p/>
    * Since we should have a list of all action-sequence inputs, we can determine if we have sufficient inputs to meet the parameter requirements of the
    * report-definition. This would include validation of values and ranges of values.
-   *
+   * 
    * @return true if valid
    * @throws Exception
    */
@@ -599,7 +606,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
 
   /**
    * Perform the primary function of this component, this is, to execute. This method will be invoked immediately following a successful validate().
-   *
+   * 
    * @return true if successful execution
    * @throws Exception
    */
@@ -671,8 +678,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       {
         return RTFOutput.generate(report, outputStream, getYieldRate());
       }
-    }
-    catch (Throwable t)
+    } catch (Throwable t)
     {
       log.error("[execute] Component execution failed.", t);
     }
