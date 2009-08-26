@@ -134,6 +134,11 @@ public class ParameterControllerPanel extends VerticalPanel
         if (parameterNodes == null || parameterNodes.getLength() == 0)
         {
           fireParametersReady(parameterMap, RENDER_TYPE.REPORT);
+          // add pagination controller (if needed)
+          if ("true".equals(parametersElement.getAttribute("paginate")))
+          {
+            add(buildPaginationController(parametersElement));
+          }
           return;
         }
         add(parameterDisclosurePanel);
@@ -344,7 +349,7 @@ public class ParameterControllerPanel extends VerticalPanel
       // we can't accept pages out of range, this can happen if we are on a page and then change a parameter value
       // resulting in a new report with less pages
       // when this happens, we'll just reduce the accepted page
-      acceptedPage = Math.max(0, acceptedPage - 1);
+      acceptedPage = Math.max(0, finalPageCount - 1);
     }
     final int finalAcceptedPage = acceptedPage;
     // add our default page, so we can keep this between selections of other parameters, otherwise it will not be on the
@@ -568,7 +573,7 @@ public class ParameterControllerPanel extends VerticalPanel
     pageControlPanelWrapper.setStyleName("pageControllerPanel");
     pageControlPanelWrapper.setWidth("100%");
     pageControlPanelWrapper.add(pageControlPanel);
-
+    
     return pageControlPanelWrapper;
   }
 
