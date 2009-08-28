@@ -6,7 +6,7 @@ import java.util.HashMap;
 
 import junit.framework.TestCase;
 
-public class PageableHTMLTests extends TestCase
+public class PageableHTMLTest extends TestCase
 {
 
   public void testSetPaginationAPI() throws Exception
