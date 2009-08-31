@@ -37,8 +37,7 @@ public class ListParameterUI extends SimplePanel
     }
   }
 
-  public ListParameterUI(final ParameterControllerPanel controller, final List<String> parameterSelections,
-      final Element parameterElement)
+  public ListParameterUI(final ParameterControllerPanel controller, final List<String> parameterSelections, final Element parameterElement)
   {
     String renderType = parameterElement.getAttribute("parameter-render-type");
     if (renderType != null)
@@ -68,7 +67,6 @@ public class ListParameterUI extends SimplePanel
     listBox.setVisibleItemCount(visibleItems);
 
     NodeList choices = parameterElement.getElementsByTagName("value-choice");
-    boolean setAnything = false;
     for (int i = 0; i < choices.getLength(); i++)
     {
       final Element choiceElement = (Element) choices.item(i);
@@ -80,20 +78,21 @@ public class ListParameterUI extends SimplePanel
         if (text.equals(choiceValue))
         {
           listBox.setItemSelected(i, true);
-          setAnything = true;
+          break;
         }
       }
     }
 
-    if (setAnything == false)
-    {
-      parameterSelections.clear();
-      if (listBox.getItemCount() > 0)
-      {
-        listBox.setItemSelected(0, true);
-        parameterSelections.add(listBox.getValue(0));
-      }
-    }
+    // if (setAnything == false)
+    // {
+    // parameterSelections.clear();
+    // if (listBox.getItemCount() > 0)
+    // {
+    // listBox.setItemSelected(0, true);
+    // parameterSelections.add(listBox.getValue(0));
+    // Window.alert("Selecting (defaulted): " + listBox.getValue(0));
+    // }
+    // }
 
     listBox.addChangeHandler(new ListBoxChangeHandler(parameterSelections, controller));
     setWidget(listBox);

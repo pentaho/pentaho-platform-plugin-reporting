@@ -99,19 +99,22 @@ public class ParameterControllerPanel extends VerticalPanel
 
     public void onResponseReceived(Request request, Response response)
     {
-      if (response.getStatusCode() != Response.SC_OK) {
+      if (response.getStatusCode() != Response.SC_OK)
+      {
         showMessageDialog(messages.getString("error"), messages.getString("couldNotFetchParams"));
         return;
       }
-      
+
       final Document resultDoc;
-      try {
+      try
+      {
         resultDoc = (Document) XMLParser.parse(response.getText());
-      } catch (Exception e) {
+      } catch (Exception e)
+      {
         showMessageDialog(messages.getString("error"), response.getText());
         return;
       }
-      
+
       clear();
 
       Element parametersElement = (Element) resultDoc.getDocumentElement();
@@ -121,7 +124,7 @@ public class ParameterControllerPanel extends VerticalPanel
       {
         layout = Window.Location.getParameter("layout");
       }
-      
+
       boolean showParameters = true;
       if (Window.Location.getParameter("showParameters") != null && !"".equals(Window.Location.getParameter("showParameters")))
       {
@@ -174,9 +177,12 @@ public class ParameterControllerPanel extends VerticalPanel
         for (String parameterGroupName : parameterGroupMap.keySet())
         {
           final Panel parameterGroupPanel;
-          if (layout.equals("flow")) {
+          if (layout.equals("flow"))
+          {
             parameterGroupPanel = new FlowPanel();
-          } else {
+          }
+          else
+          {
             parameterGroupPanel = new VerticalPanel();
           }
 
@@ -209,12 +215,15 @@ public class ParameterControllerPanel extends VerticalPanel
             {
               // only add the parameter if it has a UI
               parameterPanel.add(parameterWidget);
-              if (layout.equals("flow")) {
+              if (layout.equals("flow"))
+              {
                 SimplePanel div = new SimplePanel();
                 div.setStyleName("parameter-flow");
                 div.add(parameterPanel);
                 parameterGroupPanel.add(div);
-              } else {
+              }
+              else
+              {
                 parameterGroupPanel.add(parameterPanel);
               }
             }
@@ -345,7 +354,8 @@ public class ParameterControllerPanel extends VerticalPanel
     }
     final int finalPageCount = pageCount;
 
-    if (finalPageCount <= acceptedPage) {
+    if (finalPageCount <= acceptedPage)
+    {
       // we can't accept pages out of range, this can happen if we are on a page and then change a parameter value
       // resulting in a new report with less pages
       // when this happens, we'll just reduce the accepted page
@@ -356,8 +366,8 @@ public class ParameterControllerPanel extends VerticalPanel
     // set of params are default back to zero (page 1)
     List<String> pageList = new ArrayList<String>();
     pageList.add("" + (finalAcceptedPage));
-    parameterMap.put("accepted-page", pageList);    
-    
+    parameterMap.put("accepted-page", pageList);
+
     final Image backToFirstPage = PageImages.images.backToFirstPage().createImage();
     final Image backPage = PageImages.images.backButton().createImage();
     final Image forwardPage = PageImages.images.forwardButton().createImage();
@@ -573,7 +583,7 @@ public class ParameterControllerPanel extends VerticalPanel
     pageControlPanelWrapper.setStyleName("pageControllerPanel");
     pageControlPanelWrapper.setWidth("100%");
     pageControlPanelWrapper.add(pageControlPanel);
-    
+
     return pageControlPanelWrapper;
   }
 
@@ -603,20 +613,57 @@ public class ParameterControllerPanel extends VerticalPanel
     for (int i = 0; i < selectionsElements.getLength(); i++)
     {
       String selectionValue = ((Element) selectionsElements.item(i)).getAttribute("value");
-      parameterSelections.add(selectionValue);
+      if (isStrict)
+      {
+        // we have to make sure the selectionValue is valid (in our list of known possible values)
+        NodeList choices = parameterElement.getElementsByTagName("value-choice");
+        for (int j = 0; j < choices.getLength(); j++)
+        {
+          final Element choiceElement = (Element) choices.item(j);
+          final String choiceValue = choiceElement.getAttribute("value");
+          if (choiceValue.equals(selectionValue))
+          {
+            parameterSelections.add(selectionValue);
+            break;
+          }
+        }
+      }
+      else
+      {
+        parameterSelections.add(selectionValue);
+      }
     }
     parameterMap.put(parameterName, parameterSelections);
 
     // get default values
     final NodeList defaultValueElements = parameterElement.getElementsByTagName("default-value");
 
-    // if there are no selections, add the defaults, if they exist
+    // if there are no selections, add the defaults, if they exist while respecting strictness
     if (parameterSelections.isEmpty() && defaultValueElements != null && defaultValueElements.getLength() > 0)
     {
       for (int i = 0; i < defaultValueElements.getLength(); i++)
       {
         String defaultValue = ((Element) defaultValueElements.item(i)).getAttribute("value");
-        parameterSelections.add(defaultValue);
+
+        if (isStrict)
+        {
+          // we have to make sure the selectionValue is valid (in our list of known possible values)
+          NodeList choices = parameterElement.getElementsByTagName("value-choice");
+          for (int j = 0; j < choices.getLength(); j++)
+          {
+            final Element choiceElement = (Element) choices.item(j);
+            final String choiceValue = choiceElement.getAttribute("value");
+            if (choiceValue.equals(defaultValue))
+            {
+              parameterSelections.add(defaultValue);
+              break;
+            }
+          }
+        }
+        else
+        {
+          parameterSelections.add(defaultValue);
+        }
       }
     }
 
@@ -695,7 +742,7 @@ public class ParameterControllerPanel extends VerticalPanel
     return promptNeeded;
   }
 
-  private void showMessageDialog(String title, String message) 
+  private void showMessageDialog(String title, String message)
   {
     final DialogBox dialogBox = new DialogBox(false, true);
     dialogBox.setText(title);
@@ -720,7 +767,7 @@ public class ParameterControllerPanel extends VerticalPanel
     dialogBox.center();
     // prompt
   }
-  
+
   public void addParameterSubmissionListener(IParameterSubmissionListener listener)
   {
     listeners.add(listener);
