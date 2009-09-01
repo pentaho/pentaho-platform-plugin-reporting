@@ -587,10 +587,6 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       log.error("[input] A report-definition was not provided.");
       return false;
     }
-    if (paginateOutput && acceptedPage < 0)
-    {
-      log.warn("[input] With pageable output, accepted-page should be provided and >= 0 (using default).");
-    }
     if (reportDefinition != null && reportDefinitionPath != null && session == null)
     {
       log.error("[session] A valid session must be provided if the report-definition is given as a resource or by path.");
