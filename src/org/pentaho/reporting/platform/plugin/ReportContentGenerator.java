@@ -122,6 +122,13 @@ public class ReportContentGenerator extends SimpleContentGenerator
         reportComponent.setOutputStream(reportOutput);
         reportComponent.setReportDefinitionPath(reportDefinitionPath);
 
+        final ISolutionRepository repository = PentahoSystem.get(ISolutionRepository.class, userSession);
+        final ISolutionFile file = repository.getSolutionFile(reportDefinitionPath, ISolutionRepository.ACTION_CREATE);
+        final HttpServletResponse response = (HttpServletResponse) parameterProviders.get("path").getParameter("httpresponse");
+        response.setHeader("Content-Disposition", "inline; filename=\"" + file.getFileName() + "\"");
+        response.setHeader("Content-Description", file.getFileName());
+        response.setDateHeader("Last-Modified", file.getLastModified());
+        
         // the requested mime type can be null, in that case the report-component will resolve the desired
         // type from the output-target.
         final String mimeType = getMimeType(requestParams);
