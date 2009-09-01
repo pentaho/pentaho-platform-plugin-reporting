@@ -123,7 +123,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
         reportComponent.setReportDefinitionPath(reportDefinitionPath);
 
         final ISolutionRepository repository = PentahoSystem.get(ISolutionRepository.class, userSession);
-        final ISolutionFile file = repository.getSolutionFile(reportDefinitionPath, ISolutionRepository.ACTION_CREATE);
+        final ISolutionFile file = repository.getSolutionFile(reportDefinitionPath, ISolutionRepository.ACTION_EXECUTE);
         final HttpServletResponse response = (HttpServletResponse) parameterProviders.get("path").getParameter("httpresponse");
         response.setHeader("Content-Disposition", "inline; filename=\"" + file.getFileName() + "\"");
         response.setHeader("Content-Description", file.getFileName());
