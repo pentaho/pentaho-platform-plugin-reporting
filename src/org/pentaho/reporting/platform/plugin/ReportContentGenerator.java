@@ -71,6 +71,8 @@ public class ReportContentGenerator extends SimpleContentGenerator
 
   public void createContent(OutputStream outputStream) throws Exception
   {
+    String id = UUIDUtil.getUUIDAsString();
+    setInstanceId( id );
     final IParameterProvider requestParams = getRequestParameters();
 
     final String solution = URLDecoder.decode(requestParams.getStringParameter("solution", ""), "UTF-8"); //$NON-NLS-1$
@@ -84,7 +86,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
 
     final long start = System.currentTimeMillis();
     AuditHelper.audit(userSession.getId(), userSession.getName(), reportDefinitionPath, getObjectName(), getClass().getName(), MessageTypes.INSTANCE_START,
-        renderMode.name() + ": " + instanceId, "", 0, this); //$NON-NLS-1$
+        instanceId, "", 0, this); //$NON-NLS-1$
 
     try
     {
@@ -375,13 +377,13 @@ public class ReportContentGenerator extends SimpleContentGenerator
 
       long end = System.currentTimeMillis();
       AuditHelper.audit(userSession.getId(), userSession.getName(), reportDefinitionPath, getObjectName(), getClass().getName(), MessageTypes.INSTANCE_END,
-          renderMode.name() + ": " + instanceId, "", ((float) (end - start) / 1000), this); //$NON-NLS-1$
+          instanceId, "", ((float) (end - start) / 1000), this); //$NON-NLS-1$
     } catch (Exception ex)
     {
       log.error(ex.getMessage(), ex);
       long end = System.currentTimeMillis();
       AuditHelper.audit(userSession.getId(), userSession.getName(), reportDefinitionPath, getObjectName(), getClass().getName(), MessageTypes.INSTANCE_FAILED,
-          renderMode.name() + ": " + instanceId, "", ((float) (end - start) / 1000), this); //$NON-NLS-1$
+          instanceId, "", ((float) (end - start) / 1000), this); //$NON-NLS-1$
       outputStream.write(ex.getMessage().getBytes("UTF-8"));
       outputStream.flush();
     }
