@@ -3,6 +3,8 @@ package org.pentaho.reporting.platform.plugin.gwt.client;
 import java.util.Date;
 import java.util.List;
 
+import org.pentaho.gwt.widgets.client.datepicker.PentahoDatePicker;
+
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.i18n.client.DateTimeFormat;
@@ -53,7 +55,7 @@ public class DateParameterUI extends SimplePanel
     }
 
     DefaultFormat format = new DefaultFormat(DateTimeFormat.getLongDateFormat());
-    DateBox datePicker = new DateBox(new MyDatePicker(), date, format);
+    DateBox datePicker = new DateBox(new PentahoDatePicker(), date, format);
 
     datePicker.addValueChangeHandler(new DateParameterSelectionHandler(parameterSelections, controller));
     setWidget(datePicker);
