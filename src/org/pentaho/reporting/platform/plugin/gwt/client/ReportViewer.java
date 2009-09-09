@@ -33,7 +33,8 @@ public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback
   private String path = Window.Location.getParameter("path");
   private String name = Window.Location.getParameter("name");
   private ResourceBundle messages = new ResourceBundle();
-
+  private ReportContainer container = new ReportContainer(this, messages);
+  
   private ValueChangeHandler<String> historyHandler = new ValueChangeHandler<String>()
   {
     public void onValueChange(ValueChangeEvent<String> event)
@@ -54,7 +55,6 @@ public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback
 
   public void bundleLoaded(String bundleName)
   {
-    setupNativeHooks(this);
 
     // build report container
     // this widget has:
@@ -64,15 +64,16 @@ public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback
 
     History.addValueChangeHandler(historyHandler);
     initUI();
+    setupNativeHooks(this);
+    hideParentReportViewers();
   }
 
   private void initUI()
   {
-    ReportContainer container = new ReportContainer(this, messages);
+    container = new ReportContainer(this, messages);
     RootPanel panel = RootPanel.get("content");
     panel.clear();
     panel.add(container);
-
   }
 
   private native void setupNativeHooks(ReportViewer viewer)
@@ -83,8 +84,29 @@ public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback
     top.reportViewer_openUrlInDialog = function(title, message, width, height) {
       viewer.@org.pentaho.reporting.platform.plugin.gwt.client.ReportViewer::openUrlInDialog(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)(title, message, width, height);
     }
+    $wnd.reportViewer_hide = function() {
+      viewer.@org.pentaho.reporting.platform.plugin.gwt.client.ReportViewer::hide()();
+    }
   }-*/;
 
+  private void hide() {
+    container.hideParameterController();
+  }
+  
+  private native void hideParentReportViewers()
+  /*-{
+    var myparent = $wnd.parent;
+    while (myparent != null) {
+      if ($wnd != myparent) {
+        myparent.reportViewer_hide();
+      }
+      myparent = myparent.parent;
+      if (myparent == top) {
+        break;
+      }
+    }
+  }-*/;
+  
   public void openUrlInDialog(String title, String url, String width, String height)
   {
     if (StringUtils.isEmpty(height))

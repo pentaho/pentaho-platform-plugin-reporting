@@ -17,7 +17,7 @@ public class ReportContainer extends VerticalPanel implements IParameterSubmissi
   private ParameterControllerPanel parameterControllerPanel = null;
   private Frame reportContainer = new Frame();
   private ReportViewer viewer = null;
-  
+
   public ReportContainer(final ReportViewer viewer, ResourceBundle messages)
   {
     this.viewer = viewer;
@@ -32,6 +32,13 @@ public class ReportContainer extends VerticalPanel implements IParameterSubmissi
     setWidth("100%");
     setHeight("100%");
     makeFullHeight(reportContainer, this);
+  }
+
+  public void hideParameterController()
+  {
+    parameterControllerPanel.clear();
+    parameterControllerPanel.removeFromParent();
+    parameterControllerPanel.setVisible(false);
   }
 
   public void parametersReady(Map<String, List<String>> parameterMap, RENDER_TYPE renderType)
