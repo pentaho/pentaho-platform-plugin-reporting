@@ -380,12 +380,17 @@ public class ReportContentGenerator extends SimpleContentGenerator
           instanceId, "", ((float) (end - start) / 1000), this); //$NON-NLS-1$
     } catch (Exception ex)
     {
-      log.error(ex.getMessage(), ex);
+      final String exceptionMessage = ex.getMessage() != null ? ex.getMessage() : ex.getClass().getName();
+      log.error(exceptionMessage, ex);
       long end = System.currentTimeMillis();
       AuditHelper.audit(userSession.getId(), userSession.getName(), reportDefinitionPath, getObjectName(), getClass().getName(), MessageTypes.INSTANCE_FAILED,
           instanceId, "", ((float) (end - start) / 1000), this); //$NON-NLS-1$
-      outputStream.write(ex.getMessage().getBytes("UTF-8"));
-      outputStream.flush();
+      if (outputStream != null) {
+        outputStream.write(exceptionMessage.getBytes("UTF-8")); //$NON-NLS-1$
+        outputStream.flush();
+      } else {
+        throw new IllegalArgumentException();
+      }
     }
   }
 
