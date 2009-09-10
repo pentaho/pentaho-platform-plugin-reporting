@@ -25,6 +25,10 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
       throw new NullPointerException();
     }
 
+    if (PentahoSystem.getApplicationContext() == null) {
+      return key;
+    }
+    
     final String pentahoBaseURL = PentahoSystem.getApplicationContext().getBaseUrl();
 
     String property = null;
