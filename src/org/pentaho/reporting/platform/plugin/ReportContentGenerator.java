@@ -75,12 +75,12 @@ public class ReportContentGenerator extends SimpleContentGenerator
     setInstanceId( id );
     final IParameterProvider requestParams = getRequestParameters();
 
-    final String solution = URLDecoder.decode(requestParams.getStringParameter("solution", ""), "UTF-8"); //$NON-NLS-1$
-    final String path = URLDecoder.decode(requestParams.getStringParameter("path", ""), "UTF-8"); //$NON-NLS-1$
-    final String name = URLDecoder.decode(requestParams.getStringParameter("name", requestParams.getStringParameter("action", "")), "UTF-8"); //$NON-NLS-1$
-    final boolean subscribe = "true".equals(requestParams.getStringParameter("subscribe", "false"));
+    final String solution = URLDecoder.decode(requestParams.getStringParameter("solution", ""), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+    final String path = URLDecoder.decode(requestParams.getStringParameter("path", ""), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+    final String name = URLDecoder.decode(requestParams.getStringParameter("name", requestParams.getStringParameter("action", "")), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+    final boolean subscribe = "true".equals(requestParams.getStringParameter("subscribe", "false")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
-    renderMode = RENDER_TYPE.valueOf(requestParams.getStringParameter("renderMode", RENDER_TYPE.REPORT.toString()).toUpperCase());
+    renderMode = RENDER_TYPE.valueOf(requestParams.getStringParameter("renderMode", RENDER_TYPE.REPORT.toString()).toUpperCase()); //$NON-NLS-1$
 
     final String reportDefinitionPath = ActionInfo.buildSolutionPath(solution, path, name);
 
@@ -99,10 +99,10 @@ public class ReportContentGenerator extends SimpleContentGenerator
         final ISolutionRepository repository = PentahoSystem.get(ISolutionRepository.class, userSession);
         final ISolutionFile file = repository.getSolutionFile(reportDefinitionPath, ISolutionRepository.ACTION_CREATE);
 
-        final HttpServletResponse response = (HttpServletResponse) parameterProviders.get("path").getParameter("httpresponse");
-        response.setHeader("Content-Disposition", "attach; filename=\"" + file.getFileName() + "\"");
-        response.setHeader("Content-Description", file.getFileName());
-        response.setDateHeader("Last-Modified", file.getLastModified());
+        final HttpServletResponse response = (HttpServletResponse) parameterProviders.get("path").getParameter("httpresponse"); //$NON-NLS-1$ //$NON-NLS-2$
+        response.setHeader("Content-Disposition", "attach; filename=\"" + file.getFileName() + "\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        response.setHeader("Content-Description", file.getFileName()); //$NON-NLS-1$
+        response.setDateHeader("Last-Modified", file.getLastModified()); //$NON-NLS-1$
 
         // if the user has PERM_CREATE, we'll allow them to pull it for now, this is as relaxed
         // as I am comfortable with but I can imagine a PERM_READ or PERM_EXECUTE being used
@@ -132,17 +132,17 @@ public class ReportContentGenerator extends SimpleContentGenerator
         final ISolutionRepository repository = PentahoSystem.get(ISolutionRepository.class, userSession);
         final ISolutionFile file = repository.getSolutionFile(reportDefinitionPath, ISolutionRepository.ACTION_EXECUTE);
 
-        if (parameterProviders.get("path") != null && parameterProviders.get("path").getParameter("httpresponse") != null)
+        if (parameterProviders.get("path") != null && parameterProviders.get("path").getParameter("httpresponse") != null) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         {
-          final HttpServletResponse response = (HttpServletResponse) parameterProviders.get("path").getParameter("httpresponse");
+          final HttpServletResponse response = (HttpServletResponse) parameterProviders.get("path").getParameter("httpresponse"); //$NON-NLS-1$ //$NON-NLS-2$
           final String extension = MimeHelper.getExtension(mimeType);
           String filename = file.getFileName();
-          if (filename.indexOf(".") != -1) {
-            filename = filename.substring(0, filename.indexOf("."));
+          if (filename.indexOf(".") != -1) { //$NON-NLS-1$
+            filename = filename.substring(0, filename.indexOf(".")); //$NON-NLS-1$
           }
-          response.setHeader("Content-Disposition", "inline; filename=\"" + filename + extension + "\"");
-          response.setHeader("Content-Description", file.getFileName());
-          response.setDateHeader("Last-Modified", file.getLastModified());
+          response.setHeader("Content-Disposition", "inline; filename=\"" + filename + extension + "\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+          response.setHeader("Content-Description", file.getFileName()); //$NON-NLS-1$
+          response.setDateHeader("Last-Modified", file.getLastModified()); //$NON-NLS-1$
         }
 
 
@@ -169,7 +169,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
         }
         else
         {
-          outputStream.write("Report validation failed.".getBytes());
+          outputStream.write(org.pentaho.reporting.platform.plugin.messages.Messages.getString("ReportPlugin.ReportValidationFailed").getBytes()); //$NON-NLS-1$
           outputStream.flush();
         }
 
@@ -192,7 +192,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
       {
         // handle parameter feedback (XML) services
         org.w3c.dom.Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
-        org.w3c.dom.Element parameters = document.createElement("parameters");
+        org.w3c.dom.Element parameters = document.createElement("parameters"); //$NON-NLS-1$
         document.appendChild(parameters);
 
         if (reportComponent == null)
@@ -214,16 +214,16 @@ public class ReportContentGenerator extends SimpleContentGenerator
         ParameterDefinitionEntry parameterDefinitions[] = report.getParameterDefinition().getParameterDefinitions();
         for (ParameterDefinitionEntry parameter : parameterDefinitions)
         {
-          org.w3c.dom.Element parameterElement = document.createElement("parameter");
+          org.w3c.dom.Element parameterElement = document.createElement("parameter"); //$NON-NLS-1$
           parameters.appendChild(parameterElement);
-          parameterElement.setAttribute("name", parameter.getName());
-          parameterElement.setAttribute("parameter-group", "parameters");
+          parameterElement.setAttribute("name", parameter.getName()); //$NON-NLS-1$
+          parameterElement.setAttribute("parameter-group", "parameters"); //$NON-NLS-1$ //$NON-NLS-2$
           if (subscribe)
           {
-            parameterElement.setAttribute("parameter-group-label", "Report Parameters");
+            parameterElement.setAttribute("parameter-group-label", org.pentaho.reporting.platform.plugin.messages.Messages.getString("ReportPlugin.ReportParameters")); //$NON-NLS-1$ //$NON-NLS-2$
           }
-          parameterElement.setAttribute("type", parameter.getValueType().getName());
-          parameterElement.setAttribute("is-mandatory", "" + parameter.isMandatory());
+          parameterElement.setAttribute("type", parameter.getValueType().getName()); //$NON-NLS-1$
+          parameterElement.setAttribute("is-mandatory", "" + parameter.isMandatory()); //$NON-NLS-1$ //$NON-NLS-2$
 
           Object defaultValue = parameter.getDefaultValue(parameterContext);
           if (defaultValue != null)
@@ -232,9 +232,9 @@ public class ReportContentGenerator extends SimpleContentGenerator
             {
               for (int i = 0; i < Array.getLength(defaultValue); i++)
               {
-                org.w3c.dom.Element defaultValueElement = document.createElement("default-value");
+                org.w3c.dom.Element defaultValueElement = document.createElement("default-value"); //$NON-NLS-1$
                 parameterElement.appendChild(defaultValueElement);
-                defaultValueElement.setAttribute("value", Array.get(defaultValue, i).toString());
+                defaultValueElement.setAttribute("value", Array.get(defaultValue, i).toString()); //$NON-NLS-1$
               }
             }
             else if (parameter.getValueType().isAssignableFrom(Date.class))
@@ -244,15 +244,15 @@ public class ReportContentGenerator extends SimpleContentGenerator
               // seems to be to convert to long (millis since epoch) since the javascript
               // land doesn't have the same date time formatter
               Date date = (Date) defaultValue;
-              org.w3c.dom.Element defaultValueElement = document.createElement("default-value");
+              org.w3c.dom.Element defaultValueElement = document.createElement("default-value"); //$NON-NLS-1$
               parameterElement.appendChild(defaultValueElement);
-              defaultValueElement.setAttribute("value", "" + date.getTime());
+              defaultValueElement.setAttribute("value", "" + date.getTime()); //$NON-NLS-1$ //$NON-NLS-2$
             }
             else
             {
-              org.w3c.dom.Element defaultValueElement = document.createElement("default-value");
+              org.w3c.dom.Element defaultValueElement = document.createElement("default-value"); //$NON-NLS-1$
               parameterElement.appendChild(defaultValueElement);
-              defaultValueElement.setAttribute("value", "" + defaultValue);
+              defaultValueElement.setAttribute("value", "" + defaultValue); //$NON-NLS-1$ //$NON-NLS-2$
             }
           }
 
@@ -268,7 +268,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
           Object selections = inputs.get(parameter.getName());
           if (selections != null)
           {
-            org.w3c.dom.Element selectionsElement = document.createElement("selections");
+            org.w3c.dom.Element selectionsElement = document.createElement("selections"); //$NON-NLS-1$
             parameterElement.appendChild(selectionsElement);
 
             if (selections.getClass().isArray())
@@ -277,15 +277,15 @@ public class ReportContentGenerator extends SimpleContentGenerator
               for (int i = 0; i < length; i++)
               {
                 Object value = Array.get(selections, i);
-                org.w3c.dom.Element selectionElement = document.createElement("selection");
-                selectionElement.setAttribute("value", value.toString());
+                org.w3c.dom.Element selectionElement = document.createElement("selection"); //$NON-NLS-1$
+                selectionElement.setAttribute("value", value.toString()); //$NON-NLS-1$
                 selectionsElement.appendChild(selectionElement);
               }
             }
             else
             {
-              org.w3c.dom.Element selectionElement = document.createElement("selection");
-              selectionElement.setAttribute("value", selections.toString());
+              org.w3c.dom.Element selectionElement = document.createElement("selection"); //$NON-NLS-1$
+              selectionElement.setAttribute("value", selections.toString()); //$NON-NLS-1$
               selectionsElement.appendChild(selectionElement);
             }
           }
@@ -293,10 +293,10 @@ public class ReportContentGenerator extends SimpleContentGenerator
           if (parameter instanceof ListParameter)
           {
             ListParameter asListParam = (ListParameter) parameter;
-            parameterElement.setAttribute("is-multi-select", "" + asListParam.isAllowMultiSelection());
-            parameterElement.setAttribute("is-strict", "" + asListParam.isStrictValueCheck());
+            parameterElement.setAttribute("is-multi-select", "" + asListParam.isAllowMultiSelection()); //$NON-NLS-1$ //$NON-NLS-2$
+            parameterElement.setAttribute("is-strict", "" + asListParam.isStrictValueCheck()); //$NON-NLS-1$ //$NON-NLS-2$
 
-            org.w3c.dom.Element valuesElement = document.createElement("value-choices");
+            org.w3c.dom.Element valuesElement = document.createElement("value-choices"); //$NON-NLS-1$
             parameterElement.appendChild(valuesElement);
 
             ParameterValues possibleValues = asListParam.getValues(parameterContext);
@@ -305,23 +305,23 @@ public class ReportContentGenerator extends SimpleContentGenerator
               Object key = possibleValues.getKeyValue(i);
               Object value = possibleValues.getTextValue(i);
 
-              org.w3c.dom.Element valueElement = document.createElement("value-choice");
+              org.w3c.dom.Element valueElement = document.createElement("value-choice"); //$NON-NLS-1$
               valuesElement.appendChild(valueElement);
 
               // set
               if (key != null && value != null)
               {
-                valueElement.setAttribute("label", "" + value);
-                valueElement.setAttribute("value", "" + key);
-                valueElement.setAttribute("type", key.getClass().getName());
+                valueElement.setAttribute("label", "" + value); //$NON-NLS-1$ //$NON-NLS-2$
+                valueElement.setAttribute("value", "" + key); //$NON-NLS-1$ //$NON-NLS-2$
+                valueElement.setAttribute("type", key.getClass().getName()); //$NON-NLS-1$
               }
             }
           }
           else if (parameter instanceof PlainParameter)
           {
             // apply defaults, this is the easy case
-            parameterElement.setAttribute("is-multi-select", "false");
-            parameterElement.setAttribute("is-strict", "false");
+            parameterElement.setAttribute("is-multi-select", "false"); //$NON-NLS-1$ //$NON-NLS-2$
+            parameterElement.setAttribute("is-strict", "false"); //$NON-NLS-1$ //$NON-NLS-2$
           }
         }
         if (report.getParameterDefinition() instanceof DefaultParameterDefinition)
@@ -330,8 +330,8 @@ public class ReportContentGenerator extends SimpleContentGenerator
         }
         ValidationResult vr = report.getParameterDefinition().getValidator()
             .validate(new ValidationResult(), report.getParameterDefinition(), parameterContext);
-        parameters.setAttribute("is-prompt-needed", "" + !vr.isEmpty());
-        parameters.setAttribute("subscribe", "" + subscribe);
+        parameters.setAttribute("is-prompt-needed", "" + !vr.isEmpty()); //$NON-NLS-1$ //$NON-NLS-2$
+        parameters.setAttribute("subscribe", "" + subscribe); //$NON-NLS-1$ //$NON-NLS-2$
 
         // now add output type chooser
         addOutputParameter(report, parameters, inputs, subscribe);
@@ -340,7 +340,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
 
         // check if pagination is allowed and turned on
         if (mimeType.equalsIgnoreCase(SimpleReportingComponent.MIME_TYPE_HTML) && vr.isEmpty()
-            && "true".equalsIgnoreCase(requestParams.getStringParameter(SimpleReportingComponent.PAGINATE_OUTPUT, "true")))
+            && "true".equalsIgnoreCase(requestParams.getStringParameter(SimpleReportingComponent.PAGINATE_OUTPUT, "true"))) //$NON-NLS-1$ //$NON-NLS-2$
         {
           ByteArrayOutputStream dontCareOutputStream = new ByteArrayOutputStream();
           reportComponent.setOutputStream(dontCareOutputStream);
@@ -355,10 +355,10 @@ public class ReportContentGenerator extends SimpleContentGenerator
           if (reportComponent.isPaginateOutput() && reportComponent.validate())
           {
             reportComponent.execute();
-            parameters.setAttribute(SimpleReportingComponent.PAGINATE_OUTPUT, "true");
-            parameters.setAttribute("page-count", "" + reportComponent.getPageCount());
+            parameters.setAttribute(SimpleReportingComponent.PAGINATE_OUTPUT, "true"); //$NON-NLS-1$
+            parameters.setAttribute("page-count", "" + reportComponent.getPageCount()); //$NON-NLS-1$ //$NON-NLS-2$
             // use the saved value (we changed it to -1 for performance)
-            parameters.setAttribute(SimpleReportingComponent.ACCEPTED_PAGE, "" + acceptedPage);
+            parameters.setAttribute(SimpleReportingComponent.ACCEPTED_PAGE, "" + acceptedPage); //$NON-NLS-1$
           }
         }
 
@@ -393,11 +393,11 @@ public class ReportContentGenerator extends SimpleContentGenerator
       }
     }
   }
-
+  
   private ISubscription getSubscription()
   {
     ISubscription subscription = null;
-    String subscriptionId = getRequestParameters().getStringParameter("subscription-id", null);
+    String subscriptionId = getRequestParameters().getStringParameter("subscription-id", null); //$NON-NLS-1$
     if (!StringUtils.isEmpty(subscriptionId))
     {
       ISubscriptionRepository subscriptionRepository = PentahoSystem.get(ISubscriptionRepository.class, userSession);
@@ -415,7 +415,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
   {
     IParameterProvider requestParams = parameterProviders.get(IParameterProvider.SCOPE_REQUEST);
 
-    String subscriptionId = requestParams.getStringParameter("subscription-id", null);
+    String subscriptionId = requestParams.getStringParameter("subscription-id", null); //$NON-NLS-1$
     if (!StringUtils.isEmpty(subscriptionId))
     {
       ISubscriptionRepository subscriptionRepository = PentahoSystem.get(ISubscriptionRepository.class, userSession);
@@ -428,9 +428,9 @@ public class ReportContentGenerator extends SimpleContentGenerator
 
       // add solution,path,name
       ActionInfo info = ActionInfo.parseActionString(content.getActionReference());
-      parameters.setParameter("solution", info.getSolutionName());
-      parameters.setParameter("path", info.getPath());
-      parameters.setParameter("name", info.getActionName());
+      parameters.setParameter("solution", info.getSolutionName()); //$NON-NLS-1$
+      parameters.setParameter("path", info.getPath()); //$NON-NLS-1$
+      parameters.setParameter("name", info.getActionName()); //$NON-NLS-1$
 
       SubscriptionHelper.getSubscriptionParameters(subscriptionId, parameters, userSession);
 
@@ -473,7 +473,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
     ISubscribeContent content = subscriptionRepository.getContentByActionReference(actionReference);
     if (content == null)
     {
-      return (Messages.getString("SubscriptionHelper.ACTION_SEQUENCE_NOT_ALLOWED", parameterProvider.getStringParameter("name", ""))); //$NON-NLS-1$
+      return (Messages.getString("SubscriptionHelper.ACTION_SEQUENCE_NOT_ALLOWED", parameterProvider.getStringParameter("name", ""))); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     }
 
     HashMap parameters = new HashMap();
@@ -489,7 +489,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
     }
     parameters.put(SimpleReportingComponent.OUTPUT_TYPE, parameterProvider.getParameter(SimpleReportingComponent.OUTPUT_TYPE));
 
-    String destination = (String) parameterProvider.getParameter("destination");
+    String destination = (String) parameterProvider.getParameter("destination"); //$NON-NLS-1$
     if (subscription == null)
     {
       // create a new subscription
@@ -534,19 +534,19 @@ public class ReportContentGenerator extends SimpleContentGenerator
     ISubscription subscription = getSubscription();
 
     org.w3c.dom.Document document = parameters.getOwnerDocument();
-    org.w3c.dom.Element reportNameParameter = document.createElement("parameter");
+    org.w3c.dom.Element reportNameParameter = document.createElement("parameter"); //$NON-NLS-1$
     parameters.appendChild(reportNameParameter);
-    reportNameParameter.setAttribute("name", "subscription-name");
-    reportNameParameter.setAttribute("label", "Report Name");
-    reportNameParameter.setAttribute("parameter-group", "subscription");
-    reportNameParameter.setAttribute("parameter-group-label", "Report Scheduling Options");
-    reportNameParameter.setAttribute("type", "java.lang.String");
-    reportNameParameter.setAttribute("is-mandatory", "true");
-    reportNameParameter.setAttribute("is-multi-select", "false");
-    reportNameParameter.setAttribute("is-strict", "false");
-    reportNameParameter.setAttribute("parameter-render-type", "textbox");
+    reportNameParameter.setAttribute("name", "subscription-name"); //$NON-NLS-1$ //$NON-NLS-2$
+    reportNameParameter.setAttribute("label", org.pentaho.reporting.platform.plugin.messages.Messages.getString("ReportPlugin.ReportName")); //$NON-NLS-1$ //$NON-NLS-2$
+    reportNameParameter.setAttribute("parameter-group", "subscription"); //$NON-NLS-1$ //$NON-NLS-2$
+    reportNameParameter.setAttribute("parameter-group-label", org.pentaho.reporting.platform.plugin.messages.Messages.getString("ReportPlugin.ReportSchedulingOptions")); //$NON-NLS-1$ //$NON-NLS-2$
+    reportNameParameter.setAttribute("type", "java.lang.String"); //$NON-NLS-1$ //$NON-NLS-2$
+    reportNameParameter.setAttribute("is-mandatory", "true"); //$NON-NLS-1$ //$NON-NLS-2$
+    reportNameParameter.setAttribute("is-multi-select", "false"); //$NON-NLS-1$ //$NON-NLS-2$
+    reportNameParameter.setAttribute("is-strict", "false"); //$NON-NLS-1$ //$NON-NLS-2$
+    reportNameParameter.setAttribute("parameter-render-type", "textbox"); //$NON-NLS-1$ //$NON-NLS-2$
 
-    Object reportNameSelection = inputs.get("subscription-name");
+    Object reportNameSelection = inputs.get("subscription-name"); //$NON-NLS-1$
     if (reportNameSelection == null && subscription != null)
     {
       // subscription helper will populate with this value, grr.
@@ -554,10 +554,10 @@ public class ReportContentGenerator extends SimpleContentGenerator
     }
     if (reportNameSelection != null)
     {
-      org.w3c.dom.Element selectionsElement = document.createElement("selections");
+      org.w3c.dom.Element selectionsElement = document.createElement("selections"); //$NON-NLS-1$
       reportNameParameter.appendChild(selectionsElement);
-      org.w3c.dom.Element selectionElement = document.createElement("selection");
-      selectionElement.setAttribute("value", reportNameSelection.toString());
+      org.w3c.dom.Element selectionElement = document.createElement("selection"); //$NON-NLS-1$
+      selectionElement.setAttribute("value", reportNameSelection.toString()); //$NON-NLS-1$
       selectionsElement.appendChild(selectionElement);
     }
 
@@ -565,39 +565,39 @@ public class ReportContentGenerator extends SimpleContentGenerator
     ISubscribeContent subscribeContent = subscriptionRepository.getContentByActionReference(reportDefinitionPath);
 
     // add subscription choices, as a parameter (last in list)
-    org.w3c.dom.Element subscriptionIdElement = document.createElement("parameter");
+    org.w3c.dom.Element subscriptionIdElement = document.createElement("parameter"); //$NON-NLS-1$
     parameters.appendChild(subscriptionIdElement);
-    subscriptionIdElement.setAttribute("name", "schedule-id");
-    subscriptionIdElement.setAttribute("label", "Subscription");
-    subscriptionIdElement.setAttribute("parameter-group", "subscription");
-    subscriptionIdElement.setAttribute("parameter-group-label", "Schedule Report");
-    subscriptionIdElement.setAttribute("type", "java.lang.String");
-    subscriptionIdElement.setAttribute("is-mandatory", "true");
-    subscriptionIdElement.setAttribute("is-multi-select", "false");
-    subscriptionIdElement.setAttribute("is-strict", "true");
-    subscriptionIdElement.setAttribute("parameter-render-type", "dropdown");
+    subscriptionIdElement.setAttribute("name", "schedule-id"); //$NON-NLS-1$ //$NON-NLS-2$
+    subscriptionIdElement.setAttribute("label", org.pentaho.reporting.platform.plugin.messages.Messages.getString("ReportPlugin.Subscription")); //$NON-NLS-1$ //$NON-NLS-2$
+    subscriptionIdElement.setAttribute("parameter-group", "subscription"); //$NON-NLS-1$ //$NON-NLS-2$
+    subscriptionIdElement.setAttribute("parameter-group-label", org.pentaho.reporting.platform.plugin.messages.Messages.getString("ReportPlugin.ScheduleReport")); //$NON-NLS-1$ //$NON-NLS-2$
+    subscriptionIdElement.setAttribute("type", "java.lang.String"); //$NON-NLS-1$ //$NON-NLS-2$
+    subscriptionIdElement.setAttribute("is-mandatory", "true"); //$NON-NLS-1$ //$NON-NLS-2$
+    subscriptionIdElement.setAttribute("is-multi-select", "false"); //$NON-NLS-1$ //$NON-NLS-2$
+    subscriptionIdElement.setAttribute("is-strict", "true"); //$NON-NLS-1$ //$NON-NLS-2$
+    subscriptionIdElement.setAttribute("parameter-render-type", "dropdown"); //$NON-NLS-1$ //$NON-NLS-2$
 
-    org.w3c.dom.Element valuesElement = document.createElement("value-choices");
+    org.w3c.dom.Element valuesElement = document.createElement("value-choices"); //$NON-NLS-1$
     subscriptionIdElement.appendChild(valuesElement);
 
     for (ISchedule schedule : subscribeContent.getSchedules())
     {
-      org.w3c.dom.Element valueElement = document.createElement("value-choice");
+      org.w3c.dom.Element valueElement = document.createElement("value-choice"); //$NON-NLS-1$
       valuesElement.appendChild(valueElement);
-      valueElement.setAttribute("label", schedule.getTitle());
-      valueElement.setAttribute("value", schedule.getId());
-      valueElement.setAttribute("type", "java.lang.String");
+      valueElement.setAttribute("label", schedule.getTitle()); //$NON-NLS-1$
+      valueElement.setAttribute("value", schedule.getId()); //$NON-NLS-1$
+      valueElement.setAttribute("type", "java.lang.String"); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
     // selections (schedules)
-    org.w3c.dom.Element selectionsElement = document.createElement("selections");
+    org.w3c.dom.Element selectionsElement = document.createElement("selections"); //$NON-NLS-1$
     subscriptionIdElement.appendChild(selectionsElement);
 
-    Object scheduleIdSelection = inputs.get("schedule-id");
+    Object scheduleIdSelection = inputs.get("schedule-id"); //$NON-NLS-1$
     if (scheduleIdSelection != null)
     {
-      org.w3c.dom.Element selectionElement = document.createElement("selection");
-      selectionElement.setAttribute("value", scheduleIdSelection.toString());
+      org.w3c.dom.Element selectionElement = document.createElement("selection"); //$NON-NLS-1$
+      selectionElement.setAttribute("value", scheduleIdSelection.toString()); //$NON-NLS-1$
       selectionsElement.appendChild(selectionElement);
     }
 
@@ -610,8 +610,8 @@ public class ReportContentGenerator extends SimpleContentGenerator
         List<ISchedule> schedules = subscription.getSchedules();
         for (ISchedule schedule : schedules)
         {
-          org.w3c.dom.Element selectionElement = document.createElement("selection");
-          selectionElement.setAttribute("value", schedule.getId());
+          org.w3c.dom.Element selectionElement = document.createElement("selection"); //$NON-NLS-1$
+          selectionElement.setAttribute("value", schedule.getId()); //$NON-NLS-1$
           selectionsElement.appendChild(selectionElement);
         }
       }
@@ -621,68 +621,68 @@ public class ReportContentGenerator extends SimpleContentGenerator
   private void addOutputParameter(MasterReport report, org.w3c.dom.Element parameters, Map<String, Object> inputs, boolean subscribe)
   {
     Object lockOutputTypeObj = (Object) report.getAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.LOCK_PREFERRED_OUTPUT_TYPE);
-    if (lockOutputTypeObj != null && "true".equalsIgnoreCase(lockOutputTypeObj.toString()))
+    if (lockOutputTypeObj != null && "true".equalsIgnoreCase(lockOutputTypeObj.toString())) //$NON-NLS-1$
     {
       // if the output type is locked, do not allow prompt rendering
       return;
     }
 
     org.w3c.dom.Document document = parameters.getOwnerDocument();
-    org.w3c.dom.Element parameterOutputElement = document.createElement("parameter");
+    org.w3c.dom.Element parameterOutputElement = document.createElement("parameter"); //$NON-NLS-1$
     parameters.appendChild(parameterOutputElement);
-    parameterOutputElement.setAttribute("name", SimpleReportingComponent.OUTPUT_TYPE);
-    parameterOutputElement.setAttribute("label", "Output Type");
-    parameterOutputElement.setAttribute("parameter-group", "parameters");
+    parameterOutputElement.setAttribute("name", SimpleReportingComponent.OUTPUT_TYPE); //$NON-NLS-1$
+    parameterOutputElement.setAttribute("label", org.pentaho.reporting.platform.plugin.messages.Messages.getString("ReportPlugin.OutputType")); //$NON-NLS-1$ //$NON-NLS-2$
+    parameterOutputElement.setAttribute("parameter-group", "parameters"); //$NON-NLS-1$ //$NON-NLS-2$
     if (subscribe)
     {
-      parameterOutputElement.setAttribute("parameter-group-label", "Report Parameters");
+      parameterOutputElement.setAttribute("parameter-group-label", org.pentaho.reporting.platform.plugin.messages.Messages.getString("ReportPlugin.ReportParameters")); //$NON-NLS-1$ //$NON-NLS-2$
     }
-    parameterOutputElement.setAttribute("type", "java.lang.String");
-    parameterOutputElement.setAttribute("is-mandatory", "true");
-    parameterOutputElement.setAttribute("is-multi-select", "false");
-    parameterOutputElement.setAttribute("is-strict", "true");
-    parameterOutputElement.setAttribute("parameter-render-type", "dropdown");
+    parameterOutputElement.setAttribute("type", "java.lang.String"); //$NON-NLS-1$ //$NON-NLS-2$
+    parameterOutputElement.setAttribute("is-mandatory", "true"); //$NON-NLS-1$ //$NON-NLS-2$
+    parameterOutputElement.setAttribute("is-multi-select", "false"); //$NON-NLS-1$ //$NON-NLS-2$
+    parameterOutputElement.setAttribute("is-strict", "true"); //$NON-NLS-1$ //$NON-NLS-2$
+    parameterOutputElement.setAttribute("parameter-render-type", "dropdown"); //$NON-NLS-1$ //$NON-NLS-2$
 
-    org.w3c.dom.Element valuesElement = document.createElement("value-choices");
+    org.w3c.dom.Element valuesElement = document.createElement("value-choices"); //$NON-NLS-1$
     parameterOutputElement.appendChild(valuesElement);
 
-    org.w3c.dom.Element htmlValueElement = document.createElement("value-choice");
+    org.w3c.dom.Element htmlValueElement = document.createElement("value-choice"); //$NON-NLS-1$
     valuesElement.appendChild(htmlValueElement);
-    htmlValueElement.setAttribute("label", "HTML");
-    htmlValueElement.setAttribute("value", SimpleReportingComponent.MIME_TYPE_HTML);
-    htmlValueElement.setAttribute("type", "java.lang.String");
+    htmlValueElement.setAttribute("label", "HTML"); //$NON-NLS-1$ //$NON-NLS-2$
+    htmlValueElement.setAttribute("value", SimpleReportingComponent.MIME_TYPE_HTML); //$NON-NLS-1$
+    htmlValueElement.setAttribute("type", "java.lang.String"); //$NON-NLS-1$ //$NON-NLS-2$
 
-    org.w3c.dom.Element pdfValueElement = document.createElement("value-choice");
+    org.w3c.dom.Element pdfValueElement = document.createElement("value-choice"); //$NON-NLS-1$
     valuesElement.appendChild(pdfValueElement);
-    pdfValueElement.setAttribute("label", "PDF");
-    pdfValueElement.setAttribute("value", SimpleReportingComponent.MIME_TYPE_PDF);
-    pdfValueElement.setAttribute("type", "java.lang.String");
+    pdfValueElement.setAttribute("label", "PDF"); //$NON-NLS-1$ //$NON-NLS-2$
+    pdfValueElement.setAttribute("value", SimpleReportingComponent.MIME_TYPE_PDF); //$NON-NLS-1$
+    pdfValueElement.setAttribute("type", "java.lang.String"); //$NON-NLS-1$ //$NON-NLS-2$
 
-    org.w3c.dom.Element xlsValueElement = document.createElement("value-choice");
+    org.w3c.dom.Element xlsValueElement = document.createElement("value-choice"); //$NON-NLS-1$
     valuesElement.appendChild(xlsValueElement);
-    xlsValueElement.setAttribute("label", "Excel (XLS)");
-    xlsValueElement.setAttribute("value", SimpleReportingComponent.MIME_TYPE_XLS);
-    xlsValueElement.setAttribute("type", "java.lang.String");
+    xlsValueElement.setAttribute("label", "Excel (XLS)"); //$NON-NLS-1$ //$NON-NLS-2$
+    xlsValueElement.setAttribute("value", SimpleReportingComponent.MIME_TYPE_XLS); //$NON-NLS-1$
+    xlsValueElement.setAttribute("type", "java.lang.String"); //$NON-NLS-1$ //$NON-NLS-2$
 
-    org.w3c.dom.Element csvValueElement = document.createElement("value-choice");
+    org.w3c.dom.Element csvValueElement = document.createElement("value-choice"); //$NON-NLS-1$
     valuesElement.appendChild(csvValueElement);
-    csvValueElement.setAttribute("label", "CSV");
-    csvValueElement.setAttribute("value", SimpleReportingComponent.MIME_TYPE_CSV);
-    csvValueElement.setAttribute("type", "java.lang.String");
+    csvValueElement.setAttribute("label", "CSV"); //$NON-NLS-1$ //$NON-NLS-2$
+    csvValueElement.setAttribute("value", SimpleReportingComponent.MIME_TYPE_CSV); //$NON-NLS-1$
+    csvValueElement.setAttribute("type", "java.lang.String"); //$NON-NLS-1$ //$NON-NLS-2$
 
-    org.w3c.dom.Element rtfValueElement = document.createElement("value-choice");
+    org.w3c.dom.Element rtfValueElement = document.createElement("value-choice"); //$NON-NLS-1$
     valuesElement.appendChild(rtfValueElement);
-    rtfValueElement.setAttribute("label", "RTF");
-    rtfValueElement.setAttribute("value", SimpleReportingComponent.MIME_TYPE_RTF);
-    rtfValueElement.setAttribute("type", "java.lang.String");
+    rtfValueElement.setAttribute("label", "RTF"); //$NON-NLS-1$ //$NON-NLS-2$
+    rtfValueElement.setAttribute("value", SimpleReportingComponent.MIME_TYPE_RTF); //$NON-NLS-1$
+    rtfValueElement.setAttribute("type", "java.lang.String"); //$NON-NLS-1$ //$NON-NLS-2$
 
     Object selections = inputs.get(SimpleReportingComponent.OUTPUT_TYPE);
     if (selections != null)
     {
-      org.w3c.dom.Element selectionsElement = document.createElement("selections");
+      org.w3c.dom.Element selectionsElement = document.createElement("selections"); //$NON-NLS-1$
       parameterOutputElement.appendChild(selectionsElement);
-      org.w3c.dom.Element selectionElement = document.createElement("selection");
-      selectionElement.setAttribute("value", selections.toString());
+      org.w3c.dom.Element selectionElement = document.createElement("selection"); //$NON-NLS-1$
+      selectionElement.setAttribute("value", selections.toString()); //$NON-NLS-1$
       selectionsElement.appendChild(selectionElement);
     }
     else
@@ -691,10 +691,10 @@ public class ReportContentGenerator extends SimpleContentGenerator
       String preferredOutputType = (String) report.getAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.PREFERRED_OUTPUT_TYPE);
       if (!StringUtils.isEmpty(preferredOutputType))
       {
-        org.w3c.dom.Element selectionsElement = document.createElement("selections");
+        org.w3c.dom.Element selectionsElement = document.createElement("selections"); //$NON-NLS-1$
         parameterOutputElement.appendChild(selectionsElement);
-        org.w3c.dom.Element selectionElement = document.createElement("selection");
-        selectionElement.setAttribute("value", MimeHelper.getMimeTypeFromExtension("." + preferredOutputType));
+        org.w3c.dom.Element selectionElement = document.createElement("selection"); //$NON-NLS-1$
+        selectionElement.setAttribute("value", MimeHelper.getMimeTypeFromExtension("." + preferredOutputType)); //$NON-NLS-1$ //$NON-NLS-2$
         selectionsElement.appendChild(selectionElement);
       }
     }
@@ -721,28 +721,28 @@ public class ReportContentGenerator extends SimpleContentGenerator
 
     ActionSequenceDocument actionSequenceDocument = new ActionSequenceDocument();
     actionSequenceDocument.setTitle(reportDefinitionPath);
-    actionSequenceDocument.setVersion("1");
-    actionSequenceDocument.setAuthor("SolutionEngine");
+    actionSequenceDocument.setVersion("1"); //$NON-NLS-1$
+    actionSequenceDocument.setAuthor("SolutionEngine"); //$NON-NLS-1$
     actionSequenceDocument.setDescription(reportDefinitionPath);
-    actionSequenceDocument.setIconLocation("PentahoReporting.png");
-    actionSequenceDocument.setHelp("");
-    actionSequenceDocument.setResultType("report");
-    IActionSequenceInput outputType = actionSequenceDocument.createInput("outputType", ActionSequenceDocument.STRING_TYPE);
-    outputType.setDefaultValue("text/html");
-    IActionSequenceOutput output = actionSequenceDocument.createOutput("outputstream", "content");
-    output.addDestination("response", "content");
+    actionSequenceDocument.setIconLocation("PentahoReporting.png"); //$NON-NLS-1$
+    actionSequenceDocument.setHelp(""); //$NON-NLS-1$
+    actionSequenceDocument.setResultType("report"); //$NON-NLS-1$
+    IActionSequenceInput outputType = actionSequenceDocument.createInput("outputType", ActionSequenceDocument.STRING_TYPE); //$NON-NLS-1$
+    outputType.setDefaultValue("text/html"); //$NON-NLS-1$
+    IActionSequenceOutput output = actionSequenceDocument.createOutput("outputstream", "content"); //$NON-NLS-1$ //$NON-NLS-2$
+    output.addDestination("response", "content"); //$NON-NLS-1$ //$NON-NLS-2$
 
     try
     {
       // URI reportURI = new URI("solution:/" + actionInfo.getPath() + "/" + actionInfo.getActionName());
       // actionSequenceDocument.setResourceUri("reportDefinition", reportURI, "application/zip");
-      IActionSequenceInput reportDefinitionPathInput = actionSequenceDocument.createInput("report-definition-path", ActionSequenceDocument.STRING_TYPE);
+      IActionSequenceInput reportDefinitionPathInput = actionSequenceDocument.createInput("report-definition-path", ActionSequenceDocument.STRING_TYPE); //$NON-NLS-1$
       reportDefinitionPathInput.setDefaultValue(reportDefinitionPath);
 
       IActionDefinition pojoComponent = actionSequenceDocument.addAction(PojoAction.class);
-      pojoComponent.setComponentDefinition("class", SimpleReportingComponent.class.getName());
-      pojoComponent.addOutput("outputstream", "content");
-      pojoComponent.addInput("report-definition-path", "string");
+      pojoComponent.setComponentDefinition("class", SimpleReportingComponent.class.getName()); //$NON-NLS-1$
+      pojoComponent.addOutput("outputstream", "content"); //$NON-NLS-1$ //$NON-NLS-2$
+      pojoComponent.addInput("report-definition-path", "string"); //$NON-NLS-1$ //$NON-NLS-2$
 
       // add all prpt inputs
       if (reportComponent == null)
@@ -767,9 +767,9 @@ public class ReportContentGenerator extends SimpleContentGenerator
           IActionSequenceInput input = actionSequenceDocument.createInput(parameter.getName(), ActionSequenceDocument.STRING_TYPE);
           input.setDefaultValue(requestParams.getParameter(parameter.getName()).toString());
         }
-        pojoComponent.addInput(parameter.getName(), "string");
+        pojoComponent.addInput(parameter.getName(), "string"); //$NON-NLS-1$
       }
-      pojoComponent.addInput("outputType", "string");
+      pojoComponent.addInput("outputType", "string"); //$NON-NLS-1$ //$NON-NLS-2$
 
     } catch (Exception e)
     {
@@ -816,25 +816,25 @@ public class ReportContentGenerator extends SimpleContentGenerator
         }
         else if (CSVTableModule.TABLE_CSV_STREAM_EXPORT_TYPE.equals(preferredOutputTarget))
         {
-          mimeType = "text/csv";
+          mimeType = "text/csv"; //$NON-NLS-1$
         }
         else if (HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE.equals(preferredOutputTarget)
             || HtmlTableModule.TABLE_HTML_FLOW_EXPORT_TYPE.equals(preferredOutputTarget)
             || HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE.equals(preferredOutputTarget))
         {
-          mimeType = "text/html";
+          mimeType = "text/html"; //$NON-NLS-1$
         }
         else if (PdfPageableModule.PDF_EXPORT_TYPE.equals(preferredOutputTarget))
         {
-          mimeType = "application/pdf";
+          mimeType = "application/pdf"; //$NON-NLS-1$
         }
         else if (RTFTableModule.TABLE_RTF_FLOW_EXPORT_TYPE.equals(preferredOutputTarget))
         {
-          mimeType = "application/rtf";
+          mimeType = "application/rtf"; //$NON-NLS-1$
         }
         else if (ExcelTableModule.EXCEL_FLOW_EXPORT_TYPE.equals(preferredOutputTarget))
         {
-          mimeType = "application/vnd.ms-excel";
+          mimeType = "application/vnd.ms-excel"; //$NON-NLS-1$
         }
         else if (StringUtils.isEmpty(preferredOutputTarget) == false)
         {
@@ -845,23 +845,23 @@ public class ReportContentGenerator extends SimpleContentGenerator
         log.info(e.getMessage(), e);
       }
     }
-    if ("pdf".equalsIgnoreCase(mimeType))
+    if ("pdf".equalsIgnoreCase(mimeType)) //$NON-NLS-1$
     {
       mimeType = SimpleReportingComponent.MIME_TYPE_PDF;
     }
-    else if ("html".equalsIgnoreCase(mimeType))
+    else if ("html".equalsIgnoreCase(mimeType)) //$NON-NLS-1$
     {
       mimeType = SimpleReportingComponent.MIME_TYPE_HTML;
     }
-    else if ("csv".equalsIgnoreCase(mimeType))
+    else if ("csv".equalsIgnoreCase(mimeType)) //$NON-NLS-1$
     {
       mimeType = SimpleReportingComponent.MIME_TYPE_CSV;
     }
-    else if ("rtf".equalsIgnoreCase(mimeType))
+    else if ("rtf".equalsIgnoreCase(mimeType)) //$NON-NLS-1$
     {
       mimeType = SimpleReportingComponent.MIME_TYPE_RTF;
     }
-    else if ("xls".equalsIgnoreCase(mimeType))
+    else if ("xls".equalsIgnoreCase(mimeType)) //$NON-NLS-1$
     {
       mimeType = SimpleReportingComponent.MIME_TYPE_XLS;
     }
@@ -871,10 +871,10 @@ public class ReportContentGenerator extends SimpleContentGenerator
   public String getMimeType()
   {
     IParameterProvider requestParams = getRequestParameters();
-    renderMode = RENDER_TYPE.valueOf(requestParams.getStringParameter("renderMode", RENDER_TYPE.REPORT.toString()).toUpperCase());
+    renderMode = RENDER_TYPE.valueOf(requestParams.getStringParameter("renderMode", RENDER_TYPE.REPORT.toString()).toUpperCase()); //$NON-NLS-1$
     if (renderMode.equals(RENDER_TYPE.XML))
     {
-      return "text/xml";
+      return "text/xml"; //$NON-NLS-1$
     }
     else if (renderMode.equals(RENDER_TYPE.SUBSCRIBE))
     {
@@ -883,12 +883,12 @@ public class ReportContentGenerator extends SimpleContentGenerator
     else if (renderMode.equals(RENDER_TYPE.DOWNLOAD))
     {
       // perhaps we can invent our own mime-type or use application/zip?
-      return "application/octet-stream";
+      return "application/octet-stream"; //$NON-NLS-1$
     }
 
     String solution = requestParams.getStringParameter("solution", null); //$NON-NLS-1$
     String path = requestParams.getStringParameter("path", null); //$NON-NLS-1$
-    String name = requestParams.getStringParameter("name", requestParams.getStringParameter("action", null)); //$NON-NLS-1$
+    String name = requestParams.getStringParameter("name", requestParams.getStringParameter("action", null)); //$NON-NLS-1$ //$NON-NLS-2$
     String reportDefinitionPath = ActionInfo.buildSolutionPath(solution, path, name);
 
     if (reportComponent == null)
