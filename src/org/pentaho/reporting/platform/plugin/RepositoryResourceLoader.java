@@ -179,13 +179,13 @@ public class RepositoryResourceLoader implements ResourceLoader
   public ResourceKey deserialize(ResourceKey bundleKey, String stringKey) throws ResourceKeyCreationException
   {
     // For now, we are just going to have to pass on this one
-    throw new ResourceKeyCreationException("Can not deserialize a ZipResourceKey");
+    throw new ResourceKeyCreationException("Can not deserialize a ZipResourceKey"); //$NON-NLS-1$
   }
 
   public String serialize(ResourceKey bundleKey, ResourceKey key) throws ResourceException
   {
     // For now, we are just going to have to pass on this one
-    throw new ResourceKeyCreationException("Can not serialize a ZipResourceKey");
+    throw new ResourceKeyCreationException("Can not serialize a ZipResourceKey"); //$NON-NLS-1$
   }
 
   public URL toURL(ResourceKey key)

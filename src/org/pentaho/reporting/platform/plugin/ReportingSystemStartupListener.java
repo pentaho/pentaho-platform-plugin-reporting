@@ -48,13 +48,13 @@ public class ReportingSystemStartupListener implements IPentahoSystemListener {
         {
           ClassicEngineBoot.setUserConfig(new ReportingConfiguration());
           ClassicEngineBoot.getInstance().start();
-          Logger.debug(ClassicEngineBoot.class.getName(), ClassicEngineBoot.class.getSimpleName() + " startup invoked");
+          Logger.debug(ClassicEngineBoot.class.getName(), ClassicEngineBoot.class.getSimpleName() + " startup invoked"); //$NON-NLS-1$
           return true;
         }
       }
     } catch (Exception ex)
     {
-      Logger.warn(ReportingSystemStartupListener.class.getName(), "Failed to startup: " + ReportingSystemStartupListener.class.getSimpleName(), ex);
+      Logger.warn(ReportingSystemStartupListener.class.getName(), "Failed to startup: " + ReportingSystemStartupListener.class.getSimpleName(), ex); //$NON-NLS-1$
     }
     return false;
   }

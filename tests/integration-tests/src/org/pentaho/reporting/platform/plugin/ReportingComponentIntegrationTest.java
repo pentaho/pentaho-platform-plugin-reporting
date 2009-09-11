@@ -22,7 +22,7 @@ public class ReportingComponentIntegrationTest extends BaseTest {
   // Logger
   private static final Log log = LogFactory.getLog(ReportingComponentIntegrationTest.class);
 
-  private static final String SOLUTION_PATH = "tests/integration-tests/resource/solution";
+  private static final String SOLUTION_PATH = "tests/integration-tests/resource/solution"; //$NON-NLS-1$
 
   public String getSolutionPath()
   {
@@ -40,12 +40,12 @@ public class ReportingComponentIntegrationTest extends BaseTest {
   {
     startTest();
     SimpleParameterProvider parameterProvider = new SimpleParameterProvider();
-    parameterProvider.setParameter("outputType", "application/pdf");
-    OutputStream outputStream = getOutputStream("ReportingTest.test1", ".pdf");
+    parameterProvider.setParameter("outputType", "application/pdf"); //$NON-NLS-1$ //$NON-NLS-2$
+    OutputStream outputStream = getOutputStream("ReportingTest.test1", ".pdf"); //$NON-NLS-1$ //$NON-NLS-2$
     SimpleOutputHandler outputHandler = new SimpleOutputHandler(outputStream, true);
-    StandaloneSession session = new StandaloneSession(Messages.getString("BaseTest.DEBUG_JUNIT_SESSION"));
-    IRuntimeContext context = run("test", "reporting", "test1.xaction", null, false, parameterProvider, outputHandler, session);
-    assertEquals(Messages.getString("BaseTest.USER_RUNNING_ACTION_SEQUENCE"), IRuntimeContext.RUNTIME_STATUS_SUCCESS, context.getStatus());
+    StandaloneSession session = new StandaloneSession(Messages.getString("BaseTest.DEBUG_JUNIT_SESSION")); //$NON-NLS-1$
+    IRuntimeContext context = run("test", "reporting", "test1.xaction", null, false, parameterProvider, outputHandler, session); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+    assertEquals(Messages.getString("BaseTest.USER_RUNNING_ACTION_SEQUENCE"), IRuntimeContext.RUNTIME_STATUS_SUCCESS, context.getStatus()); //$NON-NLS-1$
     finishTest();
   }
   
@@ -53,12 +53,12 @@ public class ReportingComponentIntegrationTest extends BaseTest {
   {
     startTest();
     SimpleParameterProvider parameterProvider = new SimpleParameterProvider();
-    parameterProvider.setParameter("outputType", "text/html");
-    OutputStream outputStream = getOutputStream("ReportingTest.test1", ".html");
+    parameterProvider.setParameter("outputType", "text/html"); //$NON-NLS-1$ //$NON-NLS-2$
+    OutputStream outputStream = getOutputStream("ReportingTest.test1", ".html"); //$NON-NLS-1$ //$NON-NLS-2$
     SimpleOutputHandler outputHandler = new SimpleOutputHandler(outputStream, true);
-    StandaloneSession session = new StandaloneSession(Messages.getString("BaseTest.DEBUG_JUNIT_SESSION"));
-    IRuntimeContext context = run("test", "reporting", "test1.xaction", null, false, parameterProvider, outputHandler, session);
-    assertEquals(Messages.getString("BaseTest.USER_RUNNING_ACTION_SEQUENCE"), IRuntimeContext.RUNTIME_STATUS_SUCCESS, context.getStatus());
+    StandaloneSession session = new StandaloneSession(Messages.getString("BaseTest.DEBUG_JUNIT_SESSION")); //$NON-NLS-1$
+    IRuntimeContext context = run("test", "reporting", "test1.xaction", null, false, parameterProvider, outputHandler, session); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+    assertEquals(Messages.getString("BaseTest.USER_RUNNING_ACTION_SEQUENCE"), IRuntimeContext.RUNTIME_STATUS_SUCCESS, context.getStatus()); //$NON-NLS-1$
     finishTest();
   }
   

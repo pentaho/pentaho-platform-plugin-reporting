@@ -29,9 +29,9 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 
 public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback
 {
-  private String solution = Window.Location.getParameter("solution");
-  private String path = Window.Location.getParameter("path");
-  private String name = Window.Location.getParameter("name");
+  private String solution = Window.Location.getParameter("solution"); //$NON-NLS-1$
+  private String path = Window.Location.getParameter("path"); //$NON-NLS-1$
+  private String name = Window.Location.getParameter("name"); //$NON-NLS-1$
   private ResourceBundle messages = new ResourceBundle();
   private ReportContainer container = new ReportContainer(this, messages);
   
@@ -50,7 +50,7 @@ public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback
 
   public void onModuleLoad()
   {
-    messages.loadBundle("messages/", "messages", true, ReportViewer.this);
+    messages.loadBundle("messages/", "messages", true, ReportViewer.this); //$NON-NLS-1$ //$NON-NLS-2$
   }
 
   public void bundleLoaded(String bundleName)
@@ -71,7 +71,7 @@ public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback
   private void initUI()
   {
     container = new ReportContainer(this, messages);
-    RootPanel panel = RootPanel.get("content");
+    RootPanel panel = RootPanel.get("content"); //$NON-NLS-1$
     panel.clear();
     panel.add(container);
   }
@@ -111,34 +111,34 @@ public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback
   {
     if (StringUtils.isEmpty(height))
     {
-      height = "600px";
+      height = "600px"; //$NON-NLS-1$
     }
     if (StringUtils.isEmpty(width))
     {
-      width = "800px";
+      width = "800px"; //$NON-NLS-1$
     }
-    if (height.endsWith("px") == false)
+    if (height.endsWith("px") == false) //$NON-NLS-1$
     {
-      height += "px";
+      height += "px"; //$NON-NLS-1$
     }
-    if (width.endsWith("px") == false)
+    if (width.endsWith("px") == false) //$NON-NLS-1$
     {
-      width += "px";
+      width += "px"; //$NON-NLS-1$
     }
 
     final DialogBox dialogBox = new DialogBox(false, true);
     dialogBox.setText(title);
     VerticalPanel dialogContent = new VerticalPanel();
-    DOM.setStyleAttribute(dialogContent.getElement(), "padding", "0px 5px 0px 5px");
+    DOM.setStyleAttribute(dialogContent.getElement(), "padding", "0px 5px 0px 5px"); //$NON-NLS-1$ //$NON-NLS-2$
 
     Frame frame = new Frame(url);
     frame.setSize(width, height);
     dialogContent.add(frame);
     HorizontalPanel buttonPanel = new HorizontalPanel();
-    DOM.setStyleAttribute(buttonPanel.getElement(), "padding", "0px 5px 5px 5px");
-    buttonPanel.setWidth("100%");
+    DOM.setStyleAttribute(buttonPanel.getElement(), "padding", "0px 5px 5px 5px"); //$NON-NLS-1$ //$NON-NLS-2$
+    buttonPanel.setWidth("100%"); //$NON-NLS-1$
     buttonPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
-    Button okButton = new Button(messages.getString("ok", "OK"));
+    Button okButton = new Button(messages.getString("ok", "OK")); //$NON-NLS-1$ //$NON-NLS-2$
     okButton.addClickHandler(new ClickHandler()
     {
       public void onClick(ClickEvent event)
@@ -164,12 +164,12 @@ public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback
       return map;
     }
     historyToken = URL.decodeComponent(historyToken);
-    StringTokenizer st = new StringTokenizer(historyToken, "&");
+    StringTokenizer st = new StringTokenizer(historyToken, "&"); //$NON-NLS-1$
     int paramTokens = st.countTokens();
     for (int i = 0; i < paramTokens; i++)
     {
       String fullParam = st.tokenAt(i);
-      StringTokenizer st2 = new StringTokenizer(fullParam, "=");
+      StringTokenizer st2 = new StringTokenizer(fullParam, "="); //$NON-NLS-1$
       if (st2.countTokens() != 2)
       {
         continue;
@@ -191,14 +191,14 @@ public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback
   public String buildReportUrl(RENDER_TYPE renderType, Map<String, List<String>> reportParameterMap)
   {
     String reportPath = Window.Location.getPath();
-    if (reportPath.indexOf("reportviewer") != -1)
+    if (reportPath.indexOf("reportviewer") != -1) //$NON-NLS-1$
     {
-      reportPath = reportPath.substring(0, reportPath.indexOf("reportviewer") - 1);
+      reportPath = reportPath.substring(0, reportPath.indexOf("reportviewer") - 1); //$NON-NLS-1$
       // add query part of url
-      reportPath += "?";
+      reportPath += "?"; //$NON-NLS-1$
     }
 
-    String parameters = "";
+    String parameters = ""; //$NON-NLS-1$
     if (reportParameterMap != null)
     {
       for (String key : reportParameterMap.keySet())
@@ -208,9 +208,9 @@ public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback
         {
           if (StringUtils.isEmpty(parameters) == false)
           {
-            parameters += "&";
+            parameters += "&"; //$NON-NLS-1$
           }
-          parameters += key + "=" + URL.encodeComponent(value);
+          parameters += key + "=" + URL.encodeComponent(value); //$NON-NLS-1$
         }
       }
     }
@@ -231,9 +231,9 @@ public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback
           {
             if (StringUtils.isEmpty(parameters) == false)
             {
-              parameters += "&";
+              parameters += "&"; //$NON-NLS-1$
             }
-            parameters += key + "=" + URL.encodeComponent(decodedValue);
+            parameters += key + "=" + URL.encodeComponent(decodedValue); //$NON-NLS-1$
           }
         }
       }
@@ -253,9 +253,9 @@ public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback
           {
             if (StringUtils.isEmpty(parameters) == false)
             {
-              parameters += "&";
+              parameters += "&"; //$NON-NLS-1$
             }
-            parameters += key + "=" + URL.encodeComponent(value);
+            parameters += key + "=" + URL.encodeComponent(value); //$NON-NLS-1$
           }
         }
       }
@@ -269,12 +269,12 @@ public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback
     reportPath += parameters;
 
     // by default, in the report viewer, unless otherwise specified, pagination will be turned on
-    if (Window.Location.getParameter("paginate") == null || "".equals(Window.Location.getParameter("paginate")))
+    if (Window.Location.getParameter("paginate") == null || "".equals(Window.Location.getParameter("paginate"))) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     {
-      reportPath += "&paginate=true";
+      reportPath += "&paginate=true"; //$NON-NLS-1$
     }
 
-    reportPath += "&renderMode=" + renderType;
+    reportPath += "&renderMode=" + renderType; //$NON-NLS-1$
     return reportPath;
   }
 

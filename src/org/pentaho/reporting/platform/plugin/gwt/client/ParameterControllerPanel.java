@@ -94,14 +94,14 @@ public class ParameterControllerPanel extends VerticalPanel
   {
     public void onError(Request request, Throwable exception)
     {
-      showMessageDialog(messages.getString("error"), messages.getString("couldNotFetchParams"));
+      showMessageDialog(messages.getString("error"), messages.getString("couldNotFetchParams")); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
     public void onResponseReceived(Request request, Response response)
     {
       if (response.getStatusCode() != Response.SC_OK)
       {
-        showMessageDialog(messages.getString("error"), messages.getString("couldNotFetchParams"));
+        showMessageDialog(messages.getString("error"), messages.getString("couldNotFetchParams")); //$NON-NLS-1$ //$NON-NLS-2$
         return;
       }
 
@@ -111,7 +111,7 @@ public class ParameterControllerPanel extends VerticalPanel
         resultDoc = (Document) XMLParser.parse(response.getText());
       } catch (Exception e)
       {
-        showMessageDialog(messages.getString("error"), response.getText());
+        showMessageDialog(messages.getString("error"), response.getText()); //$NON-NLS-1$
         return;
       }
 
@@ -119,26 +119,26 @@ public class ParameterControllerPanel extends VerticalPanel
 
       Element parametersElement = (Element) resultDoc.getDocumentElement();
 
-      String layout = "vertical";
-      if (StringUtils.isEmpty(Window.Location.getParameter("layout")) == false)
+      String layout = "vertical"; //$NON-NLS-1$
+      if (StringUtils.isEmpty(Window.Location.getParameter("layout")) == false) //$NON-NLS-1$
       {
-        layout = Window.Location.getParameter("layout");
+        layout = Window.Location.getParameter("layout"); //$NON-NLS-1$
       }
 
       boolean showParameters = true;
-      if (Window.Location.getParameter("showParameters") != null && !"".equals(Window.Location.getParameter("showParameters")))
+      if (Window.Location.getParameter("showParameters") != null && !"".equals(Window.Location.getParameter("showParameters"))) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
       {
-        showParameters = "true".equalsIgnoreCase(Window.Location.getParameter("showParameters"));
+        showParameters = "true".equalsIgnoreCase(Window.Location.getParameter("showParameters")); //$NON-NLS-1$ //$NON-NLS-2$
       }
 
       if (showParameters)
       {
-        NodeList parameterNodes = parametersElement.getElementsByTagName("parameter");
+        NodeList parameterNodes = parametersElement.getElementsByTagName("parameter"); //$NON-NLS-1$
         if (parameterNodes == null || parameterNodes.getLength() == 0)
         {
           fireParametersReady(parameterMap, RENDER_TYPE.REPORT);
           // add pagination controller (if needed)
-          if ("true".equals(parametersElement.getAttribute("paginate")))
+          if ("true".equals(parametersElement.getAttribute("paginate"))) //$NON-NLS-1$ //$NON-NLS-2$
           {
             add(buildPaginationController(parametersElement));
           }
@@ -158,11 +158,11 @@ public class ParameterControllerPanel extends VerticalPanel
         {
           Element parameterElement = (Element) parameterNodes.item(i);
           parameterElements.add(parameterElement);
-          String parameterGroupName = parameterElement.getAttribute("parameter-group");
+          String parameterGroupName = parameterElement.getAttribute("parameter-group"); //$NON-NLS-1$
           if (parameterGroupName == null)
           {
             // default group
-            parameterGroupName = "parameters";
+            parameterGroupName = "parameters"; //$NON-NLS-1$
           }
           List<Element> groupList = parameterGroupMap.get(parameterGroupName);
           if (groupList == null)
@@ -177,7 +177,7 @@ public class ParameterControllerPanel extends VerticalPanel
         for (String parameterGroupName : parameterGroupMap.keySet())
         {
           final Panel parameterGroupPanel;
-          if (layout.equals("flow"))
+          if (layout.equals("flow")) //$NON-NLS-1$
           {
             parameterGroupPanel = new FlowPanel();
           }
@@ -190,23 +190,23 @@ public class ParameterControllerPanel extends VerticalPanel
           List<Element> groupList = parameterGroupMap.get(parameterGroupName);
           for (Element parameterElement : groupList)
           {
-            groupLabel = parameterElement.getAttribute("parameter-group-label");
-            String label = parameterElement.getAttribute("label");
-            if (label == null || "".equals(label))
+            groupLabel = parameterElement.getAttribute("parameter-group-label"); //$NON-NLS-1$
+            String label = parameterElement.getAttribute("label"); //$NON-NLS-1$
+            if (label == null || "".equals(label)) //$NON-NLS-1$
             {
-              label = parameterElement.getAttribute("name").trim();
+              label = parameterElement.getAttribute("name").trim(); //$NON-NLS-1$
             }
             else
             {
               label = label.trim();
             }
-            String tooltip = parameterElement.getAttribute("tooltip");
+            String tooltip = parameterElement.getAttribute("tooltip"); //$NON-NLS-1$
             Label parameterLabel = new Label(label);
             parameterLabel.setTitle(tooltip);
-            parameterLabel.setStyleName("parameter-label");
+            parameterLabel.setStyleName("parameter-label"); //$NON-NLS-1$
 
             VerticalPanel parameterPanel = new VerticalPanel();
-            parameterPanel.setStyleName("parameter");
+            parameterPanel.setStyleName("parameter"); //$NON-NLS-1$
             parameterPanel.setTitle(tooltip);
             parameterPanel.add(parameterLabel);
 
@@ -215,10 +215,10 @@ public class ParameterControllerPanel extends VerticalPanel
             {
               // only add the parameter if it has a UI
               parameterPanel.add(parameterWidget);
-              if (layout.equals("flow"))
+              if (layout.equals("flow")) //$NON-NLS-1$
               {
                 SimplePanel div = new SimplePanel();
-                div.setStyleName("parameter-flow");
+                div.setStyleName("parameter-flow"); //$NON-NLS-1$
                 div.add(parameterPanel);
                 parameterGroupPanel.add(div);
               }
@@ -228,11 +228,11 @@ public class ParameterControllerPanel extends VerticalPanel
               }
             }
           }
-          if (groupLabel != null && !"".equals(groupLabel))
+          if (groupLabel != null && !"".equals(groupLabel)) //$NON-NLS-1$
           {
             CaptionPanel parameterGroupCaptionPanel = new CaptionPanel();
             parameterGroupCaptionPanel.setCaptionText(groupLabel);
-            parameterGroupCaptionPanel.setStyleName("parameter");
+            parameterGroupCaptionPanel.setStyleName("parameter"); //$NON-NLS-1$
             parameterGroupCaptionPanel.setContentWidget(parameterGroupPanel);
             parameterContainer.add(parameterGroupCaptionPanel);
           }
@@ -244,9 +244,9 @@ public class ParameterControllerPanel extends VerticalPanel
 
         // add parameter submit button/auto-submit checkbox
         FlowPanel submitPanel = new FlowPanel();
-        submitPanel.setWidth("100%");
-        submitPanel.setStyleName("parameter-submit-panel");
-        if ("true".equalsIgnoreCase(parametersElement.getAttribute("subscribe")))
+        submitPanel.setWidth("100%"); //$NON-NLS-1$
+        submitPanel.setStyleName("parameter-submit-panel"); //$NON-NLS-1$
+        if ("true".equalsIgnoreCase(parametersElement.getAttribute("subscribe"))) //$NON-NLS-1$ //$NON-NLS-2$
         {
           submitPanel.add(submitSubscriptionButton);
         }
@@ -257,13 +257,13 @@ public class ParameterControllerPanel extends VerticalPanel
         parameterDisclosurePanel.setContent(parameterContainer);
 
         // add pagination controller (if needed)
-        if ("true".equals(parametersElement.getAttribute("paginate")))
+        if ("true".equals(parametersElement.getAttribute("paginate"))) //$NON-NLS-1$ //$NON-NLS-2$
         {
           add(buildPaginationController(parametersElement));
         }
 
         // if parameters are valid, submit them for report rendering
-        if ("false".equals(parametersElement.getAttribute("is-prompt-needed")))
+        if ("false".equals(parametersElement.getAttribute("is-prompt-needed"))) //$NON-NLS-1$ //$NON-NLS-2$
         {
           if (subscriptionPressed)
           {
@@ -283,13 +283,13 @@ public class ParameterControllerPanel extends VerticalPanel
       else
       {
         // add pagination controller (if needed)
-        if ("true".equals(parametersElement.getAttribute("paginate")))
+        if ("true".equals(parametersElement.getAttribute("paginate"))) //$NON-NLS-1$ //$NON-NLS-2$
         {
           add(buildPaginationController(parametersElement));
         }
 
         // do not show the parameter UI, but we must still fire events
-        if ("false".equals(parametersElement.getAttribute("is-prompt-needed")))
+        if ("false".equals(parametersElement.getAttribute("is-prompt-needed"))) //$NON-NLS-1$ //$NON-NLS-2$
         {
           if (subscriptionPressed)
           {
@@ -314,23 +314,23 @@ public class ParameterControllerPanel extends VerticalPanel
     this.viewer = viewer;
     this.messages = messages;
 
-    parameterDisclosurePanel = new DisclosurePanel(messages.getString("reportParameters", "Report Parameters"));
-    submitParametersButton = new Button(messages.getString("viewReport", "View Report"));
-    submitSubscriptionButton = new Button(messages.getString("schedule", "Schedule"));
+    parameterDisclosurePanel = new DisclosurePanel(messages.getString("reportParameters", "Report Parameters")); //$NON-NLS-1$ //$NON-NLS-2$
+    submitParametersButton = new Button(messages.getString("viewReport", "View Report")); //$NON-NLS-1$ //$NON-NLS-2$
+    submitSubscriptionButton = new Button(messages.getString("schedule", "Schedule")); //$NON-NLS-1$ //$NON-NLS-2$
 
-    submitParametersOnChangeCheckBox = new CheckBox(messages.getString("autoSubmit", "Auto-Submit"));
+    submitParametersOnChangeCheckBox = new CheckBox(messages.getString("autoSubmit", "Auto-Submit")); //$NON-NLS-1$ //$NON-NLS-2$
 
-    setWidth("100%");
-    setStyleName("parameter-application");
-    parameterContainer.setStyleName("parameter-container");
-    parameterContainer.setWidth("100%");
+    setWidth("100%"); //$NON-NLS-1$
+    setStyleName("parameter-application"); //$NON-NLS-1$
+    parameterContainer.setStyleName("parameter-container"); //$NON-NLS-1$
+    parameterContainer.setWidth("100%"); //$NON-NLS-1$
 
-    parameterDisclosurePanel.setStyleName("parameter-disclosure");
+    parameterDisclosurePanel.setStyleName("parameter-disclosure"); //$NON-NLS-1$
     parameterDisclosurePanel.setOpen(true);
     parameterDisclosurePanel.setAnimationEnabled(true);
-    parameterDisclosurePanel.setWidth("100%");
+    parameterDisclosurePanel.setWidth("100%"); //$NON-NLS-1$
     submitParametersOnChangeCheckBox.setValue(true);
-    submitParametersOnChangeCheckBox.setTitle(messages.getString("submitTooltip"));
+    submitParametersOnChangeCheckBox.setTitle(messages.getString("submitTooltip")); //$NON-NLS-1$
     submitParametersButton.addClickHandler(submitParametersListener);
     submitSubscriptionButton.addClickHandler(submitSubscriptionListener);
 
@@ -342,15 +342,15 @@ public class ParameterControllerPanel extends VerticalPanel
   {
     // need to add/build UI for pagination controls
     int acceptedPage = 0;
-    if (parametersElement.getAttribute("accepted-page") != null && !"".equals(parametersElement.getAttribute("accepted-page")))
+    if (parametersElement.getAttribute("accepted-page") != null && !"".equals(parametersElement.getAttribute("accepted-page"))) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     {
-      acceptedPage = Math.max(0, Integer.parseInt(parametersElement.getAttribute("accepted-page")));
+      acceptedPage = Math.max(0, Integer.parseInt(parametersElement.getAttribute("accepted-page"))); //$NON-NLS-1$
     }
 
     int pageCount = 0;
-    if (parametersElement.getAttribute("page-count") != null && !"".equals(parametersElement.getAttribute("page-count")))
+    if (parametersElement.getAttribute("page-count") != null && !"".equals(parametersElement.getAttribute("page-count"))) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     {
-      pageCount = Integer.parseInt(parametersElement.getAttribute("page-count"));
+      pageCount = Integer.parseInt(parametersElement.getAttribute("page-count")); //$NON-NLS-1$
     }
     final int finalPageCount = pageCount;
 
@@ -365,8 +365,8 @@ public class ParameterControllerPanel extends VerticalPanel
     // add our default page, so we can keep this between selections of other parameters, otherwise it will not be on the
     // set of params are default back to zero (page 1)
     List<String> pageList = new ArrayList<String>();
-    pageList.add("" + (finalAcceptedPage));
-    parameterMap.put("accepted-page", pageList);
+    pageList.add("" + (finalAcceptedPage)); //$NON-NLS-1$
+    parameterMap.put("accepted-page", pageList); //$NON-NLS-1$
 
     final Image backToFirstPage = PageImages.images.backToFirstPage().createImage();
     final Image backPage = PageImages.images.backButton().createImage();
@@ -377,10 +377,10 @@ public class ParameterControllerPanel extends VerticalPanel
     {
       public void onMouseOut(com.google.gwt.event.dom.client.MouseOutEvent event)
       {
-        backToFirstPage.removeStyleDependentName("hover");
-        backPage.removeStyleDependentName("hover");
-        forwardPage.removeStyleDependentName("hover");
-        forwardToLastPage.removeStyleDependentName("hover");
+        backToFirstPage.removeStyleDependentName("hover"); //$NON-NLS-1$
+        backPage.removeStyleDependentName("hover"); //$NON-NLS-1$
+        forwardPage.removeStyleDependentName("hover"); //$NON-NLS-1$
+        forwardToLastPage.removeStyleDependentName("hover"); //$NON-NLS-1$
       }
     };
 
@@ -390,23 +390,23 @@ public class ParameterControllerPanel extends VerticalPanel
       {
         if (event.getSource() == backToFirstPage)
         {
-          DOM.setStyleAttribute(backToFirstPage.getElement(), "backgroundColor", "");
-          backToFirstPage.addStyleDependentName("hover");
+          DOM.setStyleAttribute(backToFirstPage.getElement(), "backgroundColor", ""); //$NON-NLS-1$ //$NON-NLS-2$
+          backToFirstPage.addStyleDependentName("hover"); //$NON-NLS-1$
         }
         else if (event.getSource() == backPage)
         {
-          DOM.setStyleAttribute(backPage.getElement(), "backgroundColor", "");
-          backPage.addStyleDependentName("hover");
+          DOM.setStyleAttribute(backPage.getElement(), "backgroundColor", ""); //$NON-NLS-1$ //$NON-NLS-2$
+          backPage.addStyleDependentName("hover"); //$NON-NLS-1$
         }
         else if (event.getSource() == forwardPage)
         {
-          DOM.setStyleAttribute(forwardPage.getElement(), "backgroundColor", "");
-          forwardPage.addStyleDependentName("hover");
+          DOM.setStyleAttribute(forwardPage.getElement(), "backgroundColor", ""); //$NON-NLS-1$ //$NON-NLS-2$
+          forwardPage.addStyleDependentName("hover"); //$NON-NLS-1$
         }
         else if (event.getSource() == forwardToLastPage)
         {
-          DOM.setStyleAttribute(forwardToLastPage.getElement(), "backgroundColor", "");
-          forwardToLastPage.addStyleDependentName("hover");
+          DOM.setStyleAttribute(forwardToLastPage.getElement(), "backgroundColor", ""); //$NON-NLS-1$ //$NON-NLS-2$
+          forwardToLastPage.addStyleDependentName("hover"); //$NON-NLS-1$
         }
       }
     };
@@ -421,10 +421,10 @@ public class ParameterControllerPanel extends VerticalPanel
     forwardPage.addMouseOutHandler(mouseOutHandler);
     forwardToLastPage.addMouseOutHandler(mouseOutHandler);
 
-    backToFirstPage.setStyleName("pageControllerButton");
-    backPage.setStyleName("pageControllerButton");
-    forwardPage.setStyleName("pageControllerButton");
-    forwardToLastPage.setStyleName("pageControllerButton");
+    backToFirstPage.setStyleName("pageControllerButton"); //$NON-NLS-1$
+    backPage.setStyleName("pageControllerButton"); //$NON-NLS-1$
+    forwardPage.setStyleName("pageControllerButton"); //$NON-NLS-1$
+    forwardToLastPage.setStyleName("pageControllerButton"); //$NON-NLS-1$
 
     ClickHandler pageClickHandler = new ClickHandler()
     {
@@ -436,8 +436,8 @@ public class ParameterControllerPanel extends VerticalPanel
           if (finalAcceptedPage > 0)
           {
             List<String> pageList = new ArrayList<String>();
-            pageList.add("0");
-            parameterMap.put("accepted-page", pageList);
+            pageList.add("0"); //$NON-NLS-1$
+            parameterMap.put("accepted-page", pageList); //$NON-NLS-1$
           }
           else
           {
@@ -449,8 +449,8 @@ public class ParameterControllerPanel extends VerticalPanel
           if (finalAcceptedPage + 1 < finalPageCount)
           {
             List<String> pageList = new ArrayList<String>();
-            pageList.add("" + (finalPageCount - 1));
-            parameterMap.put("accepted-page", pageList);
+            pageList.add("" + (finalPageCount - 1)); //$NON-NLS-1$
+            parameterMap.put("accepted-page", pageList); //$NON-NLS-1$
           }
           else
           {
@@ -462,8 +462,8 @@ public class ParameterControllerPanel extends VerticalPanel
           if (finalAcceptedPage > 0)
           {
             List<String> pageList = new ArrayList<String>();
-            pageList.add("" + (finalAcceptedPage - 1));
-            parameterMap.put("accepted-page", pageList);
+            pageList.add("" + (finalAcceptedPage - 1)); //$NON-NLS-1$
+            parameterMap.put("accepted-page", pageList); //$NON-NLS-1$
           }
           else
           {
@@ -475,8 +475,8 @@ public class ParameterControllerPanel extends VerticalPanel
           if (finalAcceptedPage + 1 < finalPageCount)
           {
             List<String> pageList = new ArrayList<String>();
-            pageList.add("" + (finalAcceptedPage + 1));
-            parameterMap.put("accepted-page", pageList);
+            pageList.add("" + (finalAcceptedPage + 1)); //$NON-NLS-1$
+            parameterMap.put("accepted-page", pageList); //$NON-NLS-1$
           }
           else
           {
@@ -510,18 +510,18 @@ public class ParameterControllerPanel extends VerticalPanel
             int page = Integer.parseInt(pageBox.getText());
             if (page < 1)
             {
-              throw new Exception("<BR>First page must a positive number<BR><BR>");
+              throw new Exception(messages.getString("firstPageMustBePositive", "<BR>First page must a positive number<BR><BR>")); //$NON-NLS-1$ //$NON-NLS-2$
             }
             if (page > finalPageCount)
             {
-              throw new Exception("<BR>Page out of range, max page is : " + finalPageCount + "<BR><BR>");
+              throw new Exception(messages.getString("pageOutOfRange", "<BR>Page out of range, max page is : {0} <BR><BR>", "" + finalPageCount)); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             }
-            pageList.add("" + (page - 1));
-            parameterMap.put("accepted-page", pageList);
+            pageList.add("" + (page - 1)); //$NON-NLS-1$
+            parameterMap.put("accepted-page", pageList); //$NON-NLS-1$
             submitParametersListener.onClick(null);
           } catch (NumberFormatException t)
           {
-            error = "<BR>Page number must contain numeric digits only.<BR><BR>";
+            error = messages.getString("numericDigitsOnly", "<BR>Page number must contain numeric digits only.<BR><BR>"); //$NON-NLS-1$ //$NON-NLS-2$
           } catch (Throwable t)
           {
             error = t.getMessage();
@@ -529,15 +529,15 @@ public class ParameterControllerPanel extends VerticalPanel
           if (error != null)
           {
             final DialogBox dialogBox = new DialogBox(false, true);
-            dialogBox.setText("Error");
+            dialogBox.setText(messages.getString("error", "Error")); //$NON-NLS-1$ //$NON-NLS-2$
             VerticalPanel dialogContent = new VerticalPanel();
-            DOM.setStyleAttribute(dialogContent.getElement(), "padding", "0px 5px 0px 5px");
+            DOM.setStyleAttribute(dialogContent.getElement(), "padding", "0px 5px 0px 5px"); //$NON-NLS-1$ //$NON-NLS-2$
             dialogContent.add(new HTML(error, true));
             HorizontalPanel buttonPanel = new HorizontalPanel();
-            DOM.setStyleAttribute(buttonPanel.getElement(), "padding", "0px 5px 5px 5px");
-            buttonPanel.setWidth("100%");
+            DOM.setStyleAttribute(buttonPanel.getElement(), "padding", "0px 5px 5px 5px"); //$NON-NLS-1$ //$NON-NLS-2$
+            buttonPanel.setWidth("100%"); //$NON-NLS-1$
             buttonPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
-            Button okButton = new Button("OK");
+            Button okButton = new Button(messages.getString("ok", "OK")); //$NON-NLS-1$ //$NON-NLS-2$
             okButton.addClickHandler(new ClickHandler()
             {
               public void onClick(ClickEvent event)
@@ -556,11 +556,11 @@ public class ParameterControllerPanel extends VerticalPanel
     // pages are zero based, but expose them to the user as 1 based
     if (acceptedPage <= 0)
     {
-      pageBox.setText("1");
+      pageBox.setText("1"); //$NON-NLS-1$
     }
     else
     {
-      pageBox.setText("" + (acceptedPage + 1));
+      pageBox.setText("" + (acceptedPage + 1)); //$NON-NLS-1$
     }
     pageBox.setVisibleLength(3);
 
@@ -570,18 +570,18 @@ public class ParameterControllerPanel extends VerticalPanel
     pageControlPanel.add(backToFirstPage);
     pageControlPanel.add(backPage);
 
-    String pageStr = "&nbsp;&nbsp;" + messages.getString("page", "Page") + "&nbsp;";
+    String pageStr = "&nbsp;&nbsp;" + messages.getString("page", "Page") + "&nbsp;"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
     pageControlPanel.add(new HTML(pageStr));
     pageControlPanel.add(pageBox);
-    String pageCountStr = "&nbsp;" + messages.getString("of", "of") + "&nbsp;" + pageCount + "&nbsp;";
+    String pageCountStr = "&nbsp;" + messages.getString("of", "of") + "&nbsp;" + pageCount + "&nbsp;"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
     pageControlPanel.add(new HTML(pageCountStr));
 
     pageControlPanel.add(forwardPage);
     pageControlPanel.add(forwardToLastPage);
 
     HorizontalPanel pageControlPanelWrapper = new HorizontalPanel();
-    pageControlPanelWrapper.setStyleName("pageControllerPanel");
-    pageControlPanelWrapper.setWidth("100%");
+    pageControlPanelWrapper.setStyleName("pageControllerPanel"); //$NON-NLS-1$
+    pageControlPanelWrapper.setWidth("100%"); //$NON-NLS-1$
     pageControlPanelWrapper.add(pageControlPanel);
 
     return pageControlPanelWrapper;
@@ -589,15 +589,15 @@ public class ParameterControllerPanel extends VerticalPanel
 
   private Widget buildParameterWidget(final Element parameterElement)
   {
-    final String parameterName = parameterElement.getAttribute("name");
-    String renderType = parameterElement.getAttribute("parameter-render-type");
+    final String parameterName = parameterElement.getAttribute("name"); //$NON-NLS-1$
+    String renderType = parameterElement.getAttribute("parameter-render-type"); //$NON-NLS-1$
     if (renderType != null)
     {
       renderType = renderType.trim();
     }
 
-    final boolean isStrict = "true".equalsIgnoreCase(parameterElement.getAttribute("is-strict"));
-    final NodeList choiceElements = parameterElement.getElementsByTagName("value-choice");
+    final boolean isStrict = "true".equalsIgnoreCase(parameterElement.getAttribute("is-strict")); //$NON-NLS-1$ //$NON-NLS-2$
+    final NodeList choiceElements = parameterElement.getElementsByTagName("value-choice"); //$NON-NLS-1$
     if (isStrict && choiceElements != null && choiceElements.getLength() == 0)
     {
       // if the parameter is strict but we have no valid choices for it, it is impossible
@@ -607,20 +607,20 @@ public class ParameterControllerPanel extends VerticalPanel
       return null;
     }
 
-    final NodeList selectionsElements = parameterElement.getElementsByTagName("selection");
+    final NodeList selectionsElements = parameterElement.getElementsByTagName("selection"); //$NON-NLS-1$
 
     final List<String> parameterSelections = new ArrayList<String>();
     for (int i = 0; i < selectionsElements.getLength(); i++)
     {
-      String selectionValue = ((Element) selectionsElements.item(i)).getAttribute("value");
+      String selectionValue = ((Element) selectionsElements.item(i)).getAttribute("value"); //$NON-NLS-1$
       if (isStrict)
       {
         // we have to make sure the selectionValue is valid (in our list of known possible values)
-        NodeList choices = parameterElement.getElementsByTagName("value-choice");
+        NodeList choices = parameterElement.getElementsByTagName("value-choice"); //$NON-NLS-1$
         for (int j = 0; j < choices.getLength(); j++)
         {
           final Element choiceElement = (Element) choices.item(j);
-          final String choiceValue = choiceElement.getAttribute("value");
+          final String choiceValue = choiceElement.getAttribute("value"); //$NON-NLS-1$
           if (choiceValue.equals(selectionValue))
           {
             parameterSelections.add(selectionValue);
@@ -636,23 +636,23 @@ public class ParameterControllerPanel extends VerticalPanel
     parameterMap.put(parameterName, parameterSelections);
 
     // get default values
-    final NodeList defaultValueElements = parameterElement.getElementsByTagName("default-value");
+    final NodeList defaultValueElements = parameterElement.getElementsByTagName("default-value"); //$NON-NLS-1$
 
     // if there are no selections, add the defaults, if they exist while respecting strictness
     if (parameterSelections.isEmpty() && defaultValueElements != null && defaultValueElements.getLength() > 0)
     {
       for (int i = 0; i < defaultValueElements.getLength(); i++)
       {
-        String defaultValue = ((Element) defaultValueElements.item(i)).getAttribute("value");
+        String defaultValue = ((Element) defaultValueElements.item(i)).getAttribute("value"); //$NON-NLS-1$
 
         if (isStrict)
         {
           // we have to make sure the selectionValue is valid (in our list of known possible values)
-          NodeList choices = parameterElement.getElementsByTagName("value-choice");
+          NodeList choices = parameterElement.getElementsByTagName("value-choice"); //$NON-NLS-1$
           for (int j = 0; j < choices.getLength(); j++)
           {
             final Element choiceElement = (Element) choices.item(j);
-            final String choiceValue = choiceElement.getAttribute("value");
+            final String choiceValue = choiceElement.getAttribute("value"); //$NON-NLS-1$
             if (choiceValue.equals(defaultValue))
             {
               parameterSelections.add(defaultValue);
@@ -667,19 +667,19 @@ public class ParameterControllerPanel extends VerticalPanel
       }
     }
 
-    if ("radio".equalsIgnoreCase(renderType) || "checkbox".equalsIgnoreCase(renderType))
+    if ("radio".equalsIgnoreCase(renderType) || "checkbox".equalsIgnoreCase(renderType)) //$NON-NLS-1$ //$NON-NLS-2$
     {
       return new CheckBoxParameterUI(this, parameterSelections, parameterElement);
     }
-    else if ("togglebutton".equalsIgnoreCase(renderType))
+    else if ("togglebutton".equalsIgnoreCase(renderType)) //$NON-NLS-1$
     {
       return new ToggleButtonParameterUI(this, parameterSelections, parameterElement);
     }
-    else if ("list".equalsIgnoreCase(renderType) || "dropdown".equalsIgnoreCase(renderType))
+    else if ("list".equalsIgnoreCase(renderType) || "dropdown".equalsIgnoreCase(renderType)) //$NON-NLS-1$ //$NON-NLS-2$
     {
       return new ListParameterUI(this, parameterSelections, parameterElement);
     }
-    else if ("datepicker".equalsIgnoreCase(renderType))
+    else if ("datepicker".equalsIgnoreCase(renderType)) //$NON-NLS-1$
     {
       return new DateParameterUI(this, parameterSelections, parameterElement);
     }
@@ -704,7 +704,7 @@ public class ParameterControllerPanel extends VerticalPanel
         requestBuilder.send();
       } catch (RequestException re)
       {
-        Window.alert("Could not fetch parameter metadata from server.");
+        Window.alert(messages.getString("couldNotFetchParameters", "Could not fetch parameter metadata from server.")); //$NON-NLS-1$ //$NON-NLS-2$
       }
     }
   }
@@ -713,31 +713,31 @@ public class ParameterControllerPanel extends VerticalPanel
   {
     // before we submit, let's check prompting needs
     boolean promptNeeded = false;
-    String message = "<BR>";
+    String message = "<BR>"; //$NON-NLS-1$
     for (Element parameter : parameterElements)
     {
-      if ("true".equals(parameter.getAttribute("is-mandatory")))
+      if ("true".equals(parameter.getAttribute("is-mandatory"))) //$NON-NLS-1$ //$NON-NLS-2$
       {
         // then let's make sure we have a value for it
-        List<String> paramList = parameterMap.get(parameter.getAttribute("name").trim());
+        List<String> paramList = parameterMap.get(parameter.getAttribute("name").trim()); //$NON-NLS-1$
         if (paramList == null || paramList.size() == 0)
         {
           promptNeeded = true;
-          String paramTitle = parameter.getAttribute("label").trim();
-          if (paramTitle == null || "".equals(paramTitle))
+          String paramTitle = parameter.getAttribute("label").trim(); //$NON-NLS-1$
+          if (paramTitle == null || "".equals(paramTitle)) //$NON-NLS-1$
           {
-            paramTitle = parameter.getAttribute("name").trim();
+            paramTitle = parameter.getAttribute("name").trim(); //$NON-NLS-1$
           }
-          message += messages.getString("parameterMissing", "Parameter [{0}] is missing.", paramTitle);
-          message += "<BR>";
+          message += messages.getString("parameterMissing", "Parameter [{0}] is missing.", paramTitle); //$NON-NLS-1$ //$NON-NLS-2$
+          message += "<BR>"; //$NON-NLS-1$
         }
       }
     }
-    message += "<BR>";
+    message += "<BR>"; //$NON-NLS-1$
 
     if (promptNeeded)
     {
-      showMessageDialog(messages.getString("missingParameter", "Missing Parameter"), message);
+      showMessageDialog(messages.getString("missingParameter", "Missing Parameter"), message); //$NON-NLS-1$ //$NON-NLS-2$
     }
     return promptNeeded;
   }
@@ -747,13 +747,13 @@ public class ParameterControllerPanel extends VerticalPanel
     final DialogBox dialogBox = new DialogBox(false, true);
     dialogBox.setText(title);
     VerticalPanel dialogContent = new VerticalPanel();
-    DOM.setStyleAttribute(dialogContent.getElement(), "padding", "0px 5px 0px 5px");
+    DOM.setStyleAttribute(dialogContent.getElement(), "padding", "0px 5px 0px 5px"); //$NON-NLS-1$ //$NON-NLS-2$
     dialogContent.add(new HTML(message, true));
     HorizontalPanel buttonPanel = new HorizontalPanel();
-    DOM.setStyleAttribute(buttonPanel.getElement(), "padding", "0px 5px 5px 5px");
-    buttonPanel.setWidth("100%");
+    DOM.setStyleAttribute(buttonPanel.getElement(), "padding", "0px 5px 5px 5px"); //$NON-NLS-1$ //$NON-NLS-2$
+    buttonPanel.setWidth("100%"); //$NON-NLS-1$
     buttonPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
-    Button okButton = new Button(messages.getString("ok", "OK"));
+    Button okButton = new Button(messages.getString("ok", "OK")); //$NON-NLS-1$ //$NON-NLS-2$
     okButton.addClickHandler(new ClickHandler()
     {
       public void onClick(ClickEvent event)

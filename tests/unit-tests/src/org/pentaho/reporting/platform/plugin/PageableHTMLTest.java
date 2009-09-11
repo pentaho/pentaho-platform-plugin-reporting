@@ -36,7 +36,7 @@ public class PageableHTMLTest extends TestCase
 
     // turn on pagination, by way of input (typical mode for xaction)
     HashMap<String, Object> inputs = new HashMap<String, Object>();
-    inputs.put("paginate", "true");
+    inputs.put("paginate", "true"); //$NON-NLS-1$ //$NON-NLS-2$
     rc.setInputs(inputs);
 
     assertTrue(rc.isPaginateOutput());
@@ -55,8 +55,8 @@ public class PageableHTMLTest extends TestCase
     // make sure pagination is not yet on
     // turn on pagination, by way of input (typical mode for xaction)
     HashMap<String, Object> inputs = new HashMap<String, Object>();
-    inputs.put("paginate", "true");
-    inputs.put("accepted-page", "3");
+    inputs.put("paginate", "true"); //$NON-NLS-1$ //$NON-NLS-2$
+    inputs.put("accepted-page", "3"); //$NON-NLS-1$ //$NON-NLS-2$
     rc.setInputs(inputs);
 
     // check the accepted page
@@ -78,17 +78,17 @@ public class PageableHTMLTest extends TestCase
     // create an instance of the component
     SimpleReportingComponent rc = new SimpleReportingComponent();
     // create/set the InputStream
-    FileInputStream reportDefinition = new FileInputStream("tests/integration-tests/resource/solution/test/reporting/report.prpt");
+    FileInputStream reportDefinition = new FileInputStream("tests/integration-tests/resource/solution/test/reporting/report.prpt"); //$NON-NLS-1$
     rc.setReportDefinitionInputStream(reportDefinition);
-    rc.setOutputType("text/html");
+    rc.setOutputType("text/html"); //$NON-NLS-1$
 
     // turn on pagination, by way of input (typical mode for xaction)
     HashMap<String, Object> inputs = new HashMap<String, Object>();
-    inputs.put("paginate", "true");
-    inputs.put("accepted-page", "0");
+    inputs.put("paginate", "true"); //$NON-NLS-1$ //$NON-NLS-2$
+    inputs.put("accepted-page", "0"); //$NON-NLS-1$ //$NON-NLS-2$
     rc.setInputs(inputs);
 
-    FileOutputStream outputStream = new FileOutputStream("/tmp/" + System.currentTimeMillis() + ".html");
+    FileOutputStream outputStream = new FileOutputStream("/tmp/" + System.currentTimeMillis() + ".html"); //$NON-NLS-1$ //$NON-NLS-2$
     rc.setOutputStream(outputStream);
 
     // execute the component
@@ -103,9 +103,9 @@ public class PageableHTMLTest extends TestCase
     // create an instance of the component
     SimpleReportingComponent rc = new SimpleReportingComponent();
     // create/set the InputStream
-    FileInputStream reportDefinition = new FileInputStream("tests/integration-tests/resource/solution/test/reporting/report.prpt");
+    FileInputStream reportDefinition = new FileInputStream("tests/integration-tests/resource/solution/test/reporting/report.prpt"); //$NON-NLS-1$
     rc.setReportDefinitionInputStream(reportDefinition);
-    rc.setOutputType("text/html");
+    rc.setOutputType("text/html"); //$NON-NLS-1$
 
     // turn on pagination
     rc.setPaginateOutput(true);
@@ -117,11 +117,11 @@ public class PageableHTMLTest extends TestCase
 
     // turn on pagination, by way of input (typical mode for xaction)
     HashMap<String, Object> inputs = new HashMap<String, Object>();
-    inputs.put("paginate", "true");
-    inputs.put("accepted-page", "0");
+    inputs.put("paginate", "true"); //$NON-NLS-1$ //$NON-NLS-2$
+    inputs.put("accepted-page", "0"); //$NON-NLS-1$ //$NON-NLS-2$
     rc.setInputs(inputs);
 
-    FileOutputStream outputStream = new FileOutputStream("/tmp/" + System.currentTimeMillis() + ".html");
+    FileOutputStream outputStream = new FileOutputStream("/tmp/" + System.currentTimeMillis() + ".html"); //$NON-NLS-1$ //$NON-NLS-2$
     rc.setOutputStream(outputStream);
 
     // check the accepted page

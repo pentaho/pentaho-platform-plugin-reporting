@@ -24,13 +24,13 @@ public class ReportContainer extends VerticalPanel implements IParameterSubmissi
     parameterControllerPanel = new ParameterControllerPanel(viewer, messages);
     parameterControllerPanel.addParameterSubmissionListener(this);
 
-    reportContainer.setHeight("100%");
-    reportContainer.setWidth("100%");
-    reportContainer.getElement().setAttribute("frameBorder", "0");
+    reportContainer.setHeight("100%"); //$NON-NLS-1$
+    reportContainer.setWidth("100%"); //$NON-NLS-1$
+    reportContainer.getElement().setAttribute("frameBorder", "0"); //$NON-NLS-1$ //$NON-NLS-2$
     add(parameterControllerPanel);
     add(reportContainer);
-    setWidth("100%");
-    setHeight("100%");
+    setWidth("100%"); //$NON-NLS-1$
+    setHeight("100%"); //$NON-NLS-1$
     makeFullHeight(reportContainer, this);
   }
 
@@ -52,7 +52,7 @@ public class ReportContainer extends VerticalPanel implements IParameterSubmissi
   {
     // build url for the report to actually render
     reportContainer.setVisible(false);
-    reportContainer.setUrl("about:blank");
+    reportContainer.setUrl("about:blank"); //$NON-NLS-1$
   }
 
   private void makeFullHeight(Widget widget, Widget stopWidget)

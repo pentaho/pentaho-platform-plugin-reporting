@@ -31,14 +31,14 @@ public class PentahoPmdConfigReadHandler extends AbstractXmlReadHandler implemen
   {
     super.startParsing(attrs);
 
-    final String labelMappingAttr = attrs.getValue(getUri(), "label-mapping");
+    final String labelMappingAttr = attrs.getValue(getUri(), "label-mapping"); //$NON-NLS-1$
     if (labelMappingAttr != null)
     {
-      labelMapping = "true".equals(labelMappingAttr);
+      labelMapping = "true".equals(labelMappingAttr); //$NON-NLS-1$
     }
 
-    xmiFile = attrs.getValue(getUri(), "xmi-file");
-    domain = attrs.getValue(getUri(), "domain");
+    xmiFile = attrs.getValue(getUri(), "xmi-file"); //$NON-NLS-1$
+    domain = attrs.getValue(getUri(), "domain"); //$NON-NLS-1$
   }
 
   public boolean getLabelMapping()

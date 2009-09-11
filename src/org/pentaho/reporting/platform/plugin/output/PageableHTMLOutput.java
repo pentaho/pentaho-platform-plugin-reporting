@@ -67,7 +67,7 @@ public class PageableHTMLOutput
       rewriter = new PentahoURLRewriter(contentHandlerPattern, false);
     }
 
-    final StreamRepository targetRepository = new StreamRepository(null, outputStream, "report");
+    final StreamRepository targetRepository = new StreamRepository(null, outputStream, "report"); //$NON-NLS-1$
     final ContentLocation targetRoot = targetRepository.getRoot();
 
     final PageableHtmlOutputProcessor outputProcessor = new PageableHtmlOutputProcessor(report.getConfiguration());
@@ -96,7 +96,7 @@ public class PageableHTMLOutput
       IContentRepository contentRepository, String contentHandlerPattern, int yieldRate) throws ReportProcessingException, IOException, ContentIOException
   {
     final String reportName = StringUtils.isEmpty(report.getName()) ? UUIDUtil.getUUIDAsString() : report.getName();
-    final String solutionPath = "report-content" + "/" + reportName + "/";
+    final String solutionPath = "report-content" + "/" + reportName + "/"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     final String thePath = solutionPath + session.getId() + "-" + System.currentTimeMillis();//$NON-NLS-1$//$NON-NLS-2$
     final IContentLocation pentahoContentLocation = contentRepository.newContentLocation(thePath, reportName, reportName, solutionPath, true);
 
@@ -105,7 +105,7 @@ public class PageableHTMLOutput
     final NameGenerator dataNameGenerator = new DefaultNameGenerator(dataLocation);
     final URLRewriter rewriter = new PentahoURLRewriter(contentHandlerPattern, true);
 
-    final StreamRepository targetRepository = new StreamRepository(null, outputStream, "report");
+    final StreamRepository targetRepository = new StreamRepository(null, outputStream, "report"); //$NON-NLS-1$
     final ContentLocation targetRoot = targetRepository.getRoot();
 
     final PageableHtmlOutputProcessor outputProcessor = new PageableHtmlOutputProcessor(report.getConfiguration());

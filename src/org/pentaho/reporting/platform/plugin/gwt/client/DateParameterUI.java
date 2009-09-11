@@ -32,7 +32,7 @@ public class DateParameterUI extends SimplePanel
       parameterSelections.clear();
       Date newDate = event.getValue();
       // add date as long
-      parameterSelections.add("" + newDate.getTime());
+      parameterSelections.add("" + newDate.getTime()); //$NON-NLS-1$
       controller.fetchParameters(true);
     }
 
@@ -51,7 +51,7 @@ public class DateParameterUI extends SimplePanel
       // add the current date as the default, otherwise, a submission of another parameter
       // will not result in this parameter being submitted
       parameterSelections.clear();
-      parameterSelections.add("" + date.getTime());
+      parameterSelections.add("" + date.getTime()); //$NON-NLS-1$
     }
 
     DefaultFormat format = new DefaultFormat(DateTimeFormat.getLongDateFormat());

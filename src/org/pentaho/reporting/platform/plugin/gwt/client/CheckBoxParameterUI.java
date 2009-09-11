@@ -36,7 +36,7 @@ public class CheckBoxParameterUI extends SimplePanel
     {
       CheckBox button = (CheckBox) event.getSource();
       // if we are render radio buttons, we've got to clear the list
-      if ("radio".equalsIgnoreCase(renderType))
+      if ("radio".equalsIgnoreCase(renderType)) //$NON-NLS-1$
       {
         parameterSelections.clear();
       }
@@ -55,13 +55,13 @@ public class CheckBoxParameterUI extends SimplePanel
 
   public CheckBoxParameterUI(final ParameterControllerPanel controller, final List<String> parameterSelections, final Element parameterElement)
   {
-    final String parameterName = parameterElement.getAttribute("name");
-    String renderType = parameterElement.getAttribute("parameter-render-type");
+    final String parameterName = parameterElement.getAttribute("name"); //$NON-NLS-1$
+    String renderType = parameterElement.getAttribute("parameter-render-type"); //$NON-NLS-1$
     if (renderType != null)
     {
       renderType = renderType.trim();
     }
-    String layout = parameterElement.getAttribute("parameter-layout");
+    String layout = parameterElement.getAttribute("parameter-layout"); //$NON-NLS-1$
     if (layout != null)
     {
       layout = layout.trim();
@@ -69,7 +69,7 @@ public class CheckBoxParameterUI extends SimplePanel
 
     // build button ui
     CellPanel buttonPanel = null;
-    if ("vertical".equalsIgnoreCase(layout))
+    if ("vertical".equalsIgnoreCase(layout)) //$NON-NLS-1$
     {
       buttonPanel = new VerticalPanel();
     }
@@ -77,14 +77,14 @@ public class CheckBoxParameterUI extends SimplePanel
     {
       buttonPanel = new HorizontalPanel();
     }
-    NodeList choices = parameterElement.getElementsByTagName("value-choice");
+    NodeList choices = parameterElement.getElementsByTagName("value-choice"); //$NON-NLS-1$
     for (int i = 0; i < choices.getLength(); i++)
     {
       final Element choiceElement = (Element) choices.item(i);
-      final String choiceLabel = choiceElement.getAttribute("label");
-      final String choiceValue = choiceElement.getAttribute("value");
+      final String choiceLabel = choiceElement.getAttribute("label"); //$NON-NLS-1$
+      final String choiceValue = choiceElement.getAttribute("value"); //$NON-NLS-1$
       CheckBox tmpButton = new RadioButton(parameterName, choiceLabel);
-      if ("checkbox".equalsIgnoreCase(renderType))
+      if ("checkbox".equalsIgnoreCase(renderType)) //$NON-NLS-1$
       {
         tmpButton = new CheckBox(choiceLabel);
       }

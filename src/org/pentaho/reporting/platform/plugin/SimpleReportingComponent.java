@@ -39,6 +39,7 @@ import org.pentaho.reporting.engine.classic.core.util.beans.ConverterRegistry;
 import org.pentaho.reporting.engine.classic.core.util.beans.ValueConverter;
 import org.pentaho.reporting.libraries.base.util.StringUtils;
 import org.pentaho.reporting.libraries.resourceloader.ResourceException;
+import org.pentaho.reporting.platform.plugin.messages.Messages;
 import org.pentaho.reporting.platform.plugin.output.CSVOutput;
 import org.pentaho.reporting.platform.plugin.output.HTMLOutput;
 import org.pentaho.reporting.platform.plugin.output.PDFOutput;
@@ -55,22 +56,22 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    */
   private static final Log log = LogFactory.getLog(SimpleReportingComponent.class);
 
-  public static final String OUTPUT_TYPE = "output-type";
-  public static final String MIME_TYPE_HTML = "text/html";
-  public static final String MIME_TYPE_PDF = "application/pdf";
-  public static final String MIME_TYPE_XLS = "application/vnd.ms-excel";
-  public static final String MIME_TYPE_RTF = "application/rtf";
-  public static final String MIME_TYPE_CSV = "text/csv";
+  public static final String OUTPUT_TYPE = "output-type"; //$NON-NLS-1$
+  public static final String MIME_TYPE_HTML = "text/html"; //$NON-NLS-1$
+  public static final String MIME_TYPE_PDF = "application/pdf"; //$NON-NLS-1$
+  public static final String MIME_TYPE_XLS = "application/vnd.ms-excel"; //$NON-NLS-1$
+  public static final String MIME_TYPE_RTF = "application/rtf"; //$NON-NLS-1$
+  public static final String MIME_TYPE_CSV = "text/csv"; //$NON-NLS-1$
 
-  public static final String XLS_WORKBOOK_PARAM = "workbook";
+  public static final String XLS_WORKBOOK_PARAM = "workbook"; //$NON-NLS-1$
 
-  public static final String REPORTLOAD_RESURL = "res-url";
-  public static final String REPORT_DEFINITION_INPUT = "report-definition";
-  public static final String USE_CONTENT_REPOSITORY = "useContentRepository";
+  public static final String REPORTLOAD_RESURL = "res-url"; //$NON-NLS-1$
+  public static final String REPORT_DEFINITION_INPUT = "report-definition"; //$NON-NLS-1$
+  public static final String USE_CONTENT_REPOSITORY = "useContentRepository"; //$NON-NLS-1$
   public static final String REPORTHTML_CONTENTHANDLER_PATTERN = "content-handler-pattern"; //$NON-NLS-1$
   public static final String REPORTGENERATE_YIELDRATE = "yield-rate"; //$NON-NLS-1$
-  public static final String ACCEPTED_PAGE = "accepted-page";
-  public static final String PAGINATE_OUTPUT = "paginate";
+  public static final String ACCEPTED_PAGE = "accepted-page"; //$NON-NLS-1$
+  public static final String PAGINATE_OUTPUT = "paginate"; //$NON-NLS-1$
 
   /**
    * Static initializer block to guarantee that the ReportingComponent will be in a state where the reporting engine will be booted. We have a system listener
@@ -283,10 +284,10 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     }
     if (inputs.containsKey(PAGINATE_OUTPUT))
     {
-      paginateOutput = "true".equalsIgnoreCase("" + inputs.get(PAGINATE_OUTPUT));
+      paginateOutput = "true".equalsIgnoreCase("" + inputs.get(PAGINATE_OUTPUT)); //$NON-NLS-1$ //$NON-NLS-2$
       if (paginateOutput && inputs.containsKey(ACCEPTED_PAGE))
       {
-        acceptedPage = Integer.parseInt("" + inputs.get(ACCEPTED_PAGE));
+        acceptedPage = Integer.parseInt("" + inputs.get(ACCEPTED_PAGE)); //$NON-NLS-1$
       }
     }
   }
@@ -347,7 +348,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       final Object preferredOutputType = report.getAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.PREFERRED_OUTPUT_TYPE);
       if (preferredOutputType != null)
       {
-        outputType = MimeHelper.getMimeTypeFromExtension("." + String.valueOf(preferredOutputType));
+        outputType = MimeHelper.getMimeTypeFromExtension("." + String.valueOf(preferredOutputType)); //$NON-NLS-1$
         if (StringUtils.isEmpty(outputType))
         {
           outputType = String.valueOf(preferredOutputType);
@@ -472,7 +473,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
           return valueConverter.toPropertyValue(valueAsString);
         } catch (BeanException e)
         {
-          throw new RuntimeException("Unable to convert parameter from String to real value.");
+          throw new RuntimeException(Messages.getString("ReportPlugin.unableToConvertParameter")); //$NON-NLS-1$
         }
       }
     }
@@ -584,17 +585,17 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   {
     if (reportDefinition == null && reportDefinitionInputStream == null && reportDefinitionPath == null)
     {
-      log.error("[input] A report-definition was not provided.");
+      log.error(Messages.getString("ReportPlugin.reportDefinitionNotProvided")); //$NON-NLS-1$
       return false;
     }
     if (reportDefinition != null && reportDefinitionPath != null && session == null)
     {
-      log.error("[session] A valid session must be provided if the report-definition is given as a resource or by path.");
+      log.error(Messages.getString("ReportPlugin.noUserSession")); //$NON-NLS-1$
       return false;
     }
     if (outputStream == null)
     {
-      log.error("[output] A valid OutputStream was not provided.");
+      log.error(Messages.getString("ReportPlugin.outputStreamRequired")); //$NON-NLS-1$
       return false;
     }
     return true;
@@ -622,12 +623,12 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       if (HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE.equals(outputType))
       {
         String contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN, ClassicEngineBoot.getInstance().getGlobalConfig()
-            .getConfigProperty("org.pentaho.web.ContentHandler"));
+            .getConfigProperty("org.pentaho.web.ContentHandler")); //$NON-NLS-1$
         if (useContentRepository)
         {
           // use the content repository
           contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN, ClassicEngineBoot.getInstance().getGlobalConfig().getConfigProperty(
-              "org.pentaho.web.resource.ContentHandler"));
+              "org.pentaho.web.resource.ContentHandler")); //$NON-NLS-1$
           IContentRepository contentRepository = PentahoSystem.get(IContentRepository.class, session);
           pageCount = PageableHTMLOutput.generate(session, report, acceptedPage, outputStream, contentRepository, contentHandlerPattern, getYieldRate());
           return true;
@@ -642,12 +643,12 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       if (HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE.equals(outputType))
       {
         String contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN, ClassicEngineBoot.getInstance().getGlobalConfig()
-            .getConfigProperty("org.pentaho.web.ContentHandler"));
+            .getConfigProperty("org.pentaho.web.ContentHandler")); //$NON-NLS-1$
         if (useContentRepository)
         {
           // use the content repository
           contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN, ClassicEngineBoot.getInstance().getGlobalConfig().getConfigProperty(
-              "org.pentaho.web.resource.ContentHandler"));
+              "org.pentaho.web.resource.ContentHandler")); //$NON-NLS-1$
           IContentRepository contentRepository = PentahoSystem.get(IContentRepository.class, session);
           return HTMLOutput.generate(session, report, outputStream, contentRepository, contentHandlerPattern, getYieldRate());
         }
@@ -676,7 +677,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       }
     } catch (Throwable t)
     {
-      log.error("[execute] Component execution failed.", t);
+      log.error(Messages.getString("ReportPlugin.executionFailed"), t); //$NON-NLS-1$
     }
     // lets not pretend we were successfull, if the export type was not a valid one.
     return false;

@@ -26,11 +26,11 @@ public class ReportFileMetaDataProvider extends SolutionFileMetaAdapter
     {
       fileInfo = new FileInfo();
       String title = solutionFile.getFileName();
-      if (solutionFile.getFileName().endsWith(".prpt")) {
-        title = title.substring(0,title.indexOf(".prpt"));
+      if (solutionFile.getFileName().endsWith(".prpt")) { //$NON-NLS-1$
+        title = title.substring(0,title.indexOf(".prpt")); //$NON-NLS-1$
       }
       fileInfo.setTitle(title);
-      fileInfo.setAuthor("");
+      fileInfo.setAuthor(""); //$NON-NLS-1$
       fileInfo.setDescription(solutionFile.getFullPath());
     } catch (Exception e)
     {

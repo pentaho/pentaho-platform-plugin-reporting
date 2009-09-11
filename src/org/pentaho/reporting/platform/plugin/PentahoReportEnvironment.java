@@ -42,7 +42,7 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
     } 
     else if ("solutionRoot".equalsIgnoreCase(key)) //$NON-NLS-1$
     {
-      property = PentahoSystem.getApplicationContext().getSolutionPath("");
+      property = PentahoSystem.getApplicationContext().getSolutionPath(""); //$NON-NLS-1$
     } 
     else if ("hostColonPort".equalsIgnoreCase(key)) //$NON-NLS-1$
     {
@@ -61,7 +61,7 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
         property = roles.get(0);
         for (int i = 1; i < roles.size(); i++)
         {
-          property += ", " + roles.get(i);
+          property += ", " + roles.get(i); //$NON-NLS-1$
         }
       }
     }

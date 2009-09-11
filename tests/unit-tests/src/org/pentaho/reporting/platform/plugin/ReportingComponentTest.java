@@ -19,13 +19,13 @@ public class ReportingComponentTest extends TestCase {
     // create an instance of the component
     SimpleReportingComponent rc = new SimpleReportingComponent();
     // create/set the InputStream
-    FileInputStream reportDefinition = new FileInputStream("tests/integration-tests/resource/solution/test/reporting/report.prpt");
+    FileInputStream reportDefinition = new FileInputStream("tests/integration-tests/resource/solution/test/reporting/report.prpt"); //$NON-NLS-1$
     Map<String,Object> inputs = new HashMap<String, Object>();
     inputs.put(SimpleReportingComponent.REPORT_DEFINITION_INPUT, reportDefinition);
     rc.setInputs(inputs);
-    rc.setOutputType("application/pdf");
+    rc.setOutputType("application/pdf"); //$NON-NLS-1$
 
-    FileOutputStream outputStream = new FileOutputStream("/tmp/" + System.currentTimeMillis() + ".pdf");
+    FileOutputStream outputStream = new FileOutputStream("/tmp/" + System.currentTimeMillis() + ".pdf"); //$NON-NLS-1$ //$NON-NLS-2$
     rc.setOutputStream(outputStream);
 
     // validate the component
@@ -40,11 +40,11 @@ public class ReportingComponentTest extends TestCase {
     // create an instance of the component
     SimpleReportingComponent rc = new SimpleReportingComponent();
     // create/set the InputStream
-    FileInputStream reportDefinition = new FileInputStream("tests/integration-tests/resource/solution/test/reporting/report.prpt");
+    FileInputStream reportDefinition = new FileInputStream("tests/integration-tests/resource/solution/test/reporting/report.prpt"); //$NON-NLS-1$
     rc.setReportDefinitionInputStream(reportDefinition);
-    rc.setOutputType("application/pdf");
+    rc.setOutputType("application/pdf"); //$NON-NLS-1$
 
-    FileOutputStream outputStream = new FileOutputStream("/tmp/" + System.currentTimeMillis() + ".pdf");
+    FileOutputStream outputStream = new FileOutputStream("/tmp/" + System.currentTimeMillis() + ".pdf"); //$NON-NLS-1$ //$NON-NLS-2$
     rc.setOutputStream(outputStream);
 
     // validate the component
@@ -58,11 +58,11 @@ public class ReportingComponentTest extends TestCase {
     // create an instance of the component
     SimpleReportingComponent rc = new SimpleReportingComponent();
     // create/set the InputStream
-    FileInputStream reportDefinition = new FileInputStream("tests/integration-tests/resource/solution/test/reporting/report.prpt");
+    FileInputStream reportDefinition = new FileInputStream("tests/integration-tests/resource/solution/test/reporting/report.prpt"); //$NON-NLS-1$
     rc.setReportDefinitionInputStream(reportDefinition);
-    rc.setOutputType("text/html");
+    rc.setOutputType("text/html"); //$NON-NLS-1$
 
-    FileOutputStream outputStream = new FileOutputStream("/tmp/" + System.currentTimeMillis() + ".html");
+    FileOutputStream outputStream = new FileOutputStream("/tmp/" + System.currentTimeMillis() + ".html"); //$NON-NLS-1$ //$NON-NLS-2$
     rc.setOutputStream(outputStream);
 
     // validate the component

@@ -81,19 +81,19 @@ public class PlainParameterUI extends SimplePanel
     final Map<String, String> valueToLabelMap = new HashMap<String, String>();
 
     MultiWordSuggestOracle oracle = new MultiWordSuggestOracle();
-    NodeList choices = parameterElement.getElementsByTagName("value-choice");
+    NodeList choices = parameterElement.getElementsByTagName("value-choice"); //$NON-NLS-1$
     for (int i = 0; i < choices.getLength(); i++)
     {
       final Element choiceElement = (Element) choices.item(i);
-      final String choiceLabel = choiceElement.getAttribute("label");
-      final String choiceValue = choiceElement.getAttribute("value");
+      final String choiceLabel = choiceElement.getAttribute("label"); //$NON-NLS-1$
+      final String choiceValue = choiceElement.getAttribute("value"); //$NON-NLS-1$
       oracle.add(choiceLabel);
       labelToValueMap.put(choiceLabel, choiceValue);
       valueToLabelMap.put(choiceValue, choiceLabel);
     }
 
     final SuggestBox textBox = new SuggestBox(oracle);
-    textBox.setText("");
+    textBox.setText(""); //$NON-NLS-1$
     for (String text : parameterSelections)
     {
       String labelText = valueToLabelMap.get(text);
