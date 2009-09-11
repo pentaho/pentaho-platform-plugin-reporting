@@ -9,6 +9,7 @@ import org.pentaho.reporting.engine.classic.core.ReportDataFactoryException;
 import org.pentaho.reporting.engine.classic.extensions.datasources.pmd.PmdConnectionProvider;
 import org.pentaho.reporting.libraries.resourceloader.ResourceKey;
 import org.pentaho.reporting.libraries.resourceloader.ResourceManager;
+import org.pentaho.reporting.platform.plugin.messages.Messages;
 
 public class PentahoPmdConnectionProvider extends PmdConnectionProvider
 {
@@ -50,7 +51,7 @@ public class PentahoPmdConnectionProvider extends PmdConnectionProvider
     }
     catch (Exception e)
     {
-      throw new ReportDataFactoryException("Unable to create a connection", e);
+      throw new ReportDataFactoryException(Messages.getString("ReportPlugin.unableToCreateConnection"), e); //$NON-NLS-1$
     }
 
     return super.getConnection(databaseMeta);

@@ -10,6 +10,7 @@ import org.pentaho.reporting.engine.classic.core.ReportDataFactoryException;
 import org.pentaho.reporting.engine.classic.extensions.datasources.mondrian.DefaultCubeFileProvider;
 import org.pentaho.reporting.libraries.resourceloader.ResourceKey;
 import org.pentaho.reporting.libraries.resourceloader.ResourceManager;
+import org.pentaho.reporting.platform.plugin.messages.Messages;
 
 /**
  * Todo: Document me!
@@ -39,7 +40,7 @@ public class PentahoCubeFileProvider extends DefaultCubeFileProvider
     final String superDef = getDefinedFile();
     if (superDef == null)
     {
-      throw new ReportDataFactoryException("No schema file defined.");
+      throw new ReportDataFactoryException(Messages.getString("ReportPlugin.noSchemaDefined")); //$NON-NLS-1$
     }
 
     final File cubeFile = new File(superDef);
