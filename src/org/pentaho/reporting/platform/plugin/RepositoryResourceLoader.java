@@ -27,6 +27,7 @@ import org.pentaho.reporting.libraries.resourceloader.ResourceKeyCreationExcepti
 import org.pentaho.reporting.libraries.resourceloader.ResourceLoader;
 import org.pentaho.reporting.libraries.resourceloader.ResourceLoadingException;
 import org.pentaho.reporting.libraries.resourceloader.ResourceManager;
+import org.pentaho.reporting.platform.plugin.messages.Messages;
 
 /**
  * This class is implemented to support loading solution files from the pentaho repository into pentaho-reporting
@@ -179,13 +180,13 @@ public class RepositoryResourceLoader implements ResourceLoader
   public ResourceKey deserialize(ResourceKey bundleKey, String stringKey) throws ResourceKeyCreationException
   {
     // For now, we are just going to have to pass on this one
-    throw new ResourceKeyCreationException("Can not deserialize a ZipResourceKey"); //$NON-NLS-1$
+    throw new ResourceKeyCreationException(Messages.getString("ReportPlugin.cannotDeserializeZipResourceKey")); //$NON-NLS-1$
   }
 
   public String serialize(ResourceKey bundleKey, ResourceKey key) throws ResourceException
   {
     // For now, we are just going to have to pass on this one
-    throw new ResourceKeyCreationException("Can not serialize a ZipResourceKey"); //$NON-NLS-1$
+    throw new ResourceKeyCreationException(Messages.getString("ReportPlugin.cannotSerializeZipResourceKey")); //$NON-NLS-1$
   }
 
   public URL toURL(ResourceKey key)
