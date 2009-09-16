@@ -98,7 +98,9 @@ public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback
     var myparent = $wnd.parent;
     while (myparent != null) {
       if ($wnd != myparent) {
-        myparent.reportViewer_hide();
+        if(typeof myparent.reportViewer_hide == 'function') {
+          myparent.reportViewer_hide();
+        } 
       }
       myparent = myparent.parent;
       if (myparent == top) {
