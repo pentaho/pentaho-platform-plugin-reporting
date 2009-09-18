@@ -33,7 +33,7 @@ public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback
   private String path = Window.Location.getParameter("path"); //$NON-NLS-1$
   private String name = Window.Location.getParameter("name"); //$NON-NLS-1$
   private ResourceBundle messages = new ResourceBundle();
-  private ReportContainer container = new ReportContainer(this, messages);
+  private ReportContainer container;
   
   private ValueChangeHandler<String> historyHandler = new ValueChangeHandler<String>()
   {
@@ -70,7 +70,6 @@ public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback
 
   private void initUI()
   {
-    container = new ReportContainer(this, messages);
     RootPanel panel = RootPanel.get("content"); //$NON-NLS-1$
     panel.clear();
     panel.add(container);
