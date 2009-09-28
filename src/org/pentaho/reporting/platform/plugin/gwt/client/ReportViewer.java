@@ -101,6 +101,13 @@ public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback
           myparent.reportViewer_hide();
         } 
       }
+      if (myparent == myparent.parent) {
+        // BISERVER-3614:
+        // while we don't know why this would ever be the case,
+        // we know that this does happen and it will bring a browser
+        // to its knees, it's as if top.parent == top
+        break;
+      }
       myparent = myparent.parent;
       if (myparent == top) {
         break;
