@@ -142,7 +142,9 @@ public class ReportContentGenerator extends SimpleContentGenerator
           }
           response.setHeader("Content-Disposition", "inline; filename=\"" + filename + extension + "\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
           response.setHeader("Content-Description", file.getFileName()); //$NON-NLS-1$
-          response.setDateHeader("Last-Modified", file.getLastModified()); //$NON-NLS-1$
+          response.setHeader( "Pragma", "no-cache" );
+          response.setHeader( "Cache-Control", "no-cache" );
+          response.setDateHeader( "Expires", 0 );
         }
 
 
