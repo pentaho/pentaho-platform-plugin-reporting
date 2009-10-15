@@ -13,7 +13,7 @@ import org.pentaho.reporting.libraries.base.config.Configuration;
 
 public class PentahoReportEnvironment extends DefaultReportEnvironment
 {
-  public PentahoReportEnvironment(Configuration configuration)
+  public PentahoReportEnvironment(final Configuration configuration)
   {
     super(configuration);
   }
@@ -54,8 +54,10 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
     } 
     else if ("roles".equalsIgnoreCase(key)) //$NON-NLS-1$
     {
-      IUserDetailsRoleListService roleListService = PentahoSystem.getUserDetailsRoleListService();
-      List<String> roles = (List<String>) roleListService.getRolesForUser(PentahoSessionHolder.getSession().getName());
+      final IUserDetailsRoleListService roleListService = PentahoSystem.getUserDetailsRoleListService();
+      //noinspection unchecked
+      final List<String> roles =
+          (List<String>) roleListService.getRolesForUser(PentahoSessionHolder.getSession().getName());
       if (roles != null && roles.size() > 0)
       {
         property = roles.get(0);
@@ -80,11 +82,12 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
   {
     try
     {
-      URL url = new URL(pentahoBaseURL);
+      final URL url = new URL(pentahoBaseURL);
       return url.getProtocol() + "://" + url.getHost() + ":" + url.getPort(); //$NON-NLS-1$ //$NON-NLS-2$
     }
     catch (Exception e)
     {
+      // ignored
     }
     return pentahoBaseURL;
   }
@@ -93,11 +96,12 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
   {
     try
     {
-      URL url = new URL(pentahoBaseURL);
+      final URL url = new URL(pentahoBaseURL);
       return url.getHost() + ":" + url.getPort();//$NON-NLS-1$ 
     }
     catch (Exception e)
     {
+      // ignored 
     }
     return pentahoBaseURL;
   }
