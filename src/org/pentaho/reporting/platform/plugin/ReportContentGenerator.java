@@ -10,7 +10,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.parsers.DocumentBuilderFactory;
 
@@ -58,6 +57,9 @@ import org.pentaho.reporting.engine.classic.core.parameters.ParameterDefinitionE
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterValues;
 import org.pentaho.reporting.engine.classic.core.parameters.PlainParameter;
 import org.pentaho.reporting.engine.classic.core.parameters.ValidationResult;
+import org.pentaho.reporting.engine.classic.core.util.beans.ConverterRegistry;
+import org.pentaho.reporting.engine.classic.core.util.beans.ValueConverter;
+import org.pentaho.reporting.engine.classic.core.util.beans.BeanException;
 import org.pentaho.reporting.libraries.base.util.IOUtils;
 import org.pentaho.reporting.libraries.base.util.StringUtils;
 import org.pentaho.reporting.platform.plugin.gwt.client.ReportViewer.RENDER_TYPE;
@@ -77,7 +79,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
   public void createContent(final OutputStream outputStream) throws Exception
   {
     final String id = UUIDUtil.getUUIDAsString();
-    setInstanceId( id );
+    setInstanceId(id);
     final IParameterProvider requestParams = getRequestParameters();
 
     final String solution = URLDecoder.decode(requestParams.getStringParameter("solution", ""), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
@@ -142,14 +144,15 @@ public class ReportContentGenerator extends SimpleContentGenerator
           final HttpServletResponse response = (HttpServletResponse) parameterProviders.get("path").getParameter("httpresponse"); //$NON-NLS-1$ //$NON-NLS-2$
           final String extension = MimeHelper.getExtension(mimeType);
           String filename = file.getFileName();
-          if (filename.indexOf(".") != -1) { //$NON-NLS-1$
+          if (filename.indexOf(".") != -1)
+          { //$NON-NLS-1$
             filename = filename.substring(0, filename.indexOf(".")); //$NON-NLS-1$
           }
           response.setHeader("Content-Disposition", "inline; filename=\"" + filename + extension + "\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
           response.setHeader("Content-Description", file.getFileName()); //$NON-NLS-1$
-          response.setHeader( "Pragma", "no-cache" );
-          response.setHeader( "Cache-Control", "no-cache" );
-          response.setDateHeader( "Expires", 0 );
+          response.setHeader("Pragma", "no-cache");
+          response.setHeader("Cache-Control", "no-cache");
+          response.setDateHeader("Expires", 0);
         }
 
 
@@ -244,11 +247,13 @@ public class ReportContentGenerator extends SimpleContentGenerator
           {
             if (parameter.getValueType().isArray())
             {
-              for (int i = 0; i < Array.getLength(defaultValue); i++)
+              final int length = Array.getLength(defaultValue);
+              for (int i = 0; i < length; i++)
               {
                 final org.w3c.dom.Element defaultValueElement = document.createElement("default-value"); //$NON-NLS-1$
                 parameterElement.appendChild(defaultValueElement);
-                defaultValueElement.setAttribute("value", Array.get(defaultValue, i).toString()); //$NON-NLS-1$
+                defaultValueElement.setAttribute("value",
+                    convertParameterValueToString(Array.get(defaultValue, i), parameter.getValueType())); //$NON-NLS-1$
               }
             }
             else if (parameter.getValueType().isAssignableFrom(Date.class))
@@ -266,7 +271,8 @@ public class ReportContentGenerator extends SimpleContentGenerator
             {
               final org.w3c.dom.Element defaultValueElement = document.createElement("default-value"); //$NON-NLS-1$
               parameterElement.appendChild(defaultValueElement);
-              defaultValueElement.setAttribute("value", "" + defaultValue); //$NON-NLS-1$ //$NON-NLS-2$
+              defaultValueElement.setAttribute("value",
+                  convertParameterValueToString(defaultValue, parameter.getValueType())); //$NON-NLS-1$
             }
           }
 
@@ -325,8 +331,8 @@ public class ReportContentGenerator extends SimpleContentGenerator
               // set
               if (key != null && value != null)
               {
-                valueElement.setAttribute("label", "" + value); //$NON-NLS-1$ //$NON-NLS-2$
-                valueElement.setAttribute("value", "" + key); //$NON-NLS-1$ //$NON-NLS-2$
+                valueElement.setAttribute("label", String.valueOf(value)); //$NON-NLS-1$ //$NON-NLS-2$
+                valueElement.setAttribute("value", convertParameterValueToString(key, parameter.getValueType())); //$NON-NLS-1$ //$NON-NLS-2$
                 valueElement.setAttribute("type", key.getClass().getName()); //$NON-NLS-1$
               }
             }
@@ -392,22 +398,41 @@ public class ReportContentGenerator extends SimpleContentGenerator
       final long end = System.currentTimeMillis();
       AuditHelper.audit(userSession.getId(), userSession.getName(), reportDefinitionPath, getObjectName(), getClass().getName(), MessageTypes.INSTANCE_END,
           instanceId, "", ((float) (end - start) / 1000), this); //$NON-NLS-1$
-    } catch (Exception ex)
+    }
+    catch (Exception ex)
     {
       final String exceptionMessage = ex.getMessage() != null ? ex.getMessage() : ex.getClass().getName();
       log.error(exceptionMessage, ex);
       final long end = System.currentTimeMillis();
       AuditHelper.audit(userSession.getId(), userSession.getName(), reportDefinitionPath, getObjectName(), getClass().getName(), MessageTypes.INSTANCE_FAILED,
           instanceId, "", ((float) (end - start) / 1000), this); //$NON-NLS-1$
-      if (outputStream != null) {
+      if (outputStream != null)
+      {
         outputStream.write(exceptionMessage.getBytes("UTF-8")); //$NON-NLS-1$
         outputStream.flush();
-      } else {
+      }
+      else
+      {
         throw new IllegalArgumentException();
       }
     }
   }
-  
+
+  private String convertParameterValueToString(final Object value, final Class type) throws BeanException
+  {
+    if (value == null)
+    {
+      return null;
+    }
+
+    final ValueConverter valueConverter = ConverterRegistry.getInstance().getValueConverter(type);
+    if (valueConverter == null)
+    {
+      return String.valueOf(value);
+    }
+    return valueConverter.toAttributeValue(value);
+  }
+
   private ISubscription getSubscription()
   {
     ISubscription subscription = null;
@@ -422,7 +447,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
 
   /**
    * Safely get our request parameters, while respecting any parameters hooked up to a subscription
-   * 
+   *
    * @return IParameterProvider the provider of parameters
    */
   private IParameterProvider getRequestParameters()
@@ -461,8 +486,10 @@ public class ReportContentGenerator extends SimpleContentGenerator
     return requestParams;
   }
 
-  private String saveSubscription(final IParameterProvider parameterProvider, final ParameterDefinitionEntry parameterDefinitions[],
-      final String actionReference, final IPentahoSession userSession)
+  private String saveSubscription(final IParameterProvider parameterProvider,
+                                  final ParameterDefinitionEntry parameterDefinitions[],
+                                  final String actionReference,
+                                  final IPentahoSession userSession)
   {
 
     if ((userSession == null) || (userSession.getName() == null))
@@ -490,7 +517,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
       return (Messages.getString("SubscriptionHelper.ACTION_SEQUENCE_NOT_ALLOWED", parameterProvider.getStringParameter("name", ""))); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     }
 
-    final HashMap<String,Object> parameters = new HashMap<String,Object>();
+    final HashMap<String, Object> parameters = new HashMap<String, Object>();
 
     for (final ParameterDefinitionEntry parameter : parameterDefinitions)
     {
@@ -543,7 +570,9 @@ public class ReportContentGenerator extends SimpleContentGenerator
     }
   }
 
-  private void addSubscriptionParameter(final String reportDefinitionPath, final org.w3c.dom.Element parameters, final Map<String, Object> inputs)
+  private void addSubscriptionParameter(final String reportDefinitionPath,
+                                        final org.w3c.dom.Element parameters,
+                                        final Map<String, Object> inputs)
   {
     final ISubscription subscription = getSubscription();
 
@@ -632,7 +661,10 @@ public class ReportContentGenerator extends SimpleContentGenerator
     }
   }
 
-  private void addOutputParameter(final MasterReport report, final org.w3c.dom.Element parameters, final Map<String, Object> inputs, final boolean subscribe)
+  private void addOutputParameter(final MasterReport report,
+                                  final org.w3c.dom.Element parameters,
+                                  final Map<String, Object> inputs,
+                                  final boolean subscribe)
   {
     final Object lockOutputTypeObj = report.getAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.LOCK_PREFERRED_OUTPUT_TYPE);
     if (lockOutputTypeObj != null && "true".equalsIgnoreCase(lockOutputTypeObj.toString())) //$NON-NLS-1$
@@ -774,7 +806,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
         if (defaultValue != null)
         {
           final IActionSequenceInput input = actionSequenceDocument.createInput(parameter.getName(), ActionSequenceDocument.STRING_TYPE);
-          input.setDefaultValue(defaultValue.toString());
+          input.setDefaultValue(convertParameterValueToString(defaultValue, parameter.getValueType()));
         }
         else if (requestParams.getParameter(parameter.getName()) != null)
         {
@@ -785,7 +817,8 @@ public class ReportContentGenerator extends SimpleContentGenerator
       }
       pojoComponent.addInput("outputType", "string"); //$NON-NLS-1$ //$NON-NLS-2$
 
-    } catch (Exception e)
+    }
+    catch (Exception e)
     {
       log.error(e.getMessage(), e);
     }
@@ -854,7 +887,8 @@ public class ReportContentGenerator extends SimpleContentGenerator
         {
           mimeType = preferredOutputTarget;
         }
-      } catch (Exception e)
+      }
+      catch (Exception e)
       {
         log.info(e.getMessage(), e);
       }
