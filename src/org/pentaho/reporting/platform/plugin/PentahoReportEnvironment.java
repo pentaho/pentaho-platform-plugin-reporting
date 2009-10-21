@@ -3,7 +3,6 @@ package org.pentaho.reporting.platform.plugin;
 import java.net.URL;
 import java.util.List;
 import java.util.Locale;
-import java.io.UnsupportedEncodingException;
 
 import org.pentaho.platform.api.engine.IUserDetailsRoleListService;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
@@ -36,57 +35,70 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
       throw new NullPointerException();
     }
 
-    if (PentahoSystem.getApplicationContext() == null) {
+    if (PentahoSystem.getApplicationContext() == null)
+    {
       return key;
     }
-    
+
     final String pentahoBaseURL = PentahoSystem.getApplicationContext().getBaseUrl();
 
-    String property = null;
     if ("serverBaseURL".equalsIgnoreCase(key)) //$NON-NLS-1$
     {
-      property = getBaseServerURL(pentahoBaseURL);
-    } 
+      return getBaseServerURL(pentahoBaseURL);
+    }
     else if ("pentahoBaseURL".equalsIgnoreCase(key)) //$NON-NLS-1$
     {
-      property = pentahoBaseURL;
-    } 
+      return pentahoBaseURL;
+    }
     else if ("solutionRoot".equalsIgnoreCase(key)) //$NON-NLS-1$
     {
-      property = PentahoSystem.getApplicationContext().getSolutionPath(""); //$NON-NLS-1$
-    } 
+      return PentahoSystem.getApplicationContext().getSolutionPath(""); //$NON-NLS-1$
+    }
     else if ("hostColonPort".equalsIgnoreCase(key)) //$NON-NLS-1$
     {
-      property = getHostColonPort(pentahoBaseURL);
-    } 
+      return getHostColonPort(pentahoBaseURL);
+    }
     else if ("username".equalsIgnoreCase(key)) //$NON-NLS-1$
     {
-      property = PentahoSessionHolder.getSession().getName();
-    } 
+      return PentahoSessionHolder.getSession().getName();
+    }
     else if ("roles".equalsIgnoreCase(key)) //$NON-NLS-1$
     {
       final IUserDetailsRoleListService roleListService = PentahoSystem.getUserDetailsRoleListService();
+      final StringBuffer property = new StringBuffer();
       //noinspection unchecked
       final List<String> roles =
           (List<String>) roleListService.getRolesForUser(PentahoSessionHolder.getSession().getName());
-      if (roles != null && roles.size() > 0)
+      if (roles == null)
       {
-        property = roles.get(0);
-        for (int i = 1; i < roles.size(); i++)
+        return null;
+      }
+
+      final int rolesSize = roles.size();
+      if (rolesSize > 0)
+      {
+        property.append(roles.get(0));
+        for (int i = 1; i < rolesSize; i++)
         {
-          property += ", " + roles.get(i); //$NON-NLS-1$
+          property.append(", ");
+          property.append(roles.get(i)); //$NON-NLS-1$
         }
       }
+      return property.toString();
     }
 
-    if (property == null)
+    if (key.startsWith("session:"))
     {
-      return super.getEnvironmentProperty(key);
-    } 
-    else
-    {
-      return property;
+      final Object attribute = PentahoSessionHolder.getSession().getAttribute(key.substring("session:".length()));
+      if (attribute instanceof String)
+      {
+        return (String) attribute;
+      }
+
+      return null;
     }
+
+    return super.getEnvironmentProperty(key);
   }
 
   private String getBaseServerURL(final String pentahoBaseURL)
