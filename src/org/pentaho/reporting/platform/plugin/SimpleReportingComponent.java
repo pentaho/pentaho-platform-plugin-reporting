@@ -46,6 +46,7 @@ import org.pentaho.reporting.platform.plugin.output.PDFOutput;
 import org.pentaho.reporting.platform.plugin.output.PageableHTMLOutput;
 import org.pentaho.reporting.platform.plugin.output.RTFOutput;
 import org.pentaho.reporting.platform.plugin.output.XLSOutput;
+import org.pentaho.reporting.platform.plugin.output.EmailOutput;
 import org.xml.sax.InputSource;
 
 public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntimeInputs
@@ -58,6 +59,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
 
   public static final String OUTPUT_TYPE = "output-type"; //$NON-NLS-1$
   public static final String MIME_TYPE_HTML = "text/html"; //$NON-NLS-1$
+  public static final String MIME_TYPE_EMAIL = "mime-message/text/html"; //$NON-NLS-1$
   public static final String MIME_TYPE_PDF = "application/pdf"; //$NON-NLS-1$
   public static final String MIME_TYPE_XLS = "application/vnd.ms-excel"; //$NON-NLS-1$
   public static final String MIME_TYPE_RTF = "application/rtf"; //$NON-NLS-1$
@@ -128,7 +130,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    * @param outputType
    *          the desired output type (mime-type) for the report engine to generate
    */
-  public void setOutputType(String outputType)
+  public void setOutputType(final String outputType)
   {
     this.outputType = outputType;
   }
@@ -159,7 +161,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    * @param reportDefinition
    *          a report-definition as seen (wrapped) by an action-sequence
    */
-  public void setReportDefinition(IActionSequenceResource reportDefinition)
+  public void setReportDefinition(final IActionSequenceResource reportDefinition)
   {
     this.reportDefinition = reportDefinition;
   }
@@ -171,7 +173,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    * @param reportDefinitionInputStream
    *          any kind of InputStream which contains a valid report-definition
    */
-  public void setReportDefinitionInputStream(InputStream reportDefinitionInputStream)
+  public void setReportDefinitionInputStream(final InputStream reportDefinitionInputStream)
   {
     this.reportDefinitionInputStream = reportDefinitionInputStream;
   }
@@ -191,7 +193,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    * 
    * @param reportDefinitionPath
    */
-  public void setReportDefinitionPath(String reportDefinitionPath)
+  public void setReportDefinitionPath(final String reportDefinitionPath)
   {
     this.reportDefinitionPath = reportDefinitionPath;
   }
@@ -212,7 +214,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    * @param paginateOutput
    *          page mode
    */
-  public void setPaginateOutput(boolean paginateOutput)
+  public void setPaginateOutput(final boolean paginateOutput)
   {
     this.paginateOutput = paginateOutput;
   }
@@ -222,7 +224,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     return acceptedPage;
   }
 
-  public void setAcceptedPage(int acceptedPage)
+  public void setAcceptedPage(final int acceptedPage)
   {
     this.acceptedPage = acceptedPage;
   }
@@ -233,7 +235,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    * @param session
    *          a valid pentaho session
    */
-  public void setSession(IPentahoSession session)
+  public void setSession(final IPentahoSession session)
   {
     this.session = session;
   }
@@ -254,12 +256,12 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    * @param outputStream
    *          an OutputStream to write to
    */
-  public void setOutputStream(OutputStream outputStream)
+  public void setOutputStream(final OutputStream outputStream)
   {
     this.outputStream = outputStream;
   }
 
-  public void setUseContentRepository(Boolean useContentRepository)
+  public void setUseContentRepository(final Boolean useContentRepository)
   {
     this.useContentRepository = useContentRepository;
   }
@@ -271,7 +273,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    * @param inputs
    *          a Map containing inputs
    */
-  public void setInputs(Map<String, Object> inputs)
+  public void setInputs(final Map<String, Object> inputs)
   {
     this.inputs = inputs;
     if (inputs.containsKey(REPORT_DEFINITION_INPUT))
@@ -300,7 +302,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   {
     if (inputs != null)
     {
-      Object input = inputs.get(key);
+      final Object input = inputs.get(key);
       if (input != null)
       {
         return input;
@@ -322,8 +324,8 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     {
       if (reportDefinitionInputStream != null)
       {
-        ReportGenerator generator = ReportGenerator.createInstance();
-        InputSource repDefInputSource = new InputSource(reportDefinitionInputStream);
+        final ReportGenerator generator = ReportGenerator.createInstance();
+        final InputSource repDefInputSource = new InputSource(reportDefinitionInputStream);
         report = generator.parseReport(repDefInputSource, getDefinedResourceURL(null));
       }
       else if (reportDefinition != null)
@@ -389,6 +391,10 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     {
       return ExcelTableModule.EXCEL_FLOW_EXPORT_TYPE;
     }
+    if (MIME_TYPE_EMAIL.equals(outputType))
+    {
+      return MIME_TYPE_EMAIL;
+    }
 
     // if nothing is specified explicity, we may as well ask the report what it prefers..
     final Object preferredOutputType = report.getAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.PREFERRED_OUTPUT_TYPE);
@@ -413,12 +419,12 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     // apply inputs to report
     if (inputs != null)
     {
-      ParameterDefinitionEntry[] params = report.getParameterDefinition().getParameterDefinitions();
-      for (ParameterDefinitionEntry param : params)
+      final ParameterDefinitionEntry[] params = report.getParameterDefinition().getParameterDefinitions();
+      for (final ParameterDefinitionEntry param : params)
       {
-        String paramName = param.getName();
+        final String paramName = param.getName();
         Object value = inputs.get(paramName);
-        Object defaultValue = param.getDefaultValue(context);
+        final Object defaultValue = param.getDefaultValue(context);
         if (value == null && defaultValue != null)
         {
           value = defaultValue;
@@ -480,7 +486,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     return rawValue;
   }
 
-  private void addParameter(MasterReport report, ParameterDefinitionEntry param, String key, Object value)
+  private void addParameter(final MasterReport report, final ParameterDefinitionEntry param, final String key, final Object value)
   {
     if (value.getClass().isArray())
     {
@@ -495,7 +501,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       }
 
       final int length = Array.getLength(value);
-      Object array = Array.newInstance(componentType, length);
+      final Object array = Array.newInstance(componentType, length);
       for (int i = 0; i < length; i++)
       {
         Array.set(array, i, convert(componentType, Array.get(value, i)));
@@ -506,7 +512,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     {
       // if the parameter allows multi selections, wrap this single input in an array
       // and re-call addParameter with it
-      Object[] array = new Object[1];
+      final Object[] array = new Object[1];
       array[0] = value;
       addParameter(report, param, key, array);
     }
@@ -516,7 +522,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     }
   }
 
-  private boolean isAllowMultiSelect(ParameterDefinitionEntry parameter)
+  private boolean isAllowMultiSelect(final ParameterDefinitionEntry parameter)
   {
     if (parameter instanceof ListParameter)
     {
@@ -549,7 +555,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       final Object inputValue = inputs.get(REPORTGENERATE_YIELDRATE);
       if (inputValue instanceof Number)
       {
-        Number n = (Number) inputValue;
+        final Number n = (Number) inputValue;
         if (n.intValue() < 1)
         {
           return 0;
@@ -609,11 +615,11 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    */
   public boolean execute() throws Exception
   {
-    MasterReport report = getReport();
+    final MasterReport report = getReport();
 
     try
     {
-      ParameterContext parameterContext = new DefaultParameterContext(report);
+      final ParameterContext parameterContext = new DefaultParameterContext(report);
       // open parameter context
       parameterContext.open();
       applyInputsToReportParameters(report, parameterContext);
@@ -622,14 +628,16 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       final String outputType = computeEffectiveOutputTarget(report);
       if (HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE.equals(outputType))
       {
-        String contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN, ClassicEngineBoot.getInstance().getGlobalConfig()
-            .getConfigProperty("org.pentaho.web.ContentHandler")); //$NON-NLS-1$
+        String contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN,
+            ClassicEngineBoot.getInstance().getGlobalConfig().getConfigProperty
+                ("org.pentaho.web.ContentHandler")); //$NON-NLS-1$
         if (useContentRepository)
         {
           // use the content repository
-          contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN, ClassicEngineBoot.getInstance().getGlobalConfig().getConfigProperty(
-              "org.pentaho.web.resource.ContentHandler")); //$NON-NLS-1$
-          IContentRepository contentRepository = PentahoSystem.get(IContentRepository.class, session);
+          contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN,
+              ClassicEngineBoot.getInstance().getGlobalConfig().getConfigProperty
+                  ("org.pentaho.web.resource.ContentHandler")); //$NON-NLS-1$
+          final IContentRepository contentRepository = PentahoSystem.get(IContentRepository.class, session);
           pageCount = PageableHTMLOutput.generate(session, report, acceptedPage, outputStream, contentRepository, contentHandlerPattern, getYieldRate());
           return true;
         }
@@ -642,14 +650,16 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       }
       if (HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE.equals(outputType))
       {
-        String contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN, ClassicEngineBoot.getInstance().getGlobalConfig()
-            .getConfigProperty("org.pentaho.web.ContentHandler")); //$NON-NLS-1$
+        String contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN,
+            ClassicEngineBoot.getInstance().getGlobalConfig().getConfigProperty
+                ("org.pentaho.web.ContentHandler")); //$NON-NLS-1$
         if (useContentRepository)
         {
           // use the content repository
-          contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN, ClassicEngineBoot.getInstance().getGlobalConfig().getConfigProperty(
-              "org.pentaho.web.resource.ContentHandler")); //$NON-NLS-1$
-          IContentRepository contentRepository = PentahoSystem.get(IContentRepository.class, session);
+          contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN,
+              ClassicEngineBoot.getInstance().getGlobalConfig().getConfigProperty
+                  ("org.pentaho.web.resource.ContentHandler")); //$NON-NLS-1$
+          final IContentRepository contentRepository = PentahoSystem.get(IContentRepository.class, session);
           return HTMLOutput.generate(session, report, outputStream, contentRepository, contentHandlerPattern, getYieldRate());
         }
         else
@@ -674,6 +684,10 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       else if (RTFTableModule.TABLE_RTF_FLOW_EXPORT_TYPE.equals(outputType))
       {
         return RTFOutput.generate(report, outputStream, getYieldRate());
+      }
+      else if (MIME_TYPE_EMAIL.equals(outputType))
+      {
+        return EmailOutput.generate(report, outputStream, "cid:{0}", getYieldRate()); //$NON-NLS-1$
       }
     } catch (Throwable t)
     {
