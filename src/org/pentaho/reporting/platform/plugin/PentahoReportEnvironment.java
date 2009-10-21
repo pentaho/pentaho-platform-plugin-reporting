@@ -3,6 +3,7 @@ package org.pentaho.reporting.platform.plugin;
 import java.net.URL;
 import java.util.List;
 import java.util.Locale;
+import java.io.UnsupportedEncodingException;
 
 import org.pentaho.platform.api.engine.IUserDetailsRoleListService;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
@@ -16,6 +17,16 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
   public PentahoReportEnvironment(final Configuration configuration)
   {
     super(configuration);
+  }
+
+  /**
+   * Returns the text encoding that should be used to encode URLs.
+   *
+   * @return the encoding for URLs.
+   */
+  public String getURLEncoding()
+  {
+    return LocaleHelper.getSystemEncoding();
   }
 
   public String getEnvironmentProperty(final String key)
