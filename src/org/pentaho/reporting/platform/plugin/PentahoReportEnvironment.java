@@ -9,6 +9,7 @@ import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.util.messages.LocaleHelper;
 import org.pentaho.reporting.engine.classic.core.DefaultReportEnvironment;
+import org.pentaho.reporting.engine.classic.core.modules.output.csv.CSVQuoter;
 import org.pentaho.reporting.libraries.base.config.Configuration;
 
 public class PentahoReportEnvironment extends DefaultReportEnvironment
@@ -77,11 +78,12 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
       final int rolesSize = roles.size();
       if (rolesSize > 0)
       {
+        final CSVQuoter quoter = new CSVQuoter(",");
         property.append(roles.get(0));
         for (int i = 1; i < rolesSize; i++)
         {
-          property.append(", ");
-          property.append(roles.get(i)); //$NON-NLS-1$
+          property.append(",");
+          property.append(quoter.doQuoting(roles.get(i))); //$NON-NLS-1$
         }
       }
       return property.toString();
@@ -94,7 +96,6 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
       {
         return (String) attribute;
       }
-
       return null;
     }
 
