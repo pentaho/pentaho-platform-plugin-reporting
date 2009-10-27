@@ -382,6 +382,22 @@ public class ReportContentGenerator extends SimpleContentGenerator
           }
         }
 
+        final String autoSubmitStr = requestParams.getStringParameter("autoSubmit", "auto");
+        if ("true".equals(autoSubmitStr))
+        {
+          parameters.setAttribute("autoSubmit", "true");
+        }
+        else if ("false".equals(autoSubmitStr))
+        {
+          parameters.setAttribute("autoSubmit", "false");
+        }
+        else
+        {
+          final boolean autoUpdate = Boolean.TRUE.equals
+              (report.getAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.AUTO_SUBMIT_PARAMETER));
+          parameters.setAttribute("autoSubmit", String.valueOf(autoUpdate));
+        }
+
         // if we're going to attempt to handle subscriptions, add related choices as a parameter
         if (subscribe)
         {

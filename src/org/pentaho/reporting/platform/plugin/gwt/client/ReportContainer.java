@@ -14,13 +14,16 @@ import com.google.gwt.user.client.ui.Widget;
 
 public class ReportContainer extends VerticalPanel implements IParameterSubmissionListener
 {
-  private ParameterControllerPanel parameterControllerPanel = null;
-  private Frame reportContainer = new Frame();
-  private ReportViewer viewer = null;
+  private ParameterControllerPanel parameterControllerPanel;
+  private Frame reportContainer;
+  private ReportViewer viewer;
 
   public ReportContainer(final ReportViewer viewer, ResourceBundle messages)
   {
     this.viewer = viewer;
+
+    reportContainer = new Frame();
+
     parameterControllerPanel = new ParameterControllerPanel(viewer, messages);
     parameterControllerPanel.addParameterSubmissionListener(this);
 
@@ -45,7 +48,7 @@ public class ReportContainer extends VerticalPanel implements IParameterSubmissi
   {
     // build url for the report to actually render
     reportContainer.setVisible(true);
-    reportContainer.setUrl(viewer.buildReportUrl(renderType, parameterMap));
+    reportContainer.setUrl(viewer.buildReportUrl(renderType, parameterMap, parameterControllerPanel.isAutoSubmit()));
   }
 
   public void showBlank()
