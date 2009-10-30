@@ -41,28 +41,32 @@ import org.pentaho.platform.repository.subscription.SubscriptionHelper;
 import org.pentaho.platform.util.UUIDUtil;
 import org.pentaho.platform.util.web.MimeHelper;
 import org.pentaho.reporting.engine.classic.core.AttributeNames;
+import org.pentaho.reporting.engine.classic.core.DataRow;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
+import org.pentaho.reporting.engine.classic.core.ReportDataFactoryException;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.pdf.PdfPageableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.csv.CSVTableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlTableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.rtf.RTFTableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.xls.ExcelTableModule;
 import org.pentaho.reporting.engine.classic.core.parameters.DefaultParameterContext;
-import org.pentaho.reporting.engine.classic.core.parameters.DefaultParameterDefinition;
-import org.pentaho.reporting.engine.classic.core.parameters.DefaultReportParameterValidator;
+import org.pentaho.reporting.engine.classic.core.parameters.FormulaParameterEvaluator;
 import org.pentaho.reporting.engine.classic.core.parameters.ListParameter;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterAttributeNames;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterContext;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterDefinitionEntry;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterValues;
 import org.pentaho.reporting.engine.classic.core.parameters.PlainParameter;
+import org.pentaho.reporting.engine.classic.core.parameters.ReportParameterDefinition;
 import org.pentaho.reporting.engine.classic.core.parameters.ValidationResult;
+import org.pentaho.reporting.engine.classic.core.util.beans.BeanException;
 import org.pentaho.reporting.engine.classic.core.util.beans.ConverterRegistry;
 import org.pentaho.reporting.engine.classic.core.util.beans.ValueConverter;
-import org.pentaho.reporting.engine.classic.core.util.beans.BeanException;
 import org.pentaho.reporting.libraries.base.util.IOUtils;
 import org.pentaho.reporting.libraries.base.util.StringUtils;
 import org.pentaho.reporting.platform.plugin.gwt.client.ReportViewer.RENDER_TYPE;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 public class ReportContentGenerator extends SimpleContentGenerator
 {
@@ -201,8 +205,8 @@ public class ReportContentGenerator extends SimpleContentGenerator
       else if (renderMode.equals(RENDER_TYPE.XML))
       {
         // handle parameter feedback (XML) services
-        final org.w3c.dom.Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
-        final org.w3c.dom.Element parameters = document.createElement("parameters"); //$NON-NLS-1$
+        final Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+        final Element parameters = document.createElement("parameters"); //$NON-NLS-1$
         document.appendChild(parameters);
 
         if (reportComponent == null)
@@ -220,8 +224,13 @@ public class ReportContentGenerator extends SimpleContentGenerator
         parameterContext.open();
         // apply inputs to parameters
         reportComponent.applyInputsToReportParameters(report, parameterContext);
+        final FormulaParameterEvaluator formulaParameterEvaluator = new FormulaParameterEvaluator();
+        final ValidationResult postFormulaValidationResult = new ValidationResult();
+        final ReportParameterDefinition reportParameterDefinition = report.getParameterDefinition();
+        final DataRow parameterData = formulaParameterEvaluator.evaluate
+            (postFormulaValidationResult, reportParameterDefinition, parameterContext);
 
-        final ParameterDefinitionEntry[] parameterDefinitions = report.getParameterDefinition().getParameterDefinitions();
+        final ParameterDefinitionEntry[] parameterDefinitions = reportParameterDefinition.getParameterDefinitions();
         for (final ParameterDefinitionEntry parameter : parameterDefinitions)
         {
           final String hiddenVal = parameter.getParameterAttribute
@@ -231,125 +240,14 @@ public class ReportContentGenerator extends SimpleContentGenerator
             continue;
           }
 
-          final org.w3c.dom.Element parameterElement = document.createElement("parameter"); //$NON-NLS-1$
+          final Element parameterElement =
+              createParameterElement(subscribe, parameterData, document, parameterContext, parameter);
+
           parameters.appendChild(parameterElement);
-          parameterElement.setAttribute("name", parameter.getName()); //$NON-NLS-1$
-          parameterElement.setAttribute("parameter-group", "parameters"); //$NON-NLS-1$ //$NON-NLS-2$
-          if (subscribe)
-          {
-            parameterElement.setAttribute("parameter-group-label", org.pentaho.reporting.platform.plugin.messages.Messages.getString("ReportPlugin.ReportParameters")); //$NON-NLS-1$ //$NON-NLS-2$
-          }
-          parameterElement.setAttribute("type", parameter.getValueType().getName()); //$NON-NLS-1$
-          parameterElement.setAttribute("is-mandatory", "" + parameter.isMandatory()); //$NON-NLS-1$ //$NON-NLS-2$
-
-          final Object defaultValue = parameter.getDefaultValue(parameterContext);
-          if (defaultValue != null)
-          {
-            if (parameter.getValueType().isArray())
-            {
-              final int length = Array.getLength(defaultValue);
-              for (int i = 0; i < length; i++)
-              {
-                final org.w3c.dom.Element defaultValueElement = document.createElement("default-value"); //$NON-NLS-1$
-                parameterElement.appendChild(defaultValueElement);
-                defaultValueElement.setAttribute("value",
-                    convertParameterValueToString(Array.get(defaultValue, i), parameter.getValueType())); //$NON-NLS-1$
-              }
-            }
-            else if (parameter.getValueType().isAssignableFrom(Date.class))
-            {
-              // dates are a special thing, in order to get the web (javascript) and the
-              // server to be happy about date formats, the best thing for us to do
-              // seems to be to convert to long (millis since epoch) since the javascript
-              // land doesn't have the same date time formatter
-              final Date date = (Date) defaultValue;
-              final org.w3c.dom.Element defaultValueElement = document.createElement("default-value"); //$NON-NLS-1$
-              parameterElement.appendChild(defaultValueElement);
-              defaultValueElement.setAttribute("value", "" + date.getTime()); //$NON-NLS-1$ //$NON-NLS-2$
-            }
-            else
-            {
-              final org.w3c.dom.Element defaultValueElement = document.createElement("default-value"); //$NON-NLS-1$
-              parameterElement.appendChild(defaultValueElement);
-              defaultValueElement.setAttribute("value",
-                  convertParameterValueToString(defaultValue, parameter.getValueType())); //$NON-NLS-1$
-            }
-          }
-
-          final String[] attributeNames = parameter.getParameterAttributeNames(ParameterAttributeNames.Core.NAMESPACE);
-          for (final String attributeName : attributeNames)
-          {
-            final String attributeValue = parameter.getParameterAttribute(ParameterAttributeNames.Core.NAMESPACE, attributeName, parameterContext);
-            // expecting: label, parameter-render-type, parameter-layout
-            // but others possible as well, so we set them all
-            parameterElement.setAttribute(attributeName, attributeValue);
-          }
-
-          final Object selections = inputs.get(parameter.getName());
-          if (selections != null)
-          {
-            final org.w3c.dom.Element selectionsElement = document.createElement("selections"); //$NON-NLS-1$
-            parameterElement.appendChild(selectionsElement);
-
-            if (selections.getClass().isArray())
-            {
-              final int length = Array.getLength(selections);
-              for (int i = 0; i < length; i++)
-              {
-                final Object value = Array.get(selections, i);
-                final org.w3c.dom.Element selectionElement = document.createElement("selection"); //$NON-NLS-1$
-                selectionElement.setAttribute("value", value.toString()); //$NON-NLS-1$
-                selectionsElement.appendChild(selectionElement);
-              }
-            }
-            else
-            {
-              final org.w3c.dom.Element selectionElement = document.createElement("selection"); //$NON-NLS-1$
-              selectionElement.setAttribute("value", selections.toString()); //$NON-NLS-1$
-              selectionsElement.appendChild(selectionElement);
-            }
-          }
-
-          if (parameter instanceof ListParameter)
-          {
-            final ListParameter asListParam = (ListParameter) parameter;
-            parameterElement.setAttribute("is-multi-select", "" + asListParam.isAllowMultiSelection()); //$NON-NLS-1$ //$NON-NLS-2$
-            parameterElement.setAttribute("is-strict", "" + asListParam.isStrictValueCheck()); //$NON-NLS-1$ //$NON-NLS-2$
-
-            final org.w3c.dom.Element valuesElement = document.createElement("value-choices"); //$NON-NLS-1$
-            parameterElement.appendChild(valuesElement);
-
-            final ParameterValues possibleValues = asListParam.getValues(parameterContext);
-            for (int i = 0; i < possibleValues.getRowCount(); i++)
-            {
-              final Object key = possibleValues.getKeyValue(i);
-              final Object value = possibleValues.getTextValue(i);
-
-              final org.w3c.dom.Element valueElement = document.createElement("value-choice"); //$NON-NLS-1$
-              valuesElement.appendChild(valueElement);
-
-              // set
-              if (key != null && value != null)
-              {
-                valueElement.setAttribute("label", String.valueOf(value)); //$NON-NLS-1$ //$NON-NLS-2$
-                valueElement.setAttribute("value", convertParameterValueToString(key, parameter.getValueType())); //$NON-NLS-1$ //$NON-NLS-2$
-                valueElement.setAttribute("type", key.getClass().getName()); //$NON-NLS-1$
-              }
-            }
-          }
-          else if (parameter instanceof PlainParameter)
-          {
-            // apply defaults, this is the easy case
-            parameterElement.setAttribute("is-multi-select", "false"); //$NON-NLS-1$ //$NON-NLS-2$
-            parameterElement.setAttribute("is-strict", "false"); //$NON-NLS-1$ //$NON-NLS-2$
-          }
         }
-        if (report.getParameterDefinition() instanceof DefaultParameterDefinition)
-        {
-          ((DefaultParameterDefinition) report.getParameterDefinition()).setValidator(new DefaultReportParameterValidator());
-        }
-        final ValidationResult vr = report.getParameterDefinition().getValidator()
-            .validate(new ValidationResult(), report.getParameterDefinition(), parameterContext);
+
+        final ValidationResult vr = reportParameterDefinition.getValidator().validate
+            (postFormulaValidationResult, reportParameterDefinition, parameterContext);
         parameters.setAttribute("is-prompt-needed", "" + !vr.isEmpty()); //$NON-NLS-1$ //$NON-NLS-2$
         parameters.setAttribute("subscribe", "" + subscribe); //$NON-NLS-1$ //$NON-NLS-2$
 
@@ -376,7 +274,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
           {
             reportComponent.execute();
             parameters.setAttribute(SimpleReportingComponent.PAGINATE_OUTPUT, "true"); //$NON-NLS-1$
-            parameters.setAttribute("page-count", "" + reportComponent.getPageCount()); //$NON-NLS-1$ //$NON-NLS-2$
+            parameters.setAttribute("page-count", String.valueOf(reportComponent.getPageCount())); //$NON-NLS-1$ //$NON-NLS-2$
             // use the saved value (we changed it to -1 for performance)
             parameters.setAttribute(SimpleReportingComponent.ACCEPTED_PAGE, "" + acceptedPage); //$NON-NLS-1$
           }
@@ -432,6 +330,138 @@ public class ReportContentGenerator extends SimpleContentGenerator
         throw new IllegalArgumentException();
       }
     }
+  }
+
+  private Element createParameterElement(final boolean subscribe,
+                                         final DataRow inputs,
+                                         final Document document,
+                                         final ParameterContext parameterContext,
+                                         final ParameterDefinitionEntry parameter)
+      throws BeanException, ReportDataFactoryException
+  {
+    final Element parameterElement = document.createElement("parameter"); //$NON-NLS-1$
+    parameterElement.setAttribute("name", parameter.getName()); //$NON-NLS-1$
+    parameterElement.setAttribute("parameter-group", "parameters"); //$NON-NLS-1$ //$NON-NLS-2$
+    if (subscribe)
+    {
+      parameterElement.setAttribute("parameter-group-label", org.pentaho.reporting.platform.plugin.messages.Messages.getString("ReportPlugin.ReportParameters")); //$NON-NLS-1$ //$NON-NLS-2$
+    }
+    parameterElement.setAttribute("type", parameter.getValueType().getName()); //$NON-NLS-1$
+    parameterElement.setAttribute("is-mandatory", "" + parameter.isMandatory()); //$NON-NLS-1$ //$NON-NLS-2$
+
+    final Object defaultValue = parameter.getDefaultValue(parameterContext);
+    if (defaultValue != null)
+    {
+      final Class declaredValueType = parameter.getValueType();
+      if (declaredValueType.isArray())
+      {
+        if (defaultValue.getClass().isArray())
+        {
+          final int length = Array.getLength(defaultValue);
+          for (int i = 0; i < length; i++)
+          {
+            final Element defaultValueElement = document.createElement("default-value"); //$NON-NLS-1$
+            parameterElement.appendChild(defaultValueElement);
+            defaultValueElement.setAttribute("value",
+                convertParameterValueToString(Array.get(defaultValue, i), declaredValueType.getComponentType())); //$NON-NLS-1$
+          }
+        }
+        else
+        {
+          final Element defaultValueElement = document.createElement("default-value"); //$NON-NLS-1$
+          parameterElement.appendChild(defaultValueElement);
+          defaultValueElement.setAttribute("value",
+              convertParameterValueToString(defaultValue, declaredValueType.getComponentType())); //$NON-NLS-1$
+        }
+      }
+      else if (declaredValueType.isAssignableFrom(Date.class))
+      {
+        // dates are a special thing, in order to get the web (javascript) and the
+        // server to be happy about date formats, the best thing for us to do
+        // seems to be to convert to long (millis since epoch) since the javascript
+        // land doesn't have the same date time formatter
+        final Date date = (Date) defaultValue;
+        final Element defaultValueElement = document.createElement("default-value"); //$NON-NLS-1$
+        parameterElement.appendChild(defaultValueElement);
+        defaultValueElement.setAttribute("value", "" + date.getTime()); //$NON-NLS-1$ //$NON-NLS-2$
+      }
+      else
+      {
+        final Element defaultValueElement = document.createElement("default-value"); //$NON-NLS-1$
+        parameterElement.appendChild(defaultValueElement);
+        defaultValueElement.setAttribute("value",
+            convertParameterValueToString(defaultValue, declaredValueType)); //$NON-NLS-1$
+      }
+    }
+
+    final String[] attributeNames = parameter.getParameterAttributeNames(ParameterAttributeNames.Core.NAMESPACE);
+    for (final String attributeName : attributeNames)
+    {
+      final String attributeValue = parameter.getParameterAttribute(ParameterAttributeNames.Core.NAMESPACE, attributeName, parameterContext);
+      // expecting: label, parameter-render-type, parameter-layout
+      // but others possible as well, so we set them all
+      parameterElement.setAttribute(attributeName, attributeValue);
+    }
+
+    final Object selections = inputs.get(parameter.getName());
+    if (selections != null)
+    {
+      final Element selectionsElement = document.createElement("selections"); //$NON-NLS-1$
+      parameterElement.appendChild(selectionsElement);
+
+      if (selections.getClass().isArray())
+      {
+        final int length = Array.getLength(selections);
+        for (int i = 0; i < length; i++)
+        {
+          final Object value = Array.get(selections, i);
+          final Element selectionElement = document.createElement("selection"); //$NON-NLS-1$
+          selectionElement.setAttribute("value", value.toString()); //$NON-NLS-1$
+          selectionsElement.appendChild(selectionElement);
+        }
+      }
+      else
+      {
+        final Element selectionElement = document.createElement("selection"); //$NON-NLS-1$
+        selectionElement.setAttribute("value", selections.toString()); //$NON-NLS-1$
+        selectionsElement.appendChild(selectionElement);
+      }
+    }
+
+    if (parameter instanceof ListParameter)
+    {
+      final ListParameter asListParam = (ListParameter) parameter;
+      parameterElement.setAttribute("is-multi-select", "" + asListParam.isAllowMultiSelection()); //$NON-NLS-1$ //$NON-NLS-2$
+      parameterElement.setAttribute("is-strict", "" + asListParam.isStrictValueCheck()); //$NON-NLS-1$ //$NON-NLS-2$
+
+      final Element valuesElement = document.createElement("value-choices"); //$NON-NLS-1$
+      parameterElement.appendChild(valuesElement);
+
+      final ParameterValues possibleValues = asListParam.getValues(parameterContext);
+      for (int i = 0; i < possibleValues.getRowCount(); i++)
+      {
+        final Object key = possibleValues.getKeyValue(i);
+        final Object value = possibleValues.getTextValue(i);
+
+        final Element valueElement = document.createElement("value-choice"); //$NON-NLS-1$
+        valuesElement.appendChild(valueElement);
+
+        // set
+        if (key != null && value != null)
+        {
+          valueElement.setAttribute("label", String.valueOf(value)); //$NON-NLS-1$ //$NON-NLS-2$
+          valueElement.setAttribute("value", convertParameterValueToString(key, parameter.getValueType())); //$NON-NLS-1$ //$NON-NLS-2$
+          valueElement.setAttribute("type", key.getClass().getName()); //$NON-NLS-1$
+        }
+      }
+    }
+    else if (parameter instanceof PlainParameter)
+    {
+      // apply defaults, this is the easy case
+      parameterElement.setAttribute("is-multi-select", "false"); //$NON-NLS-1$ //$NON-NLS-2$
+      parameterElement.setAttribute("is-strict", "false"); //$NON-NLS-1$ //$NON-NLS-2$
+    }
+    return parameterElement;
   }
 
   private String convertParameterValueToString(final Object value, final Class type) throws BeanException
@@ -587,13 +617,13 @@ public class ReportContentGenerator extends SimpleContentGenerator
   }
 
   private void addSubscriptionParameter(final String reportDefinitionPath,
-                                        final org.w3c.dom.Element parameters,
+                                        final Element parameters,
                                         final Map<String, Object> inputs)
   {
     final ISubscription subscription = getSubscription();
 
-    final org.w3c.dom.Document document = parameters.getOwnerDocument();
-    final org.w3c.dom.Element reportNameParameter = document.createElement("parameter"); //$NON-NLS-1$
+    final Document document = parameters.getOwnerDocument();
+    final Element reportNameParameter = document.createElement("parameter"); //$NON-NLS-1$
     parameters.appendChild(reportNameParameter);
     reportNameParameter.setAttribute("name", "subscription-name"); //$NON-NLS-1$ //$NON-NLS-2$
     reportNameParameter.setAttribute("label", org.pentaho.reporting.platform.plugin.messages.Messages.getString("ReportPlugin.ReportName")); //$NON-NLS-1$ //$NON-NLS-2$
@@ -613,9 +643,9 @@ public class ReportContentGenerator extends SimpleContentGenerator
     }
     if (reportNameSelection != null)
     {
-      final org.w3c.dom.Element selectionsElement = document.createElement("selections"); //$NON-NLS-1$
+      final Element selectionsElement = document.createElement("selections"); //$NON-NLS-1$
       reportNameParameter.appendChild(selectionsElement);
-      final org.w3c.dom.Element selectionElement = document.createElement("selection"); //$NON-NLS-1$
+      final Element selectionElement = document.createElement("selection"); //$NON-NLS-1$
       selectionElement.setAttribute("value", reportNameSelection.toString()); //$NON-NLS-1$
       selectionsElement.appendChild(selectionElement);
     }
@@ -624,7 +654,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
     final ISubscribeContent subscribeContent = subscriptionRepository.getContentByActionReference(reportDefinitionPath);
 
     // add subscription choices, as a parameter (last in list)
-    final org.w3c.dom.Element subscriptionIdElement = document.createElement("parameter"); //$NON-NLS-1$
+    final Element subscriptionIdElement = document.createElement("parameter"); //$NON-NLS-1$
     parameters.appendChild(subscriptionIdElement);
     subscriptionIdElement.setAttribute("name", "schedule-id"); //$NON-NLS-1$ //$NON-NLS-2$
     subscriptionIdElement.setAttribute("label", org.pentaho.reporting.platform.plugin.messages.Messages.getString("ReportPlugin.Subscription")); //$NON-NLS-1$ //$NON-NLS-2$
@@ -636,12 +666,12 @@ public class ReportContentGenerator extends SimpleContentGenerator
     subscriptionIdElement.setAttribute("is-strict", "true"); //$NON-NLS-1$ //$NON-NLS-2$
     subscriptionIdElement.setAttribute("parameter-render-type", "dropdown"); //$NON-NLS-1$ //$NON-NLS-2$
 
-    final org.w3c.dom.Element valuesElement = document.createElement("value-choices"); //$NON-NLS-1$
+    final Element valuesElement = document.createElement("value-choices"); //$NON-NLS-1$
     subscriptionIdElement.appendChild(valuesElement);
 
     for (final ISchedule schedule : subscribeContent.getSchedules())
     {
-      final org.w3c.dom.Element valueElement = document.createElement("value-choice"); //$NON-NLS-1$
+      final Element valueElement = document.createElement("value-choice"); //$NON-NLS-1$
       valuesElement.appendChild(valueElement);
       valueElement.setAttribute("label", schedule.getTitle()); //$NON-NLS-1$
       valueElement.setAttribute("value", schedule.getId()); //$NON-NLS-1$
@@ -649,13 +679,13 @@ public class ReportContentGenerator extends SimpleContentGenerator
     }
 
     // selections (schedules)
-    final org.w3c.dom.Element selectionsElement = document.createElement("selections"); //$NON-NLS-1$
+    final Element selectionsElement = document.createElement("selections"); //$NON-NLS-1$
     subscriptionIdElement.appendChild(selectionsElement);
 
     final Object scheduleIdSelection = inputs.get("schedule-id"); //$NON-NLS-1$
     if (scheduleIdSelection != null)
     {
-      final org.w3c.dom.Element selectionElement = document.createElement("selection"); //$NON-NLS-1$
+      final Element selectionElement = document.createElement("selection"); //$NON-NLS-1$
       selectionElement.setAttribute("value", scheduleIdSelection.toString()); //$NON-NLS-1$
       selectionsElement.appendChild(selectionElement);
     }
@@ -669,7 +699,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
         final List<ISchedule> schedules = subscription.getSchedules();
         for (final ISchedule schedule : schedules)
         {
-          final org.w3c.dom.Element selectionElement = document.createElement("selection"); //$NON-NLS-1$
+          final Element selectionElement = document.createElement("selection"); //$NON-NLS-1$
           selectionElement.setAttribute("value", schedule.getId()); //$NON-NLS-1$
           selectionsElement.appendChild(selectionElement);
         }
@@ -678,19 +708,19 @@ public class ReportContentGenerator extends SimpleContentGenerator
   }
 
   private void addOutputParameter(final MasterReport report,
-                                  final org.w3c.dom.Element parameters,
+                                  final Element parameters,
                                   final Map<String, Object> inputs,
                                   final boolean subscribe)
   {
     final Object lockOutputTypeObj = report.getAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.LOCK_PREFERRED_OUTPUT_TYPE);
-    if (lockOutputTypeObj != null && "true".equalsIgnoreCase(lockOutputTypeObj.toString())) //$NON-NLS-1$
+    if (Boolean.TRUE.equals(lockOutputTypeObj)) //$NON-NLS-1$
     {
       // if the output type is locked, do not allow prompt rendering
       return;
     }
 
-    final org.w3c.dom.Document document = parameters.getOwnerDocument();
-    final org.w3c.dom.Element parameterOutputElement = document.createElement("parameter"); //$NON-NLS-1$
+    final Document document = parameters.getOwnerDocument();
+    final Element parameterOutputElement = document.createElement("parameter"); //$NON-NLS-1$
     parameters.appendChild(parameterOutputElement);
     parameterOutputElement.setAttribute("name", SimpleReportingComponent.OUTPUT_TYPE); //$NON-NLS-1$
     parameterOutputElement.setAttribute("label", org.pentaho.reporting.platform.plugin.messages.Messages.getString("ReportPlugin.OutputType")); //$NON-NLS-1$ //$NON-NLS-2$
@@ -705,34 +735,34 @@ public class ReportContentGenerator extends SimpleContentGenerator
     parameterOutputElement.setAttribute("is-strict", "true"); //$NON-NLS-1$ //$NON-NLS-2$
     parameterOutputElement.setAttribute("parameter-render-type", "dropdown"); //$NON-NLS-1$ //$NON-NLS-2$
 
-    final org.w3c.dom.Element valuesElement = document.createElement("value-choices"); //$NON-NLS-1$
+    final Element valuesElement = document.createElement("value-choices"); //$NON-NLS-1$
     parameterOutputElement.appendChild(valuesElement);
 
-    final org.w3c.dom.Element htmlValueElement = document.createElement("value-choice"); //$NON-NLS-1$
+    final Element htmlValueElement = document.createElement("value-choice"); //$NON-NLS-1$
     valuesElement.appendChild(htmlValueElement);
     htmlValueElement.setAttribute("label", "HTML"); //$NON-NLS-1$ //$NON-NLS-2$
     htmlValueElement.setAttribute("value", SimpleReportingComponent.MIME_TYPE_HTML); //$NON-NLS-1$
     htmlValueElement.setAttribute("type", "java.lang.String"); //$NON-NLS-1$ //$NON-NLS-2$
 
-    final org.w3c.dom.Element pdfValueElement = document.createElement("value-choice"); //$NON-NLS-1$
+    final Element pdfValueElement = document.createElement("value-choice"); //$NON-NLS-1$
     valuesElement.appendChild(pdfValueElement);
     pdfValueElement.setAttribute("label", "PDF"); //$NON-NLS-1$ //$NON-NLS-2$
     pdfValueElement.setAttribute("value", SimpleReportingComponent.MIME_TYPE_PDF); //$NON-NLS-1$
     pdfValueElement.setAttribute("type", "java.lang.String"); //$NON-NLS-1$ //$NON-NLS-2$
 
-    final org.w3c.dom.Element xlsValueElement = document.createElement("value-choice"); //$NON-NLS-1$
+    final Element xlsValueElement = document.createElement("value-choice"); //$NON-NLS-1$
     valuesElement.appendChild(xlsValueElement);
     xlsValueElement.setAttribute("label", "Excel (XLS)"); //$NON-NLS-1$ //$NON-NLS-2$
     xlsValueElement.setAttribute("value", SimpleReportingComponent.MIME_TYPE_XLS); //$NON-NLS-1$
     xlsValueElement.setAttribute("type", "java.lang.String"); //$NON-NLS-1$ //$NON-NLS-2$
 
-    final org.w3c.dom.Element csvValueElement = document.createElement("value-choice"); //$NON-NLS-1$
+    final Element csvValueElement = document.createElement("value-choice"); //$NON-NLS-1$
     valuesElement.appendChild(csvValueElement);
     csvValueElement.setAttribute("label", "CSV"); //$NON-NLS-1$ //$NON-NLS-2$
     csvValueElement.setAttribute("value", SimpleReportingComponent.MIME_TYPE_CSV); //$NON-NLS-1$
     csvValueElement.setAttribute("type", "java.lang.String"); //$NON-NLS-1$ //$NON-NLS-2$
 
-    final org.w3c.dom.Element rtfValueElement = document.createElement("value-choice"); //$NON-NLS-1$
+    final Element rtfValueElement = document.createElement("value-choice"); //$NON-NLS-1$
     valuesElement.appendChild(rtfValueElement);
     rtfValueElement.setAttribute("label", "RTF"); //$NON-NLS-1$ //$NON-NLS-2$
     rtfValueElement.setAttribute("value", SimpleReportingComponent.MIME_TYPE_RTF); //$NON-NLS-1$
@@ -741,9 +771,9 @@ public class ReportContentGenerator extends SimpleContentGenerator
     final Object selections = inputs.get(SimpleReportingComponent.OUTPUT_TYPE);
     if (selections != null)
     {
-      final org.w3c.dom.Element selectionsElement = document.createElement("selections"); //$NON-NLS-1$
+      final Element selectionsElement = document.createElement("selections"); //$NON-NLS-1$
       parameterOutputElement.appendChild(selectionsElement);
-      final org.w3c.dom.Element selectionElement = document.createElement("selection"); //$NON-NLS-1$
+      final Element selectionElement = document.createElement("selection"); //$NON-NLS-1$
       selectionElement.setAttribute("value", selections.toString()); //$NON-NLS-1$
       selectionsElement.appendChild(selectionElement);
     }
@@ -753,9 +783,9 @@ public class ReportContentGenerator extends SimpleContentGenerator
       final String preferredOutputType = (String) report.getAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.PREFERRED_OUTPUT_TYPE);
       if (!StringUtils.isEmpty(preferredOutputType))
       {
-        final org.w3c.dom.Element selectionsElement = document.createElement("selections"); //$NON-NLS-1$
+        final Element selectionsElement = document.createElement("selections"); //$NON-NLS-1$
         parameterOutputElement.appendChild(selectionsElement);
-        final org.w3c.dom.Element selectionElement = document.createElement("selection"); //$NON-NLS-1$
+        final Element selectionElement = document.createElement("selection"); //$NON-NLS-1$
         selectionElement.setAttribute("value", MimeHelper.getMimeTypeFromExtension("." + preferredOutputType)); //$NON-NLS-1$ //$NON-NLS-2$
         selectionsElement.appendChild(selectionElement);
       }
