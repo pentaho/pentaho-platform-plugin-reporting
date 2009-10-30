@@ -796,13 +796,6 @@ public class ReportContentGenerator extends SimpleContentGenerator
   {
     final IParameterProvider requestParams = parameterProviders.get(IParameterProvider.SCOPE_REQUEST);
 
-    final Iterator namesIt = requestParams.getParameterNames();
-    while (namesIt.hasNext())
-    {
-      final String name = (String) namesIt.next();
-      final Object value = requestParams.getParameter(name);
-    }
-
     final String solution = requestParams.getStringParameter("solution", null); //$NON-NLS-1$
     final String path = requestParams.getStringParameter("path", null); //$NON-NLS-1$
     final String name = requestParams.getStringParameter("action", null); //$NON-NLS-1$
