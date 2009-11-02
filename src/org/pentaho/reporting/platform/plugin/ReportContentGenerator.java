@@ -109,6 +109,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
       {
         final ISolutionRepository repository = PentahoSystem.get(ISolutionRepository.class, userSession);
         final ISolutionFile file = repository.getSolutionFile(reportDefinitionPath, ISolutionRepository.ACTION_CREATE);
+        final byte[] data = file.getData();
 
         final HttpServletResponse response = (HttpServletResponse) parameterProviders.get("path").getParameter("httpresponse"); //$NON-NLS-1$ //$NON-NLS-2$
         response.setHeader("Content-Disposition", "attach; filename=\"" + file.getFileName() + "\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
@@ -118,10 +119,12 @@ public class ReportContentGenerator extends SimpleContentGenerator
         // if the user has PERM_CREATE, we'll allow them to pull it for now, this is as relaxed
         // as I am comfortable with but I can imagine a PERM_READ or PERM_EXECUTE being used
         // in the future
-        if (repository.hasAccess(file, ISolutionRepository.ACTION_CREATE) || repository.hasAccess(file, ISolutionRepository.ACTION_UPDATE))
+        if (repository.hasAccess(file, ISolutionRepository.ACTION_CREATE) ||
+            repository.hasAccess(file, ISolutionRepository.ACTION_UPDATE))
         {
-          IOUtils.getInstance().copyStreams(new ByteArrayInputStream(file.getData()), outputStream);
+          IOUtils.getInstance().copyStreams(new ByteArrayInputStream(data), outputStream);
         }
+
       }
       else if (renderMode.equals(RENDER_TYPE.REPORT))
       {
