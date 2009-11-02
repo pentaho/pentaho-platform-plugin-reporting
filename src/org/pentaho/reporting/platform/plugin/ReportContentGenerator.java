@@ -204,9 +204,9 @@ public class ReportContentGenerator extends SimpleContentGenerator
         final HttpServletResponse response = (HttpServletResponse) parameterProviders.get("path").getParameter("httpresponse"); //$NON-NLS-1$ //$NON-NLS-2$
         final String extension = MimeHelper.getExtension(mimeType);
         String filename = file.getFileName();
-        if (filename.indexOf(".") != -1)
+        if (filename.lastIndexOf(".") != -1)
         { //$NON-NLS-1$
-          filename = filename.substring(0, filename.indexOf(".")); //$NON-NLS-1$
+          filename = filename.substring(0, filename.lastIndexOf(".")); //$NON-NLS-1$
         }
         response.setHeader("Content-Disposition", "inline; filename=\"" + filename + extension + "\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         response.setHeader("Content-Description", file.getFileName()); //$NON-NLS-1$
@@ -370,15 +370,27 @@ public class ReportContentGenerator extends SimpleContentGenerator
     // if the user has PERM_CREATE, we'll allow them to pull it for now, this is as relaxed
     // as I am comfortable with but I can imagine a PERM_READ or PERM_EXECUTE being used
     // in the future
-    if (repository.hasAccess(file, ISolutionRepository.ACTION_CREATE) ||
+    if (file.isDirectory() == false && file.isRoot() == false &&
+        repository.hasAccess(file, ISolutionRepository.ACTION_CREATE) ||
         repository.hasAccess(file, ISolutionRepository.ACTION_UPDATE))
     {
-      response.setHeader("Content-Disposition", "attach; filename=\"" + file.getFileName() + "\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-      response.setHeader("Content-Description", file.getFileName()); //$NON-NLS-1$
-      response.setDateHeader("Last-Modified", file.getLastModified()); //$NON-NLS-1$
-
       final byte[] data = file.getData();
-      outputStream.write(data);
+      if (data == null)
+      {
+        response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+      }
+      else
+      {
+        response.setHeader("Content-Disposition", "attach; filename=\"" + file.getFileName() + "\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        response.setHeader("Content-Description", file.getFileName()); //$NON-NLS-1$
+        response.setDateHeader("Last-Modified", file.getLastModified()); //$NON-NLS-1$
+        response.setContentLength(data.length); //$NON-NLS-1$
+        response.setHeader("Pragma", "no-cache");
+        response.setHeader("Cache-Control", "no-cache");
+        response.setDateHeader("Expires", 0);
+
+        outputStream.write(data);
+      }
     }
     else
     {
