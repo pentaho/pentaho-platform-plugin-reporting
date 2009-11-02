@@ -1,7 +1,7 @@
 package org.pentaho.reporting.platform.plugin;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.Array;
 import java.net.URLDecoder;
@@ -62,8 +62,8 @@ import org.pentaho.reporting.engine.classic.core.parameters.ValidationResult;
 import org.pentaho.reporting.engine.classic.core.util.beans.BeanException;
 import org.pentaho.reporting.engine.classic.core.util.beans.ConverterRegistry;
 import org.pentaho.reporting.engine.classic.core.util.beans.ValueConverter;
-import org.pentaho.reporting.libraries.base.util.IOUtils;
 import org.pentaho.reporting.libraries.base.util.StringUtils;
+import org.pentaho.reporting.libraries.resourceloader.ResourceException;
 import org.pentaho.reporting.platform.plugin.gwt.client.ReportViewer.RENDER_TYPE;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -72,12 +72,10 @@ public class ReportContentGenerator extends SimpleContentGenerator
 {
   private static final Log log = LogFactory.getLog(ReportContentGenerator.class);
 
-  private RENDER_TYPE renderMode;
   private SimpleReportingComponent reportComponent;
 
   public ReportContentGenerator()
   {
-    renderMode = RENDER_TYPE.REPORT;
   }
 
   public void createContent(final OutputStream outputStream) throws Exception
@@ -89,240 +87,57 @@ public class ReportContentGenerator extends SimpleContentGenerator
     final String solution = URLDecoder.decode(requestParams.getStringParameter("solution", ""), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     final String path = URLDecoder.decode(requestParams.getStringParameter("path", ""), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     final String name = URLDecoder.decode(requestParams.getStringParameter("name", requestParams.getStringParameter("action", "")), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-    final boolean subscribe = "true".equals(requestParams.getStringParameter("subscribe", "false")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
-    renderMode = RENDER_TYPE.valueOf(requestParams.getStringParameter("renderMode", RENDER_TYPE.REPORT.toString()).toUpperCase()); //$NON-NLS-1$
+    final RENDER_TYPE renderMode = RENDER_TYPE.valueOf
+        (requestParams.getStringParameter("renderMode", RENDER_TYPE.REPORT.toString()).toUpperCase()); //$NON-NLS-1$
 
     final String reportDefinitionPath = ActionInfo.buildSolutionPath(solution, path, name);
 
     final long start = System.currentTimeMillis();
-    AuditHelper.audit(userSession.getId(), userSession.getName(), reportDefinitionPath, getObjectName(), getClass().getName(), MessageTypes.INSTANCE_START,
+    AuditHelper.audit(userSession.getId(), userSession.getName(), reportDefinitionPath,
+        getObjectName(), getClass().getName(), MessageTypes.INSTANCE_START,
         instanceId, "", 0, this); //$NON-NLS-1$
 
+    String result = MessageTypes.INSTANCE_END;
     try
     {
-
-      // create inputs from request parameters
-      final Map<String, Object> inputs = createInputs(requestParams);
-
-      if (renderMode.equals(RENDER_TYPE.DOWNLOAD))
+      switch (renderMode)
       {
-        final ISolutionRepository repository = PentahoSystem.get(ISolutionRepository.class, userSession);
-        final ISolutionFile file = repository.getSolutionFile(reportDefinitionPath, ISolutionRepository.ACTION_CREATE);
-        final byte[] data = file.getData();
-
-        final HttpServletResponse response = (HttpServletResponse) parameterProviders.get("path").getParameter("httpresponse"); //$NON-NLS-1$ //$NON-NLS-2$
-        response.setHeader("Content-Disposition", "attach; filename=\"" + file.getFileName() + "\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-        response.setHeader("Content-Description", file.getFileName()); //$NON-NLS-1$
-        response.setDateHeader("Last-Modified", file.getLastModified()); //$NON-NLS-1$
-
-        // if the user has PERM_CREATE, we'll allow them to pull it for now, this is as relaxed
-        // as I am comfortable with but I can imagine a PERM_READ or PERM_EXECUTE being used
-        // in the future
-        if (repository.hasAccess(file, ISolutionRepository.ACTION_CREATE) ||
-            repository.hasAccess(file, ISolutionRepository.ACTION_UPDATE))
+        case DOWNLOAD:
         {
-          IOUtils.getInstance().copyStreams(new ByteArrayInputStream(data), outputStream);
+          createDownloadContent(outputStream, reportDefinitionPath);
+          break;
         }
-
+        case REPORT:
+        {
+          // create inputs from request parameters
+          final Map<String, Object> inputs = createInputs(requestParams);
+          createReportContent(outputStream, reportDefinitionPath, requestParams, inputs);
+          break;
+        }
+        case SUBSCRIBE:
+        {
+          createSubscribeContent(outputStream, reportDefinitionPath, requestParams);
+          break;
+        }
+        case XML:
+        {
+          // create inputs from request parameters
+          final Map<String, Object> inputs = createInputs(requestParams);
+          createParameterContent(outputStream, reportDefinitionPath, requestParams, inputs);
+          break;
+        }
+        default:
+          throw new IllegalArgumentException();
       }
-      else if (renderMode.equals(RENDER_TYPE.REPORT))
-      {
-        final ByteArrayOutputStream reportOutput = new ByteArrayOutputStream();
-        // produce rendered report
-        if (reportComponent == null)
-        {
-          reportComponent = new SimpleReportingComponent();
-        }
-        reportComponent.setSession(userSession);
-        reportComponent.setOutputStream(reportOutput);
-        reportComponent.setReportDefinitionPath(reportDefinitionPath);
-
-        // the requested mime type can be null, in that case the report-component will resolve the desired
-        // type from the output-target.
-        final String mimeType = getMimeType(requestParams);
-        reportComponent.setOutputType(mimeType);
-
-        final ISolutionRepository repository = PentahoSystem.get(ISolutionRepository.class, userSession);
-        final ISolutionFile file = repository.getSolutionFile(reportDefinitionPath, ISolutionRepository.ACTION_EXECUTE);
-
-        if (parameterProviders.get("path") != null && parameterProviders.get("path").getParameter("httpresponse") != null) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-        {
-          final HttpServletResponse response = (HttpServletResponse) parameterProviders.get("path").getParameter("httpresponse"); //$NON-NLS-1$ //$NON-NLS-2$
-          final String extension = MimeHelper.getExtension(mimeType);
-          String filename = file.getFileName();
-          if (filename.indexOf(".") != -1)
-          { //$NON-NLS-1$
-            filename = filename.substring(0, filename.indexOf(".")); //$NON-NLS-1$
-          }
-          response.setHeader("Content-Disposition", "inline; filename=\"" + filename + extension + "\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-          response.setHeader("Content-Description", file.getFileName()); //$NON-NLS-1$
-          response.setHeader("Pragma", "no-cache");
-          response.setHeader("Cache-Control", "no-cache");
-          response.setDateHeader("Expires", 0);
-        }
-
-
-        // add all inputs (request parameters) to report component
-        reportComponent.setInputs(inputs);
-
-        // If we haven't set an accepted page, -1 will be the default, which will give us a report
-        // with no pages. This default is used so that when we do our parameter interaction with the
-        // engine we can spend as little time as possible rendering unused pages, making it no pages.
-        // We are going to intentionally reset the accepted page to the first page, 0, at this point,
-        // if the accepted page is -1.
-        if (reportComponent.isPaginateOutput() && reportComponent.getAcceptedPage() < 0)
-        {
-          reportComponent.setAcceptedPage(0);
-        }
-
-        if (reportComponent.validate())
-        {
-          if (reportComponent.execute())
-          {
-            IOUtils.getInstance().copyStreams(new ByteArrayInputStream(reportOutput.toByteArray()), outputStream);
-            outputStream.flush();
-          }
-        }
-        else
-        {
-          outputStream.write(org.pentaho.reporting.platform.plugin.messages.Messages.getString("ReportPlugin.ReportValidationFailed").getBytes()); //$NON-NLS-1$
-          outputStream.flush();
-        }
-
-      }
-      else if (renderMode.equals(RENDER_TYPE.SUBSCRIBE))
-      {
-        if (reportComponent == null)
-        {
-          reportComponent = new SimpleReportingComponent();
-        }
-        reportComponent.setSession(userSession);
-        reportComponent.setReportDefinitionPath(reportDefinitionPath);
-        final MasterReport report = reportComponent.getReport();
-        final ParameterDefinitionEntry parameterDefinitions[] = report.getParameterDefinition().getParameterDefinitions();
-        final String result = saveSubscription(requestParams, parameterDefinitions, reportDefinitionPath, userSession);
-        outputStream.write(result.getBytes());
-        outputStream.flush();
-      }
-      else if (renderMode.equals(RENDER_TYPE.XML))
-      {
-        // handle parameter feedback (XML) services
-        final Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
-        final Element parameters = document.createElement("parameters"); //$NON-NLS-1$
-        document.appendChild(parameters);
-
-        if (reportComponent == null)
-        {
-          reportComponent = new SimpleReportingComponent();
-        }
-        reportComponent.setSession(userSession);
-        reportComponent.setReportDefinitionPath(reportDefinitionPath);
-        reportComponent.setInputs(inputs);
-
-        final MasterReport report = reportComponent.getReport();
-
-        final ParameterContext parameterContext = new DefaultParameterContext(report);
-        // open parameter context
-        parameterContext.open();
-        // apply inputs to parameters
-        reportComponent.applyInputsToReportParameters(report, parameterContext);
-        final FormulaParameterEvaluator formulaParameterEvaluator = new FormulaParameterEvaluator();
-        final ValidationResult postFormulaValidationResult = new ValidationResult();
-        final ReportParameterDefinition reportParameterDefinition = report.getParameterDefinition();
-        final DataRow parameterData = formulaParameterEvaluator.evaluate
-            (postFormulaValidationResult, reportParameterDefinition, parameterContext);
-
-        final ParameterDefinitionEntry[] parameterDefinitions = reportParameterDefinition.getParameterDefinitions();
-        for (final ParameterDefinitionEntry parameter : parameterDefinitions)
-        {
-          final String hiddenVal = parameter.getParameterAttribute
-              (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.HIDDEN, parameterContext);
-          if ("true".equals(hiddenVal))
-          {
-            continue;
-          }
-
-          final Element parameterElement =
-              createParameterElement(subscribe, parameterData, document, parameterContext, parameter);
-
-          parameters.appendChild(parameterElement);
-        }
-
-        final ValidationResult vr = reportParameterDefinition.getValidator().validate
-            (postFormulaValidationResult, reportParameterDefinition, parameterContext);
-        parameters.setAttribute("is-prompt-needed", "" + !vr.isEmpty()); //$NON-NLS-1$ //$NON-NLS-2$
-        parameters.setAttribute("subscribe", "" + subscribe); //$NON-NLS-1$ //$NON-NLS-2$
-
-        // now add output type chooser
-        addOutputParameter(report, parameters, inputs, subscribe);
-
-        final String mimeType = getMimeType(requestParams);
-
-        // check if pagination is allowed and turned on
-        if (mimeType.equalsIgnoreCase(SimpleReportingComponent.MIME_TYPE_HTML) && vr.isEmpty()
-            && "true".equalsIgnoreCase(requestParams.getStringParameter(SimpleReportingComponent.PAGINATE_OUTPUT, "true"))) //$NON-NLS-1$ //$NON-NLS-2$
-        {
-          final ByteArrayOutputStream dontCareOutputStream = new ByteArrayOutputStream();
-          reportComponent.setOutputStream(dontCareOutputStream);
-          // pagination always uses HTML
-          reportComponent.setOutputType(SimpleReportingComponent.MIME_TYPE_HTML);
-
-          // so that we don't actually produce anything, we'll accept no pages in this mode
-          final int acceptedPage = reportComponent.getAcceptedPage();
-          reportComponent.setAcceptedPage(-1);
-
-          // we can ONLY get the # of pages by asking the report to run
-          if (reportComponent.isPaginateOutput() && reportComponent.validate())
-          {
-            reportComponent.execute();
-            parameters.setAttribute(SimpleReportingComponent.PAGINATE_OUTPUT, "true"); //$NON-NLS-1$
-            parameters.setAttribute("page-count", String.valueOf(reportComponent.getPageCount())); //$NON-NLS-1$ //$NON-NLS-2$
-            // use the saved value (we changed it to -1 for performance)
-            parameters.setAttribute(SimpleReportingComponent.ACCEPTED_PAGE, "" + acceptedPage); //$NON-NLS-1$
-          }
-        }
-
-        final String autoSubmitStr = requestParams.getStringParameter("autoSubmit", "auto");
-        if ("true".equals(autoSubmitStr))
-        {
-          parameters.setAttribute("autoSubmit", "true");
-        }
-        else if ("false".equals(autoSubmitStr))
-        {
-          parameters.setAttribute("autoSubmit", "false");
-        }
-        else
-        {
-          final boolean autoUpdate = Boolean.TRUE.equals
-              (report.getAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.AUTO_SUBMIT_PARAMETER));
-          parameters.setAttribute("autoSubmit", String.valueOf(autoUpdate));
-        }
-
-        // if we're going to attempt to handle subscriptions, add related choices as a parameter
-        if (subscribe)
-        {
-          // add subscription choices, as a parameter (last in list)
-          addSubscriptionParameter(reportDefinitionPath, parameters, inputs);
-        }
-
-        WebServiceUtil.writeDocument(outputStream, document, false);
-        // close parameter context
-        parameterContext.close();
-      }
-      reportComponent = null;
-
-      final long end = System.currentTimeMillis();
-      AuditHelper.audit(userSession.getId(), userSession.getName(), reportDefinitionPath, getObjectName(), getClass().getName(), MessageTypes.INSTANCE_END,
-          instanceId, "", ((float) (end - start) / 1000), this); //$NON-NLS-1$
     }
     catch (Exception ex)
     {
       final String exceptionMessage = ex.getMessage() != null ? ex.getMessage() : ex.getClass().getName();
       log.error(exceptionMessage, ex);
-      final long end = System.currentTimeMillis();
-      AuditHelper.audit(userSession.getId(), userSession.getName(), reportDefinitionPath, getObjectName(), getClass().getName(), MessageTypes.INSTANCE_FAILED,
-          instanceId, "", ((float) (end - start) / 1000), this); //$NON-NLS-1$
+
+      result = MessageTypes.INSTANCE_FAILED;
+
       if (outputStream != null)
       {
         outputStream.write(exceptionMessage.getBytes("UTF-8")); //$NON-NLS-1$
@@ -332,6 +147,242 @@ public class ReportContentGenerator extends SimpleContentGenerator
       {
         throw new IllegalArgumentException();
       }
+    }
+    finally
+    {
+      reportComponent = null;
+
+      final long end = System.currentTimeMillis();
+      AuditHelper.audit(userSession.getId(), userSession.getName(), reportDefinitionPath,
+          getObjectName(), getClass().getName(), result,
+          instanceId, "", ((float) (end - start) / 1000), this); //$NON-NLS-1$
+    }
+  }
+
+  private void createReportContent(final OutputStream outputStream,
+                                   final String reportDefinitionPath,
+                                   final IParameterProvider requestParams, final Map<String, Object> inputs)
+      throws Exception
+  {
+    final ByteArrayOutputStream reportOutput = new ByteArrayOutputStream();
+    // produce rendered report
+    if (reportComponent == null)
+    {
+      reportComponent = new SimpleReportingComponent();
+    }
+    reportComponent.setSession(userSession);
+    reportComponent.setOutputStream(reportOutput);
+    reportComponent.setReportDefinitionPath(reportDefinitionPath);
+
+    // the requested mime type can be null, in that case the report-component will resolve the desired
+    // type from the output-target.
+    final String mimeType = computeMimeType(requestParams);
+    reportComponent.setOutputType(mimeType);
+
+    final ISolutionRepository repository = PentahoSystem.get(ISolutionRepository.class, userSession);
+    final ISolutionFile file = repository.getSolutionFile(reportDefinitionPath, ISolutionRepository.ACTION_EXECUTE);
+
+
+    // add all inputs (request parameters) to report component
+    reportComponent.setInputs(inputs);
+
+    // If we haven't set an accepted page, -1 will be the default, which will give us a report
+    // with no pages. This default is used so that when we do our parameter interaction with the
+    // engine we can spend as little time as possible rendering unused pages, making it no pages.
+    // We are going to intentionally reset the accepted page to the first page, 0, at this point,
+    // if the accepted page is -1.
+    if (reportComponent.isPaginateOutput() && reportComponent.getAcceptedPage() < 0)
+    {
+      reportComponent.setAcceptedPage(0);
+    }
+
+    if (reportComponent.validate() && reportComponent.execute())
+    {
+      if (parameterProviders.get("path") != null &&
+          parameterProviders.get("path").getParameter("httpresponse") != null) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+      {
+        final HttpServletResponse response = (HttpServletResponse) parameterProviders.get("path").getParameter("httpresponse"); //$NON-NLS-1$ //$NON-NLS-2$
+        final String extension = MimeHelper.getExtension(mimeType);
+        String filename = file.getFileName();
+        if (filename.indexOf(".") != -1)
+        { //$NON-NLS-1$
+          filename = filename.substring(0, filename.indexOf(".")); //$NON-NLS-1$
+        }
+        response.setHeader("Content-Disposition", "inline; filename=\"" + filename + extension + "\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        response.setHeader("Content-Description", file.getFileName()); //$NON-NLS-1$
+        response.setHeader("Pragma", "no-cache");
+        response.setHeader("Cache-Control", "no-cache");
+        response.setDateHeader("Expires", 0);
+      }
+
+      outputStream.write(reportOutput.toByteArray());
+      outputStream.flush();
+    }
+    else
+    {
+      if (parameterProviders.get("path") != null &&
+          parameterProviders.get("path").getParameter("httpresponse") != null) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+      {
+        final HttpServletResponse response = (HttpServletResponse) parameterProviders.get("path").getParameter("httpresponse"); //$NON-NLS-1$ //$NON-NLS-2$
+        response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+      }
+      outputStream.write(org.pentaho.reporting.platform.plugin.messages.Messages.getString("ReportPlugin.ReportValidationFailed").getBytes()); //$NON-NLS-1$
+      outputStream.flush();
+    }
+  }
+
+  private void createParameterContent(final OutputStream outputStream,
+                                      final String reportDefinitionPath,
+                                      final IParameterProvider requestParams,
+                                      final Map<String, Object> inputs)
+      throws Exception
+  {
+    final boolean subscribe = "true".equals(requestParams.getStringParameter("subscribe", "false")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+    // handle parameter feedback (XML) services
+    final Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+    final Element parameters = document.createElement("parameters"); //$NON-NLS-1$
+    document.appendChild(parameters);
+
+    if (reportComponent == null)
+    {
+      reportComponent = new SimpleReportingComponent();
+    }
+    reportComponent.setSession(userSession);
+    reportComponent.setReportDefinitionPath(reportDefinitionPath);
+    reportComponent.setInputs(inputs);
+
+    final MasterReport report = reportComponent.getReport();
+
+    final ParameterContext parameterContext = new DefaultParameterContext(report);
+    // open parameter context
+    parameterContext.open();
+    // apply inputs to parameters
+    reportComponent.applyInputsToReportParameters(report, parameterContext);
+    final FormulaParameterEvaluator formulaParameterEvaluator = new FormulaParameterEvaluator();
+    final ValidationResult postFormulaValidationResult = new ValidationResult();
+    final ReportParameterDefinition reportParameterDefinition = report.getParameterDefinition();
+    final DataRow parameterData = formulaParameterEvaluator.evaluate
+        (postFormulaValidationResult, reportParameterDefinition, parameterContext);
+
+    final ParameterDefinitionEntry[] parameterDefinitions = reportParameterDefinition.getParameterDefinitions();
+    for (final ParameterDefinitionEntry parameter : parameterDefinitions)
+    {
+      final String hiddenVal = parameter.getParameterAttribute
+          (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.HIDDEN, parameterContext);
+      if ("true".equals(hiddenVal))
+      {
+        continue;
+      }
+
+      final Element parameterElement =
+          createParameterElement(subscribe, parameterData, document, parameterContext, parameter);
+
+      parameters.appendChild(parameterElement);
+    }
+
+    final ValidationResult vr = reportParameterDefinition.getValidator().validate
+        (postFormulaValidationResult, reportParameterDefinition, parameterContext);
+    parameters.setAttribute("is-prompt-needed", "" + !vr.isEmpty()); //$NON-NLS-1$ //$NON-NLS-2$
+    parameters.setAttribute("subscribe", "" + subscribe); //$NON-NLS-1$ //$NON-NLS-2$
+
+    // now add output type chooser
+    addOutputParameter(report, parameters, inputs, subscribe);
+
+    final String mimeType = computeMimeType(requestParams);
+
+    // check if pagination is allowed and turned on
+    if (mimeType.equalsIgnoreCase(SimpleReportingComponent.MIME_TYPE_HTML) && vr.isEmpty()
+        && "true".equalsIgnoreCase(requestParams.getStringParameter(SimpleReportingComponent.PAGINATE_OUTPUT, "true"))) //$NON-NLS-1$ //$NON-NLS-2$
+    {
+      final ByteArrayOutputStream dontCareOutputStream = new ByteArrayOutputStream();
+      reportComponent.setOutputStream(dontCareOutputStream);
+      // pagination always uses HTML
+      reportComponent.setOutputType(SimpleReportingComponent.MIME_TYPE_HTML);
+
+      // so that we don't actually produce anything, we'll accept no pages in this mode
+      final int acceptedPage = reportComponent.getAcceptedPage();
+      reportComponent.setAcceptedPage(-1);
+
+      // we can ONLY get the # of pages by asking the report to run
+      if (reportComponent.isPaginateOutput() && reportComponent.validate())
+      {
+        reportComponent.execute();
+        parameters.setAttribute(SimpleReportingComponent.PAGINATE_OUTPUT, "true"); //$NON-NLS-1$
+        parameters.setAttribute("page-count", String.valueOf(reportComponent.getPageCount())); //$NON-NLS-1$ //$NON-NLS-2$
+        // use the saved value (we changed it to -1 for performance)
+        parameters.setAttribute(SimpleReportingComponent.ACCEPTED_PAGE, "" + acceptedPage); //$NON-NLS-1$
+      }
+    }
+
+    final String autoSubmitStr = requestParams.getStringParameter("autoSubmit", "auto");
+    if ("true".equals(autoSubmitStr))
+    {
+      parameters.setAttribute("autoSubmit", "true");
+    }
+    else if ("false".equals(autoSubmitStr))
+    {
+      parameters.setAttribute("autoSubmit", "false");
+    }
+    else
+    {
+      final boolean autoUpdate = Boolean.TRUE.equals
+          (report.getAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.AUTO_SUBMIT_PARAMETER));
+      parameters.setAttribute("autoSubmit", String.valueOf(autoUpdate));
+    }
+
+    // if we're going to attempt to handle subscriptions, add related choices as a parameter
+    if (subscribe)
+    {
+      // add subscription choices, as a parameter (last in list)
+      addSubscriptionParameter(reportDefinitionPath, parameters, inputs);
+    }
+
+    WebServiceUtil.writeDocument(outputStream, document, false);
+    // close parameter context
+    parameterContext.close();
+  }
+
+  private void createSubscribeContent(final OutputStream outputStream,
+                                      final String reportDefinitionPath,
+                                      final IParameterProvider requestParams)
+      throws ResourceException, IOException
+  {
+    if (reportComponent == null)
+    {
+      reportComponent = new SimpleReportingComponent();
+    }
+    reportComponent.setSession(userSession);
+    reportComponent.setReportDefinitionPath(reportDefinitionPath);
+    final MasterReport report = reportComponent.getReport();
+    final ParameterDefinitionEntry parameterDefinitions[] = report.getParameterDefinition().getParameterDefinitions();
+    final String result = saveSubscription(requestParams, parameterDefinitions, reportDefinitionPath, userSession);
+    outputStream.write(result.getBytes());
+    outputStream.flush();
+  }
+
+  private void createDownloadContent(final OutputStream outputStream, final String reportDefinitionPath)
+      throws IOException
+  {
+    final ISolutionRepository repository = PentahoSystem.get(ISolutionRepository.class, userSession);
+    final ISolutionFile file = repository.getSolutionFile(reportDefinitionPath, ISolutionRepository.ACTION_CREATE);
+    final HttpServletResponse response = (HttpServletResponse) parameterProviders.get("path").getParameter("httpresponse"); //$NON-NLS-1$ //$NON-NLS-2$
+
+    // if the user has PERM_CREATE, we'll allow them to pull it for now, this is as relaxed
+    // as I am comfortable with but I can imagine a PERM_READ or PERM_EXECUTE being used
+    // in the future
+    if (repository.hasAccess(file, ISolutionRepository.ACTION_CREATE) ||
+        repository.hasAccess(file, ISolutionRepository.ACTION_UPDATE))
+    {
+      response.setHeader("Content-Disposition", "attach; filename=\"" + file.getFileName() + "\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+      response.setHeader("Content-Description", file.getFileName()); //$NON-NLS-1$
+      response.setDateHeader("Last-Modified", file.getLastModified()); //$NON-NLS-1$
+
+      final byte[] data = file.getData();
+      outputStream.write(data);
+    }
+    else
+    {
+      response.setStatus(HttpServletResponse.SC_FORBIDDEN);
     }
   }
 
@@ -901,7 +952,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
     return log;
   }
 
-  private String getMimeType(final IParameterProvider requestParams)
+  private String computeMimeType(final IParameterProvider requestParams)
   {
     String mimeType = requestParams.getStringParameter(SimpleReportingComponent.OUTPUT_TYPE, null);
     if (StringUtils.isEmpty(mimeType))
@@ -976,7 +1027,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
   public String getMimeType()
   {
     final IParameterProvider requestParams = getRequestParameters();
-    renderMode = RENDER_TYPE.valueOf(requestParams.getStringParameter("renderMode", RENDER_TYPE.REPORT.toString()).toUpperCase()); //$NON-NLS-1$
+    final RENDER_TYPE renderMode = RENDER_TYPE.valueOf(requestParams.getStringParameter("renderMode", RENDER_TYPE.REPORT.toString()).toUpperCase()); //$NON-NLS-1$
     if (renderMode.equals(RENDER_TYPE.XML))
     {
       return "text/xml"; //$NON-NLS-1$
@@ -1003,6 +1054,6 @@ public class ReportContentGenerator extends SimpleContentGenerator
     reportComponent.setSession(userSession);
     reportComponent.setReportDefinitionPath(reportDefinitionPath);
 
-    return getMimeType(requestParams);
+    return computeMimeType(requestParams);
   }
 }
