@@ -32,7 +32,10 @@ import org.pentaho.reporting.platform.plugin.repository.ReportContentRepository;
 public class HTMLOutput
 {
 
-  public static boolean generate(final MasterReport report, final OutputStream outputStream, String contentHandlerPattern, int yieldRate)
+  public static boolean generate(final MasterReport report,
+                                 final OutputStream outputStream,
+                                 final String contentHandlerPattern,
+                                 final int yieldRate)
       throws ReportProcessingException, IOException, ContentIOException
   {
     final IApplicationContext ctx = PentahoSystem.getApplicationContext();
@@ -54,6 +57,10 @@ public class HTMLOutput
       else if (dataDirectory.exists() == false)
       {
         dataDirectory.mkdirs();
+      }
+      if (dataDirectory.exists() == false)
+      {
+        throw new ReportProcessingException("Dead " + dataDirectory.getPath()); //$NON-NLS-1$
       }
 
       final FileRepository dataRepository = new FileRepository(dataDirectory);
@@ -91,12 +98,16 @@ public class HTMLOutput
     return true;
   }
 
-  public static boolean generate(IPentahoSession session, final MasterReport report, final OutputStream outputStream, IContentRepository contentRepository,
-      String contentHandlerPattern, int yieldRate) throws ReportProcessingException, IOException, ContentIOException
+  public static boolean generate(final IPentahoSession session,
+                                 final MasterReport report,
+                                 final OutputStream outputStream,
+                                 final IContentRepository contentRepository,
+                                 final String contentHandlerPattern,
+                                 final int yieldRate) throws ReportProcessingException, IOException, ContentIOException
   {
-    final String reportName = StringUtils.isEmpty(report.getName())?UUIDUtil.getUUIDAsString():report.getName();
+    final String reportName = StringUtils.isEmpty(report.getName()) ? UUIDUtil.getUUIDAsString() : report.getName();
     final String solutionPath = "report-content" + "/" + reportName + "/"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-    final String thePath = solutionPath + session.getId() + "-" + System.currentTimeMillis() ;//$NON-NLS-1$//$NON-NLS-2$
+    final String thePath = solutionPath + session.getId() + "-" + System.currentTimeMillis();//$NON-NLS-1$//$NON-NLS-2$
     final IContentLocation pentahoContentLocation = contentRepository.newContentLocation(thePath, reportName, reportName, solutionPath, true);
 
     final ReportContentRepository repository = new ReportContentRepository(pentahoContentLocation, reportName);
