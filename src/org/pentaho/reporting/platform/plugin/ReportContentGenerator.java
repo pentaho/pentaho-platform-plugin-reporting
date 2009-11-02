@@ -450,8 +450,18 @@ public class ReportContentGenerator extends SimpleContentGenerator
         if (key != null && value != null)
         {
           valueElement.setAttribute("label", String.valueOf(value)); //$NON-NLS-1$ //$NON-NLS-2$
-          valueElement.setAttribute("value", convertParameterValueToString(key, parameter.getValueType())); //$NON-NLS-1$ //$NON-NLS-2$
-          valueElement.setAttribute("type", key.getClass().getName()); //$NON-NLS-1$
+          if (asListParam.isAllowMultiSelection() &&
+              parameter.getValueType().isArray())
+          {
+            valueElement.setAttribute("value", convertParameterValueToString//$NON-NLS-1$
+                (key, parameter.getValueType().getComponentType()));
+            valueElement.setAttribute("type", parameter.getValueType().getComponentType().getName()); //$NON-NLS-1$
+          }
+          else
+          {
+            valueElement.setAttribute("value", convertParameterValueToString(key, parameter.getValueType())); //$NON-NLS-1$ //$NON-NLS-2$
+            valueElement.setAttribute("type", parameter.getValueType().getName()); //$NON-NLS-1$
+          }
         }
       }
     }
@@ -838,19 +848,24 @@ public class ReportContentGenerator extends SimpleContentGenerator
       reportComponent.setReportDefinitionPath(reportDefinitionPath);
       final MasterReport report = reportComponent.getReport();
       final ParameterDefinitionEntry[] parameterDefinitions = report.getParameterDefinition().getParameterDefinitions();
+      final ParameterContext parameterContext = new DefaultParameterContext(report);
       for (final ParameterDefinitionEntry parameter : parameterDefinitions)
       {
-        final ParameterContext parameterContext = new DefaultParameterContext(report);
         final Object defaultValue = parameter.getDefaultValue(parameterContext);
         if (defaultValue != null)
         {
           final IActionSequenceInput input = actionSequenceDocument.createInput(parameter.getName(), ActionSequenceDocument.STRING_TYPE);
           input.setDefaultValue(convertParameterValueToString(defaultValue, parameter.getValueType()));
         }
-        else if (requestParams.getParameter(parameter.getName()) != null)
+        else
         {
-          final IActionSequenceInput input = actionSequenceDocument.createInput(parameter.getName(), ActionSequenceDocument.STRING_TYPE);
-          input.setDefaultValue(requestParams.getParameter(parameter.getName()).toString());
+          final Object paramValue = requestParams.getParameter(parameter.getName());
+          if (paramValue != null)
+          {
+            final IActionSequenceInput input =
+                actionSequenceDocument.createInput(parameter.getName(), ActionSequenceDocument.STRING_TYPE);
+            input.setDefaultValue(convertParameterValueToString(paramValue, parameter.getValueType()));
+          }
         }
         pojoComponent.addInput(parameter.getName(), "string"); //$NON-NLS-1$
       }
