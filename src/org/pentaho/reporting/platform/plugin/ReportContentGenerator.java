@@ -4,12 +4,14 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.Array;
+import java.math.BigDecimal;
 import java.net.URLDecoder;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.parsers.DocumentBuilderFactory;
 
@@ -551,6 +553,11 @@ public class ReportContentGenerator extends SimpleContentGenerator
     if (valueConverter == null)
     {
       return String.valueOf(value);
+    }
+    if (Number.class.isAssignableFrom(type)) 
+    {
+      final ValueConverter numConverter = ConverterRegistry.getInstance().getValueConverter(BigDecimal.class);
+      return numConverter.toAttributeValue(new BigDecimal(String.valueOf(value)));
     }
     return valueConverter.toAttributeValue(value);
   }
