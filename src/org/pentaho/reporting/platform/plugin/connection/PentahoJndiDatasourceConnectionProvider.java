@@ -55,20 +55,20 @@ public class PentahoJndiDatasourceConnectionProvider implements ConnectionProvid
         if (nativeConnection == null) {
           // clear datasource cache
           datasourceService.clearDataSource(datSourceName);
-          throw new SQLException(Messages.getErrorString("PentahoDatasourceConnectionProvider.ERROR_0001_INVALID_CONNECTION", datSourceName)); //$NON-NLS-1$
+          throw new SQLException(Messages.getInstance().getErrorString("PentahoDatasourceConnectionProvider.ERROR_0001_INVALID_CONNECTION", datSourceName)); //$NON-NLS-1$
         }
       } else {
         // clear datasource cache
         datasourceService.clearDataSource(datSourceName);
-        throw new SQLException(Messages.getErrorString("PentahoDatasourceConnectionProvider.ERROR_0001_INVALID_CONNECTION", datSourceName)); //$NON-NLS-1$
+        throw new SQLException(Messages.getInstance().getErrorString("PentahoDatasourceConnectionProvider.ERROR_0001_INVALID_CONNECTION", datSourceName)); //$NON-NLS-1$
       }
     } catch (Exception e) {
       try {
         IDatasourceService datasourceService =  PentahoSystem.getObjectFactory().get(IDatasourceService.class ,null);
         datasourceService.clearDataSource(datSourceName);
-        throw new SQLException(Messages.getErrorString("PentahoDatasourceConnectionProvider.ERROR_0002_UNABLE_TO_FACTORY_OBJECT", datSourceName, e.getLocalizedMessage())); //$NON-NLS-1$
+        throw new SQLException(Messages.getInstance().getErrorString("PentahoDatasourceConnectionProvider.ERROR_0002_UNABLE_TO_FACTORY_OBJECT", datSourceName, e.getLocalizedMessage())); //$NON-NLS-1$
       } catch(ObjectFactoryException objface) {
-        throw new SQLException(Messages.getErrorString("PentahoDatasourceConnectionProvider.ERROR_0002_UNABLE_TO_FACTORY_OBJECT", datSourceName, e.getLocalizedMessage())); //$NON-NLS-1$
+        throw new SQLException(Messages.getInstance().getErrorString("PentahoDatasourceConnectionProvider.ERROR_0002_UNABLE_TO_FACTORY_OBJECT", datSourceName, e.getLocalizedMessage())); //$NON-NLS-1$
       }
     }
     return nativeConnection;

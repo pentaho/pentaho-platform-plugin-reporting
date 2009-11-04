@@ -479,7 +479,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
           return valueConverter.toPropertyValue(valueAsString);
         } catch (BeanException e)
         {
-          throw new RuntimeException(Messages.getString("ReportPlugin.unableToConvertParameter")); //$NON-NLS-1$
+          throw new RuntimeException(Messages.getInstance().getString("ReportPlugin.unableToConvertParameter")); //$NON-NLS-1$
         }
       }
     }
@@ -591,17 +591,17 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   {
     if (reportDefinition == null && reportDefinitionInputStream == null && reportDefinitionPath == null)
     {
-      log.error(Messages.getString("ReportPlugin.reportDefinitionNotProvided")); //$NON-NLS-1$
+      log.error(Messages.getInstance().getString("ReportPlugin.reportDefinitionNotProvided")); //$NON-NLS-1$
       return false;
     }
     if (reportDefinition != null && reportDefinitionPath != null && session == null)
     {
-      log.error(Messages.getString("ReportPlugin.noUserSession")); //$NON-NLS-1$
+      log.error(Messages.getInstance().getString("ReportPlugin.noUserSession")); //$NON-NLS-1$
       return false;
     }
     if (outputStream == null)
     {
-      log.error(Messages.getString("ReportPlugin.outputStreamRequired")); //$NON-NLS-1$
+      log.error(Messages.getInstance().getString("ReportPlugin.outputStreamRequired")); //$NON-NLS-1$
       return false;
     }
     return true;
@@ -691,7 +691,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       }
     } catch (Throwable t)
     {
-      log.error(Messages.getString("ReportPlugin.executionFailed"), t); //$NON-NLS-1$
+      log.error(Messages.getInstance().getString("ReportPlugin.executionFailed"), t); //$NON-NLS-1$
     }
     // lets not pretend we were successfull, if the export type was not a valid one.
     return false;

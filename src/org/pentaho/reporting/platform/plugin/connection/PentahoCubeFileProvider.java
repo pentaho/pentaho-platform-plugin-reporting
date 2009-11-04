@@ -41,7 +41,7 @@ public class PentahoCubeFileProvider extends DefaultCubeFileProvider
     final String superDef = getDefinedFile();
     if (superDef == null)
     {
-      throw new ReportDataFactoryException(Messages.getString("ReportPlugin.noSchemaDefined")); //$NON-NLS-1$
+      throw new ReportDataFactoryException(Messages.getInstance().getString("ReportPlugin.noSchemaDefined")); //$NON-NLS-1$
     }
 
     final File cubeFile = new File(superDef);

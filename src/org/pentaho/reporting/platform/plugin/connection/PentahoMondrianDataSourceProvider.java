@@ -41,7 +41,7 @@ public class PentahoMondrianDataSourceProvider implements DataSourceProvider
       {
         // clear datasource cache
         datasourceService.clearDataSource(dataSourceName);
-        throw new SQLException(Messages.getErrorString("PentahoDatasourceConnectionProvider.ERROR_0001_INVALID_CONNECTION", dataSourceName)); //$NON-NLS-1$
+        throw new SQLException(Messages.getInstance().getErrorString("PentahoDatasourceConnectionProvider.ERROR_0001_INVALID_CONNECTION", dataSourceName)); //$NON-NLS-1$
       }
     }
     catch (Exception e)
@@ -50,11 +50,11 @@ public class PentahoMondrianDataSourceProvider implements DataSourceProvider
       {
         IDatasourceService datasourceService = PentahoSystem.getObjectFactory().get(IDatasourceService.class, null);
         datasourceService.clearDataSource(dataSourceName);
-        throw new SQLException(Messages.getErrorString("PentahoDatasourceConnectionProvider.ERROR_0002_UNABLE_TO_FACTORY_OBJECT", dataSourceName, e.getLocalizedMessage())); //$NON-NLS-1$
+        throw new SQLException(Messages.getInstance().getErrorString("PentahoDatasourceConnectionProvider.ERROR_0002_UNABLE_TO_FACTORY_OBJECT", dataSourceName, e.getLocalizedMessage())); //$NON-NLS-1$
       }
       catch (ObjectFactoryException objface)
       {
-        throw new SQLException(Messages.getErrorString("PentahoDatasourceConnectionProvider.ERROR_0002_UNABLE_TO_FACTORY_OBJECT", dataSourceName, e.getLocalizedMessage())); //$NON-NLS-1$
+        throw new SQLException(Messages.getInstance().getErrorString("PentahoDatasourceConnectionProvider.ERROR_0002_UNABLE_TO_FACTORY_OBJECT", dataSourceName, e.getLocalizedMessage())); //$NON-NLS-1$
       }
     }
   }

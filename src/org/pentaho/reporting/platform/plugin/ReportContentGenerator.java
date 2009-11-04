@@ -228,7 +228,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
         final HttpServletResponse response = (HttpServletResponse) parameterProviders.get("path").getParameter("httpresponse"); //$NON-NLS-1$ //$NON-NLS-2$
         response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
       }
-      outputStream.write(org.pentaho.reporting.platform.plugin.messages.Messages.getString("ReportPlugin.ReportValidationFailed").getBytes()); //$NON-NLS-1$
+      outputStream.write(org.pentaho.reporting.platform.plugin.messages.Messages.getInstance().getString("ReportPlugin.ReportValidationFailed").getBytes()); //$NON-NLS-1$
       outputStream.flush();
     }
   }
@@ -412,7 +412,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
     parameterElement.setAttribute("parameter-group", "parameters"); //$NON-NLS-1$ //$NON-NLS-2$
     if (subscribe)
     {
-      parameterElement.setAttribute("parameter-group-label", org.pentaho.reporting.platform.plugin.messages.Messages.getString("ReportPlugin.ReportParameters")); //$NON-NLS-1$ //$NON-NLS-2$
+      parameterElement.setAttribute("parameter-group-label", org.pentaho.reporting.platform.plugin.messages.Messages.getInstance().getString("ReportPlugin.ReportParameters")); //$NON-NLS-1$ //$NON-NLS-2$
     }
     parameterElement.setAttribute("type", parameter.getValueType().getName()); //$NON-NLS-1$
     parameterElement.setAttribute("is-mandatory", "" + parameter.isMandatory()); //$NON-NLS-1$ //$NON-NLS-2$
@@ -709,9 +709,9 @@ public class ReportContentGenerator extends SimpleContentGenerator
     final Element reportNameParameter = document.createElement("parameter"); //$NON-NLS-1$
     parameters.appendChild(reportNameParameter);
     reportNameParameter.setAttribute("name", "subscription-name"); //$NON-NLS-1$ //$NON-NLS-2$
-    reportNameParameter.setAttribute("label", org.pentaho.reporting.platform.plugin.messages.Messages.getString("ReportPlugin.ReportName")); //$NON-NLS-1$ //$NON-NLS-2$
+    reportNameParameter.setAttribute("label", org.pentaho.reporting.platform.plugin.messages.Messages.getInstance().getString("ReportPlugin.ReportName")); //$NON-NLS-1$ //$NON-NLS-2$
     reportNameParameter.setAttribute("parameter-group", "subscription"); //$NON-NLS-1$ //$NON-NLS-2$
-    reportNameParameter.setAttribute("parameter-group-label", org.pentaho.reporting.platform.plugin.messages.Messages.getString("ReportPlugin.ReportSchedulingOptions")); //$NON-NLS-1$ //$NON-NLS-2$
+    reportNameParameter.setAttribute("parameter-group-label", org.pentaho.reporting.platform.plugin.messages.Messages.getInstance().getString("ReportPlugin.ReportSchedulingOptions")); //$NON-NLS-1$ //$NON-NLS-2$
     reportNameParameter.setAttribute("type", "java.lang.String"); //$NON-NLS-1$ //$NON-NLS-2$
     reportNameParameter.setAttribute("is-mandatory", "true"); //$NON-NLS-1$ //$NON-NLS-2$
     reportNameParameter.setAttribute("is-multi-select", "false"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -740,9 +740,9 @@ public class ReportContentGenerator extends SimpleContentGenerator
     final Element subscriptionIdElement = document.createElement("parameter"); //$NON-NLS-1$
     parameters.appendChild(subscriptionIdElement);
     subscriptionIdElement.setAttribute("name", "schedule-id"); //$NON-NLS-1$ //$NON-NLS-2$
-    subscriptionIdElement.setAttribute("label", org.pentaho.reporting.platform.plugin.messages.Messages.getString("ReportPlugin.Subscription")); //$NON-NLS-1$ //$NON-NLS-2$
+    subscriptionIdElement.setAttribute("label", org.pentaho.reporting.platform.plugin.messages.Messages.getInstance().getString("ReportPlugin.Subscription")); //$NON-NLS-1$ //$NON-NLS-2$
     subscriptionIdElement.setAttribute("parameter-group", "subscription"); //$NON-NLS-1$ //$NON-NLS-2$
-    subscriptionIdElement.setAttribute("parameter-group-label", org.pentaho.reporting.platform.plugin.messages.Messages.getString("ReportPlugin.ScheduleReport")); //$NON-NLS-1$ //$NON-NLS-2$
+    subscriptionIdElement.setAttribute("parameter-group-label", org.pentaho.reporting.platform.plugin.messages.Messages.getInstance().getString("ReportPlugin.ScheduleReport")); //$NON-NLS-1$ //$NON-NLS-2$
     subscriptionIdElement.setAttribute("type", "java.lang.String"); //$NON-NLS-1$ //$NON-NLS-2$
     subscriptionIdElement.setAttribute("is-mandatory", "true"); //$NON-NLS-1$ //$NON-NLS-2$
     subscriptionIdElement.setAttribute("is-multi-select", "false"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -806,11 +806,11 @@ public class ReportContentGenerator extends SimpleContentGenerator
     final Element parameterOutputElement = document.createElement("parameter"); //$NON-NLS-1$
     parameters.appendChild(parameterOutputElement);
     parameterOutputElement.setAttribute("name", SimpleReportingComponent.OUTPUT_TYPE); //$NON-NLS-1$
-    parameterOutputElement.setAttribute("label", org.pentaho.reporting.platform.plugin.messages.Messages.getString("ReportPlugin.OutputType")); //$NON-NLS-1$ //$NON-NLS-2$
+    parameterOutputElement.setAttribute("label", org.pentaho.reporting.platform.plugin.messages.Messages.getInstance().getString("ReportPlugin.OutputType")); //$NON-NLS-1$ //$NON-NLS-2$
     parameterOutputElement.setAttribute("parameter-group", "parameters"); //$NON-NLS-1$ //$NON-NLS-2$
     if (subscribe)
     {
-      parameterOutputElement.setAttribute("parameter-group-label", org.pentaho.reporting.platform.plugin.messages.Messages.getString("ReportPlugin.ReportParameters")); //$NON-NLS-1$ //$NON-NLS-2$
+      parameterOutputElement.setAttribute("parameter-group-label", org.pentaho.reporting.platform.plugin.messages.Messages.getInstance().getString("ReportPlugin.ReportParameters")); //$NON-NLS-1$ //$NON-NLS-2$
     }
     parameterOutputElement.setAttribute("type", "java.lang.String"); //$NON-NLS-1$ //$NON-NLS-2$
     parameterOutputElement.setAttribute("is-mandatory", "true"); //$NON-NLS-1$ //$NON-NLS-2$
