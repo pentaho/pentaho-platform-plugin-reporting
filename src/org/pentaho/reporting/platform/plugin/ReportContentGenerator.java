@@ -623,7 +623,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
 
     if ((userSession == null) || (userSession.getName() == null))
     {
-      return Messages.getString("SubscriptionHelper.USER_LOGIN_NEEDED"); //$NON-NLS-1$
+      return Messages.getInstance().getString("SubscriptionHelper.USER_LOGIN_NEEDED"); //$NON-NLS-1$
     }
 
     final String subscriptionName = (String) parameterProvider.getParameter("subscription-name"); //$NON-NLS-1$
@@ -636,14 +636,14 @@ public class ReportContentGenerator extends SimpleContentGenerator
       final boolean isUniqueName = subscriptionRepository.checkUniqueSubscriptionName(subscriptionName, userSession.getName(), actionReference);
       if (!isUniqueName)
       {
-        return Messages.getString("SubscriptionHelper.USER_SUBSCRIPTION_NAME_ALREADY_EXISTS", subscriptionName); //$NON-NLS-1$
+        return Messages.getInstance().getString("SubscriptionHelper.USER_SUBSCRIPTION_NAME_ALREADY_EXISTS", subscriptionName); //$NON-NLS-1$
       }
     }
 
     final ISubscribeContent content = subscriptionRepository.getContentByActionReference(actionReference);
     if (content == null)
     {
-      return (Messages.getString("SubscriptionHelper.ACTION_SEQUENCE_NOT_ALLOWED", parameterProvider.getStringParameter("name", ""))); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+      return (Messages.getInstance().getString("SubscriptionHelper.ACTION_SEQUENCE_NOT_ALLOWED", parameterProvider.getStringParameter("name", ""))); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     }
 
     final HashMap<String, Object> parameters = new HashMap<String, Object>();
@@ -690,12 +690,12 @@ public class ReportContentGenerator extends SimpleContentGenerator
 
     if (subscriptionRepository.addSubscription(subscription))
     {
-      return Messages.getString("SubscriptionHelper.USER_SUBSCRIPTION_CREATED"); //$NON-NLS-1$
+      return Messages.getInstance().getString("SubscriptionHelper.USER_SUBSCRIPTION_CREATED"); //$NON-NLS-1$
     }
     else
     {
       // TODO log an error
-      return Messages.getString("SubscriptionHelper.USER_SUBSCRIPTION_NOT_CREATE"); //$NON-NLS-1$
+      return Messages.getInstance().getString("SubscriptionHelper.USER_SUBSCRIPTION_NOT_CREATE"); //$NON-NLS-1$
     }
   }
 
