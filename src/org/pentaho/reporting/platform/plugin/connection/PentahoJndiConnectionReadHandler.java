@@ -27,17 +27,20 @@ import org.xml.sax.SAXException;
 
 /**
  * @author wseyler
- *
  */
-public class PentahoJndiConnectionReadHandler extends AbstractXmlReadHandler implements ConnectionReadHandler {
+public class PentahoJndiConnectionReadHandler extends AbstractXmlReadHandler implements ConnectionReadHandler
+{
 
   private ConnectionProvider connectionProvider;
-  private StringReadHandler jndiNameReadHandler;
-  
+  private StringReadHandler pathReadHandler;
+  private StringReadHandler usernameReadHandler;
+  private StringReadHandler passwordReadHandler;
+
   /*
-   * Default constructor
-   */
-  public PentahoJndiConnectionReadHandler() {
+  * Default constructor
+  */
+  public PentahoJndiConnectionReadHandler()
+  {
     super();
   }
 
@@ -59,10 +62,20 @@ public class PentahoJndiConnectionReadHandler extends AbstractXmlReadHandler imp
     {
       return null;
     }
-    if ("path".equals(tagName)) //$NON-NLS-1$
+    if ("path".equals(tagName))
     {
-      jndiNameReadHandler = new StringReadHandler();
-      return jndiNameReadHandler;
+      pathReadHandler = new StringReadHandler();
+      return pathReadHandler;
+    }
+    if ("username".equals(tagName))
+    {
+      usernameReadHandler = new StringReadHandler();
+      return usernameReadHandler;
+    }
+    if ("password".equals(tagName))
+    {
+      passwordReadHandler = new StringReadHandler();
+      return passwordReadHandler;
     }
     return null;
   }
@@ -75,8 +88,17 @@ public class PentahoJndiConnectionReadHandler extends AbstractXmlReadHandler imp
   protected void doneParsing() throws SAXException
   {
     final PentahoJndiDatasourceConnectionProvider provider = new PentahoJndiDatasourceConnectionProvider();
-    if (jndiNameReadHandler != null) {
-      provider.setJndiName(jndiNameReadHandler.getResult());
+    if (pathReadHandler != null)
+    {
+      provider.setJndiName(pathReadHandler.getResult());
+    }
+    if (usernameReadHandler != null)
+    {
+      provider.setUsername(usernameReadHandler.getResult());
+    }
+    if (passwordReadHandler != null)
+    {
+      provider.setPassword(passwordReadHandler.getResult());
     }
     this.connectionProvider = provider;
   }
@@ -84,14 +106,16 @@ public class PentahoJndiConnectionReadHandler extends AbstractXmlReadHandler imp
   /* (non-Javadoc)
    * @see org.jfree.report.modules.parser.sql.ConnectionReadHandler#getProvider()
    */
-  public ConnectionProvider getProvider() {
+  public ConnectionProvider getProvider()
+  {
     return connectionProvider;
   }
 
   /* (non-Javadoc)
    * @see org.jfree.xmlns.parser.XmlReadHandler#getObject()
    */
-  public Object getObject() throws SAXException {
+  public Object getObject() throws SAXException
+  {
     return connectionProvider;
   }
 

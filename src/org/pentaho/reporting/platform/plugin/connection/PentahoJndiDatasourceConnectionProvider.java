@@ -18,7 +18,6 @@ package org.pentaho.reporting.platform.plugin.connection;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-
 import javax.sql.DataSource;
 
 import org.pentaho.platform.api.data.IDatasourceService;
@@ -28,64 +27,131 @@ import org.pentaho.reporting.engine.classic.core.modules.misc.datafactory.sql.Co
 
 /**
  * @author wseyler
- *
  */
-public class PentahoJndiDatasourceConnectionProvider implements ConnectionProvider {
-
-  private String datSourceName;
-
+public class PentahoJndiDatasourceConnectionProvider implements ConnectionProvider
+{
+  private String jndiName;
+  private String username;
+  private String password;
   /*
    * Default constructor
    */
-  public PentahoJndiDatasourceConnectionProvider() {
+  public PentahoJndiDatasourceConnectionProvider()
+  {
     super();
   }
 
 
-  /* (non-Javadoc)
-   * @see org.pentaho.reporting.engine.classic.core.modules.misc.datafactory.sql.ConnectionProvider#getConnection()
-   */
-  public Connection getConnection() throws SQLException {
-    Connection nativeConnection = null;
-    try {
-      final IDatasourceService datasourceService =  PentahoSystem.getObjectFactory().get(IDatasourceService.class ,null);
-      final DataSource dataSource = datasourceService.getDataSource(datSourceName);      
-      if (dataSource != null) {
-        nativeConnection = dataSource.getConnection();
-        if (nativeConnection == null) {
-          // clear datasource cache
-          datasourceService.clearDataSource(datSourceName);
-          throw new SQLException(Messages.getInstance().getErrorString("PentahoDatasourceConnectionProvider.ERROR_0001_INVALID_CONNECTION", datSourceName)); //$NON-NLS-1$
-        }
-      } else {
-        // clear datasource cache
-        datasourceService.clearDataSource(datSourceName);
-        throw new SQLException(Messages.getInstance().getErrorString("PentahoDatasourceConnectionProvider.ERROR_0001_INVALID_CONNECTION", datSourceName)); //$NON-NLS-1$
-      }
-    } catch (Exception e) {
-      try {
-        IDatasourceService datasourceService =  PentahoSystem.getObjectFactory().get(IDatasourceService.class ,null);
-        datasourceService.clearDataSource(datSourceName);
-        throw new SQLException(Messages.getInstance().getErrorString("PentahoDatasourceConnectionProvider.ERROR_0002_UNABLE_TO_FACTORY_OBJECT", datSourceName, e.getLocalizedMessage())); //$NON-NLS-1$
-      } catch(ObjectFactoryException objface) {
-        throw new SQLException(Messages.getInstance().getErrorString("PentahoDatasourceConnectionProvider.ERROR_0002_UNABLE_TO_FACTORY_OBJECT", datSourceName, e.getLocalizedMessage())); //$NON-NLS-1$
-      }
-    }
-    return nativeConnection;
-  }
-
-  public String getJndiName() {
-    return datSourceName;
-  }
-
   /**
-   * @param result
+   * Although named getConnection() this method should always return a new connection when being queried or should wrap
+   * the connection in a way so that calls to "close()" on that connection do not prevent subsequent calls to this
+   * method to fail.
+   *
+   * @return
+   * @throws java.sql.SQLException
    */
-  public void setJndiName(String jndiName) {
-    int seperatorIndex = jndiName.lastIndexOf('\\');
-    if (seperatorIndex != -1) {
-      jndiName = jndiName.substring(seperatorIndex+1);
+  public Connection createConnection(final String user, final String password) throws SQLException
+  {
+    try
+    {
+      final IDatasourceService datasourceService = PentahoSystem.getObjectFactory().get(IDatasourceService.class, null);
+      final DataSource dataSource = datasourceService.getDataSource(jndiName);
+      if (dataSource != null)
+      {
+        final String realUser;
+        final String realPassword;
+        if (username != null)
+        {
+          realUser = username;
+        }
+        else
+        {
+          realUser = user;
+        }
+        if (this.password != null)
+        {
+          realPassword = this.password;
+        }
+        else
+        {
+          realPassword = password;
+        }
+
+        if (realUser == null)
+        {
+          final Connection connection = dataSource.getConnection();
+          if (connection == null)
+          {
+            datasourceService.clearDataSource(jndiName);
+            throw new SQLException(Messages.getInstance().getErrorString("PentahoDatasourceConnectionProvider.ERROR_0001_INVALID_CONNECTION", jndiName)); //$NON-NLS-1$
+          }
+          return connection;
+        }
+
+        final Connection connection = dataSource.getConnection(realUser, realPassword);
+        if (connection == null)
+        {
+          throw new SQLException("JNDI DataSource is invalid; it returned null without throwing a meaningful error.");
+        }
+
+        final Connection nativeConnection = dataSource.getConnection();
+        if (nativeConnection == null)
+        {
+          // clear datasource cache
+          datasourceService.clearDataSource(jndiName);
+          throw new SQLException(Messages.getInstance().getErrorString("PentahoDatasourceConnectionProvider.ERROR_0001_INVALID_CONNECTION", jndiName)); //$NON-NLS-1$
+        }
+        return nativeConnection;
+      }
+      else
+      {
+        // clear datasource cache
+        datasourceService.clearDataSource(jndiName);
+        throw new SQLException(Messages.getInstance().getErrorString("PentahoDatasourceConnectionProvider.ERROR_0001_INVALID_CONNECTION", jndiName)); //$NON-NLS-1$
+      }
     }
-    datSourceName = jndiName.trim();
+    catch (Exception e)
+    {
+      try
+      {
+        final IDatasourceService datasourceService = PentahoSystem.getObjectFactory().get(IDatasourceService.class, null);
+        datasourceService.clearDataSource(jndiName);
+        throw new SQLException(Messages.getInstance().getErrorString("PentahoDatasourceConnectionProvider.ERROR_0002_UNABLE_TO_FACTORY_OBJECT", jndiName, e.getLocalizedMessage())); //$NON-NLS-1$
+      }
+      catch (ObjectFactoryException objface)
+      {
+        throw new SQLException(Messages.getInstance().getErrorString("PentahoDatasourceConnectionProvider.ERROR_0002_UNABLE_TO_FACTORY_OBJECT", jndiName, e.getLocalizedMessage())); //$NON-NLS-1$
+      }
+    }
+  }
+
+  public String getJndiName()
+  {
+    return jndiName;
+  }
+
+  public void setJndiName(final String jndiName)
+  {
+    this.jndiName = jndiName;
+  }
+
+  public String getUsername()
+  {
+    return username;
+  }
+
+  public void setUsername(final String username)
+  {
+    this.username = username;
+  }
+
+  public String getPassword()
+  {
+    return password;
+  }
+
+  public void setPassword(final String password)
+  {
+    this.password = password;
   }
 }
