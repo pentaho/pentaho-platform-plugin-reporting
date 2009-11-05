@@ -28,10 +28,10 @@
 		<dependency org="${ivy.artifact.group}" name="pentaho-reporting-engine-classic-extensions-pmd" rev="${dependency.pentaho-reporting.revision}" transitive="true" changing="true" />
 
         <!--  Codegen dependencies -->
-        <dependency org="com.google.gwt" name="gwt-user" rev="1.6.4"                         conf="codegen->default"/>
-        <dependency org="com.google.gwt" name="gwt-dev"  rev="1.6.4" m:classifier="mac"      conf="codegen-mac->default"/>
-        <dependency org="com.google.gwt" name="gwt-dev"  rev="1.6.4" m:classifier="windows"  conf="codegen-win->default"/>
-        <dependency org="com.google.gwt" name="gwt-dev"  rev="1.6.4" m:classifier="linux"    conf="codegen-linux->default"/>
+        <dependency org="com.google.gwt" name="gwt-user" rev="1.7.0"                         conf="codegen->default"/>
+        <dependency org="com.google.gwt" name="gwt-dev"  rev="1.7.0" m:classifier="mac"      conf="codegen-mac->default"/>
+        <dependency org="com.google.gwt" name="gwt-dev"  rev="1.7.0" m:classifier="windows"  conf="codegen-win->default"/>
+        <dependency org="com.google.gwt" name="gwt-dev"  rev="1.7.0" m:classifier="linux"    conf="codegen-linux->default"/>
 		<dependency org="pentaho" name="pentaho-gwt-widgets" rev="${dependency.pentaho-gwt-widgets.revision}" conf="codegen->default" changing="true">
 			<artifact name="pentaho-gwt-widgets"/>
 			<artifact name="pentaho-gwt-widgets" type="source" ext="jar" m:classifier="sources"/>
