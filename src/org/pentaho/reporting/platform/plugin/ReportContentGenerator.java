@@ -214,7 +214,6 @@ public class ReportContentGenerator extends SimpleContentGenerator
         response.setHeader("Content-Description", file.getFileName()); //$NON-NLS-1$
         response.setHeader("Pragma", "no-cache");
         response.setHeader("Cache-Control", "no-cache");
-        response.setDateHeader("Expires", 0);
       }
 
       outputStream.write(reportOutput.toByteArray());
