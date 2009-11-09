@@ -10,6 +10,7 @@ import org.pentaho.platform.api.repository.IContentLocation;
 import org.pentaho.platform.api.repository.IContentRepository;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.util.UUIDUtil;
+import org.pentaho.reporting.engine.classic.core.AttributeNames;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
 import org.pentaho.reporting.engine.classic.core.layout.output.YieldReportListener;
@@ -45,7 +46,8 @@ public class HTMLOutput
     final NameGenerator dataNameGenerator;
     if (ctx != null)
     {
-      File dataDirectory = new File(ctx.getFileOutputPath("system/tmp/"));//$NON-NLS-1$
+      String name = (String)report.getAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.NAME);
+      File dataDirectory = new File(ctx.getFileOutputPath("system/tmp/" + name + "/"));//$NON-NLS-1$
       if (dataDirectory.exists() && (dataDirectory.isDirectory() == false))
       {
         dataDirectory = dataDirectory.getParentFile();
