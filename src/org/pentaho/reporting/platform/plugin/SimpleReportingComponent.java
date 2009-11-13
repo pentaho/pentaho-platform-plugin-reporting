@@ -467,20 +467,26 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
 
     if (targetType.equals(Date.class))
     {
-      return new Date(new Long(valueAsString));
-    }
-    else
-    {
-      final ValueConverter valueConverter = ConverterRegistry.getInstance().getValueConverter(targetType);
-      if (valueConverter != null)
+      try
       {
-        try
-        {
-          return valueConverter.toPropertyValue(valueAsString);
-        } catch (BeanException e)
-        {
-          throw new RuntimeException(Messages.getInstance().getString("ReportPlugin.unableToConvertParameter")); //$NON-NLS-1$
-        }
+        return new Date(new Long(valueAsString));
+      }
+      catch (NumberFormatException nfe)
+      {
+        // ignore, we try to parse it as real date now ..
+      }
+    }
+
+    final ValueConverter valueConverter = ConverterRegistry.getInstance().getValueConverter(targetType);
+    if (valueConverter != null)
+    {
+      try
+      {
+        return valueConverter.toPropertyValue(valueAsString);
+      }
+      catch (BeanException e)
+      {
+        throw new RuntimeException(Messages.getInstance().getString("ReportPlugin.unableToConvertParameter")); //$NON-NLS-1$
       }
     }
     return rawValue;
