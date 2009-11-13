@@ -1,13 +1,16 @@
 package org.pentaho.reporting.platform.plugin;
 
+import java.io.IOException;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import javax.activation.DataHandler;
 import javax.mail.AuthenticationFailedException;
 import javax.mail.Authenticator;
 import javax.mail.Message;
+import javax.mail.MessagingException;
 import javax.mail.Multipart;
 import javax.mail.PasswordAuthentication;
 import javax.mail.SendFailedException;
@@ -18,6 +21,7 @@ import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
 
+import javax.mail.util.ByteArrayDataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
@@ -33,8 +37,7 @@ import org.pentaho.reporting.platform.plugin.messages.Messages;
  *
  * @author Pedro Alves - WebDetails
  */
-public class SimpleEmailComponent implements IAcceptsRuntimeInputs
-{
+public class SimpleEmailComponent implements IAcceptsRuntimeInputs {
 
   /**
    * The logging for logging messages from this component
@@ -70,155 +73,125 @@ public class SimpleEmailComponent implements IAcceptsRuntimeInputs
   private String attachmentName3;
 
   /*
-  * Default constructor
-  */
-  public SimpleEmailComponent()
-  {
+   * Default constructor
+   */
+  public SimpleEmailComponent() {
   }
 
   // ----------------------------------------------------------------------------
   // BEGIN BEAN METHODS
   // ----------------------------------------------------------------------------
-  public String getBcc()
-  {
+  public String getBcc() {
     return bcc;
   }
 
-  public void setBcc(final String bcc)
-  {
+  public void setBcc(final String bcc) {
     this.bcc = bcc;
   }
 
-  public String getCc()
-  {
+  public String getCc() {
     return cc;
   }
 
-  public void setCc(final String cc)
-  {
+  public void setCc(final String cc) {
     this.cc = cc;
   }
 
-  public String getFrom()
-  {
+  public String getFrom() {
     return from;
   }
 
-  public void setFrom(final String from)
-  {
+  public void setFrom(final String from) {
     this.from = from;
   }
 
-  public String getSubject()
-  {
+  public String getSubject() {
     return subject;
   }
 
-  public void setSubject(final String subject)
-  {
+  public void setSubject(final String subject) {
     this.subject = subject;
   }
 
-  public String getTo()
-  {
+  public String getTo() {
     return to;
   }
 
-  public void setTo(final String to)
-  {
+  public void setTo(final String to) {
     this.to = to;
   }
 
-  public String getMessageHtml()
-  {
+  public String getMessageHtml() {
     return messageHtml;
   }
 
-  public void setMessageHtml(final String messageHtml)
-  {
+  public void setMessageHtml(final String messageHtml) {
     this.messageHtml = messageHtml;
   }
 
-  public String getMessagePlain()
-  {
+  public String getMessagePlain() {
     return messagePlain;
   }
 
-  public void setMessagePlain(final String messagePlain)
-  {
+  public void setMessagePlain(final String messagePlain) {
     this.messagePlain = messagePlain;
   }
 
-  public IContentItem getMimeMessage()
-  {
+  public IContentItem getMimeMessage() {
     return mimeMessage;
   }
 
-  public void setMimeMessage(final IContentItem mimeMessage)
-  {
+  public void setMimeMessage(final IContentItem mimeMessage) {
     this.mimeMessage = mimeMessage;
   }
 
-  public IContentItem getAttachmentContent()
-  {
+  public IContentItem getAttachmentContent() {
     return attachmentContent;
   }
 
-  public void setAttachmentContent(final IContentItem attachmentContent)
-  {
+  public void setAttachmentContent(final IContentItem attachmentContent) {
     this.attachmentContent = attachmentContent;
   }
 
-  public String getAttachmentName()
-  {
+  public String getAttachmentName() {
     return attachmentName;
   }
 
-  public void setAttachmentName(final String attachmentName)
-  {
+  public void setAttachmentName(final String attachmentName) {
     this.attachmentName = attachmentName;
   }
 
-  public IContentItem getAttachmentContent2()
-  {
+  public IContentItem getAttachmentContent2() {
     return attachmentContent2;
   }
 
-  public void setAttachmentContent2(final IContentItem attachmentContent2)
-  {
+  public void setAttachmentContent2(final IContentItem attachmentContent2) {
     this.attachmentContent2 = attachmentContent2;
   }
 
-  public IContentItem getAttachmentContent3()
-  {
+  public IContentItem getAttachmentContent3() {
     return attachmentContent3;
   }
 
-  public void setAttachmentContent3(final IContentItem attachmentContent3)
-  {
+  public void setAttachmentContent3(final IContentItem attachmentContent3) {
     this.attachmentContent3 = attachmentContent3;
   }
 
-  public String getAttachmentName2()
-  {
+  public String getAttachmentName2() {
     return attachmentName2;
   }
 
-  public void setAttachmentName2(final String attachmentName2)
-  {
+  public void setAttachmentName2(final String attachmentName2) {
     this.attachmentName2 = attachmentName2;
   }
 
-  public String getAttachmentName3()
-  {
+  public String getAttachmentName3() {
     return attachmentName3;
   }
 
-  public void setAttachmentName3(final String attachmentName3)
-  {
+  public void setAttachmentName3(final String attachmentName3) {
     this.attachmentName3 = attachmentName3;
   }
-
   private IContentItem attachmentContent3;
 
   /**
@@ -226,8 +199,7 @@ public class SimpleEmailComponent implements IAcceptsRuntimeInputs
    *
    * @param outputType the desired output type (mime-type) for the report engine to generate
    */
-  public void setOutputType(final String outputType)
-  {
+  public void setOutputType(final String outputType) {
     this.outputType = outputType;
   }
 
@@ -236,8 +208,7 @@ public class SimpleEmailComponent implements IAcceptsRuntimeInputs
    *
    * @return the current output type for the report
    */
-  public String getOutputType()
-  {
+  public String getOutputType() {
     return outputType;
   }
 
@@ -247,41 +218,32 @@ public class SimpleEmailComponent implements IAcceptsRuntimeInputs
    *
    * @param inputs a Map containing inputs
    */
-  public void setInputs(final Map<String, Object> inputs)
-  {
+  public void setInputs(final Map<String, Object> inputs) {
     this.inputs = inputs;
 
 
-    if (inputs.containsKey(INPUT_FROM))
-    {
+    if (inputs.containsKey(INPUT_FROM)) {
       setFrom((String) inputs.get(INPUT_FROM));
     }
-    if (inputs.containsKey(INPUT_TO))
-    {
+    if (inputs.containsKey(INPUT_TO)) {
       setTo((String) inputs.get(INPUT_TO));
     }
-    if (inputs.containsKey(INPUT_CC))
-    {
+    if (inputs.containsKey(INPUT_CC)) {
       setCc((String) inputs.get(INPUT_CC));
     }
-    if (inputs.containsKey(INPUT_BCC))
-    {
+    if (inputs.containsKey(INPUT_BCC)) {
       setBcc((String) inputs.get(INPUT_BCC));
     }
-    if (inputs.containsKey(INPUT_SUBJECT))
-    {
+    if (inputs.containsKey(INPUT_SUBJECT)) {
       setSubject((String) inputs.get(INPUT_SUBJECT));
     }
-    if (inputs.containsKey(INPUT_MESSAGEPLAIN))
-    {
+    if (inputs.containsKey(INPUT_MESSAGEPLAIN)) {
       setMessagePlain((String) inputs.get(INPUT_MESSAGEPLAIN));
     }
-    if (inputs.containsKey(INPUT_MESSAGEHTML))
-    {
+    if (inputs.containsKey(INPUT_MESSAGEHTML)) {
       setMessageHtml((String) inputs.get(INPUT_MESSAGEHTML));
     }
-    if (inputs.containsKey(INPUT_MIMEMESSAGE))
-    {
+    if (inputs.containsKey(INPUT_MIMEMESSAGE)) {
       setMimeMessage((IContentItem) inputs.get(INPUT_MIMEMESSAGE));
     }
   }
@@ -289,13 +251,10 @@ public class SimpleEmailComponent implements IAcceptsRuntimeInputs
   // ----------------------------------------------------------------------------
   // END BEAN METHODS
   // ----------------------------------------------------------------------------
-  protected Object getInput(final String key, final Object defaultValue)
-  {
-    if (inputs != null)
-    {
+  protected Object getInput(final String key, final Object defaultValue) {
+    if (inputs != null) {
       final Object input = inputs.get(key);
-      if (input != null)
-      {
+      if (input != null) {
         return input;
       }
     }
@@ -312,26 +271,22 @@ public class SimpleEmailComponent implements IAcceptsRuntimeInputs
    * @return true if valid
    * @throws Exception
    */
-  public boolean validate() throws Exception
-  {
+  public boolean validate() throws Exception {
 
 
     boolean result = true;
 
-    if (getTo() == null)
-    {
+    if (getTo() == null) {
       log.error(Messages.getInstance().getString("ReportPlugin.emailToNotProvided")); //$NON-NLS-1$
       return false;
 
     }
-    else if (getFrom() == null)
-    {
+    else if (getFrom() == null) {
       log.error(Messages.getInstance().getString("ReportPlugin.emailFromNotProvided")); //$NON-NLS-1$
       return false;
 
     }
-    else if ((getMessagePlain() == null) && (getMessageHtml() == null) && (getMimeMessage() == null))
-    {
+    else if ((getMessagePlain() == null) && (getMessageHtml() == null) && (getMimeMessage() == null)) {
       log.error(Messages.getInstance().getString("ReportPlugin.emailContentNotProvided")); //$NON-NLS-1$
       result = false;
     }
@@ -343,176 +298,42 @@ public class SimpleEmailComponent implements IAcceptsRuntimeInputs
   /**
    * Perform the primary function of this component, this is, to execute. This method will be invoked immediately following a successful validate().
    *
+   * This method has 2 ways of working:
+   *
+   * 1. You supply a mimeMessage: That mimeMessage will be sent;
+   * Optionally, contents will be added as attachment and the original
+   * mimeMessage will be encapsulated under a multipart/mixed
+   *
+   *
+   * 2. You supply a messageHtml and/or a messageText. A new mimemessage will be
+   * built. If you supply both, a multipart/alternative will be used. After that
+   * attachments will be included
+   *
    * @return true if successful execution
    * @throws Exception
    */
-  public boolean execute() throws Exception
-  {
+  public boolean execute() throws Exception {
 
-    try
-    {
-
-      final Properties props = new Properties();
-
-      try
-      {
-        final Document configDocument = PentahoSystem.getSystemSettings().getSystemSettingsDocument(
-            "smtp-email/email_config.xml"); //$NON-NLS-1$
-        final List properties = configDocument.selectNodes("/email-smtp/properties/*"); //$NON-NLS-1$
-        final Iterator propertyIterator = properties.iterator();
-        while (propertyIterator.hasNext())
-        {
-          final Node propertyNode = (Node) propertyIterator.next();
-          final String propertyName = propertyNode.getName();
-          final String propertyValue = propertyNode.getText();
-          props.put(propertyName, propertyValue);
-        }
-      }
-      catch (Exception e)
-      {
-        log.error(Messages.getInstance().getString("ReportPlugin.emailConfigFileInvalid")); //$NON-NLS-1$
-        return false;
-      }
-
-      final boolean authenticate = "true".equalsIgnoreCase(props.getProperty("mail.smtp.auth")); //$NON-NLS-1$//$NON-NLS-2$
-
-      // Get a Session object
-
-      final Session session;
-      if (authenticate)
-      {
-        final Authenticator authenticator = new EmailAuthenticator();
-        session = Session.getInstance(props, authenticator);
-      }
-      else
-      {
-        session = Session.getInstance(props);
-      }
-
-      // if debugging is not set in the email config file, match the
-      // component debug setting
-      if (!props.containsKey("mail.debug"))
-      { //$NON-NLS-1$
-        session.setDebug(true);
-      }
-
-      // construct the message
-      final MimeMessage msg;
-      if (getMimeMessage() != null)
-      {
-        msg = new MimeMessage(session, getMimeMessage().getInputStream());
-      }
-      else
-      {
-        msg = new MimeMessage(session);
-      }
-
-      msg.setFrom(new InternetAddress(from));
-      msg.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to, false));
-
-      if ((cc != null) && (cc.trim().length() > 0))
-      {
-        msg.setRecipients(Message.RecipientType.CC, InternetAddress.parse(cc, false));
-      }
-      if ((bcc != null) && (bcc.trim().length() > 0))
-      {
-        msg.setRecipients(Message.RecipientType.BCC, InternetAddress.parse(bcc, false));
-      }
-
-      if (subject != null)
-      {
-        msg.setSubject(subject, LocaleHelper.getSystemEncoding());
-      }
-      if ((messagePlain != null) && (messageHtml == null) && (getAttachmentContent() == null))
-      {
-        msg.setText(messagePlain, LocaleHelper.getSystemEncoding());
-      }
-      else if (getAttachmentContent() == null)
-      {
-        if (messagePlain != null)
-        {
-          msg.setContent(messagePlain, "text/plain; charset=" + LocaleHelper.getSystemEncoding()); //$NON-NLS-1$
-        }
-        if (messageHtml != null)
-        {
-          msg.setContent(messageHtml, "text/html; charset=" + LocaleHelper.getSystemEncoding()); //$NON-NLS-1$
-        }
-      }
-      else
-      {
-        // need to create a multi-part message...
-        // create the Multipart and add its parts to it
-        Multipart multipart = new MimeMultipart();
-
-        // Test the message type
-        boolean isMimeMultipart = false;
-        try
-        {
-          isMimeMultipart = msg.getContent() instanceof MimeMultipart;
-        }
-        catch (Exception e)
-        {
-          // ignore ..
-        }
-
-        if (isMimeMultipart)
-        {
-          if (getAttachmentContent() == null)
-          {
-            multipart = (Multipart) msg.getContent();
-          }
-          else
-          {
-            // encapsulate it
-            final MimeBodyPart inlineContent = new MimeBodyPart();
-            inlineContent.setContent((Multipart) msg.getContent());
-            multipart.addBodyPart(inlineContent);
-          }
-        }
-        else
-        {
-          multipart = new MimeMultipart();
-        }
+    try {
 
 
-        // create and fill the first message part
-        if (messageHtml != null)
-        {
-          // create and fill the first message part
-          final MimeBodyPart htmlBodyPart = new MimeBodyPart();
-          htmlBodyPart.setContent(messageHtml, "text/html; charset=" + LocaleHelper.getSystemEncoding()); //$NON-NLS-1$
-          multipart.addBodyPart(htmlBodyPart);
-        }
+      // Get the session object
+      final Session session = buildSession();
 
-        if (messagePlain != null)
-        {
-          final MimeBodyPart textBodyPart = new MimeBodyPart();
-          textBodyPart.setContent(messagePlain, "text/plain; charset=" + LocaleHelper.getSystemEncoding()); //$NON-NLS-1$
-          multipart.addBodyPart(textBodyPart);
-        }
+      // Create the message
+      final MimeMessage msg = new MimeMessage(session);
 
-        if (getAttachmentContent() != null)
-        {
-          final MimeBodyPart attachmentBodyPart = new MimeBodyPart(getAttachmentContent().getInputStream());
-          attachmentBodyPart.setFileName(getAttachmentName());
-          multipart.addBodyPart(attachmentBodyPart);
-        }
-        if (getAttachmentContent2() != null)
-        {
-          final MimeBodyPart attachmentBodyPart2 = new MimeBodyPart(getAttachmentContent2().getInputStream());
-          attachmentBodyPart2.setFileName(getAttachmentName2());
-          multipart.addBodyPart(attachmentBodyPart2);
-        }
-        if (getAttachmentContent3() != null)
-        {
-          final MimeBodyPart attachmentBodyPart3 = new MimeBodyPart(getAttachmentContent3().getInputStream());
-          attachmentBodyPart3.setFileName(getAttachmentName3());
-          multipart.addBodyPart(attachmentBodyPart3);
-        }
+      // From, to, etc.
+      applyMessageHeaders(msg);
 
-        // add the Multipart to the message
-        msg.setContent(multipart);
-      }
+      // Get main message multipart
+      Multipart multipartBody = getMultipartBody(session);
+
+      // Process attachments
+      Multipart mainMultiPart = processAttachments(multipartBody);
+      msg.setContent(mainMultiPart);
+
+      // Send it
 
       msg.setHeader("X-Mailer", MAILER); //$NON-NLS-1$
       msg.setSentDate(new Date());
@@ -520,16 +341,182 @@ public class SimpleEmailComponent implements IAcceptsRuntimeInputs
       Transport.send(msg);
 
       return true;
+
     }
-    catch (SendFailedException e)
-    {
+    catch (SendFailedException e) {
       log.error(Messages.getInstance().getString("ReportPlugin.emailSendFailed")); //$NON-NLS-1$
     }
-    catch (AuthenticationFailedException e)
-    {
+    catch (AuthenticationFailedException e) {
       log.error(Messages.getInstance().getString("ReportPlugin.emailAuthenticationFailed")); //$NON-NLS-1$
     }
     return false;
+
+  }
+
+  private Multipart getMultipartBody(Session session) throws MessagingException, IOException {
+
+    // if we have a mimeMessage, use it. Otherwise, build one with what we have
+
+
+    if (getMimeMessage() != null) {
+
+      // Rebuild a MimeMessage and use this one
+
+      MimeBodyPart original = new MimeBodyPart();
+      MimeMessage originalMimeMessage = new MimeMessage(session, getMimeMessage().getInputStream());
+
+      // Return it
+      return (Multipart) originalMimeMessage.getContent();
+
+    }
+
+    // Now we can have both a messageHtml and messageText. Build according to it
+
+    MimeMultipart parentMultipart = new MimeMultipart();
+    MimeBodyPart htmlBodyPart = null, textBodyPart = null;
+
+
+    if (getMessageHtml() != null) {
+
+      htmlBodyPart = new MimeBodyPart();
+      htmlBodyPart.setContent(getMessageHtml(), "text/html; charset=" + LocaleHelper.getSystemEncoding());
+      MimeMultipart htmlMultipart = new MimeMultipart();
+      htmlMultipart.addBodyPart(htmlBodyPart);
+
+      parentMultipart = htmlMultipart;
+    }
+
+    if (getMessagePlain() != null) {
+
+      textBodyPart = new MimeBodyPart();
+      textBodyPart.setContent(getMessagePlain(), "text/plain; charset=" + LocaleHelper.getSystemEncoding());
+      MimeMultipart textMultipart = new MimeMultipart();
+      textMultipart.addBodyPart(textBodyPart);
+
+      parentMultipart = textMultipart;
+    }
+
+    // We have both text and html? Encapsulate it in a multipart/alternative
+
+    if (htmlBodyPart != null && textBodyPart != null) {
+
+      MimeMultipart alternative = new MimeMultipart("alternative");
+      alternative.addBodyPart(htmlBodyPart);
+      alternative.addBodyPart(textBodyPart);
+
+      parentMultipart = alternative;
+
+    }
+
+
+    return parentMultipart;
+
+  }
+
+  private Multipart processAttachments(Multipart multipartBody) throws MessagingException, IOException {
+
+    if (getAttachmentContent() == null) {
+
+      // We don't have a first attachment, won't even search for the others.
+      return multipartBody;
+
+    }
+
+    // We have attachments; Creating a multipart-mixed
+
+    MimeMultipart mixedMultipart = new MimeMultipart("mixed");
+
+    // Add the first part
+    MimeBodyPart bodyPart = new MimeBodyPart();
+    bodyPart.setContent(multipartBody);
+    mixedMultipart.addBodyPart(bodyPart);
+
+    // Process each of the attachments we have
+    processSpecificAttachment(mixedMultipart, getAttachmentContent());
+    processSpecificAttachment(mixedMultipart, getAttachmentContent2());
+    processSpecificAttachment(mixedMultipart, getAttachmentContent3());
+
+    return mixedMultipart;
+
+  }
+
+  private void processSpecificAttachment(MimeMultipart mixedMultipart, IContentItem attachmentContent) throws IOException, MessagingException {
+
+    // Add this attachment
+
+    if (attachmentContent != null) {
+
+      ByteArrayDataSource dataSource = new ByteArrayDataSource(
+          attachmentContent.getInputStream(), attachmentContent.getMimeType());
+      final MimeBodyPart attachmentBodyPart = new MimeBodyPart();
+      attachmentBodyPart.setDataHandler(new DataHandler(dataSource));
+      attachmentBodyPart.setFileName(getAttachmentName());
+      mixedMultipart.addBodyPart(attachmentBodyPart);
+
+    }
+
+
+  }
+
+  private void applyMessageHeaders(MimeMessage msg) throws Exception {
+
+    msg.setFrom(new InternetAddress(from));
+    msg.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to, false));
+
+    if ((cc != null) && (cc.trim().length() > 0)) {
+      msg.setRecipients(Message.RecipientType.CC, InternetAddress.parse(cc, false));
+    }
+    if ((bcc != null) && (bcc.trim().length() > 0)) {
+      msg.setRecipients(Message.RecipientType.BCC, InternetAddress.parse(bcc, false));
+    }
+
+    if (subject != null) {
+      msg.setSubject(subject, LocaleHelper.getSystemEncoding());
+    }
+
+  }
+
+  private Session buildSession() throws Exception {
+
+    final Properties props = new Properties();
+
+    try {
+      final Document configDocument = PentahoSystem.getSystemSettings().getSystemSettingsDocument(
+          "smtp-email/email_config.xml"); //$NON-NLS-1$
+      final List properties = configDocument.selectNodes("/email-smtp/properties/*"); //$NON-NLS-1$
+      final Iterator propertyIterator = properties.iterator();
+      while (propertyIterator.hasNext()) {
+        final Node propertyNode = (Node) propertyIterator.next();
+        final String propertyName = propertyNode.getName();
+        final String propertyValue = propertyNode.getText();
+        props.put(propertyName, propertyValue);
+      }
+    }
+    catch (Exception e) {
+      log.error(Messages.getInstance().getString("ReportPlugin.emailConfigFileInvalid")); //$NON-NLS-1$
+      throw e;
+    }
+
+    final boolean authenticate = "true".equalsIgnoreCase(props.getProperty("mail.smtp.auth")); //$NON-NLS-1$//$NON-NLS-2$
+
+    // Get a Session object
+
+    final Session session;
+    if (authenticate) {
+      final Authenticator authenticator = new EmailAuthenticator();
+      session = Session.getInstance(props, authenticator);
+    }
+    else {
+      session = Session.getInstance(props);
+    }
+
+    // if debugging is not set in the email config file, match the
+    // component debug setting
+    if (!props.containsKey("mail.debug")) { //$NON-NLS-1$
+      session.setDebug(true);
+    }
+
+    return session;
 
   }
 
@@ -538,20 +525,17 @@ public class SimpleEmailComponent implements IAcceptsRuntimeInputs
    *
    * @return the mime-type for the streaming output
    */
-  public String getMimeType()
-  {
+  public String getMimeType() {
     return outputType;
   }
 
-  private static class EmailAuthenticator extends Authenticator
-  {
-    private EmailAuthenticator()
-    {
+  private static class EmailAuthenticator extends Authenticator {
+
+    private EmailAuthenticator() {
     }
 
     @Override
-    protected PasswordAuthentication getPasswordAuthentication()
-    {
+    protected PasswordAuthentication getPasswordAuthentication() {
       final String user = PentahoSystem.getSystemSetting("smtp-email/email_config.xml", "mail.userid", null); //$NON-NLS-1$ //$NON-NLS-2$
       final String password = PentahoSystem.getSystemSetting("smtp-email/email_config.xml", "mail.password", null); //$NON-NLS-1$ //$NON-NLS-2$
       return new PasswordAuthentication(user, password);

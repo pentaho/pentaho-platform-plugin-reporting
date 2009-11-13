@@ -17,6 +17,7 @@ import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlO
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlPrinter;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.StreamHtmlOutputProcessor;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.URLRewriter;
+import org.pentaho.reporting.engine.classic.extensions.modules.mailer.MailURLRewriter;
 import org.pentaho.reporting.libraries.repository.ContentIOException;
 import org.pentaho.reporting.libraries.repository.ContentLocation;
 import org.pentaho.reporting.libraries.repository.DefaultNameGenerator;
@@ -46,7 +47,7 @@ public class EmailOutput
     final Session session = Session.getInstance(props);
     final EmailRepository dataRepository = new EmailRepository(session);
 
-    final URLRewriter rewriter = new PentahoURLRewriter(contentHandlerPattern, false);
+    final URLRewriter rewriter = new MailURLRewriter();
     final ContentLocation dataLocation = dataRepository.getRoot();
     final NameGenerator dataNameGenerator = new DefaultNameGenerator(dataLocation);
 
