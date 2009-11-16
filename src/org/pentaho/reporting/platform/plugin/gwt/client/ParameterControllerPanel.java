@@ -252,7 +252,7 @@ public class ParameterControllerPanel extends VerticalPanel
         }
 
         // handle the auto-submit defaults.
-        final String autoSubmitAttr = parametersElement.getAttribute("auto-submit");
+        final String autoSubmitAttr = parametersElement.getAttribute("autoSubmit");
         if (autoSubmitAttr != null)
         if ("true".equals(autoSubmitAttr)) //$NON-NLS-1$ //$NON-NLS-2$
         {
