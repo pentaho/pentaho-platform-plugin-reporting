@@ -315,7 +315,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
       }
     }
 
-    final String autoSubmitStr = requestParams.getStringParameter("autoSubmit", "auto");
+    final String autoSubmitStr = requestParams.getStringParameter("autoSubmit", "true");
     if ("true".equals(autoSubmitStr))
     {
       parameters.setAttribute("autoSubmit", "true");
@@ -705,6 +705,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
     final ISubscription subscription = getSubscription();
 
     final Document document = parameters.getOwnerDocument();
+    
     final Element reportNameParameter = document.createElement("parameter"); //$NON-NLS-1$
     parameters.appendChild(reportNameParameter);
     reportNameParameter.setAttribute("name", "subscription-name"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -732,6 +733,36 @@ public class ReportContentGenerator extends SimpleContentGenerator
       selectionsElement.appendChild(selectionElement);
     }
 
+    final String email = PentahoSystem.getSystemSetting("smtp-email/email_config.xml", "mail.userid", "");
+    if (StringUtils.isEmpty(email) == false) 
+    {
+
+      // create email destination parameter
+      final Element emailParameter = document.createElement("parameter"); //$NON-NLS-1$
+      parameters.appendChild(emailParameter);
+      emailParameter.setAttribute("name", "destination"); //$NON-NLS-1$ //$NON-NLS-2$
+      emailParameter.setAttribute("label", org.pentaho.reporting.platform.plugin.messages.Messages.getInstance().getString("ReportPlugin.Destination")); //$NON-NLS-1$ //$NON-NLS-2$
+      emailParameter.setAttribute("parameter-group", "subscription"); //$NON-NLS-1$ //$NON-NLS-2$
+      emailParameter.setAttribute("parameter-group-label", org.pentaho.reporting.platform.plugin.messages.Messages.getInstance().getString("ReportPlugin.ReportSchedulingOptions")); //$NON-NLS-1$ //$NON-NLS-2$
+      emailParameter.setAttribute("type", "java.lang.String"); //$NON-NLS-1$ //$NON-NLS-2$
+      emailParameter.setAttribute("is-mandatory", "false"); //$NON-NLS-1$ //$NON-NLS-2$
+      emailParameter.setAttribute("is-multi-select", "false"); //$NON-NLS-1$ //$NON-NLS-2$
+      emailParameter.setAttribute("is-strict", "false"); //$NON-NLS-1$ //$NON-NLS-2$
+      emailParameter.setAttribute("parameter-render-type", "textbox"); //$NON-NLS-1$ //$NON-NLS-2$
+
+      Object destinationSelection = inputs.get("destination");
+      if (destinationSelection == null && subscription != null) {
+        destinationSelection = subscription.getTitle();
+      }
+      if (destinationSelection != null) {
+        final Element selectionsElement = document.createElement("selections"); //$NON-NLS-1$
+        emailParameter.appendChild(selectionsElement);
+        final Element selectionElement = document.createElement("selection"); //$NON-NLS-1$
+        selectionElement.setAttribute("value", destinationSelection.toString()); //$NON-NLS-1$
+        selectionsElement.appendChild(selectionElement);
+      }
+    }
+    
     final ISubscriptionRepository subscriptionRepository = PentahoSystem.get(ISubscriptionRepository.class, userSession);
     final ISubscribeContent subscribeContent = subscriptionRepository.getContentByActionReference(reportDefinitionPath);
 
