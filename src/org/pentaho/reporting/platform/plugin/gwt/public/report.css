@@ -106,7 +106,18 @@ body {
 	margin: 5px 0px 0px 10px;
 }
 
+.parameter-error {
+	margin: 5px 0px 0px 10px;
+	border: 1px solid red;
+	padding: 2px;
+}
+
 .parameter-label {
+	font-size: 10pt;
+	font-weight: bold;
+}
+
+.parameter-error-label {
 	font-size: 10pt;
 	font-weight: bold;
 }

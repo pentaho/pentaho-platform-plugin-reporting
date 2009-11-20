@@ -57,10 +57,12 @@ import org.pentaho.reporting.engine.classic.core.parameters.ParameterContext;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterDefinitionEntry;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterValues;
 import org.pentaho.reporting.engine.classic.core.parameters.PlainParameter;
+import org.pentaho.reporting.engine.classic.core.parameters.ValidationMessage;
 import org.pentaho.reporting.engine.classic.core.parameters.ValidationResult;
 import org.pentaho.reporting.libraries.base.util.IOUtils;
 import org.pentaho.reporting.libraries.base.util.StringUtils;
 import org.pentaho.reporting.platform.plugin.gwt.client.ReportViewer.RENDER_TYPE;
+import org.w3c.dom.Element;
 
 public class ReportContentGenerator extends SimpleContentGenerator
 {
@@ -362,7 +364,22 @@ public class ReportContentGenerator extends SimpleContentGenerator
             parameters.setAttribute(SimpleReportingComponent.ACCEPTED_PAGE, "" + acceptedPage); //$NON-NLS-1$
           }
         }
-
+        else if (vr.isEmpty() == false) 
+        {
+          final Element errors = document.createElement("errors"); //$NON-NLS-1$
+          parameters.appendChild(errors);
+          for (String property : vr.getProperties()) 
+          {
+            for (ValidationMessage message : vr.getErrors(property)) 
+            {
+              final Element error = document.createElement("error"); //$NON-NLS-1$
+              error.setAttribute("parameter", property);
+              error.setAttribute("message", message.getMessage());
+              errors.appendChild(error);
+            }
+          }
+        }
+        
         // if we're going to attempt to handle subscriptions, add related choices as a parameter
         if (subscribe)
         {
