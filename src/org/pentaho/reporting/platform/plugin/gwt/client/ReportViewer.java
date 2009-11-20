@@ -11,6 +11,7 @@ import org.pentaho.gwt.widgets.client.utils.string.StringTokenizer;
 import org.pentaho.gwt.widgets.client.utils.string.StringUtils;
 
 import com.google.gwt.core.client.EntryPoint;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -94,8 +95,9 @@ public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback
   
   private native void hideParentReportViewers()
   /*-{
+    var count = 10;
     var myparent = $wnd.parent;
-    while (myparent != null) {
+    while (myparent != null && count >= 0) {
       if ($wnd != myparent) {
         if(typeof myparent.reportViewer_hide == 'function') {
           myparent.reportViewer_hide();
@@ -112,6 +114,7 @@ public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback
       if (myparent == top) {
         break;
       }
+      count--;
     }
   }-*/;
   
@@ -286,6 +289,13 @@ public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback
 
     reportPath += "&renderMode=" + renderType; //$NON-NLS-1$
     reportPath += "&autoSubmit=" + autoSubmit; //$NON-NLS-1$
+    if (GWT.isScript() == false) {
+      reportPath = reportPath.substring(1);
+      reportPath = "?solution=steel-wheels&path=reports&name=Inventory.prpt" + reportPath;
+      String url = "http://localhost:8080/pentaho/content/reporting" + reportPath + "&userid=joe&password=password";
+      System.out.println(url);
+      return url;
+    }
     return reportPath;
   }
 
