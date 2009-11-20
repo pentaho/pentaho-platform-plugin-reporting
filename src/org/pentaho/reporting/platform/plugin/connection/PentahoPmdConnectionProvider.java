@@ -26,11 +26,15 @@ public class PentahoPmdConnectionProvider extends PmdConnectionProvider
   }
 
 
-  public Connection getConnection(DatabaseMeta databaseMeta)
-      throws ReportDataFactoryException
+  public Connection createConnection(final DatabaseMeta databaseMeta,
+                                     final String username,
+                                     final String password) throws ReportDataFactoryException
   {
     try
     {
+      final String realUser = (databaseMeta.getUsername() == null) ? username : databaseMeta.getUsername();
+      final String realPassword = (databaseMeta.getPassword() == null) ? password : databaseMeta.getPassword();
+
       if (databaseMeta.getAccessType() == DatabaseMeta.TYPE_ACCESS_JNDI)
       {
         final String jndiName = databaseMeta.getDatabaseName();
@@ -38,9 +42,9 @@ public class PentahoPmdConnectionProvider extends PmdConnectionProvider
         {
           try
           {
-            PentahoJndiDatasourceConnectionProvider connectionProvider = new PentahoJndiDatasourceConnectionProvider();
+            final PentahoJndiDatasourceConnectionProvider connectionProvider = new PentahoJndiDatasourceConnectionProvider();
             connectionProvider.setJndiName(jndiName);
-            return connectionProvider.getConnection();
+            return connectionProvider.createConnection(realUser, realPassword);
           }
           catch (Exception e)
           {
@@ -54,6 +58,6 @@ public class PentahoPmdConnectionProvider extends PmdConnectionProvider
       throw new ReportDataFactoryException(Messages.getString("ReportPlugin.unableToCreateConnection"), e); //$NON-NLS-1$
     }
 
-    return super.getConnection(databaseMeta);
+    return super.createConnection(databaseMeta, username, password);
   }
 }
