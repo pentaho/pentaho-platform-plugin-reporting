@@ -131,6 +131,8 @@ public class ParameterControllerPanel extends VerticalPanel
         showParameters = "true".equalsIgnoreCase(Window.Location.getParameter("showParameters")); //$NON-NLS-1$ //$NON-NLS-2$
       }
 
+      HashMap<String, ArrayList<String>> errors = buildErrors(resultDoc);//$NON-NLS-1$ 
+      
       if (showParameters)
       {
         NodeList parameterNodes = parametersElement.getElementsByTagName("parameter"); //$NON-NLS-1$
@@ -214,7 +216,20 @@ public class ParameterControllerPanel extends VerticalPanel
             if (parameterWidget != null)
             {
               // only add the parameter if it has a UI
+              final String parameterName = parameterElement.getAttribute("name"); //$NON-NLS-1$              
+              ArrayList<String> parameterErrors = errors.get(parameterName);
+              if (parameterErrors != null) {
+                for (String error : parameterErrors) {
+                  Label errorLabel = new Label(error);
+                  errorLabel.setStyleName("parameter-error-label");
+                  DOM.setStyleAttribute(errorLabel.getElement(), "color", "red");
+                  parameterPanel.add(errorLabel);
+                }
+                parameterPanel.setStyleName("parameter-error"); //$NON-NLS-1$
+              }
+
               parameterPanel.add(parameterWidget);
+              
               if (layout.equals("flow")) //$NON-NLS-1$
               {
                 SimplePanel div = new SimplePanel();
@@ -351,6 +366,23 @@ public class ParameterControllerPanel extends VerticalPanel
     fetchParameters(false);
   }
 
+  private HashMap<String, ArrayList<String>> buildErrors(final Document doc) {
+    HashMap<String, ArrayList<String>> errorMap = new HashMap<String, ArrayList<String>>();
+    NodeList errors = doc.getElementsByTagName("error");
+    for (int i=0;i<errors.getLength();i++) {
+      Element error = (Element)errors.item(i);
+      String parameter = error.getAttribute("parameter");
+      String msg = error.getAttribute("message");
+      ArrayList<String> errorList = errorMap.get(parameter);
+      if (errorList == null) {
+        errorList = new ArrayList<String>();
+        errorMap.put(parameter, errorList);
+      }
+      errorList.add(msg);
+    }
+    return errorMap;
+  }
+  
   private Widget buildPaginationController(final Element parametersElement)
   {
     // need to add/build UI for pagination controls
@@ -730,7 +762,7 @@ public class ParameterControllerPanel extends VerticalPanel
     String message = "<BR>"; //$NON-NLS-1$
     for (Element parameter : parameterElements)
     {
-      if ("true".equals(parameter.getAttribute("is-mandatory"))) //$NON-NLS-1$ //$NON-NLS-2$
+      if ("true".equals(parameter.getAttribute("mandatory"))) //$NON-NLS-1$ //$NON-NLS-2$
       {
         // then let's make sure we have a value for it
         List<String> paramList = parameterMap.get(parameter.getAttribute("name").trim()); //$NON-NLS-1$

@@ -60,6 +60,7 @@ import org.pentaho.reporting.engine.classic.core.parameters.ParameterDefinitionE
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterValues;
 import org.pentaho.reporting.engine.classic.core.parameters.PlainParameter;
 import org.pentaho.reporting.engine.classic.core.parameters.ReportParameterDefinition;
+import org.pentaho.reporting.engine.classic.core.parameters.ValidationMessage;
 import org.pentaho.reporting.engine.classic.core.parameters.ValidationResult;
 import org.pentaho.reporting.engine.classic.core.util.beans.BeanException;
 import org.pentaho.reporting.engine.classic.core.util.beans.ConverterRegistry;
@@ -67,6 +68,7 @@ import org.pentaho.reporting.engine.classic.core.util.beans.ValueConverter;
 import org.pentaho.reporting.libraries.base.util.StringUtils;
 import org.pentaho.reporting.libraries.resourceloader.ResourceException;
 import org.pentaho.reporting.platform.plugin.gwt.client.ReportViewer.RENDER_TYPE;
+import org.w3c.dom.CDATASection;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -312,6 +314,20 @@ public class ReportContentGenerator extends SimpleContentGenerator
         parameters.setAttribute("page-count", String.valueOf(reportComponent.getPageCount())); //$NON-NLS-1$ //$NON-NLS-2$
         // use the saved value (we changed it to -1 for performance)
         parameters.setAttribute(SimpleReportingComponent.ACCEPTED_PAGE, "" + acceptedPage); //$NON-NLS-1$
+      }
+    } else if (vr.isEmpty() == false) 
+    {
+      final Element errors = document.createElement("errors"); //$NON-NLS-1$
+      parameters.appendChild(errors);
+      for (String property : vr.getProperties()) 
+      {
+        for (ValidationMessage message : vr.getErrors(property)) 
+        {
+          final Element error = document.createElement("error"); //$NON-NLS-1$
+          error.setAttribute("parameter", property);
+          error.setAttribute("message", message.getMessage());
+          errors.appendChild(error);
+        }
       }
     }
 
