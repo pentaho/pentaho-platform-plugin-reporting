@@ -32,7 +32,11 @@ import org.pentaho.reporting.platform.plugin.repository.ReportContentRepository;
 public class PageableHTMLOutput
 {
 
-  public static int generate(final MasterReport report, final int acceptedPage, final OutputStream outputStream, String contentHandlerPattern, int yieldRate)
+  public static int generate(final MasterReport report,
+                             final int acceptedPage,
+                             final OutputStream outputStream,
+                             final String contentHandlerPattern,
+                             final int yieldRate)
       throws ReportProcessingException, IOException, ContentIOException
   {
     final IApplicationContext ctx = PentahoSystem.getApplicationContext();
@@ -42,7 +46,7 @@ public class PageableHTMLOutput
     final NameGenerator dataNameGenerator;
     if (ctx != null)
     {
-      String name = (String)report.getAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.NAME);
+      final String name = (String) report.getAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.NAME);
       File dataDirectory = new File(ctx.getFileOutputPath("system/tmp/" + name + "/"));//$NON-NLS-1$
       if (dataDirectory.exists() && (dataDirectory.isDirectory() == false))
       {
@@ -79,14 +83,14 @@ public class PageableHTMLOutput
     printer.setUrlRewriter(rewriter);
     outputProcessor.setPrinter(printer);
     outputProcessor.setFlowSelector(new ReportPageSelector(acceptedPage));
-    PageableReportProcessor proc = new PageableReportProcessor(report, outputProcessor);
+    final PageableReportProcessor proc = new PageableReportProcessor(report, outputProcessor);
 
     if (yieldRate > 0)
     {
       proc.addReportProgressListener(new YieldReportListener(yieldRate));
     }
     proc.processReport();
-    int pageCount = outputProcessor.getLogicalPageCount();
+    final int pageCount = outputProcessor.getLogicalPageCount();
     proc.close();
 
     outputStream.flush();
@@ -94,8 +98,13 @@ public class PageableHTMLOutput
     return pageCount;
   }
 
-  public static int generate(IPentahoSession session, final MasterReport report, final int acceptedPage, final OutputStream outputStream,
-      IContentRepository contentRepository, String contentHandlerPattern, int yieldRate) throws ReportProcessingException, IOException, ContentIOException
+  public static int generate(final IPentahoSession session,
+                             final MasterReport report,
+                             final int acceptedPage,
+                             final OutputStream outputStream,
+                             final IContentRepository contentRepository,
+                             final String contentHandlerPattern,
+                             final int yieldRate) throws ReportProcessingException, IOException, ContentIOException
   {
     final String reportName = StringUtils.isEmpty(report.getName()) ? UUIDUtil.getUUIDAsString() : report.getName();
     final String solutionPath = "report-content" + "/" + reportName + "/"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
@@ -118,13 +127,13 @@ public class PageableHTMLOutput
     outputProcessor.setPrinter(printer);
 
     outputProcessor.setFlowSelector(new ReportPageSelector(acceptedPage));
-    PageableReportProcessor proc = new PageableReportProcessor(report, outputProcessor);
+    final PageableReportProcessor proc = new PageableReportProcessor(report, outputProcessor);
     if (yieldRate > 0)
     {
       proc.addReportProgressListener(new YieldReportListener(yieldRate));
     }
     proc.processReport();
-    int pageCount = outputProcessor.getLogicalPageCount();
+    final int pageCount = outputProcessor.getLogicalPageCount();
     proc.close();
 
     outputStream.flush();

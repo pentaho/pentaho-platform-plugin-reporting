@@ -23,7 +23,6 @@ import org.pentaho.reporting.libraries.repository.ContentLocation;
 import org.pentaho.reporting.libraries.repository.DefaultNameGenerator;
 import org.pentaho.reporting.libraries.repository.NameGenerator;
 import org.pentaho.reporting.libraries.repository.email.EmailRepository;
-import org.pentaho.reporting.platform.plugin.repository.PentahoURLRewriter;
 
 public class EmailOutput
 {
