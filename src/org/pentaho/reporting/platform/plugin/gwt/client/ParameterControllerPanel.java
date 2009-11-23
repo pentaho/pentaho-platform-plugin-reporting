@@ -265,6 +265,25 @@ public class ParameterControllerPanel extends VerticalPanel
         {
           submitPanel.add(submitSubscriptionButton);
         }
+
+        // handle the auto-submit defaults.
+        String autoSubmitAttr = parametersElement.getAttribute("autoSubmit");
+        if (autoSubmitAttr != null)
+        {
+          if (StringUtils.isEmpty(autoSubmitAttr) == false)
+          {
+            submitParametersOnChangeCheckBox.setValue("true".equals(autoSubmitAttr));
+          }
+        } 
+        else 
+        {
+          autoSubmitAttr = Window.Location.getParameter("autoSubmit");
+          if (StringUtils.isEmpty(autoSubmitAttr) == false)
+          {
+            submitParametersOnChangeCheckBox.setValue("true".equals(autoSubmitAttr));
+          }
+        }
+        
         submitPanel.add(submitParametersButton);
         submitPanel.add(submitParametersOnChangeCheckBox);
         parameterContainer.add(submitPanel);
@@ -824,6 +843,11 @@ public class ParameterControllerPanel extends VerticalPanel
     {
       listener.showBlank();
     }
+  }
+
+  public boolean isAutoSubmit()
+  {
+    return submitParametersOnChangeCheckBox.getValue();
   }
 
 }
