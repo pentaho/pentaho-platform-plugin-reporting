@@ -11,7 +11,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.parsers.DocumentBuilderFactory;
 
@@ -47,6 +46,7 @@ import org.pentaho.reporting.engine.classic.core.DataRow;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportDataFactoryException;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.pdf.PdfPageableModule;
+import org.pentaho.reporting.engine.classic.core.modules.output.pageable.plaintext.PlainTextPageableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.csv.CSVTableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlTableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.rtf.RTFTableModule;
@@ -68,7 +68,6 @@ import org.pentaho.reporting.engine.classic.core.util.beans.ValueConverter;
 import org.pentaho.reporting.libraries.base.util.StringUtils;
 import org.pentaho.reporting.libraries.resourceloader.ResourceException;
 import org.pentaho.reporting.platform.plugin.gwt.client.ReportViewer.RENDER_TYPE;
-import org.w3c.dom.CDATASection;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -315,13 +314,14 @@ public class ReportContentGenerator extends SimpleContentGenerator
         // use the saved value (we changed it to -1 for performance)
         parameters.setAttribute(SimpleReportingComponent.ACCEPTED_PAGE, "" + acceptedPage); //$NON-NLS-1$
       }
-    } else if (vr.isEmpty() == false) 
+    }
+    else if (vr.isEmpty() == false)
     {
       final Element errors = document.createElement("errors"); //$NON-NLS-1$
       parameters.appendChild(errors);
-      for (String property : vr.getProperties()) 
+      for (String property : vr.getProperties())
       {
-        for (ValidationMessage message : vr.getErrors(property)) 
+        for (ValidationMessage message : vr.getErrors(property))
         {
           final Element error = document.createElement("error"); //$NON-NLS-1$
           error.setAttribute("parameter", property);
@@ -569,7 +569,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
     {
       return String.valueOf(value);
     }
-    if (Number.class.isAssignableFrom(type)) 
+    if (Number.class.isAssignableFrom(type))
     {
       final ValueConverter numConverter = ConverterRegistry.getInstance().getValueConverter(BigDecimal.class);
       return numConverter.toAttributeValue(new BigDecimal(String.valueOf(value)));
@@ -721,7 +721,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
     final ISubscription subscription = getSubscription();
 
     final Document document = parameters.getOwnerDocument();
-    
+
     final Element reportNameParameter = document.createElement("parameter"); //$NON-NLS-1$
     parameters.appendChild(reportNameParameter);
     reportNameParameter.setAttribute("name", "subscription-name"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -750,7 +750,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
     }
 
     final String email = PentahoSystem.getSystemSetting("smtp-email/email_config.xml", "mail.userid", "");
-    if (StringUtils.isEmpty(email) == false) 
+    if (StringUtils.isEmpty(email) == false)
     {
 
       // create email destination parameter
@@ -767,10 +767,12 @@ public class ReportContentGenerator extends SimpleContentGenerator
       emailParameter.setAttribute("parameter-render-type", "textbox"); //$NON-NLS-1$ //$NON-NLS-2$
 
       Object destinationSelection = inputs.get("destination");
-      if (destinationSelection == null && subscription != null) {
+      if (destinationSelection == null && subscription != null)
+      {
         destinationSelection = subscription.getTitle();
       }
-      if (destinationSelection != null) {
+      if (destinationSelection != null)
+      {
         final Element selectionsElement = document.createElement("selections"); //$NON-NLS-1$
         emailParameter.appendChild(selectionsElement);
         final Element selectionElement = document.createElement("selection"); //$NON-NLS-1$
@@ -778,7 +780,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
         selectionsElement.appendChild(selectionElement);
       }
     }
-    
+
     final ISubscriptionRepository subscriptionRepository = PentahoSystem.get(ISubscriptionRepository.class, userSession);
     final ISubscribeContent subscribeContent = subscriptionRepository.getContentByActionReference(reportDefinitionPath);
 
@@ -896,6 +898,12 @@ public class ReportContentGenerator extends SimpleContentGenerator
     rtfValueElement.setAttribute("label", "RTF"); //$NON-NLS-1$ //$NON-NLS-2$
     rtfValueElement.setAttribute("value", SimpleReportingComponent.MIME_TYPE_RTF); //$NON-NLS-1$
     rtfValueElement.setAttribute("type", "java.lang.String"); //$NON-NLS-1$ //$NON-NLS-2$
+
+    final Element txtValueElement = document.createElement("value-choice"); //$NON-NLS-1$
+    valuesElement.appendChild(txtValueElement);
+    txtValueElement.setAttribute("label", "TXT"); //$NON-NLS-1$ //$NON-NLS-2$
+    txtValueElement.setAttribute("value", SimpleReportingComponent.MIME_TYPE_TXT); //$NON-NLS-1$
+    txtValueElement.setAttribute("type", "java.lang.String"); //$NON-NLS-1$ //$NON-NLS-2$
 
     final Object selections = inputs.get(SimpleReportingComponent.OUTPUT_TYPE);
     if (selections != null)
@@ -1060,6 +1068,10 @@ public class ReportContentGenerator extends SimpleContentGenerator
         {
           mimeType = preferredOutputTarget;
         }
+        else if (PlainTextPageableModule.PLAINTEXT_EXPORT_TYPE.equals(preferredOutputTarget))
+        {
+          mimeType = "text/plain"; //$NON-NLS-1$
+        }
       }
       catch (Exception e)
       {
@@ -1085,6 +1097,10 @@ public class ReportContentGenerator extends SimpleContentGenerator
     else if ("xls".equalsIgnoreCase(mimeType)) //$NON-NLS-1$
     {
       mimeType = SimpleReportingComponent.MIME_TYPE_XLS;
+    }
+    else if ("txt".equalsIgnoreCase(mimeType)) //$NON-NLS-1$
+    {
+      mimeType = SimpleReportingComponent.MIME_TYPE_TXT;
     }
     return mimeType;
   }
