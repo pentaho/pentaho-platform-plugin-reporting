@@ -89,12 +89,22 @@ public class PentahoJndiDatasourceConnectionProvider implements ConnectionProvid
           return connection;
         }
 
-        final Connection connection = dataSource.getConnection(realUser, realPassword);
-        if (connection == null)
-        {
-          throw new SQLException("JNDI DataSource is invalid; it returned null without throwing a meaningful error.");
+        try {
+          final Connection connection = dataSource.getConnection(realUser, realPassword);
+          if (connection == null)
+          {
+            throw new SQLException("JNDI DataSource is invalid; it returned null without throwing a meaningful error.");
+          }
+        } catch (UnsupportedOperationException uoe) {
+          final Connection connection = dataSource.getConnection();
+          if (connection == null)
+          {
+            datasourceService.clearDataSource(jndiName);
+            throw new SQLException(Messages.getErrorString("PentahoDatasourceConnectionProvider.ERROR_0001_INVALID_CONNECTION", jndiName)); //$NON-NLS-1$
+          }
+          return connection;
         }
-
+        
         final Connection nativeConnection = dataSource.getConnection();
         if (nativeConnection == null)
         {
