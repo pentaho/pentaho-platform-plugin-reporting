@@ -569,6 +569,16 @@ public class ReportContentGenerator extends SimpleContentGenerator
     {
       return String.valueOf(value);
     }
+    if (Date.class.isAssignableFrom(type))
+    {
+      if (value instanceof Date == false)
+      {
+        throw new BeanException("Failed to convert date-parameter value. Value is not date at all.");
+      }
+      final Date d = (Date) value;
+      final ValueConverter numConverter = ConverterRegistry.getInstance().getValueConverter(BigDecimal.class);
+      return numConverter.toAttributeValue(new BigDecimal(d.getTime()));
+    }
     if (Number.class.isAssignableFrom(type))
     {
       final ValueConverter numConverter = ConverterRegistry.getInstance().getValueConverter(BigDecimal.class);
