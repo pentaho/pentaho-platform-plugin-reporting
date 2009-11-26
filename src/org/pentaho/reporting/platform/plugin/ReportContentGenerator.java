@@ -319,9 +319,9 @@ public class ReportContentGenerator extends SimpleContentGenerator
     {
       final Element errors = document.createElement("errors"); //$NON-NLS-1$
       parameters.appendChild(errors);
-      for (String property : vr.getProperties())
+      for (final String property : vr.getProperties())
       {
-        for (ValidationMessage message : vr.getErrors(property))
+        for (final ValidationMessage message : vr.getErrors(property))
         {
           final Element error = document.createElement("error"); //$NON-NLS-1$
           error.setAttribute("parameter", property);
