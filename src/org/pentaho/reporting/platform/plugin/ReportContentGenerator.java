@@ -65,6 +65,7 @@ import org.pentaho.reporting.engine.classic.core.parameters.ValidationResult;
 import org.pentaho.reporting.engine.classic.core.util.beans.BeanException;
 import org.pentaho.reporting.engine.classic.core.util.beans.ConverterRegistry;
 import org.pentaho.reporting.engine.classic.core.util.beans.ValueConverter;
+import org.pentaho.reporting.engine.classic.core.util.NullOutputStream;
 import org.pentaho.reporting.libraries.base.util.StringUtils;
 import org.pentaho.reporting.libraries.resourceloader.ResourceException;
 import org.pentaho.reporting.platform.plugin.gwt.client.ReportViewer.RENDER_TYPE;
@@ -115,7 +116,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
         {
           // create inputs from request parameters
           final Map<String, Object> inputs = createInputs(requestParams);
-          createReportContent(outputStream, reportDefinitionPath, requestParams, inputs);
+          createReportContent(outputStream, reportDefinitionPath, inputs);
           break;
         }
         case SUBSCRIBE:
@@ -164,7 +165,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
 
   private void createReportContent(final OutputStream outputStream,
                                    final String reportDefinitionPath,
-                                   final IParameterProvider requestParams, final Map<String, Object> inputs)
+                                   final Map<String, Object> inputs)
       throws Exception
   {
     final ByteArrayOutputStream reportOutput = new ByteArrayOutputStream();
@@ -179,8 +180,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
 
     // the requested mime type can be null, in that case the report-component will resolve the desired
     // type from the output-target.
-    final String mimeType = computeMimeType(requestParams);
-    reportComponent.setOutputType(mimeType);
+    // Hoever, the report-component will inspect the inputs independently from the mimetype here.
 
     final ISolutionRepository repository = PentahoSystem.get(ISolutionRepository.class, userSession);
     final ISolutionFile file = repository.getSolutionFile(reportDefinitionPath, ISolutionRepository.ACTION_EXECUTE);
@@ -188,6 +188,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
 
     // add all inputs (request parameters) to report component
     reportComponent.setInputs(inputs);
+    final String mimeType = reportComponent.getMimeType();
 
     // If we haven't set an accepted page, -1 will be the default, which will give us a report
     // with no pages. This default is used so that when we do our parameter interaction with the
@@ -259,7 +260,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
     // open parameter context
     parameterContext.open();
     // apply inputs to parameters
-    reportComponent.applyInputsToReportParameters(report, parameterContext);
+    reportComponent.applyInputsToReportParameters(parameterContext);
     final FormulaParameterEvaluator formulaParameterEvaluator = new FormulaParameterEvaluator();
     final ValidationResult postFormulaValidationResult = new ValidationResult();
     final ReportParameterDefinition reportParameterDefinition = report.getParameterDefinition();
@@ -290,16 +291,16 @@ public class ReportContentGenerator extends SimpleContentGenerator
     // now add output type chooser
     addOutputParameter(report, parameters, inputs, subscribe);
 
-    final String mimeType = computeMimeType(requestParams);
-
+    final String mimeType = reportComponent.getMimeType();
+    
     // check if pagination is allowed and turned on
     if (mimeType.equalsIgnoreCase(SimpleReportingComponent.MIME_TYPE_HTML) && vr.isEmpty()
         && "true".equalsIgnoreCase(requestParams.getStringParameter(SimpleReportingComponent.PAGINATE_OUTPUT, "true"))) //$NON-NLS-1$ //$NON-NLS-2$
     {
-      final ByteArrayOutputStream dontCareOutputStream = new ByteArrayOutputStream();
+      final NullOutputStream dontCareOutputStream = new NullOutputStream();
       reportComponent.setOutputStream(dontCareOutputStream);
       // pagination always uses HTML
-      reportComponent.setOutputType(SimpleReportingComponent.MIME_TYPE_HTML);
+      reportComponent.setOutputTarget(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE);
 
       // so that we don't actually produce anything, we'll accept no pages in this mode
       final int acceptedPage = reportComponent.getAcceptedPage();
@@ -911,7 +912,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
 
     final Element txtValueElement = document.createElement("value-choice"); //$NON-NLS-1$
     valuesElement.appendChild(txtValueElement);
-    txtValueElement.setAttribute("label", "TXT"); //$NON-NLS-1$ //$NON-NLS-2$
+    txtValueElement.setAttribute("label", "Plain Text"); //$NON-NLS-1$ //$NON-NLS-2$
     txtValueElement.setAttribute("value", SimpleReportingComponent.MIME_TYPE_TXT); //$NON-NLS-1$
     txtValueElement.setAttribute("type", "java.lang.String"); //$NON-NLS-1$ //$NON-NLS-2$
 
@@ -983,6 +984,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
       }
       reportComponent.setSession(userSession);
       reportComponent.setReportDefinitionPath(reportDefinitionPath);
+      reportComponent.setInputs(createInputs(requestParams));
       final MasterReport report = reportComponent.getReport();
       final ParameterDefinitionEntry[] parameterDefinitions = report.getParameterDefinition().getParameterDefinitions();
       final ParameterContext parameterContext = new DefaultParameterContext(report);
@@ -1035,86 +1037,6 @@ public class ReportContentGenerator extends SimpleContentGenerator
     return log;
   }
 
-  private String computeMimeType(final IParameterProvider requestParams)
-  {
-    String mimeType = requestParams.getStringParameter(SimpleReportingComponent.OUTPUT_TYPE, null);
-    if (StringUtils.isEmpty(mimeType))
-    {
-      // set out default first, takes care of exception/else fall thru
-      mimeType = SimpleReportingComponent.MIME_TYPE_HTML;
-      try
-      {
-        final String preferredOutputTarget = (String) reportComponent.getReport().getAttribute(AttributeNames.Core.NAMESPACE,
-            AttributeNames.Core.PREFERRED_OUTPUT_TYPE);
-        if (HtmlTableModule.TABLE_HTML_FLOW_EXPORT_TYPE.equals(preferredOutputTarget)
-            || HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE.equals(preferredOutputTarget)
-            || HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE.equals(preferredOutputTarget))
-        {
-          mimeType = SimpleReportingComponent.MIME_TYPE_HTML;
-        }
-        else if (CSVTableModule.TABLE_CSV_STREAM_EXPORT_TYPE.equals(preferredOutputTarget))
-        {
-          mimeType = "text/csv"; //$NON-NLS-1$
-        }
-        else if (HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE.equals(preferredOutputTarget)
-            || HtmlTableModule.TABLE_HTML_FLOW_EXPORT_TYPE.equals(preferredOutputTarget)
-            || HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE.equals(preferredOutputTarget))
-        {
-          mimeType = "text/html"; //$NON-NLS-1$
-        }
-        else if (PdfPageableModule.PDF_EXPORT_TYPE.equals(preferredOutputTarget))
-        {
-          mimeType = "application/pdf"; //$NON-NLS-1$
-        }
-        else if (RTFTableModule.TABLE_RTF_FLOW_EXPORT_TYPE.equals(preferredOutputTarget))
-        {
-          mimeType = "application/rtf"; //$NON-NLS-1$
-        }
-        else if (ExcelTableModule.EXCEL_FLOW_EXPORT_TYPE.equals(preferredOutputTarget))
-        {
-          mimeType = "application/vnd.ms-excel"; //$NON-NLS-1$
-        }
-        else if (StringUtils.isEmpty(preferredOutputTarget) == false)
-        {
-          mimeType = preferredOutputTarget;
-        }
-        else if (PlainTextPageableModule.PLAINTEXT_EXPORT_TYPE.equals(preferredOutputTarget))
-        {
-          mimeType = "text/plain"; //$NON-NLS-1$
-        }
-      }
-      catch (Exception e)
-      {
-        log.info(e.getMessage(), e);
-      }
-    }
-    if ("pdf".equalsIgnoreCase(mimeType)) //$NON-NLS-1$
-    {
-      mimeType = SimpleReportingComponent.MIME_TYPE_PDF;
-    }
-    else if ("html".equalsIgnoreCase(mimeType)) //$NON-NLS-1$
-    {
-      mimeType = SimpleReportingComponent.MIME_TYPE_HTML;
-    }
-    else if ("csv".equalsIgnoreCase(mimeType)) //$NON-NLS-1$
-    {
-      mimeType = SimpleReportingComponent.MIME_TYPE_CSV;
-    }
-    else if ("rtf".equalsIgnoreCase(mimeType)) //$NON-NLS-1$
-    {
-      mimeType = SimpleReportingComponent.MIME_TYPE_RTF;
-    }
-    else if ("xls".equalsIgnoreCase(mimeType)) //$NON-NLS-1$
-    {
-      mimeType = SimpleReportingComponent.MIME_TYPE_XLS;
-    }
-    else if ("txt".equalsIgnoreCase(mimeType)) //$NON-NLS-1$
-    {
-      mimeType = SimpleReportingComponent.MIME_TYPE_TXT;
-    }
-    return mimeType;
-  }
-
   public String getMimeType()
   {
     final IParameterProvider requestParams = getRequestParameters();
@@ -1142,9 +1064,11 @@ public class ReportContentGenerator extends SimpleContentGenerator
     {
       reportComponent = new SimpleReportingComponent();
     }
+
+    final Map<String, Object> inputs = createInputs(requestParams);
     reportComponent.setSession(userSession);
     reportComponent.setReportDefinitionPath(reportDefinitionPath);
-
-    return computeMimeType(requestParams);
+    reportComponent.setInputs(inputs);
+    return reportComponent.getMimeType();
   }
 }

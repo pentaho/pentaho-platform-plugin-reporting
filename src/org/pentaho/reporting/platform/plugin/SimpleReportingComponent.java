@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Array;
 import java.net.URL;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
 import javax.print.DocFlavor;
@@ -22,7 +23,6 @@ import org.pentaho.platform.api.engine.IStreamingPojo;
 import org.pentaho.platform.api.repository.IContentRepository;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.plugin.action.jfreereport.helper.PentahoTableModel;
-import org.pentaho.platform.util.web.MimeHelper;
 import org.pentaho.reporting.engine.classic.core.AttributeNames;
 import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
@@ -42,6 +42,7 @@ import org.pentaho.reporting.engine.classic.core.util.beans.BeanException;
 import org.pentaho.reporting.engine.classic.core.util.beans.ConverterRegistry;
 import org.pentaho.reporting.engine.classic.core.util.beans.ValueConverter;
 import org.pentaho.reporting.engine.classic.extensions.modules.java14print.Java14PrintUtil;
+import org.pentaho.reporting.libraries.base.config.Configuration;
 import org.pentaho.reporting.libraries.base.util.StringUtils;
 import org.pentaho.reporting.libraries.resourceloader.ResourceException;
 import org.pentaho.reporting.platform.plugin.messages.Messages;
@@ -62,6 +63,8 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    * The logging for logging messages from this component
    */
   private static final Log log = LogFactory.getLog(SimpleReportingComponent.class);
+
+  public static final String OUTPUT_TARGET = "output-type"; //$NON-NLS-1$
 
   public static final String OUTPUT_TYPE = "output-type"; //$NON-NLS-1$
   public static final String MIME_TYPE_HTML = "text/html"; //$NON-NLS-1$
@@ -123,6 +126,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    */
   public SimpleReportingComponent()
   {
+    this.inputs = Collections.emptyMap();
   }
 
   // ----------------------------------------------------------------------------
@@ -203,7 +207,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   /**
    * Sets the path to the report definition (platform path)
    *
-   * @param reportDefinitionPath
+   * @param reportDefinitionPath the path to the report definition.
    */
   public void setReportDefinitionPath(final String reportDefinitionPath)
   {
@@ -251,13 +255,72 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   }
 
   /**
-   * This method returns the output-type for the streaming output, it is the same as what is returned by getOutputType() for consistency.
+   * This method returns the mime-type for the streaming output based on the effective output target.
    *
    * @return the mime-type for the streaming output
+   * @see SimpleReportingComponent#computeEffectiveOutputTarget()
    */
   public String getMimeType()
   {
-    return outputType;
+    try
+    {
+      final String outputTarget = computeEffectiveOutputTarget();
+      if (HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE.equals(outputTarget))
+      {
+        return SimpleReportingComponent.MIME_TYPE_HTML;
+      }
+      if (HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE.equals(outputTarget))
+      {
+        return SimpleReportingComponent.MIME_TYPE_HTML;
+      }
+      if (ExcelTableModule.EXCEL_FLOW_EXPORT_TYPE.equals(outputTarget))
+      {
+        return SimpleReportingComponent.MIME_TYPE_XLS;
+      }
+      if (CSVTableModule.TABLE_CSV_STREAM_EXPORT_TYPE.equals(outputTarget))
+      {
+        return SimpleReportingComponent.MIME_TYPE_CSV;
+      }
+      if (RTFTableModule.TABLE_RTF_FLOW_EXPORT_TYPE.equals(outputTarget))
+      {
+        return SimpleReportingComponent.MIME_TYPE_RTF;
+      }
+      if (PdfPageableModule.PDF_EXPORT_TYPE.equals(outputTarget))
+      {
+        return SimpleReportingComponent.MIME_TYPE_PDF;
+      }
+      if (PlainTextPageableModule.PLAINTEXT_EXPORT_TYPE.equals(outputTarget))
+      {
+        return SimpleReportingComponent.MIME_TYPE_TXT;
+      }
+      if (SimpleReportingComponent.MIME_TYPE_EMAIL.equals(outputTarget))
+      {
+        return SimpleReportingComponent.MIME_TYPE_EMAIL;
+      }
+    }
+    catch (IOException e)
+    {
+      if (log.isDebugEnabled())
+      {
+        log.warn("Failed to compute the mime-type, will return default.", e);
+      }
+      else if (log.isWarnEnabled())
+      {
+        log.warn("Failed to compute the mime-type, will return default: " + e.getMessage());
+      }
+    }
+    catch (ResourceException e)
+    {
+      if (log.isDebugEnabled())
+      {
+        log.warn("Failed to compute the mime-type, will return default.", e);
+      }
+      else if (log.isWarnEnabled())
+      {
+        log.warn("Failed to compute the mime-type, will return default: " + e.getMessage());
+      }
+    }
+    return "application/octet-stream";
   }
 
   /**
@@ -288,7 +351,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   /**
    * Set whether or not to send the report to a printer
    *
-   * @param print
+   * @param print a flag indicating whether the report should be printed.
    */
   public void setPrint(final boolean print)
   {
@@ -323,7 +386,21 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    */
   public void setInputs(final Map<String, Object> inputs)
   {
+    if (inputs == null)
+    {
+      this.inputs = Collections.emptyMap();
+      return;
+    }
+
     this.inputs = inputs;
+    if (inputs.containsKey(OUTPUT_TYPE))
+    {
+      setOutputType(String.valueOf(inputs.get(OUTPUT_TYPE)));
+    }
+    if (inputs.containsKey(OUTPUT_TARGET))
+    {
+      setOutputTarget(String.valueOf(inputs.get(OUTPUT_TARGET)));
+    }
     if (inputs.containsKey(REPORT_DEFINITION_INPUT))
     {
       setReportDefinitionInputStream((InputStream) inputs.get(REPORT_DEFINITION_INPUT));
@@ -334,19 +411,19 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     }
     if (inputs.containsKey(PAGINATE_OUTPUT))
     {
-      paginateOutput = "true".equalsIgnoreCase("" + inputs.get(PAGINATE_OUTPUT)); //$NON-NLS-1$ //$NON-NLS-2$
+      paginateOutput = "true".equals(String.valueOf(inputs.get(PAGINATE_OUTPUT))); //$NON-NLS-1$ //$NON-NLS-2$
       if (paginateOutput && inputs.containsKey(ACCEPTED_PAGE))
       {
-        acceptedPage = Integer.parseInt("" + inputs.get(ACCEPTED_PAGE)); //$NON-NLS-1$
+        acceptedPage = Integer.parseInt(String.valueOf(inputs.get(ACCEPTED_PAGE))); //$NON-NLS-1$
       }
     }
     if (inputs.containsKey(PRINT))
     {
-      print = "true".equalsIgnoreCase("" + inputs.get(PRINT)); //$NON-NLS-1$ //$NON-NLS-2$
+      print = "true".equals(String.valueOf(inputs.get(PRINT))); //$NON-NLS-1$ //$NON-NLS-2$
     }
     if (inputs.containsKey(PRINTER_NAME))
     {
-      printer = "" + inputs.get(PRINTER_NAME);
+      printer = String.valueOf(inputs.get(PRINTER_NAME));
     }
   }
 
@@ -399,21 +476,46 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     return report;
   }
 
-  private String computeEffectiveOutputTarget(final MasterReport report)
+  /**
+   * Computes the effective output target that will be used when running the report. This method does not
+   * modify any of the properties of this class.
+   * <p/>
+   * The algorithm to determine the output target is as follows:
+   * <ul>
+   * <li>
+   * If the report attribute "lock-preferred-output-type" is set, and the attribute preferred-output-type is set,
+   * the report will always be exported to the specified output type.</li>
+   * <li>If the component has the parameter "output-target" set, this output target will be used.</li>
+   * <li>If the component has the parameter "output-type" set, the mime-type will be translated into a suitable
+   * output target (depends on other parameters like paginate as well.</li>
+   * <li>If neither output-target or output-type are specified, the report's preferred output type will be used.</li>
+   * <li>If no preferred output type is set, we default to HTML export.</li>
+   * </ul>
+   * <p/>
+   * If the output type given is invalid, the report will not be executed and calls to
+   * <code>SimpleReportingComponent#getMimeType()</code> will yield the generic "application/octet-stream" response.
+   *
+   * @return
+   * @throws IOException
+   * @throws ResourceException
+   */
+  private String computeEffectiveOutputTarget() throws IOException, ResourceException
   {
+    final MasterReport report = getReport();
     if (Boolean.TRUE.equals(report.getAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.LOCK_PREFERRED_OUTPUT_TYPE)))
     {
-      final Object preferredOutputType = report.getAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.PREFERRED_OUTPUT_TYPE);
+      // preferred output type is one of the engine's output-target identifiers. It is not a mime-type string.
+      // The engine supports multiple subformats per mime-type (example HTML: zipped/streaming/flow/pageable)
+      // The mime-mapping would be inaccurate.
+      final Object preferredOutputType = report.getAttribute
+          (AttributeNames.Core.NAMESPACE, AttributeNames.Core.PREFERRED_OUTPUT_TYPE);
       if (preferredOutputType != null)
       {
-        outputType = MimeHelper.getMimeTypeFromExtension("." + String.valueOf(preferredOutputType)); //$NON-NLS-1$
-        if (StringUtils.isEmpty(outputType))
-        {
-          outputType = String.valueOf(preferredOutputType);
-        }
+        return String.valueOf(preferredOutputType);
       }
     }
 
+    final String outputTarget = getOutputTarget();
     if (outputTarget != null)
     {
       // if a engine-level output target is given, use it as it is. We can assume that the user knows how to
@@ -421,6 +523,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       return outputTarget;
     }
 
+    final String outputType = getOutputType();
     // if the user has given a mime-type instead of a output-target, lets map it to the "best" choice. If the
     // user wanted full control, he would have used the output-target property instead.
     if (MIME_TYPE_CSV.equals(outputType))
@@ -456,6 +559,47 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       return PlainTextPageableModule.PLAINTEXT_EXPORT_TYPE;
     }
 
+    if ("pdf".equalsIgnoreCase(outputType)) //$NON-NLS-1$
+    {
+      log.warn("Use of deprecated output-type detected. Please use either 'output-type=application/pdf' or 'output-target=pageable/pdf'.");
+      return PdfPageableModule.PDF_EXPORT_TYPE;
+    }
+    else if ("html".equalsIgnoreCase(outputType)) //$NON-NLS-1$
+    {
+      log.warn("Use of deprecated output-type detected. Please use either 'output-type=text/html' or one of " +
+          "'output-target=" + HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE + "' or " +
+//          "'output-target=" + HtmlTableModule.TABLE_HTML_FLOW_EXPORT_TYPE + "' or " +
+          "'output-target=" + HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE + ".");
+      if (isPaginateOutput())
+      {
+        return HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE;
+      }
+      return HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE;
+    }
+    else if ("csv".equalsIgnoreCase(outputType)) //$NON-NLS-1$
+    {
+      log.warn("Use of deprecated output-type detected. Please use either 'output-type=text/csv' or 'output-target=" +
+          CSVTableModule.TABLE_CSV_STREAM_EXPORT_TYPE + "'.");
+      return CSVTableModule.TABLE_CSV_STREAM_EXPORT_TYPE;
+    }
+    else if ("rtf".equalsIgnoreCase(outputType)) //$NON-NLS-1$
+    {
+      log.warn("Use of deprecated output-type detected. Please use either 'output-type=text/rtf' or 'output-target=" +
+          RTFTableModule.TABLE_RTF_FLOW_EXPORT_TYPE + "'.");
+      return RTFTableModule.TABLE_RTF_FLOW_EXPORT_TYPE;
+    }
+    else if ("xls".equalsIgnoreCase(outputType)) //$NON-NLS-1$
+    {
+      log.warn("Use of deprecated output-type detected. Please use either 'output-type=application/vnd.ms-excel' " +
+          "or 'output-target=" + ExcelTableModule.EXCEL_FLOW_EXPORT_TYPE + "'.");
+      return ExcelTableModule.EXCEL_FLOW_EXPORT_TYPE;
+    }
+    else if ("txt".equalsIgnoreCase(outputType)) //$NON-NLS-1$
+    {
+      log.warn("Use of deprecated output-type detected. Please use either 'output-type=text/plain' " +
+          "or 'output-target=" + PlainTextPageableModule.PLAINTEXT_EXPORT_TYPE + "'.");
+      return PlainTextPageableModule.PLAINTEXT_EXPORT_TYPE;
+    }
     // if nothing is specified explicity, we may as well ask the report what it prefers..
     final Object preferredOutputType = report.getAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.PREFERRED_OUTPUT_TYPE);
     if (preferredOutputType != null)
@@ -471,12 +615,42 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    *
    * @param report  a MasterReport object to apply parameters to
    * @param context a ParameterContext for which the parameters will be under
+   * @deprecated use the single parameter version instead. This method will now fail with an error if the
+   *             report passed in is not the same as the report this component has.
    */
   public void applyInputsToReportParameters(final MasterReport report, final ParameterContext context)
+  {
+    try
+    {
+      if (getReport() != report)
+      {
+        throw new IllegalStateException("Will not apply inputs to a foreign report.");
+      }
+      applyInputsToReportParameters(context);
+    }
+    catch (IOException e)
+    {
+      throw new IllegalStateException("Unable to apply inputs:", e);
+    }
+    catch (ResourceException e)
+    {
+      throw new IllegalStateException("Unable to apply inputs:", e);
+    }
+  }
+
+  /**
+   * Apply inputs (if any) to corresponding report parameters, care is taken when checking parameter types to perform any necessary casting and conversion.
+   *
+   * @param context a ParameterContext for which the parameters will be under
+   * @throws java.io.IOException if the report of this component could not be parsed.
+   * @throws ResourceException   if the report of this component could not be parsed.
+   */
+  public void applyInputsToReportParameters(final ParameterContext context) throws IOException, ResourceException
   {
     // apply inputs to report
     if (inputs != null)
     {
+      final MasterReport report = getReport();
       final ParameterDefinitionEntry[] params = report.getParameterDefinition().getParameterDefinitions();
       for (final ParameterDefinitionEntry param : params)
       {
@@ -593,7 +767,8 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   {
     if (parameter instanceof ListParameter)
     {
-      return ((ListParameter) parameter).isAllowMultiSelection();
+      final ListParameter listParameter = (ListParameter) parameter;
+      return listParameter.isAllowMultiSelection();
     }
     return false;
   }
@@ -618,18 +793,15 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
 
   protected int getYieldRate()
   {
-    if (getInput(REPORTGENERATE_YIELDRATE, null) != null)
+    final Object yieldRate = getInput(REPORTGENERATE_YIELDRATE, null);
+    if (yieldRate instanceof Number)
     {
-      final Object inputValue = inputs.get(REPORTGENERATE_YIELDRATE);
-      if (inputValue instanceof Number)
+      final Number n = (Number) yieldRate;
+      if (n.intValue() < 1)
       {
-        final Number n = (Number) inputValue;
-        if (n.intValue() < 1)
-        {
-          return 0;
-        }
-        return n.intValue();
+        return 0;
       }
+      return n.intValue();
     }
     return 0;
   }
@@ -690,7 +862,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       final ParameterContext parameterContext = new DefaultParameterContext(report);
       // open parameter context
       parameterContext.open();
-      applyInputsToReportParameters(report, parameterContext);
+      applyInputsToReportParameters(parameterContext);
       parameterContext.close();
 
       if (isPrint())
@@ -717,18 +889,20 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       }
       else
       {
-        final String outputType = computeEffectiveOutputTarget(report);
+        final String outputType = computeEffectiveOutputTarget();
+        final Configuration globalConfig = ClassicEngineBoot.getInstance().getGlobalConfig();
         if (HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE.equals(outputType))
         {
-          String contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN, ClassicEngineBoot.getInstance().getGlobalConfig()
-              .getConfigProperty("org.pentaho.web.ContentHandler")); //$NON-NLS-1$
+          String contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN,
+              globalConfig.getConfigProperty("org.pentaho.web.ContentHandler")); //$NON-NLS-1$
           if (useContentRepository)
           {
             // use the content repository
-            contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN, ClassicEngineBoot.getInstance().getGlobalConfig().getConfigProperty(
-                "org.pentaho.web.resource.ContentHandler")); //$NON-NLS-1$
+            contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN,
+                globalConfig.getConfigProperty("org.pentaho.web.resource.ContentHandler")); //$NON-NLS-1$
             final IContentRepository contentRepository = PentahoSystem.get(IContentRepository.class, session);
-            pageCount = PageableHTMLOutput.generate(session, report, acceptedPage, outputStream, contentRepository, contentHandlerPattern, getYieldRate());
+            pageCount = PageableHTMLOutput.generate(session, report, acceptedPage, outputStream,
+                contentRepository, contentHandlerPattern, getYieldRate());
             return true;
           }
           else
@@ -740,12 +914,12 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
         }
         if (HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE.equals(outputType))
         {
-          String contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN, ClassicEngineBoot.getInstance().getGlobalConfig()
+          String contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN, globalConfig
               .getConfigProperty("org.pentaho.web.ContentHandler")); //$NON-NLS-1$
           if (useContentRepository)
           {
             // use the content repository
-            contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN, ClassicEngineBoot.getInstance().getGlobalConfig().getConfigProperty(
+            contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN, globalConfig.getConfigProperty(
                 "org.pentaho.web.resource.ContentHandler")); //$NON-NLS-1$
             final IContentRepository contentRepository = PentahoSystem.get(IContentRepository.class, session);
             return HTMLOutput.generate(session, report, outputStream, contentRepository, contentHandlerPattern, getYieldRate());
