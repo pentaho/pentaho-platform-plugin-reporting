@@ -4,6 +4,7 @@ import java.net.URL;
 import java.util.List;
 import java.util.Locale;
 
+import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.api.engine.IUserDetailsRoleListService;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
@@ -43,33 +44,38 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
 
     final String pentahoBaseURL = PentahoSystem.getApplicationContext().getBaseUrl();
 
-    if ("serverBaseURL".equalsIgnoreCase(key)) //$NON-NLS-1$
+    final IPentahoSession session = PentahoSessionHolder.getSession();
+    if ("serverBaseURL".equals(key)) //$NON-NLS-1$
     {
       return getBaseServerURL(pentahoBaseURL);
     }
-    else if ("pentahoBaseURL".equalsIgnoreCase(key)) //$NON-NLS-1$
+    else if ("pentahoBaseURL".equals(key)) //$NON-NLS-1$
     {
       return pentahoBaseURL;
     }
-    else if ("solutionRoot".equalsIgnoreCase(key)) //$NON-NLS-1$
+    else if ("solutionRoot".equals(key)) //$NON-NLS-1$
     {
       return PentahoSystem.getApplicationContext().getSolutionPath(""); //$NON-NLS-1$
     }
-    else if ("hostColonPort".equalsIgnoreCase(key)) //$NON-NLS-1$
+    else if ("hostColonPort".equals(key)) //$NON-NLS-1$
     {
       return getHostColonPort(pentahoBaseURL);
     }
-    else if ("username".equalsIgnoreCase(key)) //$NON-NLS-1$
+    else if (session != null && "username".equals(key)) //$NON-NLS-1$
     {
-      return PentahoSessionHolder.getSession().getName();
+      return session.getName();
     }
-    else if ("roles".equalsIgnoreCase(key)) //$NON-NLS-1$
+    else if (session != null && "roles".equals(key)) //$NON-NLS-1$
     {
       final IUserDetailsRoleListService roleListService = PentahoSystem.get(IUserDetailsRoleListService.class);
+      if (roleListService == null)
+      {
+        return null;
+      }
       final StringBuffer property = new StringBuffer();
       //noinspection unchecked
       final List<String> roles =
-          (List<String>) roleListService.getRolesForUser(PentahoSessionHolder.getSession().getName());
+          (List<String>) roleListService.getRolesForUser(session.getName());
       if (roles == null)
       {
         return null;
@@ -89,9 +95,9 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
       return property.toString();
     }
 
-    if (key.startsWith("session:"))
+    if (session != null && key.startsWith("session:"))
     {
-      final Object attribute = PentahoSessionHolder.getSession().getAttribute(key.substring("session:".length()));
+      final Object attribute = session.getAttribute(key.substring("session:".length()));
       if (attribute instanceof String)
       {
         return (String) attribute;
