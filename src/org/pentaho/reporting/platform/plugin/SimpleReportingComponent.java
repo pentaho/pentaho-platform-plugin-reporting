@@ -26,6 +26,7 @@ import org.pentaho.platform.plugin.action.jfreereport.helper.PentahoTableModel;
 import org.pentaho.reporting.engine.classic.core.AttributeNames;
 import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
+import org.pentaho.reporting.engine.classic.core.metadata.ReportProcessTaskRegistry;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.pdf.PdfPageableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.plaintext.PlainTextPageableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.plaintext.driver.TextFilePrinterDriver;
@@ -64,7 +65,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    */
   private static final Log log = LogFactory.getLog(SimpleReportingComponent.class);
 
-  public static final String OUTPUT_TARGET = "output-type"; //$NON-NLS-1$
+  public static final String OUTPUT_TARGET = "output-target"; //$NON-NLS-1$
 
   public static final String OUTPUT_TYPE = "output-type"; //$NON-NLS-1$
   public static final String MIME_TYPE_HTML = "text/html"; //$NON-NLS-1$
@@ -265,6 +266,10 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     try
     {
       final String outputTarget = computeEffectiveOutputTarget();
+      if (log.isDebugEnabled())
+      {
+        log.debug("Output-target as returned by the report:" + outputTarget);
+      }
       if (HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE.equals(outputTarget))
       {
         return SimpleReportingComponent.MIME_TYPE_HTML;
@@ -476,6 +481,11 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     return report;
   }
 
+  private boolean isValidOutputType(final String outputType)
+  {
+    return ReportProcessTaskRegistry.getInstance().isExportTypeRegistered(outputType);
+  }
+
   /**
    * Computes the effective output target that will be used when running the report. This method does not
    * modify any of the properties of this class.
@@ -511,19 +521,82 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
           (AttributeNames.Core.NAMESPACE, AttributeNames.Core.PREFERRED_OUTPUT_TYPE);
       if (preferredOutputType != null)
       {
-        return String.valueOf(preferredOutputType);
+        final String preferredOutputTypeString = String.valueOf(preferredOutputType);
+        if (isValidOutputType(preferredOutputTypeString))
+        {
+          // if it is a recognized process-type, then fine, return it.
+          return preferredOutputTypeString;
+        }
+
+        final String mappedLegacyType = mapOutputTypeToOutputTarget(preferredOutputTypeString);
+        if (mappedLegacyType != null)
+        {
+          log.warn("Invalid preferred output target specified in the report. Type '" +
+              preferredOutputTypeString + "' is not a valid ReportProcessTask specifier.");
+          return mappedLegacyType;
+        }
+
+        log.warn("Invalid preferred output target specified in the report. Type '" +
+            preferredOutputTypeString + "' is neither a valid ReportProcessTask specifier nor a known legacy " +
+            "output-type. Lock-output-type will be ignored.");
+
       }
     }
 
     final String outputTarget = getOutputTarget();
     if (outputTarget != null)
     {
+      if (isValidOutputType(outputTarget) == false)
+      {
+        log.warn("Invalid output-target specified in the report. Type '" +
+            outputTarget + "' is neither a valid ReportProcessTask specifier nor a known legacy " +
+            "output-type. Lock-output-type will be ignored.");
+      }
       // if a engine-level output target is given, use it as it is. We can assume that the user knows how to
       // map from that to a real mime-type.
       return outputTarget;
     }
 
-    final String outputType = getOutputType();
+    final String mappingFromParams = mapOutputTypeToOutputTarget(getOutputType());
+    if (mappingFromParams != null)
+    {
+      return mappingFromParams;
+    }
+
+    // if nothing is specified explicity, we may as well ask the report what it prefers..
+    final Object preferredOutputType = report.getAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.PREFERRED_OUTPUT_TYPE);
+    if (preferredOutputType != null)
+    {
+      final String preferredOutputTypeString = String.valueOf(preferredOutputType);
+      if (isValidOutputType(preferredOutputTypeString))
+      {
+        return preferredOutputTypeString;
+      }
+
+      final String mappedLegacyType = mapOutputTypeToOutputTarget(preferredOutputTypeString);
+      if (mappedLegacyType != null)
+      {
+        log.warn("Invalid preferred output target specified in the report. Type '" +
+            preferredOutputTypeString + "' is not a valid ReportProcessTask specifier.");
+        return mappedLegacyType;
+      }
+
+      log.warn("Invalid preferred output target specified in the report. Type '" +
+          preferredOutputTypeString + "' is neither a valid ReportProcessTask specifier nor a known legacy " +
+          "output-type. Defaulting back to " + HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE);
+      return HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE;
+    }
+
+    // if you have come that far, it means you really messed up. Sorry, this error is not a error caused
+    // by our legacy code - it is more likely that you just entered values that are totally wrong.
+    log.error("Invalid output type specified in the report. Type '" +
+        getOutputType() + "' is not a known legacy output-type. Defaulting back to " +
+        HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE);
+    return HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE;
+  }
+
+  private String mapOutputTypeToOutputTarget(final String outputType)
+  {
     // if the user has given a mime-type instead of a output-target, lets map it to the "best" choice. If the
     // user wanted full control, he would have used the output-target property instead.
     if (MIME_TYPE_CSV.equals(outputType))
@@ -600,14 +673,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
           "or 'output-target=" + PlainTextPageableModule.PLAINTEXT_EXPORT_TYPE + "'.");
       return PlainTextPageableModule.PLAINTEXT_EXPORT_TYPE;
     }
-    // if nothing is specified explicity, we may as well ask the report what it prefers..
-    final Object preferredOutputType = report.getAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.PREFERRED_OUTPUT_TYPE);
-    if (preferredOutputType != null)
-    {
-      return String.valueOf(preferredOutputType);
-    }
-    // default to HTML stream ..
-    return HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE;
+    return null;
   }
 
   /**
@@ -886,77 +952,79 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
           }
         }
         Java14PrintUtil.printDirectly(report, printService);
+        return true;
       }
-      else
+
+      final String outputType = computeEffectiveOutputTarget();
+      final Configuration globalConfig = ClassicEngineBoot.getInstance().getGlobalConfig();
+      if (HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE.equals(outputType))
       {
-        final String outputType = computeEffectiveOutputTarget();
-        final Configuration globalConfig = ClassicEngineBoot.getInstance().getGlobalConfig();
-        if (HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE.equals(outputType))
+        String contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN,
+            globalConfig.getConfigProperty("org.pentaho.web.ContentHandler")); //$NON-NLS-1$
+        if (useContentRepository)
         {
-          String contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN,
-              globalConfig.getConfigProperty("org.pentaho.web.ContentHandler")); //$NON-NLS-1$
-          if (useContentRepository)
-          {
-            // use the content repository
-            contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN,
-                globalConfig.getConfigProperty("org.pentaho.web.resource.ContentHandler")); //$NON-NLS-1$
-            final IContentRepository contentRepository = PentahoSystem.get(IContentRepository.class, session);
-            pageCount = PageableHTMLOutput.generate(session, report, acceptedPage, outputStream,
-                contentRepository, contentHandlerPattern, getYieldRate());
-            return true;
-          }
-          else
-          {
-            // don't use the content repository
-            pageCount = PageableHTMLOutput.generate(report, acceptedPage, outputStream, contentHandlerPattern, getYieldRate());
-            return true;
-          }
+          // use the content repository
+          contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN,
+              globalConfig.getConfigProperty("org.pentaho.web.resource.ContentHandler")); //$NON-NLS-1$
+          final IContentRepository contentRepository = PentahoSystem.get(IContentRepository.class, session);
+          pageCount = PageableHTMLOutput.generate(session, report, acceptedPage, outputStream,
+              contentRepository, contentHandlerPattern, getYieldRate());
+          return true;
         }
-        if (HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE.equals(outputType))
+        else
         {
-          String contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN, globalConfig
-              .getConfigProperty("org.pentaho.web.ContentHandler")); //$NON-NLS-1$
-          if (useContentRepository)
-          {
-            // use the content repository
-            contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN, globalConfig.getConfigProperty(
-                "org.pentaho.web.resource.ContentHandler")); //$NON-NLS-1$
-            final IContentRepository contentRepository = PentahoSystem.get(IContentRepository.class, session);
-            return HTMLOutput.generate(session, report, outputStream, contentRepository, contentHandlerPattern, getYieldRate());
-          }
-          else
-          {
-            // don't use the content repository
-            return HTMLOutput.generate(report, outputStream, contentHandlerPattern, getYieldRate());
-          }
-        }
-        else if (PdfPageableModule.PDF_EXPORT_TYPE.equals(outputType))
-        {
-          return PDFOutput.generate(report, outputStream, getYieldRate());
-        }
-        else if (ExcelTableModule.EXCEL_FLOW_EXPORT_TYPE.equals(outputType))
-        {
-          final InputStream templateInputStream = (InputStream) getInput(XLS_WORKBOOK_PARAM, null);
-          return XLSOutput.generate(report, outputStream, templateInputStream, getYieldRate());
-        }
-        else if (CSVTableModule.TABLE_CSV_STREAM_EXPORT_TYPE.equals(outputType))
-        {
-          return CSVOutput.generate(report, outputStream, getYieldRate());
-        }
-        else if (RTFTableModule.TABLE_RTF_FLOW_EXPORT_TYPE.equals(outputType))
-        {
-          return RTFOutput.generate(report, outputStream, getYieldRate());
-        }
-        else if (MIME_TYPE_EMAIL.equals(outputType))
-        {
-          return EmailOutput.generate(report, outputStream, "cid:{0}", getYieldRate()); //$NON-NLS-1$
-        }
-        else if (PlainTextPageableModule.PLAINTEXT_EXPORT_TYPE.equals(outputType))
-        {
-          final TextFilePrinterDriver driver = new TextFilePrinterDriver(outputStream, 12, 6);
-          return PlainTextOutput.generate(report, outputStream, getYieldRate(), driver);
+          // don't use the content repository
+          pageCount = PageableHTMLOutput.generate(report, acceptedPage, outputStream, contentHandlerPattern, getYieldRate());
+          return true;
         }
       }
+      if (HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE.equals(outputType))
+      {
+        String contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN, globalConfig
+            .getConfigProperty("org.pentaho.web.ContentHandler")); //$NON-NLS-1$
+        if (useContentRepository)
+        {
+          // use the content repository
+          contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN, globalConfig.getConfigProperty(
+              "org.pentaho.web.resource.ContentHandler")); //$NON-NLS-1$
+          final IContentRepository contentRepository = PentahoSystem.get(IContentRepository.class, session);
+          return HTMLOutput.generate(session, report, outputStream, contentRepository, contentHandlerPattern, getYieldRate());
+        }
+        else
+        {
+          // don't use the content repository
+          return HTMLOutput.generate(report, outputStream, contentHandlerPattern, getYieldRate());
+        }
+      }
+      if (PdfPageableModule.PDF_EXPORT_TYPE.equals(outputType))
+      {
+        return PDFOutput.generate(report, outputStream, getYieldRate());
+      }
+      if (ExcelTableModule.EXCEL_FLOW_EXPORT_TYPE.equals(outputType))
+      {
+        final InputStream templateInputStream = (InputStream) getInput(XLS_WORKBOOK_PARAM, null);
+        return XLSOutput.generate(report, outputStream, templateInputStream, getYieldRate());
+      }
+      if (CSVTableModule.TABLE_CSV_STREAM_EXPORT_TYPE.equals(outputType))
+      {
+        return CSVOutput.generate(report, outputStream, getYieldRate());
+      }
+      if (RTFTableModule.TABLE_RTF_FLOW_EXPORT_TYPE.equals(outputType))
+      {
+        return RTFOutput.generate(report, outputStream, getYieldRate());
+      }
+      if (MIME_TYPE_EMAIL.equals(outputType))
+      {
+        return EmailOutput.generate(report, outputStream, "cid:{0}", getYieldRate()); //$NON-NLS-1$
+      }
+      if (PlainTextPageableModule.PLAINTEXT_EXPORT_TYPE.equals(outputType))
+      {
+        final TextFilePrinterDriver driver = new TextFilePrinterDriver(outputStream, 12, 6);
+        return PlainTextOutput.generate(report, outputStream, getYieldRate(), driver);
+      }
+
+      log.warn("Unable to resolve the output type. This request cannot be processed. Output-type=" + outputType);
+
     }
     catch (Throwable t)
     {

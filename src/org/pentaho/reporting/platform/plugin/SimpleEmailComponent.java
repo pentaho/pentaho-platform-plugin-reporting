@@ -470,7 +470,7 @@ public class SimpleEmailComponent implements IAcceptsRuntimeInputs
       final MimeMultipart alternative = new MimeMultipart("alternative");
       alternative.addBodyPart(textBodyPart);
       alternative.addBodyPart(htmlBodyPart);
-            
+
       parentMultipart = alternative;
 
     }
@@ -501,7 +501,7 @@ public class SimpleEmailComponent implements IAcceptsRuntimeInputs
       }
 
       return new String(out.toString(LocaleHelper.getSystemEncoding()));
-      
+
     }
 
     throw new IllegalStateException("Input is not a String or ContentItem");

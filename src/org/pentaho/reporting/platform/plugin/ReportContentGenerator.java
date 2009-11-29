@@ -45,12 +45,7 @@ import org.pentaho.reporting.engine.classic.core.AttributeNames;
 import org.pentaho.reporting.engine.classic.core.DataRow;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportDataFactoryException;
-import org.pentaho.reporting.engine.classic.core.modules.output.pageable.pdf.PdfPageableModule;
-import org.pentaho.reporting.engine.classic.core.modules.output.pageable.plaintext.PlainTextPageableModule;
-import org.pentaho.reporting.engine.classic.core.modules.output.table.csv.CSVTableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlTableModule;
-import org.pentaho.reporting.engine.classic.core.modules.output.table.rtf.RTFTableModule;
-import org.pentaho.reporting.engine.classic.core.modules.output.table.xls.ExcelTableModule;
 import org.pentaho.reporting.engine.classic.core.parameters.DefaultParameterContext;
 import org.pentaho.reporting.engine.classic.core.parameters.FormulaParameterEvaluator;
 import org.pentaho.reporting.engine.classic.core.parameters.ListParameter;
@@ -62,10 +57,10 @@ import org.pentaho.reporting.engine.classic.core.parameters.PlainParameter;
 import org.pentaho.reporting.engine.classic.core.parameters.ReportParameterDefinition;
 import org.pentaho.reporting.engine.classic.core.parameters.ValidationMessage;
 import org.pentaho.reporting.engine.classic.core.parameters.ValidationResult;
+import org.pentaho.reporting.engine.classic.core.util.NullOutputStream;
 import org.pentaho.reporting.engine.classic.core.util.beans.BeanException;
 import org.pentaho.reporting.engine.classic.core.util.beans.ConverterRegistry;
 import org.pentaho.reporting.engine.classic.core.util.beans.ValueConverter;
-import org.pentaho.reporting.engine.classic.core.util.NullOutputStream;
 import org.pentaho.reporting.libraries.base.util.StringUtils;
 import org.pentaho.reporting.libraries.resourceloader.ResourceException;
 import org.pentaho.reporting.platform.plugin.gwt.client.ReportViewer.RENDER_TYPE;
@@ -200,8 +195,15 @@ public class ReportContentGenerator extends SimpleContentGenerator
       reportComponent.setAcceptedPage(0);
     }
 
-    if (reportComponent.validate() && reportComponent.execute())
+    if (log.isDebugEnabled())
     {
+      log.debug("About to generate content: mimetype=" + mimeType +
+          " paginated=" + reportComponent.isPaginateOutput() + " page=" + reportComponent.getAcceptedPage());
+    }
+    if (reportComponent.validate() &&
+        reportComponent.execute())
+    {
+      final byte[] bytes = reportOutput.toByteArray();
       if (parameterProviders.get("path") != null &&
           parameterProviders.get("path").getParameter("httpresponse") != null) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
       {
@@ -216,9 +218,14 @@ public class ReportContentGenerator extends SimpleContentGenerator
         response.setHeader("Content-Description", file.getFileName()); //$NON-NLS-1$
         response.setHeader("Pragma", "no-cache");
         response.setHeader("Cache-Control", "no-cache");
+        response.setHeader("Content-Size", String.valueOf(bytes.length));
+      }
+      if (log.isDebugEnabled())
+      {
+        log.debug("Generated content: Content-Size=" + bytes.length);
       }
 
-      outputStream.write(reportOutput.toByteArray());
+      outputStream.write(bytes);
       outputStream.flush();
     }
     else
@@ -228,6 +235,10 @@ public class ReportContentGenerator extends SimpleContentGenerator
       {
         final HttpServletResponse response = (HttpServletResponse) parameterProviders.get("path").getParameter("httpresponse"); //$NON-NLS-1$ //$NON-NLS-2$
         response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+      }
+      if (log.isDebugEnabled())
+      {
+        log.debug("Failed to generate content");
       }
       outputStream.write(org.pentaho.reporting.platform.plugin.messages.Messages.getInstance().getString("ReportPlugin.ReportValidationFailed").getBytes()); //$NON-NLS-1$
       outputStream.flush();
@@ -261,11 +272,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
     parameterContext.open();
     // apply inputs to parameters
     reportComponent.applyInputsToReportParameters(parameterContext);
-    final FormulaParameterEvaluator formulaParameterEvaluator = new FormulaParameterEvaluator();
-    final ValidationResult postFormulaValidationResult = new ValidationResult();
     final ReportParameterDefinition reportParameterDefinition = report.getParameterDefinition();
-    final DataRow parameterData = formulaParameterEvaluator.evaluate
-        (postFormulaValidationResult, reportParameterDefinition, parameterContext);
 
     final ParameterDefinitionEntry[] parameterDefinitions = reportParameterDefinition.getParameterDefinitions();
     for (final ParameterDefinitionEntry parameter : parameterDefinitions)
@@ -278,13 +285,13 @@ public class ReportContentGenerator extends SimpleContentGenerator
       }
 
       final Element parameterElement =
-          createParameterElement(subscribe, parameterData, document, parameterContext, parameter);
+          createParameterElement(subscribe, inputs, document, parameterContext, parameter);
 
       parameters.appendChild(parameterElement);
     }
 
     final ValidationResult vr = reportParameterDefinition.getValidator().validate
-        (postFormulaValidationResult, reportParameterDefinition, parameterContext);
+        (new ValidationResult(), reportParameterDefinition, parameterContext);
     parameters.setAttribute("is-prompt-needed", "" + !vr.isEmpty()); //$NON-NLS-1$ //$NON-NLS-2$
     parameters.setAttribute("subscribe", "" + subscribe); //$NON-NLS-1$ //$NON-NLS-2$
 
@@ -417,7 +424,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
   }
 
   private Element createParameterElement(final boolean subscribe,
-                                         final DataRow inputs,
+                                         final Map<String,Object> inputs,
                                          final Document document,
                                          final ParameterContext parameterContext,
                                          final ParameterDefinitionEntry parameter)
@@ -434,9 +441,9 @@ public class ReportContentGenerator extends SimpleContentGenerator
     parameterElement.setAttribute("is-mandatory", "" + parameter.isMandatory()); //$NON-NLS-1$ //$NON-NLS-2$
 
     final Object defaultValue = parameter.getDefaultValue(parameterContext);
+    final Class declaredValueType = parameter.getValueType();
     if (defaultValue != null)
     {
-      final Class declaredValueType = parameter.getValueType();
       if (declaredValueType.isArray())
       {
         if (defaultValue.getClass().isArray())
@@ -500,14 +507,14 @@ public class ReportContentGenerator extends SimpleContentGenerator
         {
           final Object value = Array.get(selections, i);
           final Element selectionElement = document.createElement("selection"); //$NON-NLS-1$
-          selectionElement.setAttribute("value", value.toString()); //$NON-NLS-1$
+          selectionElement.setAttribute("value", String.valueOf(value)); //$NON-NLS-1$
           selectionsElement.appendChild(selectionElement);
         }
       }
       else
       {
         final Element selectionElement = document.createElement("selection"); //$NON-NLS-1$
-        selectionElement.setAttribute("value", selections.toString()); //$NON-NLS-1$
+        selectionElement.setAttribute("value", String.valueOf(selections)); //$NON-NLS-1$
         selectionsElement.appendChild(selectionElement);
       }
     }
