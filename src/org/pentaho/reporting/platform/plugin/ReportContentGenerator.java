@@ -42,12 +42,10 @@ import org.pentaho.platform.repository.subscription.SubscriptionHelper;
 import org.pentaho.platform.util.UUIDUtil;
 import org.pentaho.platform.util.web.MimeHelper;
 import org.pentaho.reporting.engine.classic.core.AttributeNames;
-import org.pentaho.reporting.engine.classic.core.DataRow;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportDataFactoryException;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlTableModule;
 import org.pentaho.reporting.engine.classic.core.parameters.DefaultParameterContext;
-import org.pentaho.reporting.engine.classic.core.parameters.FormulaParameterEvaluator;
 import org.pentaho.reporting.engine.classic.core.parameters.ListParameter;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterAttributeNames;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterContext;
@@ -197,8 +195,8 @@ public class ReportContentGenerator extends SimpleContentGenerator
 
     if (log.isDebugEnabled())
     {
-      log.debug("About to generate content: mimetype=" + mimeType +
-          " paginated=" + reportComponent.isPaginateOutput() + " page=" + reportComponent.getAcceptedPage());
+      log.debug(Messages.getInstance().getString("ReportPlugin.logStartGenerateContent", mimeType,//$NON-NLS-1$ 
+          String.valueOf(reportComponent.isPaginateOutput()), String.valueOf(reportComponent.getAcceptedPage())));
     }
     if (reportComponent.validate() &&
         reportComponent.execute())
@@ -222,7 +220,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
       }
       if (log.isDebugEnabled())
       {
-        log.debug("Generated content: Content-Size=" + bytes.length);
+        log.debug(Messages.getInstance().getString("ReportPlugin.logEndGenerateContent", String.valueOf(bytes.length)));//$NON-NLS-1$
       }
 
       outputStream.write(bytes);
@@ -238,7 +236,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
       }
       if (log.isDebugEnabled())
       {
-        log.debug("Failed to generate content");
+        log.debug(Messages.getInstance().getString("ReportPlugin.logErrorGenerateContent"));//$NON-NLS-1$
       }
       outputStream.write(org.pentaho.reporting.platform.plugin.messages.Messages.getInstance().getString("ReportPlugin.ReportValidationFailed").getBytes()); //$NON-NLS-1$
       outputStream.flush();

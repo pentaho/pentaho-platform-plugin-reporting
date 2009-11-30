@@ -87,6 +87,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   public static final String PAGINATE_OUTPUT = "paginate"; //$NON-NLS-1$
   public static final String PRINT = "print"; //$NON-NLS-1$
   public static final String PRINTER_NAME = "printer-name"; //$NON-NLS-1$
+  private static final String MIME_GENERIC_FALLBACK = "application/octet-stream";
 
   /**
    * Static initializer block to guarantee that the ReportingComponent will be in a state where the reporting engine will be booted. We have a system listener
@@ -268,7 +269,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       final String outputTarget = computeEffectiveOutputTarget();
       if (log.isDebugEnabled())
       {
-        log.debug("Output-target as returned by the report:" + outputTarget);
+        log.debug(Messages.getInstance().getString("ReportPlugin.logComputedOutputTarget", outputTarget));
       }
       if (HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE.equals(outputTarget))
       {
@@ -307,25 +308,25 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     {
       if (log.isDebugEnabled())
       {
-        log.warn("Failed to compute the mime-type, will return default.", e);
+        log.warn(Messages.getInstance().getString("ReportPlugin.logErrorMimeTypeFull"), e);
       }
       else if (log.isWarnEnabled())
       {
-        log.warn("Failed to compute the mime-type, will return default: " + e.getMessage());
+        log.warn(Messages.getInstance().getString("ReportPlugin.logErrorMimeTypeShort",  e.getMessage()));
       }
     }
     catch (ResourceException e)
     {
       if (log.isDebugEnabled())
       {
-        log.warn("Failed to compute the mime-type, will return default.", e);
+        log.warn(Messages.getInstance().getString("ReportPlugin.logErrorMimeTypeFull"), e);
       }
       else if (log.isWarnEnabled())
       {
-        log.warn("Failed to compute the mime-type, will return default: " + e.getMessage());
+        log.warn(Messages.getInstance().getString("ReportPlugin.logErrorMimeTypeShort",  e.getMessage()));
       }
     }
-    return "application/octet-stream";
+    return MIME_GENERIC_FALLBACK;
   }
 
   /**
@@ -416,7 +417,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     }
     if (inputs.containsKey(PAGINATE_OUTPUT))
     {
-      paginateOutput = "true".equals(String.valueOf(inputs.get(PAGINATE_OUTPUT))); //$NON-NLS-1$ //$NON-NLS-2$
+      paginateOutput = "true".equals(String.valueOf(inputs.get(PAGINATE_OUTPUT))); //$NON-NLS-1$
       if (paginateOutput && inputs.containsKey(ACCEPTED_PAGE))
       {
         acceptedPage = Integer.parseInt(String.valueOf(inputs.get(ACCEPTED_PAGE))); //$NON-NLS-1$
@@ -424,7 +425,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     }
     if (inputs.containsKey(PRINT))
     {
-      print = "true".equals(String.valueOf(inputs.get(PRINT))); //$NON-NLS-1$ //$NON-NLS-2$
+      print = "true".equals(String.valueOf(inputs.get(PRINT))); //$NON-NLS-1$
     }
     if (inputs.containsKey(PRINTER_NAME))
     {
@@ -531,15 +532,11 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
         final String mappedLegacyType = mapOutputTypeToOutputTarget(preferredOutputTypeString);
         if (mappedLegacyType != null)
         {
-          log.warn("Invalid preferred output target specified in the report. Type '" +
-              preferredOutputTypeString + "' is not a valid ReportProcessTask specifier.");
+          log.warn(Messages.getInstance().getString("ReportPlugin.warnLegacyLockedOutput", preferredOutputTypeString));
           return mappedLegacyType;
         }
 
-        log.warn("Invalid preferred output target specified in the report. Type '" +
-            preferredOutputTypeString + "' is neither a valid ReportProcessTask specifier nor a known legacy " +
-            "output-type. Lock-output-type will be ignored.");
-
+        log.warn(Messages.getInstance().getString("ReportPlugin.warnInvalidLockedOutput", preferredOutputTypeString));
       }
     }
 
@@ -548,9 +545,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     {
       if (isValidOutputType(outputTarget) == false)
       {
-        log.warn("Invalid output-target specified in the report. Type '" +
-            outputTarget + "' is neither a valid ReportProcessTask specifier nor a known legacy " +
-            "output-type. Lock-output-type will be ignored.");
+        log.warn(Messages.getInstance().getString("ReportPlugin.warnInvalidOutputTarget", outputTarget));
       }
       // if a engine-level output target is given, use it as it is. We can assume that the user knows how to
       // map from that to a real mime-type.
@@ -576,22 +571,19 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       final String mappedLegacyType = mapOutputTypeToOutputTarget(preferredOutputTypeString);
       if (mappedLegacyType != null)
       {
-        log.warn("Invalid preferred output target specified in the report. Type '" +
-            preferredOutputTypeString + "' is not a valid ReportProcessTask specifier.");
+        log.warn(Messages.getInstance().getString("ReportPlugin.warnLegacyPreferredOutput", preferredOutputTypeString));
         return mappedLegacyType;
       }
 
-      log.warn("Invalid preferred output target specified in the report. Type '" +
-          preferredOutputTypeString + "' is neither a valid ReportProcessTask specifier nor a known legacy " +
-          "output-type. Defaulting back to " + HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE);
+      log.warn(Messages.getInstance().getString("ReportPlugin.warnInvalidPreferredOutput",
+          preferredOutputTypeString,  HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE));
       return HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE;
     }
 
     // if you have come that far, it means you really messed up. Sorry, this error is not a error caused
     // by our legacy code - it is more likely that you just entered values that are totally wrong.
-    log.error("Invalid output type specified in the report. Type '" +
-        getOutputType() + "' is not a known legacy output-type. Defaulting back to " +
-        HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE);
+    log.error(Messages.getInstance().getString("ReportPlugin.warnInvalidOutputType", getOutputType(), 
+        HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE));
     return HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE;
   }
 
@@ -634,15 +626,12 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
 
     if ("pdf".equalsIgnoreCase(outputType)) //$NON-NLS-1$
     {
-      log.warn("Use of deprecated output-type detected. Please use either 'output-type=application/pdf' or 'output-target=pageable/pdf'.");
+      log.warn(Messages.getInstance().getString("ReportPlugin.warnDeprecatedPDF"));
       return PdfPageableModule.PDF_EXPORT_TYPE;
     }
     else if ("html".equalsIgnoreCase(outputType)) //$NON-NLS-1$
     {
-      log.warn("Use of deprecated output-type detected. Please use either 'output-type=text/html' or one of " +
-          "'output-target=" + HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE + "' or " +
-//          "'output-target=" + HtmlTableModule.TABLE_HTML_FLOW_EXPORT_TYPE + "' or " +
-          "'output-target=" + HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE + ".");
+      log.warn(Messages.getInstance().getString("ReportPlugin.warnDeprecatedHTML"));
       if (isPaginateOutput())
       {
         return HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE;
@@ -651,26 +640,22 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     }
     else if ("csv".equalsIgnoreCase(outputType)) //$NON-NLS-1$
     {
-      log.warn("Use of deprecated output-type detected. Please use either 'output-type=text/csv' or 'output-target=" +
-          CSVTableModule.TABLE_CSV_STREAM_EXPORT_TYPE + "'.");
+      log.warn(Messages.getInstance().getString("ReportPlugin.warnDeprecatedCSV"));
       return CSVTableModule.TABLE_CSV_STREAM_EXPORT_TYPE;
     }
     else if ("rtf".equalsIgnoreCase(outputType)) //$NON-NLS-1$
     {
-      log.warn("Use of deprecated output-type detected. Please use either 'output-type=text/rtf' or 'output-target=" +
-          RTFTableModule.TABLE_RTF_FLOW_EXPORT_TYPE + "'.");
+      log.warn(Messages.getInstance().getString("ReportPlugin.warnDeprecatedRTF"));
       return RTFTableModule.TABLE_RTF_FLOW_EXPORT_TYPE;
     }
     else if ("xls".equalsIgnoreCase(outputType)) //$NON-NLS-1$
     {
-      log.warn("Use of deprecated output-type detected. Please use either 'output-type=application/vnd.ms-excel' " +
-          "or 'output-target=" + ExcelTableModule.EXCEL_FLOW_EXPORT_TYPE + "'.");
+      log.warn(Messages.getInstance().getString("ReportPlugin.warnDeprecatedXLS"));
       return ExcelTableModule.EXCEL_FLOW_EXPORT_TYPE;
     }
     else if ("txt".equalsIgnoreCase(outputType)) //$NON-NLS-1$
     {
-      log.warn("Use of deprecated output-type detected. Please use either 'output-type=text/plain' " +
-          "or 'output-target=" + PlainTextPageableModule.PLAINTEXT_EXPORT_TYPE + "'.");
+      log.warn(Messages.getInstance().getString("ReportPlugin.warnDeprecatedTXT"));
       return PlainTextPageableModule.PLAINTEXT_EXPORT_TYPE;
     }
     return null;
@@ -690,17 +675,17 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     {
       if (getReport() != report)
       {
-        throw new IllegalStateException("Will not apply inputs to a foreign report.");
+        throw new IllegalStateException(Messages.getInstance().getString("ReportPlugin.errorForeignReportInput"));
       }
       applyInputsToReportParameters(context);
     }
     catch (IOException e)
     {
-      throw new IllegalStateException("Unable to apply inputs:", e);
+      throw new IllegalStateException(Messages.getInstance().getString("ReportPlugin.errorApplyInputsFailed"), e);
     }
     catch (ResourceException e)
     {
-      throw new IllegalStateException("Unable to apply inputs:", e);
+      throw new IllegalStateException(Messages.getInstance().getString("ReportPlugin.errorApplyInputsFailed"), e);
     }
   }
 
@@ -1023,7 +1008,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
         return PlainTextOutput.generate(report, outputStream, getYieldRate(), driver);
       }
 
-      log.warn("Unable to resolve the output type. This request cannot be processed. Output-type=" + outputType);
+      log.warn(Messages.getInstance().getString("ReportPlugin.warnUnprocessableRequest", outputType));
 
     }
     catch (Throwable t)
