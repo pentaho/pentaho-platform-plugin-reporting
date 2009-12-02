@@ -87,7 +87,8 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   public static final String PAGINATE_OUTPUT = "paginate"; //$NON-NLS-1$
   public static final String PRINT = "print"; //$NON-NLS-1$
   public static final String PRINTER_NAME = "printer-name"; //$NON-NLS-1$
-  private static final String MIME_GENERIC_FALLBACK = "application/octet-stream";
+  public static final String DASHBOARD_MODE = "dashboard-mode"; //$NON-NLS-1$
+  private static final String MIME_GENERIC_FALLBACK = "application/octet-stream"; //$NON-NLS-1$
 
   /**
    * Static initializer block to guarantee that the ReportingComponent will be in a state where the reporting engine will be booted. We have a system listener
@@ -116,7 +117,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   private boolean paginateOutput = false;
   private int acceptedPage = -1;
   private int pageCount = -1;
-
+  private boolean dashboardMode;
   /*
    * These fields are for enabling printing
    */
@@ -256,6 +257,16 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     this.session = session;
   }
 
+  public boolean isDashboardMode()
+  {
+    return dashboardMode;
+  }
+
+  public void setDashboardMode(final boolean dashboardMode)
+  {
+    this.dashboardMode = dashboardMode;
+  }
+
   /**
    * This method returns the mime-type for the streaming output based on the effective output target.
    *
@@ -384,6 +395,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     this.printer = printer;
   }
 
+
   /**
    * This method sets the map of *all* the inputs which are available to this component. This allows us to use action-sequence inputs as parameters for our
    * reports.
@@ -430,6 +442,10 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     if (inputs.containsKey(PRINTER_NAME))
     {
       printer = String.valueOf(inputs.get(PRINTER_NAME));
+    }
+    if (inputs.containsKey(DASHBOARD_MODE))
+    {
+      dashboardMode = "true".equals(String.valueOf(inputs.get(DASHBOARD_MODE))); //$NON-NLS-1$
     }
   }
 
@@ -944,6 +960,10 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       final Configuration globalConfig = ClassicEngineBoot.getInstance().getGlobalConfig();
       if (HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE.equals(outputType))
       {
+        if (dashboardMode)
+        {
+          report.getReportConfiguration().setConfigProperty(HtmlTableModule.BODY_FRAGMENT, "true");
+        }
         String contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN,
             globalConfig.getConfigProperty("org.pentaho.web.ContentHandler")); //$NON-NLS-1$
         if (useContentRepository)
@@ -965,6 +985,10 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       }
       if (HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE.equals(outputType))
       {
+        if (dashboardMode)
+        {
+          report.getReportConfiguration().setConfigProperty(HtmlTableModule.BODY_FRAGMENT, "true");
+        }
         String contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN, globalConfig
             .getConfigProperty("org.pentaho.web.ContentHandler")); //$NON-NLS-1$
         if (useContentRepository)
