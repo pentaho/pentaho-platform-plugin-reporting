@@ -39,7 +39,6 @@ public class ReportCreator
     HashMap helperObjects = new HashMap();
     // add the runtime context so that PentahoResourceData class can get access
     // to the solution repo
-    helperObjects.put(new FactoryParameterKey(RepositoryResourceData.PENTAHO_REPOSITORY_KEY), PentahoSystem.get(ISolutionRepository.class, pentahoSession));
     ResourceKey key = resourceManager.createKey(RepositoryResourceLoader.SOLUTION_SCHEMA_NAME + RepositoryResourceLoader.SCHEMA_SEPARATOR
         + reportDefinitionPath, helperObjects);
     Resource resource = resourceManager.create(key, null, MasterReport.class);
