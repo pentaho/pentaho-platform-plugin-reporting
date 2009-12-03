@@ -8,6 +8,8 @@ import java.net.URL;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
+import java.sql.Time;
+import java.sql.Timestamp;
 import javax.print.DocFlavor;
 import javax.print.PrintService;
 import javax.print.PrintServiceLookup;
@@ -764,7 +766,40 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       return null;
     }
 
-    if (targetType.equals(Date.class))
+    if (targetType.equals(Timestamp.class))
+    {
+      try
+      {
+        return new Timestamp(new Long(valueAsString));
+      }
+      catch (NumberFormatException nfe)
+      {
+        // ignore, we try to parse it as real date now ..
+      }
+    }
+    else if (targetType.equals(Time.class))
+    {
+      try
+      {
+        return new Time(new Long(valueAsString));
+      }
+      catch (NumberFormatException nfe)
+      {
+        // ignore, we try to parse it as real date now ..
+      }
+    }
+    else if (targetType.equals(java.sql.Date.class))
+    {
+      try
+      {
+        return new java.sql.Date(new Long(valueAsString));
+      }
+      catch (NumberFormatException nfe)
+      {
+        // ignore, we try to parse it as real date now ..
+      }
+    }
+    else if (targetType.equals(Date.class))
     {
       try
       {
