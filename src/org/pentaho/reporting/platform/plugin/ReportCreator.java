@@ -20,10 +20,7 @@ import java.io.IOException;
 import java.util.HashMap;
 
 import org.pentaho.platform.api.engine.IPentahoSession;
-import org.pentaho.platform.api.repository.ISolutionRepository;
-import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
-import org.pentaho.reporting.libraries.resourceloader.FactoryParameterKey;
 import org.pentaho.reporting.libraries.resourceloader.Resource;
 import org.pentaho.reporting.libraries.resourceloader.ResourceException;
 import org.pentaho.reporting.libraries.resourceloader.ResourceKey;
@@ -39,7 +36,6 @@ public class ReportCreator
     HashMap helperObjects = new HashMap();
     // add the runtime context so that PentahoResourceData class can get access
     // to the solution repo
-    helperObjects.put(new FactoryParameterKey(RepositoryResourceData.PENTAHO_REPOSITORY_KEY), PentahoSystem.get(ISolutionRepository.class, pentahoSession));
     ResourceKey key = resourceManager.createKey(RepositoryResourceLoader.SOLUTION_SCHEMA_NAME + RepositoryResourceLoader.SCHEMA_SEPARATOR
         + reportDefinitionPath, helperObjects);
     Resource resource = resourceManager.create(key, null, MasterReport.class);

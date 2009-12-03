@@ -21,7 +21,8 @@ import java.io.InputStream;
 
 import org.pentaho.platform.api.engine.ISolutionFile;
 import org.pentaho.platform.api.repository.ISolutionRepository;
-import org.pentaho.reporting.libraries.resourceloader.FactoryParameterKey;
+import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
+import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.libraries.resourceloader.ResourceData;
 import org.pentaho.reporting.libraries.resourceloader.ResourceKey;
 import org.pentaho.reporting.libraries.resourceloader.ResourceLoadingException;
@@ -39,7 +40,6 @@ public class RepositoryResourceData extends AbstractResourceData {
 
   private String filename;
   private ResourceKey key;
-  private ISolutionRepository solutionRepository;
 
   /**
    * constructor which takes a resource key for data loading specifics
@@ -54,14 +54,6 @@ public class RepositoryResourceData extends AbstractResourceData {
 
     this.key = key;
     this.filename = (String) key.getIdentifier();
-    try {
-      this.solutionRepository = (ISolutionRepository) key.getFactoryParameters().get(new FactoryParameterKey(PENTAHO_REPOSITORY_KEY));
-    } catch (Throwable t) {
-      t.printStackTrace();
-    }
-    if (solutionRepository == null) {
-      throw new InstantiationError("RepositoryResourceData: Failed to solution repository from resource key"); //$NON-NLS-1$
-    }
   }
 
   /**
@@ -73,6 +65,7 @@ public class RepositoryResourceData extends AbstractResourceData {
    */
   public InputStream getResourceAsStream(ResourceManager caller) throws ResourceLoadingException {
     try {
+      ISolutionRepository solutionRepository = PentahoSystem.get(ISolutionRepository.class);
       return solutionRepository.getResourceInputStream(key.getIdentifier().toString(), false, ISolutionRepository.ACTION_EXECUTE);
     } catch (FileNotFoundException e) {
       // might be due to access denial
@@ -103,6 +96,7 @@ public class RepositoryResourceData extends AbstractResourceData {
    * @return version
    */
   public long getVersion(ResourceManager caller) throws ResourceLoadingException {
+    ISolutionRepository solutionRepository = PentahoSystem.get(ISolutionRepository.class);
     ISolutionFile file = solutionRepository.getSolutionFile(key.getIdentifier().toString(), ISolutionRepository.ACTION_EXECUTE);
     // if we got a FileNotFoundException on getResourceInputStream then we will get a null file; avoid NPE
     if (file != null) {
