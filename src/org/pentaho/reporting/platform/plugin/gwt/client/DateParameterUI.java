@@ -38,13 +38,36 @@ public class DateParameterUI extends SimplePanel
 
   }
 
+  private Date parseDate(String text)
+  {
+    try
+    {
+      DateTimeFormat format = DateTimeFormat.getFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+      return format.parse(text);
+    }
+    catch (Exception e)
+    {
+      // invalid date string ..
+    }
+    try
+    {
+      return new Date(Long.parseLong(text));
+    }
+    catch (Exception e)
+    {
+      // invalid number as well
+    }
+    return new Date();
+  }
+
   public DateParameterUI(final ParameterControllerPanel controller, final List<String> parameterSelections, final Element parameterElement)
   {
     // selectionsList should only have 1 date
     Date date = new Date();
     if (parameterSelections.size() > 0)
     {
-      date = new Date(Long.parseLong(parameterSelections.get(0)));
+      final String paramAsText = parameterSelections.get(0);
+      date = parseDate(paramAsText);
     }
     else
     {
