@@ -768,7 +768,7 @@ public class ParameterControllerPanel extends VerticalPanel
     String message = "<BR>"; //$NON-NLS-1$
     for (Element parameter : parameterElements)
     {
-      if ("true".equals(parameter.getAttribute("mandatory"))) //$NON-NLS-1$ //$NON-NLS-2$
+      if ("true".equals(parameter.getAttribute("is-mandatory"))) //$NON-NLS-1$ //$NON-NLS-2$
       {
         // then let's make sure we have a value for it
         List<String> paramList = parameterMap.get(parameter.getAttribute("name").trim()); //$NON-NLS-1$
