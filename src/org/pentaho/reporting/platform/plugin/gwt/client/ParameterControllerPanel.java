@@ -268,7 +268,7 @@ public class ParameterControllerPanel extends VerticalPanel
 
         // handle the auto-submit defaults.
         String autoSubmitAttr = parametersElement.getAttribute("autoSubmit");
-        if (StringUtils.isEmpty(autoSubmitAttr))
+        if (autoSubmitAttr != null)
         {
           if (StringUtils.isEmpty(autoSubmitAttr) == false)
           {
