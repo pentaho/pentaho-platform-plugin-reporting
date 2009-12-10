@@ -42,20 +42,20 @@ public class DateParameterUI extends SimplePanel
   {
     try
     {
+      return new Date(Long.parseLong(text));
+    }
+    catch (Exception e)
+    {
+      // invalid number as well
+    }
+    try
+    {
       final DateTimeFormat format = DateTimeFormat.getFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
       return format.parse(text);
     }
     catch (Exception e)
     {
       // invalid date string ..
-    }
-    try
-    {
-      return new Date(Long.parseLong(text));
-    }
-    catch (Exception e)
-    {
-      // invalid number as well
     }
     return new Date();
   }
