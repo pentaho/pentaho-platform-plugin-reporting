@@ -10,6 +10,7 @@ import org.pentaho.reporting.engine.classic.core.ReportDataFactoryException;
 import org.pentaho.reporting.engine.classic.extensions.datasources.mondrian.DefaultCubeFileProvider;
 import org.pentaho.reporting.libraries.resourceloader.ResourceKey;
 import org.pentaho.reporting.libraries.resourceloader.ResourceManager;
+import org.pentaho.reporting.libraries.base.util.IOUtils;
 import org.pentaho.reporting.platform.plugin.messages.Messages;
 
 /**
@@ -55,7 +56,9 @@ public class PentahoCubeFileProvider extends DefaultCubeFileProvider
 
     for (MondrianCatalog cat : catalogs)
     {
-      if (cat.getDefinition().toLowerCase().endsWith(name.toLowerCase()))
+      final String definition = cat.getDefinition();
+      final String definitionFileName = IOUtils.getInstance().getFileName(definition);
+      if (definitionFileName.equals(name))
       {
         return cat.getDefinition();
       }
