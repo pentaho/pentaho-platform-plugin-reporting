@@ -31,6 +31,11 @@ public class DateParameterUI extends SimplePanel
     {
       parameterSelections.clear();
       Date newDate = event.getValue();
+      // if we do not update the hours/minutes/seconds, they are going to be "now"
+      // which is going to not inclusively bring all of the selected date
+      newDate.setHours(0);
+      newDate.setMinutes(0);
+      newDate.setSeconds(0);
       // add date as long
       parameterSelections.add("" + newDate.getTime()); //$NON-NLS-1$
       controller.fetchParameters(true);
