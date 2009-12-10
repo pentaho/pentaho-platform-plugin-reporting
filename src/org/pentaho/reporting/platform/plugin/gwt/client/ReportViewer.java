@@ -196,7 +196,7 @@ public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback
     return map;
   }
 
-  public String buildReportUrl(RENDER_TYPE renderType, Map<String, List<String>> reportParameterMap)
+  public String buildReportUrl(RENDER_TYPE renderType, Map<String, List<String>> reportParameterMap, boolean autoSubmit)
   {
     String reportPath = Window.Location.getPath();
     if (reportPath.indexOf("reportviewer") != -1) //$NON-NLS-1$
@@ -283,6 +283,7 @@ public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback
     }
 
     reportPath += "&renderMode=" + renderType; //$NON-NLS-1$
+    reportPath += "&autoSubmit=" + autoSubmit; //$NON-NLS-1$
     return reportPath;
   }
 
