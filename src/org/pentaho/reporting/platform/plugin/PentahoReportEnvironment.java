@@ -12,9 +12,14 @@ import org.pentaho.platform.util.messages.LocaleHelper;
 import org.pentaho.reporting.engine.classic.core.DefaultReportEnvironment;
 import org.pentaho.reporting.engine.classic.core.modules.output.csv.CSVQuoter;
 import org.pentaho.reporting.libraries.base.config.Configuration;
+import org.pentaho.reporting.platform.plugin.messages.Messages;
+import org.apache.commons.logging.LogFactory;
+import org.apache.commons.logging.Log;
 
 public class PentahoReportEnvironment extends DefaultReportEnvironment
 {
+  private static final Log logger = LogFactory.getLog(PentahoReportEnvironment.class);
+  
   public PentahoReportEnvironment(final Configuration configuration)
   {
     super(configuration);
@@ -37,72 +42,97 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
       throw new NullPointerException();
     }
 
-    if (PentahoSystem.getApplicationContext() == null)
-    {
-      return key;
-    }
-
-    final String pentahoBaseURL = PentahoSystem.getApplicationContext().getBaseUrl();
 
     final IPentahoSession session = PentahoSessionHolder.getSession();
-    if ("serverBaseURL".equals(key)) //$NON-NLS-1$
+    if (PentahoSystem.getApplicationContext() != null)
     {
-      return getBaseServerURL(pentahoBaseURL);
-    }
-    else if ("pentahoBaseURL".equals(key)) //$NON-NLS-1$
-    {
-      return pentahoBaseURL;
-    }
-    else if ("solutionRoot".equals(key)) //$NON-NLS-1$
-    {
-      return PentahoSystem.getApplicationContext().getSolutionPath(""); //$NON-NLS-1$
-    }
-    else if ("hostColonPort".equals(key)) //$NON-NLS-1$
-    {
-      return getHostColonPort(pentahoBaseURL);
-    }
-    else if (session != null && "username".equals(key)) //$NON-NLS-1$
-    {
-      return session.getName();
-    }
-    else if (session != null && "roles".equals(key)) //$NON-NLS-1$
-    {
-      final IUserDetailsRoleListService roleListService = PentahoSystem.get(IUserDetailsRoleListService.class);
-      if (roleListService == null)
+      final String pentahoBaseURL = PentahoSystem.getApplicationContext().getBaseUrl();
+      if ("serverBaseURL".equals(key)) //$NON-NLS-1$
       {
+        return getBaseServerURL(pentahoBaseURL);
+      }
+      else if ("pentahoBaseURL".equals(key)) //$NON-NLS-1$
+      {
+        return pentahoBaseURL;
+      }
+      else if ("solutionRoot".equals(key)) //$NON-NLS-1$
+      {
+        return PentahoSystem.getApplicationContext().getSolutionPath(""); //$NON-NLS-1$
+      }
+      else if ("hostColonPort".equals(key)) //$NON-NLS-1$
+      {
+        return getHostColonPort(pentahoBaseURL);
+      }
+    }
+    else
+    {
+      if ("serverBaseURL".equals(key) || //$NON-NLS-1$
+          "pentahoBaseURL".equals(key) || //$NON-NLS-1$
+          "solutionRoot".equals(key) || //$NON-NLS-1$
+          "hostColonPort".equals(key)) //$NON-NLS-1$
+      {
+        logger.warn(Messages.getInstance().getString("ReportPlugin.warnNoApplicationContext"));
+        // make it explicit that these values are not available. This way
+        // a configuration in the classic-engine.properties file cannot begin
+        // to interfer here.
         return null;
       }
-      final StringBuffer property = new StringBuffer();
-      //noinspection unchecked
-      final List<String> roles =
-          (List<String>) roleListService.getRolesForUser(session.getName());
-      if (roles == null)
+    }
+    if (session != null)
+    {
+      if ("username".equals(key)) //$NON-NLS-1$
       {
-        return null;
+        return session.getName();
       }
-
-      final int rolesSize = roles.size();
-      if (rolesSize > 0)
+      else if ("roles".equals(key)) //$NON-NLS-1$
       {
-        final CSVQuoter quoter = new CSVQuoter(",");
-        property.append(roles.get(0));
-        for (int i = 1; i < rolesSize; i++)
+        final IUserDetailsRoleListService roleListService = PentahoSystem.get(IUserDetailsRoleListService.class);
+        if (roleListService == null)
         {
-          property.append(",");
-          property.append(quoter.doQuoting(roles.get(i))); //$NON-NLS-1$
+          return null;
         }
-      }
-      return property.toString();
-    }
+        final StringBuffer property = new StringBuffer();
+        //noinspection unchecked
+        final List<String> roles =
+            (List<String>) roleListService.getRolesForUser(session.getName());
+        if (roles == null)
+        {
+          return null;
+        }
 
-    if (session != null && key.startsWith("session:"))
-    {
-      final Object attribute = session.getAttribute(key.substring("session:".length()));
-      if (attribute instanceof String)
-      {
-        return (String) attribute;
+        final int rolesSize = roles.size();
+        if (rolesSize > 0)
+        {
+          final CSVQuoter quoter = new CSVQuoter(",");//$NON-NLS-1$
+          property.append(roles.get(0));
+          for (int i = 1; i < rolesSize; i++)
+          {
+            property.append(",");//$NON-NLS-1$
+            property.append(quoter.doQuoting(roles.get(i)));
+          }
+        }
+        return property.toString();
       }
-      return null;
+
+      if (key.startsWith("session:"))//$NON-NLS-1$
+      {
+        final Object attribute = session.getAttribute(key.substring("session:".length()));//$NON-NLS-1$
+        if (attribute instanceof String)
+        {
+          return (String) attribute;
+        }
+        return null;
+      }
+    }
+    else
+    {
+      if (key.startsWith("session:") ||
+          key.equals("username") ||
+          key.equals("roles"))
+      {
+        logger.warn(Messages.getInstance().getString("ReportPlugin.warnNoSession"));
+        return null;
+      }
     }
 
     return super.getEnvironmentProperty(key);
