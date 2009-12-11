@@ -28,6 +28,8 @@ import org.pentaho.platform.plugin.action.jfreereport.helper.PentahoTableModel;
 import org.pentaho.reporting.engine.classic.core.AttributeNames;
 import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
+import org.pentaho.reporting.engine.classic.core.ReportParameterValidationException;
+import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
 import org.pentaho.reporting.engine.classic.core.metadata.ReportProcessTaskRegistry;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.pdf.PdfPageableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.plaintext.PlainTextPageableModule;
@@ -41,6 +43,8 @@ import org.pentaho.reporting.engine.classic.core.parameters.DefaultParameterCont
 import org.pentaho.reporting.engine.classic.core.parameters.ListParameter;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterContext;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterDefinitionEntry;
+import org.pentaho.reporting.engine.classic.core.parameters.ValidationResult;
+import org.pentaho.reporting.engine.classic.core.parameters.ValidationMessage;
 import org.pentaho.reporting.engine.classic.core.util.beans.BeanException;
 import org.pentaho.reporting.engine.classic.core.util.beans.ConverterRegistry;
 import org.pentaho.reporting.engine.classic.core.util.beans.ValueConverter;
@@ -695,7 +699,11 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       {
         throw new IllegalStateException(Messages.getInstance().getString("ReportPlugin.errorForeignReportInput"));
       }
-      applyInputsToReportParameters(context);
+      final ValidationResult validationResult = applyInputsToReportParameters(context, null);
+      if (validationResult.isEmpty() == false)
+      {
+        throw new IllegalStateException(Messages.getInstance().getString("ReportPlugin.errorApplyInputsFailed"));
+      }
     }
     catch (IOException e)
     {
@@ -711,11 +719,18 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    * Apply inputs (if any) to corresponding report parameters, care is taken when checking parameter types to perform any necessary casting and conversion.
    *
    * @param context a ParameterContext for which the parameters will be under
+   * @param validationResult the validation result that will hold the warnings. If null, a new one will be created.
    * @throws java.io.IOException if the report of this component could not be parsed.
    * @throws ResourceException   if the report of this component could not be parsed.
    */
-  public void applyInputsToReportParameters(final ParameterContext context) throws IOException, ResourceException
+  public ValidationResult applyInputsToReportParameters(final ParameterContext context,
+                                                        ValidationResult validationResult)
+      throws IOException, ResourceException
   {
+    if (validationResult == null)
+    {
+      validationResult = new ValidationResult();
+    }
     // apply inputs to report
     if (inputs != null)
     {
@@ -730,15 +745,25 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
         {
           value = defaultValue;
         }
-        if (value != null)
+        try
         {
           addParameter(report, param, paramName, value);
         }
+        catch (Exception e)
+        {
+          if (log.isDebugEnabled())
+          {
+            log.warn(Messages.getInstance().getString("ReportPlugin.logErrorParametrization"), e);
+          }
+          validationResult.addError(paramName, new ValidationMessage(e.getMessage()));
+        }
       }
     }
+    return validationResult;
   }
 
-  private Object convert(final Class targetType, final Object rawValue) throws NumberFormatException
+  private Object convert(final String parameterName, final Class targetType, final Object rawValue)
+      throws ReportProcessingException
   {
     if (targetType == null)
     {
@@ -820,7 +845,8 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       }
       catch (BeanException e)
       {
-        throw new RuntimeException(Messages.getInstance().getString("ReportPlugin.unableToConvertParameter")); //$NON-NLS-1$
+        throw new ReportProcessingException(Messages.getInstance().getString
+            ("ReportPlugin.unableToConvertParameter", parameterName)); //$NON-NLS-1$
       }
     }
     return rawValue;
@@ -829,8 +855,13 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   private void addParameter(final MasterReport report,
                             final ParameterDefinitionEntry param,
                             final String key,
-                            final Object value)
+                            final Object value) throws ReportProcessingException
   {
+    if (value == null)
+    {
+      report.getParameterValues().put(key, null);
+      return;
+    }
     if (value.getClass().isArray())
     {
       final Class componentType;
@@ -847,7 +878,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       final Object array = Array.newInstance(componentType, length);
       for (int i = 0; i < length; i++)
       {
-        Array.set(array, i, convert(componentType, Array.get(value, i)));
+        Array.set(array, i, convert(key, componentType, Array.get(value, i)));
       }
       report.getParameterValues().put(key, array);
     }
@@ -861,7 +892,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     }
     else
     {
-      report.getParameterValues().put(key, convert(param.getValueType(), value));
+      report.getParameterValues().put(key, convert(key, param.getValueType(), value));
     }
   }
 
@@ -964,7 +995,11 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       final ParameterContext parameterContext = new DefaultParameterContext(report);
       // open parameter context
       parameterContext.open();
-      applyInputsToReportParameters(parameterContext);
+      final ValidationResult vr = applyInputsToReportParameters(parameterContext, null);
+      if (vr.isEmpty() == false)
+      {
+        return false;
+      }
       parameterContext.close();
 
       if (isPrint())

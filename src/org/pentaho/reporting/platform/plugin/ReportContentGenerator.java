@@ -269,7 +269,9 @@ public class ReportContentGenerator extends SimpleContentGenerator
     // open parameter context
     parameterContext.open();
     // apply inputs to parameters
-    reportComponent.applyInputsToReportParameters(parameterContext);
+    ValidationResult validationResult = new ValidationResult();
+    validationResult = reportComponent.applyInputsToReportParameters(parameterContext, validationResult);
+
     final ReportParameterDefinition reportParameterDefinition = report.getParameterDefinition();
 
     final ParameterDefinitionEntry[] parameterDefinitions = reportParameterDefinition.getParameterDefinitions();
@@ -289,7 +291,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
     }
 
     final ValidationResult vr = reportParameterDefinition.getValidator().validate
-        (new ValidationResult(), reportParameterDefinition, parameterContext);
+        (validationResult, reportParameterDefinition, parameterContext);
     parameters.setAttribute("is-prompt-needed", "" + !vr.isEmpty()); //$NON-NLS-1$ //$NON-NLS-2$
     parameters.setAttribute("subscribe", "" + subscribe); //$NON-NLS-1$ //$NON-NLS-2$
 
@@ -334,6 +336,14 @@ public class ReportContentGenerator extends SimpleContentGenerator
           error.setAttribute("message", message.getMessage());
           errors.appendChild(error);
         }
+      }
+      final ValidationMessage[] globalMessages = vr.getErrors();
+      for (int i = 0; i < globalMessages.length; i++)
+      {
+        final ValidationMessage globalMessage = globalMessages[i];
+        final Element error = document.createElement("global-error"); //$NON-NLS-1$
+        error.setAttribute("message", globalMessage.getMessage());
+        errors.appendChild(error);
       }
     }
 
