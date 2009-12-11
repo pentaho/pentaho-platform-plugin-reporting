@@ -31,11 +31,6 @@ public class DateParameterUI extends SimplePanel
     {
       parameterSelections.clear();
       Date newDate = event.getValue();
-      // if we do not update the hours/minutes/seconds, they are going to be "now"
-      // which is going to not inclusively bring all of the selected date
-      newDate.setHours(0);
-      newDate.setMinutes(0);
-      newDate.setSeconds(0);
       // add date as long
       parameterSelections.add("" + newDate.getTime()); //$NON-NLS-1$
       controller.fetchParameters(true);
@@ -62,13 +57,13 @@ public class DateParameterUI extends SimplePanel
     {
       // invalid date string ..
     }
-    return new Date();
+    return null;
   }
 
   public DateParameterUI(final ParameterControllerPanel controller, final List<String> parameterSelections, final Element parameterElement)
   {
     // selectionsList should only have 1 date
-    Date date = new Date();
+    final Date date;
     if (parameterSelections.size() > 0)
     {
       final String paramAsText = parameterSelections.get(0);
@@ -76,8 +71,19 @@ public class DateParameterUI extends SimplePanel
     }
     else
     {
+      date = new Date();
+    }
+    if (date == null)
+    {
       // add the current date as the default, otherwise, a submission of another parameter
       // will not result in this parameter being submitted
+      parameterSelections.clear();
+      parameterSelections.add(""); //$NON-NLS-1$
+    }
+    else
+    {
+      // This normalizes the date. No matter how the user specified it, we will now always have
+      // a long number in our selection.
       parameterSelections.clear();
       parameterSelections.add("" + date.getTime()); //$NON-NLS-1$
     }
