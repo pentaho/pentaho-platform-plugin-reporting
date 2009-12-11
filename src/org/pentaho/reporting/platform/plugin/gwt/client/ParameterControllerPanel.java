@@ -18,6 +18,8 @@ import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.dom.client.MouseOutHandler;
 import com.google.gwt.event.dom.client.MouseOverEvent;
 import com.google.gwt.event.dom.client.MouseOverHandler;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
@@ -63,6 +65,15 @@ public class ParameterControllerPanel extends VerticalPanel
   private Button submitParametersButton;
   private boolean subscriptionPressed = false;
   private final ResourceBundle messages;
+  private Boolean autoSubmitState;
+
+  private class AutoSubmitChangeHandler implements ValueChangeHandler<Boolean>
+  {
+    public void onValueChange(final ValueChangeEvent<Boolean> booleanValueChangeEvent)
+    {
+      autoSubmitState = submitParametersOnChangeCheckBox.getValue();
+    }
+  }
 
   private ClickHandler submitParametersListener = new ClickHandler()
   {
@@ -272,23 +283,13 @@ public class ParameterControllerPanel extends VerticalPanel
         }
 
         // handle the auto-submit defaults.
-        String autoSubmitAttr = parametersElement.getAttribute("autoSubmit");
-        if (autoSubmitAttr != null)
+        final String autoSubmitAttr = parametersElement.getAttribute("autoSubmit");
+        if (StringUtils.isEmpty(autoSubmitAttr) == false)
         {
-          if (StringUtils.isEmpty(autoSubmitAttr) == false)
-          {
-            submitParametersOnChangeCheckBox.setValue("true".equals(autoSubmitAttr));
-          }
-        } 
-        else 
-        {
-          autoSubmitAttr = Window.Location.getParameter("autoSubmit");
-          if (StringUtils.isEmpty(autoSubmitAttr) == false)
-          {
-            submitParametersOnChangeCheckBox.setValue("true".equals(autoSubmitAttr));
-          }
+          submitParametersOnChangeCheckBox.setValue("true".equals(autoSubmitAttr));
+          autoSubmitState = "true".equals(autoSubmitAttr);
         }
-        
+
         submitPanel.add(submitParametersButton);
         submitPanel.add(submitParametersOnChangeCheckBox);
         parameterContainer.add(submitPanel);
@@ -372,8 +373,22 @@ public class ParameterControllerPanel extends VerticalPanel
     parameterDisclosurePanel.setOpen(true);
     parameterDisclosurePanel.setAnimationEnabled(true);
     parameterDisclosurePanel.setWidth("100%"); //$NON-NLS-1$
-    submitParametersOnChangeCheckBox.setValue(true);
+    final String autoSubmitAttr = Window.Location.getParameter("autoSubmit");
+    if (StringUtils.isEmpty(autoSubmitAttr) == false)
+    {
+      // auto-submit state is only not-null, if the user explicitly requested a value via the URL
+      submitParametersOnChangeCheckBox.setValue("true".equals(autoSubmitAttr));
+      autoSubmitState = "true".equals(autoSubmitAttr);
+    }
+    else
+    {
+      // by default we claim to have a null value, so that the report on the server gets the chance
+      // to define a sensible default ..
+      submitParametersOnChangeCheckBox.setValue(true);
+      autoSubmitState = null;
+    }
     submitParametersOnChangeCheckBox.setTitle(messages.getString("submitTooltip")); //$NON-NLS-1$
+    submitParametersOnChangeCheckBox.addValueChangeHandler(new AutoSubmitChangeHandler()); //$NON-NLS-1$
     submitParametersButton.addClickHandler(submitParametersListener);
     submitSubscriptionButton.addClickHandler(submitSubscriptionListener);
 
@@ -787,7 +802,7 @@ public class ParameterControllerPanel extends VerticalPanel
         listener.showBlank();
       }
       RequestBuilder requestBuilder = new RequestBuilder(RequestBuilder.POST, viewer.buildReportUrl
-          (RENDER_TYPE.XML, parameterMap, submitParametersOnChangeCheckBox.getValue()));
+          (RENDER_TYPE.XML, parameterMap, autoSubmitState));
       requestBuilder.setCallback(parameterRequestCallback);
       try
       {
@@ -884,9 +899,9 @@ public class ParameterControllerPanel extends VerticalPanel
     }
   }
 
-  public boolean isAutoSubmit()
+  public Boolean isAutoSubmit()
   {
-    return submitParametersOnChangeCheckBox.getValue();
+    return autoSubmitState;
   }
 
 }
