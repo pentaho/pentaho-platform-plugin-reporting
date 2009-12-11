@@ -10,6 +10,10 @@ import java.util.Date;
 import java.util.Map;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.text.SimpleDateFormat;
+import java.text.DateFormatSymbols;
 import javax.print.DocFlavor;
 import javax.print.PrintService;
 import javax.print.PrintServiceLookup;
@@ -25,6 +29,7 @@ import org.pentaho.platform.api.engine.IStreamingPojo;
 import org.pentaho.platform.api.repository.IContentRepository;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.plugin.action.jfreereport.helper.PentahoTableModel;
+import org.pentaho.platform.util.messages.LocaleHelper;
 import org.pentaho.reporting.engine.classic.core.AttributeNames;
 import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
@@ -45,9 +50,11 @@ import org.pentaho.reporting.engine.classic.core.parameters.ParameterContext;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterDefinitionEntry;
 import org.pentaho.reporting.engine.classic.core.parameters.ValidationResult;
 import org.pentaho.reporting.engine.classic.core.parameters.ValidationMessage;
+import org.pentaho.reporting.engine.classic.core.parameters.ParameterAttributeNames;
 import org.pentaho.reporting.engine.classic.core.util.beans.BeanException;
 import org.pentaho.reporting.engine.classic.core.util.beans.ConverterRegistry;
 import org.pentaho.reporting.engine.classic.core.util.beans.ValueConverter;
+import org.pentaho.reporting.engine.classic.core.util.ReportParameterValues;
 import org.pentaho.reporting.engine.classic.extensions.modules.java14print.Java14PrintUtil;
 import org.pentaho.reporting.libraries.base.config.Configuration;
 import org.pentaho.reporting.libraries.base.util.StringUtils;
@@ -736,6 +743,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     {
       final MasterReport report = getReport();
       final ParameterDefinitionEntry[] params = report.getParameterDefinition().getParameterDefinitions();
+      final ReportParameterValues parameterValues = report.getParameterValues();
       for (final ParameterDefinitionEntry param : params)
       {
         final String paramName = param.getName();
@@ -747,7 +755,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
         }
         try
         {
-          addParameter(report, param, paramName, value);
+          addParameter(context, parameterValues, param, value);
         }
         catch (Exception e)
         {
@@ -762,7 +770,9 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     return validationResult;
   }
 
-  private Object convert(final String parameterName, final Class targetType, final Object rawValue)
+  private Object convert(final ParameterContext context,
+                         final ParameterDefinitionEntry parameter,
+                         final Class targetType, final Object rawValue)
       throws ReportProcessingException
   {
     if (targetType == null)
@@ -836,6 +846,35 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       }
     }
 
+    final String dataFormat = parameter.getParameterAttribute(ParameterAttributeNames.Core.NAMESPACE,
+        ParameterAttributeNames.Core.DATA_FORMAT, context);
+    if (dataFormat != null)
+    {
+      try
+      {
+        if (Number.class.isAssignableFrom(targetType))
+        {
+          final DecimalFormat format = new DecimalFormat(dataFormat, new DecimalFormatSymbols(LocaleHelper.getLocale()));
+          format.setParseBigDecimal(true);
+          final Number number = format.parse(valueAsString);
+          final String asText = ConverterRegistry.toAttributeValue(number);
+          return ConverterRegistry.toPropertyValue(asText, targetType);
+        }
+        else if (Date.class.isAssignableFrom(targetType))
+        {
+          final SimpleDateFormat format = new SimpleDateFormat(dataFormat, new DateFormatSymbols(LocaleHelper.getLocale()));
+          format.setLenient(false);
+          final Date number = format.parse(valueAsString);
+          final String asText = ConverterRegistry.toAttributeValue(number);
+          return ConverterRegistry.toPropertyValue(asText, targetType);
+        }
+      }
+      catch (Exception e)
+      {
+        // again, ignore it .
+      }
+    }
+
     final ValueConverter valueConverter = ConverterRegistry.getInstance().getValueConverter(targetType);
     if (valueConverter != null)
     {
@@ -846,20 +885,21 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       catch (BeanException e)
       {
         throw new ReportProcessingException(Messages.getInstance().getString
-            ("ReportPlugin.unableToConvertParameter", parameterName)); //$NON-NLS-1$
+            ("ReportPlugin.unableToConvertParameter", parameter.getName())); //$NON-NLS-1$
       }
     }
     return rawValue;
   }
 
-  private void addParameter(final MasterReport report,
+  private void addParameter(final ParameterContext report,
+                            final ReportParameterValues parameterValues,
                             final ParameterDefinitionEntry param,
-                            final String key,
-                            final Object value) throws ReportProcessingException
+                            final Object value)
+      throws ReportProcessingException
   {
     if (value == null)
     {
-      report.getParameterValues().put(key, null);
+      parameterValues.put(param.getName(), null);
       return;
     }
     if (value.getClass().isArray())
@@ -878,9 +918,9 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       final Object array = Array.newInstance(componentType, length);
       for (int i = 0; i < length; i++)
       {
-        Array.set(array, i, convert(key, componentType, Array.get(value, i)));
+        Array.set(array, i, convert(report, param, componentType, Array.get(value, i)));
       }
-      report.getParameterValues().put(key, array);
+      parameterValues.put(param.getName(), array);
     }
     else if (isAllowMultiSelect(param))
     {
@@ -888,11 +928,11 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       // and re-call addParameter with it
       final Object[] array = new Object[1];
       array[0] = value;
-      addParameter(report, param, key, array);
+      addParameter(report, parameterValues, param,array);
     }
     else
     {
-      report.getParameterValues().put(key, convert(key, param.getValueType(), value));
+      parameterValues.put(param.getName(), convert(report, param, param.getValueType(), value));
     }
   }
 
