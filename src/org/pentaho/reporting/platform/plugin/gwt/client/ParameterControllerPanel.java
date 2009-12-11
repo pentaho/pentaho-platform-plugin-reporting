@@ -132,6 +132,7 @@ public class ParameterControllerPanel extends VerticalPanel
       }
 
       HashMap<String, ArrayList<String>> errors = buildErrors(resultDoc);//$NON-NLS-1$ 
+      ArrayList globalErrors = errors.get(null);
       
       if (showParameters)
       {
@@ -145,6 +146,10 @@ public class ParameterControllerPanel extends VerticalPanel
             add(buildPaginationController(parametersElement));
           }
           return;
+        }
+        if (globalErrors != null && globalErrors.isEmpty() == false)
+        {
+          add(buildGlobalErrors(globalErrors));
         }
         add(parameterDisclosurePanel);
 
@@ -295,6 +300,10 @@ public class ParameterControllerPanel extends VerticalPanel
         {
           add(buildPaginationController(parametersElement));
         }
+        if (globalErrors != null && globalErrors.isEmpty() == false)
+        {
+          add(buildGlobalErrors(globalErrors));
+        }
 
         // if parameters are valid, submit them for report rendering
         if ("false".equals(parametersElement.getAttribute("is-prompt-needed"))) //$NON-NLS-1$ //$NON-NLS-2$
@@ -386,7 +395,36 @@ public class ParameterControllerPanel extends VerticalPanel
       }
       errorList.add(msg);
     }
-    return errorMap;
+
+    NodeList globalErrors = doc.getElementsByTagName("global-error");
+     for (int i=0;i<globalErrors.getLength();i++) {
+       Element error = (Element)globalErrors.item(i);
+       String msg = error.getAttribute("message");
+       ArrayList<String> errorList = errorMap.get(null);
+       if (errorList == null) {
+         errorList = new ArrayList<String>();
+         errorMap.put(null, errorList);
+       }
+       errorList.add(msg);
+     }
+     return errorMap;
+  }
+
+  private Widget buildGlobalErrors(final ArrayList<String> errors)
+  {
+    VerticalPanel parameterPanel = new VerticalPanel();
+    parameterPanel.setStyleName("parameter-error"); //$NON-NLS-1$
+
+    // only add the parameter if it has a UI
+    if (errors!= null) {
+      for (String error : errors) {
+        Label errorLabel = new Label(error);
+        errorLabel.setStyleName("parameter-error-label");
+        DOM.setStyleAttribute(errorLabel.getElement(), "color", "red");
+        parameterPanel.add(errorLabel);
+      }
+    }
+    return parameterPanel;
   }
   
   private Widget buildPaginationController(final Element parametersElement)
