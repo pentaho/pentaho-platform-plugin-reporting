@@ -201,7 +201,7 @@ public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback
 
   public String buildReportUrl(RENDER_TYPE renderType,
                                Map<String, List<String>> reportParameterMap,
-                               final boolean autoSubmit)
+                               final Boolean autoSubmit)
   {
     String reportPath = Window.Location.getPath();
     if (reportPath.indexOf("reportviewer") != -1) //$NON-NLS-1$
@@ -288,7 +288,10 @@ public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback
     }
 
     reportPath += "&renderMode=" + renderType; //$NON-NLS-1$
-    reportPath += "&autoSubmit=" + autoSubmit; //$NON-NLS-1$
+    if (autoSubmit != null)
+    {
+      reportPath += "&autoSubmit=" + autoSubmit; //$NON-NLS-1$
+    }
     if (GWT.isScript() == false) {
       reportPath = reportPath.substring(1);
       reportPath = "?solution=steel-wheels&path=reports&name=Inventory.prpt" + reportPath;
