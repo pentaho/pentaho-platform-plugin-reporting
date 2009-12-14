@@ -281,17 +281,26 @@ public class ParameterControllerPanel extends VerticalPanel
         {
           submitPanel.add(submitSubscriptionButton);
         }
+        submitPanel.add(submitParametersButton);
 
         // handle the auto-submit defaults.
-        final String autoSubmitAttr = parametersElement.getAttribute("autoSubmit");
+        String autoSubmitAttr = parametersElement.getAttribute("autoSubmit");
+        if (StringUtils.isEmpty(autoSubmitAttr))
+        {
+          autoSubmitAttr = Window.Location.getParameter("autoSubmit");
+        } 
         if (StringUtils.isEmpty(autoSubmitAttr) == false)
         {
           submitParametersOnChangeCheckBox.setValue("true".equals(autoSubmitAttr));
           autoSubmitState = "true".equals(autoSubmitAttr);
         }
+        else
+        {
+          // BISERVER-3821 Provide ability to remove Auto-Submit check box from report viewer
+          // only show the UI for the autosubmit checkbox if no preference exists
+          submitPanel.add(submitParametersOnChangeCheckBox);
+        }
 
-        submitPanel.add(submitParametersButton);
-        submitPanel.add(submitParametersOnChangeCheckBox);
         parameterContainer.add(submitPanel);
 
         parameterDisclosurePanel.setContent(parameterContainer);
@@ -300,6 +309,10 @@ public class ParameterControllerPanel extends VerticalPanel
         if ("true".equals(parametersElement.getAttribute("paginate"))) //$NON-NLS-1$ //$NON-NLS-2$
         {
           add(buildPaginationController(parametersElement));
+        }
+        if (globalErrors != null && globalErrors.isEmpty() == false)
+        {
+          add(buildGlobalErrors(globalErrors));
         }
 
         // if parameters are valid, submit them for report rendering
@@ -802,7 +815,7 @@ public class ParameterControllerPanel extends VerticalPanel
         listener.showBlank();
       }
       RequestBuilder requestBuilder = new RequestBuilder(RequestBuilder.POST, viewer.buildReportUrl
-          (RENDER_TYPE.XML, parameterMap, submitParametersOnChangeCheckBox.getValue()));
+          (RENDER_TYPE.XML, parameterMap, autoSubmitState));
       requestBuilder.setCallback(parameterRequestCallback);
       try
       {
