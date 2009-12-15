@@ -75,7 +75,7 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
       }
       else if ("roles".equals(key)) //$NON-NLS-1$
       {
-        final IUserDetailsRoleListService roleListService = PentahoSystem.get(IUserDetailsRoleListService.class);
+        final IUserDetailsRoleListService roleListService = PentahoSystem.getUserDetailsRoleListService();
         if (roleListService == null)
         {
           return null;
