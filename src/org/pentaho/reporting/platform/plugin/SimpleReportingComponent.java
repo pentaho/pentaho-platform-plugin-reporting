@@ -5,15 +5,17 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Array;
 import java.net.URL;
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.text.DateFormatSymbols;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
-import java.sql.Time;
-import java.sql.Timestamp;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
-import java.text.SimpleDateFormat;
-import java.text.DateFormatSymbols;
+
 import javax.print.DocFlavor;
 import javax.print.PrintService;
 import javax.print.PrintServiceLookup;
@@ -21,7 +23,6 @@ import javax.swing.table.TableModel;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.axis2.databinding.types.xsd.Decimal;
 import org.pentaho.commons.connection.IPentahoResultSet;
 import org.pentaho.platform.api.engine.IAcceptsRuntimeInputs;
 import org.pentaho.platform.api.engine.IActionSequenceResource;
@@ -38,7 +39,6 @@ import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
 import org.pentaho.reporting.engine.classic.core.metadata.ReportProcessTaskRegistry;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.pdf.PdfPageableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.plaintext.PlainTextPageableModule;
-import org.pentaho.reporting.engine.classic.core.modules.output.pageable.plaintext.driver.TextFilePrinterDriver;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.csv.CSVTableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlTableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.rtf.RTFTableModule;
@@ -46,15 +46,15 @@ import org.pentaho.reporting.engine.classic.core.modules.output.table.xls.ExcelT
 import org.pentaho.reporting.engine.classic.core.modules.parser.base.ReportGenerator;
 import org.pentaho.reporting.engine.classic.core.parameters.DefaultParameterContext;
 import org.pentaho.reporting.engine.classic.core.parameters.ListParameter;
+import org.pentaho.reporting.engine.classic.core.parameters.ParameterAttributeNames;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterContext;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterDefinitionEntry;
-import org.pentaho.reporting.engine.classic.core.parameters.ValidationResult;
 import org.pentaho.reporting.engine.classic.core.parameters.ValidationMessage;
-import org.pentaho.reporting.engine.classic.core.parameters.ParameterAttributeNames;
+import org.pentaho.reporting.engine.classic.core.parameters.ValidationResult;
+import org.pentaho.reporting.engine.classic.core.util.ReportParameterValues;
 import org.pentaho.reporting.engine.classic.core.util.beans.BeanException;
 import org.pentaho.reporting.engine.classic.core.util.beans.ConverterRegistry;
 import org.pentaho.reporting.engine.classic.core.util.beans.ValueConverter;
-import org.pentaho.reporting.engine.classic.core.util.ReportParameterValues;
 import org.pentaho.reporting.engine.classic.extensions.modules.java14print.Java14PrintUtil;
 import org.pentaho.reporting.libraries.base.config.Configuration;
 import org.pentaho.reporting.libraries.base.util.StringUtils;
@@ -76,6 +76,8 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    */
   private static final Log log = LogFactory.getLog(SimpleReportingComponent.class);
 
+  public static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
+  
   public static final String OUTPUT_TARGET = "output-target"; //$NON-NLS-1$
 
   public static final String OUTPUT_TYPE = "output-type"; //$NON-NLS-1$
@@ -803,9 +805,10 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     {
       try
       {
-        return new Timestamp(new Long(valueAsString));
+        Date date = DATE_FORMAT.parse(valueAsString);
+        return new Timestamp(date.getTime());
       }
-      catch (NumberFormatException nfe)
+      catch (ParseException pe)
       {
         // ignore, we try to parse it as real date now ..
       }
@@ -814,9 +817,10 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     {
       try
       {
-        return new Time(new Long(valueAsString));
+        Date date = DATE_FORMAT.parse(valueAsString);
+        return new Time(date.getTime());
       }
-      catch (NumberFormatException nfe)
+      catch (ParseException pe)
       {
         // ignore, we try to parse it as real date now ..
       }
@@ -825,9 +829,10 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     {
       try
       {
-        return new java.sql.Date(new Long(valueAsString));
+        Date date = DATE_FORMAT.parse(valueAsString);
+        return new java.sql.Date(date.getTime());
       }
-      catch (NumberFormatException nfe)
+      catch (ParseException pe)
       {
         // ignore, we try to parse it as real date now ..
       }
@@ -836,9 +841,10 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     {
       try
       {
-        return new Date(new Long(valueAsString));
+        Date date = DATE_FORMAT.parse(valueAsString);
+        return new Date(date.getTime());
       }
-      catch (NumberFormatException nfe)
+      catch (ParseException pe)
       {
         // ignore, we try to parse it as real date now ..
       }
