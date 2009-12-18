@@ -12,6 +12,7 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.text.DateFormatSymbols;
 import javax.print.DocFlavor;
@@ -78,6 +79,8 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    */
   private static final Log log = LogFactory.getLog(SimpleReportingComponent.class);
 
+  public static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
+  
   public static final String OUTPUT_TARGET = "output-target"; //$NON-NLS-1$
 
   public static final String OUTPUT_TYPE = "output-type"; //$NON-NLS-1$
@@ -805,9 +808,10 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     {
       try
       {
-        return new Timestamp(new Long(valueAsString));
+        Date date = DATE_FORMAT.parse(valueAsString);
+        return new Timestamp(date.getTime());
       }
-      catch (NumberFormatException nfe)
+      catch (ParseException pe)
       {
         // ignore, we try to parse it as real date now ..
       }
@@ -816,9 +820,10 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     {
       try
       {
-        return new Time(new Long(valueAsString));
+        Date date = DATE_FORMAT.parse(valueAsString);
+        return new Time(date.getTime());
       }
-      catch (NumberFormatException nfe)
+      catch (ParseException pe)
       {
         // ignore, we try to parse it as real date now ..
       }
@@ -827,9 +832,10 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     {
       try
       {
-        return new java.sql.Date(new Long(valueAsString));
+        Date date = DATE_FORMAT.parse(valueAsString);
+        return new java.sql.Date(date.getTime());
       }
-      catch (NumberFormatException nfe)
+      catch (ParseException pe)
       {
         // ignore, we try to parse it as real date now ..
       }
@@ -838,9 +844,10 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     {
       try
       {
-        return new Date(new Long(valueAsString));
+        Date date = DATE_FORMAT.parse(valueAsString);
+        return new Date(date.getTime());
       }
-      catch (NumberFormatException nfe)
+      catch (ParseException pe)
       {
         // ignore, we try to parse it as real date now ..
       }

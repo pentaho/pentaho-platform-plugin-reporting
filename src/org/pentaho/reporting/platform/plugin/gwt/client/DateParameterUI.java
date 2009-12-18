@@ -15,6 +15,7 @@ import com.google.gwt.xml.client.Element;
 
 public class DateParameterUI extends SimplePanel
 {
+  private final static DateTimeFormat format = DateTimeFormat.getFormat("yyyy-MM-dd");
 
   private class DateParameterSelectionHandler implements ValueChangeHandler<Date>
   {
@@ -32,7 +33,7 @@ public class DateParameterUI extends SimplePanel
       parameterSelections.clear();
       Date newDate = event.getValue();
       // add date as long
-      parameterSelections.add("" + newDate.getTime()); //$NON-NLS-1$
+      parameterSelections.add(format.format(newDate)); //$NON-NLS-1$
       controller.fetchParameters(true);
     }
 
@@ -42,20 +43,19 @@ public class DateParameterUI extends SimplePanel
   {
     try
     {
-      return new Date(Long.parseLong(text));
-    }
-    catch (Exception e)
-    {
-      // invalid number as well
-    }
-    try
-    {
-      final DateTimeFormat format = DateTimeFormat.getFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
       return format.parse(text);
     }
     catch (Exception e)
     {
       // invalid date string ..
+    }
+    try
+    {
+      return new Date(Long.parseLong(text));
+    }
+    catch (Exception e)
+    {
+      // invalid number as well
     }
     return null;
   }
@@ -87,7 +87,7 @@ public class DateParameterUI extends SimplePanel
       // This normalizes the date. No matter how the user specified it, we will now always have
       // a long number in our selection.
       parameterSelections.clear();
-      parameterSelections.add("" + date.getTime()); //$NON-NLS-1$
+      parameterSelections.add(format.format(date)); //$NON-NLS-1$
     }
     
     final DefaultFormat format = new DefaultFormat(createFormat(parameterElement.getAttribute("data-format")));

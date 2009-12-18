@@ -6,11 +6,13 @@ import java.io.OutputStream;
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.net.URLDecoder;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.parsers.DocumentBuilderFactory;
 
@@ -481,14 +483,11 @@ public class ReportContentGenerator extends SimpleContentGenerator
       }
       else if (declaredValueType.isAssignableFrom(Date.class))
       {
-        // dates are a special thing, in order to get the web (javascript) and the
-        // server to be happy about date formats, the best thing for us to do
-        // seems to be to convert to long (millis since epoch) since the javascript
-        // land doesn't have the same date time formatter
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
         final Date date = (Date) defaultValue;
         final Element defaultValueElement = document.createElement("default-value"); //$NON-NLS-1$
         parameterElement.appendChild(defaultValueElement);
-        defaultValueElement.setAttribute("value", "" + date.getTime()); //$NON-NLS-1$ //$NON-NLS-2$
+        defaultValueElement.setAttribute("value", sdf.format(date)); //$NON-NLS-1$ //$NON-NLS-2$
       }
       else
       {
@@ -598,8 +597,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
         throw new BeanException("Failed to convert date-parameter value. Value is not date at all.");
       }
       final Date d = (Date) value;
-      final ValueConverter numConverter = ConverterRegistry.getInstance().getValueConverter(BigDecimal.class);
-      return numConverter.toAttributeValue(new BigDecimal(d.getTime()));
+      return SimpleReportingComponent.DATE_FORMAT.format(d);
     }
     if (Number.class.isAssignableFrom(type))
     {
