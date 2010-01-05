@@ -26,6 +26,7 @@
 		<dependency org="${ivy.artifact.group}" name="pentaho-reporting-engine-classic-extensions-mondrian" rev="${dependency.pentaho-reporting.revision}" transitive="true" changing="true" />
 		<dependency org="${ivy.artifact.group}" name="pentaho-reporting-engine-classic-extensions-olap4j" rev="${dependency.pentaho-reporting.revision}" transitive="true" changing="true" />
 		<dependency org="${ivy.artifact.group}" name="pentaho-reporting-engine-classic-extensions-pmd" rev="${dependency.pentaho-reporting.revision}" transitive="true" changing="true" />
+      <dependency org="${ivy.artifact.group}" name="pentaho-reporting-engine-classic-extensions-kettle" rev="${dependency.pentaho-reporting.revision}" transitive="true" changing="true" />
 
         <!--  Codegen dependencies -->
         <dependency org="com.google.gwt" name="gwt-user" rev="1.7.1"                         conf="codegen->default"/>
