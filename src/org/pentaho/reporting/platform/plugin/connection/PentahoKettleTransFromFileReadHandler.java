@@ -27,7 +27,7 @@ public class PentahoKettleTransFromFileReadHandler extends KettleTransFromFileRe
    */
   public Object getObject() throws SAXException
   {
-    return new KettleTransFromFileProducer
+    return new PentahoKettleTransFromFileProducer
         (getRepositoryName(), getFileName(), getStepName(), getUsername(), getPassword(),
             getDefinedArgumentNames(), getDefinedVariableNames());
   }
