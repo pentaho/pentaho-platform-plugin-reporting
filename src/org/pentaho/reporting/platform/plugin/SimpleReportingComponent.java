@@ -39,6 +39,7 @@ import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
 import org.pentaho.reporting.engine.classic.core.metadata.ReportProcessTaskRegistry;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.pdf.PdfPageableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.plaintext.PlainTextPageableModule;
+import org.pentaho.reporting.engine.classic.core.modules.output.pageable.plaintext.driver.TextFilePrinterDriver;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.csv.CSVTableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlTableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.rtf.RTFTableModule;
@@ -61,9 +62,11 @@ import org.pentaho.reporting.libraries.base.util.StringUtils;
 import org.pentaho.reporting.libraries.resourceloader.ResourceException;
 import org.pentaho.reporting.platform.plugin.messages.Messages;
 import org.pentaho.reporting.platform.plugin.output.CSVOutput;
+import org.pentaho.reporting.platform.plugin.output.EmailOutput;
 import org.pentaho.reporting.platform.plugin.output.HTMLOutput;
 import org.pentaho.reporting.platform.plugin.output.PDFOutput;
 import org.pentaho.reporting.platform.plugin.output.PageableHTMLOutput;
+import org.pentaho.reporting.platform.plugin.output.PlainTextOutput;
 import org.pentaho.reporting.platform.plugin.output.RTFOutput;
 import org.pentaho.reporting.platform.plugin.output.XLSOutput;
 import org.xml.sax.InputSource;
@@ -1136,7 +1139,15 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       {
         return RTFOutput.generate(report, outputStream, getYieldRate());
       }
-
+      if (MIME_TYPE_EMAIL.equals(outputType))
+      {
+        return EmailOutput.generate(report, outputStream, "cid:{0}", getYieldRate()); //$NON-NLS-1$
+      }
+      if (PlainTextPageableModule.PLAINTEXT_EXPORT_TYPE.equals(outputType))
+      {
+        final TextFilePrinterDriver driver = new TextFilePrinterDriver(outputStream, 12, 6);
+        return PlainTextOutput.generate(report, outputStream, getYieldRate(), driver);
+      }
       log.warn(Messages.getString("ReportPlugin.warnUnprocessableRequest", outputType));
 
     }
