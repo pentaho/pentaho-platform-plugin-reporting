@@ -35,7 +35,7 @@ public class PentahoKettleDataSourceReadHandler extends KettleDataSourceReadHand
   {
     if (tagName.equals("query-file"))
     {
-      final AbstractKettleTransformationReadHandler queryReadHandler = new KettleTransFromFileReadHandler();
+      final AbstractKettleTransformationReadHandler queryReadHandler = new PentahoKettleTransFromFileReadHandler();
       addQueryHandler(queryReadHandler);
       return queryReadHandler;
     }
