@@ -612,10 +612,13 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       return HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE;
     }
 
-    // if you have come that far, it means you really messed up. Sorry, this error is not a error caused
-    // by our legacy code - it is more likely that you just entered values that are totally wrong.
-    log.error(Messages.getString("ReportPlugin.warnInvalidOutputType", getOutputType(),
-        HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE));
+    if (StringUtils.isEmpty(getOutputTarget()) == false || StringUtils.isEmpty(getOutputType()) == false)
+    {
+      // if you have come that far, it means you really messed up. Sorry, this error is not a error caused
+      // by our legacy code - it is more likely that you just entered values that are totally wrong.
+      log.error(Messages.getString("ReportPlugin.warnInvalidOutputType", getOutputType(),
+          HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE));
+    }
     return HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE;
   }
 
