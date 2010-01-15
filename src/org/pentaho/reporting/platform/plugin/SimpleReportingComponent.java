@@ -12,10 +12,10 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
-
 import javax.print.DocFlavor;
 import javax.print.PrintService;
 import javax.print.PrintServiceLookup;
@@ -80,7 +80,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   private static final Log log = LogFactory.getLog(SimpleReportingComponent.class);
 
   public static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
-  
+
   public static final String OUTPUT_TARGET = "output-target"; //$NON-NLS-1$
 
   public static final String OUTPUT_TYPE = "output-type"; //$NON-NLS-1$
@@ -339,7 +339,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       }
       else if (log.isWarnEnabled())
       {
-        log.warn(Messages.getString("ReportPlugin.logErrorMimeTypeShort",  e.getMessage()));
+        log.warn(Messages.getString("ReportPlugin.logErrorMimeTypeShort", e.getMessage()));
       }
     }
     catch (ResourceException e)
@@ -350,7 +350,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       }
       else if (log.isWarnEnabled())
       {
-        log.warn(Messages.getString("ReportPlugin.logErrorMimeTypeShort",  e.getMessage()));
+        log.warn(Messages.getString("ReportPlugin.logErrorMimeTypeShort", e.getMessage()));
       }
     }
     return MIME_GENERIC_FALLBACK;
@@ -608,7 +608,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       }
 
       log.warn(Messages.getString("ReportPlugin.warnInvalidPreferredOutput",
-          preferredOutputTypeString,  HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE));
+          preferredOutputTypeString, HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE));
       return HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE;
     }
 
@@ -728,7 +728,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   /**
    * Apply inputs (if any) to corresponding report parameters, care is taken when checking parameter types to perform any necessary casting and conversion.
    *
-   * @param context a ParameterContext for which the parameters will be under
+   * @param context          a ParameterContext for which the parameters will be under
    * @param validationResult the validation result that will hold the warnings. If null, a new one will be created.
    * @throws java.io.IOException if the report of this component could not be parsed.
    * @throws ResourceException   if the report of this component could not be parsed.
@@ -909,7 +909,30 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       parameterValues.put(param.getName(), null);
       return;
     }
-    if (value.getClass().isArray())
+
+    if (isAllowMultiSelect(param) && Collection.class.isInstance(value))
+    {
+      final Collection c = (Collection) value;
+      final Class componentType;
+      if (param.getValueType().isArray())
+      {
+        componentType = param.getValueType().getComponentType();
+      }
+      else
+      {
+        componentType = param.getValueType();
+      }
+
+      final int length = c.size();
+      final Object[] sourceArray = c.toArray();
+      final Object array = Array.newInstance(componentType, length);
+      for (int i = 0; i < length; i++)
+      {
+        Array.set(array, i, convert(report, param, componentType, sourceArray[i]));
+      }
+      parameterValues.put(param.getName(), array);
+    }
+    else if (value.getClass().isArray())
     {
       final Class componentType;
       if (param.getValueType().isArray())
@@ -935,7 +958,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       // and re-call addParameter with it
       final Object[] array = new Object[1];
       array[0] = value;
-      addParameter(report, parameterValues, param,array);
+      addParameter(report, parameterValues, param, array);
     }
     else
     {
