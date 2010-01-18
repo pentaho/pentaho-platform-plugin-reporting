@@ -4,6 +4,7 @@ import org.apache.commons.vfs.FileObject;
 import org.apache.commons.vfs.FileSystemException;
 import org.apache.commons.vfs.FileSystemManager;
 import org.apache.commons.vfs.VFS;
+import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.core.ParameterMapping;
 import org.pentaho.reporting.engine.classic.extensions.datasources.kettle.KettleTransFromFileProducer;
 import org.pentaho.reporting.libraries.resourceloader.ResourceKey;
@@ -50,13 +51,23 @@ public class PentahoKettleTransFromFileProducer extends KettleTransFromFileProdu
         {
           final String file = (String) identifier;
           final FileSystemManager fileSystemManager = VFS.getManager();
-          final String[] schemes = fileSystemManager.getSchemes();
           // We try to create a file-object. If that works, we are talking about a VFS path and we can be happy.
           //noinspection UnusedDeclaration
           final FileObject fileObject = fileSystemManager.resolveFile("solution:/" + file);
-          if (fileObject.exists())
+
+          // Pentaho's solution:/ provider illegally returns null and thus breaks the contract of fileSystemManager
+          if (fileObject != null && fileObject.exists())
           {
             return "solution:/" + file;
+          }
+          else if (fileObject == null)
+          {
+            // pedro alves - Getting the file through normal apis
+            final String fileName = PentahoSystem.getApplicationContext().getSolutionPath(file);
+            if (fileName != null)
+            {
+              return fileName;
+            }
           }
         }
         catch (FileSystemException e)
