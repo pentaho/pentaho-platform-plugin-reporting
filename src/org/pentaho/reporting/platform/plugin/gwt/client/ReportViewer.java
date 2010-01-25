@@ -115,6 +115,16 @@ public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback
     }
   }-*/;
   
+  public static native boolean isInPUC()
+  /*-{
+    return (top.mantle_initialized == true);
+  }-*/;
+
+  public static native void showPUCMessageDialog(String title, String message)
+  /*-{
+    top.mantle_showMessage(title, message);
+  }-*/;
+  
   public void openUrlInDialog(String title, String url, String width, String height)
   {
     if (StringUtils.isEmpty(height))
@@ -196,7 +206,7 @@ public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback
     return map;
   }
 
-  public String buildReportUrl(RENDER_TYPE renderType, Map<String, List<String>> reportParameterMap, Boolean autoSubmit)
+  public String buildReportUrl(RENDER_TYPE renderType, Map<String, List<String>> reportParameterMap, Boolean autoSubmitUI)
   {
     String reportPath = Window.Location.getPath();
     if (reportPath.indexOf("reportviewer") != -1) //$NON-NLS-1$
@@ -283,9 +293,9 @@ public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback
     }
 
     reportPath += "&renderMode=" + renderType; //$NON-NLS-1$
-    if (autoSubmit != null)
+    if (autoSubmitUI != null)
     {
-      reportPath += "&autoSubmit=" + autoSubmit; //$NON-NLS-1$
+      reportPath += "&autoSubmitUI=" + autoSubmitUI; //$NON-NLS-1$
     }
     return reportPath;
   }
