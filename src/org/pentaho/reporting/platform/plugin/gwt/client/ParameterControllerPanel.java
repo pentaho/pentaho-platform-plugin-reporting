@@ -18,8 +18,8 @@ import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.dom.client.MouseOutHandler;
 import com.google.gwt.event.dom.client.MouseOverEvent;
 import com.google.gwt.event.dom.client.MouseOverHandler;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
@@ -299,6 +299,12 @@ public class ParameterControllerPanel extends VerticalPanel
           // BISERVER-3821 Provide ability to remove Auto-Submit check box from report viewer
           // only show the UI for the autosubmit checkbox if no preference exists
           submitPanel.add(submitParametersOnChangeCheckBox);
+        }
+        
+        autoSubmitAttr = Window.Location.getParameter("autoSubmitUI");
+        if (StringUtils.isEmpty(autoSubmitAttr) == false ){
+          submitParametersOnChangeCheckBox.setValue("true".equals(autoSubmitAttr));
+          autoSubmitState = "true".equals(autoSubmitAttr);
         }
 
         parameterContainer.add(submitPanel);
@@ -862,6 +868,11 @@ public class ParameterControllerPanel extends VerticalPanel
 
   private void showMessageDialog(String title, String message)
   {
+    if (ReportViewer.isInPUC()) {
+      ReportViewer.showPUCMessageDialog(title, message);
+      return;
+    }
+    
     final DialogBox dialogBox = new DialogBox(false, true);
     dialogBox.setText(title);
     VerticalPanel dialogContent = new VerticalPanel();
