@@ -21,10 +21,15 @@ public class ReportContainer extends VerticalPanel implements IParameterSubmissi
   public ReportContainer(final ReportViewer viewer, ResourceBundle messages)
   {
     this.viewer = viewer;
-    parameterControllerPanel = new ParameterControllerPanel(viewer, messages);
+    parameterControllerPanel = new ParameterControllerPanel(viewer, this, messages);
     parameterControllerPanel.addParameterSubmissionListener(this);
-
     reportContainer = new Frame();
+
+    init();
+  }
+
+  public void init() {
+    clear();
     reportContainer.setHeight("100%"); //$NON-NLS-1$
     reportContainer.setWidth("100%"); //$NON-NLS-1$
     reportContainer.getElement().setAttribute("frameBorder", "0"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -34,7 +39,7 @@ public class ReportContainer extends VerticalPanel implements IParameterSubmissi
     setHeight("100%"); //$NON-NLS-1$
     makeFullHeight(reportContainer, this);
   }
-
+  
   public void hideParameterController()
   {
     parameterControllerPanel.clear();

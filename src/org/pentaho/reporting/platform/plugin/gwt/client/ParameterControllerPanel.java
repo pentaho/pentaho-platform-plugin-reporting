@@ -18,8 +18,8 @@ import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.dom.client.MouseOutHandler;
 import com.google.gwt.event.dom.client.MouseOverEvent;
 import com.google.gwt.event.dom.client.MouseOverHandler;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
@@ -53,7 +53,8 @@ public class ParameterControllerPanel extends VerticalPanel
 {
   private List<IParameterSubmissionListener> listeners = new ArrayList<IParameterSubmissionListener>();
   private ReportViewer viewer;
-
+  private ReportContainer container;
+  
   // all the parameters will be forced into strings
   private Map<String, List<String>> parameterMap = new HashMap<String, List<String>>();
   private List<Element> parameterElements = new ArrayList<Element>();
@@ -142,9 +143,9 @@ public class ParameterControllerPanel extends VerticalPanel
         showParameters = "true".equalsIgnoreCase(Window.Location.getParameter("showParameters")); //$NON-NLS-1$ //$NON-NLS-2$
       }
 
-      HashMap<String, ArrayList<String>> errors = buildErrors(resultDoc);//$NON-NLS-1$ 
+      HashMap<String, ArrayList<String>> errors = buildErrors(resultDoc);//$NON-NLS-1$
       ArrayList globalErrors = errors.get(null);
-      
+
       if (showParameters)
       {
         NodeList parameterNodes = parametersElement.getElementsByTagName("parameter"); //$NON-NLS-1$
@@ -300,6 +301,12 @@ public class ParameterControllerPanel extends VerticalPanel
           // only show the UI for the autosubmit checkbox if no preference exists
           submitPanel.add(submitParametersOnChangeCheckBox);
         }
+        
+        autoSubmitAttr = Window.Location.getParameter("autoSubmitUI");
+        if (StringUtils.isEmpty(autoSubmitAttr) == false ){
+          submitParametersOnChangeCheckBox.setValue("true".equals(autoSubmitAttr));
+          autoSubmitState = "true".equals(autoSubmitAttr);
+        }
 
         parameterContainer.add(submitPanel);
 
@@ -362,14 +369,16 @@ public class ParameterControllerPanel extends VerticalPanel
           firePromptNeeded();
         }
       }
+      container.init();
     }
 
   };
 
-  public ParameterControllerPanel(final ReportViewer viewer, final ResourceBundle messages)
+  public ParameterControllerPanel(final ReportViewer viewer, final ReportContainer container, final ResourceBundle messages)
   {
     this.viewer = viewer;
     this.messages = messages;
+    this.container = container;
 
     parameterDisclosurePanel = new DisclosurePanel(messages.getString("reportParameters", "Report Parameters")); //$NON-NLS-1$ //$NON-NLS-2$
     submitParametersButton = new Button(messages.getString("viewReport", "View Report")); //$NON-NLS-1$ //$NON-NLS-2$
@@ -454,7 +463,7 @@ public class ParameterControllerPanel extends VerticalPanel
     }
     return parameterPanel;
   }
-  
+
   private Widget buildPaginationController(final Element parametersElement)
   {
     // need to add/build UI for pagination controls
@@ -862,6 +871,11 @@ public class ParameterControllerPanel extends VerticalPanel
 
   private void showMessageDialog(String title, String message)
   {
+    if (ReportViewer.isInPUC()) {
+      ReportViewer.showPUCMessageDialog(title, message);
+      return;
+    }
+    
     final DialogBox dialogBox = new DialogBox(false, true);
     dialogBox.setText(title);
     VerticalPanel dialogContent = new VerticalPanel();
