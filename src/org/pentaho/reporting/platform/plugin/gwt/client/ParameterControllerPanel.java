@@ -53,7 +53,8 @@ public class ParameterControllerPanel extends VerticalPanel
 {
   private List<IParameterSubmissionListener> listeners = new ArrayList<IParameterSubmissionListener>();
   private ReportViewer viewer;
-
+  private ReportContainer container;
+  
   // all the parameters will be forced into strings
   private Map<String, List<String>> parameterMap = new HashMap<String, List<String>>();
   private List<Element> parameterElements = new ArrayList<Element>();
@@ -368,14 +369,16 @@ public class ParameterControllerPanel extends VerticalPanel
           firePromptNeeded();
         }
       }
+      container.init();
     }
 
   };
 
-  public ParameterControllerPanel(final ReportViewer viewer, final ResourceBundle messages)
+  public ParameterControllerPanel(final ReportViewer viewer, final ReportContainer container, final ResourceBundle messages)
   {
     this.viewer = viewer;
     this.messages = messages;
+    this.container = container;
 
     parameterDisclosurePanel = new DisclosurePanel(messages.getString("reportParameters", "Report Parameters")); //$NON-NLS-1$ //$NON-NLS-2$
     submitParametersButton = new Button(messages.getString("viewReport", "View Report")); //$NON-NLS-1$ //$NON-NLS-2$
