@@ -41,6 +41,7 @@ public class ReportContainer extends VerticalPanel implements IParameterSubmissi
     setWidth("100%"); //$NON-NLS-1$
     setHeight("100%"); //$NON-NLS-1$
     makeFullHeight(reportContainer, this);
+    reportContainer.setUrl(url);
   }
   
   public void hideParameterController()
