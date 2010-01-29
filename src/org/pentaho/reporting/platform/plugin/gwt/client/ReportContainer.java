@@ -17,14 +17,22 @@ public class ReportContainer extends VerticalPanel implements IParameterSubmissi
   private ParameterControllerPanel parameterControllerPanel;
   private Frame reportContainer;
   private ReportViewer viewer;
+  private String url = "about:blank";
 
   public ReportContainer(final ReportViewer viewer, ResourceBundle messages)
   {
     this.viewer = viewer;
-    parameterControllerPanel = new ParameterControllerPanel(viewer, messages);
+    parameterControllerPanel = new ParameterControllerPanel(viewer, this, messages);
     parameterControllerPanel.addParameterSubmissionListener(this);
-
     reportContainer = new Frame();
+
+    init();
+  }
+
+  public void init() {
+	reportContainer.setUrl("about:blank");
+    reportContainer.setVisible(true);
+    clear();
     reportContainer.setHeight("100%"); //$NON-NLS-1$
     reportContainer.setWidth("100%"); //$NON-NLS-1$
     reportContainer.getElement().setAttribute("frameBorder", "0"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -34,7 +42,7 @@ public class ReportContainer extends VerticalPanel implements IParameterSubmissi
     setHeight("100%"); //$NON-NLS-1$
     makeFullHeight(reportContainer, this);
   }
-
+  
   public void hideParameterController()
   {
     parameterControllerPanel.clear();
@@ -44,16 +52,15 @@ public class ReportContainer extends VerticalPanel implements IParameterSubmissi
 
   public void parametersReady(Map<String, List<String>> parameterMap, RENDER_TYPE renderType)
   {
-    // build url for the report to actually render
-    reportContainer.setVisible(true);
-    reportContainer.setUrl(viewer.buildReportUrl(renderType, parameterMap, parameterControllerPanel.isAutoSubmit()));
+    url = viewer.buildReportUrl(renderType, parameterMap, parameterControllerPanel.isAutoSubmit());
   }
 
   public void showBlank()
   {
     // build url for the report to actually render
     reportContainer.setVisible(false);
-    reportContainer.setUrl("about:blank"); //$NON-NLS-1$
+    url = "about:blank";
+    reportContainer.setUrl(url); //$NON-NLS-1$
   }
 
   private void makeFullHeight(Widget widget, Widget stopWidget)
