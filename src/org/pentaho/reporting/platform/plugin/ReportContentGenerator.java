@@ -43,6 +43,7 @@ import org.pentaho.platform.repository.subscription.Subscription;
 import org.pentaho.platform.repository.subscription.SubscriptionHelper;
 import org.pentaho.platform.util.UUIDUtil;
 import org.pentaho.platform.util.web.MimeHelper;
+import org.pentaho.platform.util.xml.dom4j.XmlDom4JHelper;
 import org.pentaho.reporting.engine.classic.core.AttributeNames;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportDataFactoryException;
@@ -378,7 +379,8 @@ public class ReportContentGenerator extends SimpleContentGenerator
       addSubscriptionParameter(reportDefinitionPath, parameters, inputs);
     }
 
-    WebServiceUtil.writeDocument(outputStream, document, false);
+    org.dom4j.Document d4jDoc = XmlDom4JHelper.convertToDom4JDoc(document);
+    XmlDom4JHelper.saveDom(d4jDoc, outputStream, "UTF-8");
     // close parameter context
     parameterContext.close();
   }
