@@ -36,6 +36,7 @@ public class PentahoKettleTransFromFileProducer extends KettleTransFromFileProdu
       if (RepositoryResourceLoader.SOLUTION_SCHEMA_NAME.equals(schema) == false)
       {
         // these are not the droids you are looking for ..
+        key = key.getParent();
         continue;
       }
 
