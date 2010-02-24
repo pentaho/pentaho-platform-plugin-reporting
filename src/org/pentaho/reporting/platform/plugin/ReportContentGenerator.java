@@ -593,7 +593,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
     {
       if (value instanceof Date == false)
       {
-        throw new BeanException("Failed to convert date-parameter value. Value is not date at all.");
+        throw new BeanException(Messages.getErrorString("ReportPlugin.errorNonDateParameterValue"));
       }
       final Date d = (Date) value;
       return SimpleReportingComponent.DATE_FORMAT.format(d);
