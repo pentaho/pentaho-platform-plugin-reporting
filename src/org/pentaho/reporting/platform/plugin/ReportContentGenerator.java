@@ -74,6 +74,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
   private static final Log log = LogFactory.getLog(ReportContentGenerator.class);
 
   private SimpleReportingComponent reportComponent;
+  private static final String PARAMETER_FORMAT = "yyyy-MM-dd";
 
   public ReportContentGenerator()
   {
@@ -296,8 +297,8 @@ public class ReportContentGenerator extends SimpleContentGenerator
 
     final ValidationResult vr = reportParameterDefinition.getValidator().validate
         (validationResult, reportParameterDefinition, parameterContext);
-    parameters.setAttribute("is-prompt-needed", "" + !vr.isEmpty()); //$NON-NLS-1$ //$NON-NLS-2$
-    parameters.setAttribute("subscribe", "" + subscribe); //$NON-NLS-1$ //$NON-NLS-2$
+    parameters.setAttribute("is-prompt-needed", String.valueOf(!vr.isEmpty())); //$NON-NLS-1$ //$NON-NLS-2$
+    parameters.setAttribute("subscribe", String.valueOf(subscribe)); //$NON-NLS-1$ //$NON-NLS-2$
 
     // now add output type chooser
     addOutputParameter(report, parameters, inputs, subscribe);
@@ -324,7 +325,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
         parameters.setAttribute(SimpleReportingComponent.PAGINATE_OUTPUT, "true"); //$NON-NLS-1$
         parameters.setAttribute("page-count", String.valueOf(reportComponent.getPageCount())); //$NON-NLS-1$ //$NON-NLS-2$
         // use the saved value (we changed it to -1 for performance)
-        parameters.setAttribute(SimpleReportingComponent.ACCEPTED_PAGE, "" + acceptedPage); //$NON-NLS-1$
+        parameters.setAttribute(SimpleReportingComponent.ACCEPTED_PAGE, String.valueOf(acceptedPage)); //$NON-NLS-1$
       }
     }
     else if (vr.isEmpty() == false)
@@ -398,7 +399,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
     reportComponent.setSession(userSession);
     reportComponent.setReportDefinitionPath(reportDefinitionPath);
     final MasterReport report = reportComponent.getReport();
-    final ParameterDefinitionEntry parameterDefinitions[] = report.getParameterDefinition().getParameterDefinitions();
+    final ParameterDefinitionEntry[] parameterDefinitions = report.getParameterDefinition().getParameterDefinitions();
     final String result = saveSubscription(requestParams, parameterDefinitions, reportDefinitionPath, userSession);
     outputStream.write(result.getBytes());
     outputStream.flush();
@@ -425,7 +426,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
       }
       else
       {
-        response.setHeader("Content-Disposition", "attach; filename=\"" + file.getFileName() + "\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        response.setHeader("Content-Disposition", "attach; filename=\"" + file.getFileName() + '\"'); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         response.setHeader("Content-Description", file.getFileName()); //$NON-NLS-1$
         response.setDateHeader("Last-Modified", file.getLastModified()); //$NON-NLS-1$
         response.setContentLength(data.length); //$NON-NLS-1$
@@ -457,7 +458,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
       parameterElement.setAttribute("parameter-group-label", org.pentaho.reporting.platform.plugin.messages.Messages.getInstance().getString("ReportPlugin.ReportParameters")); //$NON-NLS-1$ //$NON-NLS-2$
     }
     parameterElement.setAttribute("type", parameter.getValueType().getName()); //$NON-NLS-1$
-    parameterElement.setAttribute("is-mandatory", "" + parameter.isMandatory()); //$NON-NLS-1$ //$NON-NLS-2$
+    parameterElement.setAttribute("is-mandatory", String.valueOf(parameter.isMandatory())); //$NON-NLS-1$ //$NON-NLS-2$
 
     final Object defaultValue = parameter.getDefaultValue(parameterContext);
     final Class declaredValueType = parameter.getValueType();
@@ -538,8 +539,8 @@ public class ReportContentGenerator extends SimpleContentGenerator
     if (parameter instanceof ListParameter)
     {
       final ListParameter asListParam = (ListParameter) parameter;
-      parameterElement.setAttribute("is-multi-select", "" + asListParam.isAllowMultiSelection()); //$NON-NLS-1$ //$NON-NLS-2$
-      parameterElement.setAttribute("is-strict", "" + asListParam.isStrictValueCheck()); //$NON-NLS-1$ //$NON-NLS-2$
+      parameterElement.setAttribute("is-multi-select", String.valueOf(asListParam.isAllowMultiSelection())); //$NON-NLS-1$ //$NON-NLS-2$
+      parameterElement.setAttribute("is-strict", String.valueOf(asListParam.isStrictValueCheck())); //$NON-NLS-1$ //$NON-NLS-2$
 
       final Element valuesElement = document.createElement("value-choices"); //$NON-NLS-1$
       parameterElement.appendChild(valuesElement);
@@ -600,7 +601,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
         throw new BeanException(Messages.getInstance().getErrorString("ReportPlugin.errorNonDateParameterValue"));
       }
       final Date d = (Date) value;
-      final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+      final DateFormat dateFormat = new SimpleDateFormat(PARAMETER_FORMAT);
       return dateFormat.format(d);
     }
     if (Number.class.isAssignableFrom(type))
@@ -665,7 +666,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
   }
 
   private String saveSubscription(final IParameterProvider parameterProvider,
-                                  final ParameterDefinitionEntry parameterDefinitions[],
+                                  final ParameterDefinitionEntry[] parameterDefinitions,
                                   final String actionReference,
                                   final IPentahoSession userSession)
   {

@@ -73,6 +73,7 @@ import org.xml.sax.InputSource;
 
 public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntimeInputs
 {
+  private static final String PARAMETERFORMAT = "yyyy-MM-dd";
 
   /**
    * The logging for logging messages from this component
@@ -809,7 +810,8 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     {
       try
       {
-        final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+        final SimpleDateFormat format = new SimpleDateFormat(PARAMETERFORMAT);
+        format.setLenient(false);
         final Date date = format.parse(valueAsString);
         return new Timestamp(date.getTime());
       }
@@ -822,7 +824,8 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     {
       try
       {
-        final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+        final SimpleDateFormat format = new SimpleDateFormat(PARAMETERFORMAT);
+        format.setLenient(false);
         final Date date = format.parse(valueAsString);
         return new Time(date.getTime());
       }
@@ -835,7 +838,8 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     {
       try
       {
-        final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+        final SimpleDateFormat format = new SimpleDateFormat(PARAMETERFORMAT);
+        format.setLenient(false);
         final Date date = format.parse(valueAsString);
         return new java.sql.Date(date.getTime());
       }
@@ -848,7 +852,8 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     {
       try
       {
-        final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+        final SimpleDateFormat format = new SimpleDateFormat(PARAMETERFORMAT);
+        format.setLenient(false);
         final Date date = format.parse(valueAsString);
         return new Date(date.getTime());
       }
