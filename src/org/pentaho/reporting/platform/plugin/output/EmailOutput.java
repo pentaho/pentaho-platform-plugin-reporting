@@ -32,7 +32,6 @@ public class EmailOutput
 
   public static boolean generate(final MasterReport report,
                                  final OutputStream outputStream,
-                                 final String contentHandlerPattern,
                                  final int yieldRate)
       throws ReportProcessingException, IOException, ContentIOException, MessagingException
   {

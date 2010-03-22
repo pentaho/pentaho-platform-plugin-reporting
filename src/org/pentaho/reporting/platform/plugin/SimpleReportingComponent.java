@@ -1174,7 +1174,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       }
       if (MIME_TYPE_EMAIL.equals(outputType))
       {
-        return EmailOutput.generate(report, outputStream, "cid:{0}", getYieldRate()); //$NON-NLS-1$
+        return EmailOutput.generate(report, outputStream, getYieldRate()); //$NON-NLS-1$
       }
       if (PlainTextPageableModule.PLAINTEXT_EXPORT_TYPE.equals(outputType))
       {
