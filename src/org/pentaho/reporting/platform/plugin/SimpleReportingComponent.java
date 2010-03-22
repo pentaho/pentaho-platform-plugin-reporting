@@ -79,7 +79,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    */
   private static final Log log = LogFactory.getLog(SimpleReportingComponent.class);
 
-  public static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
+  private final SimpleDateFormat dateFormat;
 
   public static final String OUTPUT_TARGET = "output-target"; //$NON-NLS-1$
 
@@ -146,6 +146,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   public SimpleReportingComponent()
   {
     this.inputs = Collections.emptyMap();
+    dateFormat = new SimpleDateFormat("yyyy-MM-dd");
   }
 
   // ----------------------------------------------------------------------------
@@ -811,7 +812,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     {
       try
       {
-        Date date = DATE_FORMAT.parse(valueAsString);
+        final Date date = dateFormat.parse(valueAsString);
         return new Timestamp(date.getTime());
       }
       catch (ParseException pe)
@@ -823,7 +824,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     {
       try
       {
-        Date date = DATE_FORMAT.parse(valueAsString);
+        final Date date = dateFormat.parse(valueAsString);
         return new Time(date.getTime());
       }
       catch (ParseException pe)
@@ -835,7 +836,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     {
       try
       {
-        Date date = DATE_FORMAT.parse(valueAsString);
+        final Date date = dateFormat.parse(valueAsString);
         return new java.sql.Date(date.getTime());
       }
       catch (ParseException pe)
@@ -847,7 +848,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     {
       try
       {
-        Date date = DATE_FORMAT.parse(valueAsString);
+        final Date date = dateFormat.parse(valueAsString);
         return new Date(date.getTime());
       }
       catch (ParseException pe)

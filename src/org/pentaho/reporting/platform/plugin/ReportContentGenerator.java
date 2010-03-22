@@ -6,6 +6,7 @@ import java.io.OutputStream;
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.net.URLDecoder;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -596,7 +597,8 @@ public class ReportContentGenerator extends SimpleContentGenerator
         throw new BeanException(Messages.getErrorString("ReportPlugin.errorNonDateParameterValue"));
       }
       final Date d = (Date) value;
-      return SimpleReportingComponent.DATE_FORMAT.format(d);
+      final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+      return dateFormat.format(d);
     }
     if (Number.class.isAssignableFrom(type))
     {
