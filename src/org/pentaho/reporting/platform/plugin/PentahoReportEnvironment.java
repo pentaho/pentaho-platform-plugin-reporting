@@ -26,7 +26,6 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
   public PentahoReportEnvironment(final Configuration configuration)
   {
     super(configuration);
-    cache = new HashMap<String,String>();
   }
 
   public String getEnvironmentProperty(final String key)
@@ -34,6 +33,10 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
     if (key == null)
     {
       throw new NullPointerException();
+    }
+    if (cache == null)
+    {
+      cache = new HashMap<String,String>();
     }
 
     final String cached = cache.get(key);
