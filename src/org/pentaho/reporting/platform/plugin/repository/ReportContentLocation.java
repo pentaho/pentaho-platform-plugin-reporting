@@ -28,8 +28,18 @@ public class ReportContentLocation implements ContentLocation {
 
   private String actionName;
 
-  public ReportContentLocation(final IContentLocation location, final ReportContentRepository repository, final String actionName)
+  public ReportContentLocation(final IContentLocation location,
+                               final ReportContentRepository repository,
+                               final String actionName)
   {
+    if (location == null)
+    {
+      throw new NullPointerException("Content-Location cannot be null");
+    }
+    if (repository == null)
+    {
+      throw new NullPointerException();
+    }
     this.location = location;
     this.repository = repository;
     this.actionName = actionName;
@@ -43,7 +53,7 @@ public class ReportContentLocation implements ContentLocation {
     {
       itemCollection.add(new ReportContentItem(iterator.next(), this));
     }
-    return (ContentEntity[]) itemCollection.toArray(new ContentEntity[itemCollection.size()]);
+    return itemCollection.toArray(new ContentEntity[itemCollection.size()]);
   }
 
   public ContentEntity getEntry(final String string) throws ContentIOException
@@ -62,8 +72,7 @@ public class ReportContentLocation implements ContentLocation {
     final String mimeType = MimeHelper.getMimeTypeFromExtension(extension);
     final IContentItem iContentItem = this.location.newContentItem(name, "Generated Report Content", //$NON-NLS-1$
         extension, mimeType, null, IContentItem.WRITEMODE_OVERWRITE);
-    final ReportContentItem reportContentItem = new ReportContentItem(iContentItem, this);
-    return reportContentItem;
+    return new ReportContentItem(iContentItem, this);
   }
 
   public ContentLocation createLocation(final String string) throws ContentCreationException

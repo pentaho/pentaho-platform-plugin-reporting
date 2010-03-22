@@ -12,7 +12,9 @@ import org.pentaho.reporting.engine.classic.core.modules.output.pageable.pdf.Pdf
 public class PDFOutput
 {
 
-  public static boolean generate(final MasterReport report, final OutputStream outputStream, int yieldRate) throws ReportProcessingException, IOException
+  public static boolean generate(final MasterReport report,
+                                 final OutputStream outputStream,
+                                 final int yieldRate) throws ReportProcessingException, IOException
   {
     PageableReportProcessor proc = null;
     try

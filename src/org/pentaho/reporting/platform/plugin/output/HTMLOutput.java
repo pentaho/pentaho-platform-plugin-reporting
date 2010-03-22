@@ -23,23 +23,26 @@ import org.pentaho.reporting.libraries.base.util.StringUtils;
 import org.pentaho.reporting.libraries.repository.ContentIOException;
 import org.pentaho.reporting.libraries.repository.ContentLocation;
 import org.pentaho.reporting.libraries.repository.DefaultNameGenerator;
-import org.pentaho.reporting.libraries.repository.NameGenerator;
 import org.pentaho.reporting.libraries.repository.file.FileRepository;
 import org.pentaho.reporting.libraries.repository.stream.StreamRepository;
+import org.pentaho.reporting.platform.plugin.repository.PentahoNameGenerator;
 import org.pentaho.reporting.platform.plugin.repository.PentahoURLRewriter;
 import org.pentaho.reporting.platform.plugin.repository.ReportContentRepository;
 
 public class HTMLOutput
 {
 
-  public static boolean generate(final MasterReport report, final OutputStream outputStream, String contentHandlerPattern, int yieldRate)
+  public static boolean generate(final MasterReport report,
+                                 final OutputStream outputStream,
+                                 final String contentHandlerPattern,
+                                 final int yieldRate)
       throws ReportProcessingException, IOException, ContentIOException
   {
     final IApplicationContext ctx = PentahoSystem.getApplicationContext();
 
     final URLRewriter rewriter;
     final ContentLocation dataLocation;
-    final NameGenerator dataNameGenerator;
+    final PentahoNameGenerator dataNameGenerator;
     if (ctx != null)
     {
       File dataDirectory = new File(ctx.getFileOutputPath("system/tmp/"));//$NON-NLS-1$
@@ -58,7 +61,8 @@ public class HTMLOutput
 
       final FileRepository dataRepository = new FileRepository(dataDirectory);
       dataLocation = dataRepository.getRoot();
-      dataNameGenerator = new DefaultNameGenerator(dataLocation);
+      dataNameGenerator = PentahoSystem.get(PentahoNameGenerator.class);
+      dataNameGenerator.initialize(dataLocation);
       rewriter = new PentahoURLRewriter(contentHandlerPattern, false);
     }
     else
@@ -91,17 +95,23 @@ public class HTMLOutput
     return true;
   }
 
-  public static boolean generate(IPentahoSession session, final MasterReport report, final OutputStream outputStream, IContentRepository contentRepository,
-      String contentHandlerPattern, int yieldRate) throws ReportProcessingException, IOException, ContentIOException
+  public static boolean generate(final IPentahoSession session,
+                                 final MasterReport report,
+                                 final OutputStream outputStream,
+                                 final IContentRepository contentRepository,
+                                 final String contentHandlerPattern,
+                                 final int yieldRate)
+      throws ReportProcessingException, IOException, ContentIOException
   {
-    final String reportName = StringUtils.isEmpty(report.getName())?UUIDUtil.getUUIDAsString():report.getName();
+    final String reportName = StringUtils.isEmpty(report.getName()) ? UUIDUtil.getUUIDAsString() : report.getName();
     final String solutionPath = "report-content" + "/" + reportName + "/"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-    final String thePath = solutionPath + session.getId() + "-" + System.currentTimeMillis() ;//$NON-NLS-1$//$NON-NLS-2$
+    final String thePath = solutionPath + session.getId() + "-" + System.currentTimeMillis();//$NON-NLS-1$//$NON-NLS-2$
     final IContentLocation pentahoContentLocation = contentRepository.newContentLocation(thePath, reportName, reportName, solutionPath, true);
 
     final ReportContentRepository repository = new ReportContentRepository(pentahoContentLocation, reportName);
     final ContentLocation dataLocation = repository.getRoot();
-    final NameGenerator dataNameGenerator = new DefaultNameGenerator(dataLocation);
+    final PentahoNameGenerator dataNameGenerator = PentahoSystem.get(PentahoNameGenerator.class);
+    dataNameGenerator.initialize(dataLocation);
     final URLRewriter rewriter = new PentahoURLRewriter(contentHandlerPattern, true);
 
     final StreamRepository targetRepository = new StreamRepository(null, outputStream, "report"); //$NON-NLS-1$
