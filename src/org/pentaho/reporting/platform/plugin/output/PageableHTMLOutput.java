@@ -26,6 +26,7 @@ import org.pentaho.reporting.libraries.repository.DefaultNameGenerator;
 import org.pentaho.reporting.libraries.repository.NameGenerator;
 import org.pentaho.reporting.libraries.repository.file.FileRepository;
 import org.pentaho.reporting.libraries.repository.stream.StreamRepository;
+import org.pentaho.reporting.platform.plugin.repository.PentahoNameGenerator;
 import org.pentaho.reporting.platform.plugin.repository.PentahoURLRewriter;
 import org.pentaho.reporting.platform.plugin.repository.ReportContentRepository;
 
@@ -43,7 +44,7 @@ public class PageableHTMLOutput
 
     final URLRewriter rewriter;
     final ContentLocation dataLocation;
-    final NameGenerator dataNameGenerator;
+    final PentahoNameGenerator dataNameGenerator;
     if (ctx != null)
     {
       final String name = (String) report.getAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.NAME);
@@ -63,7 +64,8 @@ public class PageableHTMLOutput
 
       final FileRepository dataRepository = new FileRepository(dataDirectory);
       dataLocation = dataRepository.getRoot();
-      dataNameGenerator = new DefaultNameGenerator(dataLocation);
+      dataNameGenerator = PentahoSystem.get(PentahoNameGenerator.class);
+      dataNameGenerator.initialize(dataLocation);
       rewriter = new PentahoURLRewriter(contentHandlerPattern, false);
     }
     else
@@ -113,7 +115,9 @@ public class PageableHTMLOutput
 
     final ReportContentRepository repository = new ReportContentRepository(pentahoContentLocation, reportName);
     final ContentLocation dataLocation = repository.getRoot();
-    final NameGenerator dataNameGenerator = new DefaultNameGenerator(dataLocation);
+    final PentahoNameGenerator dataNameGenerator = PentahoSystem.get(PentahoNameGenerator.class);
+    dataNameGenerator.initialize(dataLocation);
+
     final URLRewriter rewriter = new PentahoURLRewriter(contentHandlerPattern, true);
 
     final StreamRepository targetRepository = new StreamRepository(null, outputStream, "report"); //$NON-NLS-1$
