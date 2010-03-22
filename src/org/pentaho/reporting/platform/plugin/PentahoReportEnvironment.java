@@ -1,6 +1,7 @@
 package org.pentaho.reporting.platform.plugin;
 
 import java.net.URL;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
@@ -12,6 +13,7 @@ import org.pentaho.platform.util.messages.LocaleHelper;
 import org.pentaho.reporting.engine.classic.core.DefaultReportEnvironment;
 import org.pentaho.reporting.engine.classic.core.modules.output.csv.CSVQuoter;
 import org.pentaho.reporting.libraries.base.config.Configuration;
+import org.pentaho.reporting.libraries.base.util.StringUtils;
 import org.pentaho.reporting.platform.plugin.messages.Messages;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.Log;
@@ -19,10 +21,12 @@ import org.apache.commons.logging.Log;
 public class PentahoReportEnvironment extends DefaultReportEnvironment
 {
   private static final Log logger = LogFactory.getLog(PentahoReportEnvironment.class);
-  
+  private HashMap<String,String> cache;
+
   public PentahoReportEnvironment(final Configuration configuration)
   {
     super(configuration);
+    cache = new HashMap();
   }
 
   /**
@@ -42,26 +46,38 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
       throw new NullPointerException();
     }
 
-
+    final String cached = cache.get(key);
+    if (cached != null)
+    {
+      return cached;
+    }
+    
     final IPentahoSession session = PentahoSessionHolder.getSession();
     if (PentahoSystem.getApplicationContext() != null)
     {
       final String pentahoBaseURL = PentahoSystem.getApplicationContext().getBaseUrl();
       if ("serverBaseURL".equals(key)) //$NON-NLS-1$
       {
-        return getBaseServerURL(pentahoBaseURL);
+        final String baseServerURL = getBaseServerURL(pentahoBaseURL);
+        cache.put(key, baseServerURL);
+        return baseServerURL;
       }
       else if ("pentahoBaseURL".equals(key)) //$NON-NLS-1$
       {
+        cache.put(key, pentahoBaseURL);
         return pentahoBaseURL;
       }
       else if ("solutionRoot".equals(key)) //$NON-NLS-1$
       {
-        return PentahoSystem.getApplicationContext().getSolutionPath(""); //$NON-NLS-1$
+        final String solutionRoot = PentahoSystem.getApplicationContext().getSolutionPath("");
+        cache.put(key, solutionRoot);
+        return solutionRoot; //$NON-NLS-1$
       }
       else if ("hostColonPort".equals(key)) //$NON-NLS-1$
       {
-        return getHostColonPort(pentahoBaseURL);
+        final String hostColonPort = getHostColonPort(pentahoBaseURL);
+        cache.put(key, hostColonPort);
+        return hostColonPort;
       }
     }
     else
@@ -75,6 +91,7 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
         // make it explicit that these values are not available. This way
         // a configuration in the classic-engine.properties file cannot begin
         // to interfer here.
+        cache.put(key, null);
         return null;
       }
     }
@@ -82,7 +99,9 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
     {
       if ("username".equals(key)) //$NON-NLS-1$
       {
-        return session.getName();
+        final String userName = session.getName();
+        cache.put(key, userName);
+        return userName;
       }
       else if ("roles".equals(key)) //$NON-NLS-1$
       {
@@ -91,6 +110,12 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
         {
           return null;
         }
+        if (StringUtils.isEmpty(session.getName()))
+        {
+          logger.warn(Messages.getInstance().getString("ReportPlugin.warnUserWithoutName"));
+          return null;
+        }
+        
         final StringBuffer property = new StringBuffer();
         //noinspection unchecked
         final List<String> roles =
@@ -117,18 +142,14 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
       if (key.startsWith("session:"))//$NON-NLS-1$
       {
         final Object attribute = session.getAttribute(key.substring("session:".length()));//$NON-NLS-1$
-        if (attribute instanceof String)
-        {
-          return (String) attribute;
-        }
-        return null;
+        return String.valueOf(attribute);
       }
     }
     else
     {
-      if (key.startsWith("session:") ||
-          key.equals("username") ||
-          key.equals("roles"))
+      if (key.startsWith("session:") ||//$NON-NLS-1$
+          key.equals("username") ||//$NON-NLS-1$
+          key.equals("roles"))//$NON-NLS-1$
       {
         logger.warn(Messages.getInstance().getString("ReportPlugin.warnNoSession"));
         return null;
