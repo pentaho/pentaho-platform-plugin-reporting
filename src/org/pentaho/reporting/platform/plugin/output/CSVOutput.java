@@ -12,14 +12,16 @@ import org.pentaho.reporting.engine.classic.core.modules.output.table.csv.Stream
 public class CSVOutput
 {
 
-  public static boolean generate(final MasterReport report, final OutputStream outputStream, int yieldRate) throws ReportProcessingException, IOException
+  public static boolean generate(final MasterReport report,
+                                 final OutputStream outputStream,
+                                 final int yieldRate) throws ReportProcessingException, IOException
   {
     StreamReportProcessor proc = null;
     try
     {
       final StreamCSVOutputProcessor target = new StreamCSVOutputProcessor(report.getConfiguration(), outputStream);
       proc = new StreamReportProcessor(report, target);
-      
+
       if (yieldRate > 0)
       {
         proc.addReportProgressListener(new YieldReportListener(yieldRate));

@@ -39,7 +39,6 @@ import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
 import org.pentaho.reporting.engine.classic.core.metadata.ReportProcessTaskRegistry;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.pdf.PdfPageableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.plaintext.PlainTextPageableModule;
-import org.pentaho.reporting.engine.classic.core.modules.output.pageable.plaintext.driver.TextFilePrinterDriver;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.csv.CSVTableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlTableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.rtf.RTFTableModule;
@@ -142,6 +141,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   /*
    * Default constructor
    */
+
   public SimpleReportingComponent()
   {
     this.inputs = Collections.emptyMap();
@@ -365,9 +365,19 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     this.outputStream = outputStream;
   }
 
+  public OutputStream getOutputStream()
+  {
+    return outputStream;
+  }
+
   public void setUseContentRepository(final Boolean useContentRepository)
   {
     this.useContentRepository = useContentRepository;
+  }
+
+  public Boolean isUseContentRepository()
+  {
+    return useContentRepository;
   }
 
   /**
@@ -1114,22 +1124,23 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
         {
           report.getReportConfiguration().setConfigProperty(HtmlTableModule.BODY_FRAGMENT, "true");
         }
-        String contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN,
-            globalConfig.getConfigProperty("org.pentaho.web.ContentHandler")); //$NON-NLS-1$
         if (useContentRepository)
         {
           // use the content repository
-          contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN,
+          final String contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN,
               globalConfig.getConfigProperty("org.pentaho.web.resource.ContentHandler")); //$NON-NLS-1$
           final IContentRepository contentRepository = PentahoSystem.get(IContentRepository.class, session);
-          pageCount = PageableHTMLOutput.generate(session, report, acceptedPage, outputStream,
-              contentRepository, contentHandlerPattern, getYieldRate());
+          pageCount = PageableHTMLOutput.generate(report, outputStream, getYieldRate(),
+              contentRepository, contentHandlerPattern, getAcceptedPage());
           return true;
         }
         else
         {
           // don't use the content repository
-          pageCount = PageableHTMLOutput.generate(report, acceptedPage, outputStream, contentHandlerPattern, getYieldRate());
+          final String contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN,
+              globalConfig.getConfigProperty("org.pentaho.web.ContentHandler")); //$NON-NLS-1$
+          pageCount = PageableHTMLOutput.generate(report, outputStream, getYieldRate(),
+              null, contentHandlerPattern, getAcceptedPage());
           return true;
         }
       }
@@ -1139,20 +1150,20 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
         {
           report.getReportConfiguration().setConfigProperty(HtmlTableModule.BODY_FRAGMENT, "true");
         }
-        String contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN, globalConfig
-            .getConfigProperty("org.pentaho.web.ContentHandler")); //$NON-NLS-1$
         if (useContentRepository)
         {
           // use the content repository
-          contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN, globalConfig.getConfigProperty(
-              "org.pentaho.web.resource.ContentHandler")); //$NON-NLS-1$
+          final String contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN,
+                  globalConfig.getConfigProperty("org.pentaho.web.resource.ContentHandler")); //$NON-NLS-1$
           final IContentRepository contentRepository = PentahoSystem.get(IContentRepository.class, session);
-          return HTMLOutput.generate(session, report, outputStream, contentRepository, contentHandlerPattern, getYieldRate());
+          return HTMLOutput.generate(report, outputStream, contentRepository, contentHandlerPattern, getYieldRate());
         }
         else
         {
+          final String contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN,
+              globalConfig.getConfigProperty("org.pentaho.web.ContentHandler")); //$NON-NLS-1$
           // don't use the content repository
-          return HTMLOutput.generate(report, outputStream, contentHandlerPattern, getYieldRate());
+          return HTMLOutput.generate(report, outputStream, null, contentHandlerPattern, getYieldRate());
         }
       }
       if (PdfPageableModule.PDF_EXPORT_TYPE.equals(outputType))
@@ -1178,8 +1189,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       }
       if (PlainTextPageableModule.PLAINTEXT_EXPORT_TYPE.equals(outputType))
       {
-        final TextFilePrinterDriver driver = new TextFilePrinterDriver(outputStream, 12, 6);
-        return PlainTextOutput.generate(report, outputStream, getYieldRate(), driver);
+        return PlainTextOutput.generate(report, outputStream, getYieldRate());
       }
 
       log.warn(Messages.getInstance().getString("ReportPlugin.warnUnprocessableRequest", outputType));

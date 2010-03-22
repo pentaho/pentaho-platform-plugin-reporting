@@ -13,8 +13,14 @@ import org.pentaho.reporting.libraries.resourceloader.ResourceManager;
 
 public class XLSOutput
 {
+  private XLSOutput()
+  {
+  }
 
-  public static boolean generate(final MasterReport report, final OutputStream outputStream, final InputStream templateInputStream, int yieldRate)
+  public static boolean generate(final MasterReport report,
+                                 final OutputStream outputStream,
+                                 final InputStream templateInputStream,
+                                 final int yieldRate)
       throws ReportProcessingException, IOException
   {
     ResourceManager resourceManager = new ResourceManager();

@@ -16,10 +16,12 @@
  */
 package org.pentaho.reporting.platform.plugin;
 
+import java.io.File;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.pentaho.reporting.libraries.base.util.IOUtils;
 import org.pentaho.reporting.libraries.resourceloader.ResourceData;
 import org.pentaho.reporting.libraries.resourceloader.ResourceException;
 import org.pentaho.reporting.libraries.resourceloader.ResourceKey;
@@ -61,7 +63,7 @@ public class RepositoryResourceLoader implements ResourceLoader
    * @param manager
    *          resource manager
    */
-  public void setResourceManager(ResourceManager manager)
+  public void setResourceManager(final ResourceManager manager)
   {
     this.manager = manager;
   }
@@ -94,7 +96,7 @@ public class RepositoryResourceLoader implements ResourceLoader
    * @return resource data
    * @throws ResourceLoadingException
    */
-  public ResourceData load(ResourceKey key) throws ResourceLoadingException
+  public ResourceData load(final ResourceKey key) throws ResourceLoadingException
   {
     return new RepositoryResourceData(key);
   }
@@ -102,11 +104,10 @@ public class RepositoryResourceLoader implements ResourceLoader
   /**
    * see if the pentaho resource loader can support the content key path
    * 
-   * @param values
-   *          map of values to look in
+   * @param key the key that should be checked whether it is a solution key.
    * @return true if class supports the content key.
    */
-  public boolean isSupportedKey(ResourceKey key)
+  public boolean isSupportedKey(final ResourceKey key)
   {
     if (key.getSchema().equals(getSchema()))
     {
@@ -118,19 +119,17 @@ public class RepositoryResourceLoader implements ResourceLoader
   /**
    * create a new key based on the values provided
    * 
-   * @param values
-   *          map of values
    * @return new resource key
    * @throws ResourceKeyCreationException
    */
-  public ResourceKey createKey(Object value, Map factoryKeys) throws ResourceKeyCreationException
+  public ResourceKey createKey(final Object value, final Map factoryKeys) throws ResourceKeyCreationException
   {
     if (value instanceof String)
     {
-      String valueString = (String) value;
+      final String valueString = (String) value;
       if (valueString.startsWith(getSchema() + SCHEMA_SEPARATOR))
       {
-        String path = valueString.substring(getSchema().length() + SCHEMA_SEPARATOR.length());
+        final String path = valueString.substring(getSchema().length() + SCHEMA_SEPARATOR.length());
         return new ResourceKey(getSchema(), path, factoryKeys);
       }
     }
@@ -147,49 +146,51 @@ public class RepositoryResourceLoader implements ResourceLoader
    * @return derived key
    * @throws ResourceKeyCreationException
    */
-  public ResourceKey deriveKey(ResourceKey parent, String path, Map data) throws ResourceKeyCreationException
+  public ResourceKey deriveKey(final ResourceKey parent, final String path, final Map data)
+      throws ResourceKeyCreationException
   {
 
     // update url to absolute path if currently a relative path
-    if (!path.startsWith(getSchema() + SCHEMA_SEPARATOR))
+    if (path.startsWith(getSchema() + SCHEMA_SEPARATOR) == false)
     {
-      // we are looking for the current directory specified by the parent. currently
-      // the pentaho system uses the native File.separator, so we need to support it
-      // we're simply looking for the last "/" or "\" in the parent's url.
-      int winindex = ((String) parent.getIdentifier()).lastIndexOf(WIN_PATH_SEPARATOR);
-      int regindex = ((String) parent.getIdentifier()).lastIndexOf(PATH_SEPARATOR);
-      int dirindex = 0;
-      if (winindex > regindex)
-      {
-        dirindex = winindex + WIN_PATH_SEPARATOR.length();
-      }
-      else
-      {
-        dirindex = regindex + PATH_SEPARATOR.length();
-      }
-      path = ((String) parent.getIdentifier()).substring(0, dirindex) + path;
+      return createKey(path, data);
+    }
+
+    // we are looking for the current directory specified by the parent. currently
+    // the pentaho system uses the native File.separator, so we need to support it
+    // we're simply looking for the last "/" or "\" in the parent's url.
+    final String parentPath = (String) parent.getIdentifier();
+    final String absolutePath = IOUtils.getInstance().getAbsolutePath(path, parentPath);
+    final String normalizedPath;
+    if (File.pathSeparatorChar != '/')
+    {
+      normalizedPath = absolutePath.replace('/', File.pathSeparatorChar);
+    }
+    else
+    {
+      normalizedPath = absolutePath;
     }
     final Map derivedValues = new HashMap(parent.getFactoryParameters());
     if (data != null)
     {
       derivedValues.putAll(data);
     }
-    return new ResourceKey(getSchema(), path, derivedValues);
+    return new ResourceKey(getSchema(), normalizedPath, derivedValues);
   }
 
-  public ResourceKey deserialize(ResourceKey bundleKey, String stringKey) throws ResourceKeyCreationException
+  public ResourceKey deserialize(final ResourceKey bundleKey, final String stringKey) throws ResourceKeyCreationException
   {
     // For now, we are just going to have to pass on this one
     throw new ResourceKeyCreationException(Messages.getInstance().getString("ReportPlugin.cannotDeserializeZipResourceKey")); //$NON-NLS-1$
   }
 
-  public String serialize(ResourceKey bundleKey, ResourceKey key) throws ResourceException
+  public String serialize(final ResourceKey bundleKey, final ResourceKey key) throws ResourceException
   {
     // For now, we are just going to have to pass on this one
     throw new ResourceKeyCreationException(Messages.getInstance().getString("ReportPlugin.cannotSerializeZipResourceKey")); //$NON-NLS-1$
   }
 
-  public URL toURL(ResourceKey key)
+  public URL toURL(final ResourceKey key)
   {
     // not supported ..
     return null;

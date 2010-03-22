@@ -12,10 +12,13 @@ import org.pentaho.reporting.engine.classic.core.modules.output.table.rtf.FlowRT
 
 public class RTFOutput
 {
+  private RTFOutput()
+  {
+  }
 
   public static boolean generate(final MasterReport report,
                                  final OutputStream outputStream,
-                                 int yieldRate) throws ReportProcessingException, IOException
+                                 final int yieldRate) throws ReportProcessingException, IOException
   {
     ReportProcessor proc = null;
     try
