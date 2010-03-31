@@ -50,7 +50,7 @@
 		    	<exclude name=".gwt-tmp/" />
 		      <exclude name="*-aux/" />
 			</zipfileset>
-    	  <zipfileset file="plugin/plugin.xml" prefix="reporting"/>
+    	  <zipfileset dir="plugin" prefix="reporting"/>
 	    </zip>
 	</target>
 	
