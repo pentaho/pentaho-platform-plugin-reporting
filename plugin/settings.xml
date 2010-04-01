@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<settings>
-
-  <edit-subscription-url><![CDATA[/reportviewer/report.html?subscribe=true&subscription-id={subscription-id}]]></edit-subscription-url>
-  
-</settings>
-  

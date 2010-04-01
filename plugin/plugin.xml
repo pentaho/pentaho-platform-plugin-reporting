@@ -33,6 +33,10 @@
             <command>content/reporting/reportviewer/report.html?solution={solution}&amp;path={path}&amp;name={name}&amp;subscribe=true</command>
           </operation>
           <operation>
+            <id>SCHEDULE_EDIT</id>
+            <command>content/reporting/reportviewer/report.html?subscribe=true&subscription-id={subscription-id}</command>
+          </operation>
+          <operation>
             <id>BACKGROUND</id>
             <command>ViewAction?solution={solution}&amp;path={path}&amp;action={name}&amp;background=true</command>
           </operation>
