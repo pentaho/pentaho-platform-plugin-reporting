@@ -34,7 +34,7 @@
           </operation>
           <operation>
             <id>SCHEDULE_EDIT</id>
-            <command>content/reporting/reportviewer/report.html?subscribe=true&subscription-id={subscription-id}</command>
+            <command>content/reporting/reportviewer/report.html?subscribe=true&amp;subscription-id={subscription-id}</command>
           </operation>
           <operation>
             <id>BACKGROUND</id>
