@@ -8,6 +8,7 @@ import org.pentaho.gwt.widgets.client.datepicker.PentahoDatePicker;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.i18n.client.DateTimeFormat;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.datepicker.client.DateBox;
 import com.google.gwt.user.datepicker.client.DateBox.DefaultFormat;
@@ -64,9 +65,11 @@ public class DateParameterUI extends SimplePanel
                          final List<String> parameterSelections,
                          final Element parameterElement)
   {
+    final boolean ignoreDefaultDates = "true".equalsIgnoreCase(Window.Location.getParameter("ignoreDefaultDates"));
+    
     // selectionsList should only have 1 date
     final Date date;
-    if (parameterSelections.size() > 0)
+    if (ignoreDefaultDates == false && parameterSelections.size() > 0)
     {
       final String paramAsText = parameterSelections.get(0);
       date = parseDate(paramAsText);
