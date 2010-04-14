@@ -28,6 +28,7 @@ import org.pentaho.reporting.libraries.repository.ContentLocation;
 import org.pentaho.reporting.libraries.repository.DefaultNameGenerator;
 import org.pentaho.reporting.libraries.repository.file.FileRepository;
 import org.pentaho.reporting.libraries.repository.stream.StreamRepository;
+import org.pentaho.reporting.platform.plugin.messages.Messages;
 import org.pentaho.reporting.platform.plugin.repository.PentahoNameGenerator;
 import org.pentaho.reporting.platform.plugin.repository.PentahoURLRewriter;
 import org.pentaho.reporting.platform.plugin.repository.ReportContentRepository;
@@ -64,6 +65,11 @@ public class HTMLOutput
       final ReportContentRepository repository = new ReportContentRepository(pentahoContentLocation, reportName);
       dataLocation = repository.getRoot();
       dataNameGenerator = PentahoSystem.get(PentahoNameGenerator.class);
+      if (dataNameGenerator == null)
+      {
+        throw new IllegalStateException
+            (Messages.getInstance().getErrorString("ReportPlugin.errorNameGeneratorMissingConfiguration"));
+      }
       dataNameGenerator.initialize(dataLocation, isSafeToDelete());
 
       rewriter = new PentahoURLRewriter(contentHandlerPattern, true);
@@ -96,6 +102,11 @@ public class HTMLOutput
         final FileRepository dataRepository = new FileRepository(dataDirectory);
         dataLocation = dataRepository.getRoot();
         dataNameGenerator = PentahoSystem.get(PentahoNameGenerator.class);
+        if (dataNameGenerator == null)
+        {
+          throw new IllegalStateException
+              (Messages.getInstance().getErrorString("ReportPlugin.errorNameGeneratorMissingConfiguration"));
+        }
         dataNameGenerator.initialize(dataLocation, isSafeToDelete());
         rewriter = new PentahoURLRewriter(contentHandlerPattern, false);
       }
