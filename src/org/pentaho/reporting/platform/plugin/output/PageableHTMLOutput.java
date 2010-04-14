@@ -54,7 +54,7 @@ public class PageableHTMLOutput
       final ReportContentRepository repository = new ReportContentRepository(pentahoContentLocation, reportName);
       dataLocation = repository.getRoot();
       dataNameGenerator = PentahoSystem.get(PentahoNameGenerator.class);
-      dataNameGenerator.initialize(dataLocation);
+      dataNameGenerator.initialize(dataLocation, true);
       rewriter = new PentahoURLRewriter(contentHandlerPattern, true);
     }
     else
@@ -80,7 +80,7 @@ public class PageableHTMLOutput
         final FileRepository dataRepository = new FileRepository(dataDirectory);
         dataLocation = dataRepository.getRoot();
         dataNameGenerator = PentahoSystem.get(PentahoNameGenerator.class);
-        dataNameGenerator.initialize(dataLocation);
+        dataNameGenerator.initialize(dataLocation, true);
         rewriter = new PentahoURLRewriter(contentHandlerPattern, false);
       }
       else

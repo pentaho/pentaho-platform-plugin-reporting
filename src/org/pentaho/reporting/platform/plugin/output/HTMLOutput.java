@@ -12,6 +12,7 @@ import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.util.UUIDUtil;
 import org.pentaho.reporting.engine.classic.core.AttributeNames;
+import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
 import org.pentaho.reporting.engine.classic.core.layout.output.YieldReportListener;
@@ -37,6 +38,12 @@ public class HTMLOutput
   {
   }
 
+  private static boolean isSafeToDelete()
+  {
+    return "true".equals(ClassicEngineBoot.getInstance().getGlobalConfig().getConfigProperty
+        ("org.pentaho.reporting.platform.plugin.AlwaysDeleteHtmlDataFiles"));
+  }
+
   public static boolean generate(final MasterReport report,
                                  final OutputStream outputStream,
                                  final IContentRepository contentRepository,
@@ -57,7 +64,7 @@ public class HTMLOutput
       final ReportContentRepository repository = new ReportContentRepository(pentahoContentLocation, reportName);
       dataLocation = repository.getRoot();
       dataNameGenerator = PentahoSystem.get(PentahoNameGenerator.class);
-      dataNameGenerator.initialize(dataLocation);
+      dataNameGenerator.initialize(dataLocation, isSafeToDelete());
 
       rewriter = new PentahoURLRewriter(contentHandlerPattern, true);
     }
@@ -89,7 +96,7 @@ public class HTMLOutput
         final FileRepository dataRepository = new FileRepository(dataDirectory);
         dataLocation = dataRepository.getRoot();
         dataNameGenerator = PentahoSystem.get(PentahoNameGenerator.class);
-        dataNameGenerator.initialize(dataLocation);
+        dataNameGenerator.initialize(dataLocation, isSafeToDelete());
         rewriter = new PentahoURLRewriter(contentHandlerPattern, false);
       }
       else
