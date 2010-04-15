@@ -69,7 +69,7 @@ public class TempDirectoryNameGenerator implements PentahoNameGenerator
     final String suffix = mimeRegistry.getSuffix(mimeType);
     try
     {
-      final File tempFile = File.createTempFile(nameHint, suffix, targetDirectory);
+      final File tempFile = File.createTempFile(nameHint, "." + suffix, targetDirectory);
       if (safeToDelete)
       {
         final ITempFileDeleter deleter = PentahoSystem.get(ITempFileDeleter.class);
