@@ -3,6 +3,8 @@ package org.pentaho.reporting.platform.plugin.repository;
 import java.io.File;
 import java.io.IOException;
 
+import org.pentaho.platform.api.util.ITempFileDeleter;
+import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.libraries.repository.ContentIOException;
 import org.pentaho.reporting.libraries.repository.ContentLocation;
 import org.pentaho.reporting.libraries.repository.DefaultNameGenerator;
@@ -22,13 +24,16 @@ public class TempDirectoryNameGenerator implements PentahoNameGenerator
   private File targetDirectory;
   private MimeRegistry mimeRegistry;
   private DefaultNameGenerator fallback;
+  private boolean safeToDelete;
 
   public TempDirectoryNameGenerator()
   {
   }
 
-  public void initialize(final ContentLocation contentLocation)
+  public void initialize(final ContentLocation contentLocation,
+                         final boolean safeToDelete)
   {
+    this.safeToDelete = safeToDelete;
     this.mimeRegistry = contentLocation.getRepository().getMimeRegistry();
     if (contentLocation instanceof FileContentLocation)
     {
@@ -64,7 +69,15 @@ public class TempDirectoryNameGenerator implements PentahoNameGenerator
     final String suffix = mimeRegistry.getSuffix(mimeType);
     try
     {
-      final File tempFile = File.createTempFile(nameHint, suffix, targetDirectory);
+      final File tempFile = File.createTempFile(nameHint, "." + suffix, targetDirectory);
+      if (safeToDelete)
+      {
+        final ITempFileDeleter deleter = PentahoSystem.get(ITempFileDeleter.class);
+        if (deleter != null)
+        {
+          deleter.trackTempFile(tempFile);
+        }
+      }
       return tempFile.getName();
     }
     catch (IOException e)

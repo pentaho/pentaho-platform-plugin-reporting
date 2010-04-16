@@ -13,5 +13,5 @@ import org.pentaho.reporting.libraries.repository.NameGenerator;
  */
 public interface PentahoNameGenerator extends NameGenerator
 {
-  public void initialize(ContentLocation contentLocation);
+  public void initialize(ContentLocation contentLocation, final boolean safeToDelete);
 }

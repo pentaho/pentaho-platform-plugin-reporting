@@ -24,6 +24,7 @@ import org.pentaho.reporting.libraries.repository.ContentLocation;
 import org.pentaho.reporting.libraries.repository.DefaultNameGenerator;
 import org.pentaho.reporting.libraries.repository.file.FileRepository;
 import org.pentaho.reporting.libraries.repository.stream.StreamRepository;
+import org.pentaho.reporting.platform.plugin.messages.Messages;
 import org.pentaho.reporting.platform.plugin.repository.PentahoNameGenerator;
 import org.pentaho.reporting.platform.plugin.repository.PentahoURLRewriter;
 import org.pentaho.reporting.platform.plugin.repository.ReportContentRepository;
@@ -62,7 +63,12 @@ public class PageableHTMLOutput
       final FileRepository dataRepository = new FileRepository(dataDirectory);
       dataLocation = dataRepository.getRoot();
       dataNameGenerator = PentahoSystem.get(PentahoNameGenerator.class);
-      dataNameGenerator.initialize(dataLocation);
+      if (dataNameGenerator == null)
+      {
+        throw new IllegalStateException
+            (Messages.getString("ReportPlugin.errorNameGeneratorMissingConfiguration"));
+      }
+      dataNameGenerator.initialize(dataLocation, true);
       rewriter = new PentahoURLRewriter(contentHandlerPattern, false);
     }
     else
@@ -114,7 +120,12 @@ public class PageableHTMLOutput
     final ReportContentRepository repository = new ReportContentRepository(pentahoContentLocation, reportName);
     final ContentLocation dataLocation = repository.getRoot();
     final PentahoNameGenerator dataNameGenerator = PentahoSystem.get(PentahoNameGenerator.class);
-    dataNameGenerator.initialize(dataLocation);
+    if (dataNameGenerator == null)
+    {
+      throw new IllegalStateException
+          (Messages.getString("ReportPlugin.errorNameGeneratorMissingConfiguration"));
+    }
+    dataNameGenerator.initialize(dataLocation, true);
     final URLRewriter rewriter = new PentahoURLRewriter(contentHandlerPattern, true);
 
     final StreamRepository targetRepository = new StreamRepository(null, outputStream, "report"); //$NON-NLS-1$

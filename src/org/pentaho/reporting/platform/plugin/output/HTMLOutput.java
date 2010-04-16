@@ -10,6 +10,7 @@ import org.pentaho.platform.api.repository.IContentLocation;
 import org.pentaho.platform.api.repository.IContentRepository;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.util.UUIDUtil;
+import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
 import org.pentaho.reporting.engine.classic.core.layout.output.YieldReportListener;
@@ -25,12 +26,19 @@ import org.pentaho.reporting.libraries.repository.ContentLocation;
 import org.pentaho.reporting.libraries.repository.DefaultNameGenerator;
 import org.pentaho.reporting.libraries.repository.file.FileRepository;
 import org.pentaho.reporting.libraries.repository.stream.StreamRepository;
+import org.pentaho.reporting.platform.plugin.messages.Messages;
 import org.pentaho.reporting.platform.plugin.repository.PentahoNameGenerator;
 import org.pentaho.reporting.platform.plugin.repository.PentahoURLRewriter;
 import org.pentaho.reporting.platform.plugin.repository.ReportContentRepository;
 
 public class HTMLOutput
 {
+  private static boolean isSafeToDelete()
+  {
+    return "true".equals(ClassicEngineBoot.getInstance().getGlobalConfig().getConfigProperty
+        ("org.pentaho.reporting.platform.plugin.AlwaysDeleteHtmlDataFiles"));
+  }
+
 
   public static boolean generate(final MasterReport report,
                                  final OutputStream outputStream,
@@ -62,7 +70,12 @@ public class HTMLOutput
       final FileRepository dataRepository = new FileRepository(dataDirectory);
       dataLocation = dataRepository.getRoot();
       dataNameGenerator = PentahoSystem.get(PentahoNameGenerator.class);
-      dataNameGenerator.initialize(dataLocation);
+      if (dataNameGenerator == null)
+      {
+        throw new IllegalStateException
+            (Messages.getString("ReportPlugin.errorNameGeneratorMissingConfiguration"));
+      }
+      dataNameGenerator.initialize(dataLocation, isSafeToDelete());
       rewriter = new PentahoURLRewriter(contentHandlerPattern, false);
     }
     else
@@ -111,7 +124,12 @@ public class HTMLOutput
     final ReportContentRepository repository = new ReportContentRepository(pentahoContentLocation, reportName);
     final ContentLocation dataLocation = repository.getRoot();
     final PentahoNameGenerator dataNameGenerator = PentahoSystem.get(PentahoNameGenerator.class);
-    dataNameGenerator.initialize(dataLocation);
+    if (dataNameGenerator == null)
+    {
+      throw new IllegalStateException
+          (Messages.getString("ReportPlugin.errorNameGeneratorMissingConfiguration"));
+    }
+    dataNameGenerator.initialize(dataLocation, isSafeToDelete());
     final URLRewriter rewriter = new PentahoURLRewriter(contentHandlerPattern, true);
 
     final StreamRepository targetRepository = new StreamRepository(null, outputStream, "report"); //$NON-NLS-1$
