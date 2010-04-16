@@ -1,7 +1,8 @@
 package org.pentaho.reporting.platform.plugin.connection;
 
+import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.extensions.datasources.mondrian.AbstractMDXDataFactory;
-import org.pentaho.reporting.engine.classic.extensions.datasources.mondrian.parser.LegacyBandedMDXDataSourceReadHandler;
+import org.pentaho.reporting.engine.classic.extensions.datasources.mondrian.MondrianConnectionProvider;
 import org.pentaho.reporting.engine.classic.extensions.datasources.mondrian.parser.SimpleLegacyBandedMDXDataSourceReadHandler;
 import org.xml.sax.SAXException;
 
@@ -29,6 +30,10 @@ public class PentahoSimpleLegacyMdxDataSourceReadHandler extends SimpleLegacyBan
   {
     super.doneParsing();
     final AbstractMDXDataFactory o = (AbstractMDXDataFactory) getObject();
-    o.setMondrianConnectionProvider(new PentahoMondrianConnectionProvider());
+    final MondrianConnectionProvider connectionProvider = PentahoSystem.get(MondrianConnectionProvider.class);
+    if (connectionProvider != null)
+    {
+      o.setMondrianConnectionProvider(connectionProvider);
+    }
   }
 }
