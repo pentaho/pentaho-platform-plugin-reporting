@@ -447,7 +447,8 @@ public class ReportContentGenerator extends SimpleContentGenerator
     parameterElement.setAttribute("parameter-group", "parameters"); //$NON-NLS-1$ //$NON-NLS-2$
     if (subscribe)
     {
-      parameterElement.setAttribute("parameter-group-label", org.pentaho.reporting.platform.plugin.messages.Messages.getString("ReportPlugin.ReportParameters")); //$NON-NLS-1$ //$NON-NLS-2$
+      parameterElement.setAttribute("parameter-group-label",
+          org.pentaho.reporting.platform.plugin.messages.Messages.getString("ReportPlugin.ReportParameters")); //$NON-NLS-1$ //$NON-NLS-2$
     }
     parameterElement.setAttribute("type", parameter.getValueType().getName()); //$NON-NLS-1$
     parameterElement.setAttribute("is-mandatory", "" + parameter.isMandatory()); //$NON-NLS-1$ //$NON-NLS-2$
@@ -476,14 +477,6 @@ public class ReportContentGenerator extends SimpleContentGenerator
           defaultValueElement.setAttribute("value",
               convertParameterValueToString(defaultValue, declaredValueType.getComponentType())); //$NON-NLS-1$
         }
-      }
-      else if (declaredValueType.isAssignableFrom(Date.class))
-      {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
-        final Date date = (Date) defaultValue;
-        final Element defaultValueElement = document.createElement("default-value"); //$NON-NLS-1$
-        parameterElement.appendChild(defaultValueElement);
-        defaultValueElement.setAttribute("value", sdf.format(date)); //$NON-NLS-1$ //$NON-NLS-2$
       }
       else
       {
@@ -593,7 +586,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
         throw new BeanException(Messages.getErrorString("ReportPlugin.errorNonDateParameterValue"));
       }
       final Date d = (Date) value;
-      final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+      final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
       return dateFormat.format(d);
     }
     if (Number.class.isAssignableFrom(type))
