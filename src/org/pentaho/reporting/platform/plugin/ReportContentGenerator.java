@@ -74,7 +74,6 @@ public class ReportContentGenerator extends SimpleContentGenerator
   private static final Log log = LogFactory.getLog(ReportContentGenerator.class);
 
   private SimpleReportingComponent reportComponent;
-  private static final String PARAMETER_FORMAT = "yyyy-MM-dd";
 
   public ReportContentGenerator()
   {
@@ -481,14 +480,6 @@ public class ReportContentGenerator extends SimpleContentGenerator
               convertParameterValueToString(defaultValue, declaredValueType.getComponentType())); //$NON-NLS-1$
         }
       }
-      else if (declaredValueType.isAssignableFrom(Date.class))
-      {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
-        final Date date = (Date) defaultValue;
-        final Element defaultValueElement = document.createElement("default-value"); //$NON-NLS-1$
-        parameterElement.appendChild(defaultValueElement);
-        defaultValueElement.setAttribute("value", sdf.format(date)); //$NON-NLS-1$ //$NON-NLS-2$
-      }
       else
       {
         final Element defaultValueElement = document.createElement("default-value"); //$NON-NLS-1$
@@ -597,7 +588,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
         throw new BeanException(Messages.getInstance().getErrorString("ReportPlugin.errorNonDateParameterValue"));
       }
       final Date d = (Date) value;
-      final DateFormat dateFormat = new SimpleDateFormat(PARAMETER_FORMAT);
+      final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ"); // $NON-NLS-1$
       return dateFormat.format(d);
     }
     if (Number.class.isAssignableFrom(type))
