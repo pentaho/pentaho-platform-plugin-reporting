@@ -34,7 +34,7 @@ public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback {
   private String solution = Window.Location.getParameter("solution"); //$NON-NLS-1$
   private String path = Window.Location.getParameter("path"); //$NON-NLS-1$
   private String name = Window.Location.getParameter("name"); //$NON-NLS-1$
-  private ReportContainer container;
+  private ReportContainer container = new ReportContainer(this, messages);
 
   private ValueChangeHandler<String> historyHandler = new ValueChangeHandler<String>() {
     public void onValueChange(ValueChangeEvent<String> event) {
@@ -58,7 +58,6 @@ public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback {
     // +page controller (if paged output)
     // +the report itself
 
-    container = new ReportContainer(this, messages);
     History.addValueChangeHandler(historyHandler);
     initUI();
     setupNativeHooks(this);
