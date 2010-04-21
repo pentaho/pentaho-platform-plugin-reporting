@@ -23,18 +23,18 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.Frame;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
 public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback {
+  public static ResourceBundle messages = new ResourceBundle();
+  
   private String solution = Window.Location.getParameter("solution"); //$NON-NLS-1$
   private String path = Window.Location.getParameter("path"); //$NON-NLS-1$
   private String name = Window.Location.getParameter("name"); //$NON-NLS-1$
-  private ResourceBundle messages = new ResourceBundle();
-  private ReportContainer container = new ReportContainer(this, messages);
+  private ReportContainer container;
 
   private ValueChangeHandler<String> historyHandler = new ValueChangeHandler<String>() {
     public void onValueChange(ValueChangeEvent<String> event) {
@@ -58,6 +58,7 @@ public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback {
     // +page controller (if paged output)
     // +the report itself
 
+    container = new ReportContainer(this, messages);
     History.addValueChangeHandler(historyHandler);
     initUI();
     setupNativeHooks(this);

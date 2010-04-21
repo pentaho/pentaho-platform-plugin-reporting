@@ -6,8 +6,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.pentaho.gwt.widgets.client.utils.i18n.ResourceBundle;
+import org.pentaho.gwt.widgets.client.utils.string.StringUtils;
 import org.pentaho.reporting.platform.plugin.gwt.client.ReportViewer.RENDER_TYPE;
 
+import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Frame;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -22,12 +24,36 @@ public class ReportContainer extends VerticalPanel implements IParameterSubmissi
   public ReportContainer(final ReportViewer viewer, ResourceBundle messages)
   {
     this.viewer = viewer;
-
-    reportContainer = new Frame();
-
     parameterControllerPanel = new ParameterControllerPanel(viewer, this, messages);
     parameterControllerPanel.addParameterSubmissionListener(this);
+    reportContainer = new Frame() {
+      
+      public void onBrowserEvent(Event event) {
+        super.onBrowserEvent(event);
+        if (event.getTypeInt() == Event.ONLOAD) {
+          if (StringUtils.isEmpty(url) == false && url.equals("about:blank") == false) {
+            WaitPopup.getInstance().setVisible(false);
+          }
+        }
+      }
+      
+      protected void onLoad() {
+        super.onLoad();
+        if (StringUtils.isEmpty(url) == false && url.equals("about:blank") == false) {
+          WaitPopup.getInstance().setVisible(false);
+        }
+      }
 
+      public void setUrl(String url) {
+        if (StringUtils.isEmpty(url) == false && url.equals("about:blank") == false) {
+          WaitPopup.getInstance().setVisible(true);
+        }
+        super.setUrl(url);
+      }
+      
+    };
+    reportContainer.sinkEvents(Event.ONLOAD);
+    
     init();
   }
 
