@@ -10,6 +10,7 @@ import org.pentaho.gwt.widgets.client.utils.string.StringUtils;
 import org.pentaho.reporting.platform.plugin.gwt.client.ReportViewer.RENDER_TYPE;
 
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Frame;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -48,6 +49,13 @@ public class ReportContainer extends VerticalPanel implements IParameterSubmissi
         if (StringUtils.isEmpty(url) == false && url.equals("about:blank") == false) {
           WaitPopup.getInstance().setVisible(true);
         }
+        // ie is not responding to onload
+        Timer t = new Timer() {
+          public void run() {
+            WaitPopup.getInstance().setVisible(false);
+          }
+        };
+        t.schedule(1000);
         super.setUrl(url);
       }
       
