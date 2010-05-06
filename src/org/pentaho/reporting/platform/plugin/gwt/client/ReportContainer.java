@@ -20,7 +20,7 @@ public class ReportContainer extends VerticalPanel implements IParameterSubmissi
   private ParameterControllerPanel parameterControllerPanel;
   private Frame reportContainer;
   private ReportViewer viewer;
-  private String url = "about:blank";
+  private String url = "about:blank"; //$NON-NLS-1$
 
   public ReportContainer(final ReportViewer viewer, ResourceBundle messages)
   {
@@ -32,7 +32,7 @@ public class ReportContainer extends VerticalPanel implements IParameterSubmissi
       public void onBrowserEvent(Event event) {
         super.onBrowserEvent(event);
         if (event.getTypeInt() == Event.ONLOAD) {
-          if (StringUtils.isEmpty(url) == false && url.equals("about:blank") == false) {
+          if (StringUtils.isEmpty(url) == false && url.equals("about:blank") == false) { //$NON-NLS-1$
             WaitPopup.getInstance().setVisible(false);
           }
         }
@@ -40,13 +40,13 @@ public class ReportContainer extends VerticalPanel implements IParameterSubmissi
       
       protected void onLoad() {
         super.onLoad();
-        if (StringUtils.isEmpty(url) == false && url.equals("about:blank") == false) {
+        if (StringUtils.isEmpty(url) == false && url.equals("about:blank") == false) { //$NON-NLS-1$
           WaitPopup.getInstance().setVisible(false);
         }
       }
 
       public void setUrl(String url) {
-        if (StringUtils.isEmpty(url) == false && url.equals("about:blank") == false) {
+        if (StringUtils.isEmpty(url) == false && url.equals("about:blank") == false) { //$NON-NLS-1$
           WaitPopup.getInstance().setVisible(true);
         }
         // ie is not responding to onload
@@ -66,7 +66,7 @@ public class ReportContainer extends VerticalPanel implements IParameterSubmissi
   }
 
   public void init() {
-	reportContainer.setUrl("about:blank");
+	reportContainer.setUrl("about:blank"); //$NON-NLS-1$
     reportContainer.setVisible(true);
     clear();
     reportContainer.setHeight("100%"); //$NON-NLS-1$
@@ -96,7 +96,7 @@ public class ReportContainer extends VerticalPanel implements IParameterSubmissi
   {
     // build url for the report to actually render
     reportContainer.setVisible(false);
-    url = "about:blank";
+    url = "about:blank"; //$NON-NLS-1$
     reportContainer.setUrl(url); //$NON-NLS-1$
   }
 

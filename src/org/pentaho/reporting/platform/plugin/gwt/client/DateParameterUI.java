@@ -16,7 +16,7 @@ import com.google.gwt.xml.client.Element;
 
 public class DateParameterUI extends SimplePanel
 {
-  private final static DateTimeFormat format = DateTimeFormat.getFormat("yyyy-MM-dd");
+  private final static DateTimeFormat format = DateTimeFormat.getFormat("yyyy-MM-dd"); //$NON-NLS-1$
 
   private class DateParameterSelectionHandler implements ValueChangeHandler<Date>
   {
@@ -92,7 +92,7 @@ public class DateParameterUI extends SimplePanel
       // BISERVER-4090: We do only ignore the default now() date, but if the user
       // specified a date via a formula, then they get what they specified, as ignoring User-input
       // is never a sane option.
-      if ("true".equals(Window.Location.getParameter("ignoreDefaultDates")))
+      if ("true".equals(Window.Location.getParameter("ignoreDefaultDates"))) //$NON-NLS-1$ //$NON-NLS-2$
       {
         date = null;
       }
@@ -116,7 +116,7 @@ public class DateParameterUI extends SimplePanel
       parameterSelections.add(format.format(date)); //$NON-NLS-1$
     }
     
-    final DefaultFormat format = new DefaultFormat(createFormat(parameterElement.getAttribute("data-format")));
+    final DefaultFormat format = new DefaultFormat(createFormat(parameterElement.getAttribute("data-format"))); //$NON-NLS-1$
     final DateBox datePicker = new DateBox(new PentahoDatePicker(), date, format);
 
     datePicker.addValueChangeHandler(new DateParameterSelectionHandler(parameterSelections, controller));

@@ -58,7 +58,7 @@ public class PageableHTMLOutput
       if (dataNameGenerator == null)
       {
         throw new IllegalStateException
-            (Messages.getInstance().getErrorString("ReportPlugin.errorNameGeneratorMissingConfiguration"));
+            (Messages.getInstance().getErrorString("ReportPlugin.errorNameGeneratorMissingConfiguration")); //$NON-NLS-1$
       }
       dataNameGenerator.initialize(dataLocation, true);
       rewriter = new PentahoURLRewriter(contentHandlerPattern, true);
@@ -69,7 +69,7 @@ public class PageableHTMLOutput
       if (ctx != null)
       {
         final String name = (String) report.getAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.NAME);
-        File dataDirectory = new File(ctx.getFileOutputPath("system/tmp/" + name + "/"));//$NON-NLS-1$
+        File dataDirectory = new File(ctx.getFileOutputPath("system/tmp/" + name + "/"));//$NON-NLS-1$ //$NON-NLS-2$
         if (dataDirectory.exists() && (dataDirectory.isDirectory() == false))
         {
           dataDirectory = dataDirectory.getParentFile();
@@ -89,7 +89,7 @@ public class PageableHTMLOutput
         if (dataNameGenerator == null)
         {
           throw new IllegalStateException
-              (Messages.getInstance().getErrorString("ReportPlugin.errorNameGeneratorMissingConfiguration"));
+              (Messages.getInstance().getErrorString("ReportPlugin.errorNameGeneratorMissingConfiguration")); //$NON-NLS-1$
         }
         dataNameGenerator.initialize(dataLocation, true);
         rewriter = new PentahoURLRewriter(contentHandlerPattern, false);

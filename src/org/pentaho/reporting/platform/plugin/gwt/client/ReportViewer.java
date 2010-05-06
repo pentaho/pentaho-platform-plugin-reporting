@@ -272,8 +272,8 @@ public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback {
     }
     if (GWT.isScript() == false) {
       reportPath = reportPath.substring(1);
-      reportPath = "?solution=steel-wheels&path=reports&name=Inventory.prpt" + reportPath;
-      String url = "http://localhost:8080/pentaho/content/reporting" + reportPath + "&userid=joe&password=password";
+      reportPath = "?solution=steel-wheels&path=reports&name=Inventory.prpt" + reportPath; //$NON-NLS-1$
+      String url = "http://localhost:8080/pentaho/content/reporting" + reportPath + "&userid=joe&password=password"; //$NON-NLS-1$ //$NON-NLS-2$
       System.out.println(url);
       return url;
     }

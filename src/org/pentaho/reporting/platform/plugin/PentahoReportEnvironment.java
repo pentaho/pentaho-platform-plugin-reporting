@@ -72,7 +72,7 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
       }
       else if ("solutionRoot".equals(key)) //$NON-NLS-1$
       {
-        final String solutionRoot = PentahoSystem.getApplicationContext().getSolutionPath("");
+        final String solutionRoot = PentahoSystem.getApplicationContext().getSolutionPath(""); //$NON-NLS-1$
         cache.put(key, solutionRoot);
         return solutionRoot; //$NON-NLS-1$
       }
@@ -90,7 +90,7 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
           "solutionRoot".equals(key) || //$NON-NLS-1$
           "hostColonPort".equals(key)) //$NON-NLS-1$
       {
-        logger.warn(Messages.getInstance().getString("ReportPlugin.warnNoApplicationContext"));
+        logger.warn(Messages.getInstance().getString("ReportPlugin.warnNoApplicationContext")); //$NON-NLS-1$
         // make it explicit that these values are not available. This way
         // a configuration in the classic-engine.properties file cannot begin
         // to interfer here.
@@ -145,7 +145,7 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
           key.equals("username") ||//$NON-NLS-1$
           key.equals("roles"))//$NON-NLS-1$
       {
-        logger.warn(Messages.getInstance().getString("ReportPlugin.warnNoSession"));
+        logger.warn(Messages.getInstance().getString("ReportPlugin.warnNoSession")); //$NON-NLS-1$
         return null;
       }
     }

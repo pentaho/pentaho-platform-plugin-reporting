@@ -72,7 +72,7 @@ import org.xml.sax.InputSource;
 
 public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntimeInputs
 {
-  private static final String PARAMETERFORMAT = "yyyy-MM-dd";
+  private static final String PARAMETERFORMAT = "yyyy-MM-dd"; //$NON-NLS-1$
 
   /**
    * The logging for logging messages from this component
@@ -295,7 +295,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       final String outputTarget = computeEffectiveOutputTarget();
       if (log.isDebugEnabled())
       {
-        log.debug(Messages.getInstance().getString("ReportPlugin.logComputedOutputTarget", outputTarget));
+        log.debug(Messages.getInstance().getString("ReportPlugin.logComputedOutputTarget", outputTarget)); //$NON-NLS-1$
       }
       if (HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE.equals(outputTarget))
       {
@@ -334,22 +334,22 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     {
       if (log.isDebugEnabled())
       {
-        log.warn(Messages.getInstance().getString("ReportPlugin.logErrorMimeTypeFull"), e);
+        log.warn(Messages.getInstance().getString("ReportPlugin.logErrorMimeTypeFull"), e); //$NON-NLS-1$
       }
       else if (log.isWarnEnabled())
       {
-        log.warn(Messages.getInstance().getString("ReportPlugin.logErrorMimeTypeShort", e.getMessage()));
+        log.warn(Messages.getInstance().getString("ReportPlugin.logErrorMimeTypeShort", e.getMessage())); //$NON-NLS-1$
       }
     }
     catch (ResourceException e)
     {
       if (log.isDebugEnabled())
       {
-        log.warn(Messages.getInstance().getString("ReportPlugin.logErrorMimeTypeFull"), e);
+        log.warn(Messages.getInstance().getString("ReportPlugin.logErrorMimeTypeFull"), e); //$NON-NLS-1$
       }
       else if (log.isWarnEnabled())
       {
-        log.warn(Messages.getInstance().getString("ReportPlugin.logErrorMimeTypeShort", e.getMessage()));
+        log.warn(Messages.getInstance().getString("ReportPlugin.logErrorMimeTypeShort", e.getMessage())); //$NON-NLS-1$
       }
     }
     return MIME_GENERIC_FALLBACK;
@@ -573,11 +573,11 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
         final String mappedLegacyType = mapOutputTypeToOutputTarget(preferredOutputTypeString);
         if (mappedLegacyType != null)
         {
-          log.warn(Messages.getInstance().getString("ReportPlugin.warnLegacyLockedOutput", preferredOutputTypeString));
+          log.warn(Messages.getInstance().getString("ReportPlugin.warnLegacyLockedOutput", preferredOutputTypeString)); //$NON-NLS-1$
           return mappedLegacyType;
         }
 
-        log.warn(Messages.getInstance().getString("ReportPlugin.warnInvalidLockedOutput", preferredOutputTypeString));
+        log.warn(Messages.getInstance().getString("ReportPlugin.warnInvalidLockedOutput", preferredOutputTypeString)); //$NON-NLS-1$
       }
     }
 
@@ -586,7 +586,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     {
       if (isValidOutputType(outputTarget) == false)
       {
-        log.warn(Messages.getInstance().getString("ReportPlugin.warnInvalidOutputTarget", outputTarget));
+        log.warn(Messages.getInstance().getString("ReportPlugin.warnInvalidOutputTarget", outputTarget)); //$NON-NLS-1$
       }
       // if a engine-level output target is given, use it as it is. We can assume that the user knows how to
       // map from that to a real mime-type.
@@ -612,11 +612,11 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       final String mappedLegacyType = mapOutputTypeToOutputTarget(preferredOutputTypeString);
       if (mappedLegacyType != null)
       {
-        log.warn(Messages.getInstance().getString("ReportPlugin.warnLegacyPreferredOutput", preferredOutputTypeString));
+        log.warn(Messages.getInstance().getString("ReportPlugin.warnLegacyPreferredOutput", preferredOutputTypeString)); //$NON-NLS-1$
         return mappedLegacyType;
       }
 
-      log.warn(Messages.getInstance().getString("ReportPlugin.warnInvalidPreferredOutput",
+      log.warn(Messages.getInstance().getString("ReportPlugin.warnInvalidPreferredOutput", //$NON-NLS-1$
           preferredOutputTypeString, HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE));
       return HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE;
     }
@@ -625,7 +625,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     {
       // if you have come that far, it means you really messed up. Sorry, this error is not a error caused
       // by our legacy code - it is more likely that you just entered values that are totally wrong.
-      log.error(Messages.getInstance().getString("ReportPlugin.warnInvalidOutputType", getOutputType(),
+      log.error(Messages.getInstance().getString("ReportPlugin.warnInvalidOutputType", getOutputType(), //$NON-NLS-1$
           HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE));
     }
     return HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE;
@@ -670,12 +670,12 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
 
     if ("pdf".equalsIgnoreCase(outputType)) //$NON-NLS-1$
     {
-      log.warn(Messages.getInstance().getString("ReportPlugin.warnDeprecatedPDF"));
+      log.warn(Messages.getInstance().getString("ReportPlugin.warnDeprecatedPDF")); //$NON-NLS-1$
       return PdfPageableModule.PDF_EXPORT_TYPE;
     }
     else if ("html".equalsIgnoreCase(outputType)) //$NON-NLS-1$
     {
-      log.warn(Messages.getInstance().getString("ReportPlugin.warnDeprecatedHTML"));
+      log.warn(Messages.getInstance().getString("ReportPlugin.warnDeprecatedHTML")); //$NON-NLS-1$
       if (isPaginateOutput())
       {
         return HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE;
@@ -684,22 +684,22 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     }
     else if ("csv".equalsIgnoreCase(outputType)) //$NON-NLS-1$
     {
-      log.warn(Messages.getInstance().getString("ReportPlugin.warnDeprecatedCSV"));
+      log.warn(Messages.getInstance().getString("ReportPlugin.warnDeprecatedCSV")); //$NON-NLS-1$
       return CSVTableModule.TABLE_CSV_STREAM_EXPORT_TYPE;
     }
     else if ("rtf".equalsIgnoreCase(outputType)) //$NON-NLS-1$
     {
-      log.warn(Messages.getInstance().getString("ReportPlugin.warnDeprecatedRTF"));
+      log.warn(Messages.getInstance().getString("ReportPlugin.warnDeprecatedRTF")); //$NON-NLS-1$
       return RTFTableModule.TABLE_RTF_FLOW_EXPORT_TYPE;
     }
     else if ("xls".equalsIgnoreCase(outputType)) //$NON-NLS-1$
     {
-      log.warn(Messages.getInstance().getString("ReportPlugin.warnDeprecatedXLS"));
+      log.warn(Messages.getInstance().getString("ReportPlugin.warnDeprecatedXLS")); //$NON-NLS-1$
       return ExcelTableModule.EXCEL_FLOW_EXPORT_TYPE;
     }
     else if ("txt".equalsIgnoreCase(outputType)) //$NON-NLS-1$
     {
-      log.warn(Messages.getInstance().getString("ReportPlugin.warnDeprecatedTXT"));
+      log.warn(Messages.getInstance().getString("ReportPlugin.warnDeprecatedTXT")); //$NON-NLS-1$
       return PlainTextPageableModule.PLAINTEXT_EXPORT_TYPE;
     }
     return null;
@@ -719,21 +719,21 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     {
       if (getReport() != report)
       {
-        throw new IllegalStateException(Messages.getInstance().getString("ReportPlugin.errorForeignReportInput"));
+        throw new IllegalStateException(Messages.getInstance().getString("ReportPlugin.errorForeignReportInput")); //$NON-NLS-1$
       }
       final ValidationResult validationResult = applyInputsToReportParameters(context, null);
       if (validationResult.isEmpty() == false)
       {
-        throw new IllegalStateException(Messages.getInstance().getString("ReportPlugin.errorApplyInputsFailed"));
+        throw new IllegalStateException(Messages.getInstance().getString("ReportPlugin.errorApplyInputsFailed")); //$NON-NLS-1$
       }
     }
     catch (IOException e)
     {
-      throw new IllegalStateException(Messages.getInstance().getString("ReportPlugin.errorApplyInputsFailed"), e);
+      throw new IllegalStateException(Messages.getInstance().getString("ReportPlugin.errorApplyInputsFailed"), e); //$NON-NLS-1$
     }
     catch (ResourceException e)
     {
-      throw new IllegalStateException(Messages.getInstance().getString("ReportPlugin.errorApplyInputsFailed"), e);
+      throw new IllegalStateException(Messages.getInstance().getString("ReportPlugin.errorApplyInputsFailed"), e); //$NON-NLS-1$
     }
   }
 
@@ -776,7 +776,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
         {
           if (log.isDebugEnabled())
           {
-            log.warn(Messages.getInstance().getString("ReportPlugin.logErrorParametrization"), e);
+            log.warn(Messages.getInstance().getString("ReportPlugin.logErrorParametrization"), e); //$NON-NLS-1$
           }
           validationResult.addError(paramName, new ValidationMessage(e.getMessage()));
         }
@@ -1122,7 +1122,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       {
         if (dashboardMode)
         {
-          report.getReportConfiguration().setConfigProperty(HtmlTableModule.BODY_FRAGMENT, "true");
+          report.getReportConfiguration().setConfigProperty(HtmlTableModule.BODY_FRAGMENT, "true"); //$NON-NLS-1$
         }
         if (useContentRepository)
         {
@@ -1148,7 +1148,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       {
         if (dashboardMode)
         {
-          report.getReportConfiguration().setConfigProperty(HtmlTableModule.BODY_FRAGMENT, "true");
+          report.getReportConfiguration().setConfigProperty(HtmlTableModule.BODY_FRAGMENT, "true"); //$NON-NLS-1$
         }
         if (useContentRepository)
         {
@@ -1192,7 +1192,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
         return PlainTextOutput.generate(report, outputStream, getYieldRate());
       }
 
-      log.warn(Messages.getInstance().getString("ReportPlugin.warnUnprocessableRequest", outputType));
+      log.warn(Messages.getInstance().getString("ReportPlugin.warnUnprocessableRequest", outputType)); //$NON-NLS-1$
 
     }
     catch (Throwable t)

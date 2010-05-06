@@ -157,8 +157,8 @@ public class ParameterControllerPanel extends VerticalPanel
       else
       {
 
-        final boolean isPromptNeeded = "true".equals(parametersElement.getAttribute("is-prompt-needed"));
-        final boolean paginate = "true".equals(parametersElement.getAttribute("paginate"));
+        final boolean isPromptNeeded = "true".equals(parametersElement.getAttribute("is-prompt-needed")); //$NON-NLS-1$ //$NON-NLS-2$
+        final boolean paginate = "true".equals(parametersElement.getAttribute("paginate")); //$NON-NLS-1$ //$NON-NLS-2$
         // do not show the parameter UI, but we must still fire events
         // if prompt is not needed
         if (isPromptNeeded == false && (isAutoSubmit() != Boolean.FALSE || isOnChange == false)) {
@@ -210,12 +210,12 @@ public class ParameterControllerPanel extends VerticalPanel
     parameterDisclosurePanel.setOpen(true);
     parameterDisclosurePanel.setAnimationEnabled(true);
     parameterDisclosurePanel.setWidth("100%"); //$NON-NLS-1$
-    final String autoSubmitAttr = Window.Location.getParameter("autoSubmit");
+    final String autoSubmitAttr = Window.Location.getParameter("autoSubmit"); //$NON-NLS-1$
     if (StringUtils.isEmpty(autoSubmitAttr) == false)
     {
       // auto-submit state is only not-null, if the user explicitly requested a value via the URL
-      submitParametersOnChangeCheckBox.setValue("true".equals(autoSubmitAttr));
-      autoSubmitState = "true".equals(autoSubmitAttr);
+      submitParametersOnChangeCheckBox.setValue("true".equals(autoSubmitAttr)); //$NON-NLS-1$
+      autoSubmitState = "true".equals(autoSubmitAttr); //$NON-NLS-1$
     }
     else
     {
@@ -235,8 +235,8 @@ public class ParameterControllerPanel extends VerticalPanel
 
   private void showParameterPanel(final boolean isOnChange, final HashMap<String, ArrayList<String>> errors, final ArrayList globalErrors, final Element parametersElement) {
 
-    final boolean isPromptNeeded = "true".equals(parametersElement.getAttribute("is-prompt-needed"));
-    final boolean paginate = "true".equals(parametersElement.getAttribute("paginate"));
+    final boolean isPromptNeeded = "true".equals(parametersElement.getAttribute("is-prompt-needed")); //$NON-NLS-1$ //$NON-NLS-2$
+    final boolean paginate = "true".equals(parametersElement.getAttribute("paginate")); //$NON-NLS-1$ //$NON-NLS-2$
     
     NodeList parameterNodes = parametersElement.getElementsByTagName("parameter"); //$NON-NLS-1$
     if (parameterNodes == null || parameterNodes.getLength() == 0)
@@ -335,8 +335,8 @@ public class ParameterControllerPanel extends VerticalPanel
           if (parameterErrors != null) {
             for (String error : parameterErrors) {
               Label errorLabel = new Label(error);
-              errorLabel.setStyleName("parameter-error-label");
-              DOM.setStyleAttribute(errorLabel.getElement(), "color", "red");
+              errorLabel.setStyleName("parameter-error-label"); //$NON-NLS-1$
+              DOM.setStyleAttribute(errorLabel.getElement(), "color", "red"); //$NON-NLS-1$ //$NON-NLS-2$
               parameterPanel.add(errorLabel);
             }
             parameterPanel.setStyleName("parameter-error"); //$NON-NLS-1$
@@ -382,15 +382,15 @@ public class ParameterControllerPanel extends VerticalPanel
     submitPanel.add(submitParametersButton);
 
     // handle the auto-submit defaults.
-    String autoSubmitAttr = parametersElement.getAttribute("autoSubmit");
+    String autoSubmitAttr = parametersElement.getAttribute("autoSubmit"); //$NON-NLS-1$
     if (StringUtils.isEmpty(autoSubmitAttr))
     {
-      autoSubmitAttr = Window.Location.getParameter("autoSubmit");
+      autoSubmitAttr = Window.Location.getParameter("autoSubmit"); //$NON-NLS-1$
     } 
     if (StringUtils.isEmpty(autoSubmitAttr) == false)
     {
-      submitParametersOnChangeCheckBox.setValue("true".equals(autoSubmitAttr));
-      autoSubmitState = "true".equals(autoSubmitAttr);
+      submitParametersOnChangeCheckBox.setValue("true".equals(autoSubmitAttr)); //$NON-NLS-1$
+      autoSubmitState = "true".equals(autoSubmitAttr); //$NON-NLS-1$
     }
     else
     {
@@ -399,10 +399,10 @@ public class ParameterControllerPanel extends VerticalPanel
       submitPanel.add(submitParametersOnChangeCheckBox);
     }
     
-    autoSubmitAttr = Window.Location.getParameter("autoSubmitUI");
+    autoSubmitAttr = Window.Location.getParameter("autoSubmitUI"); //$NON-NLS-1$
     if (StringUtils.isEmpty(autoSubmitAttr) == false ){
-      submitParametersOnChangeCheckBox.setValue("true".equals(autoSubmitAttr));
-      autoSubmitState = "true".equals(autoSubmitAttr);
+      submitParametersOnChangeCheckBox.setValue("true".equals(autoSubmitAttr)); //$NON-NLS-1$
+      autoSubmitState = "true".equals(autoSubmitAttr); //$NON-NLS-1$
     }
 
     parameterContainer.add(submitPanel);
@@ -438,11 +438,11 @@ public class ParameterControllerPanel extends VerticalPanel
   
   private HashMap<String, ArrayList<String>> buildErrors(final Document doc) {
     HashMap<String, ArrayList<String>> errorMap = new HashMap<String, ArrayList<String>>();
-    NodeList errors = doc.getElementsByTagName("error");
+    NodeList errors = doc.getElementsByTagName("error"); //$NON-NLS-1$
     for (int i=0;i<errors.getLength();i++) {
       Element error = (Element)errors.item(i);
-      String parameter = error.getAttribute("parameter");
-      String msg = error.getAttribute("message");
+      String parameter = error.getAttribute("parameter"); //$NON-NLS-1$
+      String msg = error.getAttribute("message"); //$NON-NLS-1$
       ArrayList<String> errorList = errorMap.get(parameter);
       if (errorList == null) {
         errorList = new ArrayList<String>();
@@ -451,10 +451,10 @@ public class ParameterControllerPanel extends VerticalPanel
       errorList.add(msg);
     }
 
-    NodeList globalErrors = doc.getElementsByTagName("global-error");
+    NodeList globalErrors = doc.getElementsByTagName("global-error"); //$NON-NLS-1$
      for (int i=0;i<globalErrors.getLength();i++) {
        Element error = (Element)globalErrors.item(i);
-       String msg = error.getAttribute("message");
+       String msg = error.getAttribute("message"); //$NON-NLS-1$
        ArrayList<String> errorList = errorMap.get(null);
        if (errorList == null) {
          errorList = new ArrayList<String>();
@@ -474,8 +474,8 @@ public class ParameterControllerPanel extends VerticalPanel
     if (errors!= null) {
       for (String error : errors) {
         Label errorLabel = new Label(error);
-        errorLabel.setStyleName("parameter-error-label");
-        DOM.setStyleAttribute(errorLabel.getElement(), "color", "red");
+        errorLabel.setStyleName("parameter-error-label"); //$NON-NLS-1$
+        DOM.setStyleAttribute(errorLabel.getElement(), "color", "red"); //$NON-NLS-1$ //$NON-NLS-2$
         parameterPanel.add(errorLabel);
       }
     }

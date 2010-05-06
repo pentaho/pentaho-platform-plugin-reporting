@@ -41,8 +41,8 @@ public class HTMLOutput
 
   private static boolean isSafeToDelete()
   {
-    return "true".equals(ClassicEngineBoot.getInstance().getGlobalConfig().getConfigProperty
-        ("org.pentaho.reporting.platform.plugin.AlwaysDeleteHtmlDataFiles"));
+    return "true".equals(ClassicEngineBoot.getInstance().getGlobalConfig().getConfigProperty //$NON-NLS-1$
+        ("org.pentaho.reporting.platform.plugin.AlwaysDeleteHtmlDataFiles")); //$NON-NLS-1$
   }
 
   public static boolean generate(final MasterReport report,
@@ -68,7 +68,7 @@ public class HTMLOutput
       if (dataNameGenerator == null)
       {
         throw new IllegalStateException
-            (Messages.getInstance().getErrorString("ReportPlugin.errorNameGeneratorMissingConfiguration"));
+            (Messages.getInstance().getErrorString("ReportPlugin.errorNameGeneratorMissingConfiguration")); //$NON-NLS-1$
       }
       dataNameGenerator.initialize(dataLocation, isSafeToDelete());
 
@@ -81,7 +81,7 @@ public class HTMLOutput
       if (ctx != null)
       {
         final String name = (String) report.getAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.NAME);
-        File dataDirectory = new File(ctx.getFileOutputPath("system/tmp/" + name + "/"));//$NON-NLS-1$
+        File dataDirectory = new File(ctx.getFileOutputPath("system/tmp/" + name + "/"));//$NON-NLS-1$ //$NON-NLS-2$
         if (dataDirectory.exists() && (dataDirectory.isDirectory() == false))
         {
           dataDirectory = dataDirectory.getParentFile();
@@ -105,7 +105,7 @@ public class HTMLOutput
         if (dataNameGenerator == null)
         {
           throw new IllegalStateException
-              (Messages.getInstance().getErrorString("ReportPlugin.errorNameGeneratorMissingConfiguration"));
+              (Messages.getInstance().getErrorString("ReportPlugin.errorNameGeneratorMissingConfiguration")); //$NON-NLS-1$
         }
         dataNameGenerator.initialize(dataLocation, isSafeToDelete());
         rewriter = new PentahoURLRewriter(contentHandlerPattern, false);

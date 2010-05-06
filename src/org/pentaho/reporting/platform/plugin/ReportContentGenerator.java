@@ -206,20 +206,20 @@ public class ReportContentGenerator extends SimpleContentGenerator
         reportComponent.execute())
     {
       final byte[] bytes = reportOutput.toByteArray();
-      if (parameterProviders.get("path") != null &&
+      if (parameterProviders.get("path") != null && //$NON-NLS-1$
           parameterProviders.get("path").getParameter("httpresponse") != null) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
       {
         final HttpServletResponse response = (HttpServletResponse) parameterProviders.get("path").getParameter("httpresponse"); //$NON-NLS-1$ //$NON-NLS-2$
         final String extension = MimeHelper.getExtension(mimeType);
         String filename = file.getFileName();
-        if (filename.lastIndexOf(".") != -1)
+        if (filename.lastIndexOf(".") != -1) //$NON-NLS-1$
         { //$NON-NLS-1$
           filename = filename.substring(0, filename.lastIndexOf(".")); //$NON-NLS-1$
         }
         response.setHeader("Content-Disposition", "inline; filename=\"" + filename + extension + "\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         response.setHeader("Content-Description", file.getFileName()); //$NON-NLS-1$
-        response.setHeader("Cache-Control", "private, max-age=0, must-revalidate"); 
-        response.setHeader("Content-Size", String.valueOf(bytes.length));
+        response.setHeader("Cache-Control", "private, max-age=0, must-revalidate");  //$NON-NLS-1$ //$NON-NLS-2$
+        response.setHeader("Content-Size", String.valueOf(bytes.length)); //$NON-NLS-1$
       }
       if (log.isDebugEnabled())
       {
@@ -231,7 +231,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
     }
     else
     {
-      if (parameterProviders.get("path") != null &&
+      if (parameterProviders.get("path") != null && //$NON-NLS-1$
           parameterProviders.get("path").getParameter("httpresponse") != null) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
       {
         final HttpServletResponse response = (HttpServletResponse) parameterProviders.get("path").getParameter("httpresponse"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -282,7 +282,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
     {
       final String hiddenVal = parameter.getParameterAttribute
           (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.HIDDEN, parameterContext);
-      if ("true".equals(hiddenVal))
+      if ("true".equals(hiddenVal)) //$NON-NLS-1$
       {
         continue;
       }
@@ -335,8 +335,8 @@ public class ReportContentGenerator extends SimpleContentGenerator
         for (final ValidationMessage message : vr.getErrors(property))
         {
           final Element error = document.createElement("error"); //$NON-NLS-1$
-          error.setAttribute("parameter", property);
-          error.setAttribute("message", message.getMessage());
+          error.setAttribute("parameter", property); //$NON-NLS-1$
+          error.setAttribute("message", message.getMessage()); //$NON-NLS-1$
           errors.appendChild(error);
         }
       }
@@ -345,30 +345,30 @@ public class ReportContentGenerator extends SimpleContentGenerator
       {
         final ValidationMessage globalMessage = globalMessages[i];
         final Element error = document.createElement("global-error"); //$NON-NLS-1$
-        error.setAttribute("message", globalMessage.getMessage());
+        error.setAttribute("message", globalMessage.getMessage()); //$NON-NLS-1$
         errors.appendChild(error);
       }
     }
 
-    final String autoSubmitStr = requestParams.getStringParameter("autoSubmit", null);
-    if ("true".equals(autoSubmitStr))
+    final String autoSubmitStr = requestParams.getStringParameter("autoSubmit", null); //$NON-NLS-1$
+    if ("true".equals(autoSubmitStr)) //$NON-NLS-1$
     {
-      parameters.setAttribute("autoSubmit", "true");
+      parameters.setAttribute("autoSubmit", "true"); //$NON-NLS-1$ //$NON-NLS-2$
     }
-    else if ("false".equals(autoSubmitStr))
+    else if ("false".equals(autoSubmitStr)) //$NON-NLS-1$
     {
-      parameters.setAttribute("autoSubmit", "false");
+      parameters.setAttribute("autoSubmit", "false"); //$NON-NLS-1$ //$NON-NLS-2$
     }
     else
     {
       final Object o = report.getAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.AUTO_SUBMIT_PARAMETER);
       if(Boolean.TRUE.equals(o))
       {
-        parameters.setAttribute("autoSubmit", "true");
+        parameters.setAttribute("autoSubmit", "true"); //$NON-NLS-1$ //$NON-NLS-2$
       }
       else if(Boolean.FALSE.equals(o))
       {
-        parameters.setAttribute("autoSubmit", "false");
+        parameters.setAttribute("autoSubmit", "false"); //$NON-NLS-1$ //$NON-NLS-2$
       }
     }
 
@@ -380,7 +380,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
     }
 
     org.dom4j.Document d4jDoc = XmlDom4JHelper.convertToDom4JDoc(document);
-    XmlDom4JHelper.saveDom(d4jDoc, outputStream, "UTF-8");
+    XmlDom4JHelper.saveDom(d4jDoc, outputStream, "UTF-8"); //$NON-NLS-1$
     // close parameter context
     parameterContext.close();
   }
@@ -428,7 +428,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
         response.setHeader("Content-Description", file.getFileName()); //$NON-NLS-1$
         response.setDateHeader("Last-Modified", file.getLastModified()); //$NON-NLS-1$
         response.setContentLength(data.length); //$NON-NLS-1$
-        response.setHeader("Cache-Control", "private, max-age=0, must-revalidate");        
+        response.setHeader("Cache-Control", "private, max-age=0, must-revalidate");         //$NON-NLS-1$ //$NON-NLS-2$
         outputStream.write(data);
       }
     }
@@ -468,7 +468,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
           {
             final Element defaultValueElement = document.createElement("default-value"); //$NON-NLS-1$
             parameterElement.appendChild(defaultValueElement);
-            defaultValueElement.setAttribute("value",
+            defaultValueElement.setAttribute("value", //$NON-NLS-1$
                 convertParameterValueToString(Array.get(defaultValue, i), declaredValueType.getComponentType())); //$NON-NLS-1$
           }
         }
@@ -476,7 +476,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
         {
           final Element defaultValueElement = document.createElement("default-value"); //$NON-NLS-1$
           parameterElement.appendChild(defaultValueElement);
-          defaultValueElement.setAttribute("value",
+          defaultValueElement.setAttribute("value", //$NON-NLS-1$
               convertParameterValueToString(defaultValue, declaredValueType.getComponentType())); //$NON-NLS-1$
         }
       }
@@ -484,7 +484,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
       {
         final Element defaultValueElement = document.createElement("default-value"); //$NON-NLS-1$
         parameterElement.appendChild(defaultValueElement);
-        defaultValueElement.setAttribute("value",
+        defaultValueElement.setAttribute("value", //$NON-NLS-1$
             convertParameterValueToString(defaultValue, declaredValueType)); //$NON-NLS-1$
       }
     }
@@ -585,10 +585,10 @@ public class ReportContentGenerator extends SimpleContentGenerator
     {
       if (value instanceof Date == false)
       {
-        throw new BeanException(Messages.getInstance().getErrorString("ReportPlugin.errorNonDateParameterValue"));
+        throw new BeanException(Messages.getInstance().getErrorString("ReportPlugin.errorNonDateParameterValue")); //$NON-NLS-1$
       }
       final Date d = (Date) value;
-      final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ"); // $NON-NLS-1$
+      final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ"); // $NON-NLS-1$ //$NON-NLS-1$
       return dateFormat.format(d);
     }
     if (Number.class.isAssignableFrom(type))
@@ -771,7 +771,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
       selectionsElement.appendChild(selectionElement);
     }
 
-    final String email = PentahoSystem.getSystemSetting("smtp-email/email_config.xml", "mail.userid", "");
+    final String email = PentahoSystem.getSystemSetting("smtp-email/email_config.xml", "mail.userid", ""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     if (StringUtils.isEmpty(email) == false)
     {
 
@@ -788,7 +788,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
       emailParameter.setAttribute("is-strict", "false"); //$NON-NLS-1$ //$NON-NLS-2$
       emailParameter.setAttribute("parameter-render-type", "textbox"); //$NON-NLS-1$ //$NON-NLS-2$
 
-      Object destinationSelection = inputs.get("destination");
+      Object destinationSelection = inputs.get("destination"); //$NON-NLS-1$
       if (destinationSelection == null && subscription != null)
       {
         destinationSelection = subscription.getTitle();
