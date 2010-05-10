@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.parsers.DocumentBuilderFactory;
 
@@ -67,18 +68,15 @@ import org.pentaho.reporting.platform.plugin.gwt.client.ReportViewer.RENDER_TYPE
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-public class ReportContentGenerator extends SimpleContentGenerator
-{
+public class ReportContentGenerator extends SimpleContentGenerator {
   private static final Log log = LogFactory.getLog(ReportContentGenerator.class);
 
   private SimpleReportingComponent reportComponent;
 
-  public ReportContentGenerator()
-  {
+  public ReportContentGenerator() {
   }
 
-  public void createContent(final OutputStream outputStream) throws Exception
-  {
+  public void createContent(final OutputStream outputStream) throws Exception {
     final String id = UUIDUtil.getUUIDAsString();
     setInstanceId(id);
     final IParameterProvider requestParams = getRequestParameters();
@@ -87,177 +85,143 @@ public class ReportContentGenerator extends SimpleContentGenerator
     final String path = URLDecoder.decode(requestParams.getStringParameter("path", ""), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     final String name = URLDecoder.decode(requestParams.getStringParameter("name", requestParams.getStringParameter("action", "")), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
 
-    final RENDER_TYPE renderMode = RENDER_TYPE.valueOf
-        (requestParams.getStringParameter("renderMode", RENDER_TYPE.REPORT.toString()).toUpperCase()); //$NON-NLS-1$
+    final RENDER_TYPE renderMode = RENDER_TYPE.valueOf(requestParams.getStringParameter("renderMode", RENDER_TYPE.REPORT.toString()).toUpperCase()); //$NON-NLS-1$
 
     final String reportDefinitionPath = ActionInfo.buildSolutionPath(solution, path, name);
 
-    final long start = System.currentTimeMillis();
-    AuditHelper.audit(userSession.getId(), userSession.getName(), reportDefinitionPath,
-        getObjectName(), getClass().getName(), MessageTypes.INSTANCE_START,
-        instanceId, "", 0, this); //$NON-NLS-1$
-
-    String result = MessageTypes.INSTANCE_END;
-    try
-    {
-      switch (renderMode)
-      {
-        case DOWNLOAD:
-        {
-          createDownloadContent(outputStream, reportDefinitionPath);
-          break;
-        }
-        case REPORT:
-        {
-          // create inputs from request parameters
-          final Map<String, Object> inputs = createInputs(requestParams);
-          createReportContent(outputStream, reportDefinitionPath, inputs);
-          break;
-        }
-        case SUBSCRIBE:
-        {
-          createSubscribeContent(outputStream, reportDefinitionPath, requestParams);
-          break;
-        }
-        case XML:
-        {
-          // create inputs from request parameters
-          final Map<String, Object> inputs = createInputs(requestParams);
-          createParameterContent(outputStream, reportDefinitionPath, requestParams, inputs);
-          break;
-        }
-        default:
-          throw new IllegalArgumentException();
+    try {
+      switch (renderMode) {
+      case DOWNLOAD: {
+        createDownloadContent(outputStream, reportDefinitionPath);
+        break;
       }
-    }
-    catch (Exception ex)
-    {
+      case REPORT: {
+        // create inputs from request parameters
+        final Map<String, Object> inputs = createInputs(requestParams);
+        createReportContent(outputStream, reportDefinitionPath, inputs);
+        break;
+      }
+      case SUBSCRIBE: {
+        createSubscribeContent(outputStream, reportDefinitionPath, requestParams);
+        break;
+      }
+      case XML: {
+        // create inputs from request parameters
+        final Map<String, Object> inputs = createInputs(requestParams);
+        createParameterContent(outputStream, reportDefinitionPath, requestParams, inputs);
+        break;
+      }
+      default:
+        throw new IllegalArgumentException();
+      }
+    } catch (Exception ex) {
       final String exceptionMessage = ex.getMessage() != null ? ex.getMessage() : ex.getClass().getName();
       log.error(exceptionMessage, ex);
 
-      result = MessageTypes.INSTANCE_FAILED;
-
-      if (outputStream != null)
-      {
+      if (outputStream != null) {
         outputStream.write(exceptionMessage.getBytes("UTF-8")); //$NON-NLS-1$
         outputStream.flush();
-      }
-      else
-      {
+      } else {
         throw new IllegalArgumentException();
       }
-    }
-    finally
-    {
+    } finally {
       reportComponent = null;
-
-      final long end = System.currentTimeMillis();
-      AuditHelper.audit(userSession.getId(), userSession.getName(), reportDefinitionPath,
-          getObjectName(), getClass().getName(), result,
-          instanceId, "", ((float) (end - start) / 1000), this); //$NON-NLS-1$
     }
   }
 
-  private void createReportContent(final OutputStream outputStream,
-                                   final String reportDefinitionPath,
-                                   final Map<String, Object> inputs)
-      throws Exception
-  {
-    final ByteArrayOutputStream reportOutput = new ByteArrayOutputStream();
-    // produce rendered report
-    if (reportComponent == null)
-    {
-      reportComponent = new SimpleReportingComponent();
-    }
-    reportComponent.setSession(userSession);
-    reportComponent.setOutputStream(reportOutput);
-    reportComponent.setReportDefinitionPath(reportDefinitionPath);
+  private void createReportContent(final OutputStream outputStream, final String reportDefinitionPath, final Map<String, Object> inputs) throws Exception {
+    final long start = System.currentTimeMillis();
+    AuditHelper.audit(userSession.getId(), userSession.getName(), reportDefinitionPath, getObjectName(), getClass().getName(), MessageTypes.INSTANCE_START,
+        instanceId, "", 0, this); //$NON-NLS-1$
 
-    // the requested mime type can be null, in that case the report-component will resolve the desired
-    // type from the output-target.
-    // Hoever, the report-component will inspect the inputs independently from the mimetype here.
+    String result = MessageTypes.INSTANCE_END;
 
-    final ISolutionRepository repository = PentahoSystem.get(ISolutionRepository.class, userSession);
-    final ISolutionFile file = repository.getSolutionFile(reportDefinitionPath, ISolutionRepository.ACTION_EXECUTE);
+    try {
+      final ByteArrayOutputStream reportOutput = new ByteArrayOutputStream();
+      // produce rendered report
+      if (reportComponent == null) {
+        reportComponent = new SimpleReportingComponent();
+      }
+      reportComponent.setSession(userSession);
+      reportComponent.setOutputStream(reportOutput);
+      reportComponent.setReportDefinitionPath(reportDefinitionPath);
 
+      // the requested mime type can be null, in that case the report-component will resolve the desired
+      // type from the output-target.
+      // Hoever, the report-component will inspect the inputs independently from the mimetype here.
 
-    // add all inputs (request parameters) to report component
-    reportComponent.setInputs(inputs);
-    final String mimeType = reportComponent.getMimeType();
+      final ISolutionRepository repository = PentahoSystem.get(ISolutionRepository.class, userSession);
+      final ISolutionFile file = repository.getSolutionFile(reportDefinitionPath, ISolutionRepository.ACTION_EXECUTE);
 
-    // If we haven't set an accepted page, -1 will be the default, which will give us a report
-    // with no pages. This default is used so that when we do our parameter interaction with the
-    // engine we can spend as little time as possible rendering unused pages, making it no pages.
-    // We are going to intentionally reset the accepted page to the first page, 0, at this point,
-    // if the accepted page is -1.
-    if (reportComponent.isPaginateOutput() && reportComponent.getAcceptedPage() < 0)
-    {
-      reportComponent.setAcceptedPage(0);
-    }
+      // add all inputs (request parameters) to report component
+      reportComponent.setInputs(inputs);
+      final String mimeType = reportComponent.getMimeType();
 
-    if (log.isDebugEnabled())
-    {
-      log.debug(Messages.getString("ReportPlugin.logStartGenerateContent", mimeType,//$NON-NLS-1$
-          String.valueOf(reportComponent.isPaginateOutput()), String.valueOf(reportComponent.getAcceptedPage())));
-    }
-    if (reportComponent.validate() &&
-        reportComponent.execute())
-    {
-      final byte[] bytes = reportOutput.toByteArray();
-      if (parameterProviders.get("path") != null &&
-          parameterProviders.get("path").getParameter("httpresponse") != null) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-      {
-        final HttpServletResponse response = (HttpServletResponse) parameterProviders.get("path").getParameter("httpresponse"); //$NON-NLS-1$ //$NON-NLS-2$
-        final String extension = MimeHelper.getExtension(mimeType);
-        String filename = file.getFileName();
-        if (filename.lastIndexOf(".") != -1)
-        { //$NON-NLS-1$
-          filename = filename.substring(0, filename.lastIndexOf(".")); //$NON-NLS-1$
+      // If we haven't set an accepted page, -1 will be the default, which will give us a report
+      // with no pages. This default is used so that when we do our parameter interaction with the
+      // engine we can spend as little time as possible rendering unused pages, making it no pages.
+      // We are going to intentionally reset the accepted page to the first page, 0, at this point,
+      // if the accepted page is -1.
+      if (reportComponent.isPaginateOutput() && reportComponent.getAcceptedPage() < 0) {
+        reportComponent.setAcceptedPage(0);
+      }
+
+      if (log.isDebugEnabled()) {
+        log.debug(Messages.getString("ReportPlugin.logStartGenerateContent", mimeType,//$NON-NLS-1$
+            String.valueOf(reportComponent.isPaginateOutput()), String.valueOf(reportComponent.getAcceptedPage())));
+      }
+      if (reportComponent.validate() && reportComponent.execute()) {
+        final byte[] bytes = reportOutput.toByteArray();
+        if (parameterProviders.get("path") != null && parameterProviders.get("path").getParameter("httpresponse") != null) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        {
+          final HttpServletResponse response = (HttpServletResponse) parameterProviders.get("path").getParameter("httpresponse"); //$NON-NLS-1$ //$NON-NLS-2$
+          final String extension = MimeHelper.getExtension(mimeType);
+          String filename = file.getFileName();
+          if (filename.lastIndexOf(".") != -1) { //$NON-NLS-1$
+            filename = filename.substring(0, filename.lastIndexOf(".")); //$NON-NLS-1$
+          }
+          response.setHeader("Content-Disposition", "inline; filename=\"" + filename + extension + "\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+          response.setHeader("Content-Description", file.getFileName()); //$NON-NLS-1$
+          response.setHeader("Cache-Control", "private, max-age=0, must-revalidate");
+          response.setHeader("Content-Size", String.valueOf(bytes.length));
         }
-        response.setHeader("Content-Disposition", "inline; filename=\"" + filename + extension + "\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-        response.setHeader("Content-Description", file.getFileName()); //$NON-NLS-1$
-        response.setHeader("Cache-Control", "private, max-age=0, must-revalidate"); 
-        response.setHeader("Content-Size", String.valueOf(bytes.length));
-      }
-      if (log.isDebugEnabled())
-      {
-        log.debug(Messages.getString("ReportPlugin.logEndGenerateContent", String.valueOf(bytes.length)));//$NON-NLS-1$
-      }
+        if (log.isDebugEnabled()) {
+          log.debug(Messages.getString("ReportPlugin.logEndGenerateContent", String.valueOf(bytes.length)));//$NON-NLS-1$
+        }
 
-      outputStream.write(bytes);
-      outputStream.flush();
-    }
-    else
-    {
-      if (parameterProviders.get("path") != null &&
-          parameterProviders.get("path").getParameter("httpresponse") != null) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-      {
-        final HttpServletResponse response = (HttpServletResponse) parameterProviders.get("path").getParameter("httpresponse"); //$NON-NLS-1$ //$NON-NLS-2$
-        response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        outputStream.write(bytes);
+        outputStream.flush();
+      } else {
+        if (parameterProviders.get("path") != null && parameterProviders.get("path").getParameter("httpresponse") != null) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        {
+          final HttpServletResponse response = (HttpServletResponse) parameterProviders.get("path").getParameter("httpresponse"); //$NON-NLS-1$ //$NON-NLS-2$
+          response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        }
+        if (log.isDebugEnabled()) {
+          log.debug(Messages.getString("ReportPlugin.logErrorGenerateContent"));//$NON-NLS-1$
+        }
+        outputStream.write(org.pentaho.reporting.platform.plugin.messages.Messages.getString("ReportPlugin.ReportValidationFailed").getBytes()); //$NON-NLS-1$
+        outputStream.flush();
       }
-      if (log.isDebugEnabled())
-      {
-        log.debug(Messages.getString("ReportPlugin.logErrorGenerateContent"));//$NON-NLS-1$
-      }
-      outputStream.write(org.pentaho.reporting.platform.plugin.messages.Messages.getString("ReportPlugin.ReportValidationFailed").getBytes()); //$NON-NLS-1$
-      outputStream.flush();
+    } catch (Exception ex) {
+      result = MessageTypes.INSTANCE_FAILED;
+      throw ex;
+    } finally {
+      final long end = System.currentTimeMillis();
+      AuditHelper.audit(userSession.getId(), userSession.getName(), reportDefinitionPath, getObjectName(), getClass().getName(), result, instanceId,
+          "", ((float) (end - start) / 1000), this); //$NON-NLS-1$
     }
   }
 
-  private void createParameterContent(final OutputStream outputStream,
-                                      final String reportDefinitionPath,
-                                      final IParameterProvider requestParams,
-                                      final Map<String, Object> inputs)
-      throws Exception
-  {
+  private void createParameterContent(final OutputStream outputStream, final String reportDefinitionPath, final IParameterProvider requestParams,
+      final Map<String, Object> inputs) throws Exception {
     final boolean subscribe = "true".equals(requestParams.getStringParameter("subscribe", "false")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     // handle parameter feedback (XML) services
     final Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
     final Element parameters = document.createElement("parameters"); //$NON-NLS-1$
     document.appendChild(parameters);
 
-    if (reportComponent == null)
-    {
+    if (reportComponent == null) {
       reportComponent = new SimpleReportingComponent();
     }
     reportComponent.setSession(userSession);
@@ -276,23 +240,18 @@ public class ReportContentGenerator extends SimpleContentGenerator
     final ReportParameterDefinition reportParameterDefinition = report.getParameterDefinition();
 
     final ParameterDefinitionEntry[] parameterDefinitions = reportParameterDefinition.getParameterDefinitions();
-    for (final ParameterDefinitionEntry parameter : parameterDefinitions)
-    {
-      final String hiddenVal = parameter.getParameterAttribute
-          (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.HIDDEN, parameterContext);
-      if ("true".equals(hiddenVal))
-      {
+    for (final ParameterDefinitionEntry parameter : parameterDefinitions) {
+      final String hiddenVal = parameter.getParameterAttribute(ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.HIDDEN, parameterContext);
+      if ("true".equals(hiddenVal)) {
         continue;
       }
 
-      final Element parameterElement =
-          createParameterElement(subscribe, inputs, document, parameterContext, parameter);
+      final Element parameterElement = createParameterElement(subscribe, inputs, document, parameterContext, parameter);
 
       parameters.appendChild(parameterElement);
     }
 
-    final ValidationResult vr = reportParameterDefinition.getValidator().validate
-        (validationResult, reportParameterDefinition, parameterContext);
+    final ValidationResult vr = reportParameterDefinition.getValidator().validate(validationResult, reportParameterDefinition, parameterContext);
     parameters.setAttribute("is-prompt-needed", "" + !vr.isEmpty()); //$NON-NLS-1$ //$NON-NLS-2$
     parameters.setAttribute("subscribe", "" + subscribe); //$NON-NLS-1$ //$NON-NLS-2$
 
@@ -315,23 +274,18 @@ public class ReportContentGenerator extends SimpleContentGenerator
       reportComponent.setAcceptedPage(-1);
 
       // we can ONLY get the # of pages by asking the report to run
-      if (reportComponent.isPaginateOutput() && reportComponent.validate())
-      {
+      if (reportComponent.isPaginateOutput() && reportComponent.validate()) {
         reportComponent.execute();
         parameters.setAttribute(SimpleReportingComponent.PAGINATE_OUTPUT, "true"); //$NON-NLS-1$
         parameters.setAttribute("page-count", String.valueOf(reportComponent.getPageCount())); //$NON-NLS-1$ //$NON-NLS-2$
         // use the saved value (we changed it to -1 for performance)
         parameters.setAttribute(SimpleReportingComponent.ACCEPTED_PAGE, "" + acceptedPage); //$NON-NLS-1$
       }
-    }
-    else if (vr.isEmpty() == false)
-    {
+    } else if (vr.isEmpty() == false) {
       final Element errors = document.createElement("errors"); //$NON-NLS-1$
       parameters.appendChild(errors);
-      for (final String property : vr.getProperties())
-      {
-        for (final ValidationMessage message : vr.getErrors(property))
-        {
+      for (final String property : vr.getProperties()) {
+        for (final ValidationMessage message : vr.getErrors(property)) {
           final Element error = document.createElement("error"); //$NON-NLS-1$
           error.setAttribute("parameter", property);
           error.setAttribute("message", message.getMessage());
@@ -339,8 +293,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
         }
       }
       final ValidationMessage[] globalMessages = vr.getErrors();
-      for (int i = 0; i < globalMessages.length; i++)
-      {
+      for (int i = 0; i < globalMessages.length; i++) {
         final ValidationMessage globalMessage = globalMessages[i];
         final Element error = document.createElement("global-error"); //$NON-NLS-1$
         error.setAttribute("message", globalMessage.getMessage());
@@ -349,30 +302,21 @@ public class ReportContentGenerator extends SimpleContentGenerator
     }
 
     final String autoSubmitStr = requestParams.getStringParameter("autoSubmit", null);
-    if ("true".equals(autoSubmitStr))
-    {
+    if ("true".equals(autoSubmitStr)) {
       parameters.setAttribute("autoSubmit", "true");
-    }
-    else if ("false".equals(autoSubmitStr))
-    {
+    } else if ("false".equals(autoSubmitStr)) {
       parameters.setAttribute("autoSubmit", "false");
-    }
-    else
-    {
+    } else {
       final Object o = report.getAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.AUTO_SUBMIT_PARAMETER);
-      if(Boolean.TRUE.equals(o))
-      {
+      if (Boolean.TRUE.equals(o)) {
         parameters.setAttribute("autoSubmit", "true");
-      }
-      else if(Boolean.FALSE.equals(o))
-      {
+      } else if (Boolean.FALSE.equals(o)) {
         parameters.setAttribute("autoSubmit", "false");
       }
     }
 
     // if we're going to attempt to handle subscriptions, add related choices as a parameter
-    if (subscribe)
-    {
+    if (subscribe) {
       // add subscription choices, as a parameter (last in list)
       addSubscriptionParameter(reportDefinitionPath, parameters, inputs);
     }
@@ -382,13 +326,9 @@ public class ReportContentGenerator extends SimpleContentGenerator
     parameterContext.close();
   }
 
-  private void createSubscribeContent(final OutputStream outputStream,
-                                      final String reportDefinitionPath,
-                                      final IParameterProvider requestParams)
-      throws ResourceException, IOException
-  {
-    if (reportComponent == null)
-    {
+  private void createSubscribeContent(final OutputStream outputStream, final String reportDefinitionPath, final IParameterProvider requestParams)
+      throws ResourceException, IOException {
+    if (reportComponent == null) {
       reportComponent = new SimpleReportingComponent();
     }
     reportComponent.setSession(userSession);
@@ -400,9 +340,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
     outputStream.flush();
   }
 
-  private void createDownloadContent(final OutputStream outputStream, final String reportDefinitionPath)
-      throws IOException
-  {
+  private void createDownloadContent(final OutputStream outputStream, final String reportDefinitionPath) throws IOException {
     final ISolutionRepository repository = PentahoSystem.get(ISolutionRepository.class, userSession);
     final ISolutionFile file = repository.getSolutionFile(reportDefinitionPath, ISolutionRepository.ACTION_CREATE);
     final HttpServletResponse response = (HttpServletResponse) parameterProviders.get("path").getParameter("httpresponse"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -410,86 +348,61 @@ public class ReportContentGenerator extends SimpleContentGenerator
     // if the user has PERM_CREATE, we'll allow them to pull it for now, this is as relaxed
     // as I am comfortable with but I can imagine a PERM_READ or PERM_EXECUTE being used
     // in the future
-    if (file.isDirectory() == false && file.isRoot() == false &&
-        repository.hasAccess(file, ISolutionRepository.ACTION_CREATE) ||
-        repository.hasAccess(file, ISolutionRepository.ACTION_UPDATE))
-    {
+    if (file.isDirectory() == false && file.isRoot() == false && repository.hasAccess(file, ISolutionRepository.ACTION_CREATE)
+        || repository.hasAccess(file, ISolutionRepository.ACTION_UPDATE)) {
       final byte[] data = file.getData();
-      if (data == null)
-      {
+      if (data == null) {
         response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-      }
-      else
-      {
+      } else {
         response.setHeader("Content-Disposition", "attach; filename=\"" + file.getFileName() + "\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         response.setHeader("Content-Description", file.getFileName()); //$NON-NLS-1$
         response.setDateHeader("Last-Modified", file.getLastModified()); //$NON-NLS-1$
         response.setContentLength(data.length); //$NON-NLS-1$
-        response.setHeader("Cache-Control", "private, max-age=0, must-revalidate");        
+        response.setHeader("Cache-Control", "private, max-age=0, must-revalidate");
         outputStream.write(data);
       }
-    }
-    else
-    {
+    } else {
       response.setStatus(HttpServletResponse.SC_FORBIDDEN);
     }
   }
 
-  private Element createParameterElement(final boolean subscribe,
-                                         final Map<String,Object> inputs,
-                                         final Document document,
-                                         final ParameterContext parameterContext,
-                                         final ParameterDefinitionEntry parameter)
-      throws BeanException, ReportDataFactoryException
-  {
+  private Element createParameterElement(final boolean subscribe, final Map<String, Object> inputs, final Document document,
+      final ParameterContext parameterContext, final ParameterDefinitionEntry parameter) throws BeanException, ReportDataFactoryException {
     final Element parameterElement = document.createElement("parameter"); //$NON-NLS-1$
     parameterElement.setAttribute("name", parameter.getName()); //$NON-NLS-1$
     parameterElement.setAttribute("parameter-group", "parameters"); //$NON-NLS-1$ //$NON-NLS-2$
-    if (subscribe)
-    {
-      parameterElement.setAttribute("parameter-group-label",
-          org.pentaho.reporting.platform.plugin.messages.Messages.getString("ReportPlugin.ReportParameters")); //$NON-NLS-1$ //$NON-NLS-2$
+    if (subscribe) {
+      parameterElement
+          .setAttribute("parameter-group-label", org.pentaho.reporting.platform.plugin.messages.Messages.getString("ReportPlugin.ReportParameters")); //$NON-NLS-1$ //$NON-NLS-2$
     }
     parameterElement.setAttribute("type", parameter.getValueType().getName()); //$NON-NLS-1$
     parameterElement.setAttribute("is-mandatory", "" + parameter.isMandatory()); //$NON-NLS-1$ //$NON-NLS-2$
 
     final Object defaultValue = parameter.getDefaultValue(parameterContext);
     final Class declaredValueType = parameter.getValueType();
-    if (defaultValue != null)
-    {
-      if (declaredValueType.isArray())
-      {
-        if (defaultValue.getClass().isArray())
-        {
+    if (defaultValue != null) {
+      if (declaredValueType.isArray()) {
+        if (defaultValue.getClass().isArray()) {
           final int length = Array.getLength(defaultValue);
-          for (int i = 0; i < length; i++)
-          {
+          for (int i = 0; i < length; i++) {
             final Element defaultValueElement = document.createElement("default-value"); //$NON-NLS-1$
             parameterElement.appendChild(defaultValueElement);
-            defaultValueElement.setAttribute("value",
-                convertParameterValueToString(Array.get(defaultValue, i), declaredValueType.getComponentType())); //$NON-NLS-1$
+            defaultValueElement.setAttribute("value", convertParameterValueToString(Array.get(defaultValue, i), declaredValueType.getComponentType())); //$NON-NLS-1$
           }
-        }
-        else
-        {
+        } else {
           final Element defaultValueElement = document.createElement("default-value"); //$NON-NLS-1$
           parameterElement.appendChild(defaultValueElement);
-          defaultValueElement.setAttribute("value",
-              convertParameterValueToString(defaultValue, declaredValueType.getComponentType())); //$NON-NLS-1$
+          defaultValueElement.setAttribute("value", convertParameterValueToString(defaultValue, declaredValueType.getComponentType())); //$NON-NLS-1$
         }
-      }
-      else
-      {
+      } else {
         final Element defaultValueElement = document.createElement("default-value"); //$NON-NLS-1$
         parameterElement.appendChild(defaultValueElement);
-        defaultValueElement.setAttribute("value",
-            convertParameterValueToString(defaultValue, declaredValueType)); //$NON-NLS-1$
+        defaultValueElement.setAttribute("value", convertParameterValueToString(defaultValue, declaredValueType)); //$NON-NLS-1$
       }
     }
 
     final String[] attributeNames = parameter.getParameterAttributeNames(ParameterAttributeNames.Core.NAMESPACE);
-    for (final String attributeName : attributeNames)
-    {
+    for (final String attributeName : attributeNames) {
       final String attributeValue = parameter.getParameterAttribute(ParameterAttributeNames.Core.NAMESPACE, attributeName, parameterContext);
       // expecting: label, parameter-render-type, parameter-layout
       // but others possible as well, so we set them all
@@ -497,32 +410,26 @@ public class ReportContentGenerator extends SimpleContentGenerator
     }
 
     final Object selections = inputs.get(parameter.getName());
-    if (selections != null)
-    {
+    if (selections != null) {
       final Element selectionsElement = document.createElement("selections"); //$NON-NLS-1$
       parameterElement.appendChild(selectionsElement);
 
-      if (selections.getClass().isArray())
-      {
+      if (selections.getClass().isArray()) {
         final int length = Array.getLength(selections);
-        for (int i = 0; i < length; i++)
-        {
+        for (int i = 0; i < length; i++) {
           final Object value = Array.get(selections, i);
           final Element selectionElement = document.createElement("selection"); //$NON-NLS-1$
           selectionElement.setAttribute("value", String.valueOf(value)); //$NON-NLS-1$
           selectionsElement.appendChild(selectionElement);
         }
-      }
-      else
-      {
+      } else {
         final Element selectionElement = document.createElement("selection"); //$NON-NLS-1$
         selectionElement.setAttribute("value", String.valueOf(selections)); //$NON-NLS-1$
         selectionsElement.appendChild(selectionElement);
       }
     }
 
-    if (parameter instanceof ListParameter)
-    {
+    if (parameter instanceof ListParameter) {
       final ListParameter asListParam = (ListParameter) parameter;
       parameterElement.setAttribute("is-multi-select", "" + asListParam.isAllowMultiSelection()); //$NON-NLS-1$ //$NON-NLS-2$
       parameterElement.setAttribute("is-strict", "" + asListParam.isStrictValueCheck()); //$NON-NLS-1$ //$NON-NLS-2$
@@ -531,8 +438,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
       parameterElement.appendChild(valuesElement);
 
       final ParameterValues possibleValues = asListParam.getValues(parameterContext);
-      for (int i = 0; i < possibleValues.getRowCount(); i++)
-      {
+      for (int i = 0; i < possibleValues.getRowCount(); i++) {
         final Object key = possibleValues.getKeyValue(i);
         final Object value = possibleValues.getTextValue(i);
 
@@ -540,26 +446,19 @@ public class ReportContentGenerator extends SimpleContentGenerator
         valuesElement.appendChild(valueElement);
 
         // set
-        if (key != null && value != null)
-        {
+        if (key != null && value != null) {
           valueElement.setAttribute("label", String.valueOf(value)); //$NON-NLS-1$ //$NON-NLS-2$
-          if (asListParam.isAllowMultiSelection() &&
-              parameter.getValueType().isArray())
-          {
+          if (asListParam.isAllowMultiSelection() && parameter.getValueType().isArray()) {
             valueElement.setAttribute("value", convertParameterValueToString//$NON-NLS-1$
                 (key, parameter.getValueType().getComponentType()));
             valueElement.setAttribute("type", parameter.getValueType().getComponentType().getName()); //$NON-NLS-1$
-          }
-          else
-          {
+          } else {
             valueElement.setAttribute("value", convertParameterValueToString(key, parameter.getValueType())); //$NON-NLS-1$ //$NON-NLS-2$
             valueElement.setAttribute("type", parameter.getValueType().getName()); //$NON-NLS-1$
           }
         }
       }
-    }
-    else if (parameter instanceof PlainParameter)
-    {
+    } else if (parameter instanceof PlainParameter) {
       // apply defaults, this is the easy case
       parameterElement.setAttribute("is-multi-select", "false"); //$NON-NLS-1$ //$NON-NLS-2$
       parameterElement.setAttribute("is-strict", "false"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -567,42 +466,34 @@ public class ReportContentGenerator extends SimpleContentGenerator
     return parameterElement;
   }
 
-  private String convertParameterValueToString(final Object value, final Class type) throws BeanException
-  {
-    if (value == null)
-    {
+  private String convertParameterValueToString(final Object value, final Class type) throws BeanException {
+    if (value == null) {
       return null;
     }
 
     final ValueConverter valueConverter = ConverterRegistry.getInstance().getValueConverter(type);
-    if (valueConverter == null)
-    {
+    if (valueConverter == null) {
       return String.valueOf(value);
     }
-    if (Date.class.isAssignableFrom(type))
-    {
-      if (value instanceof Date == false)
-      {
+    if (Date.class.isAssignableFrom(type)) {
+      if (value instanceof Date == false) {
         throw new BeanException(Messages.getErrorString("ReportPlugin.errorNonDateParameterValue"));
       }
       final Date d = (Date) value;
       final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
       return dateFormat.format(d);
     }
-    if (Number.class.isAssignableFrom(type))
-    {
+    if (Number.class.isAssignableFrom(type)) {
       final ValueConverter numConverter = ConverterRegistry.getInstance().getValueConverter(BigDecimal.class);
       return numConverter.toAttributeValue(new BigDecimal(String.valueOf(value)));
     }
     return valueConverter.toAttributeValue(value);
   }
 
-  private ISubscription getSubscription()
-  {
+  private ISubscription getSubscription() {
     ISubscription subscription = null;
     final String subscriptionId = getRequestParameters().getStringParameter("subscription-id", null); //$NON-NLS-1$
-    if (!StringUtils.isEmpty(subscriptionId))
-    {
+    if (!StringUtils.isEmpty(subscriptionId)) {
       final ISubscriptionRepository subscriptionRepository = PentahoSystem.get(ISubscriptionRepository.class, userSession);
       subscription = subscriptionRepository.getSubscription(subscriptionId, userSession);
     }
@@ -611,16 +502,14 @@ public class ReportContentGenerator extends SimpleContentGenerator
 
   /**
    * Safely get our request parameters, while respecting any parameters hooked up to a subscription
-   *
+   * 
    * @return IParameterProvider the provider of parameters
    */
-  private IParameterProvider getRequestParameters()
-  {
+  private IParameterProvider getRequestParameters() {
     IParameterProvider requestParams = parameterProviders.get(IParameterProvider.SCOPE_REQUEST);
 
     final String subscriptionId = requestParams.getStringParameter("subscription-id", null); //$NON-NLS-1$
-    if (!StringUtils.isEmpty(subscriptionId))
-    {
+    if (!StringUtils.isEmpty(subscriptionId)) {
       final ISubscriptionRepository subscriptionRepository = PentahoSystem.get(ISubscriptionRepository.class, userSession);
       final ISubscription subscription = subscriptionRepository.getSubscription(subscriptionId, userSession);
       final ISubscribeContent content = subscription.getContent();
@@ -639,8 +528,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
 
       // add all parameters that were on the url, if any, they will override subscription (editing)
       final Iterator requestParamIterator = requestParams.getParameterNames();
-      while (requestParamIterator.hasNext())
-      {
+      while (requestParamIterator.hasNext()) {
         final String param = (String) requestParamIterator.next();
         parameters.setParameter(param, requestParams.getParameter(param));
       }
@@ -650,14 +538,10 @@ public class ReportContentGenerator extends SimpleContentGenerator
     return requestParams;
   }
 
-  private String saveSubscription(final IParameterProvider parameterProvider,
-                                  final ParameterDefinitionEntry parameterDefinitions[],
-                                  final String actionReference,
-                                  final IPentahoSession userSession)
-  {
+  private String saveSubscription(final IParameterProvider parameterProvider, final ParameterDefinitionEntry parameterDefinitions[],
+      final String actionReference, final IPentahoSession userSession) {
 
-    if ((userSession == null) || (userSession.getName() == null))
-    {
+    if ((userSession == null) || (userSession.getName() == null)) {
       return Messages.getString("SubscriptionHelper.USER_LOGIN_NEEDED"); //$NON-NLS-1$
     }
 
@@ -666,43 +550,35 @@ public class ReportContentGenerator extends SimpleContentGenerator
     final ISubscriptionRepository subscriptionRepository = PentahoSystem.get(ISubscriptionRepository.class, userSession);
 
     ISubscription subscription = getSubscription();
-    if (subscription == null)
-    {
+    if (subscription == null) {
       final boolean isUniqueName = subscriptionRepository.checkUniqueSubscriptionName(subscriptionName, userSession.getName(), actionReference);
-      if (!isUniqueName)
-      {
+      if (!isUniqueName) {
         return Messages.getString("SubscriptionHelper.USER_SUBSCRIPTION_NAME_ALREADY_EXISTS", subscriptionName); //$NON-NLS-1$
       }
     }
 
     final ISubscribeContent content = subscriptionRepository.getContentByActionReference(actionReference);
-    if (content == null)
-    {
+    if (content == null) {
       return (Messages.getString("SubscriptionHelper.ACTION_SEQUENCE_NOT_ALLOWED", parameterProvider.getStringParameter("name", ""))); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     }
 
     final HashMap<String, Object> parameters = new HashMap<String, Object>();
 
-    for (final ParameterDefinitionEntry parameter : parameterDefinitions)
-    {
+    for (final ParameterDefinitionEntry parameter : parameterDefinitions) {
       final String parameterName = parameter.getName();
       final Object parameterValue = parameterProvider.getParameter(parameterName);
-      if (parameterValue != null)
-      {
+      if (parameterValue != null) {
         parameters.put(parameterName, parameterValue);
       }
     }
     parameters.put(SimpleReportingComponent.OUTPUT_TYPE, parameterProvider.getParameter(SimpleReportingComponent.OUTPUT_TYPE));
 
     final String destination = (String) parameterProvider.getParameter("destination"); //$NON-NLS-1$
-    if (subscription == null)
-    {
+    if (subscription == null) {
       // create a new subscription
       final String subscriptionId = UUIDUtil.getUUIDAsString();
       subscription = new Subscription(subscriptionId, userSession.getName(), subscriptionName, content, destination, Subscription.TYPE_PERSONAL, parameters);
-    }
-    else
-    {
+    } else {
       subscription.setTitle(subscriptionName);
       subscription.setDestination(destination);
       subscription.getParameters().clear();
@@ -712,32 +588,24 @@ public class ReportContentGenerator extends SimpleContentGenerator
 
     // now add the schedules
     final List schedules = subscriptionRepository.getSchedules();
-    for (int i = 0; i < schedules.size(); i++)
-    {
+    for (int i = 0; i < schedules.size(); i++) {
       final ISchedule schedule = (ISchedule) schedules.get(i);
       final String scheduleId = schedule.getId();
       final String scheduleIdParam = (String) parameterProvider.getParameter("schedule-id"); //$NON-NLS-1$
-      if (scheduleId.equals(scheduleIdParam))
-      { //$NON-NLS-1$
+      if (scheduleId.equals(scheduleIdParam)) { //$NON-NLS-1$
         subscription.addSchedule(schedule);
       }
     }
 
-    if (subscriptionRepository.addSubscription(subscription))
-    {
+    if (subscriptionRepository.addSubscription(subscription)) {
       return Messages.getString("SubscriptionHelper.USER_SUBSCRIPTION_CREATED"); //$NON-NLS-1$
-    }
-    else
-    {
+    } else {
       // TODO log an error
       return Messages.getString("SubscriptionHelper.USER_SUBSCRIPTION_NOT_CREATE"); //$NON-NLS-1$
     }
   }
 
-  private void addSubscriptionParameter(final String reportDefinitionPath,
-                                        final Element parameters,
-                                        final Map<String, Object> inputs)
-  {
+  private void addSubscriptionParameter(final String reportDefinitionPath, final Element parameters, final Map<String, Object> inputs) {
     final ISubscription subscription = getSubscription();
 
     final Document document = parameters.getOwnerDocument();
@@ -747,7 +615,8 @@ public class ReportContentGenerator extends SimpleContentGenerator
     reportNameParameter.setAttribute("name", "subscription-name"); //$NON-NLS-1$ //$NON-NLS-2$
     reportNameParameter.setAttribute("label", org.pentaho.reporting.platform.plugin.messages.Messages.getString("ReportPlugin.ReportName")); //$NON-NLS-1$ //$NON-NLS-2$
     reportNameParameter.setAttribute("parameter-group", "subscription"); //$NON-NLS-1$ //$NON-NLS-2$
-    reportNameParameter.setAttribute("parameter-group-label", org.pentaho.reporting.platform.plugin.messages.Messages.getString("ReportPlugin.ReportSchedulingOptions")); //$NON-NLS-1$ //$NON-NLS-2$
+    reportNameParameter.setAttribute(
+        "parameter-group-label", org.pentaho.reporting.platform.plugin.messages.Messages.getString("ReportPlugin.ReportSchedulingOptions")); //$NON-NLS-1$ //$NON-NLS-2$
     reportNameParameter.setAttribute("type", "java.lang.String"); //$NON-NLS-1$ //$NON-NLS-2$
     reportNameParameter.setAttribute("is-mandatory", "true"); //$NON-NLS-1$ //$NON-NLS-2$
     reportNameParameter.setAttribute("is-multi-select", "false"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -755,13 +624,11 @@ public class ReportContentGenerator extends SimpleContentGenerator
     reportNameParameter.setAttribute("parameter-render-type", "textbox"); //$NON-NLS-1$ //$NON-NLS-2$
 
     Object reportNameSelection = inputs.get("subscription-name"); //$NON-NLS-1$
-    if (reportNameSelection == null && subscription != null)
-    {
+    if (reportNameSelection == null && subscription != null) {
       // subscription helper will populate with this value, grr.
       reportNameSelection = subscription.getTitle();
     }
-    if (reportNameSelection != null)
-    {
+    if (reportNameSelection != null) {
       final Element selectionsElement = document.createElement("selections"); //$NON-NLS-1$
       reportNameParameter.appendChild(selectionsElement);
       final Element selectionElement = document.createElement("selection"); //$NON-NLS-1$
@@ -770,8 +637,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
     }
 
     final String email = PentahoSystem.getSystemSetting("smtp-email/email_config.xml", "mail.userid", "");
-    if (StringUtils.isEmpty(email) == false)
-    {
+    if (StringUtils.isEmpty(email) == false) {
 
       // create email destination parameter
       final Element emailParameter = document.createElement("parameter"); //$NON-NLS-1$
@@ -779,7 +645,8 @@ public class ReportContentGenerator extends SimpleContentGenerator
       emailParameter.setAttribute("name", "destination"); //$NON-NLS-1$ //$NON-NLS-2$
       emailParameter.setAttribute("label", org.pentaho.reporting.platform.plugin.messages.Messages.getString("ReportPlugin.Destination")); //$NON-NLS-1$ //$NON-NLS-2$
       emailParameter.setAttribute("parameter-group", "subscription"); //$NON-NLS-1$ //$NON-NLS-2$
-      emailParameter.setAttribute("parameter-group-label", org.pentaho.reporting.platform.plugin.messages.Messages.getString("ReportPlugin.ReportSchedulingOptions")); //$NON-NLS-1$ //$NON-NLS-2$
+      emailParameter.setAttribute(
+          "parameter-group-label", org.pentaho.reporting.platform.plugin.messages.Messages.getString("ReportPlugin.ReportSchedulingOptions")); //$NON-NLS-1$ //$NON-NLS-2$
       emailParameter.setAttribute("type", "java.lang.String"); //$NON-NLS-1$ //$NON-NLS-2$
       emailParameter.setAttribute("is-mandatory", "false"); //$NON-NLS-1$ //$NON-NLS-2$
       emailParameter.setAttribute("is-multi-select", "false"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -787,12 +654,10 @@ public class ReportContentGenerator extends SimpleContentGenerator
       emailParameter.setAttribute("parameter-render-type", "textbox"); //$NON-NLS-1$ //$NON-NLS-2$
 
       Object destinationSelection = inputs.get("destination");
-      if (destinationSelection == null && subscription != null)
-      {
+      if (destinationSelection == null && subscription != null) {
         destinationSelection = subscription.getTitle();
       }
-      if (destinationSelection != null)
-      {
+      if (destinationSelection != null) {
         final Element selectionsElement = document.createElement("selections"); //$NON-NLS-1$
         emailParameter.appendChild(selectionsElement);
         final Element selectionElement = document.createElement("selection"); //$NON-NLS-1$
@@ -810,7 +675,8 @@ public class ReportContentGenerator extends SimpleContentGenerator
     subscriptionIdElement.setAttribute("name", "schedule-id"); //$NON-NLS-1$ //$NON-NLS-2$
     subscriptionIdElement.setAttribute("label", org.pentaho.reporting.platform.plugin.messages.Messages.getString("ReportPlugin.Subscription")); //$NON-NLS-1$ //$NON-NLS-2$
     subscriptionIdElement.setAttribute("parameter-group", "subscription"); //$NON-NLS-1$ //$NON-NLS-2$
-    subscriptionIdElement.setAttribute("parameter-group-label", org.pentaho.reporting.platform.plugin.messages.Messages.getString("ReportPlugin.ScheduleReport")); //$NON-NLS-1$ //$NON-NLS-2$
+    subscriptionIdElement.setAttribute(
+        "parameter-group-label", org.pentaho.reporting.platform.plugin.messages.Messages.getString("ReportPlugin.ScheduleReport")); //$NON-NLS-1$ //$NON-NLS-2$
     subscriptionIdElement.setAttribute("type", "java.lang.String"); //$NON-NLS-1$ //$NON-NLS-2$
     subscriptionIdElement.setAttribute("is-mandatory", "true"); //$NON-NLS-1$ //$NON-NLS-2$
     subscriptionIdElement.setAttribute("is-multi-select", "false"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -820,8 +686,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
     final Element valuesElement = document.createElement("value-choices"); //$NON-NLS-1$
     subscriptionIdElement.appendChild(valuesElement);
 
-    for (final ISchedule schedule : subscribeContent.getSchedules())
-    {
+    for (final ISchedule schedule : subscribeContent.getSchedules()) {
       final Element valueElement = document.createElement("value-choice"); //$NON-NLS-1$
       valuesElement.appendChild(valueElement);
       valueElement.setAttribute("label", schedule.getTitle()); //$NON-NLS-1$
@@ -834,8 +699,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
     subscriptionIdElement.appendChild(selectionsElement);
 
     final Object scheduleIdSelection = inputs.get("schedule-id"); //$NON-NLS-1$
-    if (scheduleIdSelection != null)
-    {
+    if (scheduleIdSelection != null) {
       final Element selectionElement = document.createElement("selection"); //$NON-NLS-1$
       selectionElement.setAttribute("value", scheduleIdSelection.toString()); //$NON-NLS-1$
       selectionsElement.appendChild(selectionElement);
@@ -843,13 +707,10 @@ public class ReportContentGenerator extends SimpleContentGenerator
 
     // if the user hasn't picked a schedule (to change this subscription to), and we
     // have a subscription active, get the schedules on it and add those
-    if (scheduleIdSelection == null)
-    {
-      if (subscription != null)
-      {
+    if (scheduleIdSelection == null) {
+      if (subscription != null) {
         final List<ISchedule> schedules = subscription.getSchedules();
-        for (final ISchedule schedule : schedules)
-        {
+        for (final ISchedule schedule : schedules) {
           final Element selectionElement = document.createElement("selection"); //$NON-NLS-1$
           selectionElement.setAttribute("value", schedule.getId()); //$NON-NLS-1$
           selectionsElement.appendChild(selectionElement);
@@ -858,11 +719,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
     }
   }
 
-  private void addOutputParameter(final MasterReport report,
-                                  final Element parameters,
-                                  final Map<String, Object> inputs,
-                                  final boolean subscribe)
-  {
+  private void addOutputParameter(final MasterReport report, final Element parameters, final Map<String, Object> inputs, final boolean subscribe) {
     final Object lockOutputTypeObj = report.getAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.LOCK_PREFERRED_OUTPUT_TYPE);
     if (Boolean.TRUE.equals(lockOutputTypeObj)) //$NON-NLS-1$
     {
@@ -876,9 +733,9 @@ public class ReportContentGenerator extends SimpleContentGenerator
     parameterOutputElement.setAttribute("name", SimpleReportingComponent.OUTPUT_TYPE); //$NON-NLS-1$
     parameterOutputElement.setAttribute("label", org.pentaho.reporting.platform.plugin.messages.Messages.getString("ReportPlugin.OutputType")); //$NON-NLS-1$ //$NON-NLS-2$
     parameterOutputElement.setAttribute("parameter-group", "parameters"); //$NON-NLS-1$ //$NON-NLS-2$
-    if (subscribe)
-    {
-      parameterOutputElement.setAttribute("parameter-group-label", org.pentaho.reporting.platform.plugin.messages.Messages.getString("ReportPlugin.ReportParameters")); //$NON-NLS-1$ //$NON-NLS-2$
+    if (subscribe) {
+      parameterOutputElement.setAttribute(
+          "parameter-group-label", org.pentaho.reporting.platform.plugin.messages.Messages.getString("ReportPlugin.ReportParameters")); //$NON-NLS-1$ //$NON-NLS-2$
     }
     parameterOutputElement.setAttribute("type", "java.lang.String"); //$NON-NLS-1$ //$NON-NLS-2$
     parameterOutputElement.setAttribute("is-mandatory", "true"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -926,20 +783,16 @@ public class ReportContentGenerator extends SimpleContentGenerator
     txtValueElement.setAttribute("type", "java.lang.String"); //$NON-NLS-1$ //$NON-NLS-2$
 
     final Object selections = inputs.get(SimpleReportingComponent.OUTPUT_TYPE);
-    if (selections != null)
-    {
+    if (selections != null) {
       final Element selectionsElement = document.createElement("selections"); //$NON-NLS-1$
       parameterOutputElement.appendChild(selectionsElement);
       final Element selectionElement = document.createElement("selection"); //$NON-NLS-1$
       selectionElement.setAttribute("value", selections.toString()); //$NON-NLS-1$
       selectionsElement.appendChild(selectionElement);
-    }
-    else
-    {
+    } else {
       // use default, if available, from the report
       final String preferredOutputType = (String) report.getAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.PREFERRED_OUTPUT_TYPE);
-      if (!StringUtils.isEmpty(preferredOutputType))
-      {
+      if (!StringUtils.isEmpty(preferredOutputType)) {
         final Element selectionsElement = document.createElement("selections"); //$NON-NLS-1$
         parameterOutputElement.appendChild(selectionsElement);
         final Element selectionElement = document.createElement("selection"); //$NON-NLS-1$
@@ -949,8 +802,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
     }
   }
 
-  public String generateWrapperXaction()
-  {
+  public String generateWrapperXaction() {
     final IParameterProvider requestParams = parameterProviders.get(IParameterProvider.SCOPE_REQUEST);
 
     final String solution = requestParams.getStringParameter("solution", null); //$NON-NLS-1$
@@ -974,8 +826,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
     final IActionSequenceOutput output = actionSequenceDocument.createOutput("outputstream", "content"); //$NON-NLS-1$ //$NON-NLS-2$
     output.addDestination("response", "content"); //$NON-NLS-1$ //$NON-NLS-2$
 
-    try
-    {
+    try {
       // URI reportURI = new URI("solution:/" + actionInfo.getPath() + "/" + actionInfo.getActionName());
       // actionSequenceDocument.setResourceUri("reportDefinition", reportURI, "application/zip");
       final IActionSequenceInput reportDefinitionPathInput = actionSequenceDocument.createInput("report-definition-path", ActionSequenceDocument.STRING_TYPE); //$NON-NLS-1$
@@ -987,8 +838,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
       pojoComponent.addInput("report-definition-path", "string"); //$NON-NLS-1$ //$NON-NLS-2$
 
       // add all prpt inputs
-      if (reportComponent == null)
-      {
+      if (reportComponent == null) {
         reportComponent = new SimpleReportingComponent();
       }
       reportComponent.setSession(userSession);
@@ -997,21 +847,15 @@ public class ReportContentGenerator extends SimpleContentGenerator
       final MasterReport report = reportComponent.getReport();
       final ParameterDefinitionEntry[] parameterDefinitions = report.getParameterDefinition().getParameterDefinitions();
       final ParameterContext parameterContext = new DefaultParameterContext(report);
-      for (final ParameterDefinitionEntry parameter : parameterDefinitions)
-      {
+      for (final ParameterDefinitionEntry parameter : parameterDefinitions) {
         final Object defaultValue = parameter.getDefaultValue(parameterContext);
-        if (defaultValue != null)
-        {
+        if (defaultValue != null) {
           final IActionSequenceInput input = actionSequenceDocument.createInput(parameter.getName(), ActionSequenceDocument.STRING_TYPE);
           input.setDefaultValue(convertParameterValueToString(defaultValue, parameter.getValueType()));
-        }
-        else
-        {
+        } else {
           final Object paramValue = requestParams.getParameter(parameter.getName());
-          if (paramValue != null)
-          {
-            final IActionSequenceInput input =
-                actionSequenceDocument.createInput(parameter.getName(), ActionSequenceDocument.STRING_TYPE);
+          if (paramValue != null) {
+            final IActionSequenceInput input = actionSequenceDocument.createInput(parameter.getName(), ActionSequenceDocument.STRING_TYPE);
             input.setDefaultValue(convertParameterValueToString(paramValue, parameter.getValueType()));
           }
         }
@@ -1019,21 +863,17 @@ public class ReportContentGenerator extends SimpleContentGenerator
       }
       pojoComponent.addInput("outputType", "string"); //$NON-NLS-1$ //$NON-NLS-2$
 
-    }
-    catch (Exception e)
-    {
+    } catch (Exception e) {
       log.error(e.getMessage(), e);
     }
 
     return actionSequenceDocument.toString();
   }
 
-  private Map<String, Object> createInputs(final IParameterProvider requestParams)
-  {
+  private Map<String, Object> createInputs(final IParameterProvider requestParams) {
     final Map<String, Object> inputs = new HashMap<String, Object>();
     final Iterator paramIter = requestParams.getParameterNames();
-    while (paramIter.hasNext())
-    {
+    while (paramIter.hasNext()) {
       final String paramName = (String) paramIter.next();
       final Object paramValue = requestParams.getParameter(paramName);
       inputs.put(paramName, paramValue);
@@ -1041,25 +881,18 @@ public class ReportContentGenerator extends SimpleContentGenerator
     return inputs;
   }
 
-  public Log getLogger()
-  {
+  public Log getLogger() {
     return log;
   }
 
-  public String getMimeType()
-  {
+  public String getMimeType() {
     final IParameterProvider requestParams = getRequestParameters();
     final RENDER_TYPE renderMode = RENDER_TYPE.valueOf(requestParams.getStringParameter("renderMode", RENDER_TYPE.REPORT.toString()).toUpperCase()); //$NON-NLS-1$
-    if (renderMode.equals(RENDER_TYPE.XML))
-    {
+    if (renderMode.equals(RENDER_TYPE.XML)) {
       return "text/xml"; //$NON-NLS-1$
-    }
-    else if (renderMode.equals(RENDER_TYPE.SUBSCRIBE))
-    {
+    } else if (renderMode.equals(RENDER_TYPE.SUBSCRIBE)) {
       return SimpleReportingComponent.MIME_TYPE_HTML;
-    }
-    else if (renderMode.equals(RENDER_TYPE.DOWNLOAD))
-    {
+    } else if (renderMode.equals(RENDER_TYPE.DOWNLOAD)) {
       // perhaps we can invent our own mime-type or use application/zip?
       return "application/octet-stream"; //$NON-NLS-1$
     }
@@ -1069,8 +902,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
     final String name = requestParams.getStringParameter("name", requestParams.getStringParameter("action", null)); //$NON-NLS-1$ //$NON-NLS-2$
     final String reportDefinitionPath = ActionInfo.buildSolutionPath(solution, path, name);
 
-    if (reportComponent == null)
-    {
+    if (reportComponent == null) {
       reportComponent = new SimpleReportingComponent();
     }
 
