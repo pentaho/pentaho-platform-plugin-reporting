@@ -636,7 +636,7 @@ public class ReportContentGenerator extends SimpleContentGenerator {
       selectionsElement.appendChild(selectionElement);
     }
 
-    final String email = PentahoSystem.getSystemSetting("smtp-email/email_config.xml", "mail.userid", "");
+    final String email = PentahoSystem.getSystemSetting("smtp-email/email_config.xml", "mail.smtp.host", "");
     if (StringUtils.isEmpty(email) == false) {
 
       // create email destination parameter
