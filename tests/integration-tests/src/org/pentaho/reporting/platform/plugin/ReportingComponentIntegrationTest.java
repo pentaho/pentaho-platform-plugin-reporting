@@ -61,5 +61,19 @@ public class ReportingComponentIntegrationTest extends BaseTest {
     assertEquals(Messages.getString("BaseTest.USER_RUNNING_ACTION_SEQUENCE"), IRuntimeContext.RUNTIME_STATUS_SUCCESS, context.getStatus()); //$NON-NLS-1$
     finishTest();
   }
-  
+
+  public void testBiServer4250_pdf()
+  {
+    startTest();
+    SimpleParameterProvider parameterProvider = new SimpleParameterProvider();
+    parameterProvider.setParameter("outputType", "application/pdf"); //$NON-NLS-1$ //$NON-NLS-2$
+    OutputStream outputStream = getOutputStream("ReportingTest.testbiserver4250", ".pdf"); //$NON-NLS-1$ //$NON-NLS-2$
+    SimpleOutputHandler outputHandler = new SimpleOutputHandler(outputStream, true);
+    StandaloneSession session = new StandaloneSession(Messages.getString("BaseTest.DEBUG_JUNIT_SESSION")); //$NON-NLS-1$
+    IRuntimeContext context = run("test", "reporting", "biserver-4250.xaction", null, false, parameterProvider, outputHandler, session); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+    assertEquals(Messages.getString("BaseTest.USER_RUNNING_ACTION_SEQUENCE"), IRuntimeContext.RUNTIME_STATUS_SUCCESS, context.getStatus()); //$NON-NLS-1$
+    finishTest();
+  }
+
+
 }

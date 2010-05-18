@@ -24,5 +24,7 @@ PentahoSystem which is initialized after Spring
 
 
   <bean id="systemStartupSession" class="org.pentaho.platform.engine.security.session.TrustedSystemStartupSession" scope="prototype" />
+  <bean id="PentahoNameGenerator" class="org.pentaho.reporting.platform.plugin.repository.TempDirectoryNameGenerator" scope="prototype" />
+  <bean id="MondrianConnectionProvider" class="org.pentaho.reporting.platform.plugin.connection.PentahoMondrianConnectionProvider" scope="singleton" />
 
 </beans>
