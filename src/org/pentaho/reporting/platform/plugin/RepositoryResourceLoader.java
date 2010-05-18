@@ -154,13 +154,13 @@ public class RepositoryResourceLoader implements ResourceLoader
   public ResourceKey deserialize(final ResourceKey bundleKey, final String stringKey) throws ResourceKeyCreationException
   {
     // For now, we are just going to have to pass on this one
-    throw new ResourceKeyCreationException(Messages.getString("ReportPlugin.cannotDeserializeZipResourceKey")); //$NON-NLS-1$
+    throw new ResourceKeyCreationException(Messages.getInstance().getString("ReportPlugin.cannotDeserializeZipResourceKey")); //$NON-NLS-1$
   }
 
   public String serialize(final ResourceKey bundleKey, final ResourceKey key) throws ResourceException
   {
     // For now, we are just going to have to pass on this one
-    throw new ResourceKeyCreationException(Messages.getString("ReportPlugin.cannotSerializeZipResourceKey")); //$NON-NLS-1$
+    throw new ResourceKeyCreationException(Messages.getInstance().getString("ReportPlugin.cannotSerializeZipResourceKey")); //$NON-NLS-1$
   }
 
   public URL toURL(final ResourceKey key)
