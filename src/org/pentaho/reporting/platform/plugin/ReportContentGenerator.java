@@ -19,11 +19,6 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.pentaho.actionsequence.dom.ActionSequenceDocument;
-import org.pentaho.actionsequence.dom.IActionDefinition;
-import org.pentaho.actionsequence.dom.IActionSequenceInput;
-import org.pentaho.actionsequence.dom.IActionSequenceOutput;
-import org.pentaho.actionsequence.dom.actions.PojoAction;
 import org.pentaho.platform.api.engine.IParameterProvider;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.api.engine.ISolutionFile;
@@ -809,74 +804,6 @@ public class ReportContentGenerator extends SimpleContentGenerator {
         selectionsElement.appendChild(selectionElement);
       }
     }
-  }
-
-  public String generateWrapperXaction() {
-    final IParameterProvider requestParams = parameterProviders.get(IParameterProvider.SCOPE_REQUEST);
-
-    final String solution = requestParams.getStringParameter("solution", null); //$NON-NLS-1$
-    final String path = requestParams.getStringParameter("path", null); //$NON-NLS-1$
-    final String name = requestParams.getStringParameter("action", null); //$NON-NLS-1$
-
-    // sanitization
-    final String reportDefinitionPath = ActionInfo.buildSolutionPath(solution, path, name);
-    // final ActionInfo actionInfo = ActionInfo.parseActionString(reportDefinitionPath);
-
-    final ActionSequenceDocument actionSequenceDocument = new ActionSequenceDocument();
-    actionSequenceDocument.setTitle(reportDefinitionPath);
-    actionSequenceDocument.setVersion("1"); //$NON-NLS-1$
-    actionSequenceDocument.setAuthor("SolutionEngine"); //$NON-NLS-1$
-    actionSequenceDocument.setDescription(reportDefinitionPath);
-    actionSequenceDocument.setIconLocation("PentahoReporting.png"); //$NON-NLS-1$
-    actionSequenceDocument.setHelp(""); //$NON-NLS-1$
-    actionSequenceDocument.setResultType("report"); //$NON-NLS-1$
-    final IActionSequenceInput outputType = actionSequenceDocument.createInput("outputType", ActionSequenceDocument.STRING_TYPE); //$NON-NLS-1$
-    outputType.setDefaultValue("text/html"); //$NON-NLS-1$
-    final IActionSequenceOutput output = actionSequenceDocument.createOutput("outputstream", "content"); //$NON-NLS-1$ //$NON-NLS-2$
-    output.addDestination("response", "content"); //$NON-NLS-1$ //$NON-NLS-2$
-
-    try {
-      // URI reportURI = new URI("solution:/" + actionInfo.getPath() + "/" + actionInfo.getActionName());
-      // actionSequenceDocument.setResourceUri("reportDefinition", reportURI, "application/zip");
-      final IActionSequenceInput reportDefinitionPathInput = actionSequenceDocument.createInput("report-definition-path", ActionSequenceDocument.STRING_TYPE); //$NON-NLS-1$
-      reportDefinitionPathInput.setDefaultValue(reportDefinitionPath);
-
-      final IActionDefinition pojoComponent = actionSequenceDocument.addAction(PojoAction.class);
-      pojoComponent.setComponentDefinition("class", SimpleReportingComponent.class.getName()); //$NON-NLS-1$
-      pojoComponent.addOutput("outputstream", "content"); //$NON-NLS-1$ //$NON-NLS-2$
-      pojoComponent.addInput("report-definition-path", "string"); //$NON-NLS-1$ //$NON-NLS-2$
-
-      // add all prpt inputs
-      if (reportComponent == null) {
-        reportComponent = new SimpleReportingComponent();
-      }
-      reportComponent.setSession(userSession);
-      reportComponent.setReportDefinitionPath(reportDefinitionPath);
-      reportComponent.setInputs(createInputs(requestParams));
-      final MasterReport report = reportComponent.getReport();
-      final ParameterDefinitionEntry[] parameterDefinitions = report.getParameterDefinition().getParameterDefinitions();
-      final ParameterContext parameterContext = new DefaultParameterContext(report);
-      for (final ParameterDefinitionEntry parameter : parameterDefinitions) {
-        final Object defaultValue = parameter.getDefaultValue(parameterContext);
-        if (defaultValue != null) {
-          final IActionSequenceInput input = actionSequenceDocument.createInput(parameter.getName(), ActionSequenceDocument.STRING_TYPE);
-          input.setDefaultValue(convertParameterValueToString(defaultValue, parameter.getValueType()));
-        } else {
-          final Object paramValue = requestParams.getParameter(parameter.getName());
-          if (paramValue != null) {
-            final IActionSequenceInput input = actionSequenceDocument.createInput(parameter.getName(), ActionSequenceDocument.STRING_TYPE);
-            input.setDefaultValue(convertParameterValueToString(paramValue, parameter.getValueType()));
-          }
-        }
-        pojoComponent.addInput(parameter.getName(), "string"); //$NON-NLS-1$
-      }
-      pojoComponent.addInput("outputType", "string"); //$NON-NLS-1$ //$NON-NLS-2$
-
-    } catch (Exception e) {
-      log.error(e.getMessage(), e);
-    }
-
-    return actionSequenceDocument.toString();
   }
 
   private Map<String, Object> createInputs(final IParameterProvider requestParams) {
