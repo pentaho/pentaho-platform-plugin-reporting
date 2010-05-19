@@ -1,20 +1,21 @@
 package org.pentaho.reporting.platform.plugin;
 
 import java.net.URL;
-import java.util.List;
 import java.util.Locale;
 
-import org.pentaho.platform.api.engine.IUserDetailsRoleListService;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
+import org.pentaho.platform.engine.security.SecurityHelper;
 import org.pentaho.platform.util.messages.LocaleHelper;
 import org.pentaho.reporting.engine.classic.core.DefaultReportEnvironment;
 import org.pentaho.reporting.engine.classic.core.modules.output.csv.CSVQuoter;
 import org.pentaho.reporting.libraries.base.config.Configuration;
 import org.pentaho.reporting.platform.plugin.messages.Messages;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.springframework.security.Authentication;
+import org.springframework.security.GrantedAuthority;
 
 public class PentahoReportEnvironment extends DefaultReportEnvironment
 {
@@ -71,33 +72,30 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
     {
       if ("username".equals(key)) //$NON-NLS-1$
       {
-        return session.getName();
+        Authentication authentication = SecurityHelper.getAuthentication(session, true);
+        return authentication.getName();
       }
       else if ("roles".equals(key)) //$NON-NLS-1$
       {
-        final IUserDetailsRoleListService roleListService = PentahoSystem.getUserDetailsRoleListService();
-        if (roleListService == null)
-        {
-          return null;
-        }
+        Authentication authentication = SecurityHelper.getAuthentication(session, true);
         final StringBuffer property = new StringBuffer();
         //noinspection unchecked
-        final List<String> roles =
-            (List<String>) roleListService.getRolesForUser(session.getName());
+        final GrantedAuthority[] roles =
+            authentication.getAuthorities();
         if (roles == null)
         {
           return null;
         }
 
-        final int rolesSize = roles.size();
+        final int rolesSize = roles.length;
         if (rolesSize > 0)
         {
           final CSVQuoter quoter = new CSVQuoter(",");//$NON-NLS-1$
-          property.append(roles.get(0));
+          property.append(roles[0]);
           for (int i = 1; i < rolesSize; i++)
           {
             property.append(",");//$NON-NLS-1$
-            property.append(quoter.doQuoting(roles.get(i)));
+            property.append(quoter.doQuoting(roles[i].getAuthority()));
           }
         }
         return property.toString();
