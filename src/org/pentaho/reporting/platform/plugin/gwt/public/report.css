@@ -291,3 +291,41 @@ td.datePickerMonth {
   padding: 0px 4px;
 }
 
+.waitPopup{
+  position: absolute;
+  left: 44%;
+  top: 44%;
+  padding: 15px 8px;
+  z-index: 20001;
+  height: auto;
+  border: 1px solid #ccc;
+  background: white;
+}
+.waitPopup_table{
+  color: #444;
+  background-image: url(large-loading.gif);
+  background-position: left center;
+  background-repeat: no-repeat;
+  font: bold 13px tahoma, arial, helvetica;
+}
+
+.waitPopup_title{
+
+  color: #444;
+  font: bold 16px tahoma, arial, helvetica;
+  margin-left: 40px;
+  padding-bottom: 3px;
+}
+
+.waitPopup_msg{
+  font: normal 13px arial, tahoma, sans-serif;
+  margin-left: 40px;
+}
+
+.modalDialogPageBackground {
+  opacity: 0.20;
+  background-color:  #000000;
+  z-index:250;
+  cursor: progress;
+  filter:alpha(opacity=20);
+}

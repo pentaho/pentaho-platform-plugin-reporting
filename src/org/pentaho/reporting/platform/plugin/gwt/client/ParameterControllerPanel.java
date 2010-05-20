@@ -157,6 +157,7 @@ public class ParameterControllerPanel extends VerticalPanel
           {
             add(buildPaginationController(parametersElement));
           }
+          container.init();
           return;
         }
         if (globalErrors != null && globalErrors.isEmpty() == false)
