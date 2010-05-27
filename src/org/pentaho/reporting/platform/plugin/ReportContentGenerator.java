@@ -1,6 +1,11 @@
 package org.pentaho.reporting.platform.plugin;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.Array;
@@ -17,8 +22,10 @@ import java.util.Map;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.pentaho.platform.api.engine.IApplicationContext;
 import org.pentaho.platform.api.engine.IParameterProvider;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.api.engine.ISolutionFile;
@@ -27,6 +34,7 @@ import org.pentaho.platform.api.repository.ISolutionRepository;
 import org.pentaho.platform.api.repository.ISubscribeContent;
 import org.pentaho.platform.api.repository.ISubscription;
 import org.pentaho.platform.api.repository.ISubscriptionRepository;
+import org.pentaho.platform.api.util.ITempFileDeleter;
 import org.pentaho.platform.engine.core.audit.AuditHelper;
 import org.pentaho.platform.engine.core.audit.MessageTypes;
 import org.pentaho.platform.engine.core.solution.ActionInfo;
@@ -65,6 +73,9 @@ import org.w3c.dom.Element;
 
 public class ReportContentGenerator extends SimpleContentGenerator {
   private static final Log log = LogFactory.getLog(ReportContentGenerator.class);
+  public enum StagingMode { 
+    MEMORY, TMPFILE, THRU 
+  };
 
   private SimpleReportingComponent reportComponent;
 
@@ -124,20 +135,211 @@ public class ReportContentGenerator extends SimpleContentGenerator {
     }
   }
 
+  public class TrackingOutputStream extends OutputStream {
+    private int trackingSize;
+    private OutputStream wrappedStream;
+
+    public TrackingOutputStream(OutputStream wrapped) {
+      this.wrappedStream = wrapped;
+    }
+    
+    public void write(int b) throws IOException {
+      wrappedStream.write(b);
+      trackingSize++;
+    }
+    
+    public void write(byte b[]) throws IOException {
+      super.write(b);
+    }
+
+    public void write(byte b[], int off, int len) throws IOException {
+      super.write(b, off, len);
+    }
+
+    public void flush() throws IOException {
+      wrappedStream.flush();
+    }
+    
+    public void close() throws IOException {
+      wrappedStream.close();
+    }
+
+    public OutputStream getWrappedStream() {
+      return wrappedStream;
+    }
+    
+  }
+  
+  public class StagingHandler {
+    private OutputStream destination;
+    private TrackingOutputStream stagingStream;
+    private File tmpFile;
+    private StagingMode mode;
+    
+    public static final String STAGING_MODE_KEY = "report-staging-mode"; //$NON-NLS-1$
+    
+    public StagingHandler(final OutputStream outputStream, final Map<String, Object> inputs) {
+      assert destination != null;
+      this.destination = outputStream;
+      try {
+        initializeHandler(inputs);
+      } catch (IOException ex) {
+        throw new RuntimeException(ex);
+      }
+    }
+
+    public StagingMode getStagingMode() {
+      return this.mode;
+    }
+
+    public boolean canSendHeaders() {
+      if ( (mode == StagingMode.THRU) && ( getWrittenByteCount() > 0) ) {
+        return false;
+      } else {
+        return true;
+      }
+    }
+    
+    private void initializeHandler(final Map<String, Object> inputs) throws IOException {
+      log.trace("initializeHandler - ReportContentGenerator"); //$NON-NLS-1$
+      if ( (inputs != null) && (inputs.containsKey(STAGING_MODE_KEY)) ) {
+        log.trace("Inputs has report-staging-mode"); //$NON-NLS-1$
+        Object stagingModeInput = inputs.get(STAGING_MODE_KEY);
+        try {
+          mode = StagingMode.valueOf(stagingModeInput.toString());
+          log.trace("Staging mode set by input - " + mode); //$NON-NLS-1$
+        } catch (IllegalArgumentException ignored) {
+          // ignore conversion error - fall through to default handling below
+        }
+      }
+      if (mode == null) {
+        log.trace("Looking at default settings for mode"); //$NON-NLS-1$
+        // Unable to use the plugin settings.xml because the
+        // classloader for the ReportContentGenerator isn't the plugin classloader 
+        // IPluginResourceLoader resLoader = PentahoSystem.get(IPluginResourceLoader.class, null);
+        // String defaultStagingMode = resLoader.getPluginSetting(ReportContentGenerator.class, "settings/report-staging-mode"); //$NON-NLS-1$
+        //
+        // So - get default setting from the pentaho.xml instead
+        String defaultStagingMode = PentahoSystem.getSystemSetting("report-staging-mode", null); //$NON-NLS-1$
+        if (defaultStagingMode == null) { // workaround for a bug in getPluginSetting that ignores the default passed in
+          defaultStagingMode = "MEMORY";//$NON-NLS-1$
+          log.trace("Nothing in settings/staging-mode - defaulting to MEMORY"); //$NON-NLS-1$
+        } else {
+          log.trace("Read " + defaultStagingMode + " from settings/report-staging-mode");            //$NON-NLS-1$//$NON-NLS-2$
+        }
+        try {
+          mode = StagingMode.valueOf(defaultStagingMode);
+          log.trace("Staging mode set from default - " + mode); //$NON-NLS-1$
+        } catch (IllegalArgumentException badStringInSettings) {
+          mode = StagingMode.valueOf("MEMORY"); // default state - handling staging in memory by default.
+        }
+      }
+      log.trace("Staging mode set - " + mode); //$NON-NLS-1$
+      switch (mode) {
+        case MEMORY : {
+          createTrackingProxy(new ByteArrayOutputStream());
+          break;
+        }
+        case TMPFILE : {
+          IApplicationContext appCtx = PentahoSystem.getApplicationContext();
+          // Use the deleter framework for safety...
+          if (userSession.getId().length() >= 10) {
+            tmpFile = appCtx.createTempFile(userSession, "repstg", ".tmp", true); //$NON-NLS-1$ //$NON-NLS-2$
+          } else {
+            // Workaround bug in appContext.createTempFile ... :-(
+            File parentDir = new File(appCtx.getSolutionPath("system/tmp")); //$NON-NLS-1$
+            ITempFileDeleter fileDeleter = (ITempFileDeleter)userSession.getAttribute(ITempFileDeleter.DELETER_SESSION_VARIABLE);
+            final String newPrefix = new StringBuilder().append("repstg").append(UUIDUtil.getUUIDAsString().substring(0, 10)).append('-').toString(); //$NON-NLS-1$
+            tmpFile = File.createTempFile(newPrefix, ".tmp", parentDir); //$NON-NLS-1$
+            if (fileDeleter != null) {
+              fileDeleter.trackTempFile(tmpFile);
+            } else {
+              // There is no deleter, so cleanup on VM exit. (old behavior)
+              tmpFile.deleteOnExit(); 
+            }
+          }
+
+          createTrackingProxy(new BufferedOutputStream(new FileOutputStream(tmpFile)));
+          break;
+        }
+        case THRU : {
+          createTrackingProxy(destination);
+          break;
+        }
+          
+      }
+    }
+
+    public OutputStream getStagingOutputStream() {
+      return this.stagingStream;
+    }
+
+    private void createTrackingProxy(OutputStream streamToTrack) {
+      this.stagingStream = new TrackingOutputStream(streamToTrack);
+    }
+    
+    public void complete() throws IOException {
+      switch (mode) {
+        case MEMORY : {
+          byte[] bytes = ((ByteArrayOutputStream)stagingStream.getWrappedStream()).toByteArray();
+          destination.write(bytes);
+          destination.flush();
+          break;
+        }
+        case TMPFILE : {
+          close(); // close the outputstream
+          BufferedInputStream bis = new BufferedInputStream(new FileInputStream(tmpFile));
+          try {
+            IOUtils.copy(bis, destination);
+          } finally {
+            IOUtils.closeQuietly(bis);
+          }
+          break;
+        }
+        // Nothing to do for THRU - the output already has it's stuff
+      }
+      close();
+    }
+    
+    public void close() {
+      if ( (this.stagingStream != null) && (mode == StagingMode.TMPFILE) ) {
+        IOUtils.closeQuietly(stagingStream);
+        stagingStream = null;
+      }
+      if (tmpFile != null) {
+        if (tmpFile.exists()) {
+          try {
+            tmpFile.delete();
+          } catch (Exception ignored) {
+            // I can't delete it, perhaps the deleter can delete it.
+          }
+        }
+        tmpFile = null;
+      }
+    }
+    
+    public int getWrittenByteCount() {
+      assert stagingStream != null;
+      return stagingStream.trackingSize;
+    }
+    
+  }
+  
   private void createReportContent(final OutputStream outputStream, final String reportDefinitionPath, final Map<String, Object> inputs) throws Exception {
     final long start = System.currentTimeMillis();
     AuditHelper.audit(userSession.getId(), userSession.getName(), reportDefinitionPath, getObjectName(), getClass().getName(), MessageTypes.INSTANCE_START,
         instanceId, "", 0, this); //$NON-NLS-1$
-    String result = MessageTypes.INSTANCE_END;
-    try {
 
-      final ByteArrayOutputStream reportOutput = new ByteArrayOutputStream();
+    String result = MessageTypes.INSTANCE_END;
+    StagingHandler reportStagingHandler = null;
+    try {
+      reportStagingHandler = new StagingHandler(outputStream, inputs);
       // produce rendered report
       if (reportComponent == null) {
         reportComponent = new SimpleReportingComponent();
       }
       reportComponent.setSession(userSession);
-      reportComponent.setOutputStream(reportOutput);
+      reportComponent.setOutputStream(reportStagingHandler.getStagingOutputStream());
       reportComponent.setReportDefinitionPath(reportDefinitionPath);
 
       // the requested mime type can be null, in that case the report-component will resolve the desired
@@ -164,52 +366,87 @@ public class ReportContentGenerator extends SimpleContentGenerator {
         log.debug(Messages.getInstance().getString("ReportPlugin.logStartGenerateContent", mimeType,//$NON-NLS-1$ 
             String.valueOf(reportComponent.isPaginateOutput()), String.valueOf(reportComponent.getAcceptedPage())));
       }
-      if (reportComponent.validate() && reportComponent.execute()) {
-        final byte[] bytes = reportOutput.toByteArray();
-        if (parameterProviders.get("path") != null && //$NON-NLS-1$
-            parameterProviders.get("path").getParameter("httpresponse") != null) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-        {
-          final HttpServletResponse response = (HttpServletResponse) parameterProviders.get("path").getParameter("httpresponse"); //$NON-NLS-1$ //$NON-NLS-2$
-          final String extension = MimeHelper.getExtension(mimeType);
-          String filename = file.getFileName();
-          if (filename.lastIndexOf(".") != -1) //$NON-NLS-1$
-          { //$NON-NLS-1$
-            filename = filename.substring(0, filename.lastIndexOf(".")); //$NON-NLS-1$
+      HttpServletResponse response = null;
+      boolean streamToBrowser = false;
+      if (parameterProviders.get("path") != null && parameterProviders.get("path").getParameter("httpresponse") != null) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        response = (HttpServletResponse) parameterProviders.get("path").getParameter("httpresponse"); //$NON-NLS-1$ //$NON-NLS-2$
+        if (reportStagingHandler.getStagingMode() == StagingMode.THRU ) {
+          // Direct back - check output stream...
+          OutputStream respOutputStream = response.getOutputStream();
+          if (respOutputStream == outputStream) {
+            //
+            // Massive assumption here - 
+            //  Assume the container returns the same object on successive calls to response.getOutputStream()
+            streamToBrowser = true;
           }
+        }
+      }
+      
+      final String extension = MimeHelper.getExtension(mimeType);
+      String filename = file.getFileName();
+      if (filename.lastIndexOf(".") != -1) { //$NON-NLS-1$
+        filename = filename.substring(0, filename.lastIndexOf(".")); //$NON-NLS-1$
+      }
+      
+      boolean validates = reportComponent.validate();
+      if (!validates ) {
+        sendErrorResponse(response, outputStream, reportStagingHandler);
+      } else {
+        if (streamToBrowser) {
+          // Send headers before we begin execution
           response.setHeader("Content-Disposition", "inline; filename=\"" + filename + extension + "\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
           response.setHeader("Content-Description", file.getFileName()); //$NON-NLS-1$
-          response.setHeader("Cache-Control", "private, max-age=0, must-revalidate"); //$NON-NLS-1$ //$NON-NLS-2$
-          response.setHeader("Content-Size", String.valueOf(bytes.length)); //$NON-NLS-1$
+          response.setHeader("Cache-Control", "private, max-age=0, must-revalidate");
         }
-        if (log.isDebugEnabled()) {
-          log.debug(Messages.getInstance().getString("ReportPlugin.logEndGenerateContent", String.valueOf(bytes.length)));//$NON-NLS-1$
-        }
-
-        outputStream.write(bytes);
-        outputStream.flush();
-      } else {
-        if (parameterProviders.get("path") != null && //$NON-NLS-1$
-            parameterProviders.get("path").getParameter("httpresponse") != null) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        if (  reportComponent.execute()) {
+          if (response != null) 
         {
-          final HttpServletResponse response = (HttpServletResponse) parameterProviders.get("path").getParameter("httpresponse"); //$NON-NLS-1$ //$NON-NLS-2$
-          response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            if (reportStagingHandler.canSendHeaders()) {
+          response.setHeader("Content-Disposition", "inline; filename=\"" + filename + extension + "\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+          response.setHeader("Content-Description", file.getFileName()); //$NON-NLS-1$
+              response.setHeader("Cache-Control", "private, max-age=0, must-revalidate");
+              response.setHeader("Content-Size", String.valueOf(reportStagingHandler.getWrittenByteCount()));
+            }
         }
         if (log.isDebugEnabled()) {
-          log.debug(Messages.getInstance().getString("ReportPlugin.logErrorGenerateContent"));//$NON-NLS-1$
+            log.debug(Messages.getInstance().getString("ReportPlugin.logEndGenerateContent", String.valueOf(reportStagingHandler.getWrittenByteCount())));//$NON-NLS-1$
         }
-        outputStream.write(org.pentaho.reporting.platform.plugin.messages.Messages.getInstance().getString("ReportPlugin.ReportValidationFailed").getBytes()); //$NON-NLS-1$
-        outputStream.flush();
+          reportStagingHandler.complete(); // will copy bytes to final destination...
+
+        } else { // failed execution
+          sendErrorResponse(response, outputStream, reportStagingHandler);
+        }
       }
     } catch (Exception ex) {
       result = MessageTypes.INSTANCE_FAILED;
       throw ex;
     } finally {
+      if ( reportStagingHandler != null) {
+        reportStagingHandler.close();
+      }
       final long end = System.currentTimeMillis();
       AuditHelper.audit(userSession.getId(), userSession.getName(), reportDefinitionPath, getObjectName(), getClass().getName(), result, instanceId,
           "", ((float) (end - start) / 1000), this); //$NON-NLS-1$
     }
   }
 
+  private void sendErrorResponse(HttpServletResponse response, OutputStream outputStream, StagingHandler reportStagingHandler ) throws IOException {
+    if (response != null) {
+      response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+    }
+    if (log.isDebugEnabled()) {
+      log.debug(Messages.getInstance().getString("ReportPlugin.logErrorGenerateContent"));//$NON-NLS-1$
+    }
+    if (reportStagingHandler.canSendHeaders()) {
+      //
+      // Can send headers is another way to check whether the real destination has been
+      // pre-polluted with data.
+      //
+      outputStream.write(org.pentaho.reporting.platform.plugin.messages.Messages.getInstance().getString("ReportPlugin.ReportValidationFailed").getBytes()); //$NON-NLS-1$
+      outputStream.flush();
+    }          
+  }
+  
   private void createParameterContent(final OutputStream outputStream, final String reportDefinitionPath, final IParameterProvider requestParams,
       final Map<String, Object> inputs) throws Exception {
     final boolean subscribe = "true".equals(requestParams.getStringParameter("subscribe", "false")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
