@@ -292,7 +292,9 @@ public class ReportContentGenerator extends SimpleContentGenerator {
           break;
         }
         case TMPFILE : {
-          close(); // close the outputstream
+          // Close the stream so we can use the file as input.
+          IOUtils.closeQuietly(stagingStream);
+          stagingStream = null;
           BufferedInputStream bis = new BufferedInputStream(new FileInputStream(tmpFile));
           try {
             IOUtils.copy(bis, destination);
