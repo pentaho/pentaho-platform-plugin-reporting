@@ -27,40 +27,41 @@ public class ReportContainer extends VerticalPanel implements IParameterSubmissi
     this.viewer = viewer;
     parameterControllerPanel = new ParameterControllerPanel(viewer, this, messages);
     parameterControllerPanel.addParameterSubmissionListener(this);
-    reportContainer = new Frame() {
-      
-      public void onBrowserEvent(Event event) {
-        super.onBrowserEvent(event);
-        if (event.getTypeInt() == Event.ONLOAD) {
-          if (StringUtils.isEmpty(url) == false && url.equals("about:blank") == false) { //$NON-NLS-1$
-            WaitPopup.getInstance().setVisible(false);
-          }
-        }
-      }
-      
-      protected void onLoad() {
-        super.onLoad();
-        if (StringUtils.isEmpty(url) == false && url.equals("about:blank") == false) { //$NON-NLS-1$
-          WaitPopup.getInstance().setVisible(false);
-        }
-      }
-
-      public void setUrl(String url) {
-        if (StringUtils.isEmpty(url) == false && url.equals("about:blank") == false) { //$NON-NLS-1$
-          WaitPopup.getInstance().setVisible(true);
-        }
-        // ie is not responding to onload
-        Timer t = new Timer() {
-          public void run() {
-            WaitPopup.getInstance().setVisible(false);
-          }
-        };
-        t.schedule(1000);
-        super.setUrl(url);
-      }
-      
-    };
-    reportContainer.sinkEvents(Event.ONLOAD);
+    reportContainer = new Frame();
+//    {
+//      
+//      public void onBrowserEvent(Event event) {
+//        super.onBrowserEvent(event);
+//        if (event.getTypeInt() == Event.ONLOAD) {
+//          if (StringUtils.isEmpty(url) == false && url.equals("about:blank") == false) { //$NON-NLS-1$
+//            WaitPopup.getInstance().setVisible(false);
+//          }
+//        }
+//      }
+//      
+//      protected void onLoad() {
+//        super.onLoad();
+//        if (StringUtils.isEmpty(url) == false && url.equals("about:blank") == false) { //$NON-NLS-1$
+//          WaitPopup.getInstance().setVisible(false);
+//        }
+//      }
+//
+//      public void setUrl(String url) {
+//        if (StringUtils.isEmpty(url) == false && url.equals("about:blank") == false) { //$NON-NLS-1$
+//          WaitPopup.getInstance().setVisible(true);
+//        }
+//        // ie is not responding to onload
+//        Timer t = new Timer() {
+//          public void run() {
+//            WaitPopup.getInstance().setVisible(false);
+//          }
+//        };
+//        t.schedule(1000);
+//        super.setUrl(url);
+//      }
+//      
+//    };
+    //reportContainer.sinkEvents(Event.ONLOAD);
     
     init();
   }
