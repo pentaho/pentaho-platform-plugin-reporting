@@ -28,8 +28,22 @@ import org.pentaho.reporting.libraries.resourceloader.ResourceManager;
 
 public class ReportCreator
 {
-  public static MasterReport createReport(String reportDefinitionPath,
+  /**
+   *
+   * @param reportDefinitionPath
+   * @param pentahoSession
+   * @return
+   * @throws ResourceException
+   * @throws IOException
+   * @deprecated the session is not used, so kill this method
+   */
+  public static MasterReport createReport(final String reportDefinitionPath,
                                           IPentahoSession pentahoSession) throws ResourceException, IOException
+  {
+    return createReport(reportDefinitionPath);
+  }
+  
+  public static MasterReport createReport(final String reportDefinitionPath) throws ResourceException, IOException
   {
     ResourceManager resourceManager = new ResourceManager();
     resourceManager.registerDefaults();
