@@ -42,4 +42,13 @@
         <dependency org="junit" name="junit" rev="4.4" conf="test->default" />
         <dependency org="hsqldb" name="hsqldb" rev="1.8.0" conf="test->default" transitive="false"/>
     </dependencies>
+
+  <conflicts>
+    <!--
+    Until the platform fixes its dependencies and uses TRUNK-SNAPSHOT for Trunk development, I'm going
+    to hardcode a override here.
+    -->
+    <manager org="pentaho-library" rev="TRUNK-SNAPSHOT"/>
+    <manager org="pentaho-reporting-engine" rev="TRUNK-SNAPSHOT"/>
+  </conflicts>
 </ivy-module>
