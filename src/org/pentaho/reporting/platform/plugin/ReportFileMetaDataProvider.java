@@ -11,6 +11,7 @@ import org.pentaho.platform.api.engine.ISolutionFile;
 import org.pentaho.platform.api.engine.SolutionFileMetaAdapter;
 import org.pentaho.platform.engine.core.solution.FileInfo;
 import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
+import org.pentaho.reporting.libraries.base.util.StringUtils;
 import org.pentaho.reporting.libraries.docbundle.DocumentBundle;
 import org.pentaho.reporting.libraries.docbundle.DocumentMetaData;
 import org.pentaho.reporting.libraries.docbundle.ODFMetaAttributeNames;
@@ -23,6 +24,7 @@ import org.pentaho.reporting.platform.plugin.messages.Messages;
 public class ReportFileMetaDataProvider extends SolutionFileMetaAdapter
 {
   private static final Log logger = LogFactory.getLog(ReportFileMetaDataProvider.class);
+
   public ReportFileMetaDataProvider()
   {
   }
@@ -42,7 +44,7 @@ public class ReportFileMetaDataProvider extends SolutionFileMetaAdapter
         (RepositoryResourceLoader.SOLUTION_SCHEMA_NAME + RepositoryResourceLoader.SCHEMA_SEPARATOR
             + reportDefinitionPath, helperObjects);
     final Resource resource = resourceManager.create(key, null, DocumentBundle.class);
-    final DocumentBundle bundle = (DocumentBundle)resource.getResource();
+    final DocumentBundle bundle = (DocumentBundle) resource.getResource();
     return bundle.getMetaData();
   }
 
@@ -58,7 +60,14 @@ public class ReportFileMetaDataProvider extends SolutionFileMetaAdapter
       final String description = (String) metaData.getBundleAttribute
           (ODFMetaAttributeNames.DublinCore.NAMESPACE, ODFMetaAttributeNames.DublinCore.DESCRIPTION);
       final IFileInfo fileInfo = new FileInfo();
-      fileInfo.setTitle(title);
+      if (StringUtils.isEmpty(title))
+      {
+        fileInfo.setTitle(solutionFile.getFileName());
+      }
+      else
+      {
+        fileInfo.setTitle(title);
+      }
       fileInfo.setAuthor(author); //$NON-NLS-1$
       fileInfo.setDescription(description);
 
