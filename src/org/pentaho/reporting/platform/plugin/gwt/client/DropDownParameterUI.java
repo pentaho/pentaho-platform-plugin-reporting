@@ -8,7 +8,7 @@ import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.SimplePanel;
 
-public class ListParameterUI extends SimplePanel
+public class DropDownParameterUI extends SimplePanel
 {
   private class ListBoxChangeHandler implements ChangeHandler
   {
@@ -39,24 +39,12 @@ public class ListParameterUI extends SimplePanel
     }
   }
 
-  public ListParameterUI(final ParameterControllerPanel controller, final Parameter parameterElement)
+  public DropDownParameterUI(final ParameterControllerPanel controller, final Parameter parameterElement)
   {
-    final String renderType = parameterElement.getAttribute("parameter-render-type"); //$NON-NLS-1$
-    final boolean multiSelect = parameterElement.isMultiSelect(); //$NON-NLS-1$ //$NON-NLS-2$
+    final ListBox listBox = new ListBox(false);
+    listBox.setVisibleItemCount(1);
 
-    final ListBox listBox = new ListBox(multiSelect);
-    int visibleItems;
-    final String visibleItemsStr = parameterElement.getAttribute("parameter-visible-items"); //$NON-NLS-1$
-    try
-    {
-      visibleItems = Integer.parseInt(visibleItemsStr);
-    }
-    catch (Exception e)
-    {
-      visibleItems = 5;
-    }
-
-    listBox.setVisibleItemCount(visibleItems);
+    boolean hasSelection = false;
     final List<ParameterSelection> choices = parameterElement.getSelections();
     for (int i = 0; i < choices.size(); i++)
     {
@@ -66,6 +54,20 @@ public class ListParameterUI extends SimplePanel
       listBox.addItem(choiceLabel, choiceValue);
       final boolean selected = choiceElement.isSelected();
       listBox.setItemSelected(i, selected);
+      if (selected)
+      {
+        hasSelection = true;
+      }
+    }
+
+    // only force selection if we're using a 'drop-down' style
+    if (hasSelection == false) //$NON-NLS-1$
+    {
+      if (listBox.getItemCount() > 0)
+      {
+        listBox.setItemSelected(0, true);
+        controller.getParameterMap().setSelectedValue(parameterElement.getName(), listBox.getValue(0));
+      }
     }
 
     listBox.addChangeHandler(new ListBoxChangeHandler(controller, parameterElement.getName()));

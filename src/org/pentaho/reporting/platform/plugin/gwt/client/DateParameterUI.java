@@ -3,42 +3,56 @@ package org.pentaho.reporting.platform.plugin.gwt.client;
 import java.util.Date;
 import java.util.List;
 
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.i18n.client.DateTimeFormat;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.datepicker.client.DateBox;
 import com.google.gwt.user.datepicker.client.DateBox.DefaultFormat;
-import com.google.gwt.xml.client.Element;
 import org.pentaho.gwt.widgets.client.datepicker.PentahoDatePicker;
 
 public class DateParameterUI extends SimplePanel
 {
-  private final static DateTimeFormat format = DateTimeFormat.getFormat("yyyy-MM-dd");
+  private final static DateTimeFormat format = DateTimeFormat.getFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ"); // NON-NLS
 
-  private class DateParameterSelectionHandler implements ValueChangeHandler<Date>
+  private class DateParameterSelectionHandler implements ValueChangeHandler<Date>, ChangeHandler
   {
-    private List<String> parameterSelections;
     private ParameterControllerPanel controller;
+    private String parameterName;
 
-    public DateParameterSelectionHandler(final List<String> parameterSelections,
-                                         final ParameterControllerPanel controller)
+    public DateParameterSelectionHandler(final ParameterControllerPanel controller,
+                                         final String parameterName)
     {
-      this.parameterSelections = parameterSelections;
       this.controller = controller;
+      this.parameterName = parameterName;
     }
 
-    public void onValueChange(ValueChangeEvent<Date> event)
+    public void onValueChange(final ValueChangeEvent<Date> event)
     {
-      parameterSelections.clear();
-      Date newDate = event.getValue();
+      final Date newDate = event.getValue();
       // add date as long
-      parameterSelections.add(format.format(newDate)); //$NON-NLS-1$
+      controller.getParameterMap().setSelectedValue(parameterName, format.format(newDate)); //$NON-NLS-1$
       controller.fetchParameters(true);
     }
 
+    public void onChange(final ChangeEvent changeEvent)
+    {
+      final String s = datePicker.getTextBox().getText();
+      if (ReportViewerUtil.isEmpty(s))
+      {
+        controller.getParameterMap().setSelectedValue(parameterName, null); //$NON-NLS-1$
+      }
+      else
+      {
+        controller.getParameterMap().setSelectedValue(parameterName, format.format(datePicker.getValue())); //$NON-NLS-1$
+      }
+      controller.fetchParameters(true);
+    }
   }
+
+  private DateBox datePicker;
 
   private Date parseDate(final String text)
   {
@@ -76,53 +90,31 @@ public class DateParameterUI extends SimplePanel
   }
 
   public DateParameterUI(final ParameterControllerPanel controller,
-                         final List<String> parameterSelections,
-                         final Element parameterElement)
+                         final Parameter parameterElement)
   {
     // selectionsList should only have 1 date
+
+    final List<ParameterSelection> list = parameterElement.getSelections();
     final Date date;
-    if (parameterSelections.size() > 0)
+    if (list.isEmpty())
     {
-      final String paramAsText = parameterSelections.get(0);
-      date = parseDate(paramAsText);
+      date = null;
     }
     else
     {
-      // BISERVER-4090: We do only ignore the default now() date, but if the user
-      // specified a date via a formula, then they get what they specified, as ignoring User-input
-      // is never a sane option.
-      if ("true".equals(Window.Location.getParameter("ignoreDefaultDates")))
-      {
-        date = null;
-      }
-      else
-      {
-        date = new Date();
-      }
+      final ParameterSelection parameterSelection = list.get(0);
+      date = parseDate(parameterSelection.getValue());
     }
-    if (date == null)
-    {
-      // add the current date as the default, otherwise, a submission of another parameter
-      // will not result in this parameter being submitted
-      parameterSelections.clear();
-      parameterSelections.add(""); //$NON-NLS-1$
-    }
-    else
-    {
-      // This normalizes the date. No matter how the user specified it, we will now always have
-      // a long number in our selection.
-      parameterSelections.clear();
-      parameterSelections.add(format.format(date)); //$NON-NLS-1$
-    }
+    final DefaultFormat format = new DefaultFormat(createFormat(parameterElement.getAttribute("data-format"))); // NON-NLS
+    datePicker = new DateBox(new PentahoDatePicker(), date, format);
 
-    final DefaultFormat format = new DefaultFormat(createFormat(parameterElement.getAttribute("data-format")));
-    final DateBox datePicker = new DateBox(new PentahoDatePicker(), date, format);
-
-    datePicker.addValueChangeHandler(new DateParameterSelectionHandler(parameterSelections, controller));
+    final DateParameterSelectionHandler handler = new DateParameterSelectionHandler(controller, parameterElement.getName());
+    datePicker.getTextBox().addChangeHandler(handler);
+    datePicker.addValueChangeHandler(handler);
     setWidget(datePicker);
   }
 
-  private DateTimeFormat createFormat(final String format)
+  private static DateTimeFormat createFormat(final String format)
   {
     if (format != null)
     {

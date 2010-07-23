@@ -10,38 +10,40 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.ToggleButton;
 import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.gwt.xml.client.Element;
-import com.google.gwt.xml.client.NodeList;
 
 public class ToggleButtonParameterUI extends SimplePanel
 {
   private class ToggleButtonParameterClickHandler implements ClickHandler
   {
     private ParameterControllerPanel controller;
+    private String parameterName;
     private String choiceValue;
     private boolean multiSelect;
-    private List<String> parameterSelections;
     private List<ToggleButton> buttonList;
 
-    public ToggleButtonParameterClickHandler(final List<String> parameterSelections, List<ToggleButton> buttonList, final ParameterControllerPanel controller,
-        final String choiceValue, final boolean multiSelect)
+    public ToggleButtonParameterClickHandler(final List<ToggleButton> buttonList,
+                                             final ParameterControllerPanel controller,
+                                             final String parameterName,
+                                             final String choiceValue,
+                                             final boolean multiSelect)
     {
       this.controller = controller;
+      this.parameterName = parameterName;
       this.choiceValue = choiceValue;
       this.multiSelect = multiSelect;
-      this.parameterSelections = parameterSelections;
       this.buttonList = buttonList;
     }
 
-    public void onClick(ClickEvent event)
+    public void onClick(final ClickEvent event)
     {
-      ToggleButton toggleButton = (ToggleButton) event.getSource();
+      final ToggleButton toggleButton = (ToggleButton) event.getSource();
 
+      final ParameterValues parameterValues = controller.getParameterMap();
       // if we are single select buttons, we've got to clear the list
       if (!multiSelect)
       {
-        parameterSelections.clear();
-        for (ToggleButton tb : buttonList)
+        parameterValues.setSelectedValue(parameterName, choiceValue);
+        for (final ToggleButton tb : buttonList)
         {
           if (toggleButton != tb)
           {
@@ -52,34 +54,24 @@ public class ToggleButtonParameterUI extends SimplePanel
       else
       {
         // remove element if it's already there (prevent dups for checkbox)
-        parameterSelections.remove(choiceValue);
-      }
-      if (toggleButton.isDown())
-      {
-        parameterSelections.add(choiceValue);
+        parameterValues.removeSelectedValue(parameterName, choiceValue);
+        if (toggleButton.isDown())
+        {
+          parameterValues.addSelectedValue(parameterName, choiceValue);
+        }
       }
       controller.fetchParameters(true);
     }
   }
 
-  public ToggleButtonParameterUI(final ParameterControllerPanel controller, final List<String> parameterSelections,
-      final Element parameterElement)
+  public ToggleButtonParameterUI(final ParameterControllerPanel controller, final Parameter parameterElement)
   {
-    String renderType = parameterElement.getAttribute("parameter-render-type"); //$NON-NLS-1$
-    if (renderType != null)
-    {
-      renderType = renderType.trim();
-    }
-    String layout = parameterElement.getAttribute("parameter-layout"); //$NON-NLS-1$
-    if (layout != null)
-    {
-      layout = layout.trim();
-    }
-    boolean multiSelect = "true".equals(parameterElement.getAttribute("is-multi-select")); //$NON-NLS-1$ //$NON-NLS-2$
+    final String layout = parameterElement.getAttribute("parameter-layout"); //$NON-NLS-1$
+    final boolean multiSelect = parameterElement.isMultiSelect(); //$NON-NLS-1$ //$NON-NLS-2$
 
     // build button ui
-    CellPanel buttonPanel = null;
-    if ("vertical".equalsIgnoreCase(layout)) //$NON-NLS-1$
+    final CellPanel buttonPanel;
+    if ("vertical".equals(layout)) //$NON-NLS-1$
     {
       buttonPanel = new VerticalPanel();
     }
@@ -89,20 +81,18 @@ public class ToggleButtonParameterUI extends SimplePanel
     }
     // need a button list so we can clear other selections for button-single mode
     final List<ToggleButton> buttonList = new ArrayList<ToggleButton>();
-    NodeList choices = parameterElement.getElementsByTagName("value-choice"); //$NON-NLS-1$
-    for (int i = 0; i < choices.getLength(); i++)
+    final List<ParameterSelection> choices = parameterElement.getSelections();
+    for (int i = 0; i < choices.size(); i++)
     {
-      final Element choiceElement = (Element) choices.item(i);
-      final String choiceLabel = choiceElement.getAttribute("label"); //$NON-NLS-1$
-      final String choiceValue = choiceElement.getAttribute("value"); //$NON-NLS-1$
+      final ParameterSelection choiceElement = choices.get(i);
+      final String choiceLabel = choiceElement.getLabel(); //$NON-NLS-1$
+      final String choiceValue = choiceElement.getValue(); //$NON-NLS-1$
       final ToggleButton toggleButton = new ToggleButton(choiceLabel);
       toggleButton.setTitle(choiceValue);
-      if (parameterSelections.contains(choiceValue))
-      {
-        toggleButton.setDown(true);
-      }
+      toggleButton.setDown(choiceElement.isSelected());
       buttonList.add(toggleButton);
-      toggleButton.addClickHandler(new ToggleButtonParameterClickHandler(parameterSelections, buttonList, controller, choiceValue, multiSelect));
+      toggleButton.addClickHandler(new ToggleButtonParameterClickHandler
+          (buttonList, controller, parameterElement.getName(), choiceValue, multiSelect));
       buttonPanel.add(toggleButton);
     }
     setWidget(buttonPanel);

@@ -21,23 +21,29 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.FocusPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 
-public class WaitPopup {
+public class WaitPopup
+{
 
   static private WaitPopup instance = new WaitPopup();
   private static FocusPanel pageBackground = null;
   private static int clickCount = 0;
 
-  public WaitPopup() {
-    if (pageBackground == null) {
+  public WaitPopup()
+  {
+    if (pageBackground == null)
+    {
       pageBackground = new FocusPanel();
       pageBackground.setHeight("100%"); //$NON-NLS-1$
       pageBackground.setWidth("100%"); //$NON-NLS-1$
       pageBackground.setStyleName("modalDialogPageBackground"); //$NON-NLS-1$
 
-      pageBackground.addClickHandler(new ClickHandler() {
-        public void onClick(ClickEvent event) {
+      pageBackground.addClickHandler(new ClickHandler()
+      {
+        public void onClick(final ClickEvent event)
+        {
           clickCount++;
-          if (clickCount > 2) {
+          if (clickCount > 2)
+          {
             clickCount = 0;
             pageBackground.setVisible(false);
           }
@@ -47,14 +53,20 @@ public class WaitPopup {
     }
   }
 
-  public static WaitPopup getInstance() {
+  public static WaitPopup getInstance()
+  {
     return instance;
   }
 
-  public void setVisible(boolean visible) {
-    try {
+  public void setVisible(final boolean visible)
+  {
+    try
+    {
       pageBackground.setVisible(visible);
-    } catch (Throwable t) {
+    }
+    catch (Throwable t)
+    {
+      // ignored
     }
   }
 

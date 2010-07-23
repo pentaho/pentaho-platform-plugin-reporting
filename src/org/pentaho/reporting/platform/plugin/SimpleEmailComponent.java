@@ -605,7 +605,7 @@ public class SimpleEmailComponent implements IAcceptsRuntimeInputs
       throw e;
     }
 
-    final boolean authenticate = "true".equalsIgnoreCase(props.getProperty("mail.smtp.auth")); //$NON-NLS-1$//$NON-NLS-2$
+    final boolean authenticate = "true".equals(props.getProperty("mail.smtp.auth")); //$NON-NLS-1$//$NON-NLS-2$
 
     // Get a Session object
 

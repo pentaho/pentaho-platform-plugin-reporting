@@ -40,10 +40,12 @@ import org.pentaho.reporting.engine.classic.core.metadata.ReportProcessTaskRegis
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.pdf.PdfPageableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.plaintext.PlainTextPageableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.plaintext.driver.TextFilePrinterDriver;
+import org.pentaho.reporting.engine.classic.core.modules.output.pageable.xml.XmlPageableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.csv.CSVTableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlTableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.rtf.RTFTableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.xls.ExcelTableModule;
+import org.pentaho.reporting.engine.classic.core.modules.output.table.xml.XmlTableModule;
 import org.pentaho.reporting.engine.classic.core.modules.parser.base.ReportGenerator;
 import org.pentaho.reporting.engine.classic.core.parameters.DefaultParameterContext;
 import org.pentaho.reporting.engine.classic.core.parameters.ListParameter;
@@ -52,6 +54,7 @@ import org.pentaho.reporting.engine.classic.core.parameters.ParameterContext;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterDefinitionEntry;
 import org.pentaho.reporting.engine.classic.core.parameters.ValidationMessage;
 import org.pentaho.reporting.engine.classic.core.parameters.ValidationResult;
+import org.pentaho.reporting.engine.classic.core.util.NullOutputStream;
 import org.pentaho.reporting.engine.classic.core.util.ReportParameterValues;
 import org.pentaho.reporting.engine.classic.core.util.beans.BeanException;
 import org.pentaho.reporting.engine.classic.core.util.beans.ConverterRegistry;
@@ -60,6 +63,7 @@ import org.pentaho.reporting.engine.classic.extensions.modules.java14print.Java1
 import org.pentaho.reporting.libraries.base.config.Configuration;
 import org.pentaho.reporting.libraries.base.util.StringUtils;
 import org.pentaho.reporting.libraries.resourceloader.ResourceException;
+import org.pentaho.reporting.libraries.xmlns.common.ParserUtil;
 import org.pentaho.reporting.platform.plugin.messages.Messages;
 import org.pentaho.reporting.platform.plugin.output.CSVOutput;
 import org.pentaho.reporting.platform.plugin.output.EmailOutput;
@@ -69,6 +73,8 @@ import org.pentaho.reporting.platform.plugin.output.PageableHTMLOutput;
 import org.pentaho.reporting.platform.plugin.output.PlainTextOutput;
 import org.pentaho.reporting.platform.plugin.output.RTFOutput;
 import org.pentaho.reporting.platform.plugin.output.XLSOutput;
+import org.pentaho.reporting.platform.plugin.output.XmlPageableOutput;
+import org.pentaho.reporting.platform.plugin.output.XmlTableOutput;
 import org.xml.sax.InputSource;
 
 public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntimeInputs
@@ -78,8 +84,6 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    * The logging for logging messages from this component
    */
   private static final Log log = LogFactory.getLog(SimpleReportingComponent.class);
-
-  private final SimpleDateFormat dateFormat;
 
   public static final String OUTPUT_TARGET = "output-target"; //$NON-NLS-1$
 
@@ -91,6 +95,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   public static final String MIME_TYPE_RTF = "application/rtf"; //$NON-NLS-1$
   public static final String MIME_TYPE_CSV = "text/csv"; //$NON-NLS-1$
   public static final String MIME_TYPE_TXT = "text/plain"; //$NON-NLS-1$
+  public static final String MIME_TYPE_XML = "application/xml"; //$NON-NLS-1$
 
   public static final String XLS_WORKBOOK_PARAM = "workbook"; //$NON-NLS-1$
 
@@ -122,23 +127,26 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    */
   private String outputType;
   private String outputTarget;
+  private String defaultOutputTarget;
   private MasterReport report;
   private Map<String, Object> inputs;
   private OutputStream outputStream;
   private InputStream reportDefinitionInputStream;
-  private Boolean useContentRepository = Boolean.FALSE;
+  private Boolean useContentRepository;
   private IActionSequenceResource reportDefinition;
   private String reportDefinitionPath;
   private IPentahoSession session;
-  private boolean paginateOutput = false;
-  private int acceptedPage = -1;
-  private int pageCount = -1;
+  private boolean paginateOutput;
+  private int acceptedPage;
+  private int pageCount;
   private boolean dashboardMode;
   /*
    * These fields are for enabling printing
    */
   private boolean print = false;
   private String printer;
+
+  private final SimpleDateFormat dateFormat;
 
   /*
    * Default constructor
@@ -147,11 +155,30 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   {
     this.inputs = Collections.emptyMap();
     dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+    acceptedPage = -1;
+    pageCount = -1;
+    useContentRepository = Boolean.FALSE;
+    defaultOutputTarget = HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE;
   }
 
   // ----------------------------------------------------------------------------
   // BEGIN BEAN METHODS
   // ----------------------------------------------------------------------------
+
+
+  public String getDefaultOutputTarget()
+  {
+    return defaultOutputTarget;
+  }
+
+  public void setDefaultOutputTarget(final String defaultOutputTarget)
+  {
+    if (defaultOutputTarget == null)
+    {
+      throw new NullPointerException();
+    }
+    this.defaultOutputTarget = defaultOutputTarget;
+  }
 
   public String getOutputTarget()
   {
@@ -331,6 +358,14 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       {
         return SimpleReportingComponent.MIME_TYPE_EMAIL;
       }
+      if (XmlTableModule.TABLE_XML_EXPORT_TYPE.equals(outputTarget))
+      {
+        return SimpleReportingComponent.MIME_TYPE_XML;
+      }
+      if (XmlPageableModule.PAGEABLE_XML_EXPORT_TYPE.equals(outputTarget))
+      {
+        return SimpleReportingComponent.MIME_TYPE_XML;
+      }
     }
     catch (IOException e)
     {
@@ -447,10 +482,10 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     if (inputs.containsKey(PAGINATE_OUTPUT))
     {
       paginateOutput = "true".equals(String.valueOf(inputs.get(PAGINATE_OUTPUT))); //$NON-NLS-1$
-      if (paginateOutput && inputs.containsKey(ACCEPTED_PAGE))
-      {
-        acceptedPage = Integer.parseInt(String.valueOf(inputs.get(ACCEPTED_PAGE))); //$NON-NLS-1$
-      }
+    }
+    if (inputs.containsKey(ACCEPTED_PAGE))
+    {
+      acceptedPage = ParserUtil.parseInt(String.valueOf(inputs.get(ACCEPTED_PAGE)), -1); //$NON-NLS-1$
     }
     if (inputs.containsKey(PRINT))
     {
@@ -609,8 +644,8 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       }
 
       log.warn(Messages.getString("ReportPlugin.warnInvalidPreferredOutput",
-          preferredOutputTypeString, HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE));
-      return HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE;
+          preferredOutputTypeString, getDefaultOutputTarget()));
+      return getDefaultOutputTarget();
     }
 
     if (StringUtils.isEmpty(getOutputTarget()) == false || StringUtils.isEmpty(getOutputType()) == false)
@@ -618,11 +653,15 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       // if you have come that far, it means you really messed up. Sorry, this error is not a error caused
       // by our legacy code - it is more likely that you just entered values that are totally wrong.
       log.error(Messages.getString("ReportPlugin.warnInvalidOutputType", getOutputType(),
-          HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE));
+          getDefaultOutputTarget()));
     }
-    return HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE;
+    return getDefaultOutputTarget();
   }
 
+  public String getComputedOutputTarget() throws IOException, ResourceException
+  {
+    return computeEffectiveOutputTarget();
+  }
   private String mapOutputTypeToOutputTarget(final String outputType)
   {
     // if the user has given a mime-type instead of a output-target, lets map it to the "best" choice. If the
@@ -638,6 +677,14 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
         return HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE;
       }
       return HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE;
+    }
+    if (MIME_TYPE_XML.equals(outputType))
+    {
+      if (isPaginateOutput())
+      {
+        return XmlTableModule.TABLE_XML_EXPORT_TYPE;
+      }
+      return XmlPageableModule.PAGEABLE_XML_EXPORT_TYPE;
     }
     if (MIME_TYPE_PDF.equals(outputType))
     {
@@ -703,7 +750,8 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    * @param report  a MasterReport object to apply parameters to
    * @param context a ParameterContext for which the parameters will be under
    * @deprecated use the single parameter version instead. This method will now fail with an error if the
-   *             report passed in is not the same as the report this component has.
+   *             report passed in is not the same as the report this component has. This method will be removed in
+   *             version 4.0.
    */
   public void applyInputsToReportParameters(final MasterReport report, final ParameterContext context)
   {
@@ -736,6 +784,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    * @param validationResult the validation result that will hold the warnings. If null, a new one will be created.
    * @throws java.io.IOException if the report of this component could not be parsed.
    * @throws ResourceException   if the report of this component could not be parsed.
+   * @return the validation result containing any parameter validation errors.
    */
   public ValidationResult applyInputsToReportParameters(final ParameterContext context,
                                                         ValidationResult validationResult)
@@ -1149,6 +1198,14 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
           return HTMLOutput.generate(report, outputStream, contentHandlerPattern, getYieldRate());
         }
       }
+      if (XmlPageableModule.PAGEABLE_XML_EXPORT_TYPE.equals(outputType))
+      {
+        return XmlPageableOutput.generate(report, outputStream, getYieldRate());
+      }
+      if (XmlTableModule.TABLE_XML_EXPORT_TYPE.equals(outputType))
+      {
+        return XmlTableOutput.generate(report, outputStream, getYieldRate());
+      }
       if (PdfPageableModule.PDF_EXPORT_TYPE.equals(outputType))
       {
         return PDFOutput.generate(report, outputStream, getYieldRate());
@@ -1186,4 +1243,97 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     return false;
   }
 
+
+  /**
+   * Perform a pagination run.
+   *
+   * @return the number of pages or streams generated.
+   * @throws Exception
+   */
+  public int paginate() throws Exception
+  {
+    final MasterReport report = getReport();
+
+    try
+    {
+      final ParameterContext parameterContext = new DefaultParameterContext(report);
+      // open parameter context
+      parameterContext.open();
+      final ValidationResult vr = applyInputsToReportParameters(parameterContext, null);
+      if (vr.isEmpty() == false)
+      {
+        return 0;
+      }
+      parameterContext.close();
+
+      if (isPrint())
+      {
+        return 0;
+      }
+
+      final String outputType = computeEffectiveOutputTarget();
+      final Configuration globalConfig = ClassicEngineBoot.getInstance().getGlobalConfig();
+      if (HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE.equals(outputType))
+      {
+        if (dashboardMode)
+        {
+          report.getReportConfiguration().setConfigProperty(HtmlTableModule.BODY_FRAGMENT, "true");
+        }
+        final String contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN,
+            globalConfig.getConfigProperty("org.pentaho.web.ContentHandler")); //$NON-NLS-1$
+        // don't use the content repository
+        pageCount = PageableHTMLOutput.paginate(report, acceptedPage, outputStream, contentHandlerPattern, getYieldRate());
+        return pageCount;
+      }
+      if (HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE.equals(outputType))
+      {
+        if (dashboardMode)
+        {
+          report.getReportConfiguration().setConfigProperty(HtmlTableModule.BODY_FRAGMENT, "true");
+        }
+        final String contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN, globalConfig
+            .getConfigProperty("org.pentaho.web.ContentHandler")); //$NON-NLS-1$
+        // don't use the content repository
+        return (HTMLOutput.paginage(report, contentHandlerPattern, getYieldRate()));
+      }
+      if (XmlPageableModule.PAGEABLE_XML_EXPORT_TYPE.equals(outputType))
+      {
+        return XmlPageableOutput.paginate(report, getYieldRate());
+      }
+      if (XmlTableModule.TABLE_XML_EXPORT_TYPE.equals(outputType))
+      {
+        return XmlTableOutput.paginate(report, getYieldRate());
+      }
+      if (PdfPageableModule.PDF_EXPORT_TYPE.equals(outputType))
+      {
+        return PDFOutput.paginate(report, getYieldRate());
+      }
+      if (ExcelTableModule.EXCEL_FLOW_EXPORT_TYPE.equals(outputType))
+      {
+        final InputStream templateInputStream = (InputStream) getInput(XLS_WORKBOOK_PARAM, null);
+        return XLSOutput.paginate(report, templateInputStream, getYieldRate());
+      }
+      if (CSVTableModule.TABLE_CSV_STREAM_EXPORT_TYPE.equals(outputType))
+      {
+        return CSVOutput.paginate(report, getYieldRate());
+      }
+      if (RTFTableModule.TABLE_RTF_FLOW_EXPORT_TYPE.equals(outputType))
+      {
+        return RTFOutput.paginate(report, getYieldRate());
+      }
+      if (PlainTextPageableModule.PLAINTEXT_EXPORT_TYPE.equals(outputType))
+      {
+        final TextFilePrinterDriver driver = new TextFilePrinterDriver(new NullOutputStream(), 12, 6);
+        return PlainTextOutput.paginate(report, getYieldRate(), driver);
+      }
+      log.warn(Messages.getString("ReportPlugin.warnUnprocessableRequest", outputType));
+
+    }
+    catch (Throwable t)
+    {
+      log.error(Messages.getString("ReportPlugin.executionFailed"), t); //$NON-NLS-1$
+    }
+    // lets not pretend we were successfull, if the export type was not a valid one.
+    return 0;
+  }
 }

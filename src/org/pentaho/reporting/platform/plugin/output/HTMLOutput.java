@@ -24,6 +24,7 @@ import org.pentaho.reporting.libraries.base.util.StringUtils;
 import org.pentaho.reporting.libraries.repository.ContentIOException;
 import org.pentaho.reporting.libraries.repository.ContentLocation;
 import org.pentaho.reporting.libraries.repository.DefaultNameGenerator;
+import org.pentaho.reporting.libraries.repository.dummy.DummyRepository;
 import org.pentaho.reporting.libraries.repository.file.FileRepository;
 import org.pentaho.reporting.libraries.repository.stream.StreamRepository;
 import org.pentaho.reporting.platform.plugin.messages.Messages;
@@ -39,6 +40,44 @@ public class HTMLOutput
         ("org.pentaho.reporting.platform.plugin.AlwaysDeleteHtmlDataFiles"));
   }
 
+  public static int paginage(final MasterReport report,
+                                 final String contentHandlerPattern,
+                                 final int yieldRate) throws ReportProcessingException, ContentIOException, IOException
+  {
+    final URLRewriter rewriter;
+    final ContentLocation dataLocation;
+    final PentahoNameGenerator dataNameGenerator;
+    final DummyRepository dataRepository = new DummyRepository();
+    dataLocation = dataRepository.getRoot();
+    dataNameGenerator = PentahoSystem.get(PentahoNameGenerator.class);
+    if (dataNameGenerator == null)
+    {
+      throw new IllegalStateException
+          (Messages.getString("ReportPlugin.errorNameGeneratorMissingConfiguration"));
+    }
+    dataNameGenerator.initialize(dataLocation, isSafeToDelete());
+    rewriter = new PentahoURLRewriter(contentHandlerPattern, false);
+
+    final DummyRepository targetRepository = new DummyRepository(); //$NON-NLS-1$
+    final ContentLocation targetRoot = targetRepository.getRoot();
+
+    final HtmlOutputProcessor outputProcessor = new StreamHtmlOutputProcessor(report.getConfiguration());
+    final HtmlPrinter printer = new AllItemsHtmlPrinter(report.getResourceManager());
+    printer.setContentWriter(targetRoot, new DefaultNameGenerator(targetRoot, "index", "html"));//$NON-NLS-1$//$NON-NLS-2$
+    printer.setDataWriter(dataLocation, dataNameGenerator);
+    printer.setUrlRewriter(rewriter);
+    outputProcessor.setPrinter(printer);
+
+    final StreamReportProcessor sp = new StreamReportProcessor(report, outputProcessor);
+    if (yieldRate > 0)
+    {
+      sp.addReportProgressListener(new YieldReportListener(yieldRate));
+    }
+    sp.paginate();
+    sp.close();
+
+    return sp.getPhysicalPageCount();
+  }
 
   public static boolean generate(final MasterReport report,
                                  final OutputStream outputStream,

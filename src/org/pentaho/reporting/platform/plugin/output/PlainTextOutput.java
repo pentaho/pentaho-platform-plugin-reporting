@@ -12,6 +12,31 @@ import org.pentaho.reporting.engine.classic.core.modules.output.pageable.plainte
 
 public class PlainTextOutput
 {
+  public static int paginate(final MasterReport report,
+                                 final int yieldRate,
+                                 final TextFilePrinterDriver driver) throws ReportProcessingException, IOException
+  {
+    PageableReportProcessor proc = null;
+    try
+    {
+      final PageableTextOutputProcessor outputProcessor = new PageableTextOutputProcessor(driver, report.getConfiguration());
+
+      proc = new PageableReportProcessor(report, outputProcessor);
+      if (yieldRate > 0)
+      {
+        proc.addReportProgressListener(new YieldReportListener(yieldRate));
+      }
+      proc.processReport();
+      return proc.getPhysicalPageCount();
+    }
+    finally
+    {
+      if (proc != null)
+      {
+        proc.close();
+      }
+    }
+  }
 
   public static boolean generate(final MasterReport report,
                                  final OutputStream outputStream,

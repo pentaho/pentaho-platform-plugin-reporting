@@ -120,6 +120,7 @@ body {
 .parameter-error-label {
 	font-size: 10pt;
 	font-weight: bold;
+  color: red;
 }
 
 .parameter-flow {
