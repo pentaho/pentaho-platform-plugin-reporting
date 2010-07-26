@@ -35,10 +35,8 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.xml.client.Attr;
 import com.google.gwt.xml.client.Document;
 import com.google.gwt.xml.client.Element;
-import com.google.gwt.xml.client.NamedNodeMap;
 import com.google.gwt.xml.client.NodeList;
 import com.google.gwt.xml.client.XMLParser;
 import org.pentaho.gwt.widgets.client.utils.i18n.ResourceBundle;
@@ -402,29 +400,33 @@ public class ParameterControllerPanel extends VerticalPanel
       for (int i = 0; i < parameterNodes.getLength(); i++)
       {
         final Element parameterElement = (Element) parameterNodes.item(i);
-        String parameterGroupName = parameterElement.getAttribute("parameter-group"); //$NON-NLS-1$
-        if (ReportViewerUtil.isEmpty(parameterGroupName))
-        {
-          // default group
-          parameterGroupName = "parameters"; //$NON-NLS-1$
-        }
-        ParameterGroup parameterGroup = parameterDefinition.getParameterGroup(parameterGroupName);
-        if (parameterGroup == null)
-        {
-          final String parameterGroupLabel = parameterElement.getAttribute("parameter-group-label"); //$NON-NLS-1$
-          parameterGroup = new ParameterGroup(parameterGroupName, parameterGroupLabel);
-          parameterDefinition.addParameterGroup(parameterGroup);
-        }
-
         final String name = parameterElement.getAttribute("name");// NON-NLS
         final Parameter parameter = new Parameter(name);
-        final NamedNodeMap attributes = parameterElement.getAttributes();
+        parameter.setMandatory("true".equals(parameterElement.getAttribute("is-mandatory")));
+        parameter.setStrict("true".equals(parameterElement.getAttribute("is-strict")));
+        parameter.setMultiSelect("true".equals(parameterElement.getAttribute("is-multi-select")));
+
+        final NodeList attributes = parameterElement.getElementsByTagName("attribute");
         final int length = attributes.getLength();
         for (int aidx = 0; aidx < length; aidx++)
         {
           // todo support additional namespaces ..
-          final Attr item = (Attr) attributes.item(aidx);
-          parameter.setAttribute(Parameter.CORE_NAMESPACE, item.getName(), item.getValue());
+          final Element item = (Element) attributes.item(aidx);
+          final String namespace = item.getAttribute("namespace");
+          final String attrName = item.getAttribute("name");
+          final String attrValue = item.getAttribute("value");
+          if (ReportViewerUtil.isEmpty(attrName) || ReportViewerUtil.isEmpty(attrValue))
+          {
+            continue;
+          }
+          if (ReportViewerUtil.isEmpty(namespace))
+          {
+            parameter.setAttribute(Parameter.CORE_NAMESPACE, attrName, attrValue);
+          }
+          else
+          {
+            parameter.setAttribute(namespace, attrName, attrValue);
+          }
         }
 
         final NodeList list = parameterElement.getElementsByTagName("value");
@@ -436,6 +438,20 @@ public class ParameterControllerPanel extends VerticalPanel
           final String type = valueElement.getAttribute("type"); // NON-NLS
           final boolean selected = "true".equals(valueElement.getAttribute("selected")); // NON-NLS
           parameter.addSelection(new ParameterSelection(type, value, selected, label));
+        }
+
+        String parameterGroupName = parameter.getAttribute("parameter-group"); //$NON-NLS-1$
+        if (ReportViewerUtil.isEmpty(parameterGroupName))
+        {
+          // default group
+          parameterGroupName = "parameters"; //$NON-NLS-1$
+        }
+        ParameterGroup parameterGroup = parameterDefinition.getParameterGroup(parameterGroupName);
+        if (parameterGroup == null)
+        {
+          final String parameterGroupLabel = parameter.getAttribute("parameter-group-label"); //$NON-NLS-1$
+          parameterGroup = new ParameterGroup(parameterGroupName, parameterGroupLabel);
+          parameterDefinition.addParameterGroup(parameterGroup);
         }
         parameterGroup.addParameter(parameter);
       }
@@ -696,7 +712,7 @@ public class ParameterControllerPanel extends VerticalPanel
     }
     else
     {
-      finalAcceptedPage = Math.max (0, parametersElement.getPage());
+      finalAcceptedPage = Math.max(0, parametersElement.getPage());
     }
     // add our default page, so we can keep this between selections of other parameters, otherwise it will not be on the
     // set of params are default back to zero (page 1)

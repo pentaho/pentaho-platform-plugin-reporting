@@ -308,19 +308,27 @@ public class ParameterXmlContentHandler
   {
     final Element parameterElement = document.createElement("parameter"); //$NON-NLS-1$
     parameterElement.setAttribute("name", parameter.getName()); //$NON-NLS-1$
-    parameterElement.setAttribute("parameter-group", GROUP_PARAMETERS); //$NON-NLS-1$ //$NON-NLS-2$
-    parameterElement.setAttribute("parameter-group-label", Messages.getString("ReportPlugin.ReportParameters")); //$NON-NLS-1$ //$NON-NLS-2$
     parameterElement.setAttribute("type", parameter.getValueType().getName()); //$NON-NLS-1$
     parameterElement.setAttribute("is-mandatory", String.valueOf(parameter.isMandatory())); //$NON-NLS-1$ //$NON-NLS-2$
 
-    final String[] attributeNames = parameter.getParameterAttributeNames(ParameterAttributeNames.Core.NAMESPACE);
-    for (final String attributeName : attributeNames)
+    final String[] namespaces = parameter.getParameterAttributeNamespaces();
+    for (int i = 0; i < namespaces.length; i++)
     {
-      final String attributeValue = parameter.getParameterAttribute
-          (ParameterAttributeNames.Core.NAMESPACE, attributeName, parameterContext);
-      // expecting: label, parameter-render-type, parameter-layout
-      // but others possible as well, so we set them all
-      parameterElement.setAttribute(attributeName, attributeValue);
+      final String namespace = namespaces[i];
+      final String[] attributeNames = parameter.getParameterAttributeNames(namespace);
+      for (final String attributeName : attributeNames)
+      {
+        final String attributeValue = parameter.getParameterAttribute
+            (namespace, attributeName, parameterContext);
+        // expecting: label, parameter-render-type, parameter-layout
+        // but others possible as well, so we set them all
+        final Element attributeElement = document.createElement("attribute");
+        attributeElement.setAttribute("namespace", namespace);
+        attributeElement.setAttribute("name", attributeName);
+        attributeElement.setAttribute("value", attributeValue);
+
+        parameterElement.appendChild(attributeElement);
+      }
     }
 
     final HashSet<Object> selectionSet = new HashSet<Object>();

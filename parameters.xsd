@@ -24,47 +24,14 @@
 
   <xs:complexType name="parameterType">
     <xs:sequence>
+      <xs:element type="attributeType" name="attribute" maxOccurs="1" minOccurs="0"/>
       <xs:element type="valuesType" name="values" maxOccurs="1" minOccurs="0"/>
     </xs:sequence>
     <xs:attribute type="xs:string" name="name" use="required"/>
-    <xs:attribute type="xs:string" name="parameter-group" use="optional"/>
-    <xs:attribute type="xs:string" name="parameter-group-label" use="optional"/>
-    <xs:attribute type="xs:string" name="label" use="optional"/>
-    <xs:attribute type="xs:string" name="tooltip" use="optional"/>
-    <xs:attribute type="xs:string" name="dataformat" use="optional"/>
-    <xs:attribute type="xs:int" name="parameter-visible-items" use="optional"/>
-    <xs:attribute type="parameterRenderTypeAttr" name="parameter-render-type" use="optional"/>
-    <xs:attribute type="parameterLayoutTypeAttr" name="parameter-layout" use="optional"/>
     <xs:attribute type="xs:boolean" name="is-strict" use="optional"/> <!-- was is-strict -->
     <xs:attribute type="xs:boolean" name="is-multi-select" use="optional"/>
     <xs:attribute type="xs:boolean" name="is-mandatory" use="optional"/>
-    <xs:attribute type="xs:boolean" name="hidden" use="optional"/>
   </xs:complexType>
-
-  <xs:simpleType name="parameterRenderTypeAttr">
-    <xs:annotation>
-      <xs:documentation>The currently known parameter types.</xs:documentation>
-    </xs:annotation>
-    <xs:restriction base="xs:string">
-      <xs:enumeration value="radio"/>
-      <xs:enumeration value="checkbox"/>
-      <xs:enumeration value="togglebutton"/>
-      <xs:enumeration value="list"/>
-      <xs:enumeration value="dropdown"/>
-      <xs:enumeration value="datepicker"/>
-      <xs:enumeration value="textbox"/>
-    </xs:restriction>
-  </xs:simpleType>
-
-  <xs:simpleType name="parameterLayoutTypeAttr">
-    <xs:annotation>
-      <xs:documentation>The currently known list parameter layouts.</xs:documentation>
-    </xs:annotation>
-    <xs:restriction base="xs:string">
-      <xs:enumeration value="vertical"/>
-      <xs:enumeration value="horizontal"/>
-    </xs:restriction>
-  </xs:simpleType>
 
   <xs:complexType name="errorsType">
     <xs:sequence>
@@ -94,5 +61,12 @@
     <xs:attribute type="xs:string" name="type" use="required"/>
     <xs:attribute type="xs:string" name="value" use="required"/>
     <xs:attribute type="xs:boolean" name="selected" use="required"/>
+  </xs:complexType>
+
+  <xs:complexType name="attributeType">
+    <xs:attribute type="xs:string" name="namespace" use="required"
+                  default="http://reporting.pentaho.org/namespaces/engine/parameter-attributes/core"/>
+    <xs:attribute type="xs:string" name="name" use="required"/>
+    <xs:attribute type="xs:string" name="value" use="required"/>
   </xs:complexType>
 </xs:schema>

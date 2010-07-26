@@ -20,6 +20,9 @@ public class Parameter
   private ArrayList<ParameterSelection> selections;
   private String name;
   private HashMap<String, HashMap<String, String>> attributes;
+  private boolean strict;
+  private boolean multiSelect;
+  private boolean mandatory;
 
   public Parameter(final String name)
   {
@@ -81,17 +84,32 @@ public class Parameter
 
   public boolean isStrict()
   {
-    return "true".equals(getAttribute(CORE_NAMESPACE, "is-strict")); // NON-NLS
+    return strict; // NON-NLS
   }
 
   public boolean isMultiSelect()
   {
-    return "true".equals(getAttribute(CORE_NAMESPACE, "is-multi-select")); // NON-NLS
+    return multiSelect; // NON-NLS
   }
 
   public boolean isMandatory()
   {
-    return "true".equals(getAttribute(CORE_NAMESPACE, "is-mandatory")); // NON-NLS
+    return mandatory; // NON-NLS
+  }
+
+  public void setStrict(final boolean strict)
+  {
+    this.strict = strict;
+  }
+
+  public void setMultiSelect(final boolean multiSelect)
+  {
+    this.multiSelect = multiSelect;
+  }
+
+  public void setMandatory(final boolean mandatory)
+  {
+    this.mandatory = mandatory;
   }
 
   public String getAttribute(final String name)
@@ -106,7 +124,6 @@ public class Parameter
 
   public boolean isHidden()
   {
-    // todo
-    return false;
+    return "true".equals(getAttribute(CORE_NAMESPACE, "hidden"));
   }
 }
