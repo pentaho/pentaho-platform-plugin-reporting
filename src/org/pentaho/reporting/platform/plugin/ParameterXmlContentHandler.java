@@ -107,25 +107,24 @@ public class ParameterXmlContentHandler
       parameter.put(SYS_PARAM_DESTINATION, createDestinationParameter());
       parameter.put(SYS_PARAM_SCHEDULE_ID, createScheduleIdParameter());
       parameter.put(SYS_PARAM_OUTPUT_TARGET, createOutputParameter());
-      parameter.put("subscribe", createGenericBooleanSystemParameter("subscribe", false));
+      parameter.put("subscribe", createGenericBooleanSystemParameter("subscribe", false)); // NON-NLS
 
-      parameter.put("solution", createGenericSystemParameter("solution", false));
-      parameter.put("path", createGenericSystemParameter("path", false));
-      parameter.put("name", createGenericSystemParameter("name", false));
-      parameter.put("action", createGenericSystemParameter("action", true));
-      parameter.put("output-type", createGenericSystemParameter("output-type", true));
-      parameter.put("layout", createGenericSystemParameter("layout", true));
-      parameter.put("content-handler-pattern", createGenericSystemParameter("content-handler-pattern", true));
-      parameter.put("autoSubmit", createGenericBooleanSystemParameter("autoSubmit", true));
-      parameter.put("autoSubmitUI", createGenericBooleanSystemParameter("autoSubmitUI", true));
-      parameter.put("dashboard-mode", createGenericBooleanSystemParameter("dashboard-mode", false));
-      parameter.put("showParameters", createGenericBooleanSystemParameter("showParameters", false));
-      parameter.put("paginate", createGenericBooleanSystemParameter("paginate", true));
-      parameter.put("ignoreDefaultDates", createGenericBooleanSystemParameter("ignoreDefaultDates", true));
-      parameter.put("print", createGenericBooleanSystemParameter("print", false));
-      parameter.put("printer-name", createGenericSystemParameter("printer-name", false));
-
-      parameter.put("renderMode", createRenderModeSystemParameter());
+      parameter.put("solution", createGenericSystemParameter("solution", false)); // NON-NLS
+      parameter.put("path", createGenericSystemParameter("path", false)); // NON-NLS
+      parameter.put("name", createGenericSystemParameter("name", false)); // NON-NLS
+      parameter.put("action", createGenericSystemParameter("action", true)); // NON-NLS
+      parameter.put("output-type", createGenericSystemParameter("output-type", true)); // NON-NLS
+      parameter.put("layout", createGenericSystemParameter("layout", true)); // NON-NLS
+      parameter.put("content-handler-pattern", createGenericSystemParameter("content-handler-pattern", true)); // NON-NLS
+      parameter.put("autoSubmit", createGenericBooleanSystemParameter("autoSubmit", true)); // NON-NLS
+      parameter.put("autoSubmitUI", createGenericBooleanSystemParameter("autoSubmitUI", true)); // NON-NLS
+      parameter.put("dashboard-mode", createGenericBooleanSystemParameter("dashboard-mode", false)); // NON-NLS
+      parameter.put("showParameters", createGenericBooleanSystemParameter("showParameters", false)); // NON-NLS
+      parameter.put("paginate", createGenericBooleanSystemParameter("paginate", true)); // NON-NLS
+      parameter.put("ignoreDefaultDates", createGenericBooleanSystemParameter("ignoreDefaultDates", true)); // NON-NLS
+      parameter.put("print", createGenericBooleanSystemParameter("print", false)); // NON-NLS
+      parameter.put("printer-name", createGenericSystemParameter("printer-name", false)); // NON-NLS
+      parameter.put("renderMode", createRenderModeSystemParameter()); // NON-NLS
 
       systemParameter = Collections.unmodifiableMap(parameter);
     }
@@ -142,7 +141,7 @@ public class ParameterXmlContentHandler
    */
   private boolean isGenerateDefaultDates()
   {
-    final Object value = inputs.get("ignoreDefaultDates");
+    final Object value = inputs.get("ignoreDefaultDates"); // NON-NLS
     if (value == null)
     {
       // we do not generate default dates until it is explicitly requested.
@@ -322,10 +321,10 @@ public class ParameterXmlContentHandler
             (namespace, attributeName, parameterContext);
         // expecting: label, parameter-render-type, parameter-layout
         // but others possible as well, so we set them all
-        final Element attributeElement = document.createElement("attribute");
-        attributeElement.setAttribute("namespace", namespace);
-        attributeElement.setAttribute("name", attributeName);
-        attributeElement.setAttribute("value", attributeValue);
+        final Element attributeElement = document.createElement("attribute"); // NON-NLS
+        attributeElement.setAttribute("namespace", namespace); // NON-NLS
+        attributeElement.setAttribute("name", attributeName); // NON-NLS
+        attributeElement.setAttribute("value", attributeValue); // NON-NLS
 
         parameterElement.appendChild(attributeElement);
       }
@@ -754,10 +753,10 @@ public class ParameterXmlContentHandler
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TYPE,
             ParameterAttributeNames.Core.TYPE_DROPDOWN);
     listParameter.setRole(ParameterAttributeNames.Core.ROLE_SYSTEM_PARAMETER);
-    listParameter.addValues("XML", "XML");
-    listParameter.addValues("REPORT", "REPORT");
-    listParameter.addValues("SUBSCRIBE", "SUBSCRIBE");
-    listParameter.addValues("DOWNLOAD", "DOWNLOAD");
+    listParameter.addValues("XML", "XML"); // NON-NLS
+    listParameter.addValues("REPORT", "REPORT"); // NON-NLS
+    listParameter.addValues("SUBSCRIBE", "SUBSCRIBE"); // NON-NLS
+    listParameter.addValues("DOWNLOAD", "DOWNLOAD"); // NON-NLS
     return listParameter;
   }
 
