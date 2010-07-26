@@ -805,10 +805,11 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
         final String paramName = param.getName();
         Object value = inputs.get(paramName);
         final Object defaultValue = param.getDefaultValue(context);
-        if (value == null && defaultValue != null)
+        if (value == null)
         {
           value = defaultValue;
         }
+
         try
         {
           addParameter(context, parameterValues, param, value);

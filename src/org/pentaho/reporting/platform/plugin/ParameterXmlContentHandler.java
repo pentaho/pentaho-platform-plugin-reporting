@@ -5,8 +5,11 @@ import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -30,14 +33,17 @@ import org.pentaho.reporting.engine.classic.core.modules.output.table.csv.CSVTab
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlTableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.rtf.RTFTableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.xls.ExcelTableModule;
+import org.pentaho.reporting.engine.classic.core.parameters.AbstractParameter;
 import org.pentaho.reporting.engine.classic.core.parameters.DefaultParameterContext;
 import org.pentaho.reporting.engine.classic.core.parameters.ListParameter;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterAttributeNames;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterContext;
+import org.pentaho.reporting.engine.classic.core.parameters.ParameterContextWrapper;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterDefinitionEntry;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterValues;
 import org.pentaho.reporting.engine.classic.core.parameters.PlainParameter;
 import org.pentaho.reporting.engine.classic.core.parameters.ReportParameterDefinition;
+import org.pentaho.reporting.engine.classic.core.parameters.StaticListParameter;
 import org.pentaho.reporting.engine.classic.core.parameters.ValidationMessage;
 import org.pentaho.reporting.engine.classic.core.parameters.ValidationResult;
 import org.pentaho.reporting.engine.classic.core.util.NullOutputStream;
@@ -60,16 +66,27 @@ import org.w3c.dom.Element;
 public class ParameterXmlContentHandler
 {
   private static final Log logger = LogFactory.getLog(ParameterXmlContentHandler.class);
-  
+
+  private Map<String, ParameterDefinitionEntry> systemParameter;
+
   private ReportContentGenerator contentGenerator;
   private Document document;
-  private ParameterContext parameterContext;
+  //private ParameterContext parameterContext;
   private IParameterProvider requestParameters;
   private IPentahoSession userSession;
+  private Map<String, Object> inputs;
+  private String reportDefinitionPath;
+  private static final String SYS_PARAM_OUTPUT_TARGET = SimpleReportingComponent.OUTPUT_TARGET;
+  private static final String SYS_PARAM_SUBSCRIPTION_NAME = "subscription-name";
+  private static final String SYS_PARAM_DESTINATION = "destination";
+  private static final String SYS_PARAM_SCHEDULE_ID = "schedule-id";
+  private static final String GROUP_SUBSCRIPTION = "subscription";
+  private static final String GROUP_PARAMETERS = "parameters";
 
   public ParameterXmlContentHandler(final ReportContentGenerator contentGenerator)
   {
     this.contentGenerator = contentGenerator;
+    this.inputs = contentGenerator.createInputs();
     this.requestParameters = contentGenerator.getRequestParameters();
     this.userSession = contentGenerator.getUserSession();
   }
@@ -79,14 +96,29 @@ public class ParameterXmlContentHandler
     return requestParameters;
   }
 
+  private Map<String, ParameterDefinitionEntry> getSystemParameter()
+  {
+    if (systemParameter == null)
+    {
+      final Map<String, ParameterDefinitionEntry> parameter = new LinkedHashMap<String, ParameterDefinitionEntry>();
+      parameter.put(SYS_PARAM_SUBSCRIPTION_NAME, createSubscriptionNameParameter());
+      parameter.put(SYS_PARAM_DESTINATION, createDestinationParameter());
+      parameter.put(SYS_PARAM_SCHEDULE_ID, createScheduleIdParameter());
+      parameter.put(SYS_PARAM_OUTPUT_TARGET, createOutputParameter());
+      systemParameter = Collections.unmodifiableMap(parameter);
+    }
+
+    return systemParameter;
+  }
+
 
   public void createParameterContent(final OutputStream outputStream,
-                                      final String reportDefinitionPath) throws Exception
+                                     final String reportDefinitionPath) throws Exception
   {
-    document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+    this.reportDefinitionPath = reportDefinitionPath;
+    this.document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
 
     final IParameterProvider requestParams = getRequestParameters();
-    final Map<String, Object> inputs = contentGenerator.createInputs();
 
     final boolean subscribe = "true".equals(requestParams.getStringParameter("subscribe", "false")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     // handle parameter feedback (XML) services
@@ -100,7 +132,7 @@ public class ParameterXmlContentHandler
 
     final MasterReport report = reportComponent.getReport();
 
-    parameterContext = new DefaultParameterContext(report);
+    final ParameterContext parameterContext = new DefaultParameterContext(report);
     try
     {
       // open parameter context
@@ -110,9 +142,10 @@ public class ParameterXmlContentHandler
       validationResult = reportComponent.applyInputsToReportParameters(parameterContext, validationResult);
 
       final ReportParameterDefinition reportParameterDefinition = report.getParameterDefinition();
-      final ValidationResult vr = reportParameterDefinition.getValidator().validate(validationResult, reportParameterDefinition, parameterContext);
+      final ValidationResult vr = reportParameterDefinition.getValidator().validate
+          (validationResult, reportParameterDefinition, parameterContext);
 
-      final Element parameters = document.createElement("parameters"); //$NON-NLS-1$
+      final Element parameters = document.createElement(GROUP_PARAMETERS); //$NON-NLS-1$
       parameters.setAttribute("is-prompt-needed", String.valueOf(vr.isEmpty() == false)); //$NON-NLS-1$ //$NON-NLS-2$
       parameters.setAttribute("subscribe", String.valueOf(subscribe)); //$NON-NLS-1$ //$NON-NLS-2$
 
@@ -161,36 +194,29 @@ public class ParameterXmlContentHandler
           AttributeNames.Core.NAMESPACE, AttributeNames.Core.PARAMETER_UI_LAYOUT,
           "org.pentaho.reporting.engine.classic.core.ParameterUiLayout"));
 
+      final LinkedHashMap<String, ParameterDefinitionEntry> reportParameters =
+          new LinkedHashMap<String, ParameterDefinitionEntry>();
       final ParameterDefinitionEntry[] parameterDefinitions = reportParameterDefinition.getParameterDefinitions();
-      boolean outputTypeParameterSeen = false;
       for (final ParameterDefinitionEntry parameter : parameterDefinitions)
       {
-        if (SimpleReportingComponent.OUTPUT_TARGET.equals(parameter.getName()))
-        {
-          outputTypeParameterSeen = true;
-        }
-        final Object selections = inputs.get(parameter.getName());
-        final Element parameterElement = createParameterElement(parameter, selections);
-        parameters.appendChild(parameterElement);
+        reportParameters.put(parameter.getName(), parameter);
       }
+      reportParameters.putAll(getSystemParameter());
 
-      // now add output type chooser
-      if (outputTypeParameterSeen == false)
+      hideOutputParameterIfLocked(report, reportParameters);
+      hideSubscriptionParameter(subscribe, reportParameters);
+      final Map<String, Object> inputs = computeRealInput(reportComponent.getComputedOutputTarget());
+
+      for (final ParameterDefinitionEntry parameter : reportParameters.values())
       {
-        final Object selections = reportComponent.getComputedOutputTarget();
-        addOutputParameter(report, parameters, selections);
+        final Object selections = inputs.get(parameter.getName());
+        final Element parameterElement = createParameterElement(parameter, parameterContext, selections);
+        parameters.appendChild(parameterElement);
       }
 
       if (vr.isEmpty() == false)
       {
         parameters.appendChild(createErrorElements(vr));
-      }
-
-      // if we're going to attempt to handle subscriptions, add related choices as a parameter
-      if (subscribe)
-      {
-        // add subscription choices, as a parameter (last in list)
-        addSubscriptionParameter(reportDefinitionPath, parameters, inputs);
       }
 
       document.appendChild(parameters);
@@ -203,13 +229,46 @@ public class ParameterXmlContentHandler
     }
   }
 
+  private Map<String, Object> computeRealInput(final String computedOutputTarget)
+  {
+    final Map<String, Object> realInputs = new HashMap<String, Object>(this.inputs);
+    if (realInputs.containsKey(SYS_PARAM_DESTINATION) == false)
+    {
+      realInputs.put(SYS_PARAM_DESTINATION, lookupDestination());
+    }
+    if (realInputs.containsKey(SYS_PARAM_SCHEDULE_ID) == false)
+    {
+      realInputs.put(SYS_PARAM_SCHEDULE_ID, lookupSchedules());
+    }
+    if (realInputs.containsKey(SYS_PARAM_SUBSCRIPTION_NAME) == false)
+    {
+      realInputs.put(SYS_PARAM_SUBSCRIPTION_NAME, lookupSubscriptionName());
+    }
+    realInputs.put(SYS_PARAM_OUTPUT_TARGET, computedOutputTarget);
+    return realInputs;
+  }
+
+  private void hideOutputParameterIfLocked(final MasterReport report,
+                                           final Map<String, ParameterDefinitionEntry> reportParameters)
+  {
+    final boolean lockOutputType = Boolean.TRUE.equals(report.getAttribute
+        (AttributeNames.Core.NAMESPACE, AttributeNames.Core.LOCK_PREFERRED_OUTPUT_TYPE));
+    final ParameterDefinitionEntry definitionEntry = reportParameters.get(SimpleReportingComponent.OUTPUT_TARGET);
+    if (definitionEntry instanceof AbstractParameter)
+    {
+      final AbstractParameter parameter = (AbstractParameter) definitionEntry;
+      parameter.setHidden(lockOutputType);
+    }
+  }
+
 
   private Element createParameterElement(final ParameterDefinitionEntry parameter,
+                                         final ParameterContext parameterContext,
                                          final Object selections) throws BeanException, ReportDataFactoryException
   {
     final Element parameterElement = document.createElement("parameter"); //$NON-NLS-1$
     parameterElement.setAttribute("name", parameter.getName()); //$NON-NLS-1$
-    parameterElement.setAttribute("parameter-group", "parameters"); //$NON-NLS-1$ //$NON-NLS-2$
+    parameterElement.setAttribute("parameter-group", GROUP_PARAMETERS); //$NON-NLS-1$ //$NON-NLS-2$
     parameterElement.setAttribute("parameter-group-label", Messages.getString("ReportPlugin.ReportParameters")); //$NON-NLS-1$ //$NON-NLS-2$
     parameterElement.setAttribute("type", parameter.getValueType().getName()); //$NON-NLS-1$
     parameterElement.setAttribute("is-mandatory", String.valueOf(parameter.isMandatory())); //$NON-NLS-1$ //$NON-NLS-2$
@@ -395,233 +454,184 @@ public class ParameterXmlContentHandler
   }
 
 
-  private void addSubscriptionParameter(final String reportDefinitionPath,
-                                        final Element parameters,
-                                        final Map<String, Object> inputs)
+  private void hideSubscriptionParameter(final boolean hidden,
+                                         final Map<String, ParameterDefinitionEntry> parameters)
+  {
+    final ParameterDefinitionEntry destination = parameters.get(SYS_PARAM_DESTINATION);
+    if (destination instanceof AbstractParameter)
+    {
+      final AbstractParameter parameter = (AbstractParameter) destination;
+      parameter.setHidden(hidden || parameter.isHidden());
+    }
+
+    final ParameterDefinitionEntry scheduleId = parameters.get(SYS_PARAM_SCHEDULE_ID);
+    if (scheduleId instanceof AbstractParameter)
+    {
+      final AbstractParameter parameter = (AbstractParameter) scheduleId;
+      parameter.setHidden(hidden || parameter.isHidden());
+    }
+
+    final ParameterDefinitionEntry scheduleName = parameters.get(SYS_PARAM_SUBSCRIPTION_NAME);
+    if (scheduleName instanceof AbstractParameter)
+    {
+      final AbstractParameter parameter = (AbstractParameter) scheduleName;
+      parameter.setHidden(hidden || parameter.isHidden());
+    }
+  }
+
+  private PlainParameter createSubscriptionNameParameter()
+  {
+    final PlainParameter subscriptionName = new PlainParameter(SYS_PARAM_SUBSCRIPTION_NAME, String.class);
+    subscriptionName.setMandatory(true);
+    subscriptionName.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP, GROUP_SUBSCRIPTION);
+    subscriptionName.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP_LABEL,
+            Messages.getString("ReportPlugin.ReportSchedulingOptions"));
+    subscriptionName.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.LABEL,
+            Messages.getString("ReportPlugin.ReportName"));
+    subscriptionName.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TYPE,
+            ParameterAttributeNames.Core.TYPE_TEXTBOX);
+    return subscriptionName;
+  }
+
+  private PlainParameter createDestinationParameter()
+  {
+    final PlainParameter destinationParameter = new PlainParameter(SYS_PARAM_DESTINATION, String.class);
+    destinationParameter.setMandatory(false);
+    destinationParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP, GROUP_SUBSCRIPTION);
+    destinationParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP_LABEL,
+            Messages.getString("ReportPlugin.ReportSchedulingOptions"));
+    destinationParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.LABEL,
+            Messages.getString("ReportPlugin.Destination"));
+    destinationParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TYPE,
+            ParameterAttributeNames.Core.TYPE_TEXTBOX);
+    destinationParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.HIDDEN,
+            String.valueOf(isEmailConfigured() == false));
+    return destinationParameter;
+  }
+
+  private StaticListParameter createScheduleIdParameter()
+  {
+
+    final StaticListParameter scheduleIdParameter = new StaticListParameter(SYS_PARAM_SCHEDULE_ID, false, true, String.class);
+    scheduleIdParameter.setMandatory(true);
+    scheduleIdParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP, GROUP_SUBSCRIPTION);
+    scheduleIdParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP_LABEL,
+            Messages.getString("ReportPlugin.ReportSchedulingOptions"));
+    scheduleIdParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.LABEL,
+            Messages.getString("ReportPlugin.Subscription"));
+    scheduleIdParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TYPE,
+            ParameterAttributeNames.Core.TYPE_DROPDOWN);
+    scheduleIdParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.HIDDEN,
+            String.valueOf(isEmailConfigured() == false));
+
+    appendAvailableSchedules(scheduleIdParameter);
+    return scheduleIdParameter;
+  }
+
+  private void appendAvailableSchedules(final StaticListParameter scheduleIdParameter)
+  {
+    final ISubscriptionRepository subscriptionRepository = PentahoSystem.get(ISubscriptionRepository.class, userSession);
+    if (subscriptionRepository == null)
+    {
+      return;
+    }
+
+    final ISubscribeContent subscribeContent = subscriptionRepository.getContentByActionReference(reportDefinitionPath);
+    if (subscribeContent == null)
+    {
+      return;
+    }
+
+    final List<ISchedule> list = subscribeContent.getSchedules();
+    if (list == null)
+    {
+      return;
+    }
+
+    for (final ISchedule schedule : list)
+    {
+      scheduleIdParameter.addValues(schedule.getId(), schedule.getTitle());
+    }
+  }
+
+  private String lookupSchedules()
+  {
+    final Object scheduleIdSelection = inputs.get(SYS_PARAM_SCHEDULE_ID); //$NON-NLS-1$
+    if (scheduleIdSelection != null)
+    {
+      return String.valueOf(scheduleIdSelection);
+    }
+    return null;
+  }
+
+  private boolean isEmailConfigured()
+  {
+    final String emailRaw = PentahoSystem.getSystemSetting("smtp-email/email_config.xml", "mail.smtp.host", "");//$NON-NLS-1$
+    return StringUtils.isEmpty(emailRaw) == false;
+  }
+
+  private Object lookupSubscriptionName()
   {
     final ISubscription subscription = contentGenerator.getSubscription();
-
-    final Document document = parameters.getOwnerDocument();
-
-    final Element reportNameParameter = document.createElement("parameter"); //$NON-NLS-1$
-    parameters.appendChild(reportNameParameter);
-    reportNameParameter.setAttribute("name", "subscription-name"); //$NON-NLS-1$ //$NON-NLS-2$
-    reportNameParameter.setAttribute("label", Messages.getString("ReportPlugin.ReportName")); //$NON-NLS-1$ //$NON-NLS-2$
-    reportNameParameter.setAttribute("parameter-group", "subscription"); //$NON-NLS-1$ //$NON-NLS-2$
-    reportNameParameter.setAttribute(
-        "parameter-group-label", Messages.getString("ReportPlugin.ReportSchedulingOptions")); //$NON-NLS-1$ //$NON-NLS-2$
-    reportNameParameter.setAttribute("type", "java.lang.String"); //$NON-NLS-1$ //$NON-NLS-2$
-    reportNameParameter.setAttribute("is-mandatory", "true"); //$NON-NLS-1$ //$NON-NLS-2$
-    reportNameParameter.setAttribute("is-multi-select", "false"); //$NON-NLS-1$ //$NON-NLS-2$
-    reportNameParameter.setAttribute("is-strict", "false"); //$NON-NLS-1$ //$NON-NLS-2$
-    reportNameParameter.setAttribute("parameter-render-type", "textbox"); //$NON-NLS-1$ //$NON-NLS-2$
-
-    Object reportNameSelection = inputs.get("subscription-name"); //$NON-NLS-1$
+    Object reportNameSelection = inputs.get(SYS_PARAM_SUBSCRIPTION_NAME); //$NON-NLS-1$
     if (reportNameSelection == null && subscription != null)
     {
       // subscription helper will populate with this value, grr.
       reportNameSelection = subscription.getTitle();
     }
-    if (reportNameSelection != null)
-    {
-      final Element selectionsElement = document.createElement("values"); //$NON-NLS-1$
-      reportNameParameter.appendChild(selectionsElement);
-      final Element selectionElement = document.createElement("value"); //$NON-NLS-1$
-      selectionElement.setAttribute("value", reportNameSelection.toString()); //$NON-NLS-1$
-      selectionElement.setAttribute("selected", "true");//$NON-NLS-1$
-      selectionElement.setAttribute("type", "java.lang.String");//$NON-NLS-1$
-      selectionsElement.appendChild(selectionElement);
-    }
-
-    final String email = PentahoSystem.getSystemSetting("smtp-email/email_config.xml", "mail.smtp.host", "");//$NON-NLS-1$
-    if (StringUtils.isEmpty(email) == false)
-    {
-
-      // create email destination parameter
-      final Element emailParameter = document.createElement("parameter"); //$NON-NLS-1$
-      parameters.appendChild(emailParameter);
-      emailParameter.setAttribute("name", "destination"); //$NON-NLS-1$ //$NON-NLS-2$
-      emailParameter.setAttribute("label", org.pentaho.reporting.platform.plugin.messages.Messages.getString("ReportPlugin.Destination")); //$NON-NLS-1$ //$NON-NLS-2$
-      emailParameter.setAttribute("parameter-group", "subscription"); //$NON-NLS-1$ //$NON-NLS-2$
-      emailParameter.setAttribute(
-          "parameter-group-label", org.pentaho.reporting.platform.plugin.messages.Messages.getString("ReportPlugin.ReportSchedulingOptions")); //$NON-NLS-1$ //$NON-NLS-2$
-      emailParameter.setAttribute("type", "java.lang.String"); //$NON-NLS-1$ //$NON-NLS-2$
-      emailParameter.setAttribute("is-mandatory", "false"); //$NON-NLS-1$ //$NON-NLS-2$
-      emailParameter.setAttribute("is-multi-select", "false"); //$NON-NLS-1$ //$NON-NLS-2$
-      emailParameter.setAttribute("is-strict", "false"); //$NON-NLS-1$ //$NON-NLS-2$
-      emailParameter.setAttribute("parameter-render-type", "textbox"); //$NON-NLS-1$ //$NON-NLS-2$
-
-      Object destinationSelection = inputs.get("destination");//$NON-NLS-1$
-      if (destinationSelection == null && subscription != null)
-      {
-        destinationSelection = subscription.getTitle();
-      }
-      if (destinationSelection != null)
-      {
-        final Element selectionsElement = document.createElement("values"); //$NON-NLS-1$
-        emailParameter.appendChild(selectionsElement);
-        final Element selectionElement = document.createElement("value"); //$NON-NLS-1$
-        selectionElement.setAttribute("value", destinationSelection.toString()); //$NON-NLS-1$
-        selectionElement.setAttribute("selected", "true");//$NON-NLS-1$
-        selectionElement.setAttribute("type", "java.lang.String");//$NON-NLS-1$
-        selectionsElement.appendChild(selectionElement);
-      }
-    }
-
-    final ISubscriptionRepository subscriptionRepository = PentahoSystem.get(ISubscriptionRepository.class, userSession);
-    final ISubscribeContent subscribeContent = subscriptionRepository.getContentByActionReference(reportDefinitionPath);
-
-    // add subscription choices, as a parameter (last in list)
-    final Element subscriptionIdElement = document.createElement("parameter"); //$NON-NLS-1$
-    parameters.appendChild(subscriptionIdElement);
-    subscriptionIdElement.setAttribute("name", "schedule-id"); //$NON-NLS-1$ //$NON-NLS-2$
-    subscriptionIdElement.setAttribute("label", org.pentaho.reporting.platform.plugin.messages.Messages.getString("ReportPlugin.Subscription")); //$NON-NLS-1$ //$NON-NLS-2$
-    subscriptionIdElement.setAttribute("parameter-group", "subscription"); //$NON-NLS-1$ //$NON-NLS-2$
-    subscriptionIdElement.setAttribute(
-        "parameter-group-label", org.pentaho.reporting.platform.plugin.messages.Messages.getString("ReportPlugin.ScheduleReport")); //$NON-NLS-1$ //$NON-NLS-2$
-    subscriptionIdElement.setAttribute("type", "java.lang.String"); //$NON-NLS-1$ //$NON-NLS-2$
-    subscriptionIdElement.setAttribute("is-mandatory", "true"); //$NON-NLS-1$ //$NON-NLS-2$
-    subscriptionIdElement.setAttribute("is-multi-select", "false"); //$NON-NLS-1$ //$NON-NLS-2$
-    subscriptionIdElement.setAttribute("is-strict", "true"); //$NON-NLS-1$ //$NON-NLS-2$
-    subscriptionIdElement.setAttribute("parameter-render-type", "dropdown"); //$NON-NLS-1$ //$NON-NLS-2$
-
-    final Element valuesElement = document.createElement("values"); //$NON-NLS-1$
-    subscriptionIdElement.appendChild(valuesElement);
-
-    // if the user hasn't picked a schedule (to change this subscription to), and we
-    // have a subscription active, get the schedules on it and add those
-    final Object scheduleIdSelection = inputs.get("schedule-id"); //$NON-NLS-1$
-    final HashSet<Object> selectedSchedules = new HashSet<Object>();
-    if (scheduleIdSelection != null)
-    {
-      selectedSchedules.add(selectedSchedules);
-    }
-    else
-    {
-      if (subscription != null)
-      {
-        final List<ISchedule> schedules = subscription.getSchedules();
-        for (final ISchedule schedule : schedules)
-        {
-          selectedSchedules.add(schedule.getId());
-        }
-      }
-    }
-
-    for (final ISchedule schedule : subscribeContent.getSchedules())
-    {
-      final Element valueElement = document.createElement("value"); //$NON-NLS-1$
-      valuesElement.appendChild(valueElement);
-      valueElement.setAttribute("label", schedule.getTitle()); //$NON-NLS-1$
-      valueElement.setAttribute("value", schedule.getId()); //$NON-NLS-1$
-      valueElement.setAttribute("type", "java.lang.String"); //$NON-NLS-1$ //$NON-NLS-2$
-      valueElement.setAttribute("selected", String.valueOf(selectedSchedules.contains(schedule.getId())));//$NON-NLS-1$
-    }
-
+    return reportNameSelection;
   }
 
-  private void addOutputParameter(final MasterReport report,
-                                  final Element parameters,
-                                  final Object selections)
+  private Object lookupDestination()
   {
-    final Object lockOutputTypeObj = report.getAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.LOCK_PREFERRED_OUTPUT_TYPE);
-    if (Boolean.TRUE.equals(lockOutputTypeObj)) //$NON-NLS-1$
+    final ISubscription subscription = contentGenerator.getSubscription();
+    Object destinationSelection = inputs.get(SYS_PARAM_DESTINATION);//$NON-NLS-1$
+    if (destinationSelection == null && subscription != null)
     {
-      // if the output type is locked, do not allow prompt rendering
-      return;
+      destinationSelection = subscription.getTitle();
     }
+    return destinationSelection;
+  }
 
-    final String selectedOutputType;
-    if (selections != null)
-    {
-      selectedOutputType = selections.toString();
-    }
-    else
-    {
-      // use default, if available, from the report
-      final String preferredOutputType = (String) report.getAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.PREFERRED_OUTPUT_TYPE);
-      if (!StringUtils.isEmpty(preferredOutputType))
-      {
-        selectedOutputType = preferredOutputType;
-      }
-      else
-      {
-        selectedOutputType = null;
-      }
-    }
+  private StaticListParameter createOutputParameter()
+  {
 
-    final Document document = parameters.getOwnerDocument();
-    final Element parameterOutputElement = document.createElement("parameter"); //$NON-NLS-1$
-    parameters.appendChild(parameterOutputElement);
-    parameterOutputElement.setAttribute("name", SimpleReportingComponent.OUTPUT_TARGET); //$NON-NLS-1$
-    parameterOutputElement.setAttribute("label", Messages.getString("ReportPlugin.OutputType")); //$NON-NLS-1$ //$NON-NLS-2$
-    parameterOutputElement.setAttribute("parameter-group", "parameters"); //$NON-NLS-1$ //$NON-NLS-2$
-    parameterOutputElement.setAttribute("parameter-group-label", Messages.getString("ReportPlugin.ReportParameters")); //$NON-NLS-1$ //$NON-NLS-2$
-    parameterOutputElement.setAttribute("type", "java.lang.String"); //$NON-NLS-1$ //$NON-NLS-2$
-    parameterOutputElement.setAttribute("is-mandatory", "true"); //$NON-NLS-1$ //$NON-NLS-2$
-    parameterOutputElement.setAttribute("is-multi-select", "false"); //$NON-NLS-1$ //$NON-NLS-2$
-    parameterOutputElement.setAttribute("is-strict", "true"); //$NON-NLS-1$ //$NON-NLS-2$
-    parameterOutputElement.setAttribute("parameter-render-type", "dropdown"); //$NON-NLS-1$ //$NON-NLS-2$
+    final StaticListParameter listParameter = new StaticListParameter
+        (SYS_PARAM_OUTPUT_TARGET, false, true, String.class);
+    listParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP, GROUP_PARAMETERS);
+    listParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP_LABEL,
+            Messages.getString("ReportPlugin.ReportParameters"));
+    listParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.LABEL,
+            Messages.getString("ReportPlugin.OutputType"));
+    listParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TYPE,
+            ParameterAttributeNames.Core.TYPE_DROPDOWN);
 
-    final Element valuesElement = document.createElement("values"); //$NON-NLS-1$
-    parameterOutputElement.appendChild(valuesElement);
-
-    final Element htmlPaginatedElement = document.createElement("value"); //$NON-NLS-1$
-    valuesElement.appendChild(htmlPaginatedElement);
-    htmlPaginatedElement.setAttribute("label", "HTML (Paginated)"); //$NON-NLS-1$ //$NON-NLS-2$
-    htmlPaginatedElement.setAttribute("value", HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE); //$NON-NLS-1$
-    htmlPaginatedElement.setAttribute("type", "java.lang.String"); //$NON-NLS-1$ //$NON-NLS-2$
-    htmlPaginatedElement.setAttribute("selected",//$NON-NLS-1$
-        String.valueOf(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE.equals(selectedOutputType)));
-
-    final Element htmlValueElement = document.createElement("value"); //$NON-NLS-1$
-    valuesElement.appendChild(htmlValueElement);
-    htmlValueElement.setAttribute("label", "HTML"); //$NON-NLS-1$ //$NON-NLS-2$
-    htmlValueElement.setAttribute("value", HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE); //$NON-NLS-1$
-    htmlValueElement.setAttribute("type", "java.lang.String"); //$NON-NLS-1$ //$NON-NLS-2$
-    htmlValueElement.setAttribute("selected",//$NON-NLS-1$
-        String.valueOf(HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE.equals(selectedOutputType)));
-
-    final Element pdfValueElement = document.createElement("value"); //$NON-NLS-1$
-    valuesElement.appendChild(pdfValueElement);
-    pdfValueElement.setAttribute("label", "PDF"); //$NON-NLS-1$ //$NON-NLS-2$
-    pdfValueElement.setAttribute("value", PdfPageableModule.PDF_EXPORT_TYPE); //$NON-NLS-1$
-    pdfValueElement.setAttribute("type", "java.lang.String"); //$NON-NLS-1$ //$NON-NLS-2$
-    pdfValueElement.setAttribute("selected",//$NON-NLS-1$
-        String.valueOf(PdfPageableModule.PDF_EXPORT_TYPE.equals(selectedOutputType)));
-
-    final Element xlsValueElement = document.createElement("value"); //$NON-NLS-1$
-    valuesElement.appendChild(xlsValueElement);
-    xlsValueElement.setAttribute("label", "Excel (XLS)"); //$NON-NLS-1$ //$NON-NLS-2$
-    xlsValueElement.setAttribute("value", ExcelTableModule.EXCEL_FLOW_EXPORT_TYPE); //$NON-NLS-1$
-    xlsValueElement.setAttribute("type", "java.lang.String"); //$NON-NLS-1$ //$NON-NLS-2$
-    xlsValueElement.setAttribute("selected",//$NON-NLS-1$
-        String.valueOf(ExcelTableModule.EXCEL_FLOW_EXPORT_TYPE.equals(selectedOutputType)));
-
-    final Element csvValueElement = document.createElement("value"); //$NON-NLS-1$
-    valuesElement.appendChild(csvValueElement);
-    csvValueElement.setAttribute("label", "CSV"); //$NON-NLS-1$ //$NON-NLS-2$
-    csvValueElement.setAttribute("value", CSVTableModule.TABLE_CSV_STREAM_EXPORT_TYPE); //$NON-NLS-1$
-    csvValueElement.setAttribute("type", "java.lang.String"); //$NON-NLS-1$ //$NON-NLS-2$
-    csvValueElement.setAttribute("selected",//$NON-NLS-1$
-        String.valueOf(CSVTableModule.TABLE_CSV_STREAM_EXPORT_TYPE.equals(selectedOutputType)));
-
-    final Element rtfValueElement = document.createElement("value"); //$NON-NLS-1$
-    valuesElement.appendChild(rtfValueElement);
-    rtfValueElement.setAttribute("label", "RTF"); //$NON-NLS-1$ //$NON-NLS-2$
-    rtfValueElement.setAttribute("value", RTFTableModule.TABLE_RTF_FLOW_EXPORT_TYPE); //$NON-NLS-1$
-    rtfValueElement.setAttribute("type", "java.lang.String"); //$NON-NLS-1$ //$NON-NLS-2$
-    rtfValueElement.setAttribute("selected",//$NON-NLS-1$
-        String.valueOf(RTFTableModule.TABLE_RTF_FLOW_EXPORT_TYPE.equals(selectedOutputType)));
-
-    final Element txtValueElement = document.createElement("value"); //$NON-NLS-1$
-    valuesElement.appendChild(txtValueElement);
-    txtValueElement.setAttribute("label", "Plain Text"); //$NON-NLS-1$ //$NON-NLS-2$
-    txtValueElement.setAttribute("value", PlainTextPageableModule.PLAINTEXT_EXPORT_TYPE); //$NON-NLS-1$
-    txtValueElement.setAttribute("type", "java.lang.String"); //$NON-NLS-1$ //$NON-NLS-2$
-    txtValueElement.setAttribute("selected",//$NON-NLS-1$
-        String.valueOf(PlainTextPageableModule.PLAINTEXT_EXPORT_TYPE.equals(selectedOutputType)));
-
+    listParameter.addValues(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE, Messages.getString("ReportPlugin.outputHTMLPaginated"));
+    listParameter.addValues(HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE, Messages.getString("ReportPlugin.outputHTMLStream"));
+    listParameter.addValues(PdfPageableModule.PDF_EXPORT_TYPE, Messages.getString("ReportPlugin.outputPDF"));
+    listParameter.addValues(ExcelTableModule.EXCEL_FLOW_EXPORT_TYPE, Messages.getString("ReportPlugin.outputXLS"));
+    listParameter.addValues(CSVTableModule.TABLE_CSV_STREAM_EXPORT_TYPE, Messages.getString("ReportPlugin.outputCSV"));
+    listParameter.addValues(RTFTableModule.TABLE_RTF_FLOW_EXPORT_TYPE, Messages.getString("ReportPlugin.outputRTF"));
+    listParameter.addValues(PlainTextPageableModule.PLAINTEXT_EXPORT_TYPE, Messages.getString("ReportPlugin.outputTXT"));
+    return listParameter;
   }
 
   private Boolean requestFlag(final String parameter,
@@ -673,9 +683,9 @@ public class ParameterXmlContentHandler
 
 
   private String requestConfiguration(final String parameter,
-                                       final MasterReport report,
-                                       final String attributeNamespace, final String attributeName,
-                                       final String configurationKey)
+                                      final MasterReport report,
+                                      final String attributeNamespace, final String attributeName,
+                                      final String configurationKey)
   {
     if (parameter != null)
     {
