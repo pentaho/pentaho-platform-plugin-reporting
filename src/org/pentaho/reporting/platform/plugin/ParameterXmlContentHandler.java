@@ -38,7 +38,6 @@ import org.pentaho.reporting.engine.classic.core.parameters.DefaultParameterCont
 import org.pentaho.reporting.engine.classic.core.parameters.ListParameter;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterAttributeNames;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterContext;
-import org.pentaho.reporting.engine.classic.core.parameters.ParameterContextWrapper;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterDefinitionEntry;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterValues;
 import org.pentaho.reporting.engine.classic.core.parameters.PlainParameter;
@@ -76,11 +75,14 @@ public class ParameterXmlContentHandler
   private IPentahoSession userSession;
   private Map<String, Object> inputs;
   private String reportDefinitionPath;
+
+  private static final String SYS_PARAM_RENDER_MODE = "renderMode";
   private static final String SYS_PARAM_OUTPUT_TARGET = SimpleReportingComponent.OUTPUT_TARGET;
   private static final String SYS_PARAM_SUBSCRIPTION_NAME = "subscription-name";
   private static final String SYS_PARAM_DESTINATION = "destination";
   private static final String SYS_PARAM_SCHEDULE_ID = "schedule-id";
   private static final String GROUP_SUBSCRIPTION = "subscription";
+  private static final String GROUP_SYSTEM = "system";
   private static final String GROUP_PARAMETERS = "parameters";
 
   public ParameterXmlContentHandler(final ReportContentGenerator contentGenerator)
@@ -105,12 +107,51 @@ public class ParameterXmlContentHandler
       parameter.put(SYS_PARAM_DESTINATION, createDestinationParameter());
       parameter.put(SYS_PARAM_SCHEDULE_ID, createScheduleIdParameter());
       parameter.put(SYS_PARAM_OUTPUT_TARGET, createOutputParameter());
+      parameter.put("subscribe", createGenericBooleanSystemParameter("subscribe", false));
+
+      parameter.put("solution", createGenericSystemParameter("solution", false));
+      parameter.put("path", createGenericSystemParameter("path", false));
+      parameter.put("name", createGenericSystemParameter("name", false));
+      parameter.put("action", createGenericSystemParameter("action", true));
+      parameter.put("output-type", createGenericSystemParameter("output-type", true));
+      parameter.put("layout", createGenericSystemParameter("layout", true));
+      parameter.put("content-handler-pattern", createGenericSystemParameter("content-handler-pattern", true));
+      parameter.put("autoSubmit", createGenericBooleanSystemParameter("autoSubmit", true));
+      parameter.put("autoSubmitUI", createGenericBooleanSystemParameter("autoSubmitUI", true));
+      parameter.put("dashboard-mode", createGenericBooleanSystemParameter("dashboard-mode", false));
+      parameter.put("showParameters", createGenericBooleanSystemParameter("showParameters", false));
+      parameter.put("paginate", createGenericBooleanSystemParameter("paginate", true));
+      parameter.put("ignoreDefaultDates", createGenericBooleanSystemParameter("ignoreDefaultDates", true));
+      parameter.put("print", createGenericBooleanSystemParameter("print", false));
+      parameter.put("printer-name", createGenericSystemParameter("printer-name", false));
+
+      parameter.put("renderMode", createRenderModeSystemParameter());
+
       systemParameter = Collections.unmodifiableMap(parameter);
     }
 
     return systemParameter;
   }
 
+  /**
+   * Defines whether parameter with display-type "datepicker" that have no default value set shall
+   * default to "today". This setting generates a default value for the parameter UI, but has no effect
+   * otherwise. It is flawed from the very beginning and should not be used.
+   *
+   * @return whether we generate default dates.
+   */
+  private boolean isGenerateDefaultDates()
+  {
+    final Object value = inputs.get("ignoreDefaultDates");
+    if (value == null)
+    {
+      // we do not generate default dates until it is explicitly requested.
+      // if the users want default values for parameters then let them define those in the parameter
+      return false;
+    }
+
+    return "true".equals(value);
+  }
 
   public void createParameterContent(final OutputStream outputStream,
                                      final String reportDefinitionPath) throws Exception
@@ -210,8 +251,7 @@ public class ParameterXmlContentHandler
       for (final ParameterDefinitionEntry parameter : reportParameters.values())
       {
         final Object selections = inputs.get(parameter.getName());
-        final Element parameterElement = createParameterElement(parameter, parameterContext, selections);
-        parameters.appendChild(parameterElement);
+        parameters.appendChild(createParameterElement(parameter, parameterContext, selections));
       }
 
       if (vr.isEmpty() == false)
@@ -276,7 +316,8 @@ public class ParameterXmlContentHandler
     final String[] attributeNames = parameter.getParameterAttributeNames(ParameterAttributeNames.Core.NAMESPACE);
     for (final String attributeName : attributeNames)
     {
-      final String attributeValue = parameter.getParameterAttribute(ParameterAttributeNames.Core.NAMESPACE, attributeName, parameterContext);
+      final String attributeValue = parameter.getParameterAttribute
+          (ParameterAttributeNames.Core.NAMESPACE, attributeName, parameterContext);
       // expecting: label, parameter-render-type, parameter-layout
       // but others possible as well, so we set them all
       parameterElement.setAttribute(attributeName, attributeValue);
@@ -297,6 +338,19 @@ public class ParameterXmlContentHandler
       else
       {
         selectionSet.add(selections);
+      }
+    }
+    else
+    {
+      final String type = parameter.getParameterAttribute
+          (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TYPE, parameterContext);
+      if (ParameterAttributeNames.Core.TYPE_DATEPICKER.equals(type) &&
+          Date.class.isAssignableFrom(parameter.getValueType()))
+      {
+        if (isGenerateDefaultDates())
+        {
+          selectionSet.add(new Date());
+        }
       }
     }
 
@@ -494,6 +548,7 @@ public class ParameterXmlContentHandler
     subscriptionName.setParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TYPE,
             ParameterAttributeNames.Core.TYPE_TEXTBOX);
+    subscriptionName.setRole(ParameterAttributeNames.Core.ROLE_SCHEDULE_PARAMETER);
     return subscriptionName;
   }
 
@@ -512,9 +567,52 @@ public class ParameterXmlContentHandler
     destinationParameter.setParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TYPE,
             ParameterAttributeNames.Core.TYPE_TEXTBOX);
+    destinationParameter.setHidden(isEmailConfigured() == false);
+    destinationParameter.setRole(ParameterAttributeNames.Core.ROLE_SCHEDULE_PARAMETER);
+    return destinationParameter;
+  }
+
+  private PlainParameter createGenericSystemParameter(final String parameterName,
+                                                      final boolean deprecated)
+  {
+    final PlainParameter destinationParameter = new PlainParameter(parameterName, String.class);
+    destinationParameter.setMandatory(false);
+    destinationParameter.setHidden(true);
+    destinationParameter.setRole(ParameterAttributeNames.Core.ROLE_SYSTEM_PARAMETER);
     destinationParameter.setParameterAttribute
-        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.HIDDEN,
-            String.valueOf(isEmailConfigured() == false));
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP, GROUP_SYSTEM);
+    destinationParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP_LABEL,
+            Messages.getString("ReportPlugin.SystemParameters"));
+    destinationParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.LABEL,
+            Messages.getString(parameterName));
+    destinationParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TYPE,
+            ParameterAttributeNames.Core.TYPE_TEXTBOX);
+    destinationParameter.setDeprecated(deprecated);
+    return destinationParameter;
+  }
+
+  private PlainParameter createGenericBooleanSystemParameter(final String parameterName,
+                                                             final boolean deprecated)
+  {
+    final PlainParameter destinationParameter = new PlainParameter(parameterName, Boolean.class);
+    destinationParameter.setMandatory(false);
+    destinationParameter.setHidden(true);
+    destinationParameter.setRole(ParameterAttributeNames.Core.ROLE_SYSTEM_PARAMETER);
+    destinationParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP, GROUP_SYSTEM);
+    destinationParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP_LABEL,
+            Messages.getString("ReportPlugin.SystemParameters"));
+    destinationParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.LABEL,
+            Messages.getString(parameterName));
+    destinationParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TYPE,
+            ParameterAttributeNames.Core.TYPE_TEXTBOX);
+    destinationParameter.setDeprecated(deprecated);
     return destinationParameter;
   }
 
@@ -534,9 +632,7 @@ public class ParameterXmlContentHandler
     scheduleIdParameter.setParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TYPE,
             ParameterAttributeNames.Core.TYPE_DROPDOWN);
-    scheduleIdParameter.setParameterAttribute
-        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.HIDDEN,
-            String.valueOf(isEmailConfigured() == false));
+    scheduleIdParameter.setRole(ParameterAttributeNames.Core.ROLE_SCHEDULE_PARAMETER);
 
     appendAvailableSchedules(scheduleIdParameter);
     return scheduleIdParameter;
@@ -623,7 +719,7 @@ public class ParameterXmlContentHandler
     listParameter.setParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TYPE,
             ParameterAttributeNames.Core.TYPE_DROPDOWN);
-
+    listParameter.setRole(ParameterAttributeNames.Core.ROLE_SYSTEM_PARAMETER);
     listParameter.addValues(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE, Messages.getString("ReportPlugin.outputHTMLPaginated"));
     listParameter.addValues(HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE, Messages.getString("ReportPlugin.outputHTMLStream"));
     listParameter.addValues(PdfPageableModule.PDF_EXPORT_TYPE, Messages.getString("ReportPlugin.outputPDF"));
@@ -633,6 +729,31 @@ public class ParameterXmlContentHandler
     listParameter.addValues(PlainTextPageableModule.PLAINTEXT_EXPORT_TYPE, Messages.getString("ReportPlugin.outputTXT"));
     return listParameter;
   }
+
+  private ParameterDefinitionEntry createRenderModeSystemParameter()
+  {
+    final StaticListParameter listParameter = new StaticListParameter
+        (SYS_PARAM_RENDER_MODE, false, true, String.class);
+    listParameter.setHidden(true);
+    listParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP, GROUP_PARAMETERS);
+    listParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP_LABEL,
+            Messages.getString("ReportPlugin.SystemParameters"));
+    listParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.LABEL, SYS_PARAM_RENDER_MODE);
+    listParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TYPE,
+            ParameterAttributeNames.Core.TYPE_DROPDOWN);
+    listParameter.setRole(ParameterAttributeNames.Core.ROLE_SYSTEM_PARAMETER);
+    listParameter.addValues("XML", "XML");
+    listParameter.addValues("REPORT", "REPORT");
+    listParameter.addValues("SUBSCRIBE", "SUBSCRIBE");
+    listParameter.addValues("DOWNLOAD", "DOWNLOAD");
+    return listParameter;
+  }
+
+
 
   private Boolean requestFlag(final String parameter,
                               final MasterReport report,
