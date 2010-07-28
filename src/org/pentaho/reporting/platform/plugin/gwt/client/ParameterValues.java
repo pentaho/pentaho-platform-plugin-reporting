@@ -2,6 +2,9 @@ package org.pentaho.reporting.platform.plugin.gwt.client;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
+
+import com.google.gwt.http.client.URL;
 
 /**
  * Todo: Document me!
@@ -17,27 +20,23 @@ public class ParameterValues
 
   public ParameterValues()
   {
-    backend = new HashMap<String,ArrayList<String>>();
+    backend = new HashMap<String, ArrayList<String>>();
   }
 
-  public void setSelectedValue (final String parameter, final String value)
+  public void setSelectedValue(final String parameter, final String value)
   {
     if (value == null)
     {
       setSelectedValues(parameter, new String[0]);
     }
     else
-    setSelectedValues(parameter, new String[]{value});
+    {
+      setSelectedValues(parameter, new String[]{value});
+    }
   }
 
-  public void setSelectedValues (final String parameter, final String[] values)
+  public void setSelectedValues(final String parameter, final String[] values)
   {
-    if (values.length == 0)
-    {
-      backend.remove(parameter);
-      return;
-    }
-
     ArrayList<String> strings = backend.get(parameter);
     if (strings == null)
     {
@@ -52,7 +51,7 @@ public class ParameterValues
     }
   }
 
-  public void addSelectedValue (final String parameter, final String value)
+  public void addSelectedValue(final String parameter, final String value)
   {
     if (value == null)
     {
@@ -67,8 +66,8 @@ public class ParameterValues
     }
     strings.add(value);
   }
-  
-  public void removeSelectedValue (final String parameter, final String value)
+
+  public void removeSelectedValue(final String parameter, final String value)
   {
     if (value == null)
     {
@@ -105,5 +104,26 @@ public class ParameterValues
   public boolean containsParameter(final String name)
   {
     return backend.containsKey(name);
+  }
+
+  public String toURL()
+  {
+    final StringBuffer b = new StringBuffer();
+    for (final Map.Entry<String, ArrayList<String>> entry : backend.entrySet())
+    {
+      final String key = URL.encodeComponent(entry.getKey());
+      final ArrayList<String> list = entry.getValue();
+      for (final String value : list)
+      {
+        if (b.length() > 0)
+        {
+          b.append("&");
+        }
+        b.append(key);
+        b.append('=');
+        b.append(URL.encode(value));
+      }
+    }
+    return b.toString();
   }
 }

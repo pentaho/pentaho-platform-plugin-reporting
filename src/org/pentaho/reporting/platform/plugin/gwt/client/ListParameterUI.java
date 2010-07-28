@@ -41,7 +41,6 @@ public class ListParameterUI extends SimplePanel
 
   public ListParameterUI(final ParameterControllerPanel controller, final Parameter parameterElement)
   {
-    final String renderType = parameterElement.getAttribute("parameter-render-type"); //$NON-NLS-1$
     final boolean multiSelect = parameterElement.isMultiSelect(); //$NON-NLS-1$ //$NON-NLS-2$
 
     final ListBox listBox = new ListBox(multiSelect);

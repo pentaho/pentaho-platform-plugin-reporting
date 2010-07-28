@@ -19,10 +19,12 @@ public class Parameter
 
   private ArrayList<ParameterSelection> selections;
   private String name;
+  private String type;
   private HashMap<String, HashMap<String, String>> attributes;
   private boolean strict;
   private boolean multiSelect;
   private boolean mandatory;
+  private String timezoneHint;
 
   public Parameter(final String name)
   {
@@ -39,6 +41,16 @@ public class Parameter
   public boolean hasValues()
   {
     return selections.isEmpty() == false;
+  }
+
+  public String getTimezoneHint()
+  {
+    return timezoneHint;
+  }
+
+  public void setTimezoneHint(final String timezoneHint)
+  {
+    this.timezoneHint = timezoneHint;
   }
 
   public void setAttribute(final String namespace, final String name, final String value)
@@ -125,5 +137,15 @@ public class Parameter
   public boolean isHidden()
   {
     return "true".equals(getAttribute(CORE_NAMESPACE, "hidden"));
+  }
+
+  public String getType()
+  {
+    return type;
+  }
+
+  public void setType(final String type)
+  {
+    this.type = type;
   }
 }

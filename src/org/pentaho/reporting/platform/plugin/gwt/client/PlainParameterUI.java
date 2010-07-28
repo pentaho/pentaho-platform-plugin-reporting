@@ -74,7 +74,14 @@ public class PlainParameterUI extends SimplePanel
       {
         value = text;
       }
-      controller.getParameterMap().setSelectedValue(parameterName, value);
+      if (ReportViewerUtil.isEmpty(value))
+      {
+        controller.getParameterMap().setSelectedValue(parameterName, null);
+      }
+      else
+      {
+        controller.getParameterMap().setSelectedValue(parameterName, value);
+      }
     }
 
   }

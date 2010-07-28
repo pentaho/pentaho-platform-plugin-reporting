@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.apache.commons.logging.Log;
@@ -110,6 +111,8 @@ public class ParameterXmlContentHandler
       parameter.put("subscribe", createGenericBooleanSystemParameter("subscribe", false)); // NON-NLS
 
       parameter.put("solution", createGenericSystemParameter("solution", false)); // NON-NLS
+      parameter.put("yield-rate", createGenericIntSystemParameter("yield-rate", false)); // NON-NLS
+      parameter.put("accepted-page", createGenericIntSystemParameter("accepted-page", false)); // NON-NLS
       parameter.put("path", createGenericSystemParameter("path", false)); // NON-NLS
       parameter.put("name", createGenericSystemParameter("name", false)); // NON-NLS
       parameter.put("action", createGenericSystemParameter("action", true)); // NON-NLS
@@ -245,7 +248,8 @@ public class ParameterXmlContentHandler
 
       hideOutputParameterIfLocked(report, reportParameters);
       hideSubscriptionParameter(subscribe, reportParameters);
-      final Map<String, Object> inputs = computeRealInput(reportComponent.getComputedOutputTarget());
+      final Map<String, Object> inputs = computeRealInput
+          (parameterContext, reportParameters, reportComponent.getComputedOutputTarget());
 
       for (final ParameterDefinitionEntry parameter : reportParameters.values())
       {
@@ -268,21 +272,34 @@ public class ParameterXmlContentHandler
     }
   }
 
-  private Map<String, Object> computeRealInput(final String computedOutputTarget)
+  private Map<String, Object> computeRealInput(final ParameterContext parameterContext,
+                                               final LinkedHashMap<String, ParameterDefinitionEntry> reportParameters,
+                                               final String computedOutputTarget)
   {
-    final Map<String, Object> realInputs = new HashMap<String, Object>(this.inputs);
-    if (realInputs.containsKey(SYS_PARAM_DESTINATION) == false)
+    final Map<String, Object> realInputs = new HashMap<String, Object>();
+    realInputs.put(SYS_PARAM_DESTINATION, lookupDestination());
+    realInputs.put(SYS_PARAM_SCHEDULE_ID, lookupSchedules());
+    realInputs.put(SYS_PARAM_SUBSCRIPTION_NAME, lookupSubscriptionName());
+
+    for (final ParameterDefinitionEntry parameter : reportParameters.values())
     {
-      realInputs.put(SYS_PARAM_DESTINATION, lookupDestination());
+      final Object value = inputs.get(parameter.getName());
+      try
+      {
+        final Object translatedValue = ReportContentUtil.computeParameterValue(parameterContext, parameter, value);
+        realInputs.put(parameter.getName(), translatedValue);
+      }
+      catch (Exception be)
+      {
+        if (logger.isDebugEnabled())
+        {
+          logger.debug(Messages.getString
+              ("ReportPlugin.debugParameterCannotBeConverted", parameter.getName(), String.valueOf(value)), be);
+        }
+      }
     }
-    if (realInputs.containsKey(SYS_PARAM_SCHEDULE_ID) == false)
-    {
-      realInputs.put(SYS_PARAM_SCHEDULE_ID, lookupSchedules());
-    }
-    if (realInputs.containsKey(SYS_PARAM_SUBSCRIPTION_NAME) == false)
-    {
-      realInputs.put(SYS_PARAM_SUBSCRIPTION_NAME, lookupSubscriptionName());
-    }
+
+    // thou cannot override the output target with invalid values ..
     realInputs.put(SYS_PARAM_OUTPUT_TARGET, computedOutputTarget);
     return realInputs;
   }
@@ -297,6 +314,7 @@ public class ParameterXmlContentHandler
     {
       final AbstractParameter parameter = (AbstractParameter) definitionEntry;
       parameter.setHidden(lockOutputType);
+      parameter.setMandatory(!lockOutputType);
     }
   }
 
@@ -305,135 +323,208 @@ public class ParameterXmlContentHandler
                                          final ParameterContext parameterContext,
                                          final Object selections) throws BeanException, ReportDataFactoryException
   {
-    final Element parameterElement = document.createElement("parameter"); //$NON-NLS-1$
-    parameterElement.setAttribute("name", parameter.getName()); //$NON-NLS-1$
-    parameterElement.setAttribute("type", parameter.getValueType().getName()); //$NON-NLS-1$
-    parameterElement.setAttribute("is-mandatory", String.valueOf(parameter.isMandatory())); //$NON-NLS-1$ //$NON-NLS-2$
-
-    final String[] namespaces = parameter.getParameterAttributeNamespaces();
-    for (int i = 0; i < namespaces.length; i++)
+    try
     {
-      final String namespace = namespaces[i];
-      final String[] attributeNames = parameter.getParameterAttributeNames(namespace);
-      for (final String attributeName : attributeNames)
-      {
-        final String attributeValue = parameter.getParameterAttribute
-            (namespace, attributeName, parameterContext);
-        // expecting: label, parameter-render-type, parameter-layout
-        // but others possible as well, so we set them all
-        final Element attributeElement = document.createElement("attribute"); // NON-NLS
-        attributeElement.setAttribute("namespace", namespace); // NON-NLS
-        attributeElement.setAttribute("name", attributeName); // NON-NLS
-        attributeElement.setAttribute("value", attributeValue); // NON-NLS
+      final Element parameterElement = document.createElement("parameter"); //$NON-NLS-1$
+      parameterElement.setAttribute("name", parameter.getName()); //$NON-NLS-1$
+      final Class valueType = parameter.getValueType();
+      parameterElement.setAttribute("type", valueType.getName()); //$NON-NLS-1$
+      parameterElement.setAttribute("is-mandatory", String.valueOf(parameter.isMandatory())); //$NON-NLS-1$ //$NON-NLS-2$
 
-        parameterElement.appendChild(attributeElement);
-      }
-    }
-
-    final HashSet<Object> selectionSet = new HashSet<Object>();
-    if (selections != null)
-    {
-      if (selections.getClass().isArray())
+      final String[] namespaces = parameter.getParameterAttributeNamespaces();
+      for (int i = 0; i < namespaces.length; i++)
       {
-        final int length = Array.getLength(selections);
-        for (int i = 0; i < length; i++)
+        final String namespace = namespaces[i];
+        final String[] attributeNames = parameter.getParameterAttributeNames(namespace);
+        for (final String attributeName : attributeNames)
         {
-          final Object value = Array.get(selections, i);
-          selectionSet.add(value);
+          final String attributeValue = parameter.getParameterAttribute
+              (namespace, attributeName, parameterContext);
+          // expecting: label, parameter-render-type, parameter-layout
+          // but others possible as well, so we set them all
+          final Element attributeElement = document.createElement("attribute"); // NON-NLS
+          attributeElement.setAttribute("namespace", namespace); // NON-NLS
+          attributeElement.setAttribute("name", attributeName); // NON-NLS
+          attributeElement.setAttribute("value", attributeValue); // NON-NLS
+
+          parameterElement.appendChild(attributeElement);
         }
+      }
+
+      final Class elementValueType;
+      if (valueType.isArray())
+      {
+        elementValueType = valueType.getComponentType();
       }
       else
       {
-        selectionSet.add(selections);
+        elementValueType = valueType;
       }
-    }
-    else
-    {
-      final String type = parameter.getParameterAttribute
-          (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TYPE, parameterContext);
-      if (ParameterAttributeNames.Core.TYPE_DATEPICKER.equals(type) &&
-          Date.class.isAssignableFrom(parameter.getValueType()))
+
+      if (Date.class.isAssignableFrom(elementValueType))
       {
-        if (isGenerateDefaultDates())
+        parameterElement.setAttribute("timzone-hint", computeTimeZoneHint(parameter, parameterContext));
+      }
+
+      final HashSet<Object> selectionSet = new HashSet<Object>();
+      if (selections != null)
+      {
+        if (selections.getClass().isArray())
         {
-          selectionSet.add(new Date());
-        }
-      }
-    }
-
-    if (parameter instanceof ListParameter)
-    {
-      final ListParameter asListParam = (ListParameter) parameter;
-      parameterElement.setAttribute("is-multi-select", String.valueOf(asListParam.isAllowMultiSelection())); //$NON-NLS-1$ //$NON-NLS-2$
-      parameterElement.setAttribute("is-strict", String.valueOf(asListParam.isStrictValueCheck())); //$NON-NLS-1$ //$NON-NLS-2$
-
-      final Element valuesElement = document.createElement("values"); //$NON-NLS-1$
-      parameterElement.appendChild(valuesElement);
-
-      final Class valueType;
-      if (asListParam.isAllowMultiSelection() && parameter.getValueType().isArray())
-      {
-        valueType = parameter.getValueType().getComponentType();
-      }
-      else
-      {
-        valueType = parameter.getValueType();
-      }
-
-      final ParameterValues possibleValues = asListParam.getValues(parameterContext);
-      for (int i = 0; i < possibleValues.getRowCount(); i++)
-      {
-        final Object key = possibleValues.getKeyValue(i);
-        final Object value = possibleValues.getTextValue(i);
-
-        if (key == null)
-        {
-          continue;
-        }
-
-        final Element valueElement = document.createElement("value"); //$NON-NLS-1$
-        valuesElement.appendChild(valueElement);
-
-        valueElement.setAttribute("label", String.valueOf(value)); //$NON-NLS-1$ //$NON-NLS-2$
-        valueElement.setAttribute("type", valueType.getName()); //$NON-NLS-1$
-        valueElement.setAttribute("selected", String.valueOf(selectionSet.contains(value)));//$NON-NLS-1$
-
-        if (value == null)
-        {
-          valueElement.setAttribute("null", "true"); //$NON-NLS-1$ //$NON-NLS-2$
+          final int length = Array.getLength(selections);
+          for (int i = 0; i < length; i++)
+          {
+            final Object value = Array.get(selections, i);
+            selectionSet.add(value);
+          }
         }
         else
         {
-          valueElement.setAttribute("null", "false"); //$NON-NLS-1$ //$NON-NLS-2$
-          valueElement.setAttribute("value", convertParameterValueToString(key, valueType)); //$NON-NLS-1$ //$NON-NLS-2$
+          selectionSet.add(selections);
         }
       }
-    }
-    else if (parameter instanceof PlainParameter)
-    {
-      // apply defaults, this is the easy case
-      parameterElement.setAttribute("is-multi-select", "false"); //$NON-NLS-1$ //$NON-NLS-2$
-      parameterElement.setAttribute("is-strict", "false"); //$NON-NLS-1$ //$NON-NLS-2$
-
-      if (selections != null)
+      else
       {
+        final String type = parameter.getParameterAttribute
+            (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TYPE, parameterContext);
+        if (ParameterAttributeNames.Core.TYPE_DATEPICKER.equals(type) &&
+            Date.class.isAssignableFrom(valueType))
+        {
+          if (isGenerateDefaultDates())
+          {
+            selectionSet.add(new Date());
+          }
+        }
+      }
+
+      if (parameter instanceof ListParameter)
+      {
+        final ListParameter asListParam = (ListParameter) parameter;
+        parameterElement.setAttribute("is-multi-select", String.valueOf(asListParam.isAllowMultiSelection())); //$NON-NLS-1$ //$NON-NLS-2$
+        parameterElement.setAttribute("is-strict", String.valueOf(asListParam.isStrictValueCheck())); //$NON-NLS-1$ //$NON-NLS-2$
+
         final Element valuesElement = document.createElement("values"); //$NON-NLS-1$
         parameterElement.appendChild(valuesElement);
 
-        final Element valueElement = document.createElement("value"); //$NON-NLS-1$
-        valuesElement.appendChild(valueElement);
+        final ParameterValues possibleValues = asListParam.getValues(parameterContext);
+        for (int i = 0; i < possibleValues.getRowCount(); i++)
+        {
+          final Object key = possibleValues.getKeyValue(i);
+          final Object value = possibleValues.getTextValue(i);
 
-        final Class valueType = parameter.getValueType();
-        valueElement.setAttribute("type", valueType.getName()); //$NON-NLS-1$
-        valueElement.setAttribute("selected", "true");//$NON-NLS-1$
-        valueElement.setAttribute("null", "false"); //$NON-NLS-1$ //$NON-NLS-2$
-        valueElement.setAttribute("value", convertParameterValueToString(selections, valueType)); //$NON-NLS-1$ //$NON-NLS-2$
+          if (key == null)
+          {
+            continue;
+          }
+
+          final Element valueElement = document.createElement("value"); //$NON-NLS-1$
+          valuesElement.appendChild(valueElement);
+
+          valueElement.setAttribute("label", String.valueOf(value)); //$NON-NLS-1$ //$NON-NLS-2$
+          valueElement.setAttribute("type", elementValueType.getName()); //$NON-NLS-1$
+          valueElement.setAttribute("selected", String.valueOf(selectionSet.contains(value)));//$NON-NLS-1$
+
+          if (value == null)
+          {
+            valueElement.setAttribute("null", "true"); //$NON-NLS-1$ //$NON-NLS-2$
+          }
+          else
+          {
+            valueElement.setAttribute("null", "false"); //$NON-NLS-1$ //$NON-NLS-2$
+            valueElement.setAttribute("value",
+                convertParameterValueToString(parameter, parameterContext, key, elementValueType)); //$NON-NLS-1$ //$NON-NLS-2$
+          }
+        }
       }
+      else if (parameter instanceof PlainParameter)
+      {
+        // apply defaults, this is the easy case
+        parameterElement.setAttribute("is-multi-select", "false"); //$NON-NLS-1$ //$NON-NLS-2$
+        parameterElement.setAttribute("is-strict", "false"); //$NON-NLS-1$ //$NON-NLS-2$
+
+        if (selections != null)
+        {
+          final Element valuesElement = document.createElement("values"); //$NON-NLS-1$
+          parameterElement.appendChild(valuesElement);
+
+          final Element valueElement = document.createElement("value"); //$NON-NLS-1$
+          valuesElement.appendChild(valueElement);
+          valueElement.setAttribute("type", valueType.getName()); //$NON-NLS-1$
+          valueElement.setAttribute("selected", "true");//$NON-NLS-1$
+          valueElement.setAttribute("null", "false"); //$NON-NLS-1$ //$NON-NLS-2$
+          valueElement.setAttribute("value",
+              convertParameterValueToString(parameter, parameterContext, selections, valueType)); //$NON-NLS-1$ //$NON-NLS-2$
+        }
+      }
+      return parameterElement;
     }
-    return parameterElement;
+    catch (BeanException be)
+    {
+      logger.error(Messages.getString
+          ("ReportPlugin.errorFailedToGenerateParameter", parameter.getName(), String.valueOf(selections)), be);
+      throw be;
+    }
   }
 
-  private String convertParameterValueToString(final Object value, final Class type) throws BeanException
+  private String computeTimeZoneHint(final ParameterDefinitionEntry parameter,
+                                     final ParameterContext parameterContext)
+  {
+    // add a timezone hint ..
+    final String timezoneSpec = parameter.getParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TIMEZONE, parameterContext);
+    if ("client".equals(timezoneSpec))
+    {
+      return ("");
+    }
+    else
+    {
+      final TimeZone timeZone;
+      final StringBuffer value = new StringBuffer();
+      if (timezoneSpec == null || "server".equals(timezoneSpec))
+      {
+        timeZone = TimeZone.getDefault();
+      }
+      else if ("utc".equals(timezoneSpec))
+      {
+        timeZone = TimeZone.getTimeZone("UTC");
+      }
+      else
+      {
+        timeZone = TimeZone.getTimeZone(timezoneSpec);
+      }
+
+      final int rawOffset = timeZone.getRawOffset();
+      if (rawOffset < 0)
+      {
+        value.append("-");
+      }
+      else
+      {
+        value.append("+");
+      }
+
+      final int seconds = Math.abs(rawOffset / 1000);
+      final int minutesRaw = seconds / 60;
+      final int hours = minutesRaw / 60;
+      final int minutes = minutesRaw % 60;
+      if (hours < 10)
+      {
+        value.append("0");
+      }
+      value.append(hours);
+      if (minutes < 10)
+      {
+        value.append("0");
+      }
+      value.append(minutes);
+      return value.toString();
+    }
+  }
+
+  private static String convertParameterValueToString(final ParameterDefinitionEntry parameter,
+                                                      final ParameterContext context,
+                                                      final Object value,
+                                                      final Class type) throws BeanException
   {
     if (value == null)
     {
@@ -451,8 +542,40 @@ public class ParameterXmlContentHandler
       {
         throw new BeanException(Messages.getString("ReportPlugin.errorNonDateParameterValue"));
       }
+
+      final String timezone = parameter.getParameterAttribute
+          (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TIMEZONE, context);
+      final DateFormat dateFormat;
+      if (timezone == null ||
+          "server".equals(timezone))
+      {
+        // nothing needed ..
+        // for server: Just print it as it is, including the server timezone.
+        dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");//$NON-NLS-1$
+      }
+      else if ("client".equals(timezone))
+      {
+        // for client - we do not know the client's timezone, so we give no timezone information and assume
+        //              that the client will adjust the timezone accordingly
+        //
+        // if the client sends that value back without changes, it will be interpreted as server-time.
+        dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");//$NON-NLS-1$
+      }
+      else
+      {
+        final TimeZone timeZoneObject;
+        if ("utc".equals(timezone))
+        {
+          timeZoneObject = TimeZone.getTimeZone("UTC");
+        }
+        else
+        {
+          timeZoneObject = TimeZone.getTimeZone(timezone);
+        }
+        dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");//$NON-NLS-1$
+        dateFormat.setTimeZone(timeZoneObject);
+      }
       final Date d = (Date) value;
-      final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");//$NON-NLS-1$
       return dateFormat.format(d);
     }
     if (Number.class.isAssignableFrom(type))
@@ -515,14 +638,19 @@ public class ParameterXmlContentHandler
   }
 
 
-  private void hideSubscriptionParameter(final boolean hidden,
+  private void hideSubscriptionParameter(final boolean subscribe,
                                          final Map<String, ParameterDefinitionEntry> parameters)
   {
+    final boolean hidden = (subscribe == false);
     final ParameterDefinitionEntry destination = parameters.get(SYS_PARAM_DESTINATION);
     if (destination instanceof AbstractParameter)
     {
       final AbstractParameter parameter = (AbstractParameter) destination;
       parameter.setHidden(hidden || parameter.isHidden());
+      if (subscribe == false)
+      {
+        parameter.setMandatory(false);
+      }
     }
 
     final ParameterDefinitionEntry scheduleId = parameters.get(SYS_PARAM_SCHEDULE_ID);
@@ -530,6 +658,10 @@ public class ParameterXmlContentHandler
     {
       final AbstractParameter parameter = (AbstractParameter) scheduleId;
       parameter.setHidden(hidden || parameter.isHidden());
+      if (subscribe == false)
+      {
+        parameter.setMandatory(false);
+      }
     }
 
     final ParameterDefinitionEntry scheduleName = parameters.get(SYS_PARAM_SUBSCRIPTION_NAME);
@@ -537,6 +669,10 @@ public class ParameterXmlContentHandler
     {
       final AbstractParameter parameter = (AbstractParameter) scheduleName;
       parameter.setHidden(hidden || parameter.isHidden());
+      if (subscribe == false)
+      {
+        parameter.setMandatory(false);
+      }
     }
   }
 
@@ -582,7 +718,14 @@ public class ParameterXmlContentHandler
   private PlainParameter createGenericSystemParameter(final String parameterName,
                                                       final boolean deprecated)
   {
-    final PlainParameter destinationParameter = new PlainParameter(parameterName, String.class);
+    return createGenericSystemParameter(parameterName, deprecated, String.class);
+  }
+
+  private PlainParameter createGenericSystemParameter(final String parameterName,
+                                                      final boolean deprecated,
+                                                      final Class type)
+  {
+    final PlainParameter destinationParameter = new PlainParameter(parameterName, type);
     destinationParameter.setMandatory(false);
     destinationParameter.setHidden(true);
     destinationParameter.setRole(ParameterAttributeNames.Core.ROLE_SYSTEM_PARAMETER);
@@ -592,8 +735,7 @@ public class ParameterXmlContentHandler
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP_LABEL,
             Messages.getString("ReportPlugin.SystemParameters"));
     destinationParameter.setParameterAttribute
-        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.LABEL,
-            Messages.getString(parameterName));
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.LABEL, parameterName);
     destinationParameter.setParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TYPE,
             ParameterAttributeNames.Core.TYPE_TEXTBOX);
@@ -604,23 +746,13 @@ public class ParameterXmlContentHandler
   private PlainParameter createGenericBooleanSystemParameter(final String parameterName,
                                                              final boolean deprecated)
   {
-    final PlainParameter destinationParameter = new PlainParameter(parameterName, Boolean.class);
-    destinationParameter.setMandatory(false);
-    destinationParameter.setHidden(true);
-    destinationParameter.setRole(ParameterAttributeNames.Core.ROLE_SYSTEM_PARAMETER);
-    destinationParameter.setParameterAttribute
-        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP, GROUP_SYSTEM);
-    destinationParameter.setParameterAttribute
-        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP_LABEL,
-            Messages.getString("ReportPlugin.SystemParameters"));
-    destinationParameter.setParameterAttribute
-        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.LABEL,
-            Messages.getString(parameterName));
-    destinationParameter.setParameterAttribute
-        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TYPE,
-            ParameterAttributeNames.Core.TYPE_TEXTBOX);
-    destinationParameter.setDeprecated(deprecated);
-    return destinationParameter;
+    return createGenericSystemParameter(parameterName, deprecated, Boolean.class);
+  }
+
+  private PlainParameter createGenericIntSystemParameter(final String parameterName,
+                                                         final boolean deprecated)
+  {
+    return createGenericSystemParameter(parameterName, deprecated, Integer.class);
   }
 
   private StaticListParameter createScheduleIdParameter()
@@ -759,7 +891,6 @@ public class ParameterXmlContentHandler
     listParameter.addValues("DOWNLOAD", "DOWNLOAD"); // NON-NLS
     return listParameter;
   }
-
 
 
   private Boolean requestFlag(final String parameter,

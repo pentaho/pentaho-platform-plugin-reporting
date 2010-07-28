@@ -188,11 +188,16 @@ public class ReportContentGenerator extends SimpleContentGenerator
     {
       final String paramName = (String) paramIter.next();
       final Object paramValue = requestParams.getParameter(paramName);
-      if (paramValue != null)
+      if (paramValue == null)
       {
-        // only actually add inputs who don't have NULL values
-        inputs.put(paramName, paramValue);
+        continue;
       }
+      if ("".equals(paramValue))
+      {
+        continue;
+      }
+      // only actually add inputs who don't have NULL values
+      inputs.put(paramName, paramValue);
     }
     return inputs;
   }

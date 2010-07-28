@@ -3,39 +3,24 @@ package org.pentaho.reporting.platform.plugin;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.reflect.Array;
 import java.net.URL;
-import java.sql.Time;
-import java.sql.Timestamp;
-import java.text.DateFormatSymbols;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.Map;
 import javax.print.DocFlavor;
 import javax.print.PrintService;
 import javax.print.PrintServiceLookup;
-import javax.swing.table.TableModel;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.pentaho.commons.connection.IPentahoResultSet;
 import org.pentaho.platform.api.engine.IAcceptsRuntimeInputs;
 import org.pentaho.platform.api.engine.IActionSequenceResource;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.api.engine.IStreamingPojo;
 import org.pentaho.platform.api.repository.IContentRepository;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
-import org.pentaho.platform.plugin.action.jfreereport.helper.PentahoTableModel;
-import org.pentaho.platform.util.messages.LocaleHelper;
 import org.pentaho.reporting.engine.classic.core.AttributeNames;
 import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
-import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
 import org.pentaho.reporting.engine.classic.core.metadata.ReportProcessTaskRegistry;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.pdf.PdfPageableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.plaintext.PlainTextPageableModule;
@@ -46,19 +31,13 @@ import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlT
 import org.pentaho.reporting.engine.classic.core.modules.output.table.rtf.RTFTableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.xls.ExcelTableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.xml.XmlTableModule;
-import org.pentaho.reporting.engine.classic.core.modules.parser.base.ReportGenerator;
 import org.pentaho.reporting.engine.classic.core.parameters.DefaultParameterContext;
-import org.pentaho.reporting.engine.classic.core.parameters.ListParameter;
-import org.pentaho.reporting.engine.classic.core.parameters.ParameterAttributeNames;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterContext;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterDefinitionEntry;
 import org.pentaho.reporting.engine.classic.core.parameters.ValidationMessage;
 import org.pentaho.reporting.engine.classic.core.parameters.ValidationResult;
 import org.pentaho.reporting.engine.classic.core.util.NullOutputStream;
 import org.pentaho.reporting.engine.classic.core.util.ReportParameterValues;
-import org.pentaho.reporting.engine.classic.core.util.beans.BeanException;
-import org.pentaho.reporting.engine.classic.core.util.beans.ConverterRegistry;
-import org.pentaho.reporting.engine.classic.core.util.beans.ValueConverter;
 import org.pentaho.reporting.engine.classic.extensions.modules.java14print.Java14PrintUtil;
 import org.pentaho.reporting.libraries.base.config.Configuration;
 import org.pentaho.reporting.libraries.base.util.StringUtils;
@@ -75,7 +54,6 @@ import org.pentaho.reporting.platform.plugin.output.RTFOutput;
 import org.pentaho.reporting.platform.plugin.output.XLSOutput;
 import org.pentaho.reporting.platform.plugin.output.XmlPageableOutput;
 import org.pentaho.reporting.platform.plugin.output.XmlTableOutput;
-import org.xml.sax.InputSource;
 
 public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntimeInputs
 {
@@ -146,15 +124,13 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   private boolean print = false;
   private String printer;
 
-  private final SimpleDateFormat dateFormat;
-
   /*
    * Default constructor
    */
+
   public SimpleReportingComponent()
   {
     this.inputs = Collections.emptyMap();
-    dateFormat = new SimpleDateFormat("yyyy-MM-dd");
     acceptedPage = -1;
     pageCount = -1;
     useContentRepository = Boolean.FALSE;
@@ -531,18 +507,20 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     {
       if (reportDefinitionInputStream != null)
       {
-        final ReportGenerator generator = ReportGenerator.createInstance();
-        final InputSource repDefInputSource = new InputSource(reportDefinitionInputStream);
-        report = generator.parseReport(repDefInputSource, getDefinedResourceURL(null));
+        report = ReportCreator.createReport(reportDefinitionInputStream, getDefinedResourceURL(null));
       }
       else if (reportDefinition != null)
       {
         // load the report definition as an action-sequence resource
-        report = ReportCreator.createReport(reportDefinition.getAddress(), session);
+        report = ReportCreator.createReport(reportDefinition.getAddress());
+      }
+      else if (reportDefinitionPath != null)
+      {
+        report = ReportCreator.createReport(reportDefinitionPath);
       }
       else
       {
-        report = ReportCreator.createReport(reportDefinitionPath, session);
+        throw new ResourceException();
       }
       report.setReportEnvironment(new PentahoReportEnvironment(report.getConfiguration()));
     }
@@ -662,6 +640,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   {
     return computeEffectiveOutputTarget();
   }
+
   private String mapOutputTypeToOutputTarget(final String outputType)
   {
     // if the user has given a mime-type instead of a output-target, lets map it to the "best" choice. If the
@@ -782,9 +761,9 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    *
    * @param context          a ParameterContext for which the parameters will be under
    * @param validationResult the validation result that will hold the warnings. If null, a new one will be created.
+   * @return the validation result containing any parameter validation errors.
    * @throws java.io.IOException if the report of this component could not be parsed.
    * @throws ResourceException   if the report of this component could not be parsed.
-   * @return the validation result containing any parameter validation errors.
    */
   public ValidationResult applyInputsToReportParameters(final ParameterContext context,
                                                         ValidationResult validationResult)
@@ -803,20 +782,14 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       for (final ParameterDefinitionEntry param : params)
       {
         final String paramName = param.getName();
-        Object value = inputs.get(paramName);
-        final Object defaultValue = param.getDefaultValue(context);
-        if (value == null)
-        {
-          value = defaultValue;
-        }
-
         try
         {
-          addParameter(context, parameterValues, param, value);
+          parameterValues.put(param.getName(),
+              ReportContentUtil.computeParameterValue(context, param, inputs.get(paramName)));
         }
         catch (Exception e)
         {
-          if (log.isDebugEnabled())
+          if (log.isWarnEnabled())
           {
             log.warn(Messages.getString("ReportPlugin.logErrorParametrization"), e);
           }
@@ -825,209 +798,6 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       }
     }
     return validationResult;
-  }
-
-  private Object convert(final ParameterContext context,
-                         final ParameterDefinitionEntry parameter,
-                         final Class targetType, final Object rawValue)
-      throws ReportProcessingException
-  {
-    if (targetType == null)
-    {
-      throw new NullPointerException();
-    }
-
-    if (rawValue == null)
-    {
-      return null;
-    }
-    if (targetType.isInstance(rawValue))
-    {
-      return rawValue;
-    }
-
-    if (targetType.isAssignableFrom(TableModel.class) && IPentahoResultSet.class.isAssignableFrom(rawValue.getClass()))
-    {
-      // wrap IPentahoResultSet to simulate TableModel
-      return new PentahoTableModel((IPentahoResultSet) rawValue);
-    }
-
-    final String valueAsString = String.valueOf(rawValue);
-    if (StringUtils.isEmpty(valueAsString))
-    {
-      return null;
-    }
-
-    if (targetType.equals(Timestamp.class))
-    {
-      try
-      {
-        final Date date = dateFormat.parse(valueAsString);
-        return new Timestamp(date.getTime());
-      }
-      catch (ParseException pe)
-      {
-        // ignore, we try to parse it as real date now ..
-      }
-    }
-    else if (targetType.equals(Time.class))
-    {
-      try
-      {
-        final Date date = dateFormat.parse(valueAsString);
-        return new Time(date.getTime());
-      }
-      catch (ParseException pe)
-      {
-        // ignore, we try to parse it as real date now ..
-      }
-    }
-    else if (targetType.equals(java.sql.Date.class))
-    {
-      try
-      {
-        final Date date = dateFormat.parse(valueAsString);
-        return new java.sql.Date(date.getTime());
-      }
-      catch (ParseException pe)
-      {
-        // ignore, we try to parse it as real date now ..
-      }
-    }
-    else if (targetType.equals(Date.class))
-    {
-      try
-      {
-        final Date date = dateFormat.parse(valueAsString);
-        return new Date(date.getTime());
-      }
-      catch (ParseException pe)
-      {
-        // ignore, we try to parse it as real date now ..
-      }
-    }
-
-    final String dataFormat = parameter.getParameterAttribute(ParameterAttributeNames.Core.NAMESPACE,
-        ParameterAttributeNames.Core.DATA_FORMAT, context);
-    if (dataFormat != null)
-    {
-      try
-      {
-        if (Number.class.isAssignableFrom(targetType))
-        {
-          final DecimalFormat format = new DecimalFormat(dataFormat, new DecimalFormatSymbols(LocaleHelper.getLocale()));
-          format.setParseBigDecimal(true);
-          final Number number = format.parse(valueAsString);
-          final String asText = ConverterRegistry.toAttributeValue(number);
-          return ConverterRegistry.toPropertyValue(asText, targetType);
-        }
-        else if (Date.class.isAssignableFrom(targetType))
-        {
-          final SimpleDateFormat format = new SimpleDateFormat(dataFormat, new DateFormatSymbols(LocaleHelper.getLocale()));
-          format.setLenient(false);
-          final Date number = format.parse(valueAsString);
-          final String asText = ConverterRegistry.toAttributeValue(number);
-          return ConverterRegistry.toPropertyValue(asText, targetType);
-        }
-      }
-      catch (Exception e)
-      {
-        // again, ignore it .
-      }
-    }
-
-    final ValueConverter valueConverter = ConverterRegistry.getInstance().getValueConverter(targetType);
-    if (valueConverter != null)
-    {
-      try
-      {
-        return valueConverter.toPropertyValue(valueAsString);
-      }
-      catch (BeanException e)
-      {
-        throw new ReportProcessingException(Messages.getString
-            ("ReportPlugin.unableToConvertParameter", parameter.getName())); //$NON-NLS-1$
-      }
-    }
-    return rawValue;
-  }
-
-  private void addParameter(final ParameterContext report,
-                            final ReportParameterValues parameterValues,
-                            final ParameterDefinitionEntry param,
-                            final Object value)
-      throws ReportProcessingException
-  {
-    if (value == null)
-    {
-      parameterValues.put(param.getName(), null);
-      return;
-    }
-
-    if (isAllowMultiSelect(param) && Collection.class.isInstance(value))
-    {
-      final Collection c = (Collection) value;
-      final Class componentType;
-      if (param.getValueType().isArray())
-      {
-        componentType = param.getValueType().getComponentType();
-      }
-      else
-      {
-        componentType = param.getValueType();
-      }
-
-      final int length = c.size();
-      final Object[] sourceArray = c.toArray();
-      final Object array = Array.newInstance(componentType, length);
-      for (int i = 0; i < length; i++)
-      {
-        Array.set(array, i, convert(report, param, componentType, sourceArray[i]));
-      }
-      parameterValues.put(param.getName(), array);
-    }
-    else if (value.getClass().isArray())
-    {
-      final Class componentType;
-      if (param.getValueType().isArray())
-      {
-        componentType = param.getValueType().getComponentType();
-      }
-      else
-      {
-        componentType = param.getValueType();
-      }
-
-      final int length = Array.getLength(value);
-      final Object array = Array.newInstance(componentType, length);
-      for (int i = 0; i < length; i++)
-      {
-        Array.set(array, i, convert(report, param, componentType, Array.get(value, i)));
-      }
-      parameterValues.put(param.getName(), array);
-    }
-    else if (isAllowMultiSelect(param))
-    {
-      // if the parameter allows multi selections, wrap this single input in an array
-      // and re-call addParameter with it
-      final Object[] array = new Object[1];
-      array[0] = value;
-      addParameter(report, parameterValues, param, array);
-    }
-    else
-    {
-      parameterValues.put(param.getName(), convert(report, param, param.getValueType(), value));
-    }
-  }
-
-  private boolean isAllowMultiSelect(final ParameterDefinitionEntry parameter)
-  {
-    if (parameter instanceof ListParameter)
-    {
-      final ListParameter listParameter = (ListParameter) parameter;
-      return listParameter.isAllowMultiSelection();
-    }
-    return false;
   }
 
   private URL getDefinedResourceURL(final URL defaultValue)

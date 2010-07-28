@@ -402,11 +402,13 @@ public class ParameterControllerPanel extends VerticalPanel
         final Element parameterElement = (Element) parameterNodes.item(i);
         final String name = parameterElement.getAttribute("name");// NON-NLS
         final Parameter parameter = new Parameter(name);
-        parameter.setMandatory("true".equals(parameterElement.getAttribute("is-mandatory")));
-        parameter.setStrict("true".equals(parameterElement.getAttribute("is-strict")));
-        parameter.setMultiSelect("true".equals(parameterElement.getAttribute("is-multi-select")));
+        parameter.setMandatory("true".equals(parameterElement.getAttribute("is-mandatory")));// NON-NLS
+        parameter.setStrict("true".equals(parameterElement.getAttribute("is-strict")));// NON-NLS
+        parameter.setMultiSelect("true".equals(parameterElement.getAttribute("is-multi-select")));// NON-NLS
+        parameter.setType(parameterElement.getAttribute("type"));// NON-NLS
+        parameter.setTimezoneHint(parameterElement.getAttribute("timezone-hint"));// NON-NLS
 
-        final NodeList attributes = parameterElement.getElementsByTagName("attribute");
+        final NodeList attributes = parameterElement.getElementsByTagName("attribute");// NON-NLS
         final int length = attributes.getLength();
         for (int aidx = 0; aidx < length; aidx++)
         {
@@ -435,9 +437,15 @@ public class ParameterControllerPanel extends VerticalPanel
           final Element valueElement = (Element) list.item(videx);
           final String label = valueElement.getAttribute("label"); // NON-NLS
           final String value = valueElement.getAttribute("value"); // NON-NLS
-          final String type = valueElement.getAttribute("type"); // NON-NLS
+          String type = valueElement.getAttribute("type"); // NON-NLS
+          if (ReportViewerUtil.isEmpty(type))
+          {
+            type = parameter.getType();
+          }
           final boolean selected = "true".equals(valueElement.getAttribute("selected")); // NON-NLS
-          parameter.addSelection(new ParameterSelection(type, value, selected, label));
+
+          parameter.addSelection(new ParameterSelection(type,
+              ReportViewerUtil.normalizeParameterValue(parameter, type, value), selected, label));
         }
 
         String parameterGroupName = parameter.getAttribute("parameter-group"); //$NON-NLS-1$
@@ -489,7 +497,7 @@ public class ParameterControllerPanel extends VerticalPanel
 
     // create a new parameter value map
     parameterMap = new ParameterValues();
-
+//http://localhost:8080/pentaho/content/reporting?renderMode=REPORT&output-target=table%2Fhtml%3Bpage-mode%3Dpage&accepted-page=0&UTC%252BParameter=2010-07-28T00%3A00%3A00.000&UTC%25252BParameter=2010-07-28T12%3A00%3A00.000&UTC%25252525252BParameter=2010-07-28T00%3A00%3A00.000&UTC%2525252525252BParameter=2010-07-28T12%3A00%3A00.000&UTC%2525252525252525252BParameter=2010-07-28T00%3A00%3A00.000&UTC%252525252525252525252BParameter=2010-07-28T12%3A00%3A00.000&solution=steel-wheels&path=%2Freports&name=dateparameter.prpt&locale=en_US
 
     final String layout = parametersElement.getLayout();
 
