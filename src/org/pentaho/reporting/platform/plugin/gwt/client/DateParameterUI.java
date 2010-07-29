@@ -16,9 +16,7 @@ import org.pentaho.gwt.widgets.client.datepicker.PentahoDatePicker;
 
 public class DateParameterUI extends SimplePanel
 {
-  //private final static DateTimeFormat FORMAT = DateTimeFormat.getFormat("yyyy-MM-dd'T'HH:mm:ss.SSS"); // NON-NLS
-
-  private class DateParameterSelectionHandler implements ValueChangeHandler<Date>, ChangeHandler
+  protected class DateParameterSelectionHandler implements ValueChangeHandler<Date>, ChangeHandler
   {
     private ParameterControllerPanel controller;
     private String parameterName;
@@ -32,32 +30,34 @@ public class DateParameterUI extends SimplePanel
       this.parameterName = parameter.getName();
       this.timezone = parameter.getAttribute("timezone");
       final String timezoneHint = parameter.getTimezoneHint();
-      if (timezone == null || "server".equals(timezone))
+      if ("client".equals(timezone))
       {
-        // Take the date string as it comes from the server, cut out the timezone information - the
-        // server will supply its own here.
-        format = DateTimeFormat.getFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
-      }
-      else if ("cient".equals(timezone))
-      {
-        // we ignore the timezone the server sends - any default date given by the server will
-        // be interpreted to be a client-side date.
-        format = DateTimeFormat.getFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
-      }
-      else if ("utc".equals(timezone))
-      {
-        // Take the date string as it comes from the server, present it as local time but when sending it off,
-        // do not include timezone information.
-        format = DateTimeFormat.getFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'+0000'");
-      }
-      else if (timezoneHint != null && timezoneHint.length() != 0)
-      {
-        format = DateTimeFormat.getFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'" + timezoneHint + "'");
+        format = DateTimeFormat.getFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
       }
       else
       {
-        format = DateTimeFormat.getFormat
-            ("yyyy-MM-dd'T'HH:mm:ss.SSS'" + TimeZoneOffsets.getInstance().getOffsetAsString(timezone) + "'");
+        // Take the date string as it comes from the server, cut out the timezone information - the
+        // server will supply its own here.
+        if (timezoneHint != null && timezoneHint.length() > 0)
+        {
+          format = DateTimeFormat.getFormat("yyyy-MM-dd'T'HH:mm:ss.SSS" + "'" + timezoneHint + "'");
+        }
+        else
+        {
+          if ("server".equals(timezone) || timezone == null)
+          {
+            format = DateTimeFormat.getFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
+          }
+          else if ("utc".equals(timezone))
+          {
+            format = DateTimeFormat.getFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'+0000'");
+          }
+          else if (timezone != null)
+          {
+            format = DateTimeFormat.getFormat
+                ("yyyy-MM-dd'T'HH:mm:ss.SSS'" + TimeZoneOffsets.getInstance().getOffsetAsString(timezone) + "'");
+          }
+        }
       }
     }
 
@@ -72,25 +72,26 @@ public class DateParameterUI extends SimplePanel
       {
         newDate = event.getValue();
       }
+      final String value = convertSelectionToText(newDate);
 
+
+      controller.getParameterMap().setSelectedValue(parameterName, value);
+      controller.fetchParameters(true);
+    }
+
+    protected String convertSelectionToText(final Date newDate)
+    {
       // add date as long
+      final String value;
       if (newDate == null)
       {
-        controller.getParameterMap().setSelectedValue(parameterName, null); //$NON-NLS-1$
+        value = null; //$NON-NLS-1$
       }
       else
       {
-        if ("client".equals(timezone))
-        {
-          final String offsetText = TimeZoneOffsets.formatOffset(getNativeTimezoneOffset(newDate.getTime()));
-          controller.getParameterMap().setSelectedValue(parameterName, format.format(newDate) + offsetText); //$NON-NLS-1$
-        }
-        else
-        {
-          controller.getParameterMap().setSelectedValue(parameterName, format.format(newDate));
-        } //$NON-NLS-1$
+        value = format.format(newDate);
       }
-      controller.fetchParameters(true);
+      return value;
     }
 
     public void onChange(final ChangeEvent changeEvent)
@@ -99,38 +100,36 @@ public class DateParameterUI extends SimplePanel
       if (ReportViewerUtil.isEmpty(s))
       {
         datePicker.setValue(null, true);
-//        controller.getParameterMap().setSelectedValue(parameterName, null); //$NON-NLS-1$
       }
-      else
-      {
-//        datePicker.setValue(null, true);
-//        controller.getParameterMap().setSelectedValue(parameterName, format.format(datePicker.getValue())); //$NON-NLS-1$
-      }
-//      controller.fetchParameters(true);
     }
   }
 
   private DateBox datePicker;
+  private DateParameterSelectionHandler selectionHandler;
 
-  private Date parseDate(final String text)
+  private String timezoneMode;
+
+  protected Date parseDate(final String text)
   {
+    if ("client".equals(timezoneMode))
+    {
+      try
+      {
+        return ReportViewerUtil.parseWithTimezone(text);
+      }
+      catch (Exception e)
+      {
+        // invalid date string ..
+      }
+    }
+
     try
     {
-      return DateTimeFormat.getFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").parse(text);
+      return ReportViewerUtil.parseWithoutTimezone(text);
     }
     catch (Exception e)
     {
       // invalid date string ..
-      Window.alert("Failed to parse date as date with timezone: " + text + " " + e);
-    }
-    try
-    {
-      return DateTimeFormat.getFormat("yyyy-MM-dd'T'HH:mm:ss.SSS").parse(text);
-    }
-    catch (Exception e)
-    {
-      // invalid date string ..
-      Window.alert("Failed to parse date as date without timezone: " + text + " " + e);
     }
 
     try
@@ -147,7 +146,6 @@ public class DateParameterUI extends SimplePanel
         catch (Exception e)
         {
           // invalid date string ..
-          Window.alert("Failed to parse date as short-format: " + text + " " + e);
         }
       }
     }
@@ -163,7 +161,6 @@ public class DateParameterUI extends SimplePanel
     catch (Exception e)
     {
       // invalid number as well
-      Window.alert("Failed to parse date as long-number: " + text);
     }
     return null;
   }
@@ -172,6 +169,8 @@ public class DateParameterUI extends SimplePanel
                          final Parameter parameterElement)
   {
     // selectionsList should only have 1 date
+
+    this.timezoneMode = parameterElement.getAttribute("timezone");
 
     final List<ParameterSelection> list = parameterElement.getSelections();
     final Date date;
@@ -185,13 +184,19 @@ public class DateParameterUI extends SimplePanel
       final String dateText = parameterSelection.getValue();
       date = parseDate(dateText);
     }
+
     final DefaultFormat format = new DefaultFormat(createFormat(parameterElement.getAttribute("data-format"))); // NON-NLS
     datePicker = new DateBox(new PentahoDatePicker(), date, format);
 
-    final DateParameterSelectionHandler handler = new DateParameterSelectionHandler(controller, parameterElement);
-    datePicker.getTextBox().addChangeHandler(handler);
-    datePicker.addValueChangeHandler(handler);
+    selectionHandler = new DateParameterSelectionHandler(controller, parameterElement);
+    datePicker.getTextBox().addChangeHandler(selectionHandler);
+    datePicker.addValueChangeHandler(selectionHandler);
     setWidget(datePicker);
+  }
+
+  protected DateParameterSelectionHandler getSelectionHandler()
+  {
+    return selectionHandler;
   }
 
   private static DateTimeFormat createFormat(final String format)
@@ -211,8 +216,4 @@ public class DateParameterUI extends SimplePanel
     return DateTimeFormat.getLongDateFormat();
   }
 
-  public static native int getNativeTimezoneOffset(final double milliseconds)
-    /*-{
-      return (new Date(milliseconds).getTimezoneOffset());
-    }-*/;
 }

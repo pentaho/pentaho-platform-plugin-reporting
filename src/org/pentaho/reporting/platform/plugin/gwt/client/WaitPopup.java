@@ -24,9 +24,9 @@ import com.google.gwt.user.client.ui.RootPanel;
 public class WaitPopup
 {
 
-  static private WaitPopup instance = new WaitPopup();
-  private static FocusPanel pageBackground = null;
-  private static int clickCount = 0;
+  private static final WaitPopup instance = new WaitPopup();
+  private static FocusPanel pageBackground;
+  private static int clickCount;
 
   public WaitPopup()
   {

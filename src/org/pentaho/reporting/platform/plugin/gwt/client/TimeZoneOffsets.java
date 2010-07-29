@@ -639,8 +639,8 @@ public class TimeZoneOffsets
   {
     final StringBuffer value = new StringBuffer();
     final int minutesRaw = getOffset(timezone);
-    final int hours = minutesRaw / 60;
-    final int minutes = minutesRaw % 60;
+    final int hours = Math.abs(minutesRaw / 60);
+    final int minutes = Math.abs(minutesRaw % 60);
 
     if (minutesRaw >= 0)
     {
@@ -667,8 +667,8 @@ public class TimeZoneOffsets
   {
     final StringBuffer value = new StringBuffer();
     final int minutesRaw = (int) offsetInMinutes;
-    final int hours = minutesRaw / 60;
-    final int minutes = minutesRaw % 60;
+    final int hours = Math.abs(minutesRaw / 60);
+    final int minutes = Math.abs(minutesRaw % 60);
 
     if (minutesRaw >= 0)
     {

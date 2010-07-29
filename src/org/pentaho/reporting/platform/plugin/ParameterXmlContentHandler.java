@@ -122,7 +122,7 @@ public class ParameterXmlContentHandler
       parameter.put("autoSubmit", createGenericBooleanSystemParameter("autoSubmit", true)); // NON-NLS
       parameter.put("autoSubmitUI", createGenericBooleanSystemParameter("autoSubmitUI", true)); // NON-NLS
       parameter.put("dashboard-mode", createGenericBooleanSystemParameter("dashboard-mode", false)); // NON-NLS
-      parameter.put("showParameters", createGenericBooleanSystemParameter("showParameters", false)); // NON-NLS
+      parameter.put("showParameters", createGenericBooleanSystemParameter("showParameters", true)); // NON-NLS
       parameter.put("paginate", createGenericBooleanSystemParameter("paginate", true)); // NON-NLS
       parameter.put("ignoreDefaultDates", createGenericBooleanSystemParameter("ignoreDefaultDates", true)); // NON-NLS
       parameter.put("print", createGenericBooleanSystemParameter("print", false)); // NON-NLS
@@ -547,22 +547,16 @@ public class ParameterXmlContentHandler
           (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TIMEZONE, context);
       final DateFormat dateFormat;
       if (timezone == null ||
-          "server".equals(timezone))
+          "server".equals(timezone) ||
+          "client".equals(timezone))
       {
         // nothing needed ..
         // for server: Just print it as it is, including the server timezone.
         dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");//$NON-NLS-1$
       }
-      else if ("client".equals(timezone))
-      {
-        // for client - we do not know the client's timezone, so we give no timezone information and assume
-        //              that the client will adjust the timezone accordingly
-        //
-        // if the client sends that value back without changes, it will be interpreted as server-time.
-        dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");//$NON-NLS-1$
-      }
       else
       {
+        // for convinience for the clients we send the date in the correct timezone.
         final TimeZone timeZoneObject;
         if ("utc".equals(timezone))
         {

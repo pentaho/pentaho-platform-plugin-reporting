@@ -1,5 +1,6 @@
 package org.pentaho.reporting.platform.plugin.gwt.client;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -8,7 +9,6 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.i18n.client.DateTimeFormat;
-import com.google.gwt.i18n.client.TimeZone;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Window;
@@ -65,45 +65,40 @@ public class ReportViewerUtil
       {
         // date handling speciality here ...
         final String timezone = parameter.getAttribute("timezone");
-        final String timezoneHint = parameter.getTimezoneHint();
+        String timezoneHint = parameter.getTimezoneHint();
         if (timezone == null || "server".equals(timezone))
         {
-          // Take the date string as it comes from the server, cut out the timezone information - the
-          // server will supply its own here.
-          final DateTimeFormat readFormat = DateTimeFormat.getFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
-          final DateTimeFormat writeFormat = DateTimeFormat.getFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
-          return writeFormat.format(readFormat.parse(selection));
+          if (timezoneHint == null)
+          {
+            timezoneHint = extractTimezoneHintFromData(selection);
+          }
+          if (timezoneHint == null)
+          {
+            return selection;
+          }
+
+          // update the parameter definition, so that the datepickerUI can work properly ...
+          parameter.setTimezoneHint(timezoneHint);
+          return selection;
         }
-        else if ("cient".equals(timezone))
+
+        if ("client".equals(timezone))
         {
-          // we ignore the timezone the server sends - any default date given by the server will
-          // be interpreted to be a client-side date.
-          
-          final DateTimeFormat readFormat = DateTimeFormat.getFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
-          final DateTimeFormat writeFormat = DateTimeFormat.getFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
-          return writeFormat.format(readFormat.parse(selection));
+          return selection;
         }
-        else if ("utc".equals(timezone))
+
+        // for every other mode (fixed timezone modes), translate the time into the specified timezone
+        if (timezoneHint != null && timezoneHint.length() > 0)
         {
-          // Take the date string as it comes from the server, present it as local time but when sending it off,
-          // do not include timezone information.
-          final DateTimeFormat readFormat = DateTimeFormat.getFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
-          final DateTimeFormat writeFormat = DateTimeFormat.getFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
-          return writeFormat.format(readFormat.parse(selection)) + "+0000";
+          if (selection.endsWith(timezoneHint))
+          {
+            return selection;
+          }
         }
-        else if (timezoneHint != null && timezoneHint.length() != 0)
-        {
-          final DateTimeFormat readFormat = DateTimeFormat.getFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
-          final DateTimeFormat writeFormat = DateTimeFormat.getFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
-          return writeFormat.format(readFormat.parse(selection)) + timezoneHint;
-        }
-        else
-        {
-          final DateTimeFormat readFormat = DateTimeFormat.getFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
-          final DateTimeFormat writeFormat = DateTimeFormat.getFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
-          return writeFormat.format(readFormat.parse(selection)) +
-              TimeZoneOffsets.getInstance().getOffsetAsString(timezone);
-        }
+
+        // the resulting time will have the same universal time as the original one, but the string
+        // will match the timeoffset specified in the timezone.
+        return convertTimeStampToTimeZone(selection, TimeZoneOffsets.getInstance().getOffset(timezone));
       }
       catch (IllegalArgumentException iae)
       {
@@ -114,6 +109,77 @@ public class ReportViewerUtil
 
     return selection;
   }
+
+  public static Date parseWithTimezone(final String dateString)
+  {
+    if (dateString.length() != 28)
+    {
+      throw new IllegalArgumentException("This is not a valid ISO-date with timezone: " + dateString);
+    }
+    return DateTimeFormat.getFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").parse(dateString);
+  }
+
+  public static Date parseWithoutTimezone(String dateString)
+  {
+    if (dateString.length() == 28)
+    {
+      dateString = dateString.substring(0, 23);
+    }
+    if (dateString.length() != 23)
+    {
+      throw new IllegalArgumentException("This is not a valid ISO-date without timezone: " + dateString);
+    }
+    return DateTimeFormat.getFormat("yyyy-MM-dd'T'HH:mm:ss.SSS").parse(dateString);
+  }
+
+  /**
+   * Converts a time from a arbitary timezone into the local timezone. The timestamp value remains unchanged,
+   * but the string representation changes to reflect the give timezone.
+   *
+   * @param originalTimestamp
+   * @param targetTimeZoneOffset
+   * @return
+   */
+  public static String convertTimeStampToTimeZone(final String originalTimestamp,
+                                                  final int targetTimeZoneOffset)
+  {
+    final DateTimeFormat localDate = DateTimeFormat.getFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
+
+    final Date dateLocal = parseWithoutTimezone(originalTimestamp);
+    final Date dateUniversal = parseWithTimezone(originalTimestamp);
+
+    final int localTimeToUTCOffset = getNativeTimezoneOffset(new Date().getTime()) - targetTimeZoneOffset;
+    final int serverTimeToLocalTimeOffset = (int) ((dateUniversal.getTime() - dateLocal.getTime()) / 60000);
+    final int serverTimeToUTCOffset = localTimeToUTCOffset - serverTimeToLocalTimeOffset;
+
+    final String offsetText = TimeZoneOffsets.formatOffset(serverTimeToUTCOffset);
+    final Date localWithShift = new Date(dateLocal.getTime() - serverTimeToUTCOffset);
+    return localDate.format(localWithShift) + offsetText;
+  }
+
+  /**
+   * Returns the current native time-zone offset from UTC to local time.
+   *
+   * @param milliseconds the milliseconds of a date, to evaluate summer/winter time
+   * @return the offset in minutes.
+   */
+  public static native int getNativeTimezoneOffset(final double milliseconds)
+    /*-{
+      return (new Date(milliseconds).getTimezoneOffset());
+    }-*/;
+
+  public static String extractTimezoneHintFromData(final String dateString)
+  {
+    if (dateString.length() == 28)
+    {
+      return dateString.substring(23, 28);
+    }
+    else
+    {
+      return null;
+    }
+  }
+
 
   /**
    * Parses the history tokens and returns a map keyed by the parameter names. The parameter values are

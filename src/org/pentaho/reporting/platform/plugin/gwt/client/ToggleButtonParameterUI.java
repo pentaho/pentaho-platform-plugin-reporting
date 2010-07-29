@@ -99,15 +99,3 @@ public class ToggleButtonParameterUI extends SimplePanel
   }
 
 }
-
-// UTC+Parameter=2010-02-09T00:00:00.000+0000
-// Client=2010-02-09T00:00:00.0000000
-// Server=2010-02-09T00:00:00.000+0000
-// GMT=2010-02-09T00:00:00.000-0100
-// output-target=table/html;page-mode=page&accepted-page=0&solution=steel-wheels&path=/reports&name=dateparameter.prpt&locale=en_US
-
-// UTC+Parameter=2010-07-28T00:00:00.000+0000&
-// Client=2010-07-28T00:00:00.0000000&
-// Server=2010-07-28T00:00:00.000+0100&
-// GMT=2010-07-28T00:00:00.000-0100&
-// output-target=table/html;page-mode=page&accepted-page=0&solution=steel-wheels&path=/reports&name=dateparameter.prpt&locale=en_US
