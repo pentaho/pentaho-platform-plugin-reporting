@@ -2,8 +2,8 @@
 <xs:schema attributeFormDefault="unqualified"
            elementFormDefault="qualified"
            xmlns:xs="http://www.w3.org/2001/XMLSchema"
-           xmlns="http://reporting.pentaho.org/namespaces/engine/classic/metadata/1.0"
-           targetNamespace="http://reporting.pentaho.org/namespaces/engine/classic/metadata/1.0">
+           xmlns="http://reporting.pentaho.org/namespaces/parameter/1.0"
+           targetNamespace="http://reporting.pentaho.org/namespaces/parameter/1.0">
 
 
   <xs:complexType name="parametersType">

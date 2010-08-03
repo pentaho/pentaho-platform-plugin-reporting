@@ -40,6 +40,10 @@
             <id>BACKGROUND</id>
             <command>ViewAction?solution={solution}&amp;path={path}&amp;action={name}&amp;background=true</command>
           </operation>
+          <operation>
+            <id>PARAMETER</id>
+            <command>content/reporting/?renderMode=XML&amp;solution={solution}&amp;path={path}&amp;name={name}</command>
+          </operation>
         </operations>
       </content-type>
     </content-types>
