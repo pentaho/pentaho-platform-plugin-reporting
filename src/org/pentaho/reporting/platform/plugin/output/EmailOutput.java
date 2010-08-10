@@ -16,12 +16,10 @@ import org.pentaho.reporting.engine.classic.core.modules.output.table.html.AllIt
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlOutputProcessor;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlPrinter;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.StreamHtmlOutputProcessor;
-import org.pentaho.reporting.engine.classic.core.modules.output.table.html.URLRewriter;
 import org.pentaho.reporting.engine.classic.extensions.modules.mailer.MailURLRewriter;
 import org.pentaho.reporting.libraries.repository.ContentIOException;
 import org.pentaho.reporting.libraries.repository.ContentLocation;
 import org.pentaho.reporting.libraries.repository.DefaultNameGenerator;
-import org.pentaho.reporting.libraries.repository.NameGenerator;
 import org.pentaho.reporting.libraries.repository.email.EmailRepository;
 
 public class EmailOutput
@@ -44,16 +42,13 @@ public class EmailOutput
     final Properties props = new Properties();
     final Session session = Session.getInstance(props);
     final EmailRepository dataRepository = new EmailRepository(session);
-
-    final URLRewriter rewriter = new MailURLRewriter();
     final ContentLocation dataLocation = dataRepository.getRoot();
-    final NameGenerator dataNameGenerator = new DefaultNameGenerator(dataLocation);
 
     final HtmlOutputProcessor outputProcessor = new StreamHtmlOutputProcessor(report.getConfiguration());
     final HtmlPrinter printer = new AllItemsHtmlPrinter(report.getResourceManager());
     printer.setContentWriter(dataLocation, new DefaultNameGenerator(dataLocation, "index", "html"));//$NON-NLS-1$//$NON-NLS-2$
-    printer.setDataWriter(dataLocation, dataNameGenerator);
-    printer.setUrlRewriter(rewriter);
+    printer.setDataWriter(dataLocation, new DefaultNameGenerator(dataLocation));
+    printer.setUrlRewriter(new MailURLRewriter());
     outputProcessor.setPrinter(printer);
 
     final StreamReportProcessor sp = new StreamReportProcessor(report, outputProcessor);

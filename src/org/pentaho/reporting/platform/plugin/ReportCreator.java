@@ -17,42 +17,53 @@
 package org.pentaho.reporting.platform.plugin;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.util.HashMap;
 
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
+import org.pentaho.reporting.engine.classic.core.modules.parser.base.ReportGenerator;
 import org.pentaho.reporting.libraries.resourceloader.Resource;
 import org.pentaho.reporting.libraries.resourceloader.ResourceException;
 import org.pentaho.reporting.libraries.resourceloader.ResourceKey;
 import org.pentaho.reporting.libraries.resourceloader.ResourceManager;
+import org.xml.sax.InputSource;
 
 public class ReportCreator
 {
+  public static MasterReport createReport(final InputStream inputStream,
+                                          final URL url) throws IOException, ResourceException
+  {
+    final ReportGenerator generator = ReportGenerator.createInstance();
+    final InputSource repDefInputSource = new InputSource(inputStream);
+    return generator.parseReport(repDefInputSource, url);
+  }
+
   /**
-   *
+   * @deprecated Use the one without the session instead.
    * @param reportDefinitionPath
-   * @param pentahoSession
+   * @param session
    * @return
    * @throws ResourceException
    * @throws IOException
-   * @deprecated the session is not used, so kill this method
    */
   public static MasterReport createReport(final String reportDefinitionPath,
-                                          IPentahoSession pentahoSession) throws ResourceException, IOException
+                                          IPentahoSession session) throws ResourceException, IOException
   {
     return createReport(reportDefinitionPath);
   }
-  
+
   public static MasterReport createReport(final String reportDefinitionPath) throws ResourceException, IOException
   {
-    ResourceManager resourceManager = new ResourceManager();
+    final ResourceManager resourceManager = new ResourceManager();
     resourceManager.registerDefaults();
-    HashMap helperObjects = new HashMap();
+    final HashMap helperObjects = new HashMap();
     // add the runtime context so that PentahoResourceData class can get access
     // to the solution repo
-    ResourceKey key = resourceManager.createKey(RepositoryResourceLoader.SOLUTION_SCHEMA_NAME + RepositoryResourceLoader.SCHEMA_SEPARATOR
+    final ResourceKey key = resourceManager.createKey(RepositoryResourceLoader.SOLUTION_SCHEMA_NAME + RepositoryResourceLoader.SCHEMA_SEPARATOR
         + reportDefinitionPath, helperObjects);
-    Resource resource = resourceManager.create(key, null, MasterReport.class);
+    final Resource resource = resourceManager.create(key, null, MasterReport.class);
     return (MasterReport) resource.getResource();
   }
 

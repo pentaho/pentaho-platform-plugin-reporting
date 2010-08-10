@@ -8,10 +8,8 @@ import org.pentaho.platform.api.engine.IApplicationContext;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.api.repository.IContentLocation;
 import org.pentaho.platform.api.repository.IContentRepository;
-import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.util.UUIDUtil;
-import org.pentaho.reporting.engine.classic.core.AttributeNames;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
 import org.pentaho.reporting.engine.classic.core.layout.output.YieldReportListener;
@@ -33,74 +31,172 @@ import org.pentaho.reporting.platform.plugin.repository.ReportContentRepository;
 
 public class PageableHTMLOutput
 {
-  public static int generate(final MasterReport report,
+  public static int paginate(final MasterReport report,
+                             final int acceptedPage,
                              final OutputStream outputStream,
-                             final int yieldRate,
-                             final IContentRepository contentRepository,
                              final String contentHandlerPattern,
-                             final int acceptedPage)
+                             final int yieldRate)
       throws ReportProcessingException, IOException, ContentIOException
   {
+    final IApplicationContext ctx = PentahoSystem.getApplicationContext();
+
+    final URLRewriter rewriter;
     final ContentLocation dataLocation;
     final PentahoNameGenerator dataNameGenerator;
-    final URLRewriter rewriter;
-    if (contentRepository != null)
+    if (ctx != null)
     {
-      final String reportName = StringUtils.isEmpty(report.getName()) ? UUIDUtil.getUUIDAsString() : report.getName();
-      final String solutionPath = "report-content" + "/" + reportName + "/"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-      final IPentahoSession session = PentahoSessionHolder.getSession();
-      final String thePath = solutionPath + session.getId() + "-" + System.currentTimeMillis();//$NON-NLS-1$//$NON-NLS-2$
-      final IContentLocation pentahoContentLocation = contentRepository.newContentLocation(thePath, reportName, reportName, solutionPath, true);
+      File dataDirectory = new File(ctx.getFileOutputPath("system/tmp/"));//$NON-NLS-1$
+      if (dataDirectory.exists() && (dataDirectory.isDirectory() == false))
+      {
+        dataDirectory = dataDirectory.getParentFile();
+        if (dataDirectory.isDirectory() == false)
+        {
+          throw new ReportProcessingException("Dead " + dataDirectory.getPath()); //$NON-NLS-1$
+        }
+      }
+      else if (dataDirectory.exists() == false)
+      {
+        dataDirectory.mkdirs();
+      }
 
-      final ReportContentRepository repository = new ReportContentRepository(pentahoContentLocation, reportName);
-      dataLocation = repository.getRoot();
+      final FileRepository dataRepository = new FileRepository(dataDirectory);
+      dataLocation = dataRepository.getRoot();
       dataNameGenerator = PentahoSystem.get(PentahoNameGenerator.class);
       if (dataNameGenerator == null)
       {
         throw new IllegalStateException
-            (Messages.getInstance().getErrorString("ReportPlugin.errorNameGeneratorMissingConfiguration")); //$NON-NLS-1$
+            (Messages.getInstance().getString("ReportPlugin.errorNameGeneratorMissingConfiguration"));
       }
       dataNameGenerator.initialize(dataLocation, true);
-      rewriter = new PentahoURLRewriter(contentHandlerPattern, true);
+      rewriter = new PentahoURLRewriter(contentHandlerPattern, false);
     }
     else
     {
-      final IApplicationContext ctx = PentahoSystem.getApplicationContext();
-      if (ctx != null)
-      {
-        final String name = (String) report.getAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.NAME);
-        File dataDirectory = new File(ctx.getFileOutputPath("system/tmp/" + name + "/"));//$NON-NLS-1$ //$NON-NLS-2$
-        if (dataDirectory.exists() && (dataDirectory.isDirectory() == false))
-        {
-          dataDirectory = dataDirectory.getParentFile();
-          if (dataDirectory.isDirectory() == false)
-          {
-            throw new ReportProcessingException("Dead " + dataDirectory.getPath()); //$NON-NLS-1$
-          }
-        }
-        else if (dataDirectory.exists() == false)
-        {
-          dataDirectory.mkdirs();
-        }
-
-        final FileRepository dataRepository = new FileRepository(dataDirectory);
-        dataLocation = dataRepository.getRoot();
-        dataNameGenerator = PentahoSystem.get(PentahoNameGenerator.class);
-        if (dataNameGenerator == null)
-        {
-          throw new IllegalStateException
-              (Messages.getInstance().getErrorString("ReportPlugin.errorNameGeneratorMissingConfiguration")); //$NON-NLS-1$
-        }
-        dataNameGenerator.initialize(dataLocation, true);
-        rewriter = new PentahoURLRewriter(contentHandlerPattern, false);
-      }
-      else
-      {
-        dataLocation = null;
-        dataNameGenerator = null;
-        rewriter = new PentahoURLRewriter(contentHandlerPattern, false);
-      }
+      dataLocation = null;
+      dataNameGenerator = null;
+      rewriter = new PentahoURLRewriter(contentHandlerPattern, false);
     }
+
+    final StreamRepository targetRepository = new StreamRepository(null, outputStream, "report"); //$NON-NLS-1$
+    final ContentLocation targetRoot = targetRepository.getRoot();
+
+    final PageableHtmlOutputProcessor outputProcessor = new PageableHtmlOutputProcessor(report.getConfiguration());
+    final HtmlPrinter printer = new AllItemsHtmlPrinter(report.getResourceManager());
+    printer.setContentWriter(targetRoot, new DefaultNameGenerator(targetRoot, "index", "html"));//$NON-NLS-1$//$NON-NLS-2$
+    printer.setDataWriter(dataLocation, dataNameGenerator);
+    printer.setUrlRewriter(rewriter);
+    outputProcessor.setPrinter(printer);
+    outputProcessor.setFlowSelector(new ReportPageSelector(acceptedPage));
+    final PageableReportProcessor proc = new PageableReportProcessor(report, outputProcessor);
+
+    if (yieldRate > 0)
+    {
+      proc.addReportProgressListener(new YieldReportListener(yieldRate));
+    }
+    proc.paginate();
+    final int pageCount = outputProcessor.getLogicalPageCount();
+    proc.close();
+
+    outputStream.flush();
+    outputStream.close();
+    return pageCount;
+  }
+
+  public static int generate(final MasterReport report,
+                             final int acceptedPage,
+                             final OutputStream outputStream,
+                             final String contentHandlerPattern,
+                             final int yieldRate)
+      throws ReportProcessingException, IOException, ContentIOException
+  {
+    final IApplicationContext ctx = PentahoSystem.getApplicationContext();
+
+    final URLRewriter rewriter;
+    final ContentLocation dataLocation;
+    final PentahoNameGenerator dataNameGenerator;
+    if (ctx != null)
+    {
+      File dataDirectory = new File(ctx.getFileOutputPath("system/tmp/"));//$NON-NLS-1$
+      if (dataDirectory.exists() && (dataDirectory.isDirectory() == false))
+      {
+        dataDirectory = dataDirectory.getParentFile();
+        if (dataDirectory.isDirectory() == false)
+        {
+          throw new ReportProcessingException("Dead " + dataDirectory.getPath()); //$NON-NLS-1$
+        }
+      }
+      else if (dataDirectory.exists() == false)
+      {
+        dataDirectory.mkdirs();
+      }
+
+      final FileRepository dataRepository = new FileRepository(dataDirectory);
+      dataLocation = dataRepository.getRoot();
+      dataNameGenerator = PentahoSystem.get(PentahoNameGenerator.class);
+      if (dataNameGenerator == null)
+      {
+        throw new IllegalStateException
+            (Messages.getInstance().getString("ReportPlugin.errorNameGeneratorMissingConfiguration"));
+      }
+      dataNameGenerator.initialize(dataLocation, true);
+      rewriter = new PentahoURLRewriter(contentHandlerPattern, false);
+    }
+    else
+    {
+      dataLocation = null;
+      dataNameGenerator = null;
+      rewriter = new PentahoURLRewriter(contentHandlerPattern, false);
+    }
+
+    final StreamRepository targetRepository = new StreamRepository(null, outputStream, "report"); //$NON-NLS-1$
+    final ContentLocation targetRoot = targetRepository.getRoot();
+
+    final PageableHtmlOutputProcessor outputProcessor = new PageableHtmlOutputProcessor(report.getConfiguration());
+    final HtmlPrinter printer = new AllItemsHtmlPrinter(report.getResourceManager());
+    printer.setContentWriter(targetRoot, new DefaultNameGenerator(targetRoot, "index", "html"));//$NON-NLS-1$//$NON-NLS-2$
+    printer.setDataWriter(dataLocation, dataNameGenerator);
+    printer.setUrlRewriter(rewriter);
+    outputProcessor.setPrinter(printer);
+    outputProcessor.setFlowSelector(new ReportPageSelector(acceptedPage));
+    final PageableReportProcessor proc = new PageableReportProcessor(report, outputProcessor);
+
+    if (yieldRate > 0)
+    {
+      proc.addReportProgressListener(new YieldReportListener(yieldRate));
+    }
+    proc.processReport();
+    final int pageCount = outputProcessor.getLogicalPageCount();
+    proc.close();
+
+    outputStream.flush();
+    outputStream.close();
+    return pageCount;
+  }
+
+  public static int generate(final IPentahoSession session,
+                             final MasterReport report,
+                             final int acceptedPage,
+                             final OutputStream outputStream,
+                             final IContentRepository contentRepository,
+                             final String contentHandlerPattern,
+                             final int yieldRate)
+      throws ReportProcessingException, IOException, ContentIOException
+  {
+    final String reportName = StringUtils.isEmpty(report.getName()) ? UUIDUtil.getUUIDAsString() : report.getName();
+    final String solutionPath = "report-content" + "/" + reportName + "/"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+    final String thePath = solutionPath + session.getId() + "-" + System.currentTimeMillis();//$NON-NLS-1$//$NON-NLS-2$
+    final IContentLocation pentahoContentLocation = contentRepository.newContentLocation(thePath, reportName, reportName, solutionPath, true);
+
+    final ReportContentRepository repository = new ReportContentRepository(pentahoContentLocation, reportName);
+    final ContentLocation dataLocation = repository.getRoot();
+    final PentahoNameGenerator dataNameGenerator = PentahoSystem.get(PentahoNameGenerator.class);
+    if (dataNameGenerator == null)
+    {
+      throw new IllegalStateException
+          (Messages.getInstance().getString("ReportPlugin.errorNameGeneratorMissingConfiguration"));
+    }
+    dataNameGenerator.initialize(dataLocation, true);
+    final URLRewriter rewriter = new PentahoURLRewriter(contentHandlerPattern, true);
 
     final StreamRepository targetRepository = new StreamRepository(null, outputStream, "report"); //$NON-NLS-1$
     final ContentLocation targetRoot = targetRepository.getRoot();

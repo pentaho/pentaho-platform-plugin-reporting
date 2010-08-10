@@ -5,28 +5,29 @@ import java.io.OutputStream;
 
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
+import org.pentaho.reporting.engine.classic.core.layout.output.ReportProcessor;
 import org.pentaho.reporting.engine.classic.core.layout.output.YieldReportListener;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.base.StreamReportProcessor;
-import org.pentaho.reporting.engine.classic.core.modules.output.table.csv.StreamCSVOutputProcessor;
+import org.pentaho.reporting.engine.classic.core.modules.output.table.xml.XmlTableOutputProcessor;
 import org.pentaho.reporting.engine.classic.core.util.NullOutputStream;
 
-public class CSVOutput
+public class XmlTableOutput
 {
-
-  public static int paginate(final MasterReport report, 
-                                 final int yieldRate) throws ReportProcessingException, IOException
+  public static int paginate(final MasterReport report,
+                             final int yieldRate) throws ReportProcessingException, IOException
   {
     StreamReportProcessor proc = null;
     try
     {
-      final StreamCSVOutputProcessor target = new StreamCSVOutputProcessor(report.getConfiguration(), new NullOutputStream());
+      final XmlTableOutputProcessor target = new XmlTableOutputProcessor
+          (report.getConfiguration(), new NullOutputStream());
       proc = new StreamReportProcessor(report, target);
 
       if (yieldRate > 0)
       {
         proc.addReportProgressListener(new YieldReportListener(yieldRate));
       }
-      proc.paginate();
+      proc.processReport();
       return proc.getPhysicalPageCount();
     }
     finally
@@ -42,12 +43,12 @@ public class CSVOutput
                                  final OutputStream outputStream,
                                  final int yieldRate) throws ReportProcessingException, IOException
   {
-    StreamReportProcessor proc = null;
+    ReportProcessor proc = null;
     try
     {
-      final StreamCSVOutputProcessor target = new StreamCSVOutputProcessor(report.getConfiguration(), outputStream);
+      final XmlTableOutputProcessor target = new XmlTableOutputProcessor(report.getConfiguration(), outputStream);
       proc = new StreamReportProcessor(report, target);
-      
+
       if (yieldRate > 0)
       {
         proc.addReportProgressListener(new YieldReportListener(yieldRate));

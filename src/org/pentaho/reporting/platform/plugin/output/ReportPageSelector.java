@@ -8,12 +8,12 @@ public class ReportPageSelector implements FlowSelector
 
   private int acceptedPage;
 
-  public ReportPageSelector(final int acceptedPage)
+  public ReportPageSelector(int acceptedPage)
   {
     this.acceptedPage = acceptedPage;
   }
 
-  public boolean isLogicalPageAccepted(final LogicalPageKey key)
+  public boolean isLogicalPageAccepted(LogicalPageKey key)
   {
     if (key == null)
     {

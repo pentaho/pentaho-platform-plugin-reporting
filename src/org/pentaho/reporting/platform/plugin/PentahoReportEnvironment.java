@@ -28,16 +28,6 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
     super(configuration);
   }
 
-  /**
-   * Returns the text encoding that should be used to encode URLs.
-   *
-   * @return the encoding for URLs.
-   */
-  public String getURLEncoding()
-  {
-    return LocaleHelper.getSystemEncoding();
-  }
-
   public String getEnvironmentProperty(final String key)
   {
     if (key == null)
@@ -72,7 +62,7 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
       }
       else if ("solutionRoot".equals(key)) //$NON-NLS-1$
       {
-        final String solutionRoot = PentahoSystem.getApplicationContext().getSolutionPath(""); //$NON-NLS-1$
+        final String solutionRoot = PentahoSystem.getApplicationContext().getSolutionPath("");
         cache.put(key, solutionRoot);
         return solutionRoot; //$NON-NLS-1$
       }
@@ -90,7 +80,7 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
           "solutionRoot".equals(key) || //$NON-NLS-1$
           "hostColonPort".equals(key)) //$NON-NLS-1$
       {
-        logger.warn(Messages.getInstance().getString("ReportPlugin.warnNoApplicationContext")); //$NON-NLS-1$
+        logger.warn(Messages.getInstance().getString("ReportPlugin.warnNoApplicationContext"));
         // make it explicit that these values are not available. This way
         // a configuration in the classic-engine.properties file cannot begin
         // to interfer here.
@@ -145,7 +135,7 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
           key.equals("username") ||//$NON-NLS-1$
           key.equals("roles"))//$NON-NLS-1$
       {
-        logger.warn(Messages.getInstance().getString("ReportPlugin.warnNoSession")); //$NON-NLS-1$
+        logger.warn(Messages.getInstance().getString("ReportPlugin.warnNoSession"));
         return null;
       }
     }
@@ -162,7 +152,7 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
     }
     catch (Exception e)
     {
-      // ignored
+      // ignore
     }
     return pentahoBaseURL;
   }
@@ -176,7 +166,7 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
     }
     catch (Exception e)
     {
-      // ignored 
+      // ignore
     }
     return pentahoBaseURL;
   }
