@@ -5,6 +5,7 @@
            xmlns="http://reporting.pentaho.org/namespaces/parameter/1.0"
            targetNamespace="http://reporting.pentaho.org/namespaces/parameter/1.0">
 
+  <xs:element name="parameters" type="parametersType"/>
 
   <xs:complexType name="parametersType">
     <xs:sequence>
