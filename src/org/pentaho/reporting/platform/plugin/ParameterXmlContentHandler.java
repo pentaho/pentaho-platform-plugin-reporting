@@ -14,6 +14,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -263,7 +267,11 @@ public class ParameterXmlContentHandler
       }
 
       document.appendChild(parameters);
-      WebServiceUtil.writeDocument(outputStream, document, false);
+
+      final DOMSource source = new DOMSource(document);
+      final StreamResult result = new StreamResult(outputStream);
+      final Transformer transformer = TransformerFactory.newInstance().newTransformer();
+      transformer.transform(source, result);
       // close parameter context
     }
     finally
