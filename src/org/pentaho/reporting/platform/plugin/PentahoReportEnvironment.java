@@ -7,6 +7,7 @@ import java.util.Locale;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.pentaho.platform.api.engine.IPentahoSession;
+import org.pentaho.platform.engine.core.system.PentahoRequestContextHolder;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.engine.security.SecurityHelper;
@@ -48,17 +49,17 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
     final IPentahoSession session = PentahoSessionHolder.getSession();
     if (PentahoSystem.getApplicationContext() != null)
     {
-      final String pentahoBaseURL = PentahoSystem.getApplicationContext().getBaseUrl();
+      final String fullyQualifiedServerUrl = PentahoSystem.getApplicationContext().getFullyQualifiedServerURL();
       if ("serverBaseURL".equals(key)) //$NON-NLS-1$
       {
-        final String baseServerURL = getBaseServerURL(pentahoBaseURL);
+        final String baseServerURL = getBaseServerURL(fullyQualifiedServerUrl);
         cache.put(key, baseServerURL);
         return baseServerURL;
       }
       else if ("pentahoBaseURL".equals(key)) //$NON-NLS-1$
       {
-        cache.put(key, pentahoBaseURL);
-        return pentahoBaseURL;
+        cache.put(key, fullyQualifiedServerUrl);
+        return fullyQualifiedServerUrl;
       }
       else if ("solutionRoot".equals(key)) //$NON-NLS-1$
       {
@@ -68,9 +69,13 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
       }
       else if ("hostColonPort".equals(key)) //$NON-NLS-1$
       {
-        final String hostColonPort = getHostColonPort(pentahoBaseURL);
+        final String hostColonPort = getHostColonPort(fullyQualifiedServerUrl);
         cache.put(key, hostColonPort);
         return hostColonPort;
+      } if ("requestContextPath".equals(key)) //$NON-NLS-1$
+      {
+        final String requestContextPath = PentahoRequestContextHolder.getRequestContext().getContextPath();
+        cache.put(key, requestContextPath);
       }
     }
     else
@@ -78,7 +83,9 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
       if ("serverBaseURL".equals(key) || //$NON-NLS-1$
           "pentahoBaseURL".equals(key) || //$NON-NLS-1$
           "solutionRoot".equals(key) || //$NON-NLS-1$
-          "hostColonPort".equals(key)) //$NON-NLS-1$
+          "hostColonPort".equals(key) ||//$NON-NLS-1$
+          "requestContextPath".equals(key) //$NON-NLS-1$
+          ) //$NON-NLS-1$
       {
         logger.warn(Messages.getString("ReportPlugin.warnNoApplicationContext"));
         // make it explicit that these values are not available. This way
@@ -143,32 +150,32 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
     return super.getEnvironmentProperty(key);
   }
 
-  private String getBaseServerURL(final String pentahoBaseURL)
+  private String getBaseServerURL(final String fullyQualifiedServerUrl)
   {
     try
     {
-      final URL url = new URL(pentahoBaseURL);
+      final URL url = new URL(fullyQualifiedServerUrl);
       return url.getProtocol() + "://" + url.getHost() + ":" + url.getPort(); //$NON-NLS-1$ //$NON-NLS-2$
     }
     catch (Exception e)
     {
       // ignore
     }
-    return pentahoBaseURL;
+    return fullyQualifiedServerUrl;
   }
 
-  private String getHostColonPort(final String pentahoBaseURL)
+  private String getHostColonPort(final String fullyQualifiedServerUrl)
   {
     try
     {
-      final URL url = new URL(pentahoBaseURL);
+      final URL url = new URL(fullyQualifiedServerUrl);
       return url.getHost() + ":" + url.getPort();//$NON-NLS-1$ 
     }
     catch (Exception e)
     {
       // ignore
     }
-    return pentahoBaseURL;
+    return fullyQualifiedServerUrl;
   }
 
   public Locale getLocale()

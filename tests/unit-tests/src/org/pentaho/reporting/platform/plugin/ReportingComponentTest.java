@@ -5,6 +5,19 @@ import java.io.FileOutputStream;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.pentaho.platform.api.engine.IPluginProvider;
+import org.pentaho.platform.api.engine.IServiceManager;
+import org.pentaho.platform.api.engine.ISolutionEngine;
+import org.pentaho.platform.api.engine.IPentahoDefinableObjectFactory.Scope;
+import org.pentaho.platform.api.repository.ISolutionRepository;
+import org.pentaho.platform.engine.services.solution.SolutionEngine;
+import org.pentaho.platform.plugin.services.pluginmgr.SystemPathXmlPluginProvider;
+import org.pentaho.platform.plugin.services.pluginmgr.servicemgr.DefaultServiceManager;
+import org.pentaho.platform.repository.solution.filebased.FileBasedSolutionRepository;
+import org.pentaho.reporting.platform.plugin.repository.PentahoNameGenerator;
+import org.pentaho.reporting.platform.plugin.repository.TempDirectoryNameGenerator;
+import org.pentaho.test.platform.engine.core.MicroPlatform;
+
 import junit.framework.TestCase;
 
 /**
@@ -14,6 +27,28 @@ import junit.framework.TestCase;
  */
 public class ReportingComponentTest extends TestCase {
   
+  private MicroPlatform microPlatform;
+  
+  @Override
+  protected void setUp() throws Exception {
+    // TODO Auto-generated method stub
+    super.setUp();
+    microPlatform = new MicroPlatform("tests/integration-tests/resource/");
+    microPlatform.define(ISolutionEngine.class, SolutionEngine.class);
+    microPlatform.define(ISolutionRepository.class, FileBasedSolutionRepository.class);
+    microPlatform.define(IPluginProvider.class, SystemPathXmlPluginProvider.class);
+    microPlatform.define(IServiceManager.class, DefaultServiceManager.class, Scope.GLOBAL);
+    microPlatform.define(PentahoNameGenerator.class, TempDirectoryNameGenerator.class, Scope.GLOBAL);
+    
+    microPlatform.start();
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    microPlatform.stop();
+  }
+
+
   public void testReportDefinitionAsInput() throws Exception
   {
     // create an instance of the component

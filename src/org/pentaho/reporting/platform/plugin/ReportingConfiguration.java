@@ -106,11 +106,11 @@ public class ReportingConfiguration extends PropertyLookupParser implements Conf
 
     if (context != null)
     {
-      if ("base-url".equals(property))//$NON-NLS-1$ 
-      {
-        return context.getBaseUrl();
+      if ("base-url".equals(property)) {//$NON-NLS-1$ 
+        return context.getFullyQualifiedServerURL();
       }
     }
     return null;
   }
 }
+//
