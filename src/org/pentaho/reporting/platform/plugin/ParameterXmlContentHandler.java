@@ -877,7 +877,7 @@ public class ParameterXmlContentHandler
         (SYS_PARAM_RENDER_MODE, false, true, String.class);
     listParameter.setHidden(true);
     listParameter.setParameterAttribute
-        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP, GROUP_PARAMETERS);
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP, GROUP_SYSTEM);
     listParameter.setParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP_LABEL,
             Messages.getInstance().getString("ReportPlugin.SystemParameters"));
