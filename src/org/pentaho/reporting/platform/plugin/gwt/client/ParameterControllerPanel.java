@@ -841,6 +841,10 @@ public class ParameterControllerPanel extends VerticalPanel
     {
       return new DateParameterUI(this, parameterElement);
     }
+    else if ("multi-line".equals(renderType)) //$NON-NLS-1$
+    {
+      return new TextAreaParameterUI(this, parameterElement);
+    }
     else
     {
       return new PlainParameterUI(this, parameterElement);
