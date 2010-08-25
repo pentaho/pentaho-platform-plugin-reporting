@@ -47,12 +47,7 @@ public class ReportContentUtil
     if (value == null || "".equals(value))
     {
       // there are still buggy report definitions out there ...
-      final Object defaultValue = parameterDefinition.getDefaultValue(report);
-      if (defaultValue == null || "".equals(defaultValue))
-      {
-        return null;
-      }
-      return defaultValue;
+      return null;
     }
 
     final Class valueType = parameterDefinition.getValueType();

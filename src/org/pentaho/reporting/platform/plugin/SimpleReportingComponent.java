@@ -22,6 +22,7 @@ import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.core.AttributeNames;
 import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
+import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
 import org.pentaho.reporting.engine.classic.core.metadata.ReportProcessTaskRegistry;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.pdf.PdfPageableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.plaintext.PlainTextPageableModule;
@@ -35,8 +36,10 @@ import org.pentaho.reporting.engine.classic.core.modules.output.table.xml.XmlTab
 import org.pentaho.reporting.engine.classic.core.parameters.DefaultParameterContext;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterContext;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterDefinitionEntry;
+import org.pentaho.reporting.engine.classic.core.parameters.ParameterUtils;
 import org.pentaho.reporting.engine.classic.core.parameters.ValidationMessage;
 import org.pentaho.reporting.engine.classic.core.parameters.ValidationResult;
+import org.pentaho.reporting.engine.classic.core.states.StateUtilities;
 import org.pentaho.reporting.engine.classic.core.util.NullOutputStream;
 import org.pentaho.reporting.engine.classic.core.util.ReportParameterValues;
 import org.pentaho.reporting.engine.classic.extensions.modules.java14print.Java14PrintUtil;
@@ -758,7 +761,8 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   }
 
   /**
-   * Apply inputs (if any) to corresponding report parameters, care is taken when checking parameter types to perform any necessary casting and conversion.
+   * Apply inputs (if any) to corresponding report parameters, care is taken when
+   * checking parameter types to perform any necessary casting and conversion.
    *
    * @param context          a ParameterContext for which the parameters will be under
    * @param validationResult the validation result that will hold the warnings. If null, a new one will be created.
@@ -887,7 +891,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
 
     try
     {
-      final ParameterContext parameterContext = new DefaultParameterContext(report);
+      final DefaultParameterContext parameterContext = new DefaultParameterContext(report);
       // open parameter context
       parameterContext.open();
       final ValidationResult vr = applyInputsToReportParameters(parameterContext, null);
@@ -1038,6 +1042,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       {
         return 0;
       }
+      
       parameterContext.close();
 
       if (isPrint())
