@@ -44,6 +44,7 @@ import org.pentaho.reporting.engine.classic.core.parameters.ListParameter;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterAttributeNames;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterContext;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterDefinitionEntry;
+import org.pentaho.reporting.engine.classic.core.parameters.ParameterUtils;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterValues;
 import org.pentaho.reporting.engine.classic.core.parameters.PlainParameter;
 import org.pentaho.reporting.engine.classic.core.parameters.ReportParameterDefinition;
@@ -179,7 +180,7 @@ public class ParameterXmlContentHandler
 
     final MasterReport report = reportComponent.getReport();
 
-    final ParameterContext parameterContext = new DefaultParameterContext(report);
+    final DefaultParameterContext parameterContext = new DefaultParameterContext(report);
     try
     {
       // open parameter context
