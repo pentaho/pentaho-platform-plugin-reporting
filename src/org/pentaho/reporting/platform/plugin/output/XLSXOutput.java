@@ -12,7 +12,7 @@ import org.pentaho.reporting.engine.classic.core.modules.output.table.xls.FlowEx
 import org.pentaho.reporting.engine.classic.core.util.NullOutputStream;
 import org.pentaho.reporting.libraries.resourceloader.ResourceManager;
 
-public class XLSOutput
+public class XLSXOutput
 {
   public static int paginate(final MasterReport report,
                                  final InputStream templateInputStream,
@@ -23,7 +23,7 @@ public class XLSOutput
     resourceManager.registerDefaults();
 
     final FlowExcelOutputProcessor target = new FlowExcelOutputProcessor(report.getConfiguration(), new NullOutputStream(), resourceManager);
-    target.setUseXlsxFormat(false);
+    target.setUseXlsxFormat(true);
     final FlowReportProcessor reportProcessor = new FlowReportProcessor(report, target);
 
     if (templateInputStream != null)
@@ -50,7 +50,7 @@ public class XLSOutput
     resourceManager.registerDefaults();
 
     final FlowExcelOutputProcessor target = new FlowExcelOutputProcessor(report.getConfiguration(), outputStream, resourceManager);
-    target.setUseXlsxFormat(false);
+    target.setUseXlsxFormat(true);
     final FlowReportProcessor reportProcessor = new FlowReportProcessor(report, target);
 
     if (templateInputStream != null)

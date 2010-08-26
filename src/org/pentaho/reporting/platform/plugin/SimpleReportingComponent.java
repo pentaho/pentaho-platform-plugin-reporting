@@ -22,7 +22,6 @@ import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.core.AttributeNames;
 import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
-import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
 import org.pentaho.reporting.engine.classic.core.metadata.ReportProcessTaskRegistry;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.pdf.PdfPageableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.plaintext.PlainTextPageableModule;
@@ -36,10 +35,8 @@ import org.pentaho.reporting.engine.classic.core.modules.output.table.xml.XmlTab
 import org.pentaho.reporting.engine.classic.core.parameters.DefaultParameterContext;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterContext;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterDefinitionEntry;
-import org.pentaho.reporting.engine.classic.core.parameters.ParameterUtils;
 import org.pentaho.reporting.engine.classic.core.parameters.ValidationMessage;
 import org.pentaho.reporting.engine.classic.core.parameters.ValidationResult;
-import org.pentaho.reporting.engine.classic.core.states.StateUtilities;
 import org.pentaho.reporting.engine.classic.core.util.NullOutputStream;
 import org.pentaho.reporting.engine.classic.core.util.ReportParameterValues;
 import org.pentaho.reporting.engine.classic.extensions.modules.java14print.Java14PrintUtil;
@@ -56,6 +53,7 @@ import org.pentaho.reporting.platform.plugin.output.PageableHTMLOutput;
 import org.pentaho.reporting.platform.plugin.output.PlainTextOutput;
 import org.pentaho.reporting.platform.plugin.output.RTFOutput;
 import org.pentaho.reporting.platform.plugin.output.XLSOutput;
+import org.pentaho.reporting.platform.plugin.output.XLSXOutput;
 import org.pentaho.reporting.platform.plugin.output.XmlPageableOutput;
 import org.pentaho.reporting.platform.plugin.output.XmlTableOutput;
 
@@ -74,6 +72,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   public static final String MIME_TYPE_EMAIL = "mime-message/text/html"; //$NON-NLS-1$
   public static final String MIME_TYPE_PDF = "application/pdf"; //$NON-NLS-1$
   public static final String MIME_TYPE_XLS = "application/vnd.ms-excel"; //$NON-NLS-1$
+  public static final String MIME_TYPE_XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"; //$NON-NLS-1$
   public static final String MIME_TYPE_RTF = "application/rtf"; //$NON-NLS-1$
   public static final String MIME_TYPE_CSV = "text/csv"; //$NON-NLS-1$
   public static final String MIME_TYPE_TXT = "text/plain"; //$NON-NLS-1$
@@ -317,6 +316,10 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       if (ExcelTableModule.EXCEL_FLOW_EXPORT_TYPE.equals(outputTarget))
       {
         return SimpleReportingComponent.MIME_TYPE_XLS;
+      }
+      if (ExcelTableModule.XLSX_FLOW_EXPORT_TYPE.equals(outputTarget))
+      {
+        return SimpleReportingComponent.MIME_TYPE_XLSX;
       }
       if (CSVTableModule.TABLE_CSV_STREAM_EXPORT_TYPE.equals(outputTarget))
       {
@@ -681,6 +684,10 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     {
       return ExcelTableModule.EXCEL_FLOW_EXPORT_TYPE;
     }
+    if (MIME_TYPE_XLSX.equals(outputType))
+    {
+      return ExcelTableModule.XLSX_FLOW_EXPORT_TYPE;
+    }
     if (MIME_TYPE_EMAIL.equals(outputType))
     {
       return MIME_TYPE_EMAIL;
@@ -933,7 +940,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
         {
           report.getReportConfiguration().setConfigProperty(HtmlTableModule.BODY_FRAGMENT, "true");
         }
-        String contentHandlerPattern = PentahoRequestContextHolder.getRequestContext().getContextPath(); 
+        String contentHandlerPattern = PentahoRequestContextHolder.getRequestContext().getContextPath();
         contentHandlerPattern += (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN,
             globalConfig.getConfigProperty("org.pentaho.web.ContentHandler")); //$NON-NLS-1$
         if (useContentRepository)
@@ -993,6 +1000,11 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
         final InputStream templateInputStream = (InputStream) getInput(XLS_WORKBOOK_PARAM, null);
         return XLSOutput.generate(report, outputStream, templateInputStream, getYieldRate());
       }
+      if (ExcelTableModule.XLSX_FLOW_EXPORT_TYPE.equals(outputType))
+      {
+        final InputStream templateInputStream = (InputStream) getInput(XLS_WORKBOOK_PARAM, null);
+        return XLSXOutput.generate(report, outputStream, templateInputStream, getYieldRate());
+      }
       if (CSVTableModule.TABLE_CSV_STREAM_EXPORT_TYPE.equals(outputType))
       {
         return CSVOutput.generate(report, outputStream, getYieldRate());
@@ -1042,7 +1054,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       {
         return 0;
       }
-      
+
       parameterContext.close();
 
       if (isPrint())
@@ -1093,6 +1105,11 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       {
         final InputStream templateInputStream = (InputStream) getInput(XLS_WORKBOOK_PARAM, null);
         return XLSOutput.paginate(report, templateInputStream, getYieldRate());
+      }
+      if (ExcelTableModule.XLSX_FLOW_EXPORT_TYPE.equals(outputType))
+      {
+        final InputStream templateInputStream = (InputStream) getInput(XLS_WORKBOOK_PARAM, null);
+        return XLSXOutput.paginate(report, templateInputStream, getYieldRate());
       }
       if (CSVTableModule.TABLE_CSV_STREAM_EXPORT_TYPE.equals(outputType))
       {

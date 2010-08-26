@@ -866,6 +866,7 @@ public class ParameterXmlContentHandler
     listParameter.addValues(HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE, Messages.getString("ReportPlugin.outputHTMLStream"));
     listParameter.addValues(PdfPageableModule.PDF_EXPORT_TYPE, Messages.getString("ReportPlugin.outputPDF"));
     listParameter.addValues(ExcelTableModule.EXCEL_FLOW_EXPORT_TYPE, Messages.getString("ReportPlugin.outputXLS"));
+    listParameter.addValues(ExcelTableModule.XLSX_FLOW_EXPORT_TYPE, Messages.getString("ReportPlugin.outputXLSX"));
     listParameter.addValues(CSVTableModule.TABLE_CSV_STREAM_EXPORT_TYPE, Messages.getString("ReportPlugin.outputCSV"));
     listParameter.addValues(RTFTableModule.TABLE_RTF_FLOW_EXPORT_TYPE, Messages.getString("ReportPlugin.outputRTF"));
     listParameter.addValues(PlainTextPageableModule.PLAINTEXT_EXPORT_TYPE, Messages.getString("ReportPlugin.outputTXT"));
