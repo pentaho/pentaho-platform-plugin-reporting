@@ -7,21 +7,10 @@
   
   See common_build.xml for more details
 ============================================================================-->
-<project name="Pentaho Reporting Platform Plugin" basedir="." default="jar" xmlns:ivy="antlib:org.apache.ivy.ant">
-
-	<description>
-	  This build file is used to create the Pentaho Commons Action Sequence DOM 
-		project and works with the common_build.xml file.
-	</description>
-
-	<!-- Import the version information -->
-	<property file="${basedir}/version.properties" />
-
-	<!-- Define the default location of the gwt common build file -->
-	<property name="gwt.common.build.file" value="./gwt_common_build.xml" description="This is the location of the standardized common_build.xml file" />
+<project name="Pentaho Reporting Platform Plugin" basedir="." default="default" xmlns:ivy="antlib:org.apache.ivy.ant">
 
 	<!-- Import the common_build.xml file which contains all the default tasks -->
-	<import file="${gwt.common.build.file}" />
+	<import file="./build-res/subfloor-gwt.xml" />
 
 	<!--
       AS STATED ABOVE, THE ONLY TASKS THAT SHOULD EXIST IN THIS BUILD FILE ARE
@@ -29,32 +18,4 @@
       FOUND IN common_build.xml.
     -->
 
-	<!-- Directory in which the source will be copied before a compile -->
-	<property name="temp-src.dir" value="${bin.dir}/src" />
-
-	<!--=======================================================================
-      gwt-compile
-      
-      Performs the required gwt compiles
-      ====================================================================-->
-	<target name="gwt-compile" description="Performs the required GWT Compilation">
-		<!-- Compile the ReportViewer Application -->
-		<ant antfile="${gwt.common.build.file}" target="gwt-compile">
-			<property name="gwt-module.path" value="org.pentaho.reporting.platform.plugin.gwt.ReportViewer" />
-		</ant>
-	</target>
-
-	<target name="package">
-	    <zip destfile="${gwt.package.zipfile}" compress="true" >
-			<zipfileset dir="${gwt.output.dir}" prefix="reporting">
-		    	<exclude name=".gwt-tmp/" />
-		      <exclude name="*-aux/" />
-			</zipfileset>
-    	  <zipfileset file="plugin/plugin.xml" prefix="reporting"/>
-	    </zip>
-	</target>
-	
-    <target name="dist" depends="jar, gwt-compile, package">
-    </target>
-	
 </project>
