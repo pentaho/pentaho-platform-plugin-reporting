@@ -28,7 +28,6 @@ import org.pentaho.platform.api.repository.ISubscribeContent;
 import org.pentaho.platform.api.repository.ISubscription;
 import org.pentaho.platform.api.repository.ISubscriptionRepository;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
-import org.pentaho.platform.engine.services.WebServiceUtil;
 import org.pentaho.reporting.engine.classic.core.AttributeNames;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportDataFactoryException;
@@ -44,7 +43,6 @@ import org.pentaho.reporting.engine.classic.core.parameters.ListParameter;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterAttributeNames;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterContext;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterDefinitionEntry;
-import org.pentaho.reporting.engine.classic.core.parameters.ParameterUtils;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterValues;
 import org.pentaho.reporting.engine.classic.core.parameters.PlainParameter;
 import org.pentaho.reporting.engine.classic.core.parameters.ReportParameterDefinition;
@@ -186,8 +184,8 @@ public class ParameterXmlContentHandler
       // open parameter context
       parameterContext.open();
       // apply inputs to parameters
-      ValidationResult validationResult = new ValidationResult();
-      validationResult = reportComponent.applyInputsToReportParameters(parameterContext, validationResult);
+      final ValidationResult validationResult =
+          reportComponent.applyInputsToReportParameters(parameterContext, new ValidationResult());
 
       final ReportParameterDefinition reportParameterDefinition = report.getParameterDefinition();
       final ValidationResult vr = reportParameterDefinition.getValidator().validate
@@ -254,7 +252,7 @@ public class ParameterXmlContentHandler
       hideOutputParameterIfLocked(report, reportParameters);
       hideSubscriptionParameter(subscribe, reportParameters);
       final Map<String, Object> inputs = computeRealInput
-          (parameterContext, reportParameters, reportComponent.getComputedOutputTarget());
+          (parameterContext, reportParameters, reportComponent.getComputedOutputTarget(), vr);
 
       for (final ParameterDefinitionEntry parameter : reportParameters.values())
       {
@@ -283,7 +281,8 @@ public class ParameterXmlContentHandler
 
   private Map<String, Object> computeRealInput(final ParameterContext parameterContext,
                                                final LinkedHashMap<String, ParameterDefinitionEntry> reportParameters,
-                                               final String computedOutputTarget)
+                                               final String computedOutputTarget,
+                                               final ValidationResult result)
   {
     final Map<String, Object> realInputs = new HashMap<String, Object>();
     realInputs.put(SYS_PARAM_DESTINATION, lookupDestination());
@@ -293,6 +292,10 @@ public class ParameterXmlContentHandler
     for (final ParameterDefinitionEntry parameter : reportParameters.values())
     {
       final Object value = inputs.get(parameter.getName());
+      if (value == null)
+      {
+        realInputs.put(parameter.getName(), result.getParameterValues().get(parameter.getName()));
+      }
       try
       {
         final Object translatedValue = ReportContentUtil.computeParameterValue(parameterContext, parameter, value);
