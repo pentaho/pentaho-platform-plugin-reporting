@@ -240,8 +240,7 @@ public class ParameterXmlContentHandler
           AttributeNames.Core.NAMESPACE, AttributeNames.Core.PARAMETER_UI_LAYOUT,
           "org.pentaho.reporting.engine.classic.core.ParameterUiLayout"));
 
-      final LinkedHashMap<String, ParameterDefinitionEntry> reportParameters =
-          new LinkedHashMap<String, ParameterDefinitionEntry>();
+      final LinkedHashMap<String, ParameterDefinitionEntry> reportParameters = new LinkedHashMap<String, ParameterDefinitionEntry>();
       final ParameterDefinitionEntry[] parameterDefinitions = reportParameterDefinition.getParameterDefinitions();
       for (final ParameterDefinitionEntry parameter : parameterDefinitions)
       {
@@ -375,7 +374,7 @@ public class ParameterXmlContentHandler
 
       if (Date.class.isAssignableFrom(elementValueType))
       {
-        parameterElement.setAttribute("timzone-hint", computeTimeZoneHint(parameter, parameterContext));
+        parameterElement.setAttribute("timzone-hint", computeTimeZoneHint(parameter, parameterContext));//$NON-NLS-1$
       }
 
       final HashSet<Object> selectionSet = new HashSet<Object>();
@@ -484,7 +483,7 @@ public class ParameterXmlContentHandler
     // add a timezone hint ..
     final String timezoneSpec = parameter.getParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TIMEZONE, parameterContext);
-    if ("client".equals(timezoneSpec))
+    if ("client".equals(timezoneSpec))//$NON-NLS-1$
     {
       return ("");
     }
@@ -492,13 +491,13 @@ public class ParameterXmlContentHandler
     {
       final TimeZone timeZone;
       final StringBuffer value = new StringBuffer();
-      if (timezoneSpec == null || "server".equals(timezoneSpec))
+      if (timezoneSpec == null || "server".equals(timezoneSpec))//$NON-NLS-1$
       {
         timeZone = TimeZone.getDefault();
       }
-      else if ("utc".equals(timezoneSpec))
+      else if ("utc".equals(timezoneSpec))//$NON-NLS-1$
       {
-        timeZone = TimeZone.getTimeZone("UTC");
+        timeZone = TimeZone.getTimeZone("UTC");//$NON-NLS-1$
       }
       else
       {
@@ -559,8 +558,8 @@ public class ParameterXmlContentHandler
           (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TIMEZONE, context);
       final DateFormat dateFormat;
       if (timezone == null ||
-          "server".equals(timezone) ||
-          "client".equals(timezone))
+          "server".equals(timezone) ||//$NON-NLS-1$
+          "client".equals(timezone))//$NON-NLS-1$
       {
         // nothing needed ..
         // for server: Just print it as it is, including the server timezone.
@@ -570,9 +569,9 @@ public class ParameterXmlContentHandler
       {
         // for convinience for the clients we send the date in the correct timezone.
         final TimeZone timeZoneObject;
-        if ("utc".equals(timezone))
+        if ("utc".equals(timezone))//$NON-NLS-1$
         {
-          timeZoneObject = TimeZone.getTimeZone("UTC");
+          timeZoneObject = TimeZone.getTimeZone("UTC");//$NON-NLS-1$
         }
         else
         {
