@@ -60,7 +60,7 @@ public class ToggleButtonParameterUI extends SimplePanel
           parameterValues.addSelectedValue(parameterName, choiceValue);
         }
       }
-      controller.fetchParameters(true);
+      controller.fetchParameters(ParameterControllerPanel.ParameterSubmitMode.USERINPUT);
     }
   }
 

@@ -35,7 +35,7 @@ public class DropDownParameterUI extends SimplePanel
       }
       controller.getParameterMap().setSelectedValues
           (parameterName, selectedItems.toArray(new String[selectedItems.size()]));
-      controller.fetchParameters(true);
+      controller.fetchParameters(ParameterControllerPanel.ParameterSubmitMode.USERINPUT);
     }
   }
 
