@@ -43,7 +43,7 @@ public class TextAreaParameterUI extends SimplePanel
       if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER)
       {
         // on enter, force update
-        controller.fetchParameters(false);
+        controller.fetchParameters(ParameterControllerPanel.ParameterSubmitMode.USERINPUT);
       }
     }
 

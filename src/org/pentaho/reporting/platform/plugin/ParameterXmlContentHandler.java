@@ -73,6 +73,7 @@ public class ParameterXmlContentHandler
   private Map<String, ParameterDefinitionEntry> systemParameter;
 
   private ReportContentGenerator contentGenerator;
+  private boolean paginate;
   private Document document;
   //private ParameterContext parameterContext;
   private IParameterProvider requestParameters;
@@ -89,9 +90,11 @@ public class ParameterXmlContentHandler
   private static final String GROUP_SYSTEM = "system";
   private static final String GROUP_PARAMETERS = "parameters";
 
-  public ParameterXmlContentHandler(final ReportContentGenerator contentGenerator)
+  public ParameterXmlContentHandler(final ReportContentGenerator contentGenerator,
+                                    final boolean paginate)
   {
     this.contentGenerator = contentGenerator;
+    this.paginate = paginate;
     this.inputs = contentGenerator.createInputs();
     this.requestParameters = contentGenerator.getRequestParameters();
     this.userSession = contentGenerator.getUserSession();
@@ -196,7 +199,7 @@ public class ParameterXmlContentHandler
       parameters.setAttribute("subscribe", String.valueOf(subscribe)); //$NON-NLS-1$ //$NON-NLS-2$
 
       // check if pagination is allowed and turned on
-      if (vr.isEmpty()) //$NON-NLS-1$ //$NON-NLS-2$
+      if (vr.isEmpty() && paginate) //$NON-NLS-1$ //$NON-NLS-2$
       {
         appendPageCount(reportComponent, parameters);
       }

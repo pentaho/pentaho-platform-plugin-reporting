@@ -143,6 +143,15 @@ public class ParameterDefinition
     this.autoSubmitUI = autoSubmitUI;
   }
 
+  public boolean isAllowAutosubmit()
+  {
+    if (autoSubmit != null)
+    {
+      return autoSubmit;
+    }
+    return autoSubmitUI;
+  }
+
   public boolean isSubscribe()
   {
     return subscribe;

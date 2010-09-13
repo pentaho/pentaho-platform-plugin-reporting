@@ -2,10 +2,15 @@ package org.pentaho.reporting.platform.plugin;
 
 import java.net.URL;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Locale;
+import java.util.Map;
+import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.pentaho.platform.api.engine.IParameterProvider;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoRequestContextHolder;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
@@ -22,11 +27,19 @@ import org.springframework.security.GrantedAuthority;
 public class PentahoReportEnvironment extends DefaultReportEnvironment
 {
   private static final Log logger = LogFactory.getLog(PentahoReportEnvironment.class);
-  private HashMap<String,String> cache;
+  private HashMap<String, String> cache;
+  private IParameterProvider pathProvider;
 
   public PentahoReportEnvironment(final Configuration configuration)
   {
     super(configuration);
+  }
+
+  public PentahoReportEnvironment(final Configuration configuration,
+                                  final IParameterProvider pathProvider)
+  {
+    super(configuration);
+    this.pathProvider = pathProvider;
   }
 
   public String getEnvironmentProperty(final String key)
@@ -38,14 +51,14 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
 
     if (cache == null)
     {
-      cache = new HashMap<String,String>();
+      cache = new HashMap<String, String>();
     }
     final String cached = cache.get(key);
     if (cached != null)
     {
       return cached;
     }
-    
+
     final IPentahoSession session = PentahoSessionHolder.getSession();
     if (PentahoSystem.getApplicationContext() != null)
     {
@@ -72,7 +85,8 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
         final String hostColonPort = getHostColonPort(fullyQualifiedServerUrl);
         cache.put(key, hostColonPort);
         return hostColonPort;
-      } if ("requestContextPath".equals(key)) //$NON-NLS-1$
+      }
+      else if ("requestContextPath".equals(key)) //$NON-NLS-1$
       {
         final String requestContextPath = PentahoRequestContextHolder.getRequestContext().getContextPath();
         cache.put(key, requestContextPath);
@@ -99,14 +113,14 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
     {
       if ("username".equals(key)) //$NON-NLS-1$
       {
-        Authentication authentication = SecurityHelper.getAuthentication(session, true);
+        final Authentication authentication = SecurityHelper.getAuthentication(session, true);
         final String userName = authentication.getName();
         cache.put(key, userName);
         return userName;
       }
       else if ("roles".equals(key)) //$NON-NLS-1$
       {
-        Authentication authentication = SecurityHelper.getAuthentication(session, true);
+        final Authentication authentication = SecurityHelper.getAuthentication(session, true);
         final StringBuffer property = new StringBuffer();
         //noinspection unchecked
         final GrantedAuthority[] roles =
@@ -181,5 +195,32 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
   public Locale getLocale()
   {
     return LocaleHelper.getLocale();
+  }
+
+  public Map<String, String[]> getUrlExtraParameter()
+  {
+    if (pathProvider == null)
+    {
+      return super.getUrlExtraParameter();
+    }
+
+    final Object maybeRequest = pathProvider.getParameter("httprequest"); // NON-NLS
+    if (maybeRequest instanceof HttpServletRequest == false)
+    {
+      return super.getUrlExtraParameter();
+    }
+
+    final HttpServletRequest request = (HttpServletRequest) maybeRequest;
+    final Map map = request.getParameterMap();
+    final LinkedHashMap<String, String[]> retval = new LinkedHashMap<String, String[]>();
+    final Iterator it = map.entrySet().iterator();
+    while (it.hasNext())
+    {
+      final Map.Entry o = (Map.Entry) it.next();
+      final String key = (String) o.getKey();
+      final String[] values = (String[]) o.getValue();
+      retval.put(key, values.clone());
+    }
+    return retval;
   }
 }

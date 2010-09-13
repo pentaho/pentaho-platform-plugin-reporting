@@ -73,7 +73,14 @@ public class ReportContentGenerator extends SimpleContentGenerator
         case XML:
         {
           // create inputs from request parameters
-          final ParameterXmlContentHandler parameterXmlContentHandler = new ParameterXmlContentHandler(this);
+          final ParameterXmlContentHandler parameterXmlContentHandler = new ParameterXmlContentHandler(this, true);
+          parameterXmlContentHandler.createParameterContent(outputStream, reportDefinitionPath);
+          break;
+        }
+        case PARAMETER:
+        {
+          // create inputs from request parameters
+          final ParameterXmlContentHandler parameterXmlContentHandler = new ParameterXmlContentHandler(this, false);
           parameterXmlContentHandler.createParameterContent(outputStream, reportDefinitionPath);
           break;
         }

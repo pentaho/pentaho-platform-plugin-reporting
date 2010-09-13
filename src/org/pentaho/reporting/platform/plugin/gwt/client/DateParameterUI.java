@@ -76,7 +76,7 @@ public class DateParameterUI extends SimplePanel
 
 
       controller.getParameterMap().setSelectedValue(parameterName, value);
-      controller.fetchParameters(true);
+      controller.fetchParameters(ParameterControllerPanel.ParameterSubmitMode.USERINPUT);
     }
 
     protected String convertSelectionToText(final Date newDate)

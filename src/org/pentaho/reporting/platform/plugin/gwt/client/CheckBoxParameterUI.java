@@ -41,7 +41,7 @@ public class CheckBoxParameterUI extends SimplePanel
       {
         parameterValues.addSelectedValue(parameterName, choiceValue);
       }
-      controller.fetchParameters(true);
+      controller.fetchParameters(ParameterControllerPanel.ParameterSubmitMode.USERINPUT);
     }
   }
 
@@ -73,7 +73,7 @@ public class CheckBoxParameterUI extends SimplePanel
       {
         controller.getParameterMap().setSelectedValue(parameterName, null);
       }
-      controller.fetchParameters(true);
+      controller.fetchParameters(ParameterControllerPanel.ParameterSubmitMode.USERINPUT);
     }
   }
 
