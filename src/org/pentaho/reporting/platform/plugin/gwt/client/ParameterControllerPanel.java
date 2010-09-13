@@ -111,7 +111,7 @@ public class ParameterControllerPanel extends VerticalPanel
 
       if (parameterDefinition.isShowParameterUi())
       {
-        buildParameterPanel(errors, globalErrors, parameterDefinition);
+        buildParameterPanel(submitMode, errors, globalErrors, parameterDefinition);
       }
       else
       {
@@ -125,7 +125,7 @@ public class ParameterControllerPanel extends VerticalPanel
           {
             add(buildPaginationController(parameterDefinition.getProcessingState()));
           }
-          if (parameterDefinition.isAllowAutosubmit())
+          if (parameterDefinition.isAllowAutosubmit() || submitMode == ParameterSubmitMode.MANUAL)
           {
             showReport();
           }
@@ -504,14 +504,16 @@ public class ParameterControllerPanel extends VerticalPanel
     return parameterDefinition;
   }
 
-  private void buildParameterPanel(final HashMap<String, ArrayList<String>> errors,
+  private void buildParameterPanel(final ParameterSubmitMode mode,
+                                   final HashMap<String, ArrayList<String>> errors,
                                    final ArrayList<String> globalErrors,
                                    final ParameterDefinition parametersElement)
   {
 
     if (parametersElement.isEmpty())
     {
-      if (parametersElement.isAllowAutosubmit() && subscriptionPressed == false)
+      if ((parametersElement.isAllowAutosubmit() || mode == ParameterSubmitMode.MANUAL) && 
+          subscriptionPressed == false)
       {
         showReport();
       }
@@ -679,9 +681,16 @@ public class ParameterControllerPanel extends VerticalPanel
 
     // do not show the parameter UI, but we must still fire events
     // if prompt is not needed
-    if (parametersElement.isPromptNeeded() == false && parametersElement.isAllowAutosubmit())
+    if (parametersElement.isPromptNeeded() == false)
     {
-      showReport();
+      if (parametersElement.isAllowAutosubmit() || mode == ParameterSubmitMode.MANUAL)
+      {
+        showReport();
+      }
+      else
+      {
+        showBlankPage();
+      }
     }
     else
     {
