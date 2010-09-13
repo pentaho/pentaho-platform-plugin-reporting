@@ -39,7 +39,7 @@ import org.pentaho.reporting.platform.plugin.messages.Messages;
 public class ReportContentUtil
 {
 
-  public static Object computeParameterValue(final ParameterContext report,
+  public static Object computeParameterValue(final ParameterContext parameterContext,
                                        final ParameterDefinitionEntry parameterDefinition,
                                        final Object value)
       throws ReportProcessingException
@@ -55,14 +55,13 @@ public class ReportContentUtil
     {
       final Collection c = (Collection) value;
       final Class componentType;
-      final Class parameterValueType = valueType;
-      if (parameterValueType.isArray())
+      if (valueType.isArray())
       {
-        componentType = parameterValueType.getComponentType();
+        componentType = valueType.getComponentType();
       }
       else
       {
-        componentType = parameterValueType;
+        componentType = valueType;
       }
 
       final int length = c.size();
@@ -70,7 +69,7 @@ public class ReportContentUtil
       final Object array = Array.newInstance(componentType, length);
       for (int i = 0; i < length; i++)
       {
-        Array.set(array, i, convert(report, parameterDefinition, componentType, sourceArray[i]));
+        Array.set(array, i, convert(parameterContext, parameterDefinition, componentType, sourceArray[i]));
       }
       return array;
     }
@@ -90,7 +89,7 @@ public class ReportContentUtil
       final Object array = Array.newInstance(componentType, length);
       for (int i = 0; i < length; i++)
       {
-        Array.set(array, i, convert(report, parameterDefinition, componentType, Array.get(value, i)));
+        Array.set(array, i, convert(parameterContext, parameterDefinition, componentType, Array.get(value, i)));
       }
       return array;
     }
@@ -100,11 +99,11 @@ public class ReportContentUtil
       // and re-call addParameter with it
       final Object[] array = new Object[1];
       array[0] = value;
-      return computeParameterValue(report, parameterDefinition, array);
+      return computeParameterValue(parameterContext, parameterDefinition, array);
     }
     else
     {
-      return convert(report, parameterDefinition, parameterDefinition.getValueType(), value);
+      return convert(parameterContext, parameterDefinition, parameterDefinition.getValueType(), value);
     }
   }
 
@@ -270,7 +269,7 @@ public class ReportContentUtil
 
     try
     {
-      final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+      final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd"); // NON-NLS
       return simpleDateFormat.parse(value);
     }
     catch (ParseException pe)
@@ -287,27 +286,27 @@ public class ReportContentUtil
     final String timezoneSpec = parameterEntry.getParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TIMEZONE, context);
     if (timezoneSpec == null ||
-        "server".equals(timezoneSpec))
+        "server".equals(timezoneSpec)) // NON-NLS
     {
-      final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
+      final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS"); // NON-NLS
       return simpleDateFormat.parse(value);
     }
-    else if ("utc".equals(timezoneSpec))
+    else if ("utc".equals(timezoneSpec)) // NON-NLS
     {
-      final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
-      simpleDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+      final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS"); // NON-NLS
+      simpleDateFormat.setTimeZone(TimeZone.getTimeZone("UTC")); // NON-NLS
       return simpleDateFormat.parse(value);
     }
-    else if ("client".equals(timezoneSpec))
+    else if ("client".equals(timezoneSpec)) // NON-NLS
     {
       try
       {
-        final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+        final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ"); // NON-NLS
         return simpleDateFormat.parse(value);
       }
       catch (ParseException pe)
       {
-        final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
+        final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS"); // NON-NLS
         return simpleDateFormat.parse(value);
       }
     }
@@ -315,7 +314,7 @@ public class ReportContentUtil
     {
       final TimeZone timeZone = TimeZone.getTimeZone(timezoneSpec);
       // this never returns null, but if the timezone is not understood, we end up with GMT/UTC.
-      final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
+      final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS"); // NON-NLS
       simpleDateFormat.setTimeZone(timeZone);
       return simpleDateFormat.parse(value);
     }
