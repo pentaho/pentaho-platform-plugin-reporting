@@ -182,6 +182,8 @@ public class ParameterXmlContentHandler
     final MasterReport report = reportComponent.getReport();
 
     final DefaultParameterContext parameterContext = new DefaultParameterContext(report);
+    final ValidationResult vr;
+    final Element parameters;
     try
     {
       // open parameter context
@@ -191,18 +193,14 @@ public class ParameterXmlContentHandler
           reportComponent.applyInputsToReportParameters(parameterContext, new ValidationResult());
 
       final ReportParameterDefinition reportParameterDefinition = report.getParameterDefinition();
-      final ValidationResult vr = reportParameterDefinition.getValidator().validate
+      vr = reportParameterDefinition.getValidator().validate
           (validationResult, reportParameterDefinition, parameterContext);
 
-      final Element parameters = document.createElement(GROUP_PARAMETERS); //$NON-NLS-1$
+      parameters = document.createElement(GROUP_PARAMETERS); //$NON-NLS-1$
       parameters.setAttribute("is-prompt-needed", String.valueOf(vr.isEmpty() == false)); //$NON-NLS-1$ //$NON-NLS-2$
       parameters.setAttribute("subscribe", String.valueOf(subscribe)); //$NON-NLS-1$ //$NON-NLS-2$
 
       // check if pagination is allowed and turned on
-      if (vr.isEmpty() && paginate) //$NON-NLS-1$ //$NON-NLS-2$
-      {
-        appendPageCount(reportComponent, parameters);
-      }
 
       final Boolean autoSubmitFlag = requestFlag("autoSubmit", report,
           AttributeNames.Core.NAMESPACE, AttributeNames.Core.AUTO_SUBMIT_PARAMETER,
@@ -267,18 +265,23 @@ public class ParameterXmlContentHandler
         parameters.appendChild(createErrorElements(vr));
       }
 
-      document.appendChild(parameters);
-
-      final DOMSource source = new DOMSource(document);
-      final StreamResult result = new StreamResult(outputStream);
-      final Transformer transformer = TransformerFactory.newInstance().newTransformer();
-      transformer.transform(source, result);
-      // close parameter context
     }
     finally
     {
       parameterContext.close();
     }
+
+    if (vr.isEmpty() && paginate) //$NON-NLS-1$ //$NON-NLS-2$
+    {
+      appendPageCount(reportComponent, parameters);
+    }
+    document.appendChild(parameters);
+
+    final DOMSource source = new DOMSource(document);
+    final StreamResult result = new StreamResult(outputStream);
+    final Transformer transformer = TransformerFactory.newInstance().newTransformer();
+    transformer.transform(source, result);
+    // close parameter context
   }
 
   private Map<String, Object> computeRealInput(final ParameterContext parameterContext,
