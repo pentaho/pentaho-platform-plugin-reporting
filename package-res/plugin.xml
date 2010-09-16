@@ -42,7 +42,7 @@
           </operation>
           <operation>
             <id>PARAMETER</id>
-            <command>content/reporting/?renderMode=XML&amp;solution={solution}&amp;path={path}&amp;name={name}</command>
+            <command>content/reporting/?renderMode=PARAMETER&amp;solution={solution}&amp;path={path}&amp;name={name}</command>
           </operation>
         </operations>
       </content-type>
