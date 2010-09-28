@@ -52,7 +52,7 @@ public class ParameterDefinition
     {
       return false;
     }
-    return false;
+    return true;
   }
 
   public boolean isPromptNeeded()
