@@ -443,10 +443,6 @@ public class ParameterXmlContentHandler
         }
       }
 
-
-      logger.error("Parameter: " + parameter.getName());
-      logger.error("Parameter: Selection Set: " + selectionSet);
-
       if (parameter instanceof ListParameter)
       {
         final ListParameter asListParam = (ListParameter) parameter;
@@ -466,7 +462,6 @@ public class ParameterXmlContentHandler
           {
             continue;
           }
-          logger.error("Parameter: Selection Mapping: " + key + " => " + value);
 
           final Element valueElement = document.createElement("value"); //$NON-NLS-1$
           valuesElement.appendChild(valueElement);
