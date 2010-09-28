@@ -134,6 +134,27 @@ public class Parameter
     return selections;
   }
 
+  public boolean isSelectedValue(final String selection)
+  {
+    for (int i = 0; i < selections.size(); i++)
+    {
+      final ParameterSelection parameterSelection = selections.get(i);
+      if (parameterSelection.isSelected() == false)
+      {
+        continue;
+      }
+      if (selection == null && parameterSelection.getValue() == null)
+      {
+        return true;
+      }
+      if (selection != null && selection.equals(parameterSelection.getValue()))
+      {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public boolean isHidden()
   {
     return "true".equals(getAttribute(CORE_NAMESPACE, "hidden"));

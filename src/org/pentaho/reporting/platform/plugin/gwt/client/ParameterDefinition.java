@@ -43,12 +43,16 @@ public class ParameterDefinition
 
   public boolean isShowParameterUi()
   {
-    return showParameterUi;
-  }
-
-  public void setShowParameterUi(final boolean showParameterUi)
-  {
-    this.showParameterUi = showParameterUi;
+    final Parameter parameter = getParameter("showParameters");
+    if (parameter == null)
+    {
+      return true;
+    }
+    if (parameter.isSelectedValue("false"))
+    {
+      return false;
+    }
+    return false;
   }
 
   public boolean isPromptNeeded()

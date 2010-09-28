@@ -407,7 +407,6 @@ public class ParameterControllerPanel extends VerticalPanel
     parameterDefinition.setPromptNeeded("true".equals(element.getAttribute("is-prompt-needed"))); // NON-NLS
     parameterDefinition.setPaginate("true".equals(element.getAttribute("paginate")));// NON-NLS
     parameterDefinition.setSubscribe("true".equals(element.getAttribute("subscribe")));// NON-NLS
-    parameterDefinition.setShowParameterUi("true".equals(element.getAttribute("show-parameter-ui")));// NON-NLS
     parameterDefinition.setLayout(element.getAttribute("layout"));// NON-NLS
 
     final ProcessingState state = new ProcessingState();
