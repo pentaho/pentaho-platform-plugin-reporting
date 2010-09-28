@@ -121,7 +121,7 @@ public class ParameterValues
         }
         b.append(key);
         b.append('=');
-        b.append(URL.encode(value));
+        b.append(URL.encodeComponent(value));
       }
     }
     return b.toString();

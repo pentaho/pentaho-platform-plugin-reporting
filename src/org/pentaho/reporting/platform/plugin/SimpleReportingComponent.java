@@ -796,8 +796,12 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
         final String paramName = param.getName();
         try
         {
-          parameterValues.put(param.getName(),
-              ReportContentUtil.computeParameterValue(context, param, inputs.get(paramName)));
+          final Object computedParameter = ReportContentUtil.computeParameterValue(context, param, inputs.get(paramName));
+          parameterValues.put(param.getName(), computedParameter);
+          if (log.isWarnEnabled())
+          {
+            log.warn("Parameter: " + paramName + " = " + inputs.get(paramName) + " => " + computedParameter);
+          }
         }
         catch (Exception e)
         {

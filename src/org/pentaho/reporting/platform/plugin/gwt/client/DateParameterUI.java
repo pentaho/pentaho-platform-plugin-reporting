@@ -22,6 +22,7 @@ public class DateParameterUI extends SimplePanel
     private String parameterName;
     private String timezone;
     private DateTimeFormat format;
+    private boolean waitForNext;
 
     public DateParameterSelectionHandler(final ParameterControllerPanel controller,
                                          final Parameter parameter)
@@ -63,15 +64,19 @@ public class DateParameterUI extends SimplePanel
 
     public void onValueChange(final ValueChangeEvent<Date> event)
     {
-      final Date newDate;
-      if (ReportViewerUtil.isEmpty(datePicker.getTextBox().getText()))
+      if (waitForNext == false)
       {
-        newDate = null;
+        // GWT fires date change events twice and the first date is absolutely wrong with a offset 12 hours
+        // in the future. The code for the date-picker looks creepy, as they try to keep things in sync between
+        // the messagebox (and there they parse the date) and the date-picker itself.
+        //
+        // Both firefox and safari show this problem, probably IE and other browsers as well.
+        waitForNext = true;
+        return;
       }
-      else
-      {
-        newDate = event.getValue();
-      }
+
+      waitForNext = false;
+      final Date newDate = event.getValue();
       final String value = convertSelectionToText(newDate);
 
 
@@ -81,17 +86,12 @@ public class DateParameterUI extends SimplePanel
 
     protected String convertSelectionToText(final Date newDate)
     {
-      // add date as long
-      final String value;
       if (newDate == null)
       {
-        value = null; //$NON-NLS-1$
+        return null; //$NON-NLS-1$
       }
-      else
-      {
-        value = format.format(newDate);
-      }
-      return value;
+
+      return format.format(newDate);
     }
 
     public void onChange(final ChangeEvent changeEvent)
@@ -99,7 +99,8 @@ public class DateParameterUI extends SimplePanel
       final String s = datePicker.getTextBox().getText();
       if (ReportViewerUtil.isEmpty(s))
       {
-        datePicker.setValue(null, true);
+        controller.getParameterMap().setSelectedValue(parameterName, null);
+        controller.fetchParameters(ParameterControllerPanel.ParameterSubmitMode.USERINPUT);
       }
     }
   }

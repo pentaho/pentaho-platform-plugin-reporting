@@ -136,36 +136,34 @@ public class ReportViewerUtil
    * Converts a time from a arbitary timezone into the local timezone. The timestamp value remains unchanged,
    * but the string representation changes to reflect the give timezone.
    *
-   * @param originalTimestamp
-   * @param targetTimeZoneOffset
-   * @return
+   * @param originalTimestamp the timestamp as string from the server.
+   * @param targetTimeZoneOffsetInMinutes the target timezone offset in minutes from GMT
+   * @return the converted timestamp string.
    */
   public static String convertTimeStampToTimeZone(final String originalTimestamp,
-                                                  final int targetTimeZoneOffset)
+                                                  final int targetTimeZoneOffsetInMinutes)
   {
     final DateTimeFormat localDate = DateTimeFormat.getFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
 
     final Date dateLocal = parseWithoutTimezone(originalTimestamp);
-    final Date dateUniversal = parseWithTimezone(originalTimestamp);
+    final Date dateUtc = parseWithTimezone(originalTimestamp);
+    final String offsetText = TimeZoneOffsets.formatOffset(targetTimeZoneOffsetInMinutes);
+    final long date = dateLocal.getTime() + (targetTimeZoneOffsetInMinutes * 60000) +
+        (dateUtc.getTime() - dateLocal.getTime()) - (getNativeTimezoneOffset() * 60000);
 
-    final int localTimeToUTCOffset = getNativeTimezoneOffset(new Date().getTime()) - targetTimeZoneOffset;
-    final int serverTimeToLocalTimeOffset = (int) ((dateUniversal.getTime() - dateLocal.getTime()) / 60000);
-    final int serverTimeToUTCOffset = localTimeToUTCOffset - serverTimeToLocalTimeOffset;
-
-    final String offsetText = TimeZoneOffsets.formatOffset(serverTimeToUTCOffset);
-    final Date localWithShift = new Date(dateLocal.getTime() - serverTimeToUTCOffset);
-    return localDate.format(localWithShift) + offsetText;
+    final Date localWithShift = new Date(date);
+    final String dateAsText = localDate.format(localWithShift) + offsetText;
+    return dateAsText;
   }
 
   /**
    * Returns the current native time-zone offset from UTC to local time.
    *
-   * @param milliseconds the milliseconds of a date, to evaluate summer/winter time
    * @return the offset in minutes.
    */
-  public static native int getNativeTimezoneOffset(final double milliseconds)
+  public static native int getNativeTimezoneOffset()
     /*-{
-      return (new Date(milliseconds).getTimezoneOffset());
+      return (new Date().getTimezoneOffset());
     }-*/;
 
   public static String extractTimezoneHintFromData(final String dateString)
