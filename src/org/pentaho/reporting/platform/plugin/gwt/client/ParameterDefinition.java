@@ -20,7 +20,6 @@ public class ParameterDefinition
   private boolean paginate;
   private String layout;
   private Boolean autoSubmit;
-  private boolean showParameterUi;
   private LinkedHashMap<String, ParameterGroup> parameters;
   private boolean autoSubmitUI;
   private boolean subscribe;
