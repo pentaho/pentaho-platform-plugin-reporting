@@ -230,7 +230,8 @@ public class ReportContentGenerator extends SimpleContentGenerator
     final IParameterProvider requestParams = getRequestParameters();
     final RENDER_TYPE renderMode = RENDER_TYPE.valueOf
         (requestParams.getStringParameter("renderMode", RENDER_TYPE.REPORT.toString()).toUpperCase()); //$NON-NLS-1$
-    if (renderMode.equals(RENDER_TYPE.XML))
+    if (renderMode.equals(RENDER_TYPE.XML) ||
+        renderMode.equals(RENDER_TYPE.PARAMETER))
     {
       return "text/xml"; //$NON-NLS-1$
     }
