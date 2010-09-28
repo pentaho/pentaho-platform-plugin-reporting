@@ -42,6 +42,7 @@ import org.pentaho.reporting.engine.classic.core.parameters.DefaultParameterCont
 import org.pentaho.reporting.engine.classic.core.parameters.ListParameter;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterAttributeNames;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterContext;
+import org.pentaho.reporting.engine.classic.core.parameters.ParameterContextWrapper;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterDefinitionEntry;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterValues;
 import org.pentaho.reporting.engine.classic.core.parameters.PlainParameter;
@@ -50,6 +51,7 @@ import org.pentaho.reporting.engine.classic.core.parameters.StaticListParameter;
 import org.pentaho.reporting.engine.classic.core.parameters.ValidationMessage;
 import org.pentaho.reporting.engine.classic.core.parameters.ValidationResult;
 import org.pentaho.reporting.engine.classic.core.util.NullOutputStream;
+import org.pentaho.reporting.engine.classic.core.util.ReportParameterValues;
 import org.pentaho.reporting.engine.classic.core.util.beans.BeanException;
 import org.pentaho.reporting.engine.classic.core.util.beans.ConverterRegistry;
 import org.pentaho.reporting.engine.classic.core.util.beans.ValueConverter;
@@ -100,7 +102,7 @@ public class ParameterXmlContentHandler
     this.userSession = contentGenerator.getUserSession();
   }
 
-  public IParameterProvider getRequestParameters()
+  private IParameterProvider getRequestParameters()
   {
     return requestParameters;
   }
@@ -241,13 +243,25 @@ public class ParameterXmlContentHandler
           AttributeNames.Core.NAMESPACE, AttributeNames.Core.PARAMETER_UI_LAYOUT,
           "org.pentaho.reporting.engine.classic.core.ParameterUiLayout"));
 
-      final LinkedHashMap<String, ParameterDefinitionEntry> reportParameters = new LinkedHashMap<String, ParameterDefinitionEntry>();
+
       final ParameterDefinitionEntry[] parameterDefinitions = reportParameterDefinition.getParameterDefinitions();
+      // Collect all parameter, but allow user-parameter to override system parameter.
+      // It is the user's problem if the types do not match and weird errors occur, but
+      // there are sensible usecases where this should be allowed.
+      // System parameter must come last in the list, as this is how it was done in the original
+      // version and this is how people expect it to be now.
+      final LinkedHashMap<String, ParameterDefinitionEntry> reportParameters = new LinkedHashMap<String, ParameterDefinitionEntry>();
       for (final ParameterDefinitionEntry parameter : parameterDefinitions)
       {
         reportParameters.put(parameter.getName(), parameter);
       }
-      reportParameters.putAll(getSystemParameter());
+      for (final Map.Entry<String,ParameterDefinitionEntry> entry: getSystemParameter().entrySet())
+      {
+        if (reportParameters.containsKey(entry.getKey()) == false)
+        {
+          reportParameters.put(entry.getKey(), entry.getValue());
+        }
+      }
 
       hideOutputParameterIfLocked(report, reportParameters);
       hideSubscriptionParameter(subscribe, reportParameters);
@@ -257,7 +271,9 @@ public class ParameterXmlContentHandler
       for (final ParameterDefinitionEntry parameter : reportParameters.values())
       {
         final Object selections = inputs.get(parameter.getName());
-        parameters.appendChild(createParameterElement(parameter, parameterContext, selections));
+        final ParameterContextWrapper wrapper = new ParameterContextWrapper
+            (parameterContext, vr.getParameterValues());
+        parameters.appendChild(createParameterElement(parameter, wrapper, selections));
       }
 
       if (vr.isEmpty() == false)
@@ -294,24 +310,37 @@ public class ParameterXmlContentHandler
     realInputs.put(SYS_PARAM_SCHEDULE_ID, lookupSchedules());
     realInputs.put(SYS_PARAM_SUBSCRIPTION_NAME, lookupSubscriptionName());
 
+    final ReportParameterValues parameterValues = result.getParameterValues();
+    
     for (final ParameterDefinitionEntry parameter : reportParameters.values())
     {
-      final Object value = inputs.get(parameter.getName());
+      final String parameterName = parameter.getName();
+      final Object value = inputs.get(parameterName);
       if (value == null)
       {
-        realInputs.put(parameter.getName(), result.getParameterValues().get(parameter.getName()));
+        // have no value, so we use the default value ..
+        realInputs.put(parameterName, parameterValues.get(parameterName));
+        continue;
       }
+      
       try
       {
         final Object translatedValue = ReportContentUtil.computeParameterValue(parameterContext, parameter, value);
-        realInputs.put(parameter.getName(), translatedValue);
+        if (translatedValue != null)
+        {
+          realInputs.put(parameterName, translatedValue);
+        }
+        else
+        {
+          realInputs.put(parameterName, parameterValues.get(parameterName));
+        }
       }
       catch (Exception be)
       {
         if (logger.isDebugEnabled())
         {
           logger.debug(Messages.getString
-              ("ReportPlugin.debugParameterCannotBeConverted", parameter.getName(), String.valueOf(value)), be);
+              ("ReportPlugin.debugParameterCannotBeConverted", parameterName, String.valueOf(value)), be);
         }
       }
     }
@@ -414,6 +443,10 @@ public class ParameterXmlContentHandler
         }
       }
 
+
+      logger.error("Parameter: " + parameter.getName());
+      logger.error("Parameter: Selection Set: " + selectionSet);
+
       if (parameter instanceof ListParameter)
       {
         final ListParameter asListParam = (ListParameter) parameter;
@@ -433,13 +466,14 @@ public class ParameterXmlContentHandler
           {
             continue;
           }
+          logger.error("Parameter: Selection Mapping: " + key + " => " + value);
 
           final Element valueElement = document.createElement("value"); //$NON-NLS-1$
           valuesElement.appendChild(valueElement);
 
           valueElement.setAttribute("label", String.valueOf(value)); //$NON-NLS-1$ //$NON-NLS-2$
           valueElement.setAttribute("type", elementValueType.getName()); //$NON-NLS-1$
-          valueElement.setAttribute("selected", String.valueOf(selectionSet.contains(value)));//$NON-NLS-1$
+          valueElement.setAttribute("selected", String.valueOf(selectionSet.contains(key)));//$NON-NLS-1$
 
           if (value == null)
           {
@@ -901,6 +935,7 @@ public class ParameterXmlContentHandler
     listParameter.addValues("REPORT", "REPORT"); // NON-NLS
     listParameter.addValues("SUBSCRIBE", "SUBSCRIBE"); // NON-NLS
     listParameter.addValues("DOWNLOAD", "DOWNLOAD"); // NON-NLS
+    listParameter.addValues("PARAMETER", "PARAMETER"); // NON-NLS
     return listParameter;
   }
 
