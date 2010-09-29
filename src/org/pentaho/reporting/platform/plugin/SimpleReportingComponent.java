@@ -49,6 +49,7 @@ import org.pentaho.reporting.platform.plugin.output.CSVOutput;
 import org.pentaho.reporting.platform.plugin.output.EmailOutput;
 import org.pentaho.reporting.platform.plugin.output.HTMLOutput;
 import org.pentaho.reporting.platform.plugin.output.PDFOutput;
+import org.pentaho.reporting.platform.plugin.output.PNGOutput;
 import org.pentaho.reporting.platform.plugin.output.PageableHTMLOutput;
 import org.pentaho.reporting.platform.plugin.output.PlainTextOutput;
 import org.pentaho.reporting.platform.plugin.output.RTFOutput;
@@ -77,6 +78,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   public static final String MIME_TYPE_CSV = "text/csv"; //$NON-NLS-1$
   public static final String MIME_TYPE_TXT = "text/plain"; //$NON-NLS-1$
   public static final String MIME_TYPE_XML = "application/xml"; //$NON-NLS-1$
+  public static final String MIME_TYPE_PNG = "image/png"; //$NON-NLS-1$
 
   public static final String XLS_WORKBOOK_PARAM = "workbook"; //$NON-NLS-1$
 
@@ -91,6 +93,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   public static final String PRINTER_NAME = "printer-name"; //$NON-NLS-1$
   public static final String DASHBOARD_MODE = "dashboard-mode"; //$NON-NLS-1$
   private static final String MIME_GENERIC_FALLBACK = "application/octet-stream"; //$NON-NLS-1$
+  public static final String PNG_EXPORT_TYPE = "pageable/X-AWT-Graphics;image-type=png";
 
   /**
    * Static initializer block to guarantee that the ReportingComponent will be in a state where the reporting engine will be booted. We have a system listener
@@ -349,6 +352,10 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       {
         return SimpleReportingComponent.MIME_TYPE_XML;
       }
+      if (PNG_EXPORT_TYPE.equals(outputTarget))
+      {
+        return SimpleReportingComponent.MIME_TYPE_PNG;
+      }
     }
     catch (IOException e)
     {
@@ -537,6 +544,10 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
 
   private boolean isValidOutputType(final String outputType)
   {
+    if (PNG_EXPORT_TYPE.equals(outputType))
+    {
+      return true;
+    }
     return ReportProcessTaskRegistry.getInstance().isExportTypeRegistered(outputType);
   }
 
@@ -987,6 +998,10 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
           return HTMLOutput.generate(report, outputStream, contentHandlerPattern, getYieldRate());
         }
       }
+      if (PNG_EXPORT_TYPE.equals(outputType))
+      {
+        return PNGOutput.generate(report, acceptedPage, outputStream, getYieldRate());
+      }
       if (XmlPageableModule.PAGEABLE_XML_EXPORT_TYPE.equals(outputType))
       {
         return XmlPageableOutput.generate(report, outputStream, getYieldRate());
@@ -1092,6 +1107,10 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
             .getConfigProperty("org.pentaho.web.ContentHandler")); //$NON-NLS-1$
         // don't use the content repository
         return (HTMLOutput.paginage(report, contentHandlerPattern, getYieldRate()));
+      }
+      if (PNG_EXPORT_TYPE.equals(outputType))
+      {
+        return PNGOutput.paginate(report, getYieldRate());
       }
       if (XmlPageableModule.PAGEABLE_XML_EXPORT_TYPE.equals(outputType))
       {
