@@ -258,15 +258,15 @@ public class ParameterXmlContentHandler
       final Map<String, Object> inputs = computeRealInput
           (parameterContext, reportParameters, reportComponent.getComputedOutputTarget(), vr);
 
-      final Boolean showParameterUI = requestFlag("showParameterUI", report, // NON-NLS
+      final Boolean showParameterUI = requestFlag("showParameters", report, // NON-NLS
           AttributeNames.Core.NAMESPACE, AttributeNames.Core.SHOW_PARAMETER_UI, null);
       if (Boolean.FALSE.equals(showParameterUI))
       {
-        inputs.put("showParameterUI", Boolean.FALSE); // NON-NLS
+        inputs.put("showParameters", Boolean.FALSE); // NON-NLS
       }
       else
       {
-        inputs.put("showParameterUI", Boolean.TRUE); // NON-NLS
+        inputs.put("showParameters", Boolean.TRUE); // NON-NLS
       }
 
 
