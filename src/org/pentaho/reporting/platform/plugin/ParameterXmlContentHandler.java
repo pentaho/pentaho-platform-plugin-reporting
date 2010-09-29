@@ -228,16 +228,6 @@ public class ParameterXmlContentHandler
         parameters.setAttribute("autoSubmitUI", "true"); // NON-NLS
       }
 
-      final Boolean showParameterUI = requestFlag("showParameterUI", report, // NON-NLS
-          AttributeNames.Core.NAMESPACE, AttributeNames.Core.SHOW_PARAMETER_UI, null);
-      if (Boolean.FALSE.equals(showParameterUI))
-      {
-        parameters.setAttribute("show-parameter-ui", "false"); // NON-NLS
-      }
-      else
-      {
-        parameters.setAttribute("show-parameter-ui", "true"); // NON-NLS
-      }
 
       parameters.setAttribute("layout", requestConfiguration("layout", report, // NON-NLS
           AttributeNames.Core.NAMESPACE, AttributeNames.Core.PARAMETER_UI_LAYOUT,
@@ -267,6 +257,18 @@ public class ParameterXmlContentHandler
       hideSubscriptionParameter(subscribe, reportParameters);
       final Map<String, Object> inputs = computeRealInput
           (parameterContext, reportParameters, reportComponent.getComputedOutputTarget(), vr);
+
+      final Boolean showParameterUI = requestFlag("showParameterUI", report, // NON-NLS
+          AttributeNames.Core.NAMESPACE, AttributeNames.Core.SHOW_PARAMETER_UI, null);
+      if (Boolean.FALSE.equals(showParameterUI))
+      {
+        inputs.put("showParameterUI", Boolean.FALSE); // NON-NLS
+      }
+      else
+      {
+        inputs.put("showParameterUI", Boolean.TRUE); // NON-NLS
+      }
+
 
       for (final ParameterDefinitionEntry parameter : reportParameters.values())
       {
