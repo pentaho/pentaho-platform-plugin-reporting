@@ -321,7 +321,7 @@ public class ReportViewerUtil
           continue;
         }
 
-        final List<String> valueList = requestParams.get(key);
+        final List<String> valueList = requestParams.get(rawkey);
         final String[] encodedList = new String[valueList.size()];
         for (int i = 0; i < valueList.size(); i++)
         {
