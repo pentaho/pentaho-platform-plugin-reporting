@@ -112,6 +112,7 @@ public class ParameterControllerPanel extends VerticalPanel
       if (parameterDefinition.isShowParameterUi())
       {
         buildParameterPanel(submitMode, errors, globalErrors, parameterDefinition);
+        DOM.getElementById("parameter-panel-focus-widget").focus();
       }
       else
       {
@@ -563,6 +564,19 @@ public class ParameterControllerPanel extends VerticalPanel
       final String groupLabel = group.getLabel(); //$NON-NLS-1$
 
       int parametersAdded = 0;
+
+
+      // BISERVER-4512 - adding a tiny textbox to set the focus to onload to avoid the
+      // IE issue of "locked" textbox widgets
+      TextBox tb = new TextBox();
+      tb.setHeight("1px");
+      tb.setWidth("1px");
+      tb.setStylePrimaryName("parameter-panel-focus-widget");
+      
+      DOM.setElementAttribute(tb.getElement(), "id", "parameter-panel-focus-widget");
+      parameterGroupPanel.add(tb);
+
+
       for (final Parameter parameterElement : group.getParameters())
       {
         if (parameterElement.isHidden())
