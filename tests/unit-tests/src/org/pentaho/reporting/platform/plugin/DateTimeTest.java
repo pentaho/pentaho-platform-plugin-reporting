@@ -6,9 +6,10 @@ import java.util.Date;
 import java.util.TimeZone;
 
 import com.google.gwt.i18n.client.DateTimeFormat;
-import com.google.gwt.user.client.Window;
 import junit.framework.TestCase;
-import org.pentaho.reporting.platform.plugin.gwt.client.ReportViewerUtil;
+import org.pentaho.reporting.engine.classic.core.parameters.ParameterAttributeNames;
+import org.pentaho.reporting.platform.plugin.gwt.client.Parameter;
+import org.pentaho.reporting.platform.plugin.gwt.client.ParameterSelection;
 import org.pentaho.reporting.platform.plugin.gwt.client.TimeZoneOffsets;
 
 /**
@@ -37,8 +38,8 @@ public class DateTimeTest extends TestCase
 
     final String dateAsText = normalizeDate(originalTimestamp, targetTimeZoneOffsetInMinutes);
 
-    final long t1 = parseWithTimezone(dateAsText).getTime();
-    final long t2 = parseWithTimezone(originalTimestamp).getTime();
+    final long t1 = TestReportViewerUtil.parseWithTimezone(dateAsText).getTime();
+    final long t2 = TestReportViewerUtil.parseWithTimezone(originalTimestamp).getTime();
     System.out.println(dateAsText);
     System.out.println(t1 - t2);
     System.out.println((t1 - t2) / 60000);
@@ -52,8 +53,8 @@ public class DateTimeTest extends TestCase
 
     final String dateAsText = normalizeDate(originalTimestamp, targetTimeZoneOffsetInMinutes);
 
-    final long t1 = parseWithTimezone(dateAsText).getTime();
-    final long t2 = parseWithTimezone(originalTimestamp).getTime();
+    final long t1 = TestReportViewerUtil.parseWithTimezone(dateAsText).getTime();
+    final long t2 = TestReportViewerUtil.parseWithTimezone(originalTimestamp).getTime();
     System.out.println(dateAsText);
     System.out.println(t1 - t2);
     System.out.println((t1 - t2) / 60000);
@@ -63,11 +64,11 @@ public class DateTimeTest extends TestCase
   private String normalizeDate(final String originalTimestamp, final int targetTimeZoneOffsetInMinutes)
       throws ParseException
   {
-    final Date dateLocal = parseWithoutTimezone(originalTimestamp);
-    final Date dateUtc = parseWithTimezone(originalTimestamp);
+    final Date dateLocal = TestReportViewerUtil.parseWithoutTimezone(originalTimestamp);
+    final Date dateUtc = TestReportViewerUtil.parseWithTimezone(originalTimestamp);
     final String offsetText = TimeZoneOffsets.formatOffset(targetTimeZoneOffsetInMinutes);
     final long date = dateLocal.getTime() + (targetTimeZoneOffsetInMinutes * 60000) +
-        (dateUtc.getTime() - dateLocal.getTime()) - (getNativeTimezoneOffset() * 60000);
+        (dateUtc.getTime() - dateLocal.getTime()) - (TestReportViewerUtil.getNativeTimezoneOffset() * 60000);
 
     final Date localWithShift = new Date(date);
     final SimpleDateFormat localDate = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.'000'");
@@ -76,30 +77,25 @@ public class DateTimeTest extends TestCase
   }
 
 
-  public static Date parseWithTimezone(final String dateString) throws ParseException
+  public void testParameterNormalization() throws ParseException
   {
-    if (dateString.length() != 28)
-    {
-      throw new IllegalArgumentException("This is not a valid ISO-date with timezone: " + dateString);
-    }
-    return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.'000'Z").parse(dateString);
+    final String utc = "2010-10-26T06:32:59.000+0000";
+    final String gmt = "2010-10-26T06:32:59.000-0100";
+
+    System.out.println(TestReportViewerUtil.getNativeTimezoneOffset());
+    final Parameter parameter = new Parameter("UTC");
+ //   parameter.setTimezoneHint("+0000");
+    parameter.setType("java.util.Date");
+    parameter.setAttribute(ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TIMEZONE, "utc");
+    parameter.addSelection(new ParameterSelection("java.util.Date", utc, true, null));
+    System.out.println (TestReportViewerUtil.normalizeParameterValue(parameter, "java.util.Date", utc));
+
+    final Parameter p2 = new Parameter("GMT");
+    p2.setTimezoneHint("-0100");
+    p2.setType("java.util.Date");
+    p2.setAttribute(ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TIMEZONE, "Etc/GMT+1");
+    p2.addSelection(new ParameterSelection("java.util.Date", gmt, true, null));
+    System.out.println (TestReportViewerUtil.normalizeParameterValue(p2, "java.util.Date", gmt));
   }
 
-  public static Date parseWithoutTimezone(String dateString) throws ParseException
-  {
-    if (dateString.length() == 28)
-    {
-      dateString = dateString.substring(0, 23);
-    }
-    if (dateString.length() != 23)
-    {
-      throw new IllegalArgumentException("This is not a valid ISO-date without timezone: " + dateString);
-    }
-    return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.'000'").parse(dateString);
-  }
-
-  private int getNativeTimezoneOffset()
-  {
-    return TimeZone.getDefault().getOffset(System.currentTimeMillis()) / 60000;
-  }
 }
