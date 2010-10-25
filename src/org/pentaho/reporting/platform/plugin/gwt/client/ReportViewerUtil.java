@@ -74,11 +74,13 @@ public class ReportViewerUtil
           }
           if (timezoneHint == null)
           {
+//            Window.alert("No Timezone hint given for " + parameter.getName());
             return selection;
           }
 
           // update the parameter definition, so that the datepickerUI can work properly ...
           parameter.setTimezoneHint(timezoneHint);
+//          Window.alert("No Timezone given for " + parameter.getName());
           return selection;
         }
 
@@ -94,6 +96,11 @@ public class ReportViewerUtil
           {
             return selection;
           }
+//          Window.alert("Selection is not in same TZ " + parameter.getName() + " " + timezoneHint + " " + selection);
+        }
+        else
+        {
+//          Window.alert("TZ Hint " + parameter.getName() + " " + timezoneHint + " " + selection);
         }
 
         // the resulting time will have the same universal time as the original one, but the string
@@ -151,6 +158,9 @@ public class ReportViewerUtil
     final long date = dateLocal.getTime() + (targetTimeZoneOffsetInMinutes * 60000) +
         (dateUtc.getTime() - dateLocal.getTime()) - (getNativeTimezoneOffset() * 60000);
 
+//    Window.alert("Converting: LocalDate:" + dateLocal + " vs UTC:" + dateUtc +
+//        " \n Offset:" + offsetText + " Min:" + targetTimeZoneOffsetInMinutes +
+//        " \n Native: " + getNativeTimezoneOffset());
     final Date localWithShift = new Date(date);
     final String dateAsText = localDate.format(localWithShift) + offsetText;
     return dateAsText;
@@ -163,7 +173,7 @@ public class ReportViewerUtil
    */
   public static native int getNativeTimezoneOffset()
     /*-{
-      return (new Date().getTimezoneOffset());
+      return -(new Date().getTimezoneOffset());
     }-*/;
 
   public static String extractTimezoneHintFromData(final String dateString)
@@ -350,15 +360,20 @@ public class ReportViewerUtil
     }
 
     reportPath += "&" + parametersAsString;
-
     if (GWT.isScript() == false)
     {
+      System.out.println("Computed path was: " + reportPath);
       reportPath = reportPath.substring(1);
       reportPath = "?solution=steel-wheels&path=reports&name=Inventory.prpt&" + reportPath; //$NON-NLS-1$
       final String url = "http://localhost:8080/pentaho/content/reporting" + reportPath + "&userid=joe&password=password"; //$NON-NLS-1$ //$NON-NLS-2$
-      System.out.println(url);
+      System.out.println("Using development url: " + url);
       return url;
     }
+/*    else
+    {
+      Window.alert("Computed-URL: " + reportPath);
+    }
+    */
     return reportPath;
   }
 

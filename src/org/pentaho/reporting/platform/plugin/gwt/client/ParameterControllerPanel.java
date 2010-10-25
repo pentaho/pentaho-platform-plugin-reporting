@@ -42,6 +42,7 @@ import com.google.gwt.xml.client.Element;
 import com.google.gwt.xml.client.NodeList;
 import com.google.gwt.xml.client.XMLParser;
 import org.pentaho.gwt.widgets.client.utils.i18n.ResourceBundle;
+import org.pentaho.gwt.widgets.client.utils.string.StringUtils;
 import org.pentaho.reporting.platform.plugin.gwt.client.ReportViewer.RENDER_TYPE;
 import org.pentaho.reporting.platform.plugin.gwt.client.images.PageImages;
 
@@ -68,7 +69,8 @@ public class ParameterControllerPanel extends VerticalPanel
 
     public void onResponseReceived(final Request request, final Response response)
     {
-      if (response.getStatusCode() != Response.SC_OK)
+      final int code = response.getStatusCode();
+      if (code != Response.SC_OK)
       {
         ReportViewerUtil.showErrorDialog(messages, messages.getString("couldNotFetchParams")); //$NON-NLS-1$ //$NON-NLS-2$
         return;
@@ -481,8 +483,14 @@ public class ParameterControllerPanel extends VerticalPanel
           }
           final boolean selected = "true".equals(valueElement.getAttribute("selected")); // NON-NLS
 
-          parameter.addSelection(new ParameterSelection(type,
-              ReportViewerUtil.normalizeParameterValue(parameter, type, value), selected, label));
+          final String normValue = ReportViewerUtil.normalizeParameterValue(parameter, type, value);
+          parameter.addSelection(new ParameterSelection(type,normValue, selected, label));
+/*
+          if (String.valueOf(normValue).equals(String.valueOf(value)) == false)
+          {
+            Window.alert("Changed Normalized Value: " + normValue + " vs " + value);
+          }
+          */
         }
 
         String parameterGroupName = parameter.getAttribute("parameter-group"); //$NON-NLS-1$
