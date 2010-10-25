@@ -557,6 +557,10 @@ public class ParameterControllerPanel extends VerticalPanel
       {
         parameterGroupPanel = new FlowPanel();
       }
+      else if (layout.equals("horizontal"))
+      {
+        parameterGroupPanel = new HorizontalPanel();
+      }
       else
       {
         parameterGroupPanel = new VerticalPanel();
