@@ -116,25 +116,25 @@ public class ParameterXmlContentHandler
       parameter.put(SYS_PARAM_DESTINATION, createDestinationParameter());
       parameter.put(SYS_PARAM_SCHEDULE_ID, createScheduleIdParameter());
       parameter.put(SYS_PARAM_OUTPUT_TARGET, createOutputParameter());
-      parameter.put("subscribe", createGenericBooleanSystemParameter("subscribe", false)); // NON-NLS
+      parameter.put("subscribe", createGenericBooleanSystemParameter("subscribe", false, false)); // NON-NLS
 
-      parameter.put("solution", createGenericSystemParameter("solution", false)); // NON-NLS
-      parameter.put("yield-rate", createGenericIntSystemParameter("yield-rate", false)); // NON-NLS
-      parameter.put("accepted-page", createGenericIntSystemParameter("accepted-page", false)); // NON-NLS
-      parameter.put("path", createGenericSystemParameter("path", false)); // NON-NLS
-      parameter.put("name", createGenericSystemParameter("name", false)); // NON-NLS
-      parameter.put("action", createGenericSystemParameter("action", true)); // NON-NLS
-      parameter.put("output-type", createGenericSystemParameter("output-type", true)); // NON-NLS
-      parameter.put("layout", createGenericSystemParameter("layout", true)); // NON-NLS
-      parameter.put("content-handler-pattern", createGenericSystemParameter("content-handler-pattern", true)); // NON-NLS
-      parameter.put("autoSubmit", createGenericBooleanSystemParameter("autoSubmit", true)); // NON-NLS
-      parameter.put("autoSubmitUI", createGenericBooleanSystemParameter("autoSubmitUI", true)); // NON-NLS
-      parameter.put("dashboard-mode", createGenericBooleanSystemParameter("dashboard-mode", false)); // NON-NLS
-      parameter.put("showParameters", createGenericBooleanSystemParameter("showParameters", true)); // NON-NLS
-      parameter.put("paginate", createGenericBooleanSystemParameter("paginate", true)); // NON-NLS
-      parameter.put("ignoreDefaultDates", createGenericBooleanSystemParameter("ignoreDefaultDates", true)); // NON-NLS
-      parameter.put("print", createGenericBooleanSystemParameter("print", false)); // NON-NLS
-      parameter.put("printer-name", createGenericSystemParameter("printer-name", false)); // NON-NLS
+      parameter.put("solution", createGenericSystemParameter("solution", false, false)); // NON-NLS
+      parameter.put("yield-rate", createGenericIntSystemParameter("yield-rate", false, false)); // NON-NLS
+      parameter.put("accepted-page", createGenericIntSystemParameter("accepted-page", false, false)); // NON-NLS
+      parameter.put("path", createGenericSystemParameter("path", false, false)); // NON-NLS
+      parameter.put("name", createGenericSystemParameter("name", false, false)); // NON-NLS
+      parameter.put("action", createGenericSystemParameter("action", true, false)); // NON-NLS
+      parameter.put("output-type", createGenericSystemParameter("output-type", true, false)); // NON-NLS
+      parameter.put("layout", createGenericSystemParameter("layout", true, false)); // NON-NLS
+      parameter.put("content-handler-pattern", createGenericSystemParameter("content-handler-pattern", true, false)); // NON-NLS
+      parameter.put("autoSubmit", createGenericBooleanSystemParameter("autoSubmit", true, true)); // NON-NLS
+      parameter.put("autoSubmitUI", createGenericBooleanSystemParameter("autoSubmitUI", true, true)); // NON-NLS
+      parameter.put("dashboard-mode", createGenericBooleanSystemParameter("dashboard-mode", false, true)); // NON-NLS
+      parameter.put("showParameters", createGenericBooleanSystemParameter("showParameters", true, true)); // NON-NLS
+      parameter.put("paginate", createGenericBooleanSystemParameter("paginate", true, false)); // NON-NLS
+      parameter.put("ignoreDefaultDates", createGenericBooleanSystemParameter("ignoreDefaultDates", true, false)); // NON-NLS
+      parameter.put("print", createGenericBooleanSystemParameter("print", false, false)); // NON-NLS
+      parameter.put("printer-name", createGenericSystemParameter("printer-name", false, false)); // NON-NLS
       parameter.put("renderMode", createRenderModeSystemParameter()); // NON-NLS
 
       systemParameter = Collections.unmodifiableMap(parameter);
@@ -723,6 +723,8 @@ public class ParameterXmlContentHandler
     final PlainParameter subscriptionName = new PlainParameter(SYS_PARAM_SUBSCRIPTION_NAME, String.class);
     subscriptionName.setMandatory(true);
     subscriptionName.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PREFERRED, String.valueOf(false));
+    subscriptionName.setParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP, GROUP_SUBSCRIPTION);
     subscriptionName.setParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP_LABEL,
@@ -742,6 +744,8 @@ public class ParameterXmlContentHandler
     final PlainParameter destinationParameter = new PlainParameter(SYS_PARAM_DESTINATION, String.class);
     destinationParameter.setMandatory(false);
     destinationParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PREFERRED, String.valueOf(false));
+    destinationParameter.setParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP, GROUP_SUBSCRIPTION);
     destinationParameter.setParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP_LABEL,
@@ -758,19 +762,23 @@ public class ParameterXmlContentHandler
   }
 
   private PlainParameter createGenericSystemParameter(final String parameterName,
-                                                      final boolean deprecated)
+                                                      final boolean deprecated,
+                                                      final boolean preferredParameter)
   {
-    return createGenericSystemParameter(parameterName, deprecated, String.class);
+    return createGenericSystemParameter(parameterName, deprecated, preferredParameter, String.class);
   }
 
   private PlainParameter createGenericSystemParameter(final String parameterName,
                                                       final boolean deprecated,
+                                                      final boolean preferredParameter,
                                                       final Class type)
   {
     final PlainParameter destinationParameter = new PlainParameter(parameterName, type);
     destinationParameter.setMandatory(false);
     destinationParameter.setHidden(true);
     destinationParameter.setRole(ParameterAttributeNames.Core.ROLE_SYSTEM_PARAMETER);
+    destinationParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PREFERRED, String.valueOf(preferredParameter));
     destinationParameter.setParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP, GROUP_SYSTEM);
     destinationParameter.setParameterAttribute
@@ -786,15 +794,17 @@ public class ParameterXmlContentHandler
   }
 
   private PlainParameter createGenericBooleanSystemParameter(final String parameterName,
-                                                             final boolean deprecated)
+                                                             final boolean deprecated,
+                                                      final boolean preferredParameter)
   {
-    return createGenericSystemParameter(parameterName, deprecated, Boolean.class);
+    return createGenericSystemParameter(parameterName, deprecated, preferredParameter, Boolean.class);
   }
 
   private PlainParameter createGenericIntSystemParameter(final String parameterName,
-                                                         final boolean deprecated)
+                                                         final boolean deprecated,
+                                                      final boolean preferredParameter)
   {
-    return createGenericSystemParameter(parameterName, deprecated, Integer.class);
+    return createGenericSystemParameter(parameterName, deprecated, preferredParameter, Integer.class);
   }
 
   private StaticListParameter createScheduleIdParameter()
@@ -802,6 +812,8 @@ public class ParameterXmlContentHandler
 
     final StaticListParameter scheduleIdParameter = new StaticListParameter(SYS_PARAM_SCHEDULE_ID, false, true, String.class);
     scheduleIdParameter.setMandatory(true);
+    scheduleIdParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PREFERRED, "false");
     scheduleIdParameter.setParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP, GROUP_SUBSCRIPTION);
     scheduleIdParameter.setParameterAttribute
@@ -890,6 +902,8 @@ public class ParameterXmlContentHandler
     final StaticListParameter listParameter = new StaticListParameter
         (SYS_PARAM_OUTPUT_TARGET, false, true, String.class);
     listParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PREFERRED, String.valueOf(true));
+    listParameter.setParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP, GROUP_PARAMETERS);
     listParameter.setParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP_LABEL,
@@ -917,6 +931,8 @@ public class ParameterXmlContentHandler
     final StaticListParameter listParameter = new StaticListParameter
         (SYS_PARAM_RENDER_MODE, false, true, String.class);
     listParameter.setHidden(true);
+    listParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PREFERRED, String.valueOf(false));
     listParameter.setParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP, GROUP_SYSTEM);
     listParameter.setParameterAttribute
