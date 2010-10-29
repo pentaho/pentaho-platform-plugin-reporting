@@ -117,10 +117,10 @@ public class ParameterXmlContentHandler
       parameter.put(SYS_PARAM_SCHEDULE_ID, createScheduleIdParameter());
       parameter.put(SYS_PARAM_OUTPUT_TARGET, createOutputParameter());
       parameter.put("subscribe", createGenericBooleanSystemParameter("subscribe", false, false)); // NON-NLS
-      parameter.put("::mantleTabName",
-          createGenericSystemParameter("::mantleTabName", false, true)); // NON-NLS
-      parameter.put("::mantleTabActive",
-          createGenericBooleanSystemParameter("::mantleTabActive", false, true)); // NON-NLS
+      parameter.put("::TabName",
+          createGenericSystemParameter("::TabName", false, true)); // NON-NLS
+      parameter.put("::TabActive",
+          createGenericBooleanSystemParameter("::TabActive", false, true)); // NON-NLS
       parameter.put("solution", createGenericSystemParameter("solution", false, false)); // NON-NLS
       parameter.put("yield-rate", createGenericIntSystemParameter("yield-rate", false, false)); // NON-NLS
       parameter.put("accepted-page", createGenericIntSystemParameter("accepted-page", false, false)); // NON-NLS
