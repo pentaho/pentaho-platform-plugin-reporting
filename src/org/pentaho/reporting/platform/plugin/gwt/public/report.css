@@ -329,4 +329,10 @@ td.datePickerMonth {
   z-index:250;
   cursor: progress;
   filter:alpha(opacity=20);
-} 
+}
+
+#parameter-panel-focus-widget {
+  margin: 0px;
+  border: none;
+  padding: 0px;
+}
