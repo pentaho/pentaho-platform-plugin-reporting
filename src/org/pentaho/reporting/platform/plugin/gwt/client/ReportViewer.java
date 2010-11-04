@@ -43,7 +43,7 @@ public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback
 
   public void onModuleLoad()
   {
-    messages.loadBundle("messages/", "messages", true, ReportViewer.this); //$NON-NLS-1$ //$NON-NLS-2$
+    messages.loadBundle("messages/", "reportingMessages", true, ReportViewer.this); //$NON-NLS-1$ //$NON-NLS-2$
   }
 
   public void bundleLoaded(final String bundleName)
