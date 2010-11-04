@@ -38,28 +38,30 @@ public class PentahoMondrianConnectionProvider extends DefaultMondrianConnection
       if (StringUtils.isEmpty(role))
       {
         // Only if the action sequence/requester hasn't already injected a role in here do this.
-        final IConnectionUserRoleMapper mondrianUserRoleMapper =
-            PentahoSystem.get(IConnectionUserRoleMapper.class, MDX_CONNECTION_MAPPER_KEY, null);
-        if (mondrianUserRoleMapper != null)
-        {
-          // Do role mapping
-          final String[] validMondrianRolesForUser =
-              mondrianUserRoleMapper.mapConnectionRoles(PentahoSessionHolder.getSession(), catalog);
-          if ((validMondrianRolesForUser != null) && (validMondrianRolesForUser.length > 0))
+        if(PentahoSystem.getObjectFactory().objectDefined(MDX_CONNECTION_MAPPER_KEY)) {
+          final IConnectionUserRoleMapper mondrianUserRoleMapper =
+              PentahoSystem.get(IConnectionUserRoleMapper.class, MDX_CONNECTION_MAPPER_KEY, null);
+          if (mondrianUserRoleMapper != null)
           {
-            final StringBuffer buff = new StringBuffer();
-            for (int i = 0; i < validMondrianRolesForUser.length; i++)
+            // Do role mapping
+            final String[] validMondrianRolesForUser =
+                mondrianUserRoleMapper.mapConnectionRoles(PentahoSessionHolder.getSession(), catalog);
+            if ((validMondrianRolesForUser != null) && (validMondrianRolesForUser.length > 0))
             {
-              final String aRole = validMondrianRolesForUser[i];
-              // According to http://mondrian.pentaho.org/documentation/configuration.php
-              // double-comma escapes a comma
-              if (i > 0)
+              final StringBuffer buff = new StringBuffer();
+              for (int i = 0; i < validMondrianRolesForUser.length; i++)
               {
-                buff.append(",");
+                final String aRole = validMondrianRolesForUser[i];
+                // According to http://mondrian.pentaho.org/documentation/configuration.php
+                // double-comma escapes a comma
+                if (i > 0)
+                {
+                  buff.append(",");
+                }
+                buff.append(aRole.replaceAll(",", ",,"));
               }
-              buff.append(aRole.replaceAll(",", ",,"));
+              properties.setProperty("Role", buff.toString());
             }
-            properties.setProperty("Role", buff.toString());
           }
         }
       }
