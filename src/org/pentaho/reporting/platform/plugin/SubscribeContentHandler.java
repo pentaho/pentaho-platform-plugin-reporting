@@ -91,7 +91,7 @@ public class SubscribeContentHandler
         parameters.put(parameterName, parameterValue);
       }
     }
-    parameters.put(SimpleReportingComponent.OUTPUT_TYPE, parameterProvider.getParameter(SimpleReportingComponent.OUTPUT_TYPE));
+    parameters.put(SimpleReportingComponent.OUTPUT_TARGET, parameterProvider.getParameter(SimpleReportingComponent.OUTPUT_TARGET));
 
     final String destination = (String) parameterProvider.getParameter("destination"); //$NON-NLS-1$
     if (subscription == null)
