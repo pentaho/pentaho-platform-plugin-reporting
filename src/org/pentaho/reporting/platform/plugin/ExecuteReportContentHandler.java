@@ -2,6 +2,7 @@ package org.pentaho.reporting.platform.plugin;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.Serializable;
 import java.util.Map;
 import javax.servlet.http.HttpServletResponse;
 
@@ -11,6 +12,8 @@ import org.pentaho.platform.api.engine.IParameterProvider;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.api.engine.ISolutionFile;
 import org.pentaho.platform.api.repository.ISolutionRepository;
+import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
+import org.pentaho.platform.api.repository2.unified.RepositoryFile;
 import org.pentaho.platform.engine.core.audit.AuditHelper;
 import org.pentaho.platform.engine.core.audit.MessageTypes;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
@@ -42,11 +45,12 @@ public class ExecuteReportContentHandler
     this.userSession = contentGenerator.getUserSession();
   }
 
-  public void createReportContent(final OutputStream outputStream, final String reportDefinitionPath) throws Exception
+  public void createReportContent(final OutputStream outputStream, final Serializable fileId) throws Exception
   {
     final long start = System.currentTimeMillis();
     final Map<String, Object> inputs = contentGenerator.createInputs();
-    AuditHelper.audit(userSession.getId(), userSession.getName(), reportDefinitionPath,
+    AuditHelper.audit(userSession.getId(), userSession.getName(), 
+        (String)fileId,
         contentGenerator.getObjectName(), getClass().getName(), MessageTypes.INSTANCE_START,
         contentGenerator.getInstanceId(), "", 0, contentGenerator); //$NON-NLS-1$
 
@@ -57,7 +61,7 @@ public class ExecuteReportContentHandler
       // produce rendered report
       final SimpleReportingComponent reportComponent = new SimpleReportingComponent();
       reportComponent.setSession(userSession);
-      reportComponent.setReportDefinitionPath(reportDefinitionPath);
+      reportComponent.setReportFileId(fileId);
       reportComponent.setPaginateOutput(true);
       reportComponent.setDefaultOutputTarget(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE);
       reportComponent.setInputs(inputs);
@@ -96,8 +100,8 @@ public class ExecuteReportContentHandler
       // type from the output-target.
       // Hoever, the report-component will inspect the inputs independently from the mimetype here.
 
-      final ISolutionRepository repository = PentahoSystem.get(ISolutionRepository.class, userSession);
-      final ISolutionFile file = repository.getSolutionFile(reportDefinitionPath, ISolutionRepository.ACTION_EXECUTE);
+      final IUnifiedRepository repository = PentahoSystem.get(IUnifiedRepository.class, userSession);
+      final RepositoryFile file = repository.getFileById(fileId);
 
       // add all inputs (request parameters) to report component
       final String mimeType = reportComponent.getMimeType();
@@ -144,7 +148,7 @@ public class ExecuteReportContentHandler
       }
 
       final String extension = MimeHelper.getExtension(mimeType);
-      String filename = file.getFileName();
+      String filename = file.getName();
       if (filename.lastIndexOf(".") != -1)
       { //$NON-NLS-1$
         filename = filename.substring(0, filename.lastIndexOf(".")); //$NON-NLS-1$
@@ -161,7 +165,7 @@ public class ExecuteReportContentHandler
         {
           // Send headers before we begin execution
           response.setHeader("Content-Disposition", "inline; filename=\"" + filename + extension + "\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-          response.setHeader("Content-Description", file.getFileName()); //$NON-NLS-1$
+          response.setHeader("Content-Description", file.getName()); //$NON-NLS-1$
           response.setHeader("Cache-Control", "private, max-age=0, must-revalidate");
         }
         if (reportComponent.execute())
@@ -171,7 +175,7 @@ public class ExecuteReportContentHandler
             if (reportStagingHandler.canSendHeaders())
             {
               response.setHeader("Content-Disposition", "inline; filename=\"" + filename + extension + "\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-              response.setHeader("Content-Description", file.getFileName()); //$NON-NLS-1$
+              response.setHeader("Content-Description", file.getName()); //$NON-NLS-1$
               response.setHeader("Cache-Control", "private, max-age=0, must-revalidate");
               response.setHeader("Content-Size", String.valueOf(reportStagingHandler.getWrittenByteCount()));
             }
@@ -201,7 +205,7 @@ public class ExecuteReportContentHandler
         reportStagingHandler.close();
       }
       final long end = System.currentTimeMillis();
-      AuditHelper.audit(userSession.getId(), userSession.getName(), reportDefinitionPath,
+      AuditHelper.audit(userSession.getId(), userSession.getName(), (String) fileId,
           contentGenerator.getObjectName(), getClass().getName(), result, contentGenerator.getInstanceId(),
           "", ((float) (end - start) / 1000), contentGenerator); //$NON-NLS-1$
     }

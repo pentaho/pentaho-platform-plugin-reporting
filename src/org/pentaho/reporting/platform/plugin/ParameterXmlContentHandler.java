@@ -1,6 +1,7 @@
 package org.pentaho.reporting.platform.plugin;
 
 import java.io.OutputStream;
+import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.text.DateFormat;
@@ -79,7 +80,7 @@ public class ParameterXmlContentHandler
   private IParameterProvider requestParameters;
   private IPentahoSession userSession;
   private Map<String, Object> inputs;
-  private String reportDefinitionPath;
+  private Serializable fileId;
 
   private static final String SYS_PARAM_RENDER_MODE = "renderMode";
   private static final String SYS_PARAM_OUTPUT_TARGET = SimpleReportingComponent.OUTPUT_TARGET;
@@ -113,13 +114,10 @@ public class ParameterXmlContentHandler
       parameter.put(SYS_PARAM_SCHEDULE_ID, createScheduleIdParameter());
       parameter.put(SYS_PARAM_OUTPUT_TARGET, createOutputParameter());
       parameter.put("subscribe", createGenericBooleanSystemParameter("subscribe", false)); // NON-NLS
-
-      parameter.put("solution", createGenericSystemParameter("solution", false)); // NON-NLS
       parameter.put("yield-rate", createGenericIntSystemParameter("yield-rate", false)); // NON-NLS
       parameter.put("accepted-page", createGenericIntSystemParameter("accepted-page", false)); // NON-NLS
       parameter.put("path", createGenericSystemParameter("path", false)); // NON-NLS
-      parameter.put("name", createGenericSystemParameter("name", false)); // NON-NLS
-      parameter.put("action", createGenericSystemParameter("action", true)); // NON-NLS
+      parameter.put("id", createGenericSystemParameter("id", false)); // NON-NLS
       parameter.put("output-type", createGenericSystemParameter("output-type", true)); // NON-NLS
       parameter.put("layout", createGenericSystemParameter("layout", true)); // NON-NLS
       parameter.put("content-handler-pattern", createGenericSystemParameter("content-handler-pattern", true)); // NON-NLS
@@ -160,9 +158,9 @@ public class ParameterXmlContentHandler
   }
 
   public void createParameterContent(final OutputStream outputStream,
-                                     final String reportDefinitionPath) throws Exception
+                                     final Serializable fileId) throws Exception
   {
-    this.reportDefinitionPath = reportDefinitionPath;
+    this.fileId = fileId;
     this.document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
 
     final IParameterProvider requestParams = getRequestParameters();
@@ -172,7 +170,7 @@ public class ParameterXmlContentHandler
 
     final SimpleReportingComponent reportComponent = new SimpleReportingComponent();
     reportComponent.setSession(userSession);
-    reportComponent.setReportDefinitionPath(reportDefinitionPath);
+    reportComponent.setReportFileId(fileId);
     reportComponent.setPaginateOutput(true);
     reportComponent.setDefaultOutputTarget(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE);
     reportComponent.setInputs(inputs);
@@ -787,7 +785,7 @@ public class ParameterXmlContentHandler
       return;
     }
 
-    final ISubscribeContent subscribeContent = subscriptionRepository.getContentByActionReference(reportDefinitionPath);
+    final ISubscribeContent subscribeContent = subscriptionRepository.getContentByActionReference((String)fileId);
     if (subscribeContent == null)
     {
       return;

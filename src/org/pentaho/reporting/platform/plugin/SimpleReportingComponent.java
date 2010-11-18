@@ -3,6 +3,7 @@ package org.pentaho.reporting.platform.plugin;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.Serializable;
 import java.net.URL;
 import java.util.Collections;
 import java.util.Map;
@@ -113,7 +114,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   private InputStream reportDefinitionInputStream;
   private Boolean useContentRepository;
   private IActionSequenceResource reportDefinition;
-  private String reportDefinitionPath;
+  private Serializable fileId;
   private IPentahoSession session;
   private boolean paginateOutput;
   private int acceptedPage;
@@ -223,19 +224,19 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    *
    * @return reportdefinitionPath
    */
-  public String getReportDefinitionPath()
+  public Serializable getReportFileId()
   {
-    return reportDefinitionPath;
+    return fileId;
   }
 
   /**
    * Sets the path to the report definition (platform path)
    *
-   * @param reportDefinitionPath the path to the report definition.
+   * @param fileId the path to the report definition.
    */
-  public void setReportDefinitionPath(final String reportDefinitionPath)
+  public void setReportFileId(final Serializable fileId)
   {
-    this.reportDefinitionPath = reportDefinitionPath;
+    this.fileId = fileId;
   }
 
   /**
@@ -515,9 +516,9 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
         // load the report definition as an action-sequence resource
         report = ReportCreator.createReport(reportDefinition.getAddress());
       }
-      else if (reportDefinitionPath != null)
+      else if (fileId != null)
       {
-        report = ReportCreator.createReport(reportDefinitionPath);
+        report = ReportCreator.createReport(fileId);
       }
       else
       {
@@ -857,12 +858,12 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    */
   public boolean validate() throws Exception
   {
-    if (reportDefinition == null && reportDefinitionInputStream == null && reportDefinitionPath == null)
+    if (reportDefinition == null && reportDefinitionInputStream == null && fileId == null)
     {
       log.error(Messages.getInstance().getString("ReportPlugin.reportDefinitionNotProvided")); //$NON-NLS-1$
       return false;
     }
-    if (reportDefinition != null && reportDefinitionPath != null && session == null)
+    if (reportDefinition != null && fileId != null && session == null)
     {
       log.error(Messages.getInstance().getString("ReportPlugin.noUserSession")); //$NON-NLS-1$
       return false;

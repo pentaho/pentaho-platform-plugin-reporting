@@ -18,6 +18,7 @@ package org.pentaho.reporting.platform.plugin;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.net.URL;
 import java.util.HashMap;
 
@@ -48,13 +49,13 @@ public class ReportCreator
    * @throws ResourceException
    * @throws IOException
    */
-  public static MasterReport createReport(final String reportDefinitionPath,
+  public static MasterReport createReport(final Serializable fileId,
                                           IPentahoSession session) throws ResourceException, IOException
   {
-    return createReport(reportDefinitionPath);
+    return createReport(fileId);
   }
 
-  public static MasterReport createReport(final String reportDefinitionPath) throws ResourceException, IOException
+  public static MasterReport createReport(final Serializable fileId) throws ResourceException, IOException
   {
     final ResourceManager resourceManager = new ResourceManager();
     resourceManager.registerDefaults();
@@ -62,7 +63,7 @@ public class ReportCreator
     // add the runtime context so that PentahoResourceData class can get access
     // to the solution repo
     final ResourceKey key = resourceManager.createKey(RepositoryResourceLoader.SOLUTION_SCHEMA_NAME + RepositoryResourceLoader.SCHEMA_SEPARATOR
-        + reportDefinitionPath, helperObjects);
+        + fileId, helperObjects);
     final Resource resource = resourceManager.create(key, null, MasterReport.class);
     return (MasterReport) resource.getResource();
   }

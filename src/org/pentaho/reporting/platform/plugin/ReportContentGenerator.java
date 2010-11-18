@@ -25,6 +25,10 @@ import org.pentaho.reporting.platform.plugin.gwt.client.ReportViewer.RENDER_TYPE
 
 public class ReportContentGenerator extends SimpleContentGenerator
 {
+  /**
+   * 
+   */
+  private static final long serialVersionUID = 1L;
   private static final Log log = LogFactory.getLog(ReportContentGenerator.class);
 
   public ReportContentGenerator()
@@ -37,15 +41,11 @@ public class ReportContentGenerator extends SimpleContentGenerator
     setInstanceId(id);
     final IParameterProvider requestParams = getRequestParameters();
 
-    final String solution = URLDecoder.decode(requestParams.getStringParameter("solution", ""), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-    final String path = URLDecoder.decode(requestParams.getStringParameter("path", ""), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-    final String name = URLDecoder.decode(requestParams.getStringParameter("name", requestParams.getStringParameter("action", "")), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+    final String fileId = requestParams.getStringParameter("id", null); //$NON-NLS-1$ //$NON-NLS-2$
+    
 
     final RENDER_TYPE renderMode = RENDER_TYPE.valueOf
         (requestParams.getStringParameter("renderMode", RENDER_TYPE.REPORT.toString()).toUpperCase()); //$NON-NLS-1$
-
-    final String reportDefinitionPath = ActionInfo.buildSolutionPath(solution, path, name);
-
     try
     {
       switch (renderMode)
@@ -54,27 +54,27 @@ public class ReportContentGenerator extends SimpleContentGenerator
         {
           final DownloadReportContentHandler contentHandler =
               new DownloadReportContentHandler(userSession, parameterProviders.get("path"));
-          contentHandler.createDownloadContent(outputStream, reportDefinitionPath);
+          contentHandler.createDownloadContent(outputStream, fileId);
           break;
         }
         case REPORT:
         {
           // create inputs from request parameters
           final ExecuteReportContentHandler executeReportContentHandler = new ExecuteReportContentHandler(this);
-          executeReportContentHandler.createReportContent(outputStream, reportDefinitionPath);
+          executeReportContentHandler.createReportContent(outputStream, fileId);
           break;
         }
         case SUBSCRIBE:
         {
           final SubscribeContentHandler subscribeContentHandler = new SubscribeContentHandler(this);
-          subscribeContentHandler.createSubscribeContent(outputStream, reportDefinitionPath);
+          subscribeContentHandler.createSubscribeContent(outputStream, fileId);
           break;
         }
         case XML:
         {
           // create inputs from request parameters
           final ParameterXmlContentHandler parameterXmlContentHandler = new ParameterXmlContentHandler(this);
-          parameterXmlContentHandler.createParameterContent(outputStream, reportDefinitionPath);
+          parameterXmlContentHandler.createParameterContent(outputStream, fileId);
           break;
         }
         default:
@@ -140,12 +140,6 @@ public class ReportContentGenerator extends SimpleContentGenerator
       final Map<String, Object> contentParameters = content.getParameters();
       final SimpleParameterSetter parameters = new SimpleParameterSetter();
       parameters.setParameters(contentParameters);
-
-      // add solution,path,name
-      final ActionInfo info = ActionInfo.parseActionString(content.getActionReference());
-      parameters.setParameter("solution", info.getSolutionName()); //$NON-NLS-1$
-      parameters.setParameter("path", info.getPath()); //$NON-NLS-1$
-      parameters.setParameter("name", info.getActionName()); //$NON-NLS-1$
 
       SubscriptionHelper.getSubscriptionParameters(subscriptionId, parameters, userSession);
 
@@ -226,16 +220,13 @@ public class ReportContentGenerator extends SimpleContentGenerator
       return "application/octet-stream"; //$NON-NLS-1$
     }
 
-    final String solution = requestParams.getStringParameter("solution", null); //$NON-NLS-1$
-    final String path = requestParams.getStringParameter("path", null); //$NON-NLS-1$
-    final String name = requestParams.getStringParameter("name", requestParams.getStringParameter("action", null)); //$NON-NLS-1$ //$NON-NLS-2$
-    final String reportDefinitionPath = ActionInfo.buildSolutionPath(solution, path, name);
-
+    final String fileId = requestParams.getStringParameter("id", null); //$NON-NLS-1$ //$NON-NLS-2$
+    
     final SimpleReportingComponent reportComponent = new SimpleReportingComponent();
     final Map<String, Object> inputs = createInputs(requestParams);
     reportComponent.setDefaultOutputTarget(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE);
     reportComponent.setSession(userSession);
-    reportComponent.setReportDefinitionPath(reportDefinitionPath);
+    reportComponent.setReportFileId(fileId);
     reportComponent.setInputs(inputs);
     return reportComponent.getMimeType();
   }
