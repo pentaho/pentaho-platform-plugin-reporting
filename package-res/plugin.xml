@@ -22,15 +22,15 @@
           <!-- for any of these urls, you can add layout=flow to the url -->
           <operation>
             <id>RUN</id>
-            <command>content/reporting/reportviewer/report.html?solution={solution}&amp;path={path}&amp;name={name}&amp;locale={locale}</command>
+            <command>content/reporting/reportviewer/report.html?id={id}&amp;locale={locale}</command>
           </operation>
           <operation>
             <id>NEWWINDOW</id>
-            <command>content/reporting/reportviewer/report.html?solution={solution}&amp;path={path}&amp;name={name}&amp;locale={locale}</command>
+            <command>content/reporting/reportviewer/report.html?id={id}&amp;locale={locale}</command>
           </operation>
           <operation>
             <id>SCHEDULE_NEW</id>
-            <command>content/reporting/reportviewer/report.html?solution={solution}&amp;path={path}&amp;name={name}&amp;subscribe=true&amp;locale={locale}</command>
+            <command>content/reporting/reportviewer/report.html?id={id}&amp;subscribe=true&amp;locale={locale}</command>
           </operation>
           <operation>
             <id>SCHEDULE_EDIT</id>
@@ -38,11 +38,11 @@
           </operation>
           <operation>
             <id>BACKGROUND</id>
-            <command>ViewAction?solution={solution}&amp;path={path}&amp;action={name}&amp;background=true</command>
+            <command>ViewAction?id={id}&amp;background=true</command>
           </operation>
           <operation>
             <id>PARAMETER</id>
-            <command>content/reporting/?renderMode=XML&amp;solution={solution}&amp;path={path}&amp;name={name}</command>
+            <command>content/reporting/?renderMode=XML&amp;id={id}</command>
           </operation>
         </operations>
       </content-type>
