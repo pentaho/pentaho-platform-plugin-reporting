@@ -20,7 +20,6 @@ public class ParameterDefinition
   private boolean paginate;
   private String layout;
   private Boolean autoSubmit;
-  private boolean showParameterUi;
   private LinkedHashMap<String, ParameterGroup> parameters;
   private boolean autoSubmitUI;
   private boolean subscribe;
@@ -43,12 +42,16 @@ public class ParameterDefinition
 
   public boolean isShowParameterUi()
   {
-    return showParameterUi;
-  }
-
-  public void setShowParameterUi(final boolean showParameterUi)
-  {
-    this.showParameterUi = showParameterUi;
+    final Parameter parameter = getParameter("showParameters");
+    if (parameter == null)
+    {
+      return true;
+    }
+    if (parameter.isSelectedValue("false"))
+    {
+      return false;
+    }
+    return true;
   }
 
   public boolean isPromptNeeded()
@@ -141,6 +144,15 @@ public class ParameterDefinition
   public void setAutoSubmitUI(final boolean autoSubmitUI)
   {
     this.autoSubmitUI = autoSubmitUI;
+  }
+
+  public boolean isAllowAutosubmit()
+  {
+    if (autoSubmit != null)
+    {
+      return autoSubmit;
+    }
+    return autoSubmitUI;
   }
 
   public boolean isSubscribe()

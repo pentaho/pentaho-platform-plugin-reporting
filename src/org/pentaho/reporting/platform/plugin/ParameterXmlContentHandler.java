@@ -28,7 +28,6 @@ import org.pentaho.platform.api.repository.ISubscribeContent;
 import org.pentaho.platform.api.repository.ISubscription;
 import org.pentaho.platform.api.repository.ISubscriptionRepository;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
-import org.pentaho.platform.engine.services.WebServiceUtil;
 import org.pentaho.reporting.engine.classic.core.AttributeNames;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportDataFactoryException;
@@ -43,6 +42,7 @@ import org.pentaho.reporting.engine.classic.core.parameters.DefaultParameterCont
 import org.pentaho.reporting.engine.classic.core.parameters.ListParameter;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterAttributeNames;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterContext;
+import org.pentaho.reporting.engine.classic.core.parameters.ParameterContextWrapper;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterDefinitionEntry;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterValues;
 import org.pentaho.reporting.engine.classic.core.parameters.PlainParameter;
@@ -51,6 +51,7 @@ import org.pentaho.reporting.engine.classic.core.parameters.StaticListParameter;
 import org.pentaho.reporting.engine.classic.core.parameters.ValidationMessage;
 import org.pentaho.reporting.engine.classic.core.parameters.ValidationResult;
 import org.pentaho.reporting.engine.classic.core.util.NullOutputStream;
+import org.pentaho.reporting.engine.classic.core.util.ReportParameterValues;
 import org.pentaho.reporting.engine.classic.core.util.beans.BeanException;
 import org.pentaho.reporting.engine.classic.core.util.beans.ConverterRegistry;
 import org.pentaho.reporting.engine.classic.core.util.beans.ValueConverter;
@@ -74,8 +75,8 @@ public class ParameterXmlContentHandler
   private Map<String, ParameterDefinitionEntry> systemParameter;
 
   private ReportContentGenerator contentGenerator;
+  private boolean paginate;
   private Document document;
-  //private ParameterContext parameterContext;
   private IParameterProvider requestParameters;
   private IPentahoSession userSession;
   private Map<String, Object> inputs;
@@ -90,15 +91,17 @@ public class ParameterXmlContentHandler
   private static final String GROUP_SYSTEM = "system";
   private static final String GROUP_PARAMETERS = "parameters";
 
-  public ParameterXmlContentHandler(final ReportContentGenerator contentGenerator)
+  public ParameterXmlContentHandler(final ReportContentGenerator contentGenerator,
+                                    final boolean paginate)
   {
     this.contentGenerator = contentGenerator;
+    this.paginate = paginate;
     this.inputs = contentGenerator.createInputs();
     this.requestParameters = contentGenerator.getRequestParameters();
     this.userSession = contentGenerator.getUserSession();
   }
 
-  public IParameterProvider getRequestParameters()
+  private IParameterProvider getRequestParameters()
   {
     return requestParameters;
   }
@@ -112,25 +115,28 @@ public class ParameterXmlContentHandler
       parameter.put(SYS_PARAM_DESTINATION, createDestinationParameter());
       parameter.put(SYS_PARAM_SCHEDULE_ID, createScheduleIdParameter());
       parameter.put(SYS_PARAM_OUTPUT_TARGET, createOutputParameter());
-      parameter.put("subscribe", createGenericBooleanSystemParameter("subscribe", false)); // NON-NLS
-
-      parameter.put("solution", createGenericSystemParameter("solution", false)); // NON-NLS
-      parameter.put("yield-rate", createGenericIntSystemParameter("yield-rate", false)); // NON-NLS
-      parameter.put("accepted-page", createGenericIntSystemParameter("accepted-page", false)); // NON-NLS
-      parameter.put("path", createGenericSystemParameter("path", false)); // NON-NLS
-      parameter.put("name", createGenericSystemParameter("name", false)); // NON-NLS
-      parameter.put("action", createGenericSystemParameter("action", true)); // NON-NLS
-      parameter.put("output-type", createGenericSystemParameter("output-type", true)); // NON-NLS
-      parameter.put("layout", createGenericSystemParameter("layout", true)); // NON-NLS
-      parameter.put("content-handler-pattern", createGenericSystemParameter("content-handler-pattern", true)); // NON-NLS
-      parameter.put("autoSubmit", createGenericBooleanSystemParameter("autoSubmit", true)); // NON-NLS
-      parameter.put("autoSubmitUI", createGenericBooleanSystemParameter("autoSubmitUI", true)); // NON-NLS
-      parameter.put("dashboard-mode", createGenericBooleanSystemParameter("dashboard-mode", false)); // NON-NLS
-      parameter.put("showParameters", createGenericBooleanSystemParameter("showParameters", true)); // NON-NLS
-      parameter.put("paginate", createGenericBooleanSystemParameter("paginate", true)); // NON-NLS
-      parameter.put("ignoreDefaultDates", createGenericBooleanSystemParameter("ignoreDefaultDates", true)); // NON-NLS
-      parameter.put("print", createGenericBooleanSystemParameter("print", false)); // NON-NLS
-      parameter.put("printer-name", createGenericSystemParameter("printer-name", false)); // NON-NLS
+      parameter.put("subscribe", createGenericBooleanSystemParameter("subscribe", false, false)); // NON-NLS
+      parameter.put("::TabName",
+          createGenericSystemParameter("::TabName", false, true)); // NON-NLS
+      parameter.put("::TabActive",
+          createGenericBooleanSystemParameter("::TabActive", false, true)); // NON-NLS
+      parameter.put("solution", createGenericSystemParameter("solution", false, false)); // NON-NLS
+      parameter.put("yield-rate", createGenericIntSystemParameter("yield-rate", false, false)); // NON-NLS
+      parameter.put("accepted-page", createGenericIntSystemParameter("accepted-page", false, false)); // NON-NLS
+      parameter.put("path", createGenericSystemParameter("path", false, false)); // NON-NLS
+      parameter.put("name", createGenericSystemParameter("name", false, false)); // NON-NLS
+      parameter.put("action", createGenericSystemParameter("action", true, false)); // NON-NLS
+      parameter.put("output-type", createGenericSystemParameter("output-type", true, false)); // NON-NLS
+      parameter.put("layout", createGenericSystemParameter("layout", true, false)); // NON-NLS
+      parameter.put("content-handler-pattern", createGenericSystemParameter("content-handler-pattern", true, false)); // NON-NLS
+      parameter.put("autoSubmit", createGenericBooleanSystemParameter("autoSubmit", true, true)); // NON-NLS
+      parameter.put("autoSubmitUI", createGenericBooleanSystemParameter("autoSubmitUI", true, true)); // NON-NLS
+      parameter.put("dashboard-mode", createGenericBooleanSystemParameter("dashboard-mode", false, true)); // NON-NLS
+      parameter.put("showParameters", createGenericBooleanSystemParameter("showParameters", true, true)); // NON-NLS
+      parameter.put("paginate", createGenericBooleanSystemParameter("paginate", true, false)); // NON-NLS
+      parameter.put("ignoreDefaultDates", createGenericBooleanSystemParameter("ignoreDefaultDates", true, false)); // NON-NLS
+      parameter.put("print", createGenericBooleanSystemParameter("print", false, false)); // NON-NLS
+      parameter.put("printer-name", createGenericSystemParameter("printer-name", false, false)); // NON-NLS
       parameter.put("renderMode", createRenderModeSystemParameter()); // NON-NLS
 
       systemParameter = Collections.unmodifiableMap(parameter);
@@ -179,28 +185,26 @@ public class ParameterXmlContentHandler
 
     final MasterReport report = reportComponent.getReport();
 
-    final ParameterContext parameterContext = new DefaultParameterContext(report);
+    final DefaultParameterContext parameterContext = new DefaultParameterContext(report);
+    final ValidationResult vr;
+    final Element parameters;
     try
     {
       // open parameter context
       parameterContext.open();
       // apply inputs to parameters
-      ValidationResult validationResult = new ValidationResult();
-      validationResult = reportComponent.applyInputsToReportParameters(parameterContext, validationResult);
+      final ValidationResult validationResult =
+          reportComponent.applyInputsToReportParameters(parameterContext, new ValidationResult());
 
       final ReportParameterDefinition reportParameterDefinition = report.getParameterDefinition();
-      final ValidationResult vr = reportParameterDefinition.getValidator().validate
+      vr = reportParameterDefinition.getValidator().validate
           (validationResult, reportParameterDefinition, parameterContext);
 
-      final Element parameters = document.createElement(GROUP_PARAMETERS); //$NON-NLS-1$
+      parameters = document.createElement(GROUP_PARAMETERS); //$NON-NLS-1$
       parameters.setAttribute("is-prompt-needed", String.valueOf(vr.isEmpty() == false)); //$NON-NLS-1$ //$NON-NLS-2$
       parameters.setAttribute("subscribe", String.valueOf(subscribe)); //$NON-NLS-1$ //$NON-NLS-2$
 
       // check if pagination is allowed and turned on
-      if (vr.isEmpty()) //$NON-NLS-1$ //$NON-NLS-2$
-      {
-        appendPageCount(reportComponent, parameters);
-      }
 
       final Boolean autoSubmitFlag = requestFlag("autoSubmit", report,
           AttributeNames.Core.NAMESPACE, AttributeNames.Core.AUTO_SUBMIT_PARAMETER,
@@ -226,39 +230,54 @@ public class ParameterXmlContentHandler
         parameters.setAttribute("autoSubmitUI", "true"); // NON-NLS
       }
 
-      final Boolean showParameterUI = requestFlag("showParameterUI", report, // NON-NLS
-          AttributeNames.Core.NAMESPACE, AttributeNames.Core.SHOW_PARAMETER_UI, null);
-      if (Boolean.FALSE.equals(showParameterUI))
-      {
-        parameters.setAttribute("show-parameter-ui", "false"); // NON-NLS
-      }
-      else
-      {
-        parameters.setAttribute("show-parameter-ui", "true"); // NON-NLS
-      }
 
       parameters.setAttribute("layout", requestConfiguration("layout", report, // NON-NLS
           AttributeNames.Core.NAMESPACE, AttributeNames.Core.PARAMETER_UI_LAYOUT,
           "org.pentaho.reporting.engine.classic.core.ParameterUiLayout"));
 
-      final LinkedHashMap<String, ParameterDefinitionEntry> reportParameters =
-          new LinkedHashMap<String, ParameterDefinitionEntry>();
+
       final ParameterDefinitionEntry[] parameterDefinitions = reportParameterDefinition.getParameterDefinitions();
+      // Collect all parameter, but allow user-parameter to override system parameter.
+      // It is the user's problem if the types do not match and weird errors occur, but
+      // there are sensible usecases where this should be allowed.
+      // System parameter must come last in the list, as this is how it was done in the original
+      // version and this is how people expect it to be now.
+      final LinkedHashMap<String, ParameterDefinitionEntry> reportParameters = new LinkedHashMap<String, ParameterDefinitionEntry>();
       for (final ParameterDefinitionEntry parameter : parameterDefinitions)
       {
         reportParameters.put(parameter.getName(), parameter);
       }
-      reportParameters.putAll(getSystemParameter());
+      for (final Map.Entry<String,ParameterDefinitionEntry> entry: getSystemParameter().entrySet())
+      {
+        if (reportParameters.containsKey(entry.getKey()) == false)
+        {
+          reportParameters.put(entry.getKey(), entry.getValue());
+        }
+      }
 
       hideOutputParameterIfLocked(report, reportParameters);
       hideSubscriptionParameter(subscribe, reportParameters);
       final Map<String, Object> inputs = computeRealInput
-          (parameterContext, reportParameters, reportComponent.getComputedOutputTarget());
+          (parameterContext, reportParameters, reportComponent.getComputedOutputTarget(), vr);
+
+      final Boolean showParameterUI = requestFlag("showParameters", report, // NON-NLS
+          AttributeNames.Core.NAMESPACE, AttributeNames.Core.SHOW_PARAMETER_UI, null);
+      if (Boolean.FALSE.equals(showParameterUI))
+      {
+        inputs.put("showParameters", Boolean.FALSE); // NON-NLS
+      }
+      else
+      {
+        inputs.put("showParameters", Boolean.TRUE); // NON-NLS
+      }
+
 
       for (final ParameterDefinitionEntry parameter : reportParameters.values())
       {
         final Object selections = inputs.get(parameter.getName());
-        parameters.appendChild(createParameterElement(parameter, parameterContext, selections));
+        final ParameterContextWrapper wrapper = new ParameterContextWrapper
+            (parameterContext, vr.getParameterValues());
+        parameters.appendChild(createParameterElement(parameter, wrapper, selections));
       }
 
       if (vr.isEmpty() == false)
@@ -266,36 +285,59 @@ public class ParameterXmlContentHandler
         parameters.appendChild(createErrorElements(vr));
       }
 
-      document.appendChild(parameters);
-
-      final DOMSource source = new DOMSource(document);
-      final StreamResult result = new StreamResult(outputStream);
-      final Transformer transformer = TransformerFactory.newInstance().newTransformer();
-      transformer.transform(source, result);
-      // close parameter context
     }
     finally
     {
       parameterContext.close();
     }
+
+    if (vr.isEmpty() && paginate) //$NON-NLS-1$ //$NON-NLS-2$
+    {
+      appendPageCount(reportComponent, parameters);
+    }
+    document.appendChild(parameters);
+
+    final DOMSource source = new DOMSource(document);
+    final StreamResult result = new StreamResult(outputStream);
+    final Transformer transformer = TransformerFactory.newInstance().newTransformer();
+    transformer.transform(source, result);
+    // close parameter context
   }
 
   private Map<String, Object> computeRealInput(final ParameterContext parameterContext,
                                                final LinkedHashMap<String, ParameterDefinitionEntry> reportParameters,
-                                               final String computedOutputTarget)
+                                               final String computedOutputTarget,
+                                               final ValidationResult result)
   {
     final Map<String, Object> realInputs = new HashMap<String, Object>();
     realInputs.put(SYS_PARAM_DESTINATION, lookupDestination());
     realInputs.put(SYS_PARAM_SCHEDULE_ID, lookupSchedules());
     realInputs.put(SYS_PARAM_SUBSCRIPTION_NAME, lookupSubscriptionName());
 
+    final ReportParameterValues parameterValues = result.getParameterValues();
+
     for (final ParameterDefinitionEntry parameter : reportParameters.values())
     {
-      final Object value = inputs.get(parameter.getName());
+      final String parameterName = parameter.getName();
+      final Object value = inputs.get(parameterName);
+      if (value == null)
+      {
+        // have no value, so we use the default value ..
+        realInputs.put(parameterName, parameterValues.get(parameterName));
+        continue;
+      }
+
       try
       {
         final Object translatedValue = ReportContentUtil.computeParameterValue(parameterContext, parameter, value);
-        realInputs.put(parameter.getName(), translatedValue);
+        if (translatedValue != null)
+        {
+          realInputs.put(parameterName, translatedValue);
+        }
+        else
+        {
+          realInputs.put(parameterName, parameterValues.get(parameterName));
+        }
       }
       catch (Exception be)
       {
@@ -371,7 +413,7 @@ public class ParameterXmlContentHandler
 
       if (Date.class.isAssignableFrom(elementValueType))
       {
-        parameterElement.setAttribute("timzone-hint", computeTimeZoneHint(parameter, parameterContext));
+        parameterElement.setAttribute("timzone-hint", computeTimeZoneHint(parameter, parameterContext));//$NON-NLS-1$
       }
 
       final HashSet<Object> selectionSet = new HashSet<Object>();
@@ -430,7 +472,7 @@ public class ParameterXmlContentHandler
 
           valueElement.setAttribute("label", String.valueOf(value)); //$NON-NLS-1$ //$NON-NLS-2$
           valueElement.setAttribute("type", elementValueType.getName()); //$NON-NLS-1$
-          valueElement.setAttribute("selected", String.valueOf(selectionSet.contains(value)));//$NON-NLS-1$
+          valueElement.setAttribute("selected", String.valueOf(selectionSet.contains(key)));//$NON-NLS-1$
 
           if (value == null)
           {
@@ -480,7 +522,7 @@ public class ParameterXmlContentHandler
     // add a timezone hint ..
     final String timezoneSpec = parameter.getParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TIMEZONE, parameterContext);
-    if ("client".equals(timezoneSpec))
+    if ("client".equals(timezoneSpec))//$NON-NLS-1$
     {
       return ("");
     }
@@ -488,13 +530,13 @@ public class ParameterXmlContentHandler
     {
       final TimeZone timeZone;
       final StringBuffer value = new StringBuffer();
-      if (timezoneSpec == null || "server".equals(timezoneSpec))
+      if (timezoneSpec == null || "server".equals(timezoneSpec))//$NON-NLS-1$
       {
         timeZone = TimeZone.getDefault();
       }
-      else if ("utc".equals(timezoneSpec))
+      else if ("utc".equals(timezoneSpec))//$NON-NLS-1$
       {
-        timeZone = TimeZone.getTimeZone("UTC");
+        timeZone = TimeZone.getTimeZone("UTC");//$NON-NLS-1$
       }
       else
       {
@@ -555,8 +597,8 @@ public class ParameterXmlContentHandler
           (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TIMEZONE, context);
       final DateFormat dateFormat;
       if (timezone == null ||
-          "server".equals(timezone) ||
-          "client".equals(timezone))
+          "server".equals(timezone) ||//$NON-NLS-1$
+          "client".equals(timezone))//$NON-NLS-1$
       {
         // nothing needed ..
         // for server: Just print it as it is, including the server timezone.
@@ -566,9 +608,9 @@ public class ParameterXmlContentHandler
       {
         // for convinience for the clients we send the date in the correct timezone.
         final TimeZone timeZoneObject;
-        if ("utc".equals(timezone))
+        if ("utc".equals(timezone))//$NON-NLS-1$
         {
-          timeZoneObject = TimeZone.getTimeZone("UTC");
+          timeZoneObject = TimeZone.getTimeZone("UTC");//$NON-NLS-1$
         }
         else
         {
@@ -683,6 +725,8 @@ public class ParameterXmlContentHandler
     final PlainParameter subscriptionName = new PlainParameter(SYS_PARAM_SUBSCRIPTION_NAME, String.class);
     subscriptionName.setMandatory(true);
     subscriptionName.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PREFERRED, String.valueOf(false));
+    subscriptionName.setParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP, GROUP_SUBSCRIPTION);
     subscriptionName.setParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP_LABEL,
@@ -702,6 +746,8 @@ public class ParameterXmlContentHandler
     final PlainParameter destinationParameter = new PlainParameter(SYS_PARAM_DESTINATION, String.class);
     destinationParameter.setMandatory(false);
     destinationParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PREFERRED, String.valueOf(false));
+    destinationParameter.setParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP, GROUP_SUBSCRIPTION);
     destinationParameter.setParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP_LABEL,
@@ -718,19 +764,23 @@ public class ParameterXmlContentHandler
   }
 
   private PlainParameter createGenericSystemParameter(final String parameterName,
-                                                      final boolean deprecated)
+                                                      final boolean deprecated,
+                                                      final boolean preferredParameter)
   {
-    return createGenericSystemParameter(parameterName, deprecated, String.class);
+    return createGenericSystemParameter(parameterName, deprecated, preferredParameter, String.class);
   }
 
   private PlainParameter createGenericSystemParameter(final String parameterName,
                                                       final boolean deprecated,
+                                                      final boolean preferredParameter,
                                                       final Class type)
   {
     final PlainParameter destinationParameter = new PlainParameter(parameterName, type);
     destinationParameter.setMandatory(false);
     destinationParameter.setHidden(true);
     destinationParameter.setRole(ParameterAttributeNames.Core.ROLE_SYSTEM_PARAMETER);
+    destinationParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PREFERRED, String.valueOf(preferredParameter));
     destinationParameter.setParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP, GROUP_SYSTEM);
     destinationParameter.setParameterAttribute
@@ -746,15 +796,17 @@ public class ParameterXmlContentHandler
   }
 
   private PlainParameter createGenericBooleanSystemParameter(final String parameterName,
-                                                             final boolean deprecated)
+                                                             final boolean deprecated,
+                                                      final boolean preferredParameter)
   {
-    return createGenericSystemParameter(parameterName, deprecated, Boolean.class);
+    return createGenericSystemParameter(parameterName, deprecated, preferredParameter, Boolean.class);
   }
 
   private PlainParameter createGenericIntSystemParameter(final String parameterName,
-                                                         final boolean deprecated)
+                                                         final boolean deprecated,
+                                                      final boolean preferredParameter)
   {
-    return createGenericSystemParameter(parameterName, deprecated, Integer.class);
+    return createGenericSystemParameter(parameterName, deprecated, preferredParameter, Integer.class);
   }
 
   private StaticListParameter createScheduleIdParameter()
@@ -762,6 +814,8 @@ public class ParameterXmlContentHandler
 
     final StaticListParameter scheduleIdParameter = new StaticListParameter(SYS_PARAM_SCHEDULE_ID, false, true, String.class);
     scheduleIdParameter.setMandatory(true);
+    scheduleIdParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PREFERRED, "false");
     scheduleIdParameter.setParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP, GROUP_SUBSCRIPTION);
     scheduleIdParameter.setParameterAttribute
@@ -850,6 +904,8 @@ public class ParameterXmlContentHandler
     final StaticListParameter listParameter = new StaticListParameter
         (SYS_PARAM_OUTPUT_TARGET, false, true, String.class);
     listParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PREFERRED, String.valueOf(true));
+    listParameter.setParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP, GROUP_PARAMETERS);
     listParameter.setParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP_LABEL,
@@ -865,6 +921,7 @@ public class ParameterXmlContentHandler
     listParameter.addValues(HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE, Messages.getInstance().getString("ReportPlugin.outputHTMLStream"));
     listParameter.addValues(PdfPageableModule.PDF_EXPORT_TYPE, Messages.getInstance().getString("ReportPlugin.outputPDF"));
     listParameter.addValues(ExcelTableModule.EXCEL_FLOW_EXPORT_TYPE, Messages.getInstance().getString("ReportPlugin.outputXLS"));
+    listParameter.addValues(ExcelTableModule.XLSX_FLOW_EXPORT_TYPE, Messages.getInstance().getString("ReportPlugin.outputXLSX"));
     listParameter.addValues(CSVTableModule.TABLE_CSV_STREAM_EXPORT_TYPE, Messages.getInstance().getString("ReportPlugin.outputCSV"));
     listParameter.addValues(RTFTableModule.TABLE_RTF_FLOW_EXPORT_TYPE, Messages.getInstance().getString("ReportPlugin.outputRTF"));
     listParameter.addValues(PlainTextPageableModule.PLAINTEXT_EXPORT_TYPE, Messages.getInstance().getString("ReportPlugin.outputTXT"));
@@ -876,6 +933,8 @@ public class ParameterXmlContentHandler
     final StaticListParameter listParameter = new StaticListParameter
         (SYS_PARAM_RENDER_MODE, false, true, String.class);
     listParameter.setHidden(true);
+    listParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PREFERRED, String.valueOf(false));
     listParameter.setParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP, GROUP_SYSTEM);
     listParameter.setParameterAttribute
@@ -891,6 +950,7 @@ public class ParameterXmlContentHandler
     listParameter.addValues("REPORT", "REPORT"); // NON-NLS
     listParameter.addValues("SUBSCRIBE", "SUBSCRIBE"); // NON-NLS
     listParameter.addValues("DOWNLOAD", "DOWNLOAD"); // NON-NLS
+    listParameter.addValues("PARAMETER", "PARAMETER"); // NON-NLS
     return listParameter;
   }
 

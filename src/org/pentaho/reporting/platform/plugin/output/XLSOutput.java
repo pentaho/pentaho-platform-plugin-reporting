@@ -23,6 +23,7 @@ public class XLSOutput
     resourceManager.registerDefaults();
 
     final FlowExcelOutputProcessor target = new FlowExcelOutputProcessor(report.getConfiguration(), new NullOutputStream(), resourceManager);
+    target.setUseXlsxFormat(false);
     final FlowReportProcessor reportProcessor = new FlowReportProcessor(report, target);
 
     if (templateInputStream != null)
@@ -49,6 +50,7 @@ public class XLSOutput
     resourceManager.registerDefaults();
 
     final FlowExcelOutputProcessor target = new FlowExcelOutputProcessor(report.getConfiguration(), outputStream, resourceManager);
+    target.setUseXlsxFormat(false);
     final FlowReportProcessor reportProcessor = new FlowReportProcessor(report, target);
 
     if (templateInputStream != null)

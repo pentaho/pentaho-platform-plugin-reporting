@@ -16,7 +16,7 @@ import org.pentaho.reporting.libraries.base.config.DefaultConfiguration;
 
 /**
  * Creation-Date: 05.07.2007, 19:48:16
- * 
+ *
  * @author Thomas Morgner
  */
 public class ReportingConfiguration extends PropertyLookupParser implements Configuration {
@@ -34,12 +34,12 @@ public class ReportingConfiguration extends PropertyLookupParser implements Conf
     {
       return;
     }
-    final List reportSettings = cfg.getSystemSettings("report-config/entry");//$NON-NLS-1$ 
+    final List reportSettings = cfg.getSystemSettings("report-config/entry");//$NON-NLS-1$
     for (int i = 0; i < reportSettings.size(); i++)
     {
       final Element element = (Element) reportSettings.get(i);
-      final Attribute name = element.attribute("name");//$NON-NLS-1$ 
-      final Attribute value = element.attribute("value");//$NON-NLS-1$ 
+      final Attribute name = element.attribute("name");//$NON-NLS-1$
+      final Attribute value = element.attribute("value");//$NON-NLS-1$
       if ((name != null) && (value != null))
       {
         this.config.setConfigProperty(name.getValue(), translateAndLookup(value.getValue()));
@@ -106,7 +106,7 @@ public class ReportingConfiguration extends PropertyLookupParser implements Conf
 
     if (context != null)
     {
-      if ("base-url".equals(property)) {//$NON-NLS-1$ 
+      if ("base-url".equals(property)) {//$NON-NLS-1$
         return context.getFullyQualifiedServerURL();
       }
     }

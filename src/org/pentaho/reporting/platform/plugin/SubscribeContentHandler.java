@@ -42,7 +42,7 @@ public class SubscribeContentHandler
                                      final String reportDefinitionPath)
       throws ResourceException, IOException
   {
-    final MasterReport report = ReportCreator.createReport(reportDefinitionPath, userSession);
+    final MasterReport report = ReportCreator.createReport(reportDefinitionPath);
     final ParameterDefinitionEntry parameterDefinitions[] = report.getParameterDefinition().getParameterDefinitions();
     final String result = saveSubscription(parameterDefinitions, reportDefinitionPath);
     outputStream.write(result.getBytes());

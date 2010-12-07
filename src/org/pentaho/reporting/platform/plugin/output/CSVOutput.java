@@ -13,7 +13,7 @@ import org.pentaho.reporting.engine.classic.core.util.NullOutputStream;
 public class CSVOutput
 {
 
-  public static int paginate(final MasterReport report, 
+  public static int paginate(final MasterReport report,
                                  final int yieldRate) throws ReportProcessingException, IOException
   {
     StreamReportProcessor proc = null;
@@ -47,7 +47,7 @@ public class CSVOutput
     {
       final StreamCSVOutputProcessor target = new StreamCSVOutputProcessor(report.getConfiguration(), outputStream);
       proc = new StreamReportProcessor(report, target);
-      
+
       if (yieldRate > 0)
       {
         proc.addReportProgressListener(new YieldReportListener(yieldRate));

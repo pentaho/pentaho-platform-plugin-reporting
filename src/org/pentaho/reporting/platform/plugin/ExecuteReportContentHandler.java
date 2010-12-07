@@ -86,7 +86,7 @@ public class ExecuteReportContentHandler
       if (reportStagingHandler.isFullyBuffered())
       {
         // it is safe to disable the buffered writing for the report now that we have a
-        // extra buffering in place. 
+        // extra buffering in place.
         report.getReportConfiguration().setConfigProperty(FORCED_BUFFERED_WRITING, "false");
       }
 

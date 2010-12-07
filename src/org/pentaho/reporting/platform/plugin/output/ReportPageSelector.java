@@ -5,15 +5,14 @@ import org.pentaho.reporting.engine.classic.core.layout.output.LogicalPageKey;
 
 public class ReportPageSelector implements FlowSelector
 {
-
   private int acceptedPage;
 
-  public ReportPageSelector(int acceptedPage)
+  public ReportPageSelector(final int acceptedPage)
   {
     this.acceptedPage = acceptedPage;
   }
 
-  public boolean isLogicalPageAccepted(LogicalPageKey key)
+  public boolean isLogicalPageAccepted(final LogicalPageKey key)
   {
     if (key == null)
     {

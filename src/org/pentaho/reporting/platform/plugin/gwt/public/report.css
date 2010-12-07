@@ -20,7 +20,7 @@ body {
   font-size: 10pt;
 }
 
-.gwt-ToggleButton-up {
+.gwt-ToggleButton-up, .gwt-ToggleButton-up-disabled {
   background-image: url(buttonbg.gif);
   padding: 3px;
   margin: 2px;
@@ -45,7 +45,7 @@ body {
 
 }
 
-.gwt-ToggleButton-down {
+.gwt-ToggleButton-down, .gwt-ToggleButton-down-disabled {
   background-image: url(buttonbg.gif);
   padding: 2px;
   margin: 2px;
@@ -244,8 +244,8 @@ body {
 }
 .datePickerDay {
   padding: 4px;
-  cursor: hand;
   cursor: pointer;
+  cursor: hand;
 }
 .datePickerDayIsToday {
   border: 1px solid black;
@@ -277,7 +277,7 @@ body {
 }
 td.datePickerMonth {
   text-align: center;
-  vertical-align: center;
+  vertical-align: middle;
   white-space: nowrap;
   font-size: 70%;
   font-weight: bold;
@@ -286,8 +286,8 @@ td.datePickerMonth {
 .datePickerNextButton {
   font-size: 120%;
   line-height: 1em;
-  cursor: hand;
   cursor: pointer;
+  cursor: hand;
   padding: 0px 4px;
 }
 

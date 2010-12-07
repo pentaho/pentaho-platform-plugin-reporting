@@ -14,6 +14,7 @@ import org.pentaho.platform.api.repository.ISubscribeContent;
 import org.pentaho.platform.api.repository.ISubscription;
 import org.pentaho.platform.api.repository.ISubscriptionRepository;
 import org.pentaho.platform.engine.core.solution.ActionInfo;
+import org.pentaho.platform.engine.core.solution.SimpleParameterProvider;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.engine.services.solution.SimpleContentGenerator;
 import org.pentaho.platform.engine.services.solution.SimpleParameterSetter;
@@ -73,7 +74,14 @@ public class ReportContentGenerator extends SimpleContentGenerator
         case XML:
         {
           // create inputs from request parameters
-          final ParameterXmlContentHandler parameterXmlContentHandler = new ParameterXmlContentHandler(this);
+          final ParameterXmlContentHandler parameterXmlContentHandler = new ParameterXmlContentHandler(this, true);
+          parameterXmlContentHandler.createParameterContent(outputStream, reportDefinitionPath);
+          break;
+        }
+        case PARAMETER:
+        {
+          // create inputs from request parameters
+          final ParameterXmlContentHandler parameterXmlContentHandler = new ParameterXmlContentHandler(this, false);
           parameterXmlContentHandler.createParameterContent(outputStream, reportDefinitionPath);
           break;
         }
@@ -126,6 +134,11 @@ public class ReportContentGenerator extends SimpleContentGenerator
     if (requestParameters != null)
     {
       return requestParameters;
+    }
+
+    if (parameterProviders == null)
+    {
+      return new SimpleParameterProvider();
     }
 
     IParameterProvider requestParams = parameterProviders.get(IParameterProvider.SCOPE_REQUEST);
@@ -183,6 +196,11 @@ public class ReportContentGenerator extends SimpleContentGenerator
   private static Map<String, Object> createInputs(final IParameterProvider requestParams)
   {
     final Map<String, Object> inputs = new HashMap<String, Object>();
+    if (requestParams == null)
+    {
+      return inputs;
+    }
+
     final Iterator paramIter = requestParams.getParameterNames();
     while (paramIter.hasNext())
     {
@@ -212,7 +230,8 @@ public class ReportContentGenerator extends SimpleContentGenerator
     final IParameterProvider requestParams = getRequestParameters();
     final RENDER_TYPE renderMode = RENDER_TYPE.valueOf
         (requestParams.getStringParameter("renderMode", RENDER_TYPE.REPORT.toString()).toUpperCase()); //$NON-NLS-1$
-    if (renderMode.equals(RENDER_TYPE.XML))
+    if (renderMode.equals(RENDER_TYPE.XML) ||
+        renderMode.equals(RENDER_TYPE.PARAMETER))
     {
       return "text/xml"; //$NON-NLS-1$
     }

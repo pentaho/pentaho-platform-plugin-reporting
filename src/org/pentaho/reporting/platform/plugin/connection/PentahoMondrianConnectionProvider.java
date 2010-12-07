@@ -1,6 +1,7 @@
 package org.pentaho.reporting.platform.plugin.connection;
 
 import java.util.Properties;
+
 import javax.sql.DataSource;
 
 import mondrian.olap.Connection;
@@ -12,14 +13,6 @@ import org.pentaho.reporting.engine.classic.core.ReportDataFactoryException;
 import org.pentaho.reporting.engine.classic.extensions.datasources.mondrian.DefaultMondrianConnectionProvider;
 import org.pentaho.reporting.libraries.base.util.StringUtils;
 
-/**
- * Todo: Document me!
- * <p/>
- * Date: 15.04.2010
- * Time: 19:30:57
- *
- * @author Thomas Morgner.
- */
 public class PentahoMondrianConnectionProvider extends DefaultMondrianConnectionProvider
 {
   public static final String MDX_CONNECTION_MAPPER_KEY = "Mondrian-UserRoleMapper"; //$NON-NLS-1$
@@ -38,7 +31,8 @@ public class PentahoMondrianConnectionProvider extends DefaultMondrianConnection
       if (StringUtils.isEmpty(role))
       {
         // Only if the action sequence/requester hasn't already injected a role in here do this.
-        if(PentahoSystem.getObjectFactory().objectDefined(MDX_CONNECTION_MAPPER_KEY)) {
+        if(PentahoSystem.getObjectFactory().objectDefined(MDX_CONNECTION_MAPPER_KEY))
+        {
           final IConnectionUserRoleMapper mondrianUserRoleMapper =
               PentahoSystem.get(IConnectionUserRoleMapper.class, MDX_CONNECTION_MAPPER_KEY, null);
           if (mondrianUserRoleMapper != null)

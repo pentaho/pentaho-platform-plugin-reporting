@@ -1,14 +1,14 @@
 /*
- * This program is free software; you can redistribute it and/or modify it under the 
- * terms of the GNU Lesser General Public License, version 2.1 as published by the Free Software 
+ * This program is free software; you can redistribute it and/or modify it under the
+ * terms of the GNU Lesser General Public License, version 2.1 as published by the Free Software
  * Foundation.
  *
- * You should have received a copy of the GNU Lesser General Public License along with this 
- * program; if not, you can obtain a copy at http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html 
- * or from the Free Software Foundation, Inc., 
+ * You should have received a copy of the GNU Lesser General Public License along with this
+ * program; if not, you can obtain a copy at http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
+ * or from the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
@@ -30,19 +30,17 @@ import org.pentaho.reporting.libraries.resourceloader.loader.AbstractResourceDat
 
 /**
  * This class is implemented to support loading solution files from the pentaho repository into JFreeReport
- * 
+ *
  * @author Will Gorman/Michael D'Amour
  */
 public class RepositoryResourceData extends AbstractResourceData {
-
-  public static final String PENTAHO_REPOSITORY_KEY = "pentahoRepositoryKey"; //$NON-NLS-1$
 
   private String filename;
   private ResourceKey key;
 
   /**
    * constructor which takes a resource key for data loading specifics
-   * 
+   *
    * @param key
    *          resource key
    */
@@ -57,14 +55,14 @@ public class RepositoryResourceData extends AbstractResourceData {
 
   /**
    * gets a resource stream from the runtime context.
-   * 
+   *
    * @param caller
    *          resource manager
    * @return input stream
    */
-  public InputStream getResourceAsStream(ResourceManager caller) throws ResourceLoadingException {
+  public InputStream getResourceAsStream(final ResourceManager caller) throws ResourceLoadingException {
     try {
-      ISolutionRepository solutionRepository = PentahoSystem.get(ISolutionRepository.class);
+      final ISolutionRepository solutionRepository = PentahoSystem.get(ISolutionRepository.class);
       return solutionRepository.getResourceInputStream(key.getIdentifier().toString(), false, ISolutionRepository.ACTION_EXECUTE);
     } catch (FileNotFoundException e) {
       // might be due to access denial
@@ -74,12 +72,12 @@ public class RepositoryResourceData extends AbstractResourceData {
 
   /**
    * returns a requested attribute, currently only supporting filename.
-   * 
-   * @param key
+   *
+   * @param lookupKey
    *          attribute requested
    * @return attribute value
    */
-  public Object getAttribute(String lookupKey) {
+  public Object getAttribute(final String lookupKey) {
     if (lookupKey.equals(ResourceData.FILENAME)) {
       return filename;
     }
@@ -88,15 +86,15 @@ public class RepositoryResourceData extends AbstractResourceData {
 
   /**
    * return the version number
-   * 
+   *
    * @param caller
    *          resource manager
-   * 
+   *
    * @return version
    */
-  public long getVersion(ResourceManager caller) throws ResourceLoadingException {
-    ISolutionRepository solutionRepository = PentahoSystem.get(ISolutionRepository.class);
-    ISolutionFile file = solutionRepository.getSolutionFile(key.getIdentifier().toString(), ISolutionRepository.ACTION_EXECUTE);
+  public long getVersion(final ResourceManager caller) throws ResourceLoadingException {
+    final ISolutionRepository solutionRepository = PentahoSystem.get(ISolutionRepository.class);
+    final ISolutionFile file = solutionRepository.getSolutionFile(key.getIdentifier().toString(), ISolutionRepository.ACTION_EXECUTE);
     // if we got a FileNotFoundException on getResourceInputStream then we will get a null file; avoid NPE
     if (file != null) {
       return file.getLastModified();
@@ -107,7 +105,7 @@ public class RepositoryResourceData extends AbstractResourceData {
 
   /**
    * get the resource key
-   * 
+   *
    * @return resource key
    */
   public ResourceKey getKey() {

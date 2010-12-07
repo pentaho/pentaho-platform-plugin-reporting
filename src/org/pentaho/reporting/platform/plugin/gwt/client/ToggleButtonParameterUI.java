@@ -11,7 +11,7 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.ToggleButton;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
-public class ToggleButtonParameterUI extends SimplePanel
+public class ToggleButtonParameterUI extends SimplePanel implements ParameterUI
 {
   private class ToggleButtonParameterClickHandler implements ClickHandler
   {
@@ -60,9 +60,11 @@ public class ToggleButtonParameterUI extends SimplePanel
           parameterValues.addSelectedValue(parameterName, choiceValue);
         }
       }
-      controller.fetchParameters(true);
+      controller.fetchParameters(ParameterControllerPanel.ParameterSubmitMode.USERINPUT);
     }
   }
+
+  private ArrayList<ToggleButton> buttonList;
 
   public ToggleButtonParameterUI(final ParameterControllerPanel controller, final Parameter parameterElement)
   {
@@ -80,7 +82,7 @@ public class ToggleButtonParameterUI extends SimplePanel
       buttonPanel = new HorizontalPanel();
     }
     // need a button list so we can clear other selections for button-single mode
-    final List<ToggleButton> buttonList = new ArrayList<ToggleButton>();
+    buttonList = new ArrayList<ToggleButton>();
     final List<ParameterSelection> choices = parameterElement.getSelections();
     for (int i = 0; i < choices.size(); i++)
     {
@@ -98,4 +100,12 @@ public class ToggleButtonParameterUI extends SimplePanel
     setWidget(buttonPanel);
   }
 
+  public void setEnabled(final boolean enabled)
+  {
+    for (int i = 0; i < buttonList.size(); i++)
+    {
+      final ToggleButton button = buttonList.get(i);
+      button.setEnabled(enabled);
+    }
+  }
 }

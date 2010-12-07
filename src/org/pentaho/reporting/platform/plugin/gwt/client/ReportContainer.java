@@ -15,6 +15,50 @@ import org.pentaho.reporting.platform.plugin.gwt.client.ReportViewer.RENDER_TYPE
 
 public class ReportContainer extends VerticalPanel implements IParameterSubmissionListener
 {
+  private class ReportContentFrame extends Frame
+  {
+
+    public void onBrowserEvent(final Event event)
+    {
+      super.onBrowserEvent(event);
+      if (event.getTypeInt() == Event.ONLOAD)
+      {
+        if (StringUtils.isEmpty(url) == false && url.equals(ABOUT_BLANK) == false)
+        {
+          WaitPopup.getInstance().setVisible(false);
+        }
+      }
+    }
+
+    protected void onLoad()
+    {
+      super.onLoad();
+      if (StringUtils.isEmpty(url) == false && url.equals(ABOUT_BLANK) == false)
+      {
+        WaitPopup.getInstance().setVisible(false);
+      }
+    }
+
+    public void setUrl(final String url)
+    {
+      if (StringUtils.isEmpty(url) == false && url.equals(ABOUT_BLANK) == false)
+      {
+        WaitPopup.getInstance().setVisible(true);
+      }
+      super.setUrl(url);
+      // ie is not responding to onload
+      final Timer t = new Timer()
+      {
+        public void run()
+        {
+          WaitPopup.getInstance().setVisible(false);
+        }
+      };
+      t.schedule(1000);
+    }
+
+  }
+
   private static final String ABOUT_BLANK = "about:blank";
 
   private ParameterControllerPanel parameterControllerPanel;
@@ -25,49 +69,7 @@ public class ReportContainer extends VerticalPanel implements IParameterSubmissi
   {
     parameterControllerPanel = new ParameterControllerPanel(this, messages);
     parameterControllerPanel.addParameterSubmissionListener(this);
-    reportContainer = new Frame()
-    {
-
-      public void onBrowserEvent(final Event event)
-      {
-        super.onBrowserEvent(event);
-        if (event.getTypeInt() == Event.ONLOAD)
-        {
-          if (StringUtils.isEmpty(url) == false && url.equals(ABOUT_BLANK) == false)
-          {
-            WaitPopup.getInstance().setVisible(false);
-          }
-        }
-      }
-
-      protected void onLoad()
-      {
-        super.onLoad();
-        if (StringUtils.isEmpty(url) == false && url.equals(ABOUT_BLANK) == false)
-        {
-          WaitPopup.getInstance().setVisible(false);
-        }
-      }
-
-      public void setUrl(final String url)
-      {
-        if (StringUtils.isEmpty(url) == false && url.equals(ABOUT_BLANK) == false)
-        {
-          WaitPopup.getInstance().setVisible(true);
-        }
-        super.setUrl(url);
-        // ie is not responding to onload
-        final Timer t = new Timer()
-        {
-          public void run()
-          {
-            WaitPopup.getInstance().setVisible(false);
-          }
-        };
-        t.schedule(1000);
-      }
-
-    };
+    reportContainer = new ReportContentFrame();
     reportContainer.sinkEvents(Event.ONLOAD);
 
     init();
