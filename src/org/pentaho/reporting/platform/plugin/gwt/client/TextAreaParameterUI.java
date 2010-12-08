@@ -1,21 +1,14 @@
 package org.pentaho.reporting.platform.plugin.gwt.client;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
-import com.google.gwt.event.logical.shared.SelectionEvent;
-import com.google.gwt.event.logical.shared.SelectionHandler;
-import com.google.gwt.user.client.ui.MultiWordSuggestOracle;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.SuggestBox;
-import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
 import com.google.gwt.user.client.ui.TextArea;
 
-public class TextAreaParameterUI extends SimplePanel
+public class TextAreaParameterUI extends SimplePanel implements ParameterUI
 {
   private class PlainParameterKeyUpHandler implements KeyUpHandler
   {
@@ -49,10 +42,12 @@ public class TextAreaParameterUI extends SimplePanel
 
   }
 
+  private TextArea textBox;
+
   public TextAreaParameterUI(final ParameterControllerPanel controller, final Parameter parameterElement)
   {
     final List<ParameterSelection> selections = parameterElement.getSelections();
-    final TextArea textBox = new TextArea();
+    textBox = new TextArea();
     if (selections.isEmpty())
     {
       textBox.setText(""); //$NON-NLS-1$
@@ -74,4 +69,8 @@ public class TextAreaParameterUI extends SimplePanel
     setWidget(textBox);
   }
 
+  public void setEnabled(final boolean enabled)
+  {
+    textBox.setEnabled(enabled);
+  }
 }

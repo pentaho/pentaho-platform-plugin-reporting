@@ -14,7 +14,7 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.SuggestBox;
 import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
 
-public class PlainParameterUI extends SimplePanel
+public class PlainParameterUI extends SimplePanel implements ParameterUI
 {
   private final Map<String, String> labelToValueMap = new HashMap<String, String>();
 
@@ -86,6 +86,8 @@ public class PlainParameterUI extends SimplePanel
 
   }
 
+  private SuggestBox textBox;
+
   public PlainParameterUI(final ParameterControllerPanel controller, final Parameter parameterElement)
   {
     final MultiWordSuggestOracle oracle = new MultiWordSuggestOracle();
@@ -102,7 +104,7 @@ public class PlainParameterUI extends SimplePanel
       }
     }
 
-    final SuggestBox textBox = new SuggestBox(oracle);
+    textBox = new SuggestBox(oracle);
     if (selections.isEmpty())
     {
       textBox.setText(""); //$NON-NLS-1$
@@ -125,4 +127,8 @@ public class PlainParameterUI extends SimplePanel
     setWidget(textBox);
   }
 
+  public void setEnabled(final boolean enabled)
+  {
+    textBox.getTextBox().setEnabled(enabled);
+  }
 }

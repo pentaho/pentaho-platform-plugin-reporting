@@ -8,8 +8,8 @@ import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
@@ -77,7 +77,6 @@ public class ParameterXmlContentHandler
   private ReportContentGenerator contentGenerator;
   private boolean paginate;
   private Document document;
-  //private ParameterContext parameterContext;
   private IParameterProvider requestParameters;
   private IPentahoSession userSession;
   private Map<String, Object> inputs;
@@ -248,7 +247,7 @@ public class ParameterXmlContentHandler
       {
         reportParameters.put(parameter.getName(), parameter);
       }
-      for (final Map.Entry<String,ParameterDefinitionEntry> entry: getSystemParameter().entrySet())
+      for (final Map.Entry<String, ParameterDefinitionEntry> entry : getSystemParameter().entrySet())
       {
         if (reportParameters.containsKey(entry.getKey()) == false)
         {
@@ -316,7 +315,7 @@ public class ParameterXmlContentHandler
     realInputs.put(SYS_PARAM_SUBSCRIPTION_NAME, lookupSubscriptionName());
 
     final ReportParameterValues parameterValues = result.getParameterValues();
-    
+
     for (final ParameterDefinitionEntry parameter : reportParameters.values())
     {
       final String parameterName = parameter.getName();
@@ -327,7 +326,7 @@ public class ParameterXmlContentHandler
         realInputs.put(parameterName, parameterValues.get(parameterName));
         continue;
       }
-      
+
       try
       {
         final Object translatedValue = ReportContentUtil.computeParameterValue(parameterContext, parameter, value);
@@ -345,7 +344,7 @@ public class ParameterXmlContentHandler
         if (logger.isDebugEnabled())
         {
           logger.debug(Messages.getString
-              ("ReportPlugin.debugParameterCannotBeConverted", parameterName, String.valueOf(value)), be);
+              ("ReportPlugin.debugParameterCannotBeConverted", parameter.getName(), String.valueOf(value)), be);
         }
       }
     }
@@ -417,7 +416,7 @@ public class ParameterXmlContentHandler
         parameterElement.setAttribute("timzone-hint", computeTimeZoneHint(parameter, parameterContext));//$NON-NLS-1$
       }
 
-      final HashSet<Object> selectionSet = new HashSet<Object>();
+      final LinkedHashSet<Object> selectionSet = new LinkedHashSet<Object>();
       if (selections != null)
       {
         if (selections.getClass().isArray())
@@ -448,6 +447,8 @@ public class ParameterXmlContentHandler
         }
       }
 
+      final LinkedHashSet handledValues = (LinkedHashSet) selectionSet.clone();
+
       if (parameter instanceof ListParameter)
       {
         final ListParameter asListParam = (ListParameter) parameter;
@@ -463,11 +464,6 @@ public class ParameterXmlContentHandler
           final Object key = possibleValues.getKeyValue(i);
           final Object value = possibleValues.getTextValue(i);
 
-          if (key == null)
-          {
-            continue;
-          }
-
           final Element valueElement = document.createElement("value"); //$NON-NLS-1$
           valuesElement.appendChild(valueElement);
 
@@ -475,7 +471,7 @@ public class ParameterXmlContentHandler
           valueElement.setAttribute("type", elementValueType.getName()); //$NON-NLS-1$
           valueElement.setAttribute("selected", String.valueOf(selectionSet.contains(key)));//$NON-NLS-1$
 
-          if (value == null)
+          if (key == null)
           {
             valueElement.setAttribute("null", "true"); //$NON-NLS-1$ //$NON-NLS-2$
           }
@@ -485,6 +481,30 @@ public class ParameterXmlContentHandler
             valueElement.setAttribute("value",
                 convertParameterValueToString(parameter, parameterContext, key, elementValueType)); //$NON-NLS-1$ //$NON-NLS-2$
           }
+
+          handledValues.remove(key);
+        }
+
+        for (final Object key : handledValues)
+        {
+          final Element valueElement = document.createElement("value"); //$NON-NLS-1$
+          valuesElement.appendChild(valueElement);
+
+          valueElement.setAttribute("label", Messages.getString("ReportPlugin.autoParameter", String.valueOf(key))); //$NON-NLS-1$ //$NON-NLS-2$
+          valueElement.setAttribute("type", elementValueType.getName()); //$NON-NLS-1$
+          valueElement.setAttribute("selected", String.valueOf(selectionSet.contains(key)));//$NON-NLS-1$
+
+          if (key == null)
+          {
+            valueElement.setAttribute("null", "true"); //$NON-NLS-1$ //$NON-NLS-2$
+          }
+          else
+          {
+            valueElement.setAttribute("null", "false"); //$NON-NLS-1$ //$NON-NLS-2$
+            valueElement.setAttribute("value",
+                convertParameterValueToString(parameter, parameterContext, key, elementValueType)); //$NON-NLS-1$ //$NON-NLS-2$
+          }
+
         }
       }
       else if (parameter instanceof PlainParameter)
@@ -798,14 +818,14 @@ public class ParameterXmlContentHandler
 
   private PlainParameter createGenericBooleanSystemParameter(final String parameterName,
                                                              final boolean deprecated,
-                                                      final boolean preferredParameter)
+                                                             final boolean preferredParameter)
   {
     return createGenericSystemParameter(parameterName, deprecated, preferredParameter, Boolean.class);
   }
 
   private PlainParameter createGenericIntSystemParameter(final String parameterName,
                                                          final boolean deprecated,
-                                                      final boolean preferredParameter)
+                                                         final boolean preferredParameter)
   {
     return createGenericSystemParameter(parameterName, deprecated, preferredParameter, Integer.class);
   }

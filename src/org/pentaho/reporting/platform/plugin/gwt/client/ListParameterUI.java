@@ -8,7 +8,7 @@ import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.SimplePanel;
 
-public class ListParameterUI extends SimplePanel
+public class ListParameterUI extends SimplePanel implements ParameterUI
 {
   private class ListBoxChangeHandler implements ChangeHandler
   {
@@ -39,11 +39,13 @@ public class ListParameterUI extends SimplePanel
     }
   }
 
+  private ListBox listBox;
+
   public ListParameterUI(final ParameterControllerPanel controller, final Parameter parameterElement)
   {
     final boolean multiSelect = parameterElement.isMultiSelect(); //$NON-NLS-1$ //$NON-NLS-2$
 
-    final ListBox listBox = new ListBox(multiSelect);
+    listBox = new ListBox(multiSelect);
     int visibleItems;
     final String visibleItemsStr = parameterElement.getAttribute("parameter-visible-items"); //$NON-NLS-1$
     try
@@ -71,4 +73,8 @@ public class ListParameterUI extends SimplePanel
     setWidget(listBox);
   }
 
+  public void setEnabled(final boolean enabled)
+  {
+    listBox.setEnabled(enabled);
+  }
 }

@@ -8,7 +8,7 @@ import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.SimplePanel;
 
-public class DropDownParameterUI extends SimplePanel
+public class DropDownParameterUI extends SimplePanel implements ParameterUI
 {
   private class ListBoxChangeHandler implements ChangeHandler
   {
@@ -39,9 +39,11 @@ public class DropDownParameterUI extends SimplePanel
     }
   }
 
+  private ListBox listBox;
+
   public DropDownParameterUI(final ParameterControllerPanel controller, final Parameter parameterElement)
   {
-    final ListBox listBox = new ListBox(false);
+    listBox = new ListBox(false);
     listBox.setVisibleItemCount(1);
 
     boolean hasSelection = false;
@@ -74,4 +76,8 @@ public class DropDownParameterUI extends SimplePanel
     setWidget(listBox);
   }
 
+  public void setEnabled(final boolean enabled)
+  {
+    listBox.setEnabled(enabled); 
+  }
 }

@@ -1,5 +1,6 @@
 package org.pentaho.reporting.platform.plugin.gwt.client;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -11,7 +12,7 @@ import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
-public class CheckBoxParameterUI extends SimplePanel
+public class CheckBoxParameterUI extends SimplePanel implements ParameterUI
 {
 
   private class CheckBoxParameterClickHandler implements ClickHandler
@@ -77,9 +78,12 @@ public class CheckBoxParameterUI extends SimplePanel
     }
   }
 
+  private ArrayList<CheckBox> buttons;
+
   public CheckBoxParameterUI(final ParameterControllerPanel controller,
                              final Parameter parameterElement)
   {
+    buttons = new ArrayList<CheckBox>();
     final String parameterName = parameterElement.getName(); //$NON-NLS-1$
     String renderType = parameterElement.getAttribute("parameter-render-type"); //$NON-NLS-1$
     if (renderType != null)
@@ -123,8 +127,17 @@ public class CheckBoxParameterUI extends SimplePanel
       tmpButton.setTitle(choiceValue);
       // set checked based on selections list
       buttonPanel.add(tmpButton);
+      buttons.add(tmpButton);
     }
     setWidget(buttonPanel);
   }
 
+  public void setEnabled(final boolean enabled)
+  {
+    for (int i = 0; i < buttons.size(); i++)
+    {
+      final CheckBox checkBox = buttons.get(i);
+      checkBox.setEnabled(enabled);
+    }
+  }
 }

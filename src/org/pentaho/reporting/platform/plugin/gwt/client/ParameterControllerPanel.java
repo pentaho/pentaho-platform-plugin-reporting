@@ -42,7 +42,6 @@ import com.google.gwt.xml.client.Element;
 import com.google.gwt.xml.client.NodeList;
 import com.google.gwt.xml.client.XMLParser;
 import org.pentaho.gwt.widgets.client.utils.i18n.ResourceBundle;
-import org.pentaho.gwt.widgets.client.utils.string.StringUtils;
 import org.pentaho.reporting.platform.plugin.gwt.client.ReportViewer.RENDER_TYPE;
 import org.pentaho.reporting.platform.plugin.gwt.client.images.PageImages;
 
@@ -64,6 +63,7 @@ public class ParameterControllerPanel extends VerticalPanel
 
     public void onError(final Request request, final Throwable exception)
     {
+      setEnabled(true);
       ReportViewerUtil.showErrorDialog(messages, messages.getString("couldNotFetchParams")); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
@@ -109,7 +109,9 @@ public class ParameterControllerPanel extends VerticalPanel
         parameterDefinition.setAutoSubmitUI(submitParametersOnChangeCheckBox.getValue() == Boolean.TRUE);
       }
 
+      parameterWidgets.clear();
       clear();
+      setEnabled(true);
 
       if (parameterDefinition.isShowParameterUi())
       {
@@ -165,6 +167,11 @@ public class ParameterControllerPanel extends VerticalPanel
 
     public void onClick(final ClickEvent event)
     {
+      if (enabled == false)
+      {
+        return;
+      }
+
       if (promptNeeded() == false)
       {
         subscriptionPressed = onSubscribe;
@@ -213,6 +220,11 @@ public class ParameterControllerPanel extends VerticalPanel
 
     public void onClick(final ClickEvent event)
     {
+      if (enabled == false)
+      {
+        return;
+      }
+
       if (finalAcceptedPage > 0)
       {
         parameterMap.setSelectedValue("accepted-page", "0"); //$NON-NLS-1$
@@ -235,6 +247,11 @@ public class ParameterControllerPanel extends VerticalPanel
 
     public void onClick(final ClickEvent event)
     {
+      if (enabled == false)
+      {
+        return;
+      }
+
       if (finalAcceptedPage + 1 < finalPageCount)
       {
         parameterMap.setSelectedValue("accepted-page", String.valueOf(finalPageCount - 1)); //$NON-NLS-1$
@@ -255,6 +272,11 @@ public class ParameterControllerPanel extends VerticalPanel
 
     public void onClick(final ClickEvent event)
     {
+      if (enabled == false)
+      {
+        return;
+      }
+
       if (finalAcceptedPage > 0)
       {
         parameterMap.setSelectedValue("accepted-page", String.valueOf(finalAcceptedPage - 1)); //$NON-NLS-1$
@@ -277,6 +299,11 @@ public class ParameterControllerPanel extends VerticalPanel
 
     public void onClick(final ClickEvent event)
     {
+      if (enabled == false)
+      {
+        return;
+      }
+
       if (finalAcceptedPage + 1 < finalPageCount)
       {
         parameterMap.setSelectedValue("accepted-page", String.valueOf(finalAcceptedPage + 1)); //$NON-NLS-1$
@@ -299,6 +326,11 @@ public class ParameterControllerPanel extends VerticalPanel
 
     public void onKeyUp(final KeyUpEvent event)
     {
+      if (enabled == false)
+      {
+        return;
+      }
+      
       if (event.getNativeKeyCode() != KeyCodes.KEY_ENTER)
       {
         return;
@@ -367,15 +399,19 @@ public class ParameterControllerPanel extends VerticalPanel
 
   private Button submitSubscriptionButton;
   private Button submitParametersButton;
-
+  private ArrayList<ParameterUI> parameterWidgets;
   private ParameterDefinition parameterDefinition;
+  private TextBox pageBox;
+  private boolean enabled;
 
   public ParameterControllerPanel(final ReportContainer container, final ResourceBundle messages)
   {
     this.messages = messages;
     this.container = container;
+    this.enabled = true;
 
     parameterMap = new ParameterValues();
+    parameterWidgets = new ArrayList<ParameterUI>();
 
     parameterDisclosurePanel = new DisclosurePanel(messages.getString("reportParameters", "Report Parameters")); //$NON-NLS-1$ //$NON-NLS-2$
     parameterDisclosurePanel.setStyleName("parameter-disclosure"); //$NON-NLS-1$
@@ -402,6 +438,28 @@ public class ParameterControllerPanel extends VerticalPanel
 
     // async call
     fetchParameters(ParameterSubmitMode.INITIAL);
+  }
+
+  public void setEnabled(final boolean enabled)
+  {
+    this.enabled = enabled;
+
+    WaitPopup.getInstance().setVisible(enabled == false);
+    
+    submitParametersButton.setEnabled(enabled);
+    submitParametersOnChangeCheckBox.setEnabled(enabled);
+    submitSubscriptionButton.setEnabled(enabled);
+    if (pageBox != null)
+    {
+      pageBox.setEnabled(enabled);
+    }
+
+    for (int i = 0; i < parameterWidgets.size(); i++)
+    {
+      final ParameterUI parameterUI = parameterWidgets.get(i);
+      parameterUI.setEnabled(enabled);
+    }
+
   }
 
   private ParameterDefinition parseParameterDefinition(final Element element)
@@ -520,7 +578,7 @@ public class ParameterControllerPanel extends VerticalPanel
 
     if (parametersElement.isEmpty())
     {
-      if ((parametersElement.isAllowAutosubmit() || mode == ParameterSubmitMode.MANUAL) && 
+      if ((parametersElement.isAllowAutosubmit() || mode == ParameterSubmitMode.MANUAL) &&
           subscriptionPressed == false)
       {
         showReport();
@@ -547,7 +605,8 @@ public class ParameterControllerPanel extends VerticalPanel
 
     // build parameter UI from document
     parameterContainer.clear();
-
+    parameterWidgets.clear();
+    
     // create a new parameter value map
     parameterMap = new ParameterValues();
 //http://localhost:8080/pentaho/content/reporting?renderMode=REPORT&output-target=table%2Fhtml%3Bpage-mode%3Dpage&accepted-page=0&UTC%252BParameter=2010-07-28T00%3A00%3A00.000&UTC%25252BParameter=2010-07-28T12%3A00%3A00.000&UTC%25252525252BParameter=2010-07-28T00%3A00%3A00.000&UTC%2525252525252BParameter=2010-07-28T12%3A00%3A00.000&UTC%2525252525252525252BParameter=2010-07-28T00%3A00%3A00.000&UTC%252525252525252525252BParameter=2010-07-28T12%3A00%3A00.000&solution=steel-wheels&path=%2Freports&name=dateparameter.prpt&locale=en_US
@@ -584,7 +643,7 @@ public class ParameterControllerPanel extends VerticalPanel
       tb.setHeight("1px");
       tb.setWidth("1px");
       tb.setStylePrimaryName("parameter-panel-focus-widget");
-      
+
       DOM.setElementAttribute(tb.getElement(), "id", "parameter-panel-focus-widget");
       parameterGroupPanel.add(tb);
 
@@ -629,6 +688,10 @@ public class ParameterControllerPanel extends VerticalPanel
           parameterPanel.setStyleName("parameter-error"); //$NON-NLS-1$
         }
 
+        if (parameterWidget instanceof ParameterUI)
+        {
+          parameterWidgets.add((ParameterUI) parameterWidget);
+        }
         parameterPanel.add(parameterWidget);
 
         if (layout.equals("flow")) //$NON-NLS-1$
@@ -822,7 +885,7 @@ public class ParameterControllerPanel extends VerticalPanel
     forwardToLastPage.addClickHandler(new GotoLastPageClickHandler(finalAcceptedPage, finalPageCount));
 
 
-    final TextBox pageBox = new TextBox();
+    pageBox = new TextBox();
     pageBox.setTextAlignment(TextBox.ALIGN_RIGHT);
     pageBox.addKeyUpHandler(new PageInputHandler(pageBox, finalPageCount));
     // pages are zero based, but expose them to the user as 1 based
@@ -956,11 +1019,13 @@ public class ParameterControllerPanel extends VerticalPanel
     requestBuilder.setCallback(parameterRequestCallback);
     try
     {
+      setEnabled(false);
       requestBuilder.send();
     }
     catch (RequestException re)
     {
       Window.alert(messages.getString("couldNotFetchParameters", "Could not fetch parameter metadata from server.")); //$NON-NLS-1$ //$NON-NLS-2$
+      setEnabled(true);
     }
   }
 

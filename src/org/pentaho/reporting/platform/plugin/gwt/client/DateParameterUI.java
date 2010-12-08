@@ -14,7 +14,7 @@ import com.google.gwt.user.datepicker.client.DateBox;
 import com.google.gwt.user.datepicker.client.DateBox.DefaultFormat;
 import org.pentaho.gwt.widgets.client.datepicker.PentahoDatePicker;
 
-public class DateParameterUI extends SimplePanel
+public class DateParameterUI extends SimplePanel implements ParameterUI
 {
   protected class DateParameterSelectionHandler implements ValueChangeHandler<Date>, ChangeHandler
   {
@@ -193,6 +193,11 @@ public class DateParameterUI extends SimplePanel
     datePicker.getTextBox().addChangeHandler(selectionHandler);
     datePicker.addValueChangeHandler(selectionHandler);
     setWidget(datePicker);
+  }
+
+  public void setEnabled(final boolean enabled)
+  {
+    datePicker.setEnabled(enabled);
   }
 
   protected DateParameterSelectionHandler getSelectionHandler()
