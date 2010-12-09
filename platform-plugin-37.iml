@@ -8,9 +8,20 @@
       <sourceFolder url="file://$MODULE_DIR$/tests/integration-tests/resource" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/tests/integration-tests/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/tests/unit-tests/src" isTestSource="false" />
+      <excludeFolder url="file://$MODULE_DIR$/bin" />
     </content>
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="inheritedJdk" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="file://$MODULE_DIR$/war/WEB-INF/lib" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+        <jarDirectory url="file://$MODULE_DIR$/war/WEB-INF/lib" recursive="false" />
+      </library>
+    </orderEntry>
   </component>
 </module>
 
