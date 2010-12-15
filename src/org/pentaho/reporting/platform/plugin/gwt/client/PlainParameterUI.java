@@ -105,23 +105,31 @@ public class PlainParameterUI extends SimplePanel implements ParameterUI
     }
 
     textBox = new SuggestBox(oracle);
+
     if (selections.isEmpty())
     {
       textBox.setText(""); //$NON-NLS-1$
     }
     else
     {
-      final ParameterSelection parameterSelection = selections.get(0);
+      ParameterSelection parameterSelection = null;
+      for (int i = 0; i < selections.size(); i++)
+      {
+        final ParameterSelection selection = selections.get(i);
+        if (selection.isSelected())
+        {
+          parameterSelection = selection;
+        }
+      }
+
+      if (parameterSelection == null)
+      {
+        parameterSelection = selections.get(0);
+      }
       final String labelText = parameterSelection.getLabel();
-      if (labelText != null && labelText.length() > 0)
-      {
-        textBox.setText(labelText);
-      }
-      else
-      {
-        textBox.setValue(parameterSelection.getValue());
-      }
+      textBox.setText(labelText);
     }
+    
     textBox.addSelectionHandler(new PlainParameterSelectionHandler(controller, parameterElement.getName()));
     textBox.addKeyUpHandler(new PlainParameterKeyUpHandler(controller, parameterElement.getName()));
     setWidget(textBox);
