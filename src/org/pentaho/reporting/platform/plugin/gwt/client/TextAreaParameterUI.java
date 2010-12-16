@@ -54,15 +54,20 @@ public class TextAreaParameterUI extends SimplePanel implements ParameterUI
     }
     else
     {
-      final ParameterSelection parameterSelection = selections.get(0);
-      final String labelText = parameterSelection.getLabel();
-      if (labelText != null && labelText.length() > 0)
+      ParameterSelection parameterSelection = null;
+      for (int i = 0; i < selections.size(); i++)
       {
-        textBox.setText(labelText);
+        final ParameterSelection selection = selections.get(i);
+        if (selection.isSelected())
+        {
+          parameterSelection = selection;
+        }
       }
-      else
+
+      if (parameterSelection != null)
       {
-        textBox.setValue(parameterSelection.getValue());
+        final String labelText = parameterSelection.getLabel();
+        textBox.setText(labelText);
       }
     }
     textBox.addKeyUpHandler(new PlainParameterKeyUpHandler(controller, parameterElement.getName()));

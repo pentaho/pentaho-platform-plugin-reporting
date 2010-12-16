@@ -62,14 +62,9 @@ public class DropDownParameterUI extends SimplePanel implements ParameterUI
       }
     }
 
-    // only force selection if we're using a 'drop-down' style
-    if (hasSelection == false) //$NON-NLS-1$
+    if (hasSelection == false)
     {
-      if (listBox.getItemCount() > 0)
-      {
-        listBox.setItemSelected(0, true);
-        controller.getParameterMap().setSelectedValue(parameterElement.getName(), listBox.getValue(0));
-      }
+      listBox.setSelectedIndex(-1);
     }
 
     listBox.addChangeHandler(new ListBoxChangeHandler(controller, parameterElement.getName()));
