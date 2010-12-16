@@ -62,6 +62,11 @@ public class DropDownParameterUI extends SimplePanel implements ParameterUI
       }
     }
 
+    if (hasSelection == false)
+    {
+      listBox.setSelectedIndex(-1);
+    }
+
     listBox.addChangeHandler(new ListBoxChangeHandler(controller, parameterElement.getName()));
     setWidget(listBox);
   }
