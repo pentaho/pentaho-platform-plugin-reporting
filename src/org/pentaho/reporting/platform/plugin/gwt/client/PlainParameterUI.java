@@ -122,14 +122,13 @@ public class PlainParameterUI extends SimplePanel implements ParameterUI
         }
       }
 
-      if (parameterSelection == null)
+      if (parameterSelection != null)
       {
-        parameterSelection = selections.get(0);
+        final String labelText = parameterSelection.getLabel();
+        textBox.setText(labelText);
       }
-      final String labelText = parameterSelection.getLabel();
-      textBox.setText(labelText);
     }
-    
+
     textBox.addSelectionHandler(new PlainParameterSelectionHandler(controller, parameterElement.getName()));
     textBox.addKeyUpHandler(new PlainParameterKeyUpHandler(controller, parameterElement.getName()));
     setWidget(textBox);
