@@ -13,7 +13,7 @@ import org.pentaho.gwt.widgets.client.utils.i18n.ResourceBundle;
 import org.pentaho.gwt.widgets.client.utils.string.StringUtils;
 import org.pentaho.reporting.platform.plugin.gwt.client.ReportViewer.RENDER_TYPE;
 
-public class ReportContainer extends VerticalPanel implements IParameterSubmissionListener
+public class ReportContainer extends VerticalPanel
 {
   private class ReportContentFrame extends Frame
   {
@@ -67,10 +67,10 @@ public class ReportContainer extends VerticalPanel implements IParameterSubmissi
 
   public ReportContainer(final ResourceBundle messages)
   {
-    parameterControllerPanel = new ParameterControllerPanel(this, messages);
-    parameterControllerPanel.addParameterSubmissionListener(this);
     reportContainer = new ReportContentFrame();
     reportContainer.sinkEvents(Event.ONLOAD);
+
+    parameterControllerPanel = new ParameterControllerPanel(this, messages);
 
     init();
   }
