@@ -247,6 +247,7 @@ public class ParameterXmlContentHandler
   private static final String SYS_PARAM_SUBSCRIPTION_NAME = "subscription-name";
   private static final String SYS_PARAM_DESTINATION = "destination";
   private static final String SYS_PARAM_SCHEDULE_ID = "schedule-id";
+  private static final String SYS_PARAM_CONTENT_LINK = "::cl";
   private static final String GROUP_SUBSCRIPTION = "subscription";
   private static final String GROUP_SYSTEM = "system";
   private static final String GROUP_PARAMETERS = "parameters";
@@ -276,6 +277,7 @@ public class ParameterXmlContentHandler
       parameter.put(SYS_PARAM_SCHEDULE_ID, createScheduleIdParameter());
       parameter.put(SYS_PARAM_OUTPUT_TARGET, createOutputParameter());
       parameter.put("subscribe", createGenericBooleanSystemParameter("subscribe", false, false)); // NON-NLS
+      parameter.put(SYS_PARAM_CONTENT_LINK, createContentLinkingParameter()); // NON-NLS
       parameter.put("::TabName",
           createGenericSystemParameter("::TabName", false, true)); // NON-NLS
       parameter.put("::TabActive",
@@ -1003,7 +1005,8 @@ public class ParameterXmlContentHandler
   private StaticListParameter createScheduleIdParameter()
   {
 
-    final StaticListParameter scheduleIdParameter = new StaticListParameter(SYS_PARAM_SCHEDULE_ID, false, true, String.class);
+    final StaticListParameter scheduleIdParameter =
+        new StaticListParameter(SYS_PARAM_SCHEDULE_ID, false, true, String.class);
     scheduleIdParameter.setMandatory(true);
     scheduleIdParameter.setParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PREFERRED, "false");
@@ -1019,6 +1022,31 @@ public class ParameterXmlContentHandler
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TYPE,
             ParameterAttributeNames.Core.TYPE_DROPDOWN);
     scheduleIdParameter.setRole(ParameterAttributeNames.Core.ROLE_SCHEDULE_PARAMETER);
+
+    appendAvailableSchedules(scheduleIdParameter);
+    return scheduleIdParameter;
+  }
+
+  private StaticListParameter createContentLinkingParameter()
+  {
+
+    final StaticListParameter scheduleIdParameter =
+        new StaticListParameter(SYS_PARAM_CONTENT_LINK, true, false, String[].class);
+    scheduleIdParameter.setMandatory(false);
+    scheduleIdParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PREFERRED, "false");
+    scheduleIdParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP, GROUP_SYSTEM);
+    scheduleIdParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP_LABEL,
+            Messages.getInstance().getString("ReportPlugin.SystemParameters"));
+    scheduleIdParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.LABEL,
+            Messages.getInstance().getString("ReportPlugin.ContentLinking"));
+    scheduleIdParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TYPE,
+            ParameterAttributeNames.Core.TYPE_LIST);
+    scheduleIdParameter.setRole(ParameterAttributeNames.Core.ROLE_SYSTEM_PARAMETER);
 
     appendAvailableSchedules(scheduleIdParameter);
     return scheduleIdParameter;
