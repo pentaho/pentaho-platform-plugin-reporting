@@ -82,6 +82,7 @@ public class PlainParameterUI extends SimplePanel implements ParameterUI
       {
         controller.getParameterMap().setSelectedValue(parameterName, value);
       }
+      controller.fetchParameters(ParameterControllerPanel.ParameterSubmitMode.USERINPUT);
     }
 
   }
