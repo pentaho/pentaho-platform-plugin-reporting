@@ -523,8 +523,9 @@ public class ParameterXmlContentHandler
           valueElement.setAttribute("type", valueType.getName()); //$NON-NLS-1$
           valueElement.setAttribute("selected", "true");//$NON-NLS-1$
           valueElement.setAttribute("null", "false"); //$NON-NLS-1$ //$NON-NLS-2$
-          valueElement.setAttribute("value",
-              convertParameterValueToString(parameter, parameterContext, selections, valueType)); //$NON-NLS-1$ //$NON-NLS-2$
+	  final String value = convertParameterValueToString(parameter, parameterContext, selections, valueType); //$NON-NLS-1$ //$NON-NLS-2$
+          valueElement.setAttribute("value", value);
+          valueElement.setAttribute("label", value);
         }
       }
       return parameterElement;
