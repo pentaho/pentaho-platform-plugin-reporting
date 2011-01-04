@@ -193,7 +193,17 @@ public class ReportContentGenerator extends SimpleContentGenerator {
       return "application/octet-stream"; //$NON-NLS-1$
     }
 
-    final String fileId = requestParams.getStringParameter("id", null); //$NON-NLS-1$ //$NON-NLS-2$
+    String fileId = requestParams.getStringParameter("id", null); //$NON-NLS-1$ //$NON-NLS-2$
+    if (fileId == null) {
+      final String filePath = requestParams.getStringParameter("path", null);
+      if (filePath != null) {
+        IUnifiedRepository unifiedRepository = PentahoSystem.get(IUnifiedRepository.class, null);
+        RepositoryFile repositoryFile = unifiedRepository.getFile(filePath);
+        if (repositoryFile != null) {
+          fileId = repositoryFile.getId().toString();
+        }
+      }
+    }
 
     final SimpleReportingComponent reportComponent = new SimpleReportingComponent();
     final Map<String, Object> inputs = createInputs(requestParams);
