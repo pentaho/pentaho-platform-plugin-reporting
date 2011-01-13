@@ -98,6 +98,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   private static final String MIME_GENERIC_FALLBACK = "application/octet-stream"; //$NON-NLS-1$
   public static final String PNG_EXPORT_TYPE = "pageable/X-AWT-Graphics;image-type=png";
   private static final String CONTENT_LINKING_PARAMETER = "::cl";
+  private static final String CONTENT_LINKING_WIDGET_ID = "::cl_id";
 
   /**
    * Static initializer block to guarantee that the ReportingComponent will be in a state where the reporting engine will be booted. We have a system listener
@@ -542,64 +543,78 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       }
 
       final String clText = extractContentLinkSpec();
-      report.setReportEnvironment(new PentahoReportEnvironment(report.getConfiguration(), clText));
+      final String clId = extractWidgetId();
+      report.setReportEnvironment(new PentahoReportEnvironment(report.getConfiguration(), clText, clId));
     }
 
     return report;
   }
 
+  private String extractWidgetId()
+  {
+    if (inputs == null)
+    {
+      return null;
+    }
+
+    final Object clRaw = inputs.get(CONTENT_LINKING_WIDGET_ID);
+    if (clRaw == null)
+    {
+      return null;
+    }
+    return String.valueOf(clRaw);
+  }
+
   private String extractContentLinkSpec()
   {
-    final String clText;
-    if(inputs != null)
+    if (inputs == null)
     {
-      final Object clRaw = inputs.get(CONTENT_LINKING_PARAMETER);
-      if (clRaw == null)
+      return null;
+    }
+
+    final Object clRaw = inputs.get(CONTENT_LINKING_PARAMETER);
+    if (clRaw == null)
+    {
+      return null;
+    }
+
+    if (clRaw instanceof Collection)
+    {
+      final Collection c = (Collection) clRaw;
+      final CSVQuoter quoter = new CSVQuoter(',', '"');
+      final StringBuilder b = new StringBuilder();
+      for (final Object o: c)
       {
-        clText = null;
-      }
-      else if (clRaw instanceof Collection)
-      {
-        final Collection c = (Collection) clRaw;
-        final CSVQuoter quoter = new CSVQuoter(',', '"');
-        final StringBuilder b = new StringBuilder();
-        for (final Object o: c)
+        final String s = quoter.doQuoting(String.valueOf(o));
+        if (b.length() > 0)
         {
-          final String s = quoter.doQuoting(String.valueOf(o));
-          if (b.length() > 0)
-          {
-            b.append(',');
-          }
-          b.append(s);
+          b.append(',');
         }
-        clText = b.toString();
+        b.append(s);
       }
-      else if (clRaw.getClass().isArray())
+      return b.toString();
+    }
+
+    if (clRaw.getClass().isArray())
+    {
+      final CSVQuoter quoter = new CSVQuoter(',', '"');
+      final StringBuilder b = new StringBuilder();
+      for (int i = 0, size = Array.getLength(clRaw); i < size; i++)
       {
-        final CSVQuoter quoter = new CSVQuoter(',', '"');
-        final StringBuilder b = new StringBuilder();
-        for (int i = 0, size = Array.getLength(clRaw); i < size; i++)
+        final Object o = Array.get(clRaw, i);
+        final String s = quoter.doQuoting(String.valueOf(o));
+        if (b.length() > 0)
         {
-          final Object o = Array.get(clRaw, i);
-          final String s = quoter.doQuoting(String.valueOf(o));
-          if (b.length() > 0)
-          {
-            b.append(',');
-          }
-          b.append(s);
+          b.append(',');
         }
-        clText = b.toString();
+        b.append(s);
       }
-      else
-      {
-        clText = String.valueOf(clRaw);
-      }
+      return b.toString();
     }
     else
     {
-      clText = null;
+      return String.valueOf(clRaw);
     }
-    return clText;
   }
 
   private boolean isValidOutputType(final String outputType)
