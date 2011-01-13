@@ -29,17 +29,16 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
   private static final Log logger = LogFactory.getLog(PentahoReportEnvironment.class);
   private HashMap<String, String> cache;
   private IParameterProvider pathProvider;
-
-  public PentahoReportEnvironment(final Configuration configuration)
-  {
-    super(configuration);
-  }
+  private String clText;
+  private String clId;
 
   public PentahoReportEnvironment(final Configuration configuration,
-                                  final IParameterProvider pathProvider)
+                                  final String clText,
+                                  final String clId)
   {
     super(configuration);
-    this.pathProvider = pathProvider;
+    this.clText = clText;
+    this.clId = clId;
   }
 
   public String getEnvironmentProperty(final String key)
@@ -49,10 +48,20 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
       throw new NullPointerException();
     }
 
+    if ("contentLink".equals(key))
+    {
+      return clText;
+    }
+    if ("contentLink-widget".equals(key))
+    {
+      return clId;
+    }
+
     if (cache == null)
     {
       cache = new HashMap<String, String>();
     }
+    
     final String cached = cache.get(key);
     if (cached != null)
     {

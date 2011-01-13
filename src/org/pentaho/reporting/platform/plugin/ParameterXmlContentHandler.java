@@ -31,6 +31,10 @@ import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.core.AttributeNames;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportDataFactoryException;
+import org.pentaho.reporting.engine.classic.core.ReportElement;
+import org.pentaho.reporting.engine.classic.core.Section;
+import org.pentaho.reporting.engine.classic.core.function.Expression;
+import org.pentaho.reporting.engine.classic.core.function.FormulaExpression;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.pdf.PdfPageableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.plaintext.PlainTextPageableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.csv.CSVTableModule;
@@ -50,12 +54,21 @@ import org.pentaho.reporting.engine.classic.core.parameters.ReportParameterDefin
 import org.pentaho.reporting.engine.classic.core.parameters.StaticListParameter;
 import org.pentaho.reporting.engine.classic.core.parameters.ValidationMessage;
 import org.pentaho.reporting.engine.classic.core.parameters.ValidationResult;
+import org.pentaho.reporting.engine.classic.core.style.ElementStyleKeys;
 import org.pentaho.reporting.engine.classic.core.util.NullOutputStream;
 import org.pentaho.reporting.engine.classic.core.util.ReportParameterValues;
 import org.pentaho.reporting.engine.classic.core.util.beans.BeanException;
 import org.pentaho.reporting.engine.classic.core.util.beans.ConverterRegistry;
 import org.pentaho.reporting.engine.classic.core.util.beans.ValueConverter;
+import org.pentaho.reporting.engine.classic.extensions.drilldown.DrillDownProfile;
+import org.pentaho.reporting.engine.classic.extensions.drilldown.DrillDownProfileMetaData;
 import org.pentaho.reporting.libraries.base.util.StringUtils;
+import org.pentaho.reporting.libraries.formula.DefaultFormulaContext;
+import org.pentaho.reporting.libraries.formula.lvalues.DataTable;
+import org.pentaho.reporting.libraries.formula.lvalues.FormulaFunction;
+import org.pentaho.reporting.libraries.formula.lvalues.LValue;
+import org.pentaho.reporting.libraries.formula.lvalues.StaticValue;
+import org.pentaho.reporting.libraries.formula.parser.FormulaParser;
 import org.pentaho.reporting.platform.plugin.messages.Messages;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -70,6 +83,153 @@ import org.w3c.dom.Element;
  */
 public class ParameterXmlContentHandler
 {
+  private static class OutputParameterCollector
+  {
+    private OutputParameterCollector()
+    {
+    }
+
+    public String[] collectParameter(final MasterReport reportDefinition)
+    {
+      final LinkedHashSet<String> parameter = new LinkedHashSet<String>();
+
+      inspectElement(reportDefinition, parameter);
+      traverseSection(reportDefinition, parameter);
+
+      return parameter.toArray(new String[parameter.size()]);
+    }
+
+    private void traverseSection(final Section section, final LinkedHashSet<String> parameter)
+    {
+      final int count = section.getElementCount();
+      for (int i = 0; i < count; i++)
+      {
+        final ReportElement element = section.getElement(i);
+        inspectElement(element, parameter);
+        if (element instanceof Section)
+        {
+          traverseSection((Section) element, parameter);
+        }
+      }
+    }
+
+    private void inspectElement(final ReportElement element, final LinkedHashSet<String> parameter)
+    {
+      try
+      {
+        final Expression expression = element.getStyleExpression(ElementStyleKeys.HREF_TARGET);
+        if (expression instanceof FormulaExpression == false)
+        {
+          // DrillDown only works with the formula function of the same name
+          return;
+        }
+
+        final FormulaExpression fe = (FormulaExpression) expression;
+        final String formulaText = fe.getFormulaExpression();
+        if (StringUtils.isEmpty(formulaText))
+        {
+          // DrillDown only works with the formula function of the same name
+          return;
+        }
+
+        if (formulaText.startsWith("DRILLDOWN") == false)
+        {
+          // DrillDown only works if the function is the only element. Everything else is beyond our control.
+          return;
+        }
+        final FormulaParser formulaParser = new FormulaParser();
+        final LValue value = formulaParser.parse(formulaText);
+        if (value instanceof FormulaFunction == false)
+        {
+          // Not a valid formula or a complex term - we do not handle that
+          return;
+        }
+        final DefaultFormulaContext context = new DefaultFormulaContext();
+        value.initialize(context);
+
+        final FormulaFunction fn = (FormulaFunction) value;
+        final LValue[] params = fn.getChildValues();
+        if (params.length != 3)
+        {
+          // Malformed formula: Need 3 parameter
+          return;
+        }
+        final String config = extractText(params[0]);
+        if (config == null)
+        {
+          // Malformed formula: No statically defined config profile
+          return;
+        }
+
+        final DrillDownProfile profile = DrillDownProfileMetaData.getInstance().getDrillDownProfile(config);
+        if (profile == null)
+        {
+          // Malformed formula: Unknown drilldown profile
+          return;
+        }
+
+        if ("pentaho".equals(profile.getAttribute("group")) == false)
+        {
+          // Only 'pentaho' drill-down profiles can be used. Filters out all other third party drilldowns
+          return;
+        }
+
+        if (params[2] instanceof DataTable == false)
+        {
+          // Malformed formula: Not a parameter table
+          return;
+        }
+        final DataTable dataTable = (DataTable) params[2];
+        final int rowCount = dataTable.getRowCount();
+        final int colCount = dataTable.getColumnCount();
+        if (colCount != 2)
+        {
+          // Malformed formula: Parameter table is invalid. Must be two cols, many rows ..
+          return;
+        }
+
+        for (int i = 0; i < rowCount; i++)
+        {
+          final LValue valueAt = dataTable.getValueAt(i, 0);
+          final String name = extractText(valueAt);
+          if (name == null)
+          {
+            continue;
+          }
+          parameter.add(name);
+        }
+      }
+      catch (Exception e)
+      {
+        // ignore ..
+      }
+    }
+
+    private String extractText(final LValue value)
+    {
+      if (value == null)
+      {
+        return null;
+      }
+      if (value.isConstant())
+      {
+        if (value instanceof StaticValue)
+        {
+          final StaticValue staticValue = (StaticValue) value;
+          final Object o = staticValue.getValue();
+          if (o == null)
+          {
+            return null; // NON-NLS
+          }
+          return String.valueOf(o);
+        }
+      }
+      return null; // NON-NLS
+
+    }
+
+  }
+
   private static final Log logger = LogFactory.getLog(ParameterXmlContentHandler.class);
 
   private Map<String, ParameterDefinitionEntry> systemParameter;
@@ -90,6 +250,7 @@ public class ParameterXmlContentHandler
   private static final String GROUP_SUBSCRIPTION = "subscription";
   private static final String GROUP_SYSTEM = "system";
   private static final String GROUP_PARAMETERS = "parameters";
+  private static final String SYS_PARAM_CONTENT_LINK = "::cl";
 
   public ParameterXmlContentHandler(final ReportContentGenerator contentGenerator,
                                     final boolean paginate)
@@ -116,6 +277,7 @@ public class ParameterXmlContentHandler
       parameter.put(SYS_PARAM_SCHEDULE_ID, createScheduleIdParameter());
       parameter.put(SYS_PARAM_OUTPUT_TARGET, createOutputParameter());
       parameter.put("subscribe", createGenericBooleanSystemParameter("subscribe", false, false)); // NON-NLS
+      parameter.put(SYS_PARAM_CONTENT_LINK, createContentLinkingParameter()); // NON-NLS
       parameter.put("::TabName",
           createGenericSystemParameter("::TabName", false, true)); // NON-NLS
       parameter.put("::TabActive",
@@ -285,6 +447,16 @@ public class ParameterXmlContentHandler
         parameters.appendChild(createErrorElements(vr));
       }
 
+      final String[] outputParameter = new OutputParameterCollector().collectParameter(report);
+      for (int i = 0; i < outputParameter.length; i++)
+      {
+        final String outputParameterName = outputParameter[i];
+        //  <output-parameter displayName="Territory" id="[Markets].[Territory]"/>
+        final Element element = document.createElement("output-parameter");
+        element.setAttribute("displayName", outputParameterName);
+        element.setAttribute("id", outputParameterName);
+        parameters.appendChild(element);
+      }
     }
     finally
     {
@@ -829,6 +1001,31 @@ public class ParameterXmlContentHandler
                                                          final boolean preferredParameter)
   {
     return createGenericSystemParameter(parameterName, deprecated, preferredParameter, Integer.class);
+  }
+
+  private StaticListParameter createContentLinkingParameter()
+  {
+
+    final StaticListParameter scheduleIdParameter =
+        new StaticListParameter(SYS_PARAM_CONTENT_LINK, true, false, String[].class);
+    scheduleIdParameter.setMandatory(false);
+    scheduleIdParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PREFERRED, "false");
+    scheduleIdParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP, GROUP_SYSTEM);
+    scheduleIdParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP_LABEL,
+            Messages.getString("ReportPlugin.SystemParameters"));
+    scheduleIdParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.LABEL,
+            Messages.getString("ReportPlugin.ContentLinking"));
+    scheduleIdParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TYPE,
+            ParameterAttributeNames.Core.TYPE_LIST);
+    scheduleIdParameter.setRole(ParameterAttributeNames.Core.ROLE_SYSTEM_PARAMETER);
+
+    appendAvailableSchedules(scheduleIdParameter);
+    return scheduleIdParameter;
   }
 
   private StaticListParameter createScheduleIdParameter()
