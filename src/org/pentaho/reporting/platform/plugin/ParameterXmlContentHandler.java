@@ -83,7 +83,7 @@ import org.w3c.dom.Element;
  */
 public class ParameterXmlContentHandler
 {
-  private class OutputParameterCollector
+  private static class OutputParameterCollector
   {
     private OutputParameterCollector()
     {
@@ -347,7 +347,6 @@ public class ParameterXmlContentHandler
 
     final MasterReport report = reportComponent.getReport();
 
-    final String[] outputParameter = new OutputParameterCollector().collectParameter(report);
     final DefaultParameterContext parameterContext = new DefaultParameterContext(report);
     final ValidationResult vr;
     final Element parameters;
@@ -448,6 +447,7 @@ public class ParameterXmlContentHandler
         parameters.appendChild(createErrorElements(vr));
       }
 
+      final String[] outputParameter = new OutputParameterCollector().collectParameter(report);
       for (int i = 0; i < outputParameter.length; i++)
       {
         final String outputParameterName = outputParameter[i];
