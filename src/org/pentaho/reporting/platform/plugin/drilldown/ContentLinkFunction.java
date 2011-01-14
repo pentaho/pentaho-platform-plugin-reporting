@@ -53,6 +53,7 @@ public class ContentLinkFunction implements Function
     final Type type = parameters.getType(0);
     final HashMap<String, Object[]> values = collectParameterValues(o, type, context);
 
+    final String widgetId = getWidgetId(context);
     final StringBuilder builder = new StringBuilder();
     builder.append("javascript:");
     //window.parent.Dashboards.fireChange(PARAM, VALUE);"
@@ -60,18 +61,27 @@ public class ContentLinkFunction implements Function
     {
       final String variable = contentLink[i];
       builder.append("window.parent.Dashboards.fireChange(");
-      builder.append(QuoteTextFunction.saveConvert(variable));
+      if (StringUtils.isEmpty(widgetId))
+      {
+        builder.append(QuoteTextFunction.saveConvert(variable));
+      }
+      else
+      {
+        builder.append(QuoteTextFunction.saveConvert(widgetId));
+        builder.append("$");
+        builder.append(QuoteTextFunction.saveConvert(variable));
+      }
       builder.append(",");
 
       final Object[] objects = values.get(variable);
       if (objects == null || objects.length == 0)
       {
-        builder.append ("null");
+        builder.append("null");
       }
       else if (objects.length == 1)
       {
         builder.append('"');
-        builder.append (QuoteTextFunction.saveConvert(String.valueOf(objects[0])));
+        builder.append(QuoteTextFunction.saveConvert(String.valueOf(objects[0])));
         builder.append('"');
       }
       else
@@ -81,7 +91,7 @@ public class ContentLinkFunction implements Function
         {
           if (j != 0)
           {
-            builder.append (",");
+            builder.append(",");
           }
           builder.append('"');
           builder.append(QuoteTextFunction.saveConvert(String.valueOf(objects[j])));
@@ -91,9 +101,8 @@ public class ContentLinkFunction implements Function
       }
       builder.append(");");
     }
-    
+
     final String value = null;
-    final String widgetId = getWidgetId(context);
     if (StringUtils.isEmpty(widgetId))
     {
       return new TypeValuePair(TextType.TYPE, value);
@@ -135,8 +144,8 @@ public class ContentLinkFunction implements Function
   }
 
   private HashMap<String, Object[]> collectParameterValues(final Object o,
-                                         final Type type,
-                                         final FormulaContext context) throws EvaluationException
+                                                           final Type type,
+                                                           final FormulaContext context) throws EvaluationException
   {
     final HashMap<String, Object[]> params = new HashMap<String, Object[]>();
     if (o instanceof Object[][])
@@ -156,7 +165,7 @@ public class ContentLinkFunction implements Function
         }
         else
         {
-          params.put(String.valueOf(values[0]), new Object[] {value});
+          params.put(String.valueOf(values[0]), new Object[]{value});
         }
       }
     }
