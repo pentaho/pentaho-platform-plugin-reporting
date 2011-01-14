@@ -70,7 +70,9 @@ public class ContentLinkFunction implements Function
       }
       else if (objects.length == 1)
       {
+        builder.append('"');
         builder.append (QuoteTextFunction.saveConvert(String.valueOf(objects[0])));
+        builder.append('"');
       }
       else
       {
@@ -81,7 +83,9 @@ public class ContentLinkFunction implements Function
           {
             builder.append (",");
           }
-          builder.append (QuoteTextFunction.saveConvert(String.valueOf(objects[j])));
+          builder.append('"');
+          builder.append(QuoteTextFunction.saveConvert(String.valueOf(objects[j])));
+          builder.append('"');
         }
         builder.append(")");
       }
@@ -165,7 +169,8 @@ public class ContentLinkFunction implements Function
       }
       for (int i = 0, n = callback.getRowCount(); i < n; i++)
       {
-        final Sequence sequenceRaw = context.getTypeRegistry().convertToSequence(type, o);
+        final Sequence sequenceRaw = context.getTypeRegistry().convertToSequence
+            (callback.getType(i, 1), callback.getValue(i, 1));
         if (sequenceRaw == null)
         {
           throw EvaluationException.getInstance(LibFormulaErrorValue.ERROR_NA_VALUE);
