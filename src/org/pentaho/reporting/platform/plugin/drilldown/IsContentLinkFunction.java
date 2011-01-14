@@ -5,6 +5,7 @@ import java.util.Set;
 
 import org.pentaho.reporting.engine.classic.core.ReportEnvironment;
 import org.pentaho.reporting.engine.classic.core.function.ReportFormulaContext;
+import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlTableModule;
 import org.pentaho.reporting.libraries.base.util.CSVTokenizer;
 import org.pentaho.reporting.libraries.formula.EvaluationException;
 import org.pentaho.reporting.libraries.formula.FormulaContext;
@@ -72,18 +73,25 @@ public class IsContentLinkFunction implements Function
       }
     }
 
-    return new TypeValuePair(LogicalType.TYPE, Boolean.valueOf(isContentLink(context, params)));
+    return new TypeValuePair(LogicalType.TYPE, isContentLink(context, params));
   }
 
 
-  private boolean isContentLink(final FormulaContext context, final Set<String> parameters)
+  private Boolean isContentLink(final FormulaContext context, final Set<String> parameters)
   {
     if ((context instanceof ReportFormulaContext) == false)
     {
-      return false;
+      return Boolean.FALSE;
     }
 
     final ReportFormulaContext reportFormulaContext = (ReportFormulaContext) context;
+    final String exportType = reportFormulaContext.getExportType();
+    if (exportType.startsWith("table/html") == false ||
+        HtmlTableModule.ZIP_HTML_EXPORT_TYPE.equals(exportType))
+    {
+      return Boolean.FALSE;
+    }
+
     final ReportEnvironment environment = reportFormulaContext.getRuntime().getProcessingContext().getEnvironment();
     final String clText = environment.getEnvironmentProperty("contentLink");
     final CSVTokenizer csvTokenizer = new CSVTokenizer(clText, ",", "\"");
@@ -92,9 +100,9 @@ public class IsContentLinkFunction implements Function
       final String el = csvTokenizer.nextToken();
       if (parameters.contains(el))
       {
-        return true;
+        return Boolean.TRUE;
       }
     }
-    return false;
+    return Boolean.FALSE;
   }
 }
