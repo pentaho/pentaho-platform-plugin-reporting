@@ -32,6 +32,11 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
   private String clText;
   private String clId;
 
+  public PentahoReportEnvironment(final Configuration configuration)
+  {
+    this(configuration, null, null);
+  }
+
   public PentahoReportEnvironment(final Configuration configuration,
                                   final String clText,
                                   final String clId)
