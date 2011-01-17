@@ -162,6 +162,11 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
       {
         final Object attribute = session.getAttribute(key.substring("session:".length()));//$NON-NLS-1$
         return String.valueOf(attribute);
+      } 
+      else if (key.startsWith("global:"))
+      {
+        final Object attribute = PentahoSystem.getGlobalParameters().getParameter(key.substring("global:".length()));//$NON-NLS-1$
+        return String.valueOf(attribute);
       }
     }
     else
