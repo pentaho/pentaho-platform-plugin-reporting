@@ -991,7 +991,6 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     {
       final DefaultParameterContext parameterContext = new DefaultParameterContext(report);
       // open parameter context
-      parameterContext.open();
       final ValidationResult vr = applyInputsToReportParameters(parameterContext, null);
       if (vr.isEmpty() == false)
       {
@@ -1143,7 +1142,6 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     {
       final ParameterContext parameterContext = new DefaultParameterContext(report);
       // open parameter context
-      parameterContext.open();
       final ValidationResult vr = applyInputsToReportParameters(parameterContext, null);
       if (vr.isEmpty() == false)
       {

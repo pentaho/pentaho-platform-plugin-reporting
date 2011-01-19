@@ -352,8 +352,6 @@ public class ParameterXmlContentHandler
     final Element parameters;
     try
     {
-      // open parameter context
-      parameterContext.open();
       // apply inputs to parameters
       final ValidationResult validationResult =
           reportComponent.applyInputsToReportParameters(parameterContext, new ValidationResult());
