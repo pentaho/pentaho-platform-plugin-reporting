@@ -60,15 +60,15 @@ public class ContentLinkFunction implements Function
     for (int i = 0; i < contentLink.length; i++)
     {
       final String variable = contentLink[i];
-      builder.append("window.parent.Dashboards.fireChange(");
+      builder.append("var wnd=window.parent;var slf;while(!wnd.Dashboards && wnd.parent){slf=wnd;wnd=wnd.parent};wnd.Dashboards.fireOutputParam(slf,");
       if (StringUtils.isEmpty(widgetId))
       {
+        builder.append('\'');
         builder.append(QuoteTextFunction.saveConvert(variable));
+        builder.append('\'');
       }
       else
       {
-        builder.append(QuoteTextFunction.saveConvert(widgetId));
-        builder.append("$");
         builder.append(QuoteTextFunction.saveConvert(variable));
       }
       builder.append(",");
@@ -80,9 +80,9 @@ public class ContentLinkFunction implements Function
       }
       else if (objects.length == 1)
       {
-        builder.append('"');
+        builder.append('\'');
         builder.append(QuoteTextFunction.saveConvert(String.valueOf(objects[0])));
-        builder.append('"');
+        builder.append('\'');
       }
       else
       {
@@ -93,21 +93,21 @@ public class ContentLinkFunction implements Function
           {
             builder.append(",");
           }
-          builder.append('"');
+          builder.append('\'');
           builder.append(QuoteTextFunction.saveConvert(String.valueOf(objects[j])));
-          builder.append('"');
+          builder.append('\'');
         }
         builder.append(")");
       }
       builder.append(");");
     }
 
-    final String value = null;
+    final String value = builder.toString();
     if (StringUtils.isEmpty(widgetId))
     {
       return new TypeValuePair(TextType.TYPE, value);
     }
-    return new TypeValuePair(TextType.TYPE, widgetId + "$" + value);
+    return new TypeValuePair(TextType.TYPE, value);
   }
 
 

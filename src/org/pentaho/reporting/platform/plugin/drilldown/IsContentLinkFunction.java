@@ -7,6 +7,7 @@ import org.pentaho.reporting.engine.classic.core.ReportEnvironment;
 import org.pentaho.reporting.engine.classic.core.function.ReportFormulaContext;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlTableModule;
 import org.pentaho.reporting.libraries.base.util.CSVTokenizer;
+import org.pentaho.reporting.libraries.base.util.StringUtils;
 import org.pentaho.reporting.libraries.formula.EvaluationException;
 import org.pentaho.reporting.libraries.formula.FormulaContext;
 import org.pentaho.reporting.libraries.formula.LibFormulaErrorValue;
@@ -94,6 +95,10 @@ public class IsContentLinkFunction implements Function
 
     final ReportEnvironment environment = reportFormulaContext.getRuntime().getProcessingContext().getEnvironment();
     final String clText = environment.getEnvironmentProperty("contentLink");
+    if(StringUtils.isEmpty(clText))
+    {
+      return Boolean.FALSE;
+    }
     final CSVTokenizer csvTokenizer = new CSVTokenizer(clText, ",", "\"");
     while (csvTokenizer.hasMoreTokens())
     {
