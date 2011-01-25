@@ -1,14 +1,13 @@
 package org.pentaho.reporting.platform.plugin.connection;
 
 import java.sql.SQLException;
-import java.sql.Connection;
+import java.util.ArrayList;
 import javax.sql.DataSource;
 
-import org.pentaho.reporting.engine.classic.extensions.datasources.mondrian.JndiDataSourceProvider;
-import org.pentaho.reporting.engine.classic.extensions.datasources.mondrian.DataSourceProvider;
 import org.pentaho.platform.api.data.IDatasourceService;
 import org.pentaho.platform.api.engine.ObjectFactoryException;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
+import org.pentaho.reporting.engine.classic.extensions.datasources.mondrian.DataSourceProvider;
 
 /**
  * Todo: Document me!
@@ -48,7 +47,7 @@ public class PentahoMondrianDataSourceProvider implements DataSourceProvider
     {
       try
       {
-        IDatasourceService datasourceService = PentahoSystem.getObjectFactory().get(IDatasourceService.class, null);
+        final IDatasourceService datasourceService = PentahoSystem.getObjectFactory().get(IDatasourceService.class, null);
         datasourceService.clearDataSource(dataSourceName);
         throw new SQLException(Messages.getInstance().getErrorString("PentahoDatasourceConnectionProvider.ERROR_0002_UNABLE_TO_FACTORY_OBJECT", dataSourceName, e.getLocalizedMessage())); //$NON-NLS-1$
       }
@@ -57,5 +56,13 @@ public class PentahoMondrianDataSourceProvider implements DataSourceProvider
         throw new SQLException(Messages.getInstance().getErrorString("PentahoDatasourceConnectionProvider.ERROR_0002_UNABLE_TO_FACTORY_OBJECT", dataSourceName, e.getLocalizedMessage())); //$NON-NLS-1$
       }
     }
+  }
+
+  public Object getConnectionHash()
+  {
+    final ArrayList<Object> list = new ArrayList<Object>();
+    list.add(getClass().getName());
+    list.add(dataSourceName);
+    return list;
   }
 }

@@ -18,6 +18,7 @@ package org.pentaho.reporting.platform.plugin.connection;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import javax.sql.DataSource;
 
 import org.pentaho.platform.api.data.IDatasourceService;
@@ -33,9 +34,10 @@ public class PentahoJndiDatasourceConnectionProvider implements ConnectionProvid
   private String jndiName;
   private String username;
   private String password;
+
   /*
-   * Default constructor
-   */
+  * Default constructor
+  */
   public PentahoJndiDatasourceConnectionProvider()
   {
     super();
@@ -87,14 +89,17 @@ public class PentahoJndiDatasourceConnectionProvider implements ConnectionProvid
           }
           return connection;
         }
-        
-        try {
+
+        try
+        {
           final Connection connection = dataSource.getConnection(realUser, realPassword);
           if (connection == null)
           {
             throw new SQLException("JNDI DataSource is invalid; it returned null without throwing a meaningful error.");
           }
-        } catch (UnsupportedOperationException uoe) {
+        }
+        catch (UnsupportedOperationException uoe)
+        {
           final Connection connection = dataSource.getConnection();
           if (connection == null)
           {
@@ -163,5 +168,14 @@ public class PentahoJndiDatasourceConnectionProvider implements ConnectionProvid
   public void setPassword(final String password)
   {
     this.password = password;
+  }
+
+  public Object getConnectionHash()
+  {
+    final ArrayList<Object> list = new ArrayList<Object>();
+    list.add(getClass().getName());
+    list.add(jndiName);
+    list.add(username);
+    return list;
   }
 }
