@@ -38,11 +38,6 @@ public class PentahoCubeFileProvider extends DefaultCubeFileProvider
     }
 
     final File cubeFile = new File(superDef);
-    if (cubeFile.exists())
-    {
-      return superDef;
-    }
-
     final String name = cubeFile.getName();
     final List<MondrianCatalog> catalogs =
         MondrianCatalogHelper.getInstance().listCatalogs(PentahoSessionHolder.getSession(), false);
