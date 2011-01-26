@@ -53,7 +53,6 @@ public class ContentLinkFunction implements Function
     final Type type = parameters.getType(0);
     final HashMap<String, Object[]> values = collectParameterValues(o, type, context);
 
-    final String widgetId = getWidgetId(context);
     final StringBuilder builder = new StringBuilder();
     builder.append("javascript:");
     //window.parent.Dashboards.fireChange(PARAM, VALUE);"
@@ -61,16 +60,9 @@ public class ContentLinkFunction implements Function
     {
       final String variable = contentLink[i];
       builder.append("var wnd=window.parent;var slf;while(!wnd.Dashboards && wnd.parent){slf=wnd;wnd=wnd.parent};wnd.Dashboards.fireOutputParam(slf,");
-      if (StringUtils.isEmpty(widgetId))
-      {
-        builder.append('\'');
-        builder.append(QuoteTextFunction.saveConvert(variable));
-        builder.append('\'');
-      }
-      else
-      {
-        builder.append(QuoteTextFunction.saveConvert(variable));
-      }
+      builder.append('\'');
+      builder.append(QuoteTextFunction.saveConvert(variable));
+      builder.append('\'');
       builder.append(",");
 
       final Object[] objects = values.get(variable);
@@ -103,24 +95,7 @@ public class ContentLinkFunction implements Function
     }
 
     final String value = builder.toString();
-    if (StringUtils.isEmpty(widgetId))
-    {
-      return new TypeValuePair(TextType.TYPE, value);
-    }
     return new TypeValuePair(TextType.TYPE, value);
-  }
-
-
-  private String getWidgetId(final FormulaContext context)
-  {
-    if ((context instanceof ReportFormulaContext) == false)
-    {
-      return null;
-    }
-
-    final ReportFormulaContext reportFormulaContext = (ReportFormulaContext) context;
-    final ReportEnvironment environment = reportFormulaContext.getRuntime().getProcessingContext().getEnvironment();
-    return environment.getEnvironmentProperty("contentLink-widget");
   }
 
   private String[] getContentLink(final FormulaContext context)
