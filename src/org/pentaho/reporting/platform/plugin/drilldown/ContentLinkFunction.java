@@ -102,7 +102,7 @@ public class ContentLinkFunction implements Function
       builder.append(");");
     }
 
-    final String value = null;
+    final String value = builder.toString();
     if (StringUtils.isEmpty(widgetId))
     {
       return new TypeValuePair(TextType.TYPE, value);
