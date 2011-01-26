@@ -28,16 +28,14 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
 
   public PentahoReportEnvironment(final Configuration configuration)
   {
-    this(configuration, null, null);
+    this(configuration, null);
   }
 
   public PentahoReportEnvironment(final Configuration configuration,
-                                  final String clText,
-                                  final String clId)
+                                  final String clText)
   {
     super(configuration);
     this.clText = clText;
-    this.clId = clId;
   }
 
   public String getEnvironmentProperty(final String key)
@@ -50,10 +48,6 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
     if ("contentLink".equals(key))
     {
       return clText;
-    }
-    if ("contentLink-widget".equals(key))
-    {
-      return clId;
     }
 
     if (cache == null)
