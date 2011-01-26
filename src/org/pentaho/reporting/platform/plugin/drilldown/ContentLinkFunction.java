@@ -133,6 +133,10 @@ public class ContentLinkFunction implements Function
     final ReportFormulaContext reportFormulaContext = (ReportFormulaContext) context;
     final ReportEnvironment environment = reportFormulaContext.getRuntime().getProcessingContext().getEnvironment();
     final String clText = environment.getEnvironmentProperty("contentLink");
+    if (clText == null)
+    {
+      return new String[0];
+    }
     final CSVTokenizer csvTokenizer = new CSVTokenizer(clText, ",", "\"");
     final LinkedHashSet<String> result = new LinkedHashSet<String>();
     while (csvTokenizer.hasMoreTokens())

@@ -94,6 +94,10 @@ public class IsContentLinkFunction implements Function
 
     final ReportEnvironment environment = reportFormulaContext.getRuntime().getProcessingContext().getEnvironment();
     final String clText = environment.getEnvironmentProperty("contentLink");
+    if (clText == null)
+    {
+      return Boolean.FALSE;
+    }
     final CSVTokenizer csvTokenizer = new CSVTokenizer(clText, ",", "\"");
     while (csvTokenizer.hasMoreTokens())
     {
