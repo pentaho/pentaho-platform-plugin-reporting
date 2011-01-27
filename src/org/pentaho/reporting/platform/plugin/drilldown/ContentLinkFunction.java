@@ -59,7 +59,7 @@ public class ContentLinkFunction implements Function
     for (int i = 0; i < contentLink.length; i++)
     {
       final String variable = contentLink[i];
-      builder.append("var wnd=window.parent;var slf;while(!wnd.Dashboards && wnd.parent){slf=wnd;wnd=wnd.parent};wnd.Dashboards.fireOutputParam(slf,");
+      builder.append("var wnd=window.parent;var slf;while(!wnd.Dashboards && wnd.parent && wnd.parent !== wnd){slf=wnd;wnd=wnd.parent};wnd.Dashboards.fireOutputParam(slf,");
       builder.append('\'');
       builder.append(QuoteTextFunction.saveConvert(variable));
       builder.append('\'');
