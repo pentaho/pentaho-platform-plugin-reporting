@@ -543,26 +543,10 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       }
 
       final String clText = extractContentLinkSpec();
-      final String clId = extractWidgetId();
-      report.setReportEnvironment(new PentahoReportEnvironment(report.getConfiguration(), clText, clId));
+      report.setReportEnvironment(new PentahoReportEnvironment(report.getConfiguration(), clText));
     }
 
     return report;
-  }
-
-  private String extractWidgetId()
-  {
-    if (inputs == null)
-    {
-      return null;
-    }
-
-    final Object clRaw = inputs.get(CONTENT_LINKING_WIDGET_ID);
-    if (clRaw == null)
-    {
-      return null;
-    }
-    return String.valueOf(clRaw);
   }
 
   private String extractContentLinkSpec()
