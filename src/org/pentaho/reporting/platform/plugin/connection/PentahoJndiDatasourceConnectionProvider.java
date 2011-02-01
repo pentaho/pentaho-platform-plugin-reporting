@@ -1,16 +1,16 @@
 /*
- * Copyright 2007 Pentaho Corporation.  All rights reserved. 
- * This software was developed by Pentaho Corporation and is provided under the terms 
- * of the Mozilla Public License, Version 1.1, or any later version. You may not use 
- * this file except in compliance with the license. If you need a copy of the license, 
- * please go to http://www.mozilla.org/MPL/MPL-1.1.txt. The Original Code is the Pentaho 
+ * Copyright 2007 Pentaho Corporation.  All rights reserved.
+ * This software was developed by Pentaho Corporation and is provided under the terms
+ * of the Mozilla Public License, Version 1.1, or any later version. You may not use
+ * this file except in compliance with the license. If you need a copy of the license,
+ * please go to http://www.mozilla.org/MPL/MPL-1.1.txt. The Original Code is the Pentaho
  * BI Platform.  The Initial Developer is Pentaho Corporation.
  *
- * Software distributed under the Mozilla Public License is distributed on an "AS IS" 
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or  implied. Please refer to 
+ * Software distributed under the Mozilla Public License is distributed on an "AS IS"
+ * basis, WITHOUT WARRANTY OF ANY KIND, either express or  implied. Please refer to
  * the license for the specific language governing your rights and limitations.
  *
- * @created Apr 6, 2009 
+ * @created Apr 6, 2009
  * @author wseyler
  */
 
@@ -18,7 +18,7 @@ package org.pentaho.reporting.platform.plugin.connection;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-
+import java.util.ArrayList;
 import javax.sql.DataSource;
 
 import org.pentaho.platform.api.data.IDatasourceService;
@@ -34,9 +34,10 @@ public class PentahoJndiDatasourceConnectionProvider implements ConnectionProvid
   private String jndiName;
   private String username;
   private String password;
+
   /*
-   * Default constructor
-   */
+  * Default constructor
+  */
   public PentahoJndiDatasourceConnectionProvider()
   {
     super();
@@ -89,13 +90,16 @@ public class PentahoJndiDatasourceConnectionProvider implements ConnectionProvid
           return connection;
         }
 
-        try {
+        try
+        {
           final Connection connection = dataSource.getConnection(realUser, realPassword);
           if (connection == null)
           {
             throw new SQLException("JNDI DataSource is invalid; it returned null without throwing a meaningful error.");
           }
-        } catch (UnsupportedOperationException uoe) {
+        }
+        catch (UnsupportedOperationException uoe)
+        {
           final Connection connection = dataSource.getConnection();
           if (connection == null)
           {
@@ -104,7 +108,7 @@ public class PentahoJndiDatasourceConnectionProvider implements ConnectionProvid
           }
           return connection;
         }
-        
+
         final Connection nativeConnection = dataSource.getConnection();
         if (nativeConnection == null)
         {
@@ -164,5 +168,14 @@ public class PentahoJndiDatasourceConnectionProvider implements ConnectionProvid
   public void setPassword(final String password)
   {
     this.password = password;
+  }
+
+  public Object getConnectionHash()
+  {
+    final ArrayList<Object> list = new ArrayList<Object>();
+    list.add(getClass().getName());
+    list.add(jndiName);
+    list.add(username);
+    return list;
   }
 }
