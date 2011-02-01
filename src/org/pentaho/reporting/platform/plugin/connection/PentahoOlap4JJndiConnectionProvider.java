@@ -2,6 +2,7 @@ package org.pentaho.reporting.platform.plugin.connection;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import javax.sql.DataSource;
 
 import org.olap4j.OlapConnection;
@@ -186,5 +187,15 @@ public class PentahoOlap4JJndiConnectionProvider implements OlapConnectionProvid
   {
     this.password = password;
   }
+
+  public Object getConnectionHash()
+  {
+    final ArrayList<Object> list = new ArrayList<Object>();
+    list.add(getClass().getName());
+    list.add(jndiName);
+    list.add(username);
+    return list;
+  }
+  
 }
 

@@ -2,6 +2,7 @@ package org.pentaho.reporting.platform.plugin.connection;
 
 import java.sql.SQLException;
 import java.sql.Connection;
+import java.util.ArrayList;
 import javax.sql.DataSource;
 
 import org.pentaho.reporting.engine.classic.extensions.datasources.mondrian.JndiDataSourceProvider;
@@ -58,4 +59,13 @@ public class PentahoMondrianDataSourceProvider implements DataSourceProvider
       }
     }
   }
+
+  public Object getConnectionHash()
+  {
+    final ArrayList<Object> list = new ArrayList<Object>();
+    list.add(getClass().getName());
+    list.add(dataSourceName);
+    return list;
+  }
+
 }
