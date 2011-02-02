@@ -8,39 +8,21 @@ import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
 import org.pentaho.reporting.engine.classic.core.layout.output.YieldReportListener;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.base.StreamReportProcessor;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.csv.StreamCSVOutputProcessor;
-import org.pentaho.reporting.engine.classic.core.util.NullOutputStream;
+import org.pentaho.reporting.libraries.repository.ContentIOException;
 
-public class CSVOutput
+public class CSVOutput implements ReportOutputHandler
 {
 
-  public static int paginate(final MasterReport report,
-                                 final int yieldRate) throws ReportProcessingException, IOException
+  public int paginate(final MasterReport report,
+                      final int yieldRate) throws ReportProcessingException, IOException
   {
-    StreamReportProcessor proc = null;
-    try
-    {
-      final StreamCSVOutputProcessor target = new StreamCSVOutputProcessor(report.getConfiguration(), new NullOutputStream());
-      proc = new StreamReportProcessor(report, target);
-
-      if (yieldRate > 0)
-      {
-        proc.addReportProgressListener(new YieldReportListener(yieldRate));
-      }
-      proc.paginate();
-      return proc.getPhysicalPageCount();
-    }
-    finally
-    {
-      if (proc != null)
-      {
-        proc.close();
-      }
-    }
+    return 0;
   }
 
-  public static boolean generate(final MasterReport report,
-                                 final OutputStream outputStream,
-                                 final int yieldRate) throws ReportProcessingException, IOException
+  public boolean generate(final MasterReport report,
+                          final int acceptedPage,
+                          final OutputStream outputStream,
+                          final int yieldRate) throws ReportProcessingException, IOException, ContentIOException
   {
     StreamReportProcessor proc = null;
     try
@@ -65,5 +47,10 @@ public class CSVOutput
         proc.close();
       }
     }
+  }
+
+  public void close()
+  {
+
   }
 }

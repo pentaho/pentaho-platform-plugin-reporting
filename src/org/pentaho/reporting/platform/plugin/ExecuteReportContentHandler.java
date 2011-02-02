@@ -56,7 +56,6 @@ public class ExecuteReportContentHandler
     {
       // produce rendered report
       final SimpleReportingComponent reportComponent = new SimpleReportingComponent();
-      reportComponent.setSession(userSession);
       reportComponent.setReportDefinitionPath(reportDefinitionPath);
       reportComponent.setPaginateOutput(true);
       reportComponent.setDefaultOutputTarget(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE);

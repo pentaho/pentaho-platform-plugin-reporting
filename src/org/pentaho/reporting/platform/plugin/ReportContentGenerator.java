@@ -253,7 +253,6 @@ public class ReportContentGenerator extends SimpleContentGenerator
     final SimpleReportingComponent reportComponent = new SimpleReportingComponent();
     final Map<String, Object> inputs = createInputs(requestParams);
     reportComponent.setDefaultOutputTarget(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE);
-    reportComponent.setSession(userSession);
     reportComponent.setReportDefinitionPath(reportDefinitionPath);
     reportComponent.setInputs(inputs);
     return reportComponent.getMimeType();
