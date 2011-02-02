@@ -1006,26 +1006,25 @@ public class ParameterXmlContentHandler
   private StaticListParameter createContentLinkingParameter()
   {
 
-    final StaticListParameter scheduleIdParameter =
+    final StaticListParameter parameter =
         new StaticListParameter(SYS_PARAM_CONTENT_LINK, true, false, String[].class);
-    scheduleIdParameter.setMandatory(false);
-    scheduleIdParameter.setParameterAttribute
+    parameter.setMandatory(false);
+    parameter.setHidden(true);
+    parameter.setRole(ParameterAttributeNames.Core.ROLE_SYSTEM_PARAMETER);
+    parameter.setParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PREFERRED, "false");
-    scheduleIdParameter.setParameterAttribute
+    parameter.setParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP, GROUP_SYSTEM);
-    scheduleIdParameter.setParameterAttribute
+    parameter.setParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP_LABEL,
             Messages.getString("ReportPlugin.SystemParameters"));
-    scheduleIdParameter.setParameterAttribute
+    parameter.setParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.LABEL,
             Messages.getString("ReportPlugin.ContentLinking"));
-    scheduleIdParameter.setParameterAttribute
+    parameter.setParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TYPE,
             ParameterAttributeNames.Core.TYPE_LIST);
-    scheduleIdParameter.setRole(ParameterAttributeNames.Core.ROLE_SYSTEM_PARAMETER);
-
-    appendAvailableSchedules(scheduleIdParameter);
-    return scheduleIdParameter;
+    return parameter;
   }
 
   private StaticListParameter createScheduleIdParameter()
