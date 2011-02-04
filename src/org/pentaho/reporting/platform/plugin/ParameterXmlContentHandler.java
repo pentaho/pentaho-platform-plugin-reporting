@@ -28,6 +28,7 @@ import org.pentaho.platform.api.repository.ISubscribeContent;
 import org.pentaho.platform.api.repository.ISubscription;
 import org.pentaho.platform.api.repository.ISubscriptionRepository;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
+import org.pentaho.platform.util.UUIDUtil;
 import org.pentaho.reporting.engine.classic.core.AttributeNames;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportDataFactoryException;
@@ -241,6 +242,7 @@ public class ParameterXmlContentHandler
   private IPentahoSession userSession;
   private Map<String, Object> inputs;
   private String reportDefinitionPath;
+  private String sessionId;
 
   private static final String SYS_PARAM_RENDER_MODE = "renderMode";
   private static final String SYS_PARAM_OUTPUT_TARGET = SimpleReportingComponent.OUTPUT_TARGET;
@@ -248,6 +250,7 @@ public class ParameterXmlContentHandler
   private static final String SYS_PARAM_DESTINATION = "destination";
   private static final String SYS_PARAM_SCHEDULE_ID = "schedule-id";
   private static final String SYS_PARAM_CONTENT_LINK = "::cl";
+  public static final String SYS_PARAM_SESSION_ID = "::session";
   private static final String GROUP_SUBSCRIPTION = "subscription";
   private static final String GROUP_SYSTEM = "system";
   private static final String GROUP_PARAMETERS = "parameters";
@@ -285,6 +288,7 @@ public class ParameterXmlContentHandler
       parameter.put("solution", createGenericSystemParameter("solution", false, false)); // NON-NLS
       parameter.put("yield-rate", createGenericIntSystemParameter("yield-rate", false, false)); // NON-NLS
       parameter.put("accepted-page", createGenericIntSystemParameter("accepted-page", false, false)); // NON-NLS
+      parameter.put(SYS_PARAM_SESSION_ID, createGenericSystemParameter(SYS_PARAM_SESSION_ID, false, false)); // NON-NLS
       parameter.put("path", createGenericSystemParameter("path", false, false)); // NON-NLS
       parameter.put("name", createGenericSystemParameter("name", false, false)); // NON-NLS
       parameter.put("action", createGenericSystemParameter("action", true, false)); // NON-NLS
@@ -330,36 +334,48 @@ public class ParameterXmlContentHandler
   public void createParameterContent(final OutputStream outputStream,
                                      final String reportDefinitionPath) throws Exception
   {
-    this.reportDefinitionPath = reportDefinitionPath;
-    this.document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+    DefaultParameterContext parameterContext = null;
 
-    final IParameterProvider requestParams = getRequestParameters();
-
-    final boolean subscribe = "true".equals(requestParams.getStringParameter("subscribe", "false")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-    // handle parameter feedback (XML) services
-
-    final SimpleReportingComponent reportComponent = new SimpleReportingComponent();
-    reportComponent.setReportDefinitionPath(reportDefinitionPath);
-    reportComponent.setPaginateOutput(true);
-    reportComponent.setDefaultOutputTarget(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE);
-    reportComponent.setInputs(inputs);
-
-    final MasterReport report = reportComponent.getReport();
-
-    final DefaultParameterContext parameterContext = new DefaultParameterContext(report);
-    final ValidationResult vr;
-    final Element parameters;
     try
     {
+
+      final Object rawSessionId = inputs.get(ParameterXmlContentHandler.SYS_PARAM_SESSION_ID);
+      if (rawSessionId instanceof String && "".equals(rawSessionId) == false)
+      {
+        ReportSessionIdHolder.set((String) rawSessionId);
+      }
+      else
+      {
+        ReportSessionIdHolder.set(UUIDUtil.getUUIDAsString());
+        inputs.put(ParameterXmlContentHandler.SYS_PARAM_SESSION_ID, ReportSessionIdHolder.get());
+      }
+
+      this.reportDefinitionPath = reportDefinitionPath;
+      this.document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+
+      final IParameterProvider requestParams = getRequestParameters();
+
+      final boolean subscribe = "true".equals(requestParams.getStringParameter("subscribe", "false")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+      // handle parameter feedback (XML) services
+
+      final SimpleReportingComponent reportComponent = new SimpleReportingComponent();
+      reportComponent.setReportDefinitionPath(reportDefinitionPath);
+      reportComponent.setPaginateOutput(true);
+      reportComponent.setDefaultOutputTarget(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE);
+      reportComponent.setInputs(inputs);
+
+      final MasterReport report = reportComponent.getReport();
+      parameterContext = new DefaultParameterContext(report);
+
       // apply inputs to parameters
       final ValidationResult validationResult =
           reportComponent.applyInputsToReportParameters(parameterContext, new ValidationResult());
 
       final ReportParameterDefinition reportParameterDefinition = report.getParameterDefinition();
-      vr = reportParameterDefinition.getValidator().validate
+      final ValidationResult vr = reportParameterDefinition.getValidator().validate
           (validationResult, reportParameterDefinition, parameterContext);
 
-      parameters = document.createElement(GROUP_PARAMETERS); //$NON-NLS-1$
+      final Element parameters = document.createElement(GROUP_PARAMETERS); //$NON-NLS-1$
       parameters.setAttribute("is-prompt-needed", String.valueOf(vr.isEmpty() == false)); //$NON-NLS-1$ //$NON-NLS-2$
       parameters.setAttribute("subscribe", String.valueOf(subscribe)); //$NON-NLS-1$ //$NON-NLS-2$
 
@@ -454,23 +470,24 @@ public class ParameterXmlContentHandler
         element.setAttribute("id", outputParameterName);
         parameters.appendChild(element);
       }
+
+      if (vr.isEmpty() && paginate) //$NON-NLS-1$ //$NON-NLS-2$
+      {
+        appendPageCount(reportComponent, parameters);
+      }
+      document.appendChild(parameters);
+
+      final DOMSource source = new DOMSource(document);
+      final StreamResult result = new StreamResult(outputStream);
+      final Transformer transformer = TransformerFactory.newInstance().newTransformer();
+      transformer.transform(source, result);
+      // close parameter context
     }
     finally
     {
+      ReportSessionIdHolder.remove();
       parameterContext.close();
     }
-
-    if (vr.isEmpty() && paginate) //$NON-NLS-1$ //$NON-NLS-2$
-    {
-      appendPageCount(reportComponent, parameters);
-    }
-    document.appendChild(parameters);
-
-    final DOMSource source = new DOMSource(document);
-    final StreamResult result = new StreamResult(outputStream);
-    final Transformer transformer = TransformerFactory.newInstance().newTransformer();
-    transformer.transform(source, result);
-    // close parameter context
   }
 
   private Map<String, Object> computeRealInput(final ParameterContext parameterContext,
