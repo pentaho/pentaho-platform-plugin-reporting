@@ -14,6 +14,7 @@ import org.pentaho.platform.api.repository.ISolutionRepository;
 import org.pentaho.platform.engine.core.audit.AuditHelper;
 import org.pentaho.platform.engine.core.audit.MessageTypes;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
+import org.pentaho.platform.util.UUIDUtil;
 import org.pentaho.platform.util.web.MimeHelper;
 import org.pentaho.reporting.engine.classic.core.AttributeNames;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
@@ -49,6 +50,12 @@ public class ExecuteReportContentHandler
     AuditHelper.audit(userSession.getId(), userSession.getName(), reportDefinitionPath,
         contentGenerator.getObjectName(), getClass().getName(), MessageTypes.INSTANCE_START,
         contentGenerator.getInstanceId(), "", 0, contentGenerator); //$NON-NLS-1$
+
+    final Object rawSessionId = inputs.get(ParameterXmlContentHandler.SYS_PARAM_SESSION_ID);
+    if ((rawSessionId instanceof String) == false || "".equals(rawSessionId))
+    {
+      inputs.put(ParameterXmlContentHandler.SYS_PARAM_SESSION_ID, UUIDUtil.getUUIDAsString());
+    }
 
     String result = MessageTypes.INSTANCE_END;
     StagingHandler reportStagingHandler = null;
@@ -115,7 +122,7 @@ public class ExecuteReportContentHandler
 
       if (logger.isDebugEnabled())
       {
-        logger.debug(Messages.getString("ReportPlugin.logStartGenerateContent", mimeType,//$NON-NLS-1$
+        logger.debug(Messages.getInstance().getString("ReportPlugin.logStartGenerateContent", mimeType,//$NON-NLS-1$
             outputTarget, String.valueOf(reportComponent.getAcceptedPage())));
       }
 
@@ -178,7 +185,7 @@ public class ExecuteReportContentHandler
           }
           if (logger.isDebugEnabled())
           {
-            logger.debug(Messages.getString("ReportPlugin.logEndGenerateContent", String.valueOf(reportStagingHandler.getWrittenByteCount())));//$NON-NLS-1$
+            logger.debug(Messages.getInstance().getString("ReportPlugin.logEndGenerateContent", String.valueOf(reportStagingHandler.getWrittenByteCount())));//$NON-NLS-1$
           }
           reportStagingHandler.complete(); // will copy bytes to final destination...
 
@@ -218,7 +225,7 @@ public class ExecuteReportContentHandler
     }
     if (logger.isDebugEnabled())
     {
-      logger.debug(Messages.getString("ReportPlugin.logErrorGenerateContent"));//$NON-NLS-1$
+      logger.debug(Messages.getInstance().getString("ReportPlugin.logErrorGenerateContent"));//$NON-NLS-1$
     }
     if (reportStagingHandler.canSendHeaders())
     {
@@ -226,7 +233,7 @@ public class ExecuteReportContentHandler
       // Can send headers is another way to check whether the real destination has been
       // pre-polluted with data.
       //
-      outputStream.write(Messages.getString("ReportPlugin.ReportValidationFailed").getBytes()); //$NON-NLS-1$
+      outputStream.write(Messages.getInstance().getString("ReportPlugin.ReportValidationFailed").getBytes()); //$NON-NLS-1$
       outputStream.flush();
     }
   }

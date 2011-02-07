@@ -9,6 +9,8 @@
     </content>
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="jdk" jdkName="1.6" jdkType="JavaSDK" />
+    <orderEntry type="module" module-name="core" />
+    <orderEntry type="module" module-name="extensions-mondrian" />
     <orderEntry type="module-library">
       <library>
         <CLASSES>

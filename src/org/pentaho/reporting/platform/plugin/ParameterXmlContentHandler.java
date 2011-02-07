@@ -28,6 +28,7 @@ import org.pentaho.platform.api.repository.ISubscribeContent;
 import org.pentaho.platform.api.repository.ISubscription;
 import org.pentaho.platform.api.repository.ISubscriptionRepository;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
+import org.pentaho.platform.util.UUIDUtil;
 import org.pentaho.reporting.engine.classic.core.AttributeNames;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportDataFactoryException;
@@ -242,15 +243,18 @@ public class ParameterXmlContentHandler
   private Map<String, Object> inputs;
   private String reportDefinitionPath;
 
-  private static final String SYS_PARAM_RENDER_MODE = "renderMode";
+  public static final String SYS_PARAM_RENDER_MODE = "renderMode";
   private static final String SYS_PARAM_OUTPUT_TARGET = SimpleReportingComponent.OUTPUT_TARGET;
   private static final String SYS_PARAM_SUBSCRIPTION_NAME = "subscription-name";
   private static final String SYS_PARAM_DESTINATION = "destination";
   private static final String SYS_PARAM_SCHEDULE_ID = "schedule-id";
+  private static final String SYS_PARAM_CONTENT_LINK = "::cl";
+  public static final String SYS_PARAM_SESSION_ID = "::session";
   private static final String GROUP_SUBSCRIPTION = "subscription";
   private static final String GROUP_SYSTEM = "system";
   private static final String GROUP_PARAMETERS = "parameters";
-  private static final String SYS_PARAM_CONTENT_LINK = "::cl";
+  private static final String SYS_PARAM_TAB_NAME = "::TabName";
+  private static final String SYS_PARAM_TAB_ACTIVE = "::TabActive";
 
   public ParameterXmlContentHandler(final ReportContentGenerator contentGenerator,
                                     final boolean paginate)
@@ -278,13 +282,14 @@ public class ParameterXmlContentHandler
       parameter.put(SYS_PARAM_OUTPUT_TARGET, createOutputParameter());
       parameter.put("subscribe", createGenericBooleanSystemParameter("subscribe", false, false)); // NON-NLS
       parameter.put(SYS_PARAM_CONTENT_LINK, createContentLinkingParameter()); // NON-NLS
-      parameter.put("::TabName",
-          createGenericSystemParameter("::TabName", false, true)); // NON-NLS
-      parameter.put("::TabActive",
-          createGenericBooleanSystemParameter("::TabActive", false, true)); // NON-NLS
+      parameter.put(SYS_PARAM_TAB_NAME,
+          createGenericSystemParameter(SYS_PARAM_TAB_NAME, false, true)); // NON-NLS
+      parameter.put(SYS_PARAM_TAB_ACTIVE,
+          createGenericBooleanSystemParameter(SYS_PARAM_TAB_ACTIVE, false, true)); // NON-NLS
       parameter.put("solution", createGenericSystemParameter("solution", false, false)); // NON-NLS
       parameter.put("yield-rate", createGenericIntSystemParameter("yield-rate", false, false)); // NON-NLS
       parameter.put("accepted-page", createGenericIntSystemParameter("accepted-page", false, false)); // NON-NLS
+      parameter.put(SYS_PARAM_SESSION_ID, createGenericSystemParameter(SYS_PARAM_SESSION_ID, false, false)); // NON-NLS
       parameter.put("path", createGenericSystemParameter("path", false, false)); // NON-NLS
       parameter.put("name", createGenericSystemParameter("name", false, false)); // NON-NLS
       parameter.put("action", createGenericSystemParameter("action", true, false)); // NON-NLS
@@ -299,7 +304,7 @@ public class ParameterXmlContentHandler
       parameter.put("ignoreDefaultDates", createGenericBooleanSystemParameter("ignoreDefaultDates", true, false)); // NON-NLS
       parameter.put("print", createGenericBooleanSystemParameter("print", false, false)); // NON-NLS
       parameter.put("printer-name", createGenericSystemParameter("printer-name", false, false)); // NON-NLS
-      parameter.put("renderMode", createRenderModeSystemParameter()); // NON-NLS
+      parameter.put(SYS_PARAM_RENDER_MODE, createRenderModeSystemParameter()); // NON-NLS
 
       systemParameter = Collections.unmodifiableMap(parameter);
     }
@@ -330,6 +335,12 @@ public class ParameterXmlContentHandler
   public void createParameterContent(final OutputStream outputStream,
                                      final String reportDefinitionPath) throws Exception
   {
+    final Object rawSessionId = inputs.get(ParameterXmlContentHandler.SYS_PARAM_SESSION_ID);
+    if ((rawSessionId instanceof String) == false || "".equals(rawSessionId))
+    {
+      inputs.put(ParameterXmlContentHandler.SYS_PARAM_SESSION_ID, UUIDUtil.getUUIDAsString());
+    }
+
     this.reportDefinitionPath = reportDefinitionPath;
     this.document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
 
@@ -515,7 +526,7 @@ public class ParameterXmlContentHandler
       {
         if (logger.isDebugEnabled())
         {
-          logger.debug(Messages.getString
+          logger.debug(Messages.getInstance().getString
               ("ReportPlugin.debugParameterCannotBeConverted", parameter.getName(), String.valueOf(value)), be);
         }
       }
@@ -662,7 +673,7 @@ public class ParameterXmlContentHandler
           final Element valueElement = document.createElement("value"); //$NON-NLS-1$
           valuesElement.appendChild(valueElement);
 
-          valueElement.setAttribute("label", Messages.getString("ReportPlugin.autoParameter", String.valueOf(key))); //$NON-NLS-1$ //$NON-NLS-2$
+          valueElement.setAttribute("label", Messages.getInstance().getString("ReportPlugin.autoParameter", String.valueOf(key))); //$NON-NLS-1$ //$NON-NLS-2$
           valueElement.setAttribute("type", elementValueType.getName()); //$NON-NLS-1$
           valueElement.setAttribute("selected", String.valueOf(selectionSet.contains(key)));//$NON-NLS-1$
 
@@ -704,7 +715,7 @@ public class ParameterXmlContentHandler
     }
     catch (BeanException be)
     {
-      logger.error(Messages.getString
+      logger.error(Messages.getInstance().getString
           ("ReportPlugin.errorFailedToGenerateParameter", parameter.getName(), String.valueOf(selections)), be);
       throw be;
     }
@@ -784,7 +795,7 @@ public class ParameterXmlContentHandler
     {
       if (value instanceof Date == false)
       {
-        throw new BeanException(Messages.getString("ReportPlugin.errorNonDateParameterValue"));
+        throw new BeanException(Messages.getInstance().getString("ReportPlugin.errorNonDateParameterValue"));
       }
 
       final String timezone = parameter.getParameterAttribute
@@ -924,10 +935,10 @@ public class ParameterXmlContentHandler
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP, GROUP_SUBSCRIPTION);
     subscriptionName.setParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP_LABEL,
-            Messages.getString("ReportPlugin.ReportSchedulingOptions"));
+            Messages.getInstance().getString("ReportPlugin.ReportSchedulingOptions"));
     subscriptionName.setParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.LABEL,
-            Messages.getString("ReportPlugin.ReportName"));
+            Messages.getInstance().getString("ReportPlugin.ReportName"));
     subscriptionName.setParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TYPE,
             ParameterAttributeNames.Core.TYPE_TEXTBOX);
@@ -945,10 +956,10 @@ public class ParameterXmlContentHandler
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP, GROUP_SUBSCRIPTION);
     destinationParameter.setParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP_LABEL,
-            Messages.getString("ReportPlugin.ReportSchedulingOptions"));
+            Messages.getInstance().getString("ReportPlugin.ReportSchedulingOptions"));
     destinationParameter.setParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.LABEL,
-            Messages.getString("ReportPlugin.Destination"));
+            Messages.getInstance().getString("ReportPlugin.Destination"));
     destinationParameter.setParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TYPE,
             ParameterAttributeNames.Core.TYPE_TEXTBOX);
@@ -979,7 +990,7 @@ public class ParameterXmlContentHandler
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP, GROUP_SYSTEM);
     destinationParameter.setParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP_LABEL,
-            Messages.getString("ReportPlugin.SystemParameters"));
+            Messages.getInstance().getString("ReportPlugin.SystemParameters"));
     destinationParameter.setParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.LABEL, parameterName);
     destinationParameter.setParameterAttribute
@@ -1017,10 +1028,10 @@ public class ParameterXmlContentHandler
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP, GROUP_SYSTEM);
     parameter.setParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP_LABEL,
-            Messages.getString("ReportPlugin.SystemParameters"));
+            Messages.getInstance().getString("ReportPlugin.SystemParameters"));
     parameter.setParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.LABEL,
-            Messages.getString("ReportPlugin.ContentLinking"));
+            Messages.getInstance().getString("ReportPlugin.ContentLinking"));
     parameter.setParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TYPE,
             ParameterAttributeNames.Core.TYPE_LIST);
@@ -1038,10 +1049,10 @@ public class ParameterXmlContentHandler
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP, GROUP_SUBSCRIPTION);
     scheduleIdParameter.setParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP_LABEL,
-            Messages.getString("ReportPlugin.ReportSchedulingOptions"));
+            Messages.getInstance().getString("ReportPlugin.ReportSchedulingOptions"));
     scheduleIdParameter.setParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.LABEL,
-            Messages.getString("ReportPlugin.Subscription"));
+            Messages.getInstance().getString("ReportPlugin.Subscription"));
     scheduleIdParameter.setParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TYPE,
             ParameterAttributeNames.Core.TYPE_DROPDOWN);
@@ -1127,22 +1138,22 @@ public class ParameterXmlContentHandler
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP, GROUP_PARAMETERS);
     listParameter.setParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP_LABEL,
-            Messages.getString("ReportPlugin.ReportParameters"));
+            Messages.getInstance().getString("ReportPlugin.ReportParameters"));
     listParameter.setParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.LABEL,
-            Messages.getString("ReportPlugin.OutputType"));
+            Messages.getInstance().getString("ReportPlugin.OutputType"));
     listParameter.setParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TYPE,
             ParameterAttributeNames.Core.TYPE_DROPDOWN);
     listParameter.setRole(ParameterAttributeNames.Core.ROLE_SYSTEM_PARAMETER);
-    listParameter.addValues(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE, Messages.getString("ReportPlugin.outputHTMLPaginated"));
-    listParameter.addValues(HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE, Messages.getString("ReportPlugin.outputHTMLStream"));
-    listParameter.addValues(PdfPageableModule.PDF_EXPORT_TYPE, Messages.getString("ReportPlugin.outputPDF"));
-    listParameter.addValues(ExcelTableModule.EXCEL_FLOW_EXPORT_TYPE, Messages.getString("ReportPlugin.outputXLS"));
-    listParameter.addValues(ExcelTableModule.XLSX_FLOW_EXPORT_TYPE, Messages.getString("ReportPlugin.outputXLSX"));
-    listParameter.addValues(CSVTableModule.TABLE_CSV_STREAM_EXPORT_TYPE, Messages.getString("ReportPlugin.outputCSV"));
-    listParameter.addValues(RTFTableModule.TABLE_RTF_FLOW_EXPORT_TYPE, Messages.getString("ReportPlugin.outputRTF"));
-    listParameter.addValues(PlainTextPageableModule.PLAINTEXT_EXPORT_TYPE, Messages.getString("ReportPlugin.outputTXT"));
+    listParameter.addValues(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE, Messages.getInstance().getString("ReportPlugin.outputHTMLPaginated"));
+    listParameter.addValues(HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE, Messages.getInstance().getString("ReportPlugin.outputHTMLStream"));
+    listParameter.addValues(PdfPageableModule.PDF_EXPORT_TYPE, Messages.getInstance().getString("ReportPlugin.outputPDF"));
+    listParameter.addValues(ExcelTableModule.EXCEL_FLOW_EXPORT_TYPE, Messages.getInstance().getString("ReportPlugin.outputXLS"));
+    listParameter.addValues(ExcelTableModule.XLSX_FLOW_EXPORT_TYPE, Messages.getInstance().getString("ReportPlugin.outputXLSX"));
+    listParameter.addValues(CSVTableModule.TABLE_CSV_STREAM_EXPORT_TYPE, Messages.getInstance().getString("ReportPlugin.outputCSV"));
+    listParameter.addValues(RTFTableModule.TABLE_RTF_FLOW_EXPORT_TYPE, Messages.getInstance().getString("ReportPlugin.outputRTF"));
+    listParameter.addValues(PlainTextPageableModule.PLAINTEXT_EXPORT_TYPE, Messages.getInstance().getString("ReportPlugin.outputTXT"));
     return listParameter;
   }
 
@@ -1157,7 +1168,7 @@ public class ParameterXmlContentHandler
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP, GROUP_SYSTEM);
     listParameter.setParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP_LABEL,
-            Messages.getString("ReportPlugin.SystemParameters"));
+            Messages.getInstance().getString("ReportPlugin.SystemParameters"));
     listParameter.setParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.LABEL, SYS_PARAM_RENDER_MODE);
     listParameter.setParameterAttribute

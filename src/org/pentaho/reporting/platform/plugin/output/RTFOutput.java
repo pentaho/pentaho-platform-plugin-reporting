@@ -9,39 +9,23 @@ import org.pentaho.reporting.engine.classic.core.layout.output.ReportProcessor;
 import org.pentaho.reporting.engine.classic.core.layout.output.YieldReportListener;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.base.FlowReportProcessor;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.rtf.FlowRTFOutputProcessor;
-import org.pentaho.reporting.engine.classic.core.util.NullOutputStream;
 
-public class RTFOutput
+public class RTFOutput implements ReportOutputHandler
 {
-  public static int paginate(final MasterReport report,
-                             final int yieldRate) throws ReportProcessingException, IOException
+  public RTFOutput()
   {
-    FlowReportProcessor proc = null;
-    try
-    {
-      final FlowRTFOutputProcessor target = new FlowRTFOutputProcessor
-          (report.getConfiguration(), new NullOutputStream(), report.getResourceManager());
-      proc = new FlowReportProcessor(report, target);
-
-      if (yieldRate > 0)
-      {
-        proc.addReportProgressListener(new YieldReportListener(yieldRate));
-      }
-      proc.processReport();
-      return proc.getPhysicalPageCount();
-    }
-    finally
-    {
-      if (proc != null)
-      {
-        proc.close();
-      }
-    }
   }
 
-  public static boolean generate(final MasterReport report,
-                                 final OutputStream outputStream,
-                                 final int yieldRate) throws ReportProcessingException, IOException
+  public int paginate(final MasterReport report,
+                      final int yieldRate) throws ReportProcessingException, IOException
+  {
+    return 0;
+  }
+
+  public boolean generate(final MasterReport report,
+                          final int acceptedPage,
+                          final OutputStream outputStream,
+                          final int yieldRate) throws ReportProcessingException, IOException
   {
     ReportProcessor proc = null;
     try
@@ -66,5 +50,10 @@ public class RTFOutput
         proc.close();
       }
     }
+  }
+
+  public void close()
+  {
+
   }
 }

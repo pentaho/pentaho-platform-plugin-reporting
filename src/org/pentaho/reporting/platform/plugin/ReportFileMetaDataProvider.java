@@ -84,7 +84,7 @@ public class ReportFileMetaDataProvider extends SolutionFileMetaAdapter
     }
     catch (Exception e)
     {
-      logger.warn(Messages.getString("ReportPlugin.errorMetadataNotReadable"), e);
+      logger.warn(Messages.getInstance().getString("ReportPlugin.errorMetadataNotReadable"), e);
       return null;
     }
   }

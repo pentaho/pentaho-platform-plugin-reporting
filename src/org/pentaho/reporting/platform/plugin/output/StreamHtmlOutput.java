@@ -6,15 +6,15 @@ import java.io.OutputStream;
 
 import org.pentaho.platform.api.engine.IApplicationContext;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
+import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
-import org.pentaho.reporting.engine.classic.core.layout.output.DisplayAllFlowSelector;
 import org.pentaho.reporting.engine.classic.core.layout.output.YieldReportListener;
-import org.pentaho.reporting.engine.classic.core.modules.output.pageable.base.PageableReportProcessor;
-import org.pentaho.reporting.engine.classic.core.modules.output.pageable.base.SinglePageFlowSelector;
+import org.pentaho.reporting.engine.classic.core.modules.output.table.base.StreamReportProcessor;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.AllItemsHtmlPrinter;
+import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlOutputProcessor;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlPrinter;
-import org.pentaho.reporting.engine.classic.core.modules.output.table.html.PageableHtmlOutputProcessor;
+import org.pentaho.reporting.engine.classic.core.modules.output.table.html.StreamHtmlOutputProcessor;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.URLRewriter;
 import org.pentaho.reporting.libraries.repository.ContentIOException;
 import org.pentaho.reporting.libraries.repository.ContentLocation;
@@ -25,13 +25,11 @@ import org.pentaho.reporting.platform.plugin.messages.Messages;
 import org.pentaho.reporting.platform.plugin.repository.PentahoNameGenerator;
 import org.pentaho.reporting.platform.plugin.repository.PentahoURLRewriter;
 
-public class PageableHTMLOutput implements ReportOutputHandler
+public class StreamHtmlOutput implements ReportOutputHandler
 {
   private String contentHandlerPattern;
-  private ProxyOutputStream proxyOutputStream;
-  private PageableReportProcessor proc;
 
-  public PageableHTMLOutput(final String contentHandlerPattern)
+  public StreamHtmlOutput(final String contentHandlerPattern)
   {
     this.contentHandlerPattern = contentHandlerPattern;
   }
@@ -41,18 +39,28 @@ public class PageableHTMLOutput implements ReportOutputHandler
     return contentHandlerPattern;
   }
 
-  public ProxyOutputStream getProxyOutputStream()
+  public void close()
   {
-    return proxyOutputStream;
+
   }
 
-  public void setProxyOutputStream(final ProxyOutputStream proxyOutputStream)
+  protected boolean isSafeToDelete()
   {
-    this.proxyOutputStream = proxyOutputStream;
+    return "true".equals(ClassicEngineBoot.getInstance().getGlobalConfig().getConfigProperty
+        ("org.pentaho.reporting.platform.plugin.AlwaysDeleteHtmlDataFiles"));
   }
 
-  protected PageableReportProcessor createReportProcessor(final MasterReport report, final int yieldRate)
-      throws ReportProcessingException, ContentIOException
+  public int paginate(final MasterReport report,
+                      final int yieldRate) throws ReportProcessingException, ContentIOException, IOException
+  {
+    return 0;
+  }
+
+  public boolean generate(final MasterReport report,
+                          final int acceptedPage,
+                          final OutputStream outputStream,
+                          final int yieldRate)
+      throws ReportProcessingException, IOException, ContentIOException
   {
     final IApplicationContext ctx = PentahoSystem.getApplicationContext();
 
@@ -83,7 +91,7 @@ public class PageableHTMLOutput implements ReportOutputHandler
         throw new IllegalStateException
             (Messages.getInstance().getString("ReportPlugin.errorNameGeneratorMissingConfiguration"));
       }
-      dataNameGenerator.initialize(dataLocation, true);
+      dataNameGenerator.initialize(dataLocation, isSafeToDelete());
       rewriter = new PentahoURLRewriter(contentHandlerPattern, false);
     }
     else
@@ -93,81 +101,27 @@ public class PageableHTMLOutput implements ReportOutputHandler
       rewriter = new PentahoURLRewriter(contentHandlerPattern, false);
     }
 
-    proxyOutputStream = new ProxyOutputStream();
-    final StreamRepository targetRepository = new StreamRepository(null, proxyOutputStream, "report"); //$NON-NLS-1$
+    final StreamRepository targetRepository = new StreamRepository(null, outputStream, "report"); //$NON-NLS-1$
     final ContentLocation targetRoot = targetRepository.getRoot();
 
+    final HtmlOutputProcessor outputProcessor = new StreamHtmlOutputProcessor(report.getConfiguration());
     final HtmlPrinter printer = new AllItemsHtmlPrinter(report.getResourceManager());
     printer.setContentWriter(targetRoot, new DefaultNameGenerator(targetRoot, "index", "html"));//$NON-NLS-1$//$NON-NLS-2$
     printer.setDataWriter(dataLocation, dataNameGenerator);
     printer.setUrlRewriter(rewriter);
-
-    final PageableHtmlOutputProcessor outputProcessor = new PageableHtmlOutputProcessor(report.getConfiguration());
     outputProcessor.setPrinter(printer);
-    proc = new PageableReportProcessor(report, outputProcessor);
 
+    final StreamReportProcessor sp = new StreamReportProcessor(report, outputProcessor);
     if (yieldRate > 0)
     {
-      proc.addReportProgressListener(new YieldReportListener(yieldRate));
+      sp.addReportProgressListener(new YieldReportListener(yieldRate));
     }
+    sp.processReport();
+    sp.close();
 
-    return proc;
-  }
-
-  public int paginate(final MasterReport report,
-                      final int yieldRate) throws ReportProcessingException, IOException, ContentIOException
-  {
-    if (proc == null)
-    {
-      proc = createReportProcessor(report, yieldRate);
-    }
-    if (proc.isPaginated() == false)
-    {
-      proc.paginate();
-    }
-
-    return proc.getLogicalPageCount();
-  }
-
-  public boolean generate(final MasterReport report,
-                          final int acceptedPage,
-                          final OutputStream outputStream,
-                          final int yieldRate)
-      throws ReportProcessingException, IOException, ContentIOException
-  {
-    if (proc == null)
-    {
-      proc = createReportProcessor(report, yieldRate);
-    }
-    final PageableHtmlOutputProcessor outputProcessor = (PageableHtmlOutputProcessor) proc.getOutputProcessor();
-    if (acceptedPage >= 0)
-    {
-      outputProcessor.setFlowSelector(new SinglePageFlowSelector(acceptedPage));
-    }
-    else
-    {
-      outputProcessor.setFlowSelector(new DisplayAllFlowSelector());
-    }
-    proxyOutputStream.setParent(outputStream);
-    try
-    {
-      proc.processReport();
-    }
-    finally
-    {
-      outputStream.flush();
-      outputStream.close();
-    }
+    outputStream.flush();
+    outputStream.close();
     return true;
   }
 
-  public void close()
-  {
-    if (proc != null)
-    {
-      proc.close();
-      proxyOutputStream = null;
-    }
-
-  }
 }

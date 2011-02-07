@@ -108,7 +108,7 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
           "requestContextPath".equals(key) //$NON-NLS-1$
           ) //$NON-NLS-1$
       {
-        logger.warn(Messages.getString("ReportPlugin.warnNoApplicationContext"));
+        logger.warn(Messages.getInstance().getString("ReportPlugin.warnNoApplicationContext"));
         // make it explicit that these values are not available. This way
         // a configuration in the classic-engine.properties file cannot begin
         // to interfer here.
@@ -168,7 +168,7 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
           key.equals("username") ||//$NON-NLS-1$
           key.equals("roles"))//$NON-NLS-1$
       {
-        logger.warn(Messages.getString("ReportPlugin.warnNoSession"));
+        logger.warn(Messages.getInstance().getString("ReportPlugin.warnNoSession"));
         return null;
       }
     }

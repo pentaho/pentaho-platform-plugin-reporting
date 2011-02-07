@@ -236,7 +236,7 @@ public class ReportContentUtil
       }
       catch (BeanException e)
       {
-        throw new ReportProcessingException(Messages.getString
+        throw new ReportProcessingException(Messages.getInstance().getString
             ("ReportPlugin.unableToConvertParameter", parameter.getName(), valueAsString)); //$NON-NLS-1$
       }
     }

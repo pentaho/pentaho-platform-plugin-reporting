@@ -16,82 +16,93 @@ import org.pentaho.reporting.engine.classic.core.modules.output.pageable.graphic
 import org.pentaho.reporting.libraries.base.util.PngEncoder;
 import org.pentaho.reporting.libraries.repository.ContentIOException;
 
-public class PNGOutput
+public class PNGOutput implements ReportOutputHandler
 {
-  public static int paginate(final MasterReport report,
-                             final int yieldRate)
-      throws ReportProcessingException, IOException, ContentIOException
+  private transient PrintReportProcessor proc;
+
+  public PNGOutput()
   {
-    PrintReportProcessor proc = null;
-    try
-    {
-      proc = new PrintReportProcessor(report);
-      if (yieldRate > 0)
-      {
-        proc.addReportProgressListener(new YieldReportListener(yieldRate));
-      }
-      proc.paginate();
-      return proc.getNumberOfPages();
-    }
-    finally
-    {
-      if (proc != null)
-      {
-        proc.close();
-      }
-    }
   }
 
-  public static boolean generate(final MasterReport report,
-                             final int acceptedPage,
-                             final OutputStream outputStream,
-                             final int yieldRate)
+  public int paginate(final MasterReport report,
+                      final int yieldRate)
       throws ReportProcessingException, IOException, ContentIOException
   {
-    PrintReportProcessor proc = null;
-    try
+    if (proc == null)
     {
-      proc = new PrintReportProcessor(report);
-      if (yieldRate > 0)
-      {
-        proc.addReportProgressListener(new YieldReportListener(yieldRate));
-      }
+      proc = create(report, yieldRate);
+    }
+
+    if (proc.isPaginated() == false)
+    {
       proc.paginate();
-      final int pageCount = proc.getNumberOfPages();
-
-      if (pageCount <= acceptedPage)
-      {
-        return false;
-      }
-
-      final BufferedImage image = createImage(proc.getPageFormat(acceptedPage));
-
-      final Rectangle rect = new Rectangle(0, 0, image.getWidth(), image.getHeight());
-      // prepare the image by filling it ...
-      final Graphics2D g2 = image.createGraphics();
-      g2.setPaint(Color.white);
-      g2.fill(rect);
-
-      final PageDrawable pageDrawable = proc.getPageDrawable(acceptedPage);
-      pageDrawable.draw(g2, rect);
-      g2.dispose();
-
-      // convert to PNG ...
-      final PngEncoder encoder = new PngEncoder(image, true, 0, 9);
-      final byte[] data = encoder.pngEncode();
-
-      outputStream.write(data);
-      outputStream.flush();
-      outputStream.close();
-      return true;
     }
-    finally
+
+    return proc.getNumberOfPages();
+  }
+
+  public void close()
+  {
+    if (proc != null)
     {
-      if (proc != null)
-      {
-        proc.close();
-      }
+      proc.close();
     }
+
+  }
+
+  public boolean generate(final MasterReport report,
+                          final int acceptedPage,
+                          final OutputStream outputStream,
+                          final int yieldRate)
+      throws ReportProcessingException, IOException, ContentIOException
+  {
+    if (proc == null)
+    {
+      proc = create(report, yieldRate);
+    }
+
+    if (proc.isPaginated() == false)
+    {
+      proc.paginate();
+    }
+    final int pageCount = proc.getNumberOfPages();
+
+    if (pageCount <= acceptedPage)
+    {
+      return false;
+    }
+
+    final BufferedImage image = createImage(proc.getPageFormat(acceptedPage));
+
+    final Rectangle rect = new Rectangle(0, 0, image.getWidth(), image.getHeight());
+    // prepare the image by filling it ...
+    final Graphics2D g2 = image.createGraphics();
+    g2.setPaint(Color.white);
+    g2.fill(rect);
+
+    final PageDrawable pageDrawable = proc.getPageDrawable(acceptedPage);
+    pageDrawable.draw(g2, rect);
+    g2.dispose();
+
+    // convert to PNG ...
+    final PngEncoder encoder = new PngEncoder(image, true, 0, 9);
+    final byte[] data = encoder.pngEncode();
+
+    outputStream.write(data);
+    outputStream.flush();
+    outputStream.close();
+    return true;
+  }
+
+  private PrintReportProcessor create(final MasterReport report, final int yieldRate)
+      throws ReportProcessingException
+  {
+    final PrintReportProcessor proc = new PrintReportProcessor(report);
+    if (yieldRate > 0)
+    {
+      proc.addReportProgressListener(new YieldReportListener(yieldRate));
+    }
+    return proc;
   }
 
   /**
@@ -105,7 +116,6 @@ public class PNGOutput
     final double width = pf.getWidth();
     final double height = pf.getHeight();
     //write the report to the temp file
-    return new BufferedImage
-        ((int) width, (int) height, BufferedImage.TYPE_BYTE_INDEXED);
+    return new BufferedImage((int) width, (int) height, BufferedImage.TYPE_BYTE_INDEXED);
   }
 }

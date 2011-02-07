@@ -60,7 +60,7 @@ public class PentahoPmdConnectionProvider extends PmdConnectionProvider
     }
     catch (Exception e)
     {
-      throw new ReportDataFactoryException(Messages.getString("ReportPlugin.unableToCreateConnection"), e); //$NON-NLS-1$
+      throw new ReportDataFactoryException(Messages.getInstance().getString("ReportPlugin.unableToCreateConnection"), e); //$NON-NLS-1$
     }
 
     return super.createConnection(databaseMeta, username, password);

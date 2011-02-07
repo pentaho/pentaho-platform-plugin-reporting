@@ -326,19 +326,19 @@ public class SimpleEmailComponent implements IAcceptsRuntimeInputs
 
     if (getTo() == null)
     {
-      log.error(Messages.getString("ReportPlugin.emailToNotProvided")); //$NON-NLS-1$
+      log.error(Messages.getInstance().getString("ReportPlugin.emailToNotProvided")); //$NON-NLS-1$
       return false;
 
     }
     else if (getFrom() == null)
     {
-      log.error(Messages.getString("ReportPlugin.emailFromNotProvided")); //$NON-NLS-1$
+      log.error(Messages.getInstance().getString("ReportPlugin.emailFromNotProvided")); //$NON-NLS-1$
       return false;
 
     }
     else if ((getMessagePlain() == null) && (getMessageHtml() == null) && (getMimeMessage() == null))
     {
-      log.error(Messages.getString("ReportPlugin.emailContentNotProvided")); //$NON-NLS-1$
+      log.error(Messages.getInstance().getString("ReportPlugin.emailContentNotProvided")); //$NON-NLS-1$
       result = false;
     }
 
@@ -398,11 +398,11 @@ public class SimpleEmailComponent implements IAcceptsRuntimeInputs
     }
     catch (SendFailedException e)
     {
-      log.error(Messages.getString("ReportPlugin.emailSendFailed")); //$NON-NLS-1$
+      log.error(Messages.getInstance().getString("ReportPlugin.emailSendFailed")); //$NON-NLS-1$
     }
     catch (AuthenticationFailedException e)
     {
-      log.error(Messages.getString("ReportPlugin.emailAuthenticationFailed")); //$NON-NLS-1$
+      log.error(Messages.getInstance().getString("ReportPlugin.emailAuthenticationFailed")); //$NON-NLS-1$
     }
     return false;
 
@@ -601,7 +601,7 @@ public class SimpleEmailComponent implements IAcceptsRuntimeInputs
     }
     catch (Exception e)
     {
-      log.error(Messages.getString("ReportPlugin.emailConfigFileInvalid")); //$NON-NLS-1$
+      log.error(Messages.getInstance().getString("ReportPlugin.emailConfigFileInvalid")); //$NON-NLS-1$
       throw e;
     }
 

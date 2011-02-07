@@ -31,7 +31,7 @@ import org.pentaho.reporting.platform.plugin.messages.Messages;
 
 /**
  * This class is implemented to support loading solution files from the pentaho repository into pentaho-reporting
- * 
+ *
  * @author Will Gorman/Michael D'Amour
  */
 public class RepositoryResourceLoader implements ResourceLoader
@@ -45,7 +45,9 @@ public class RepositoryResourceLoader implements ResourceLoader
 
   public static final String WIN_PATH_SEPARATOR = "\\"; //$NON-NLS-1$
 
-  /** keep track of the resource manager */
+  /**
+   * keep track of the resource manager
+   */
   private ResourceManager manager;
 
   /**
@@ -57,18 +59,17 @@ public class RepositoryResourceLoader implements ResourceLoader
 
   /**
    * set the resource manager
-   * 
-   * @param manager
-   *          resource manager
+   *
+   * @param manager resource manager
    */
-  public void setResourceManager(ResourceManager manager)
+  public void setResourceManager(final ResourceManager manager)
   {
     this.manager = manager;
   }
 
   /**
    * get the resource manager
-   * 
+   *
    * @return resource manager
    */
   public ResourceManager getManager()
@@ -78,7 +79,7 @@ public class RepositoryResourceLoader implements ResourceLoader
 
   /**
    * get the schema name, in this case it's always "solution"
-   * 
+   *
    * @return the schema name
    */
   public String getSchema()
@@ -88,25 +89,23 @@ public class RepositoryResourceLoader implements ResourceLoader
 
   /**
    * create a resource data object
-   * 
-   * @param key
-   *          resource key
+   *
+   * @param key resource key
    * @return resource data
    * @throws ResourceLoadingException
    */
-  public ResourceData load(ResourceKey key) throws ResourceLoadingException
+  public ResourceData load(final ResourceKey key) throws ResourceLoadingException
   {
     return new RepositoryResourceData(key);
   }
 
   /**
    * see if the pentaho resource loader can support the content key path
-   * 
-   * @param values
-   *          map of values to look in
+   *
+   * @param key the resource key.
    * @return true if class supports the content key.
    */
-  public boolean isSupportedKey(ResourceKey key)
+  public boolean isSupportedKey(final ResourceKey key)
   {
     if (key.getSchema().equals(getSchema()))
     {
@@ -117,20 +116,20 @@ public class RepositoryResourceLoader implements ResourceLoader
 
   /**
    * create a new key based on the values provided
-   * 
-   * @param values
-   *          map of values
-   * @return new resource key
-   * @throws ResourceKeyCreationException
+   *
+   * @param value       the key value.
+   * @param factoryKeys map of values.
+   * @return new resource key.
+   * @throws ResourceKeyCreationException if an error occurred.
    */
-  public ResourceKey createKey(Object value, Map factoryKeys) throws ResourceKeyCreationException
+  public ResourceKey createKey(final Object value, final Map factoryKeys) throws ResourceKeyCreationException
   {
     if (value instanceof String)
     {
-      String valueString = (String) value;
+      final String valueString = (String) value;
       if (valueString.startsWith(getSchema() + SCHEMA_SEPARATOR))
       {
-        String path = valueString.substring(getSchema().length() + SCHEMA_SEPARATOR.length());
+        final String path = valueString.substring(getSchema().length() + SCHEMA_SEPARATOR.length());
         return new ResourceKey(getSchema(), path, factoryKeys);
       }
     }
@@ -139,15 +138,15 @@ public class RepositoryResourceLoader implements ResourceLoader
 
   /**
    * derive a key from an existing key, used when a relative path is given.
-   * 
-   * @param parent
-   *          the parent key
-   * @param data
-   *          the new data to be keyed
+   *
+   * @param parent the parent key
+   * @param data   the new data to be keyed
    * @return derived key
    * @throws ResourceKeyCreationException
    */
-  public ResourceKey deriveKey(ResourceKey parent, String path, Map data) throws ResourceKeyCreationException
+  public ResourceKey deriveKey(final ResourceKey parent,
+                               String path,
+                               final Map data) throws ResourceKeyCreationException
   {
 
     // update url to absolute path if currently a relative path
@@ -156,8 +155,8 @@ public class RepositoryResourceLoader implements ResourceLoader
       // we are looking for the current directory specified by the parent. currently
       // the pentaho system uses the native File.separator, so we need to support it
       // we're simply looking for the last "/" or "\" in the parent's url.
-      int winindex = ((String) parent.getIdentifier()).lastIndexOf(WIN_PATH_SEPARATOR);
-      int regindex = ((String) parent.getIdentifier()).lastIndexOf(PATH_SEPARATOR);
+      final int winindex = ((String) parent.getIdentifier()).lastIndexOf(WIN_PATH_SEPARATOR);
+      final int regindex = ((String) parent.getIdentifier()).lastIndexOf(PATH_SEPARATOR);
       int dirindex = 0;
       if (winindex > regindex)
       {
@@ -177,19 +176,20 @@ public class RepositoryResourceLoader implements ResourceLoader
     return new ResourceKey(getSchema(), path, derivedValues);
   }
 
-  public ResourceKey deserialize(ResourceKey bundleKey, String stringKey) throws ResourceKeyCreationException
+  public ResourceKey deserialize(final ResourceKey bundleKey,
+                                 final String stringKey) throws ResourceKeyCreationException
   {
     // For now, we are just going to have to pass on this one
-    throw new ResourceKeyCreationException(Messages.getString("ReportPlugin.cannotDeserializeZipResourceKey")); //$NON-NLS-1$
+    throw new ResourceKeyCreationException(Messages.getInstance().getString("ReportPlugin.cannotDeserializeZipResourceKey")); //$NON-NLS-1$
   }
 
-  public String serialize(ResourceKey bundleKey, ResourceKey key) throws ResourceException
+  public String serialize(final ResourceKey bundleKey, final ResourceKey key) throws ResourceException
   {
     // For now, we are just going to have to pass on this one
-    throw new ResourceKeyCreationException(Messages.getString("ReportPlugin.cannotSerializeZipResourceKey")); //$NON-NLS-1$
+    throw new ResourceKeyCreationException(Messages.getInstance().getString("ReportPlugin.cannotSerializeZipResourceKey")); //$NON-NLS-1$
   }
 
-  public URL toURL(ResourceKey key)
+  public URL toURL(final ResourceKey key)
   {
     // not supported ..
     return null;
