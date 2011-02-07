@@ -40,28 +40,7 @@ public class XLSOutput implements ReportOutputHandler
                       final int yieldRate)
       throws ReportProcessingException, IOException
   {
-    if (reportProcessor == null)
-    {
-      reportProcessor = createProcessor(report, yieldRate);
-    }
-
-    try
-    {
-      if (templateData != null)
-      {
-        final FlowExcelOutputProcessor target = (FlowExcelOutputProcessor) reportProcessor.getOutputProcessor();
-        target.setTemplateInputStream(new ByteArrayInputStream(templateData));
-      }
-
-      reportProcessor.paginate();
-    }
-    finally
-    {
-      final FlowExcelOutputProcessor target = (FlowExcelOutputProcessor) reportProcessor.getOutputProcessor();
-      target.setTemplateInputStream(null);
-    }
-
-    return reportProcessor.getPhysicalPageCount();
+    return 0;
   }
 
   private FlowReportProcessor createProcessor(final MasterReport report, final int yieldRate)

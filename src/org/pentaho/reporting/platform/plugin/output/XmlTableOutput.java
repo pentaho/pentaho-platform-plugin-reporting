@@ -21,23 +21,7 @@ public class XmlTableOutput implements ReportOutputHandler
   public int paginate(final MasterReport report,
                       final int yieldRate) throws ReportProcessingException, IOException
   {
-    try
-    {
-
-      if (proc == null)
-      {
-        proc = createProcessor(report, yieldRate);
-      }
-      proc.paginate();
-      return proc.getPhysicalPageCount();
-    }
-    finally
-    {
-      if (proc != null)
-      {
-        proc.close();
-      }
-    }
+    return 0;
   }
 
   private StreamReportProcessor createProcessor(final MasterReport report, final int yieldRate)

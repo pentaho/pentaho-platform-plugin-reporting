@@ -11,5 +11,5 @@ public interface ReportCache
 {
   public ReportOutputHandler get(ReportCacheKey key);
 
-  public void put(ReportCacheKey key, ReportOutputHandler report);
+  public ReportOutputHandler put(ReportCacheKey key, ReportOutputHandler report);
 }

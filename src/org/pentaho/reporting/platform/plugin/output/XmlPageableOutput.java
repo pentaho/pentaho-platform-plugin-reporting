@@ -6,7 +6,9 @@ import java.io.OutputStream;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
 import org.pentaho.reporting.engine.classic.core.layout.output.YieldReportListener;
+import org.pentaho.reporting.engine.classic.core.modules.output.pageable.base.AllPageFlowSelector;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.base.PageableReportProcessor;
+import org.pentaho.reporting.engine.classic.core.modules.output.pageable.base.SinglePageFlowSelector;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.xml.XmlPageOutputProcessor;
 
 public class XmlPageableOutput implements ReportOutputHandler
@@ -52,14 +54,25 @@ public class XmlPageableOutput implements ReportOutputHandler
     {
       proc = createProcessor(report, yieldRate);
     }
+
     try
     {
+      if (acceptedPage >= 0)
+      {
+        final XmlPageOutputProcessor outputProcessor = (XmlPageOutputProcessor) proc.getOutputProcessor();
+        outputProcessor.setFlowSelector(new SinglePageFlowSelector(acceptedPage, false));
+      }
       proxyOutputStream.setParent(outputStream);
       proc.processReport();
       return true;
     }
     finally
     {
+      if (acceptedPage >= 0)
+      {
+        final XmlPageOutputProcessor outputProcessor = (XmlPageOutputProcessor) proc.getOutputProcessor();
+        outputProcessor.setFlowSelector(new AllPageFlowSelector());
+      }
       if (proxyOutputStream != null)
       {
         proxyOutputStream.setParent(null);

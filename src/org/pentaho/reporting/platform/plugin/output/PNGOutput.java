@@ -20,6 +20,10 @@ public class PNGOutput implements ReportOutputHandler
 {
   private transient PrintReportProcessor proc;
 
+  public PNGOutput()
+  {
+  }
+
   public int paginate(final MasterReport report,
                       final int yieldRate)
       throws ReportProcessingException, IOException, ContentIOException

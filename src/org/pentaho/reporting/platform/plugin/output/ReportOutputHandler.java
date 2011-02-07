@@ -17,6 +17,17 @@ import org.pentaho.reporting.libraries.repository.ContentIOException;
  */
 public interface ReportOutputHandler
 {
+  /**
+   * Returns the number of pages in the report. If the output target does not support pagination,
+   * return zero.
+   *
+   * @param report the report to handle.
+   * @param yieldRate the yield rate.
+   * @return the number of pages generated or zero for a non-paginatable report.
+   * @throws ReportProcessingException if the report processing fails.
+   * @throws IOException if there is an IO error.
+   * @throws ContentIOException if there is an IO error.
+   */
   public int paginate(final MasterReport report,
                              final int yieldRate)
       throws ReportProcessingException, IOException, ContentIOException;

@@ -33,13 +33,7 @@ public class PDFOutput implements ReportOutputHandler
   public int paginate(final MasterReport report,
                       final int yieldRate) throws ReportProcessingException, IOException
   {
-    if (proc == null)
-    {
-      proc = createProcessor(report, yieldRate);
-    }
-
-    proc.paginate();
-    return proc.getPhysicalPageCount();
+    return 0;
   }
 
   public boolean generate(final MasterReport report,

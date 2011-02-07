@@ -1,5 +1,7 @@
 package org.pentaho.reporting.platform.plugin.cache;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,6 +15,9 @@ import org.pentaho.platform.api.engine.ILogoutListener;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
+import org.pentaho.reporting.engine.classic.core.MasterReport;
+import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
+import org.pentaho.reporting.libraries.repository.ContentIOException;
 import org.pentaho.reporting.platform.plugin.output.ReportOutputHandler;
 
 /**
@@ -31,9 +36,8 @@ public class DefaultReportCache implements ReportCache
     {
     }
 
-    public void onLogout(final IPentahoSession iPentahoSession)
+    public void onLogout(final IPentahoSession session)
     {
-      final IPentahoSession session = PentahoSessionHolder.getSession();
       final Object attribute = session.getAttribute(SESSION_ATTRIBUTE);
       if (attribute instanceof CacheManager == false)
       {
@@ -44,7 +48,8 @@ public class DefaultReportCache implements ReportCache
       if (manager.cacheExists(CACHE_NAME))
       {
         final Cache cache = manager.getCache(CACHE_NAME);
-        final List keys = new ArrayList(cache.getKeys());
+        //noinspection unchecked
+        final List<Object> keys = new ArrayList<Object>(cache.getKeys());
         for (final Object key : keys)
         {
           final Element element = cache.get(key);
@@ -70,6 +75,14 @@ public class DefaultReportCache implements ReportCache
 
     private CacheHolder(final ReportCacheKey realKey, final ReportOutputHandler outputHandler)
     {
+      if (outputHandler == null)
+      {
+        throw new NullPointerException();
+      }
+      if (realKey == null)
+      {
+        throw new NullPointerException();
+      }
       this.realKey = realKey;
       this.outputHandler = outputHandler;
     }
@@ -155,6 +168,7 @@ public class DefaultReportCache implements ReportCache
     public void notifyRemoveAll(final Ehcache ehcache)
     {
       // could be that we are to late already here, the javadoc is not very clear on this one ..
+      //noinspection unchecked
       final List keys = new ArrayList(ehcache.getKeys());
       for (final Object key : keys)
       {
@@ -176,6 +190,36 @@ public class DefaultReportCache implements ReportCache
     public void dispose()
     {
 
+    }
+  }
+
+  private static class CachedReportOutputHandler implements ReportOutputHandler
+  {
+    private ReportOutputHandler parent;
+
+    private CachedReportOutputHandler(final ReportOutputHandler parent)
+    {
+      this.parent = parent;
+    }
+
+    public int paginate(final MasterReport report, final int yieldRate)
+        throws ReportProcessingException, IOException, ContentIOException
+    {
+      return parent.paginate(report, yieldRate);
+    }
+
+    public boolean generate(final MasterReport report,
+                            final int acceptedPage,
+                            final OutputStream outputStream,
+                            final int yieldRate)
+        throws ReportProcessingException, IOException, ContentIOException
+    {
+      return parent.generate(report, acceptedPage, outputStream, yieldRate);
+    }
+
+    public void close()
+    {
+      // is a no-op. Closing is done by the cache itself when the element gets evicted ..
     }
   }
 
@@ -214,11 +258,11 @@ public class DefaultReportCache implements ReportCache
         cache.remove(key.getSessionId());
         return null;
       }
-      return cacheHolder.getOutputHandler();
+      return new CachedReportOutputHandler(cacheHolder.getOutputHandler());
     }
   }
 
-  public void put(final ReportCacheKey key, final ReportOutputHandler report)
+  public ReportOutputHandler put(final ReportCacheKey key, final ReportOutputHandler report)
   {
     final IPentahoSession session = PentahoSessionHolder.getSession();
     synchronized (session)
@@ -254,5 +298,7 @@ public class DefaultReportCache implements ReportCache
       final CacheHolder cacheHolder = new CacheHolder(key, report);
       cache.put(new Element(key, cacheHolder));
     }
+    return new CachedReportOutputHandler(report);
   }
+
 }

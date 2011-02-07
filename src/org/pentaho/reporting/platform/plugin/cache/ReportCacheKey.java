@@ -3,6 +3,7 @@ package org.pentaho.reporting.platform.plugin.cache;
 import java.util.Map;
 
 import org.pentaho.reporting.engine.classic.core.cache.DataCacheKey;
+import org.pentaho.reporting.platform.plugin.ParameterXmlContentHandler;
 
 /**
  * Todo: Document me!
@@ -21,7 +22,13 @@ public class ReportCacheKey extends DataCacheKey
     this.sessionId = sessionId;
     for (final Map.Entry<String, Object> entry : parameter.entrySet())
     {
-      addParameter(entry.getKey(), entry.getValue());
+      final String key = entry.getKey();
+      if (ParameterXmlContentHandler.SYS_PARAM_RENDER_MODE.equals(key))
+      {
+        continue;
+      }
+
+      addParameter(key, entry.getValue());
     }
   }
 

@@ -43,6 +43,9 @@ import org.pentaho.reporting.libraries.base.util.CSVQuoter;
 import org.pentaho.reporting.libraries.base.util.StringUtils;
 import org.pentaho.reporting.libraries.resourceloader.ResourceException;
 import org.pentaho.reporting.libraries.xmlns.common.ParserUtil;
+import org.pentaho.reporting.platform.plugin.cache.DefaultReportCache;
+import org.pentaho.reporting.platform.plugin.cache.ReportCache;
+import org.pentaho.reporting.platform.plugin.cache.ReportCacheKey;
 import org.pentaho.reporting.platform.plugin.messages.Messages;
 import org.pentaho.reporting.platform.plugin.output.CSVOutput;
 import org.pentaho.reporting.platform.plugin.output.EmailOutput;
@@ -951,6 +954,11 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       log.error(Messages.getInstance().getString("ReportPlugin.outputStreamRequired")); //$NON-NLS-1$
       return false;
     }
+    if (inputs == null)
+    {
+      log.error(Messages.getInstance().getString("ReportPlugin.inputParameterRequired")); //$NON-NLS-1$
+      return false;
+    }
     return true;
   }
 
@@ -1007,9 +1015,14 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
         return false;
       }
 
-      final boolean result = reportOutputHandler.generate(report, acceptedPage, outputStream, getYieldRate());
-      reportOutputHandler.close();
-      return result;
+      try
+      {
+        return reportOutputHandler.generate(report, acceptedPage, outputStream, getYieldRate());
+      }
+      finally
+      {
+        reportOutputHandler.close();
+      }
     }
     catch (Throwable t)
     {
@@ -1021,6 +1034,19 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
 
   protected ReportOutputHandler createOutputHandlerForOutputType(final String outputType) throws IOException
   {
+    if (inputs == null)
+    {
+      throw new IllegalStateException("Inputs are null, this component did not validate properly");
+    }
+
+    final ReportCacheKey reportCacheKey = new ReportCacheKey(getViewerSessionId(), inputs);
+    final ReportCache cache = new DefaultReportCache();
+    final ReportOutputHandler outputHandler = cache.get(reportCacheKey);
+    if (outputHandler != null)
+    {
+      return outputHandler;
+    }
+
     final ReportOutputHandler reportOutputHandler;
     if (HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE.equals(outputType))
     {
@@ -1123,7 +1149,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    * Perform a pagination run.
    *
    * @return the number of pages or streams generated.
-   * @throws IOException if an IO error occurred while loading the report.
+   * @throws IOException       if an IO error occurred while loading the report.
    * @throws ResourceException if a resource loading error occurred.
    */
   public int paginate() throws IOException, ResourceException
@@ -1154,7 +1180,14 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
         log.warn(Messages.getInstance().getString("ReportPlugin.warnUnprocessableRequest", outputType));
         return 0;
       }
-      return reportOutputHandler.paginate(report, getYieldRate());
+      try
+      {
+        return reportOutputHandler.paginate(report, getYieldRate());
+      }
+      finally
+      {
+        reportOutputHandler.close();
+      }
 
     }
     catch (Throwable t)
@@ -1163,5 +1196,19 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     }
     // lets not pretend we were successfull, if the export type was not a valid one.
     return 0;
+  }
+
+  private String getViewerSessionId()
+  {
+    if (inputs == null)
+    {
+      return null;
+    }
+    final Object o = inputs.get(ParameterXmlContentHandler.SYS_PARAM_SESSION_ID);
+    if (o instanceof String)
+    {
+      return String.valueOf(o);
+    }
+    return null;
   }
 }

@@ -19,15 +19,7 @@ public class PlainTextOutput implements ReportOutputHandler
   public int paginate(final MasterReport report,
                       final int yieldRate) throws ReportProcessingException, IOException, ContentIOException
   {
-    if (proc == null)
-    {
-      proc = create(report, yieldRate);
-    }
-    if (proc.isPaginated() == false)
-    {
-      proc.paginate();
-    }
-    return proc.getPhysicalPageCount();
+    return 0;
   }
 
   public boolean generate(final MasterReport report,
