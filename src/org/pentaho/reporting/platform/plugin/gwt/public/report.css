@@ -12,8 +12,8 @@ body {
   background-color: white;
   border: hidden;
   frameborder: 0;
-  overflow:visible; 
-  width:100%; 
+  overflow:visible;
+  width:100%;
 }
 
 .gwt-ToggleButton {
@@ -328,4 +328,14 @@ td.datePickerMonth {
   z-index:250;
   cursor: progress;
   filter:alpha(opacity=20);
-} 
+}
+
+.parameter-panel-focus-widget{
+  border: 0px none;
+  padding: 0px;
+  margin: 0px;
+  clip: rect(0,0,0,0);
+  overflow:hidden;
+  height: 0px;
+  width: 0px;
+}
