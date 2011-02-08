@@ -15,7 +15,6 @@ import org.pentaho.reporting.engine.classic.core.modules.output.pageable.base.Si
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.AllItemsHtmlPrinter;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlPrinter;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.PageableHtmlOutputProcessor;
-import org.pentaho.reporting.engine.classic.core.modules.output.table.html.URLRewriter;
 import org.pentaho.reporting.libraries.repository.ContentIOException;
 import org.pentaho.reporting.libraries.repository.ContentLocation;
 import org.pentaho.reporting.libraries.repository.DefaultNameGenerator;
@@ -30,6 +29,7 @@ public class PageableHTMLOutput implements ReportOutputHandler
   private String contentHandlerPattern;
   private ProxyOutputStream proxyOutputStream;
   private PageableReportProcessor proc;
+  private AllItemsHtmlPrinter printer;
 
   public PageableHTMLOutput(final String contentHandlerPattern)
   {
@@ -51,12 +51,37 @@ public class PageableHTMLOutput implements ReportOutputHandler
     this.proxyOutputStream = proxyOutputStream;
   }
 
+  public HtmlPrinter getPrinter()
+  {
+    return printer;
+  }
+
   protected PageableReportProcessor createReportProcessor(final MasterReport report, final int yieldRate)
-      throws ReportProcessingException, ContentIOException
+      throws ReportProcessingException
+  {
+
+    proxyOutputStream = new ProxyOutputStream();
+
+    printer = new AllItemsHtmlPrinter(report.getResourceManager());
+    printer.setUrlRewriter(new PentahoURLRewriter(contentHandlerPattern, false));
+
+    final PageableHtmlOutputProcessor outputProcessor = new PageableHtmlOutputProcessor(report.getConfiguration());
+    outputProcessor.setPrinter(printer);
+    proc = new PageableReportProcessor(report, outputProcessor);
+
+    if (yieldRate > 0)
+    {
+      proc.addReportProgressListener(new YieldReportListener(yieldRate));
+    }
+
+    return proc;
+  }
+
+  protected void reinitOutputTarget() throws ReportProcessingException, ContentIOException
   {
     final IApplicationContext ctx = PentahoSystem.getApplicationContext();
 
-    final URLRewriter rewriter;
+
     final ContentLocation dataLocation;
     final PentahoNameGenerator dataNameGenerator;
     if (ctx != null)
@@ -84,34 +109,18 @@ public class PageableHTMLOutput implements ReportOutputHandler
             (Messages.getInstance().getString("ReportPlugin.errorNameGeneratorMissingConfiguration"));
       }
       dataNameGenerator.initialize(dataLocation, true);
-      rewriter = new PentahoURLRewriter(contentHandlerPattern, false);
     }
     else
     {
       dataLocation = null;
       dataNameGenerator = null;
-      rewriter = new PentahoURLRewriter(contentHandlerPattern, false);
     }
 
-    proxyOutputStream = new ProxyOutputStream();
     final StreamRepository targetRepository = new StreamRepository(null, proxyOutputStream, "report"); //$NON-NLS-1$
     final ContentLocation targetRoot = targetRepository.getRoot();
 
-    final HtmlPrinter printer = new AllItemsHtmlPrinter(report.getResourceManager());
     printer.setContentWriter(targetRoot, new DefaultNameGenerator(targetRoot, "index", "html"));//$NON-NLS-1$//$NON-NLS-2$
     printer.setDataWriter(dataLocation, dataNameGenerator);
-    printer.setUrlRewriter(rewriter);
-
-    final PageableHtmlOutputProcessor outputProcessor = new PageableHtmlOutputProcessor(report.getConfiguration());
-    outputProcessor.setPrinter(printer);
-    proc = new PageableReportProcessor(report, outputProcessor);
-
-    if (yieldRate > 0)
-    {
-      proc.addReportProgressListener(new YieldReportListener(yieldRate));
-    }
-
-    return proc;
   }
 
   public int paginate(final MasterReport report,
@@ -121,9 +130,18 @@ public class PageableHTMLOutput implements ReportOutputHandler
     {
       proc = createReportProcessor(report, yieldRate);
     }
-    if (proc.isPaginated() == false)
+    reinitOutputTarget();
+    try
     {
-      proc.paginate();
+      if (proc.isPaginated() == false)
+      {
+        proc.paginate();
+      }
+    }
+    finally
+    {
+      printer.setContentWriter(null, null);
+      printer.setDataWriter(null, null);
     }
 
     return proc.getLogicalPageCount();
@@ -149,6 +167,7 @@ public class PageableHTMLOutput implements ReportOutputHandler
       outputProcessor.setFlowSelector(new DisplayAllFlowSelector());
     }
     proxyOutputStream.setParent(outputStream);
+    reinitOutputTarget();
     try
     {
       proc.processReport();
@@ -157,6 +176,8 @@ public class PageableHTMLOutput implements ReportOutputHandler
     {
       outputStream.flush();
       outputStream.close();
+      printer.setContentWriter(null, null);
+      printer.setDataWriter(null, null);
     }
     return true;
   }

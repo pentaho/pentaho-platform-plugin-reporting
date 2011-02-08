@@ -13,7 +13,6 @@ import org.pentaho.reporting.engine.classic.core.modules.output.pageable.base.Pa
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.AllItemsHtmlPrinter;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlPrinter;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.PageableHtmlOutputProcessor;
-import org.pentaho.reporting.engine.classic.core.modules.output.table.html.URLRewriter;
 import org.pentaho.reporting.libraries.base.util.StringUtils;
 import org.pentaho.reporting.libraries.repository.ContentIOException;
 import org.pentaho.reporting.libraries.repository.ContentLocation;
@@ -34,16 +33,35 @@ import org.pentaho.reporting.platform.plugin.repository.ReportContentRepository;
  */
 public class PageableContentRepoHtmlOutput extends PageableHTMLOutput
 {
+  private String reportName;
+
   public PageableContentRepoHtmlOutput(final String contentHandlerPattern)
   {
     super(contentHandlerPattern);
   }
 
   protected PageableReportProcessor createReportProcessor(final MasterReport report,
-                                                          final int yieldRate) throws ReportProcessingException, ContentIOException
+                                                          final int yieldRate) throws ReportProcessingException
+  {
+    reportName = StringUtils.isEmpty(report.getName()) ? UUIDUtil.getUUIDAsString() : report.getName();
+    setProxyOutputStream(new ProxyOutputStream());
+
+    final PageableHtmlOutputProcessor outputProcessor = new PageableHtmlOutputProcessor(report.getConfiguration());
+    final HtmlPrinter printer = new AllItemsHtmlPrinter(report.getResourceManager());
+    printer.setUrlRewriter(new PentahoURLRewriter(getContentHandlerPattern(), true));
+    outputProcessor.setPrinter(printer);
+
+    final PageableReportProcessor proc = new PageableReportProcessor(report, outputProcessor);
+    if (yieldRate > 0)
+    {
+      proc.addReportProgressListener(new YieldReportListener(yieldRate));
+    }
+    return super.createReportProcessor(report, yieldRate);
+  }
+
+  protected void reinitOutputTarget() throws ReportProcessingException, ContentIOException
   {
     final IPentahoSession session = PentahoSessionHolder.getSession();
-    final String reportName = StringUtils.isEmpty(report.getName()) ? UUIDUtil.getUUIDAsString() : report.getName();
     final String solutionPath = "report-content" + "/" + reportName + "/"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     final String thePath = solutionPath + session.getId() + "-" + System.currentTimeMillis();//$NON-NLS-1$//$NON-NLS-2$
     final IContentRepository contentRepository = PentahoSystem.get(IContentRepository.class, session);
@@ -59,26 +77,12 @@ public class PageableContentRepoHtmlOutput extends PageableHTMLOutput
     }
     dataNameGenerator.initialize(dataLocation, true);
 
-    final ProxyOutputStream proxyOutputStream = new ProxyOutputStream();
-    setProxyOutputStream(proxyOutputStream);
-    final URLRewriter rewriter = new PentahoURLRewriter(getContentHandlerPattern(), true);
 
-    final StreamRepository targetRepository = new StreamRepository(null, proxyOutputStream, "report"); //$NON-NLS-1$
+    final StreamRepository targetRepository = new StreamRepository(null, getProxyOutputStream(), "report"); //$NON-NLS-1$
     final ContentLocation targetRoot = targetRepository.getRoot();
 
-    final PageableHtmlOutputProcessor outputProcessor = new PageableHtmlOutputProcessor(report.getConfiguration());
-    final HtmlPrinter printer = new AllItemsHtmlPrinter(report.getResourceManager());
+    final HtmlPrinter printer = getPrinter();
     printer.setContentWriter(targetRoot, new DefaultNameGenerator(targetRoot, "index", "html"));//$NON-NLS-1$//$NON-NLS-2$
     printer.setDataWriter(dataLocation, dataNameGenerator);
-    printer.setUrlRewriter(rewriter);
-    outputProcessor.setPrinter(printer);
-
-    final PageableReportProcessor proc = new PageableReportProcessor(report, outputProcessor);
-    if (yieldRate > 0)
-    {
-      proc.addReportProgressListener(new YieldReportListener(yieldRate));
-    }
-    return super.createReportProcessor(report, yieldRate);
   }
-
 }

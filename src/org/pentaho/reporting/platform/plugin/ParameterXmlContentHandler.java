@@ -133,7 +133,7 @@ public class ParameterXmlContentHandler
           return;
         }
 
-        if (formulaText.startsWith("DRILLDOWN") == false)
+        if (formulaText.startsWith("DRILLDOWN") == false) // NON-NLS
         {
           // DrillDown only works if the function is the only element. Everything else is beyond our control.
           return;
@@ -169,7 +169,7 @@ public class ParameterXmlContentHandler
           return;
         }
 
-        if ("pentaho".equals(profile.getAttribute("group")) == false)
+        if ("pentaho".equals(profile.getAttribute("group")) == false) // NON-NLS
         {
           // Only 'pentaho' drill-down profiles can be used. Filters out all other third party drilldowns
           return;
@@ -248,7 +248,7 @@ public class ParameterXmlContentHandler
   private static final String SYS_PARAM_SUBSCRIPTION_NAME = "subscription-name";
   private static final String SYS_PARAM_DESTINATION = "destination";
   private static final String SYS_PARAM_SCHEDULE_ID = "schedule-id";
-  private static final String SYS_PARAM_CONTENT_LINK = "::cl";
+  public static final String SYS_PARAM_CONTENT_LINK = "::cl";
   public static final String SYS_PARAM_SESSION_ID = "::session";
   private static final String GROUP_SUBSCRIPTION = "subscription";
   private static final String GROUP_SYSTEM = "system";
@@ -350,7 +350,6 @@ public class ParameterXmlContentHandler
     // handle parameter feedback (XML) services
 
     final SimpleReportingComponent reportComponent = new SimpleReportingComponent();
-    reportComponent.setSession(userSession);
     reportComponent.setReportDefinitionPath(reportDefinitionPath);
     reportComponent.setPaginateOutput(true);
     reportComponent.setDefaultOutputTarget(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE);
@@ -463,28 +462,28 @@ public class ParameterXmlContentHandler
       {
         final String outputParameterName = outputParameter[i];
         //  <output-parameter displayName="Territory" id="[Markets].[Territory]"/>
-        final Element element = document.createElement("output-parameter");
-        element.setAttribute("displayName", outputParameterName);
-        element.setAttribute("id", outputParameterName);
+        final Element element = document.createElement("output-parameter");// NON-NLS
+        element.setAttribute("displayName", outputParameterName);// NON-NLS
+        element.setAttribute("id", outputParameterName);// NON-NLS
         parameters.appendChild(element);
       }
+
+      if (vr.isEmpty() && paginate) //$NON-NLS-1$ //$NON-NLS-2$
+      {
+        appendPageCount(reportComponent, parameters);
+      }
+      document.appendChild(parameters);
+
+      final DOMSource source = new DOMSource(document);
+      final StreamResult result = new StreamResult(outputStream);
+      final Transformer transformer = TransformerFactory.newInstance().newTransformer();
+      transformer.transform(source, result);
+      // close parameter context
     }
     finally
     {
       parameterContext.close();
     }
-
-    if (vr.isEmpty() && paginate) //$NON-NLS-1$ //$NON-NLS-2$
-    {
-      appendPageCount(reportComponent, parameters);
-    }
-    document.appendChild(parameters);
-
-    final DOMSource source = new DOMSource(document);
-    final StreamResult result = new StreamResult(outputStream);
-    final Transformer transformer = TransformerFactory.newInstance().newTransformer();
-    transformer.transform(source, result);
-    // close parameter context
   }
 
   private Map<String, Object> computeRealInput(final ParameterContext parameterContext,
@@ -706,9 +705,9 @@ public class ParameterXmlContentHandler
           valueElement.setAttribute("type", valueType.getName()); //$NON-NLS-1$
           valueElement.setAttribute("selected", "true");//$NON-NLS-1$
           valueElement.setAttribute("null", "false"); //$NON-NLS-1$ //$NON-NLS-2$
-	  final String value = convertParameterValueToString(parameter, parameterContext, selections, valueType); //$NON-NLS-1$ //$NON-NLS-2$
-          valueElement.setAttribute("value", value);
-          valueElement.setAttribute("label", value);
+          final String value = convertParameterValueToString(parameter, parameterContext, selections, valueType);
+          valueElement.setAttribute("value", value); //$NON-NLS-1$ //$NON-NLS-2$
+          valueElement.setAttribute("label", value); //$NON-NLS-1$ //$NON-NLS-2$
         }
       }
       return parameterElement;
@@ -859,17 +858,11 @@ public class ParameterXmlContentHandler
     return errors;
   }
 
+
   private static void appendPageCount(final SimpleReportingComponent reportComponent, final Element parameters)
       throws Exception
   {
-    if (HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE.equals(reportComponent.getComputedOutputTarget()) == false)
-    {
-      return;
-    }
-
     reportComponent.setOutputStream(new NullOutputStream());
-    // pagination always uses HTML
-    reportComponent.setOutputTarget(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE);
 
     // so that we don't actually produce anything, we'll accept no pages in this mode
     final int acceptedPage = reportComponent.getAcceptedPage();
@@ -879,13 +872,17 @@ public class ParameterXmlContentHandler
     if (reportComponent.validate())
     {
       final int totalPageCount = reportComponent.paginate();
+      if (totalPageCount == 0)
+      {
+        return;
+      }
+
       parameters.setAttribute(SimpleReportingComponent.PAGINATE_OUTPUT, "true"); //$NON-NLS-1$
       parameters.setAttribute("page-count", String.valueOf(totalPageCount)); //$NON-NLS-1$ //$NON-NLS-2$
       // use the saved value (we changed it to -1 for performance)
       parameters.setAttribute(SimpleReportingComponent.ACCEPTED_PAGE, String.valueOf(acceptedPage)); //$NON-NLS-1$
     }
   }
-
 
   private void hideSubscriptionParameter(final boolean subscribe,
                                          final Map<String, ParameterDefinitionEntry> parameters)

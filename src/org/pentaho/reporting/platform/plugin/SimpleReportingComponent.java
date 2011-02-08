@@ -18,7 +18,6 @@ import org.pentaho.platform.api.engine.IAcceptsRuntimeInputs;
 import org.pentaho.platform.api.engine.IActionSequenceResource;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.api.engine.IStreamingPojo;
-import org.pentaho.platform.api.repository.IContentRepository;
 import org.pentaho.platform.engine.core.system.PentahoRequestContextHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.core.AttributeNames;
@@ -27,7 +26,6 @@ import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.metadata.ReportProcessTaskRegistry;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.pdf.PdfPageableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.plaintext.PlainTextPageableModule;
-import org.pentaho.reporting.engine.classic.core.modules.output.pageable.plaintext.driver.TextFilePrinterDriver;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.xml.XmlPageableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.csv.CSVTableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlTableModule;
@@ -39,7 +37,6 @@ import org.pentaho.reporting.engine.classic.core.parameters.ParameterContext;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterDefinitionEntry;
 import org.pentaho.reporting.engine.classic.core.parameters.ValidationMessage;
 import org.pentaho.reporting.engine.classic.core.parameters.ValidationResult;
-import org.pentaho.reporting.engine.classic.core.util.NullOutputStream;
 import org.pentaho.reporting.engine.classic.core.util.ReportParameterValues;
 import org.pentaho.reporting.engine.classic.extensions.modules.java14print.Java14PrintUtil;
 import org.pentaho.reporting.libraries.base.config.Configuration;
@@ -104,8 +101,6 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   private static final String MIME_GENERIC_FALLBACK = "application/octet-stream"; //$NON-NLS-1$
   public static final String PNG_EXPORT_TYPE = "pageable/X-AWT-Graphics;image-type=png";
 
-  private static final String CONTENT_LINKING_PARAMETER = "::cl";
-  private static final String CONTENT_LINKING_WIDGET_ID = "::cl_id";
 
   /**
    * Static initializer block to guarantee that the ReportingComponent will be in a state where the reporting engine will be booted. We have a system listener
@@ -131,7 +126,6 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   private Boolean useContentRepository;
   private IActionSequenceResource reportDefinition;
   private String reportDefinitionPath;
-  private IPentahoSession session;
   private boolean paginateOutput;
   private int acceptedPage;
   private int pageCount;
@@ -289,10 +283,10 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    * This method sets the IPentahoSession to use in order to access the pentaho platform file repository and content repository.
    *
    * @param session a valid pentaho session
+   * @deprecated No longer used.
    */
   public void setSession(final IPentahoSession session)
   {
-    this.session = session;
   }
 
   public boolean isDashboardMode()
@@ -563,7 +557,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       return null;
     }
 
-    final Object clRaw = inputs.get(CONTENT_LINKING_PARAMETER);
+    final Object clRaw = inputs.get(ParameterXmlContentHandler.SYS_PARAM_CONTENT_LINK);
     if (clRaw == null)
     {
       return null;
@@ -574,7 +568,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       final Collection c = (Collection) clRaw;
       final CSVQuoter quoter = new CSVQuoter(',', '"');
       final StringBuilder b = new StringBuilder();
-      for (final Object o: c)
+      for (final Object o : c)
       {
         final String s = quoter.doQuoting(String.valueOf(o));
         if (b.length() > 0)
@@ -875,9 +869,10 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
         {
           final Object computedParameter = ReportContentUtil.computeParameterValue(context, param, inputs.get(paramName));
           parameterValues.put(param.getName(), computedParameter);
-          if (log.isWarnEnabled())
+          if (log.isInfoEnabled())
           {
-            log.warn("Parameter: " + paramName + " = " + inputs.get(paramName) + " => " + computedParameter);
+            log.info(Messages.getInstance().getString("ReportPlugin.infoParameterValues",
+                paramName, String.valueOf(inputs.get(paramName)), String.valueOf(computedParameter)));
           }
         }
         catch (Exception e)
@@ -1045,7 +1040,11 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     }
 
     final ReportCacheKey reportCacheKey = new ReportCacheKey(getViewerSessionId(), inputs);
-    final ReportCache cache = new DefaultReportCache();
+    ReportCache cache = PentahoSystem.get(ReportCache.class);
+    if (cache == null)
+    {
+      cache = new DefaultReportCache();
+    }
     final ReportOutputHandler outputHandler = cache.get(reportCacheKey);
     if (outputHandler != null)
     {
@@ -1145,9 +1144,10 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     }
     else
     {
-      reportOutputHandler = null;
+      return null;
     }
-    return reportOutputHandler;
+
+    return cache.put(reportCacheKey, reportOutputHandler);
   }
 
   /**
@@ -1216,5 +1216,5 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     }
     return null;
   }
-  
+
 }

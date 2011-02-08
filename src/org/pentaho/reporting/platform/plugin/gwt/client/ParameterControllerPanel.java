@@ -127,6 +127,32 @@ public class ParameterControllerPanel extends VerticalPanel
       }
       else
       {
+        if (globalErrors != null && globalErrors.isEmpty() == false)
+        {
+          add(buildGlobalErrors(globalErrors));
+        }
+
+        // create a new parameter value map
+        parameterMap = new ParameterValues();
+        final ParameterGroup[] parameterGroups = parameterDefinition.getParameterGroups();
+        for (final ParameterGroup group: parameterGroups)
+        {
+          for (final Parameter parameterElement : group.getParameters())
+          {
+            final String parameterName = parameterElement.getName(); //$NON-NLS-1$
+            final List<ParameterSelection> list = parameterElement.getSelections();
+            final ArrayList<String> parameterSelections = new ArrayList<String>();
+            for (final ParameterSelection selection : list)
+            {
+              if (selection.isSelected())
+              {
+                parameterSelections.add(selection.getValue());
+              }
+            }
+            parameterMap.setSelectedValues(parameterName, parameterSelections.toArray(new String[parameterSelections.size()]));
+          }
+        }
+
         final boolean isPromptNeeded = parameterDefinition.isPromptNeeded();
         final boolean paginate = parameterDefinition.isPaginate();
         // do not show the parameter UI, but we must still fire events
@@ -149,11 +175,6 @@ public class ParameterControllerPanel extends VerticalPanel
         else
         {
           showBlankPage();
-        }
-
-        if (globalErrors != null && globalErrors.isEmpty() == false)
-        {
-          add(buildGlobalErrors(globalErrors));
         }
 
       }
@@ -584,194 +605,203 @@ public class ParameterControllerPanel extends VerticalPanel
   {
     try
     {
-    if (globalErrors != null && globalErrors.isEmpty() == false)
-    {
-      add(buildGlobalErrors(globalErrors));
-    }
-
-    // build parameter UI from document
-    parameterContainer.clear();
-    parameterWidgets.clear();
-
-    // create a new parameter value map
-    parameterMap = new ParameterValues();
-//http://localhost:8080/pentaho/content/reporting?renderMode=REPORT&output-target=table%2Fhtml%3Bpage-mode%3Dpage&accepted-page=0&UTC%252BParameter=2010-07-28T00%3A00%3A00.000&UTC%25252BParameter=2010-07-28T12%3A00%3A00.000&UTC%25252525252BParameter=2010-07-28T00%3A00%3A00.000&UTC%2525252525252BParameter=2010-07-28T12%3A00%3A00.000&UTC%2525252525252525252BParameter=2010-07-28T00%3A00%3A00.000&UTC%252525252525252525252BParameter=2010-07-28T12%3A00%3A00.000&solution=steel-wheels&path=%2Freports&name=dateparameter.prpt&locale=en_US
-
-    final String layout = parametersElement.getLayout();
-    int totalParameterAdded = 0;
-    // must preserve order
-    final ParameterGroup[] parameterGroups = parametersElement.getParameterGroups();
-    for (int i = 0; i < parameterGroups.length; i++)
-    {
-      final ParameterGroup group = parameterGroups[i];
-
-      final Panel parameterGroupPanel;
-      if (layout.equals("flow")) //$NON-NLS-1$
+      if (globalErrors != null && globalErrors.isEmpty() == false)
       {
-        parameterGroupPanel = new FlowPanel();
-      }
-      else if (layout.equals("horizontal"))
-      {
-        parameterGroupPanel = new HorizontalPanel();
-      }
-      else
-      {
-        parameterGroupPanel = new VerticalPanel();
-      }
-      final String groupLabel = group.getLabel(); //$NON-NLS-1$
-
-      int parametersAdded = 0;
-
-
-      if (i == 0)
-      {
-        // BISERVER-4512 - adding a tiny textbox to set the focus to onload to avoid the
-        // IE issue of "locked" textbox widgets
-        parameterGroupPanel.add(focusComponent);
+        add(buildGlobalErrors(globalErrors));
       }
 
-      for (final Parameter parameterElement : group.getParameters())
+      // build parameter UI from document
+      parameterContainer.clear();
+      parameterWidgets.clear();
+
+      // create a new parameter value map
+      parameterMap = new ParameterValues();
+
+      final String layout = parametersElement.getLayout();
+      int totalParameterAdded = 0;
+      // must preserve order
+      final ParameterGroup[] parameterGroups = parametersElement.getParameterGroups();
+      for (int i = 0; i < parameterGroups.length; i++)
       {
-        if (parameterElement.isHidden())
-        {
-          continue;
-        }
+        final ParameterGroup group = parameterGroups[i];
 
-        final String label = parameterElement.getLabel(); //$NON-NLS-1$
-        final String tooltip = parameterElement.getTooltip(); //$NON-NLS-1$
-        final Label parameterLabel = new Label(label);
-        parameterLabel.setTitle(tooltip);
-        parameterLabel.setStyleName("parameter-label"); //$NON-NLS-1$
-
-        final VerticalPanel parameterPanel = new VerticalPanel();
-        parameterPanel.setStyleName("parameter"); //$NON-NLS-1$
-        parameterPanel.setTitle(tooltip);
-        parameterPanel.add(parameterLabel);
-
-        final Widget parameterWidget = buildParameterWidget(parameterElement);
-        if (parameterWidget == null)
-        {
-          continue;
-        }
-
-        parametersAdded += 1;
-
-        // only add the parameter if it has a UI
-        final String parameterName = parameterElement.getName(); //$NON-NLS-1$
-        final ArrayList<String> parameterErrors = errors.get(parameterName);
-        if (parameterErrors != null)
-        {
-          for (final String error : parameterErrors)
-          {
-            final Label errorLabel = new Label(error);
-            errorLabel.setStyleName("parameter-error-label");// NON-NLS
-            parameterPanel.add(errorLabel);
-          }
-          parameterPanel.setStyleName("parameter-error"); //$NON-NLS-1$
-        }
-
-        if (parameterWidget instanceof ParameterUI)
-        {
-          parameterWidgets.add((ParameterUI) parameterWidget);
-        }
-        parameterPanel.add(parameterWidget);
-
+        final Panel parameterGroupPanel;
         if (layout.equals("flow")) //$NON-NLS-1$
         {
-          final SimplePanel div = new SimplePanel();
-          div.setStyleName("parameter-flow"); //$NON-NLS-1$
-          div.add(parameterPanel);
-          parameterGroupPanel.add(div);
+          parameterGroupPanel = new FlowPanel();
+        }
+        else if (layout.equals("horizontal"))
+        {
+          parameterGroupPanel = new HorizontalPanel();
         }
         else
         {
-          parameterGroupPanel.add(parameterPanel);
+          parameterGroupPanel = new VerticalPanel();
+        }
+        final String groupLabel = group.getLabel(); //$NON-NLS-1$
+
+        int parametersAdded = 0;
+
+
+        if (i == 0)
+        {
+          // BISERVER-4512 - adding a tiny textbox to set the focus to onload to avoid the
+          // IE issue of "locked" textbox widgets
+          parameterGroupPanel.add(focusComponent);
+        }
+
+        for (final Parameter parameterElement : group.getParameters())
+        {
+          final String parameterName = parameterElement.getName(); //$NON-NLS-1$
+          final List<ParameterSelection> list = parameterElement.getSelections();
+          final ArrayList<String> parameterSelections = new ArrayList<String>();
+          for (final ParameterSelection selection : list)
+          {
+            if (selection.isSelected())
+            {
+              parameterSelections.add(selection.getValue());
+            }
+          }
+          parameterMap.setSelectedValues(parameterName, parameterSelections.toArray(new String[parameterSelections.size()]));
+
+          if (parameterElement.isHidden())
+          {
+            continue;
+          }
+
+          final String label = parameterElement.getLabel(); //$NON-NLS-1$
+          final String tooltip = parameterElement.getTooltip(); //$NON-NLS-1$
+          final Label parameterLabel = new Label(label);
+          parameterLabel.setTitle(tooltip);
+          parameterLabel.setStyleName("parameter-label"); //$NON-NLS-1$
+
+          final VerticalPanel parameterPanel = new VerticalPanel();
+          parameterPanel.setStyleName("parameter"); //$NON-NLS-1$
+          parameterPanel.setTitle(tooltip);
+          parameterPanel.add(parameterLabel);
+
+          final Widget parameterWidget = buildParameterWidget(parameterElement);
+          if (parameterWidget == null)
+          {
+            continue;
+          }
+
+          parametersAdded += 1;
+
+          // only add the parameter if it has a UI
+          final ArrayList<String> parameterErrors = errors.get(parameterName);
+          if (parameterErrors != null)
+          {
+            for (final String error : parameterErrors)
+            {
+              final Label errorLabel = new Label(error);
+              errorLabel.setStyleName("parameter-error-label");// NON-NLS
+              parameterPanel.add(errorLabel);
+            }
+            parameterPanel.setStyleName("parameter-error"); //$NON-NLS-1$
+          }
+
+          if (parameterWidget instanceof ParameterUI)
+          {
+            parameterWidgets.add((ParameterUI) parameterWidget);
+          }
+          parameterPanel.add(parameterWidget);
+
+          if (layout.equals("flow")) //$NON-NLS-1$
+          {
+            final SimplePanel div = new SimplePanel();
+            div.setStyleName("parameter-flow"); //$NON-NLS-1$
+            div.add(parameterPanel);
+            parameterGroupPanel.add(div);
+          }
+          else
+          {
+            parameterGroupPanel.add(parameterPanel);
+          }
+        }
+
+        totalParameterAdded += parametersAdded;
+        if (parametersAdded > 0)
+        {
+          if (parametersElement.isSubscribe()) //$NON-NLS-1$
+          {
+            final CaptionPanel parameterGroupCaptionPanel = new CaptionPanel();
+            parameterGroupCaptionPanel.setCaptionText(groupLabel);
+            parameterGroupCaptionPanel.setStyleName("parameter"); //$NON-NLS-1$
+            parameterGroupCaptionPanel.setContentWidget(parameterGroupPanel);
+            parameterContainer.add(parameterGroupCaptionPanel);
+          }
+          else
+          {
+            parameterContainer.add(parameterGroupPanel);
+          }
         }
       }
 
-      totalParameterAdded += parametersAdded;
-      if (parametersAdded > 0)
+      if (totalParameterAdded > 0)
       {
-        if (parametersElement.isSubscribe()) //$NON-NLS-1$
+        // add parameter submit button/auto-submit checkbox
+        final FlowPanel submitPanel = new FlowPanel();
+        submitPanel.setWidth("100%"); //$NON-NLS-1$
+        submitPanel.setStyleName("parameter-submit-panel"); //$NON-NLS-1$
+        if (parametersElement.isSubscribe()) //$NON-NLS-1$ //$NON-NLS-2$
         {
-          final CaptionPanel parameterGroupCaptionPanel = new CaptionPanel();
-          parameterGroupCaptionPanel.setCaptionText(groupLabel);
-          parameterGroupCaptionPanel.setStyleName("parameter"); //$NON-NLS-1$
-          parameterGroupCaptionPanel.setContentWidget(parameterGroupPanel);
-          parameterContainer.add(parameterGroupCaptionPanel);
+          submitPanel.add(submitSubscriptionButton);
+        }
+        submitPanel.add(submitParametersButton);
+
+        // handle the auto-submit defaults.
+        final Boolean autoSubmitAttr = parametersElement.getAutoSubmit();
+        if (Boolean.TRUE.equals(autoSubmitAttr))
+        {
+          submitParametersOnChangeCheckBox.setValue(true);
+        }
+        else if (Boolean.FALSE.equals(autoSubmitAttr))
+        {
+          submitParametersOnChangeCheckBox.setValue(false);
         }
         else
         {
-          parameterContainer.add(parameterGroupPanel);
+          // BISERVER-3821 Provide ability to remove Auto-Submit check box from report viewer
+          // only show the UI for the autosubmit checkbox if no preference exists
+          submitPanel.add(submitParametersOnChangeCheckBox);
+          submitParametersOnChangeCheckBox.setValue(parametersElement.isAutoSubmitUI());
         }
-      }
-    }
 
-    if (totalParameterAdded > 0)
-    {
-      // add parameter submit button/auto-submit checkbox
-      final FlowPanel submitPanel = new FlowPanel();
-      submitPanel.setWidth("100%"); //$NON-NLS-1$
-      submitPanel.setStyleName("parameter-submit-panel"); //$NON-NLS-1$
-      if (parametersElement.isSubscribe()) //$NON-NLS-1$ //$NON-NLS-2$
-      {
-        submitPanel.add(submitSubscriptionButton);
-      }
-      submitPanel.add(submitParametersButton);
+        parameterContainer.add(submitPanel);
 
-      // handle the auto-submit defaults.
-      final Boolean autoSubmitAttr = parametersElement.getAutoSubmit();
-      if (Boolean.TRUE.equals(autoSubmitAttr))
-      {
-        submitParametersOnChangeCheckBox.setValue(true);
-      }
-      else if (Boolean.FALSE.equals(autoSubmitAttr))
-      {
-        submitParametersOnChangeCheckBox.setValue(false);
-      }
-      else
-      {
-        // BISERVER-3821 Provide ability to remove Auto-Submit check box from report viewer
-        // only show the UI for the autosubmit checkbox if no preference exists
-        submitPanel.add(submitParametersOnChangeCheckBox);
-        submitParametersOnChangeCheckBox.setValue(parametersElement.isAutoSubmitUI());
+        parameterDisclosurePanel.setContent(parameterContainer);
+        add(parameterDisclosurePanel);
       }
 
-      parameterContainer.add(submitPanel);
-
-      parameterDisclosurePanel.setContent(parameterContainer);
-      add(parameterDisclosurePanel);
-    }
-
-    // add pagination controller (if needed)
-    if (parametersElement.isPaginate()) //$NON-NLS-1$ //$NON-NLS-2$
-    {
-      add(buildPaginationController(parametersElement.getProcessingState()));
-    }
-    if (globalErrors != null && globalErrors.isEmpty() == false)
-    {
-      add(buildGlobalErrors(globalErrors));
-    }
-
-
-    // do not show the parameter UI, but we must still fire events
-    // if prompt is not needed
-    if (parametersElement.isPromptNeeded() == false)
-    {
-      final boolean flag = (mode == ParameterSubmitMode.MANUAL);
-      if (parametersElement.isAllowAutosubmit() || flag)
+      // add pagination controller (if needed)
+      if (parametersElement.isPaginate()) //$NON-NLS-1$ //$NON-NLS-2$
       {
-        showReport();
+        add(buildPaginationController(parametersElement.getProcessingState()));
+      }
+      if (globalErrors != null && globalErrors.isEmpty() == false)
+      {
+        add(buildGlobalErrors(globalErrors));
+      }
+
+      // do not show the parameter UI, but we must still fire events
+      // if prompt is not needed
+      if (parametersElement.isPromptNeeded() == false)
+      {
+        final boolean flag = (mode == ParameterSubmitMode.MANUAL);
+        if (parametersElement.isAllowAutosubmit() || flag)
+        {
+          showReport();
+        }
+        else
+        {
+          showBlankPage();
+        }
       }
       else
       {
         showBlankPage();
       }
-    }
-    else
-    {
-      showBlankPage();
-    }
     }
     catch (Exception e)
     {
@@ -917,7 +947,6 @@ public class ParameterControllerPanel extends VerticalPanel
 
   private Widget buildParameterWidget(final Parameter parameterElement)
   {
-    final String parameterName = parameterElement.getName(); //$NON-NLS-1$
     String renderType = parameterElement.getAttribute("parameter-render-type"); //$NON-NLS-1$
     if (renderType != null)
     {
@@ -934,17 +963,6 @@ public class ParameterControllerPanel extends VerticalPanel
       return null;
     }
 
-    final List<ParameterSelection> list = parameterElement.getSelections();
-    final ArrayList<String> parameterSelections = new ArrayList<String>();
-    for (int i = 0; i < list.size(); i++)
-    {
-      final ParameterSelection selection = list.get(i);
-      if (selection.isSelected())
-      {
-        parameterSelections.add(selection.getValue());
-      }
-    }
-    parameterMap.setSelectedValues(parameterName, parameterSelections.toArray(new String[parameterSelections.size()]));
 
     if ("radio".equals(renderType) || "checkbox".equals(renderType)) //$NON-NLS-1$ //$NON-NLS-2$
     {
