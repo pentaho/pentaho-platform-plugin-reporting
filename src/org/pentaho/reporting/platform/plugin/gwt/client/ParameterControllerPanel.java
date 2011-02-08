@@ -723,10 +723,12 @@ public class ParameterControllerPanel extends VerticalPanel
         totalParameterAdded += parametersAdded;
         if (parametersAdded > 0)
         {
-          if (parametersElement.isSubscribe()) //$NON-NLS-1$
+          if (parametersElement.isSubscribe())
           {
             final CaptionPanel parameterGroupCaptionPanel = new CaptionPanel();
-            parameterGroupCaptionPanel.setCaptionText(groupLabel);
+            if(groupLabel != null && !groupLabel.equals("")) {
+              parameterGroupCaptionPanel.setCaptionText(groupLabel);
+            }
             parameterGroupCaptionPanel.setStyleName("parameter"); //$NON-NLS-1$
             parameterGroupCaptionPanel.setContentWidget(parameterGroupPanel);
             parameterContainer.add(parameterGroupCaptionPanel);
