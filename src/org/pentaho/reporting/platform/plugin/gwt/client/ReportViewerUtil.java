@@ -367,10 +367,21 @@ public class ReportViewerUtil
     reportPath += "&" + parametersAsString;
     if (GWT.isScript() == false)
     {
+      // Build a dev/test url
       System.out.println("Computed path was: " + reportPath);
       reportPath = reportPath.substring(1);
-      reportPath = "?solution=steel-wheels&path=reports&name=Inventory.prpt&" + reportPath; //$NON-NLS-1$
-      final String url = "http://localhost:8080/pentaho/content/reporting" + reportPath + "&userid=joe&password=password"; //$NON-NLS-1$ //$NON-NLS-2$
+      
+      if(!reportPath.contains("solution")) {
+        reportPath = reportPath + "&solution=steel-wheels&path=reports&name=Inventory.prpt"; //$NON-NLS-1$
+      }
+      if(!reportPath.contains("path")) {
+        reportPath = reportPath + "&path=reports"; //$NON-NLS-1$
+      }
+      if(!reportPath.contains("name")) {
+        reportPath = reportPath + "&name=Inventory.prpt"; //$NON-NLS-1$
+      }
+      
+      final String url = "http://localhost:8080/pentaho/content/reporting?" + reportPath + "&userid=joe&password=password"; //$NON-NLS-1$ //$NON-NLS-2$
       System.out.println("Using development url: " + url);
       return url;
     }

@@ -24,7 +24,11 @@ public class DropDownParameterUI extends SimplePanel implements ParameterUI
 
     public void onChange(final ChangeEvent event)
     {
-      final ListBox listBox = (ListBox) event.getSource();
+      updateSelection((ListBox) event.getSource());
+      controller.fetchParameters(ParameterControllerPanel.ParameterSubmitMode.USERINPUT);
+    }
+    
+    public void updateSelection(ListBox listBox) {
       final ArrayList<String> selectedItems = new ArrayList<String>();
       for (int i = 0; i < listBox.getItemCount(); i++)
       {
@@ -35,7 +39,6 @@ public class DropDownParameterUI extends SimplePanel implements ParameterUI
       }
       controller.getParameterMap().setSelectedValues
           (parameterName, selectedItems.toArray(new String[selectedItems.size()]));
-      controller.fetchParameters(ParameterControllerPanel.ParameterSubmitMode.USERINPUT);
     }
   }
 
@@ -62,12 +65,15 @@ public class DropDownParameterUI extends SimplePanel implements ParameterUI
       }
     }
 
-    if (hasSelection == false)
-    {
-      listBox.setSelectedIndex(-1);
-    }
+    ListBoxChangeHandler lbChangeHandler = new ListBoxChangeHandler(controller, parameterElement.getName());
+    listBox.addChangeHandler(lbChangeHandler);
 
-    listBox.addChangeHandler(new ListBoxChangeHandler(controller, parameterElement.getName()));
+    if (hasSelection == false) {
+      listBox.setSelectedIndex(0);
+    }
+    
+    lbChangeHandler.updateSelection(listBox);
+    
     setWidget(listBox);
   }
 
