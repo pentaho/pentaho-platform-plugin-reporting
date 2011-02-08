@@ -57,14 +57,9 @@ public class ExecuteReportContentHandler
     try
     {
       final Object rawSessionId = inputs.get(ParameterXmlContentHandler.SYS_PARAM_SESSION_ID);
-      if (rawSessionId instanceof String && "".equals(rawSessionId) == false)
+      if ((rawSessionId instanceof String) == false || "".equals(rawSessionId))
       {
-        ReportSessionIdHolder.set((String) rawSessionId);
-      }
-      else
-      {
-        ReportSessionIdHolder.set(UUIDUtil.getUUIDAsString());
-        inputs.put(ParameterXmlContentHandler.SYS_PARAM_SESSION_ID, ReportSessionIdHolder.get());
+        inputs.put(ParameterXmlContentHandler.SYS_PARAM_SESSION_ID, UUIDUtil.getUUIDAsString());
       }
 
       // produce rendered report
@@ -213,7 +208,6 @@ public class ExecuteReportContentHandler
         reportStagingHandler.close();
       }
       
-      ReportSessionIdHolder.remove();
       final long end = System.currentTimeMillis();
       AuditHelper.audit(userSession.getId(), userSession.getName(), reportDefinitionPath,
           contentGenerator.getObjectName(), getClass().getName(), result, contentGenerator.getInstanceId(),

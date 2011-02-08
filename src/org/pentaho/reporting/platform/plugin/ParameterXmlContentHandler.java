@@ -232,8 +232,6 @@ public class ParameterXmlContentHandler
   }
 
   private static final Log logger = LogFactory.getLog(ParameterXmlContentHandler.class);
-  private static final String SYS_PARAM_TAB_NAME = "::TabName";
-  private static final String SYS_PARAM_TAB_ACTIVE = "::TabActive";
 
   private Map<String, ParameterDefinitionEntry> systemParameter;
 
@@ -255,6 +253,8 @@ public class ParameterXmlContentHandler
   private static final String GROUP_SUBSCRIPTION = "subscription";
   private static final String GROUP_SYSTEM = "system";
   private static final String GROUP_PARAMETERS = "parameters";
+  private static final String SYS_PARAM_TAB_NAME = "::TabName";
+  private static final String SYS_PARAM_TAB_ACTIVE = "::TabActive";
 
   public ParameterXmlContentHandler(final ReportContentGenerator contentGenerator,
                                     final boolean paginate)
@@ -341,14 +341,9 @@ public class ParameterXmlContentHandler
     {
 
       final Object rawSessionId = inputs.get(ParameterXmlContentHandler.SYS_PARAM_SESSION_ID);
-      if (rawSessionId instanceof String && "".equals(rawSessionId) == false)
+      if ((rawSessionId instanceof String) == false || "".equals(rawSessionId))
       {
-        ReportSessionIdHolder.set((String) rawSessionId);
-      }
-      else
-      {
-        ReportSessionIdHolder.set(UUIDUtil.getUUIDAsString());
-        inputs.put(ParameterXmlContentHandler.SYS_PARAM_SESSION_ID, ReportSessionIdHolder.get());
+        inputs.put(ParameterXmlContentHandler.SYS_PARAM_SESSION_ID, UUIDUtil.getUUIDAsString());
       }
 
       this.reportDefinitionPath = reportDefinitionPath;
@@ -486,7 +481,6 @@ public class ParameterXmlContentHandler
     }
     finally
     {
-      ReportSessionIdHolder.remove();
       parameterContext.close();
     }
   }
