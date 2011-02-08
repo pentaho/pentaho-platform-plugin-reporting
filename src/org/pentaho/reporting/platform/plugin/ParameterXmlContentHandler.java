@@ -248,7 +248,7 @@ public class ParameterXmlContentHandler
   private static final String SYS_PARAM_SUBSCRIPTION_NAME = "subscription-name";
   private static final String SYS_PARAM_DESTINATION = "destination";
   private static final String SYS_PARAM_SCHEDULE_ID = "schedule-id";
-  private static final String SYS_PARAM_CONTENT_LINK = "::cl";
+  public static final String SYS_PARAM_CONTENT_LINK = "::cl";
   public static final String SYS_PARAM_SESSION_ID = "::session";
   private static final String GROUP_SUBSCRIPTION = "subscription";
   private static final String GROUP_SYSTEM = "system";
@@ -335,43 +335,42 @@ public class ParameterXmlContentHandler
   public void createParameterContent(final OutputStream outputStream,
                                      final String reportDefinitionPath) throws Exception
   {
-    DefaultParameterContext parameterContext = null;
+    final Object rawSessionId = inputs.get(ParameterXmlContentHandler.SYS_PARAM_SESSION_ID);
+    if ((rawSessionId instanceof String) == false || "".equals(rawSessionId))
+    {
+      inputs.put(ParameterXmlContentHandler.SYS_PARAM_SESSION_ID, UUIDUtil.getUUIDAsString());
+    }
 
+    this.reportDefinitionPath = reportDefinitionPath;
+    this.document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+
+    final IParameterProvider requestParams = getRequestParameters();
+
+    final boolean subscribe = "true".equals(requestParams.getStringParameter("subscribe", "false")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+    // handle parameter feedback (XML) services
+
+    final SimpleReportingComponent reportComponent = new SimpleReportingComponent();
+    reportComponent.setReportDefinitionPath(reportDefinitionPath);
+    reportComponent.setPaginateOutput(true);
+    reportComponent.setDefaultOutputTarget(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE);
+    reportComponent.setInputs(inputs);
+
+    final MasterReport report = reportComponent.getReport();
+
+    final DefaultParameterContext parameterContext = new DefaultParameterContext(report);
+    final ValidationResult vr;
+    final Element parameters;
     try
     {
-
-      final Object rawSessionId = inputs.get(ParameterXmlContentHandler.SYS_PARAM_SESSION_ID);
-      if ((rawSessionId instanceof String) == false || "".equals(rawSessionId))
-      {
-        inputs.put(ParameterXmlContentHandler.SYS_PARAM_SESSION_ID, UUIDUtil.getUUIDAsString());
-      }
-
-      this.reportDefinitionPath = reportDefinitionPath;
-      this.document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
-
-      final IParameterProvider requestParams = getRequestParameters();
-
-      final boolean subscribe = "true".equals(requestParams.getStringParameter("subscribe", "false")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-      // handle parameter feedback (XML) services
-
-      final SimpleReportingComponent reportComponent = new SimpleReportingComponent();
-      reportComponent.setReportDefinitionPath(reportDefinitionPath);
-      reportComponent.setPaginateOutput(true);
-      reportComponent.setDefaultOutputTarget(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE);
-      reportComponent.setInputs(inputs);
-
-      final MasterReport report = reportComponent.getReport();
-      parameterContext = new DefaultParameterContext(report);
-
       // apply inputs to parameters
       final ValidationResult validationResult =
           reportComponent.applyInputsToReportParameters(parameterContext, new ValidationResult());
 
       final ReportParameterDefinition reportParameterDefinition = report.getParameterDefinition();
-      final ValidationResult vr = reportParameterDefinition.getValidator().validate
+      vr = reportParameterDefinition.getValidator().validate
           (validationResult, reportParameterDefinition, parameterContext);
 
-      final Element parameters = document.createElement(GROUP_PARAMETERS); //$NON-NLS-1$
+      parameters = document.createElement(GROUP_PARAMETERS); //$NON-NLS-1$
       parameters.setAttribute("is-prompt-needed", String.valueOf(vr.isEmpty() == false)); //$NON-NLS-1$ //$NON-NLS-2$
       parameters.setAttribute("subscribe", String.valueOf(subscribe)); //$NON-NLS-1$ //$NON-NLS-2$
 
@@ -671,7 +670,7 @@ public class ParameterXmlContentHandler
           final Element valueElement = document.createElement("value"); //$NON-NLS-1$
           valuesElement.appendChild(valueElement);
 
-          valueElement.setAttribute("label", Messages.getInstance().getString("ReportPlugin.autoParameter", key)); //$NON-NLS-1$ //$NON-NLS-2$
+          valueElement.setAttribute("label", Messages.getInstance().getString("ReportPlugin.autoParameter", String.valueOf(key))); //$NON-NLS-1$ //$NON-NLS-2$
           valueElement.setAttribute("type", elementValueType.getName()); //$NON-NLS-1$
           valueElement.setAttribute("selected", String.valueOf(selectionSet.contains(key)));//$NON-NLS-1$
 
@@ -874,7 +873,7 @@ public class ParameterXmlContentHandler
       {
         return;
       }
-      
+
       parameters.setAttribute(SimpleReportingComponent.PAGINATE_OUTPUT, "true"); //$NON-NLS-1$
       parameters.setAttribute("page-count", String.valueOf(totalPageCount)); //$NON-NLS-1$ //$NON-NLS-2$
       // use the saved value (we changed it to -1 for performance)
@@ -1010,33 +1009,9 @@ public class ParameterXmlContentHandler
     return createGenericSystemParameter(parameterName, deprecated, preferredParameter, Integer.class);
   }
 
-  private StaticListParameter createScheduleIdParameter()
-  {
-
-    final StaticListParameter scheduleIdParameter =
-        new StaticListParameter(SYS_PARAM_SCHEDULE_ID, false, true, String.class);
-    scheduleIdParameter.setMandatory(true);
-    scheduleIdParameter.setParameterAttribute
-        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PREFERRED, "false");
-    scheduleIdParameter.setParameterAttribute
-        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP, GROUP_SUBSCRIPTION);
-    scheduleIdParameter.setParameterAttribute
-        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP_LABEL,
-            Messages.getInstance().getString("ReportPlugin.ReportSchedulingOptions"));
-    scheduleIdParameter.setParameterAttribute
-        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.LABEL,
-            Messages.getInstance().getString("ReportPlugin.Subscription"));
-    scheduleIdParameter.setParameterAttribute
-        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TYPE,
-            ParameterAttributeNames.Core.TYPE_DROPDOWN);
-    scheduleIdParameter.setRole(ParameterAttributeNames.Core.ROLE_SCHEDULE_PARAMETER);
-
-    appendAvailableSchedules(scheduleIdParameter);
-    return scheduleIdParameter;
-  }
-
   private StaticListParameter createContentLinkingParameter()
   {
+
     final StaticListParameter parameter =
         new StaticListParameter(SYS_PARAM_CONTENT_LINK, true, false, String[].class);
     parameter.setMandatory(false);
@@ -1056,6 +1031,30 @@ public class ParameterXmlContentHandler
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TYPE,
             ParameterAttributeNames.Core.TYPE_LIST);
     return parameter;
+  }
+
+  private StaticListParameter createScheduleIdParameter()
+  {
+
+    final StaticListParameter scheduleIdParameter = new StaticListParameter(SYS_PARAM_SCHEDULE_ID, false, true, String.class);
+    scheduleIdParameter.setMandatory(true);
+    scheduleIdParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PREFERRED, "false");
+    scheduleIdParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP, GROUP_SUBSCRIPTION);
+    scheduleIdParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP_LABEL,
+            Messages.getInstance().getString("ReportPlugin.ReportSchedulingOptions"));
+    scheduleIdParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.LABEL,
+            Messages.getInstance().getString("ReportPlugin.Subscription"));
+    scheduleIdParameter.setParameterAttribute
+        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TYPE,
+            ParameterAttributeNames.Core.TYPE_DROPDOWN);
+    scheduleIdParameter.setRole(ParameterAttributeNames.Core.ROLE_SCHEDULE_PARAMETER);
+
+    appendAvailableSchedules(scheduleIdParameter);
+    return scheduleIdParameter;
   }
 
   private void appendAvailableSchedules(final StaticListParameter scheduleIdParameter)

@@ -11,6 +11,8 @@ import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Element;
 import net.sf.ehcache.event.CacheEventListener;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.pentaho.platform.api.engine.ILogoutListener;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
@@ -29,6 +31,7 @@ public class DefaultReportCache implements ReportCache
 {
   private static String SESSION_ATTRIBUTE = DefaultReportCache.class.getName() + "-Cache";
   private static final String CACHE_NAME = "report-output-handlers";
+  private static final Log logger = LogFactory.getLog(DefaultReportCache.class);
 
   private static class LogoutHandler implements ILogoutListener
   {
@@ -38,9 +41,11 @@ public class DefaultReportCache implements ReportCache
 
     public void onLogout(final IPentahoSession session)
     {
+      logger.debug("Shutting down session " + session.getId());
       final Object attribute = session.getAttribute(SESSION_ATTRIBUTE);
       if (attribute instanceof CacheManager == false)
       {
+        logger.debug("Shutting down session " + session.getId() + ": No cache manager found");
         return;
       }
 
@@ -50,19 +55,15 @@ public class DefaultReportCache implements ReportCache
         final Cache cache = manager.getCache(CACHE_NAME);
         //noinspection unchecked
         final List<Object> keys = new ArrayList<Object>(cache.getKeys());
+        logger.debug("Shutting down session " + session.getId() + ": Closing " + keys.size() + " open reports.");
         for (final Object key : keys)
         {
-          final Element element = cache.get(key);
-          final Object o = element.getValue();
-          if (o instanceof CacheHolder)
-          {
-            final CacheHolder cacheHolder = (CacheHolder) o;
-            cacheHolder.getOutputHandler().close();
-            cache.remove(key);
-          }
+          // remove also closes the cache-holder and thus the report (if the report is no longer in use).
+          cache.remove(key);
         }
       }
 
+      logger.debug("Shutting down session " + session.getId() + ": Closing cache manager.");
       manager.shutdown();
     }
   }
@@ -72,6 +73,8 @@ public class DefaultReportCache implements ReportCache
     private ReportCacheKey realKey;
     private ReportOutputHandler outputHandler;
     private boolean closed;
+    private boolean reportInUse;
+    private boolean reportInCache;
 
     private CacheHolder(final ReportCacheKey realKey, final ReportOutputHandler outputHandler)
     {
@@ -83,8 +86,19 @@ public class DefaultReportCache implements ReportCache
       {
         throw new NullPointerException();
       }
+      this.reportInCache = true;
       this.realKey = realKey;
       this.outputHandler = outputHandler;
+    }
+
+    public synchronized void markEvicted()
+    {
+      reportInCache = false;
+    }
+
+    public boolean isReportInCache()
+    {
+      return reportInCache;
     }
 
     public ReportCacheKey getRealKey()
@@ -97,13 +111,23 @@ public class DefaultReportCache implements ReportCache
       return outputHandler;
     }
 
-    public void close()
+    public synchronized void close()
     {
+      if (reportInUse && reportInCache)
+      {
+        return;
+      }
+
       if (closed == false)
       {
         outputHandler.close();
         closed = true;
       }
+    }
+
+    public synchronized void setReportInUse(final boolean reportInUse)
+    {
+      this.reportInUse = reportInUse;
     }
   }
 
@@ -144,6 +168,7 @@ public class DefaultReportCache implements ReportCache
       }
 
       final CacheHolder cacheHolder = (CacheHolder) o;
+      logger.debug("Shutting down report on element-expired event " + cacheHolder.getRealKey().getSessionId());
       cacheHolder.close();
     }
 
@@ -162,6 +187,8 @@ public class DefaultReportCache implements ReportCache
       }
 
       final CacheHolder cacheHolder = (CacheHolder) o;
+      cacheHolder.markEvicted();
+      logger.debug("Shutting down report on element-evicted event " + cacheHolder.getRealKey().getSessionId());
       cacheHolder.close();
     }
 
@@ -177,6 +204,8 @@ public class DefaultReportCache implements ReportCache
         if (o instanceof CacheHolder)
         {
           final CacheHolder cacheHolder = (CacheHolder) o;
+          cacheHolder.markEvicted();
+          logger.debug("Shutting down report on remove-all event " + cacheHolder.getRealKey().getSessionId());
           cacheHolder.close();
         }
       }
@@ -195,17 +224,18 @@ public class DefaultReportCache implements ReportCache
 
   private static class CachedReportOutputHandler implements ReportOutputHandler
   {
-    private ReportOutputHandler parent;
+    private CacheHolder parent;
 
-    private CachedReportOutputHandler(final ReportOutputHandler parent)
+    private CachedReportOutputHandler(final CacheHolder parent)
     {
       this.parent = parent;
+      this.parent.setReportInUse(true);
     }
 
     public int paginate(final MasterReport report, final int yieldRate)
         throws ReportProcessingException, IOException, ContentIOException
     {
-      return parent.paginate(report, yieldRate);
+      return parent.getOutputHandler().paginate(report, yieldRate);
     }
 
     public boolean generate(final MasterReport report,
@@ -214,12 +244,16 @@ public class DefaultReportCache implements ReportCache
                             final int yieldRate)
         throws ReportProcessingException, IOException, ContentIOException
     {
-      return parent.generate(report, acceptedPage, outputStream, yieldRate);
+      return parent.getOutputHandler().generate(report, acceptedPage, outputStream, yieldRate);
     }
 
     public void close()
     {
-      // is a no-op. Closing is done by the cache itself when the element gets evicted ..
+      this.parent.setReportInUse(false);
+      if (this.parent.isReportInCache() == false)
+      {
+        this.parent.close();
+      }
     }
   }
 
@@ -230,47 +264,66 @@ public class DefaultReportCache implements ReportCache
   public ReportOutputHandler get(final ReportCacheKey key)
   {
     final IPentahoSession session = PentahoSessionHolder.getSession();
+    logger.debug("id: " + session.getId() + " - Cache.get(..) started");
     synchronized (session)
     {
       final Object attribute = session.getAttribute(SESSION_ATTRIBUTE);
       if (attribute instanceof CacheManager == false)
       {
+        logger.debug("id: " + session.getId() + " - Cache.get(..): No cache manager");
         return null;
       }
 
       final CacheManager manager = (CacheManager) attribute;
       if (manager.cacheExists(CACHE_NAME) == false)
       {
+        logger.debug("id: " + session.getId() + " - Cache.get(..): No cache registered");
         return null;
       }
 
       final Cache cache = manager.getCache(CACHE_NAME);
       final Element element = cache.get(key.getSessionId());
+      if (element == null)
+      {
+        logger.debug("id: " + session.getId() + " - Cache.get(..): No element in cache for key: " + key.getSessionId());
+        return null;
+      }
+
       final Object o = element.getObjectValue();
       if (o instanceof CacheHolder == false)
       {
+        logger.debug("id: " + session.getId() + " - Cache.get(..): No valid element in cache for key: " + key.getSessionId());
         return null;
       }
 
       final CacheHolder cacheHolder = (CacheHolder) o;
       if (cacheHolder.getRealKey().equals(key) == false)
       {
+        logger.debug("id: " + session.getId() + " - Cache.get(..): remove stale report after parameter changed: " + key.getSessionId());
         cache.remove(key.getSessionId());
         return null;
       }
-      return new CachedReportOutputHandler(cacheHolder.getOutputHandler());
+      logger.debug("id: " + session.getId() + " - Cache.get(..): Returning cached instance for key: " + key.getSessionId());
+      return new CachedReportOutputHandler(cacheHolder);
     }
   }
 
   public ReportOutputHandler put(final ReportCacheKey key, final ReportOutputHandler report)
   {
+    if (report instanceof CachedReportOutputHandler)
+    {
+      throw new IllegalStateException();
+    }
+
     final IPentahoSession session = PentahoSessionHolder.getSession();
+    logger.debug("id: " + session.getId() + " - Cache.put(..) started");
     synchronized (session)
     {
       final Object attribute = session.getAttribute(SESSION_ATTRIBUTE);
       final CacheManager manager;
       if (attribute instanceof CacheManager == false)
       {
+        logger.debug("id: " + session.getId() + " - Cache.put(..): No cache manager; creating one");
         manager = new CacheManager();
         session.setAttribute(SESSION_ATTRIBUTE, manager);
         PentahoSystem.addLogoutListener(new LogoutHandler());
@@ -282,6 +335,7 @@ public class DefaultReportCache implements ReportCache
 
       if (manager.cacheExists(CACHE_NAME) == false)
       {
+        logger.debug("id: " + session.getId() + " - Cache.put(..): No cache registered with manager; creating one");
         manager.addCache(CACHE_NAME);
         final Cache cache = manager.getCache(CACHE_NAME);
         cache.getCacheEventNotificationService().registerListener(new CacheEvictionHandler());
@@ -289,16 +343,32 @@ public class DefaultReportCache implements ReportCache
 
       final Cache cache = manager.getCache(CACHE_NAME);
       final Element element = cache.get(key.getSessionId());
-      final Object o = element.getObjectValue();
-      if (o != null)
+      if (element != null)
       {
-        cache.remove(key.getSessionId());
+        final Object o = element.getObjectValue();
+        if (o instanceof CacheHolder)
+        {
+          final CacheHolder cacheHolder = (CacheHolder) o;
+          if (cacheHolder.getRealKey().equals(key) == false)
+          {
+            logger.debug("id: " + session.getId() + " - Cache.put(..): Removing stale object.");
+            cache.remove(key.getSessionId());
+          }
+          else
+          {
+            // otherwise: Keep the element in the cache and the next put will perform an "update" operation
+            // on it. This will not close the report object.
+            logger.debug("id: " + session.getId() + " - Cache.put(..): keeping existing object, no cache operation done.");
+            return new CachedReportOutputHandler(cacheHolder);
+          }
+        }
       }
 
       final CacheHolder cacheHolder = new CacheHolder(key, report);
-      cache.put(new Element(key, cacheHolder));
+      cache.put(new Element(key.getSessionId(), cacheHolder));
+      logger.debug("id: " + session.getId() + " - Cache.put(..): storing new report for key " + key.getSessionId());
+      return new CachedReportOutputHandler(cacheHolder);
     }
-    return new CachedReportOutputHandler(report);
   }
 
 }

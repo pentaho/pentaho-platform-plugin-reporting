@@ -325,6 +325,11 @@ public class ReportViewerUtil
         {
           continue;
         }
+        if ("::session".equals(key))
+        {
+          // session IDs are generated on the server, not via URL. We discard all such parameters on the URL.
+          continue;
+        }
 
         if (parameters.containsParameter(key))
         {

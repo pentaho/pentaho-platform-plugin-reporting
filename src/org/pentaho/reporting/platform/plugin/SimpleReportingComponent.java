@@ -19,6 +19,7 @@ import org.pentaho.platform.api.engine.IActionSequenceResource;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.api.engine.IStreamingPojo;
 import org.pentaho.platform.engine.core.system.PentahoRequestContextHolder;
+import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.core.AttributeNames;
 import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
@@ -99,8 +100,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   public static final String DASHBOARD_MODE = "dashboard-mode"; //$NON-NLS-1$
   private static final String MIME_GENERIC_FALLBACK = "application/octet-stream"; //$NON-NLS-1$
   public static final String PNG_EXPORT_TYPE = "pageable/X-AWT-Graphics;image-type=png";
-  private static final String CONTENT_LINKING_PARAMETER = "::cl";
-  private static final String CONTENT_LINKING_WIDGET_ID = "::cl_id";
+
 
   /**
    * Static initializer block to guarantee that the ReportingComponent will be in a state where the reporting engine will be booted. We have a system listener
@@ -557,7 +557,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       return null;
     }
 
-    final Object clRaw = inputs.get(CONTENT_LINKING_PARAMETER);
+    final Object clRaw = inputs.get(ParameterXmlContentHandler.SYS_PARAM_CONTENT_LINK);
     if (clRaw == null)
     {
       return null;
@@ -872,7 +872,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
           if (log.isInfoEnabled())
           {
             log.info(Messages.getInstance().getString("ReportPlugin.infoParameterValues",
-                paramName, inputs.get(paramName), computedParameter));
+                paramName, String.valueOf(inputs.get(paramName)), String.valueOf(computedParameter)));
           }
         }
         catch (Exception e)
@@ -1040,7 +1040,11 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     }
 
     final ReportCacheKey reportCacheKey = new ReportCacheKey(getViewerSessionId(), inputs);
-    final ReportCache cache = new DefaultReportCache();
+    ReportCache cache = PentahoSystem.get(ReportCache.class);
+    if (cache == null)
+    {
+      cache = new DefaultReportCache();
+    }
     final ReportOutputHandler outputHandler = cache.get(reportCacheKey);
     if (outputHandler != null)
     {
@@ -1140,9 +1144,10 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     }
     else
     {
-      reportOutputHandler = null;
+      return null;
     }
-    return reportOutputHandler;
+
+    return cache.put(reportCacheKey, reportOutputHandler);
   }
 
   /**
@@ -1211,4 +1216,5 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     }
     return null;
   }
+
 }
