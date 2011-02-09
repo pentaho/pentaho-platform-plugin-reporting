@@ -45,6 +45,7 @@ import org.pentaho.reporting.libraries.base.util.StringUtils;
 import org.pentaho.reporting.libraries.resourceloader.ResourceException;
 import org.pentaho.reporting.libraries.xmlns.common.ParserUtil;
 import org.pentaho.reporting.platform.plugin.cache.DefaultReportCache;
+import org.pentaho.reporting.platform.plugin.cache.NullReportCache;
 import org.pentaho.reporting.platform.plugin.cache.ReportCache;
 import org.pentaho.reporting.platform.plugin.cache.ReportCacheKey;
 import org.pentaho.reporting.platform.plugin.messages.Messages;
@@ -1039,16 +1040,25 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       throw new IllegalStateException("Inputs are null, this component did not validate properly");
     }
 
+    final Object attribute = report.getAttribute(AttributeNames.Pentaho.NAMESPACE, AttributeNames.Pentaho.REPORT_CACHE);
     final ReportCacheKey reportCacheKey = new ReportCacheKey(getViewerSessionId(), inputs);
-    ReportCache cache = PentahoSystem.get(ReportCache.class);
-    if (cache == null)
+    ReportCache cache;
+    if (Boolean.FALSE.equals(attribute))
     {
-      cache = new DefaultReportCache();
+      cache = new NullReportCache();
     }
-    final ReportOutputHandler outputHandler = cache.get(reportCacheKey);
-    if (outputHandler != null)
+    else
     {
-      return outputHandler;
+      cache = PentahoSystem.get(ReportCache.class);
+      if (cache == null)
+      {
+        cache = new DefaultReportCache();
+      }
+      final ReportOutputHandler outputHandler = cache.get(reportCacheKey);
+      if (outputHandler != null)
+      {
+        return outputHandler;
+      }
     }
 
     final ReportOutputHandler reportOutputHandler;
