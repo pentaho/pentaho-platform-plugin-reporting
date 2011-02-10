@@ -515,6 +515,18 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     return defaultValue;
   }
 
+  
+  /**
+   * Sets the MasterReport for the report-definition, needed by subclasses, such as with interactive adhoc
+   *
+   * @return nothing
+   */
+  public void setReport(MasterReport report) {
+    this.report = report;
+    final String clText = extractContentLinkSpec();
+    report.setReportEnvironment(new PentahoReportEnvironment(report.getConfiguration(), clText));
+  }
+  
   /**
    * Get the MasterReport for the report-definition, the MasterReport object will be cached as needed, using the PentahoResourceLoader.
    *
