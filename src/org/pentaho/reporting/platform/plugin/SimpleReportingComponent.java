@@ -399,6 +399,16 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     this.outputStream = outputStream;
   }
 
+  /**
+   * Gets the useContentRepository flag, needed by subclasses, such as with interactive adhoc
+   *
+   * @return useContentRepository
+   */
+  public boolean getUseContentRepository() 
+  {
+    return useContentRepository;
+  }
+  
   public void setUseContentRepository(final Boolean useContentRepository)
   {
     this.useContentRepository = useContentRepository;
@@ -444,6 +454,19 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     this.printer = printer;
   }
 
+  /**
+   * Get the inputs, needed by subclasses, such as with interactive adhoc
+   *
+   * @return immutable input map
+   */
+  public Map<String, Object> getInputs() 
+  {
+    if (inputs != null) 
+    {
+      return Collections.unmodifiableMap(inputs);
+    }
+    return Collections.EMPTY_MAP;
+  }
 
   /**
    * This method sets the map of *all* the inputs which are available to this component. This allows us to use action-sequence inputs as parameters for our
@@ -1224,7 +1247,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     return 0;
   }
 
-  private String getViewerSessionId()
+  protected String getViewerSessionId()
   {
     if (inputs == null)
     {
