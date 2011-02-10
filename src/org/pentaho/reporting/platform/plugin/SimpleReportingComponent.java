@@ -8,13 +8,44 @@ import java.net.URL;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
-
 import javax.print.DocFlavor;
 import javax.print.PrintService;
 import javax.print.PrintServiceLookup;
-import javax.security.auth.login.Configuration;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.pentaho.platform.api.engine.IAcceptsRuntimeInputs;
+import org.pentaho.platform.api.engine.IActionSequenceResource;
+import org.pentaho.platform.api.engine.IPentahoSession;
+import org.pentaho.platform.api.engine.IStreamingPojo;
+import org.pentaho.platform.engine.core.system.PentahoRequestContextHolder;
+import org.pentaho.platform.engine.core.system.PentahoSystem;
+import org.pentaho.reporting.engine.classic.core.AttributeNames;
+import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
+import org.pentaho.reporting.engine.classic.core.MasterReport;
+import org.pentaho.reporting.engine.classic.core.metadata.ReportProcessTaskRegistry;
+import org.pentaho.reporting.engine.classic.core.modules.output.pageable.pdf.PdfPageableModule;
+import org.pentaho.reporting.engine.classic.core.modules.output.pageable.plaintext.PlainTextPageableModule;
+import org.pentaho.reporting.engine.classic.core.modules.output.pageable.xml.XmlPageableModule;
+import org.pentaho.reporting.engine.classic.core.modules.output.table.csv.CSVTableModule;
+import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlTableModule;
+import org.pentaho.reporting.engine.classic.core.modules.output.table.rtf.RTFTableModule;
+import org.pentaho.reporting.engine.classic.core.modules.output.table.xls.ExcelTableModule;
+import org.pentaho.reporting.engine.classic.core.modules.output.table.xml.XmlTableModule;
+import org.pentaho.reporting.engine.classic.core.parameters.DefaultParameterContext;
+import org.pentaho.reporting.engine.classic.core.parameters.ParameterContext;
+import org.pentaho.reporting.engine.classic.core.parameters.ParameterDefinitionEntry;
+import org.pentaho.reporting.engine.classic.core.parameters.ValidationMessage;
+import org.pentaho.reporting.engine.classic.core.parameters.ValidationResult;
+import org.pentaho.reporting.engine.classic.core.util.ReportParameterValues;
+import org.pentaho.reporting.engine.classic.extensions.modules.java14print.Java14PrintUtil;
+import org.pentaho.reporting.libraries.base.config.Configuration;
+import org.pentaho.reporting.libraries.base.util.CSVQuoter;
+import org.pentaho.reporting.libraries.base.util.StringUtils;
+import org.pentaho.reporting.libraries.resourceloader.ResourceException;
+import org.pentaho.reporting.libraries.xmlns.common.ParserUtil;
 import org.pentaho.reporting.platform.plugin.cache.DefaultReportCache;
+import org.pentaho.reporting.platform.plugin.cache.NullReportCache;
 import org.pentaho.reporting.platform.plugin.cache.ReportCache;
 import org.pentaho.reporting.platform.plugin.cache.ReportCacheKey;
 import org.pentaho.reporting.platform.plugin.messages.Messages;
@@ -34,10 +65,6 @@ import org.pentaho.reporting.platform.plugin.output.XLSXOutput;
 import org.pentaho.reporting.platform.plugin.output.XmlPageableOutput;
 import org.pentaho.reporting.platform.plugin.output.XmlTableOutput;
 
-import sun.rmi.runtime.Log;
-
-import com.sun.xml.internal.ws.util.StringUtils;
-import com.sun.xml.internal.ws.wsdl.parser.ParserUtil;
 
 public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntimeInputs
 {
