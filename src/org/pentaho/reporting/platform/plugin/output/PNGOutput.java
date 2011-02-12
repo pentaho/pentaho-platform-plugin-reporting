@@ -47,7 +47,6 @@ public class PNGOutput implements ReportOutputHandler
     {
       proc.close();
     }
-
   }
 
   public boolean generate(final MasterReport report,

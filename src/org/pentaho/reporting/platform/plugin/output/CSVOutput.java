@@ -24,28 +24,23 @@ public class CSVOutput implements ReportOutputHandler
                           final OutputStream outputStream,
                           final int yieldRate) throws ReportProcessingException, IOException, ContentIOException
   {
-    StreamReportProcessor proc = null;
+    final StreamCSVOutputProcessor target = new StreamCSVOutputProcessor(report.getConfiguration(), outputStream);
+    final StreamReportProcessor proc = new StreamReportProcessor(report, target);
+
+    if (yieldRate > 0)
+    {
+      proc.addReportProgressListener(new YieldReportListener(yieldRate));
+    }
+    
     try
     {
-      final StreamCSVOutputProcessor target = new StreamCSVOutputProcessor(report.getConfiguration(), outputStream);
-      proc = new StreamReportProcessor(report, target);
-
-      if (yieldRate > 0)
-      {
-        proc.addReportProgressListener(new YieldReportListener(yieldRate));
-      }
       proc.processReport();
       proc.close();
-      proc = null;
-      outputStream.close();
       return true;
     }
     finally
     {
-      if (proc != null)
-      {
-        proc.close();
-      }
+      proc.close();
     }
   }
 

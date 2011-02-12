@@ -83,11 +83,16 @@ public class StreamContentRepoHtmlOutput extends StreamHtmlOutput
     {
       sp.addReportProgressListener(new YieldReportListener(yieldRate));
     }
-    sp.processReport();
-    sp.close();
+    try
+    {
+      sp.processReport();
+    }
+    finally
+    {
+      sp.close();
+    }
 
     outputStream.flush();
-    outputStream.close();
     return true;
   }
 

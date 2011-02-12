@@ -175,7 +175,6 @@ public class PageableHTMLOutput implements ReportOutputHandler
     finally
     {
       outputStream.flush();
-      outputStream.close();
       printer.setContentWriter(null, null);
       printer.setDataWriter(null, null);
     }

@@ -24,7 +24,8 @@ public class XmlTableOutput implements ReportOutputHandler
     return 0;
   }
 
-  private StreamReportProcessor createProcessor(final MasterReport report, final int yieldRate)
+  private StreamReportProcessor createProcessor(final MasterReport report,
+                                                final int yieldRate)
       throws ReportProcessingException
   {
     proxyOutputStream = new ProxyOutputStream();
@@ -58,7 +59,7 @@ public class XmlTableOutput implements ReportOutputHandler
     finally
     {
       proxyOutputStream.setParent(null);
-      outputStream.close();
+      outputStream.flush();
     }
   }
 

@@ -12,8 +12,6 @@ import org.pentaho.reporting.engine.classic.core.util.NullOutputStream;
 
 public class PDFOutput implements ReportOutputHandler
 {
-  private PageableReportProcessor proc;
-
   public PDFOutput()
   {
   }
@@ -41,10 +39,7 @@ public class PDFOutput implements ReportOutputHandler
                           final OutputStream outputStream,
                           final int yieldRate) throws ReportProcessingException, IOException
   {
-    if (proc == null)
-    {
-      proc = createProcessor(report, yieldRate);
-    }
+    final PageableReportProcessor proc = createProcessor(report, yieldRate);
     try
     {
       proc.processReport();
@@ -52,15 +47,11 @@ public class PDFOutput implements ReportOutputHandler
     }
     finally
     {
-      outputStream.close();
+      proc.close();
     }
   }
 
   public void close()
   {
-    if (proc != null)
-    {
-      proc.close();
-    }
   }
 }

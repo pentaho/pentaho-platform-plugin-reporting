@@ -16,7 +16,6 @@ import org.pentaho.reporting.libraries.base.util.IOUtils;
 public class XLSOutput implements ReportOutputHandler
 {
   private byte[] templateData;
-  private FlowReportProcessor reportProcessor;
   private ProxyOutputStream proxyOutputStream;
 
   public XLSOutput(final InputStream templateInputStream) throws IOException
@@ -65,11 +64,7 @@ public class XLSOutput implements ReportOutputHandler
                           final int yieldRate)
       throws ReportProcessingException, IOException
   {
-    if (reportProcessor == null)
-    {
-      reportProcessor = createProcessor(report, yieldRate);
-    }
-
+    final FlowReportProcessor reportProcessor = createProcessor(report, yieldRate);
     try
     {
       proxyOutputStream.setParent(outputStream);
@@ -80,26 +75,20 @@ public class XLSOutput implements ReportOutputHandler
       }
 
       reportProcessor.processReport();
+      outputStream.flush();
+      return true;
     }
     finally
     {
+      reportProcessor.close();
       proxyOutputStream.setParent(null);
       final FlowExcelOutputProcessor target = (FlowExcelOutputProcessor) reportProcessor.getOutputProcessor();
       target.setTemplateInputStream(null);
     }
 
-    outputStream.flush();
-    outputStream.close();
-    return true;
   }
 
   public void close()
   {
-    if (reportProcessor != null)
-    {
-      reportProcessor.close();
-      reportProcessor = null;
-      proxyOutputStream = null;
-    }
   }
 }
