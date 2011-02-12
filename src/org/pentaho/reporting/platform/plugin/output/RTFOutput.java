@@ -27,28 +27,21 @@ public class RTFOutput implements ReportOutputHandler
                           final OutputStream outputStream,
                           final int yieldRate) throws ReportProcessingException, IOException
   {
-    ReportProcessor proc = null;
+    final FlowRTFOutputProcessor target = new FlowRTFOutputProcessor(report.getConfiguration(), outputStream, report.getResourceManager());
+    final ReportProcessor proc = new FlowReportProcessor(report, target);
+
+    if (yieldRate > 0)
+    {
+      proc.addReportProgressListener(new YieldReportListener(yieldRate));
+    }
     try
     {
-      final FlowRTFOutputProcessor target = new FlowRTFOutputProcessor(report.getConfiguration(), outputStream, report.getResourceManager());
-      proc = new FlowReportProcessor(report, target);
-
-      if (yieldRate > 0)
-      {
-        proc.addReportProgressListener(new YieldReportListener(yieldRate));
-      }
       proc.processReport();
-      proc.close();
-      proc = null;
-      outputStream.close();
       return true;
     }
     finally
     {
-      if (proc != null)
-      {
-        proc.close();
-      }
+      proc.close();
     }
   }
 

@@ -64,18 +64,25 @@ public class EmailOutput implements ReportOutputHandler
       {
         sp.addReportProgressListener(new YieldReportListener(yieldRate));
       }
-      sp.processReport();
-      dataRepository.writeEmail(outputStream);
-      sp.close();
 
-      outputStream.flush();
-      outputStream.close();
-      return true;
+      try
+      {
+        sp.processReport();
+        dataRepository.writeEmail(outputStream);
+
+        outputStream.flush();
+        return true;
+      }
+      finally
+      {
+        sp.close();
+      }
     }
     catch (MessagingException e)
     {
       throw new ReportProcessingException("Error", e);
     }
+
   }
 
   public void close()

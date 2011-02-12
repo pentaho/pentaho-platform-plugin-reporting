@@ -77,7 +77,6 @@ public class XmlPageableOutput implements ReportOutputHandler
       {
         proxyOutputStream.setParent(null);
       }
-      outputStream.close();
     }
   }
 

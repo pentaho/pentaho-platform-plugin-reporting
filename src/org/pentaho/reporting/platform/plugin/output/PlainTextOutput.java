@@ -13,7 +13,6 @@ import org.pentaho.reporting.libraries.repository.ContentIOException;
 
 public class PlainTextOutput implements ReportOutputHandler
 {
-  private PageableReportProcessor proc;
   private ProxyOutputStream proxyOutputStream;
 
   public int paginate(final MasterReport report,
@@ -27,26 +26,20 @@ public class PlainTextOutput implements ReportOutputHandler
                           final OutputStream outputStream,
                           final int yieldRate) throws ReportProcessingException, IOException, ContentIOException
   {
-    if (proc == null)
-    {
-      this.proc = create(report, yieldRate);
-    }
-    if (proc.isPaginated() == false)
-    {
-      proc.paginate();
-    }
-
+    final PageableReportProcessor proc = create(report, yieldRate);
     proxyOutputStream.setParent(outputStream);
     try
     {
+      if (proc.isPaginated() == false)
+      {
+        proc.paginate();
+      }
       proc.processReport();
-      proc.close();
-      proc = null;
     }
     finally
     {
+      proc.close();
       proxyOutputStream.setParent(null);
-      outputStream.close();
     }
     return true;
   }
@@ -67,11 +60,5 @@ public class PlainTextOutput implements ReportOutputHandler
 
   public void close()
   {
-    if (proc != null)
-    {
-      proc.close();
-      proc = null;
-      proxyOutputStream = null;
-    }
   }
 }
