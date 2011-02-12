@@ -286,13 +286,13 @@ public class ParameterXmlContentHandler
           createGenericSystemParameter(SYS_PARAM_TAB_NAME, false, true)); // NON-NLS
       parameter.put(SYS_PARAM_TAB_ACTIVE,
           createGenericBooleanSystemParameter(SYS_PARAM_TAB_ACTIVE, false, true)); // NON-NLS
-      parameter.put("solution", createGenericSystemParameter("solution", false, false)); // NON-NLS
+  //    parameter.put("solution", createGenericSystemParameter("solution", false, false)); // NON-NLS
       parameter.put("yield-rate", createGenericIntSystemParameter("yield-rate", false, false)); // NON-NLS
       parameter.put("accepted-page", createGenericIntSystemParameter("accepted-page", false, false)); // NON-NLS
       parameter.put(SYS_PARAM_SESSION_ID, createGenericSystemParameter(SYS_PARAM_SESSION_ID, false, false)); // NON-NLS
-      parameter.put("path", createGenericSystemParameter("path", false, false)); // NON-NLS
-      parameter.put("name", createGenericSystemParameter("name", false, false)); // NON-NLS
-      parameter.put("action", createGenericSystemParameter("action", true, false)); // NON-NLS
+  //    parameter.put("path", createGenericSystemParameter("path", false, false)); // NON-NLS
+  //    parameter.put("name", createGenericSystemParameter("name", false, false)); // NON-NLS
+  //    parameter.put("action", createGenericSystemParameter("action", true, false)); // NON-NLS
       parameter.put("output-type", createGenericSystemParameter("output-type", true, false)); // NON-NLS
       parameter.put("layout", createGenericSystemParameter("layout", true, false)); // NON-NLS
       parameter.put("content-handler-pattern", createGenericSystemParameter("content-handler-pattern", true, false)); // NON-NLS
