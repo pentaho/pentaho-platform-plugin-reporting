@@ -27,6 +27,10 @@ public class ReportCacheKey extends DataCacheKey
       {
         continue;
       }
+      if (ParameterXmlContentHandler.SYS_PARAM_ACCEPTED_PAGE.equals(key))
+      {
+        continue;
+      }
 
       addParameter(key, entry.getValue());
     }

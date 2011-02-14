@@ -232,6 +232,7 @@ public class ParameterXmlContentHandler
   }
 
   private static final Log logger = LogFactory.getLog(ParameterXmlContentHandler.class);
+  public static final String SYS_PARAM_ACCEPTED_PAGE = "accepted-page";
 
   private Map<String, ParameterDefinitionEntry> systemParameter;
 
@@ -288,7 +289,7 @@ public class ParameterXmlContentHandler
           createGenericBooleanSystemParameter(SYS_PARAM_TAB_ACTIVE, false, true)); // NON-NLS
       //parameter.put("solution", createGenericSystemParameter("solution", false, false)); // NON-NLS
       parameter.put("yield-rate", createGenericIntSystemParameter("yield-rate", false, false)); // NON-NLS
-      parameter.put("accepted-page", createGenericIntSystemParameter("accepted-page", false, false)); // NON-NLS
+      parameter.put(SYS_PARAM_ACCEPTED_PAGE, createGenericIntSystemParameter(SYS_PARAM_ACCEPTED_PAGE, false, false)); // NON-NLS
       parameter.put(SYS_PARAM_SESSION_ID, createGenericSystemParameter(SYS_PARAM_SESSION_ID, false, false)); // NON-NLS
       //parameter.put("path", createGenericSystemParameter("path", false, false)); // NON-NLS
       //parameter.put("name", createGenericSystemParameter("name", false, false)); // NON-NLS
