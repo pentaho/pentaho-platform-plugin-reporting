@@ -259,6 +259,7 @@ public class DefaultReportCache implements ReportCache
 
   public DefaultReportCache()
   {
+    PentahoSystem.addLogoutListener(new LogoutHandler());
   }
 
   public ReportOutputHandler get(final ReportCacheKey key)
@@ -326,7 +327,6 @@ public class DefaultReportCache implements ReportCache
         logger.debug("id: " + session.getId() + " - Cache.put(..): No cache manager; creating one");
         manager = new CacheManager();
         session.setAttribute(SESSION_ATTRIBUTE, manager);
-        PentahoSystem.addLogoutListener(new LogoutHandler());
       }
       else
       {
