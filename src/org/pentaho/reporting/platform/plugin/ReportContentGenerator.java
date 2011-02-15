@@ -193,7 +193,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
     return createInputs(getRequestParameters());
   }
 
-  private static Map<String, Object> createInputs(final IParameterProvider requestParams)
+  protected static Map<String, Object> createInputs(final IParameterProvider requestParams)
   {
     final Map<String, Object> inputs = new HashMap<String, Object>();
     if (requestParams == null)
