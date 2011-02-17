@@ -785,7 +785,7 @@ public class ParameterXmlContentHandler
       return;
     }
 
-    final ISubscribeContent subscribeContent = subscriptionRepository.getContentByActionReference((String)fileId);
+    final ISubscribeContent subscribeContent = subscriptionRepository.getContentByActionReference(fileId.toString());
     if (subscribeContent == null)
     {
       return;

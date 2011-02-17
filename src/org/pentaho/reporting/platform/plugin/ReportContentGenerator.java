@@ -1,5 +1,6 @@
 package org.pentaho.reporting.platform.plugin;
 
+import java.io.File;
 import java.io.OutputStream;
 import java.net.URLDecoder;
 import java.util.HashMap;
@@ -10,6 +11,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.pentaho.platform.api.engine.IParameterProvider;
 import org.pentaho.platform.api.engine.IPentahoSession;
+import org.pentaho.platform.api.engine.IPluginManager;
+import org.pentaho.platform.api.engine.IPluginResourceLoader;
+import org.pentaho.platform.api.repository.ISolutionRepository;
 import org.pentaho.platform.api.repository.ISubscribeContent;
 import org.pentaho.platform.api.repository.ISubscription;
 import org.pentaho.platform.api.repository.ISubscriptionRepository;
@@ -19,6 +23,7 @@ import org.pentaho.platform.engine.core.solution.ActionInfo;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.engine.services.solution.SimpleContentGenerator;
 import org.pentaho.platform.engine.services.solution.SimpleParameterSetter;
+import org.pentaho.platform.plugin.services.pluginmgr.PluginClassLoader;
 import org.pentaho.platform.repository.subscription.SubscriptionHelper;
 import org.pentaho.platform.util.UUIDUtil;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlTableModule;
@@ -39,40 +44,39 @@ public class ReportContentGenerator extends SimpleContentGenerator {
   public void createContent(final OutputStream outputStream) throws Exception {
     final String id = UUIDUtil.getUUIDAsString();
     setInstanceId(id);
+
+    IUnifiedRepository unifiedRepository = PentahoSystem.get(IUnifiedRepository.class, null);
     final IParameterProvider requestParams = getRequestParameters();
+    final String path = URLDecoder.decode(requestParams.getStringParameter("path", ""), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+    final RENDER_TYPE renderMode = RENDER_TYPE.valueOf
+          (requestParams.getStringParameter("renderMode", RENDER_TYPE.REPORT.toString()).toUpperCase()); //$NON-NLS-1$
 
-    String fileId = requestParams.getStringParameter("id", null); //$NON-NLS-1$ //$NON-NLS-2$
-    if (fileId == null) {
-      IUnifiedRepository unifiedRepository = PentahoSystem.get(IUnifiedRepository.class, null);
-      RepositoryFile prptFile = unifiedRepository.getFile(requestParams.getStringParameter("path", null));
-      fileId = prptFile.getId().toString();
-    }
+    RepositoryFile prptFile = unifiedRepository.getFile(path);
 
-    final RENDER_TYPE renderMode = RENDER_TYPE.valueOf(requestParams.getStringParameter(
-        "renderMode", RENDER_TYPE.REPORT.toString()).toUpperCase()); //$NON-NLS-1$
+
     try {
       switch (renderMode) {
         case DOWNLOAD: {
           final DownloadReportContentHandler contentHandler = new DownloadReportContentHandler(userSession,
               parameterProviders.get("path"));
-          contentHandler.createDownloadContent(outputStream, fileId);
+          contentHandler.createDownloadContent(outputStream, prptFile.getPath());
           break;
         }
         case REPORT: {
           // create inputs from request parameters
           final ExecuteReportContentHandler executeReportContentHandler = new ExecuteReportContentHandler(this);
-          executeReportContentHandler.createReportContent(outputStream, fileId);
+          executeReportContentHandler.createReportContent(outputStream, prptFile.getId());
           break;
         }
         case SUBSCRIBE: {
           final SubscribeContentHandler subscribeContentHandler = new SubscribeContentHandler(this);
-          subscribeContentHandler.createSubscribeContent(outputStream, fileId);
+          subscribeContentHandler.createSubscribeContent(outputStream, prptFile.getId());
           break;
         }
         case XML: {
           // create inputs from request parameters
           final ParameterXmlContentHandler parameterXmlContentHandler = new ParameterXmlContentHandler(this);
-          parameterXmlContentHandler.createParameterContent(outputStream, fileId);
+          parameterXmlContentHandler.createParameterContent(outputStream, prptFile.getId());
           break;
         }
         default:
@@ -182,8 +186,10 @@ public class ReportContentGenerator extends SimpleContentGenerator {
 
   public String getMimeType() {
     final IParameterProvider requestParams = getRequestParameters();
-    final RENDER_TYPE renderMode = RENDER_TYPE.valueOf(requestParams.getStringParameter(
-        "renderMode", RENDER_TYPE.REPORT.toString()).toUpperCase()); //$NON-NLS-1$
+    IUnifiedRepository unifiedRepository = PentahoSystem.get(IUnifiedRepository.class, null);
+    final RENDER_TYPE renderMode = RENDER_TYPE.valueOf
+        (requestParams.getStringParameter("renderMode", RENDER_TYPE.REPORT.toString()).toUpperCase()); //$NON-NLS-1$
+
     if (renderMode.equals(RENDER_TYPE.XML)) {
       return "text/xml"; //$NON-NLS-1$
     } else if (renderMode.equals(RENDER_TYPE.SUBSCRIBE)) {
@@ -192,25 +198,42 @@ public class ReportContentGenerator extends SimpleContentGenerator {
       // perhaps we can invent our own mime-type or use application/zip?
       return "application/octet-stream"; //$NON-NLS-1$
     }
-
-    String fileId = requestParams.getStringParameter("id", null); //$NON-NLS-1$ //$NON-NLS-2$
-    if (fileId == null) {
-      final String filePath = requestParams.getStringParameter("path", null);
-      if (filePath != null) {
-        IUnifiedRepository unifiedRepository = PentahoSystem.get(IUnifiedRepository.class, null);
-        RepositoryFile repositoryFile = unifiedRepository.getFile(filePath);
-        if (repositoryFile != null) {
-          fileId = repositoryFile.getId().toString();
-        }
-      }
-    }
+    final String path = requestParams.getStringParameter("path", ""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+    RepositoryFile prptFile = unifiedRepository.getFile(path);
 
     final SimpleReportingComponent reportComponent = new SimpleReportingComponent();
     final Map<String, Object> inputs = createInputs(requestParams);
     reportComponent.setDefaultOutputTarget(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE);
     reportComponent.setSession(userSession);
-    reportComponent.setReportFileId(fileId);
+    reportComponent.setReportFileId(prptFile.getId());
     reportComponent.setInputs(inputs);
     return reportComponent.getMimeType();
   }
+
+
+  public String getSystemRelativePluginPath(ClassLoader classLoader) {
+        File dir = getPluginDir(classLoader);
+        if (dir == null) {
+            return null;
+        }
+        // get the full path with \ converted to /
+        String path = dir.getAbsolutePath().replace('\\', ISolutionRepository.SEPARATOR);
+        int pos = path.lastIndexOf(ISolutionRepository.SEPARATOR + "system" + ISolutionRepository.SEPARATOR); //$NON-NLS-1$
+        if (pos != -1) {
+            path = path.substring(pos + 8);
+        }
+        return path;
+  }
+
+  protected File getPluginDir(ClassLoader classLoader) {
+       if (classLoader instanceof PluginClassLoader) {
+        return ((PluginClassLoader) classLoader).getPluginDir();
+       }
+        return null;
+  }
+
+
 }
+
+
+

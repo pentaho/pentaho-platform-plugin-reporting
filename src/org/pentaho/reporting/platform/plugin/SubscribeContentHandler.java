@@ -2,6 +2,7 @@ package org.pentaho.reporting.platform.plugin;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 
@@ -39,12 +40,12 @@ public class SubscribeContentHandler
   }
 
   public void createSubscribeContent(final OutputStream outputStream,
-                                     final String reportDefinitionPath)
+                                     final Serializable fileId)
       throws ResourceException, IOException
   {
-    final MasterReport report = ReportCreator.createReport(reportDefinitionPath, userSession);
+    final MasterReport report = ReportCreator.createReport(fileId, userSession);
     final ParameterDefinitionEntry parameterDefinitions[] = report.getParameterDefinition().getParameterDefinitions();
-    final String result = saveSubscription(parameterDefinitions, reportDefinitionPath);
+    final String result = saveSubscription(parameterDefinitions, fileId.toString());
     outputStream.write(result.getBytes());
     outputStream.flush();
   }

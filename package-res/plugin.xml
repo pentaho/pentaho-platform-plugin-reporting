@@ -22,38 +22,40 @@
           <!-- for any of these urls, you can add layout=flow to the url -->
           <operation>
             <id>RUN</id>
-            <command>content/reporting/reportviewer/report.html?id={id}&amp;locale={locale}</command>
+            <perspective>viewer</perspective>
           </operation>
           <operation>
             <id>NEWWINDOW</id>
-            <command>content/reporting/reportviewer/report.html?id={id}&amp;locale={locale}</command>
+            <perspective>viewer</perspective>
           </operation>
           <operation>
             <id>SCHEDULE_NEW</id>
-            <command>content/reporting/reportviewer/report.html?id={id}&amp;subscribe=true&amp;locale={locale}</command>
+            <perspective>viewer</perspective>
           </operation>
           <operation>
             <id>SCHEDULE_EDIT</id>
-            <command>content/reporting/reportviewer/report.html?subscribe=true&amp;subscription-id={subscription-id}&amp;locale={locale}</command>
+            <perspective>viewer</perspective>
           </operation>
           <operation>
             <id>BACKGROUND</id>
-            <command>ViewAction?id={id}&amp;background=true</command>
           </operation>
           <operation>
             <id>PARAMETER</id>
-            <command>content/reporting/?renderMode=XML&amp;id={id}</command>
           </operation>
         </operations>
       </content-type>
     </content-types>
 
+    <content-generator id="reporting viewer" type="prpt:viewer">
+      <classname>org.pentaho.reporting.platform.plugin.ReportViewerDelegateContentGenerator</classname>
+      <fileinfo-classname>org.pentaho.reporting.platform.plugin.ReportFileMetaDataProvider</fileinfo-classname>
+      <title>Reporting Viewer Plugin</title>
+    </content-generator>
     <content-generator id="reporting" type="prpt">
       <classname>org.pentaho.reporting.platform.plugin.ReportContentGenerator</classname>
       <fileinfo-classname>org.pentaho.reporting.platform.plugin.ReportFileMetaDataProvider</fileinfo-classname>
       <title>Reporting Plugin</title>
     </content-generator>
-
     <bean id="SimpleReportingComponent" class="org.pentaho.reporting.platform.plugin.SimpleReportingComponent"/>
 
 </plugin>

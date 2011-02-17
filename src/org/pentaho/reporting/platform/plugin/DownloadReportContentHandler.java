@@ -46,17 +46,17 @@ public class DownloadReportContentHandler
   }
 
   public void createDownloadContent(final OutputStream outputStream,
-                                     final Serializable fileId) throws IOException
+                                     final String path) throws IOException
   {
     final IUnifiedRepository repository = PentahoSystem.get(IUnifiedRepository.class, userSession);
-    final RepositoryFile file = repository.getFileById(fileId);
+    final RepositoryFile file = repository.getFile(path);
     final HttpServletResponse response = (HttpServletResponse) pathProvider.getParameter("httpresponse"); //$NON-NLS-1$ //$NON-NLS-2$
 
     // if the user has PERM_CREATE, we'll allow them to pull it for now, this is as relaxed
     // as I am comfortable with but I can imagine a PERM_READ or PERM_EXECUTE being used
     // in the future
     if (!file.isFolder() && !file.getPath().equals("/")) {
-      SimpleRepositoryFileData fileData = repository.getDataForRead(fileId, SimpleRepositoryFileData.class);
+      SimpleRepositoryFileData fileData = repository.getDataForRead(file.getId(), SimpleRepositoryFileData.class);
       InputStream input = fileData.getStream();
       final byte[] data = input.toString().getBytes();
       if (data == null) {

@@ -49,8 +49,7 @@ public class ExecuteReportContentHandler
   {
     final long start = System.currentTimeMillis();
     final Map<String, Object> inputs = contentGenerator.createInputs();
-    AuditHelper.audit(userSession.getId(), userSession.getName(), 
-        (String)fileId,
+    AuditHelper.audit(userSession.getId(), userSession.getName(), fileId.toString(),
         contentGenerator.getObjectName(), getClass().getName(), MessageTypes.INSTANCE_START,
         contentGenerator.getInstanceId(), "", 0, contentGenerator); //$NON-NLS-1$
 
@@ -205,7 +204,7 @@ public class ExecuteReportContentHandler
         reportStagingHandler.close();
       }
       final long end = System.currentTimeMillis();
-      AuditHelper.audit(userSession.getId(), userSession.getName(), (String) fileId,
+      AuditHelper.audit(userSession.getId(), userSession.getName(), fileId.toString(),
           contentGenerator.getObjectName(), getClass().getName(), result, contentGenerator.getInstanceId(),
           "", ((float) (end - start) / 1000), contentGenerator); //$NON-NLS-1$
     }

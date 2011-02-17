@@ -78,7 +78,7 @@ public class RepositoryResourceData extends AbstractResourceData {
   /**
    * returns a requested attribute, currently only supporting filename.
    * 
-   * @param key
+   * @param lookupKey
    *          attribute requested
    * @return attribute value
    */

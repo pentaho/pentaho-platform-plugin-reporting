@@ -233,14 +233,18 @@ public class ReportViewerUtil
       throw new NullPointerException();
     }
     String reportPath = Window.Location.getPath();
-    if (reportPath.indexOf("reportviewer") != -1) //$NON-NLS-1$
-    {
-      reportPath = reportPath.substring(0, reportPath.indexOf("reportviewer") - 1); //$NON-NLS-1$
-      // add query part of url
-      reportPath += "?"; //$NON-NLS-1$
+    reportPath = reportPath.replace("viewer", "output");
+    reportPath += "?renderMode=" + renderType; // NON-NLS
+    if(reportPath.indexOf("&path") < 0) {
+        int start = reportPath.indexOf("files");
+        int end = reportPath.indexOf(":");
+        String path = reportPath.substring(start+"files".length(), end);
+        reportPath +="&path=" + path;
     }
-    reportPath += "renderMode=" + renderType; // NON-NLS
-
+    if(reportPath.indexOf("&locale") < 0) {
+        String localeName = StringUtils.defaultIfEmpty(Window.Location.getParameter("locale"), getLanguagePreference()); //$NON-NLS-1$
+        reportPath += "&locale=" + localeName;
+    }
     final ParameterValues parameters = new ParameterValues();
 
     // User submitted values always make it into the final URL ..
@@ -350,8 +354,10 @@ public class ReportViewerUtil
       // then we must not URL-encode the paramter string. 
       History.newItem(parametersAsString, false);
     }
+    if(!StringUtils.isEmpty(parametersAsString)) {
+        reportPath += "&" + parametersAsString;
+    }
 
-    reportPath += "&" + parametersAsString;
 
     if (GWT.isScript() == false)
     {
@@ -434,4 +440,14 @@ public class ReportViewerUtil
     return text == null || "".equals(text);
   }
 
+  private static native String getLanguagePreference()
+    /*-{
+      var m = $doc.getElementsByTagName('meta');
+      for(var i in m) {
+        if(m[i].name == 'gwt:property' && m[i].content.indexOf('locale=') != -1) {
+          return m[i].content.substring(m[i].content.indexOf('=')+1);
+        }
+      }
+      return "default";
+  }-*/;
 }

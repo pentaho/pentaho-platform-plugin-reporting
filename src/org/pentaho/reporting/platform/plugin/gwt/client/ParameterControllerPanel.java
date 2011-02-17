@@ -527,7 +527,7 @@ public class ParameterControllerPanel extends VerticalPanel
       tb.setHeight("1px");
       tb.setWidth("1px");
       tb.setStylePrimaryName("parameter-panel-focus-widget");
-      
+
       DOM.setElementAttribute(tb.getElement(), "id", "parameter-panel-focus-widget");
       parameterGroupPanel.add(tb);
 
@@ -865,7 +865,7 @@ public class ParameterControllerPanel extends VerticalPanel
     {
       listener.showBlank();
     }
-    final RequestBuilder requestBuilder = new RequestBuilder(RequestBuilder.POST,
+    final RequestBuilder requestBuilder = new RequestBuilder(RequestBuilder.GET,
         ReportViewerUtil.buildReportUrl(RENDER_TYPE.XML, parameterMap));
     parameterRequestCallback.setIsOnChange(isOnChange);
     requestBuilder.setCallback(parameterRequestCallback);

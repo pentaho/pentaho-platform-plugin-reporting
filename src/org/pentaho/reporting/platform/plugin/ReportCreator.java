@@ -43,7 +43,7 @@ public class ReportCreator
 
   /**
    * @deprecated Use the one without the session instead.
-   * @param reportDefinitionPath
+   * @param fileId
    * @param session
    * @return
    * @throws ResourceException
