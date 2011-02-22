@@ -428,7 +428,7 @@ public class ParameterXmlContentHandler
 
           valueElement.setAttribute("label", String.valueOf(value)); //$NON-NLS-1$ //$NON-NLS-2$
           valueElement.setAttribute("type", elementValueType.getName()); //$NON-NLS-1$
-          valueElement.setAttribute("selected", String.valueOf(selectionSet.contains(value)));//$NON-NLS-1$
+          valueElement.setAttribute("selected", String.valueOf(selectionSet.contains(key)));//$NON-NLS-1$
 
           if (value == null)
           {
