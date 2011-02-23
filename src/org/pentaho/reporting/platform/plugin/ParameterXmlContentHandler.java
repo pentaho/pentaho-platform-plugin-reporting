@@ -606,12 +606,12 @@ public class ParameterXmlContentHandler
           for (int i = 0; i < length; i++)
           {
             final Object value = Array.get(selections, i);
-            selectionSet.add(value);
+            selectionSet.add(resolveSelectionValue(value));
           }
         }
         else
         {
-          selectionSet.add(selections);
+          selectionSet.add(resolveSelectionValue(selections));
         }
       }
       else
@@ -650,8 +650,15 @@ public class ParameterXmlContentHandler
 
           valueElement.setAttribute("label", String.valueOf(value)); //$NON-NLS-1$ //$NON-NLS-2$
           valueElement.setAttribute("type", elementValueType.getName()); //$NON-NLS-1$
-          valueElement.setAttribute("selected", String.valueOf(selectionSet.contains(key)));//$NON-NLS-1$
 
+          if (key instanceof Number) {
+            BigDecimal bd = new BigDecimal(String.valueOf(key));
+            valueElement.setAttribute("selected", String.valueOf(selectionSet.contains(bd)));//$NON-NLS-1$
+            handledValues.remove(bd);
+          } else {
+            valueElement.setAttribute("selected", String.valueOf(selectionSet.contains(key)));//$NON-NLS-1$
+            handledValues.remove(key);
+          }
           if (key == null)
           {
             valueElement.setAttribute("null", "true"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -663,7 +670,6 @@ public class ParameterXmlContentHandler
                 convertParameterValueToString(parameter, parameterContext, key, elementValueType)); //$NON-NLS-1$ //$NON-NLS-2$
           }
 
-          handledValues.remove(key);
         }
 
         for (final Object key : handledValues)
@@ -673,7 +679,13 @@ public class ParameterXmlContentHandler
 
           valueElement.setAttribute("label", Messages.getInstance().getString("ReportPlugin.autoParameter", String.valueOf(key))); //$NON-NLS-1$ //$NON-NLS-2$
           valueElement.setAttribute("type", elementValueType.getName()); //$NON-NLS-1$
-          valueElement.setAttribute("selected", String.valueOf(selectionSet.contains(key)));//$NON-NLS-1$
+
+          if (key instanceof Number) {
+            BigDecimal bd = new BigDecimal(String.valueOf(key));
+            valueElement.setAttribute("selected", String.valueOf(selectionSet.contains(bd)));//$NON-NLS-1$
+          } else {
+            valueElement.setAttribute("selected", String.valueOf(selectionSet.contains(key)));//$NON-NLS-1$
+          }
 
           if (key == null)
           {
@@ -717,6 +729,19 @@ public class ParameterXmlContentHandler
           ("ReportPlugin.errorFailedToGenerateParameter", parameter.getName(), String.valueOf(selections)), be);
       throw be;
     }
+  }
+
+  private Object resolveSelectionValue(Object value) {
+    // convert all numerics to BigDecimals for cross-numeric-class matching
+    if (value instanceof Number)
+    {
+      return new BigDecimal(String.valueOf(value.toString()));
+    }
+    else
+    {
+      return value;
+    }
+
   }
 
   private String computeTimeZoneHint(final ParameterDefinitionEntry parameter,
