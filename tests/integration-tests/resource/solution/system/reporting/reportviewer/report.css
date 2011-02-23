@@ -1,0 +1,331 @@
+body {
+  background-color: white;
+  color: black;
+  font-family: Tahoma, Arial, Helvetica, sans-serif;
+  font-size: 10pt;
+  margin: 0px;
+  padding: 0px;
+}
+
+.gwt-Frame {
+  font-size: 10pt;
+  background-color: white;
+  border: hidden;
+  frameborder: 0;
+  overflow:visible; 
+  width:100%; 
+}
+
+.gwt-ToggleButton {
+  font-size: 10pt;
+}
+
+.gwt-ToggleButton-up {
+  background-image: url(buttonbg.gif);
+  padding: 3px;
+  margin: 2px;
+  background-color: #E8F1FF;
+  border-width: 1px;
+  border-style: solid;
+  border-color: white #a0a0a0 #a0a0a0 white;
+  cursor: pointer;
+  cursor: hand;
+}
+
+.gwt-ToggleButton-up-hovering {
+  background-image: url(buttonhoverbg.gif);
+  padding: 3px;
+  margin: 2px;
+  background-color: #E8F1FF;
+  border-width: 1px;
+  border-style: solid;
+  border-color: white black black white;
+  cursor: pointer;
+  cursor: hand;
+
+}
+
+.gwt-ToggleButton-down {
+  background-image: url(buttonbg.gif);
+  padding: 2px;
+  margin: 2px;
+  background-color: #E8F1FF;
+  border-width: 2px;
+  border-style: solid;
+  border-color: black white white black;
+  cursor: pointer;
+  cursor: hand;
+}
+
+.gwt-ToggleButton-down-hovering {
+  background-image: url(buttonhoverbg.gif);
+  padding: 2px;
+  margin: 2px;
+  background-color: #E8F1FF;
+  border-width: 2px;
+  border-style: solid;
+  border-color: black white white black;
+  cursor: pointer;
+  cursor: hand;
+}
+
+.parameter-disclosure {
+}
+
+.parameter-disclosure-open .header {
+  background-color: #dfdfdf;
+  border-bottom: 1px solid #777777;
+  text-decoration: none;
+  cursor: pointer;
+  cursor: hand;
+}
+
+.parameter-disclosure-closed .header {
+  background-color: #dfdfdf;
+  text-decoration: none;
+  cursor: pointer;
+  cursor: hand;
+}
+
+.parameter-application {
+	background-color: #efefef;
+	border: 1px solid #777777;
+}
+
+.parameter-submit-panel {
+	background-color: #cccccc;
+	border-top: 1px solid #777777;
+	padding: 3px 0px 3px 10px;
+	margin-top: 10px;
+}
+
+.parameter-container {
+}
+
+.parameter {
+	margin: 5px 0px 0px 10px;
+}
+
+.parameter-error {
+	margin: 5px 0px 0px 10px;
+	border: 1px solid red;
+	padding: 2px;
+}
+
+.parameter-label {
+	font-size: 10pt;
+	font-weight: bold;
+}
+
+.parameter-error-label {
+	font-size: 10pt;
+	font-weight: bold;
+}
+
+.parameter-flow {
+  display: inline;
+  float: left;
+}
+
+.gwt-SuggestBoxPopup {
+  color: black;
+  background-color: white;
+  border-bottom: 1px solid black;
+  border-right: 1px solid black;
+}
+
+.gwt-SuggestBoxPopup .item {
+  padding: 2px 2px 2px 2px;
+  cursor: pointer;
+  cursor: hand;
+}
+
+.gwt-SuggestBoxPopup .item-selected {
+  color: black;
+  background-color: #d0d0d0;
+  border: 1px solid #d0d0d0;
+  padding: 2px 2px 2px 2px;
+  cursor: pointer;
+  cursor: hand;
+}
+
+.gwt-CheckBox {
+  font-size: 10pt;
+}
+
+.gwt-RadioButton {
+  font-size: 10pt;
+}
+
+
+.dialogButtonPanel {
+  border-top: 1px solid #848484;
+  background-color: #ececec;
+}
+
+.gwt-DialogBox {
+  background-color: #ececec;
+  border: 1px solid #848484;
+  z-index: 1000;
+}
+
+.gwt-DialogBox .Caption {
+  background-image: url(subtoolbar_bg.png);
+  background-color: #d3d3d3;
+  color: black;
+  cursor: move;
+  border-bottom: 1px solid #848484;
+  text-align: left;
+  padding: 6px 0px 6px 5px;
+}
+
+.gwt-DialogBox .dialogMiddleCenter {
+  height: 100%;
+}
+
+.gwt-DialogBox .dialogMiddleCenterInner {
+  height: 100%;
+}
+
+
+.pageControllerPanel {
+  border-top: 1px solid #777777;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  padding-left: 10px;
+}
+
+.pageControllerButton {
+  border: 1px solid #777777;
+  cursor: pointer;
+  cursor: hand;
+}
+
+.pageControllerButton-hover {
+  background-color: #CCCCCC;
+}
+
+
+.gwt-DateBox input {
+  width: 8em;
+}
+.dateBoxFormatError {
+  background: #ffcccc;
+}
+.dateBoxPopup {
+  z-index: 3;
+}
+
+.gwt-DatePicker {
+  border: 1px solid #777777;
+  cursor: default;
+}
+.gwt-DatePicker td,
+.datePickerMonthSelector td:focus {
+  outline: none
+}
+.datePickerDays {
+  width: 100%;
+  background: white;
+}
+.datePickerDay,
+.datePickerWeekdayLabel,
+.datePickerWeekendLabel {
+  font-size: 75%;
+  text-align: center;
+  padding: 4px;
+  outline: none;
+}
+.datePickerWeekdayLabel,
+.datePickerWeekendLabel {
+  background: #CCCCCC;
+  padding: 0px 4px 2px;
+  cursor: default;
+}
+.datePickerDay {
+  padding: 4px;
+  cursor: hand;
+  cursor: pointer;
+}
+.datePickerDayIsToday {
+  border: 1px solid black;
+  padding: 3px;
+}
+.datePickerDayIsWeekend {
+  background: #EEEEEE;
+}
+.datePickerDayIsFiller {
+  color: #888888;
+}
+.datePickerDayIsValue {
+  background: #777777;
+  color: white;
+}
+.datePickerDayIsDisabled {
+  color: #AAAAAA;
+  font-style: italic;
+}
+.datePickerDayIsHighlighted {
+  background: #F0E68C;
+}
+.datePickerDayIsValueAndHighlighted {
+  background: #bbddd9;
+}
+.datePickerMonthSelector {
+  background: #CCCCCC;
+  width: 100%;
+}
+td.datePickerMonth {
+  text-align: center;
+  vertical-align: center;
+  white-space: nowrap;
+  font-size: 70%;
+  font-weight: bold;
+}
+.datePickerPreviousButton,
+.datePickerNextButton {
+  font-size: 120%;
+  line-height: 1em;
+  cursor: hand;
+  cursor: pointer;
+  padding: 0px 4px;
+}
+
+.waitPopup{
+  position: absolute;
+  left: 44%;
+  top: 44%;
+  padding: 15px 8px;
+  z-index: 20001;
+  height: auto;
+  border: 1px solid #ccc;
+  background: white;
+}
+.waitPopup_table{
+  color: #444;
+  background-image: url(large-loading.gif);
+  background-position: left center;
+  background-repeat: no-repeat;
+  font: bold 13px tahoma, arial, helvetica;
+}
+
+.waitPopup_title{
+
+  color: #444;
+  font: bold 16px tahoma, arial, helvetica;
+  margin-left: 40px;
+  padding-bottom: 3px;
+}
+
+.waitPopup_msg{
+  font: normal 13px arial, tahoma, sans-serif;
+  margin-left: 40px;
+}
+
+.modalDialogPageBackground {
+  opacity: 0.20;
+  background-color:  #000000;
+  z-index:250;
+  cursor: progress;
+  filter:alpha(opacity=20);
+} 
