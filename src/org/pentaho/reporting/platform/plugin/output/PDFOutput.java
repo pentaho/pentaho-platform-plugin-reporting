@@ -17,9 +17,10 @@ public class PDFOutput implements ReportOutputHandler
   }
 
   private PageableReportProcessor createProcessor(final MasterReport report,
-                                                  final int yieldRate) throws ReportProcessingException
+                                                  final int yieldRate,
+                                                  final OutputStream outputStream) throws ReportProcessingException
   {
-    final PdfOutputProcessor outputProcessor = new PdfOutputProcessor(report.getConfiguration(), new NullOutputStream());
+    final PdfOutputProcessor outputProcessor = new PdfOutputProcessor(report.getConfiguration(), outputStream);
     final PageableReportProcessor proc = new PageableReportProcessor(report, outputProcessor);
     if (yieldRate > 0)
     {
@@ -39,7 +40,7 @@ public class PDFOutput implements ReportOutputHandler
                           final OutputStream outputStream,
                           final int yieldRate) throws ReportProcessingException, IOException
   {
-    final PageableReportProcessor proc = createProcessor(report, yieldRate);
+    final PageableReportProcessor proc = createProcessor(report, yieldRate, outputStream);
     try
     {
       proc.processReport();
