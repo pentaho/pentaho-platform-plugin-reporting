@@ -43,13 +43,32 @@ public class ReportContentGenerator extends SimpleContentGenerator {
 
   public void createContent(final OutputStream outputStream) throws Exception {
     final String id = UUIDUtil.getUUIDAsString();
+    String path = null;
+    RENDER_TYPE renderMode = null;
     setInstanceId(id);
 
     IUnifiedRepository unifiedRepository = PentahoSystem.get(IUnifiedRepository.class, null);
     final IParameterProvider requestParams = getRequestParameters();
-    final String path = URLDecoder.decode(requestParams.getStringParameter("path", ""), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-    final RENDER_TYPE renderMode = RENDER_TYPE.valueOf
-          (requestParams.getStringParameter("renderMode", RENDER_TYPE.REPORT.toString()).toUpperCase()); //$NON-NLS-1$
+    final IParameterProvider pathParams = getPathParameters();
+
+    if(requestParams != null && requestParams.getStringParameter("path", null) != null) {
+          path = URLDecoder.decode(requestParams.getStringParameter("path", ""), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+    } else if(pathParams != null && pathParams.getStringParameter("path", null) != null) {
+          path = URLDecoder.decode(pathParams.getStringParameter("path", ""), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+    }
+
+    if(requestParams != null && requestParams.getStringParameter("renderMode", null) != null) {
+        renderMode = RENDER_TYPE.valueOf
+            (requestParams.getStringParameter("renderMode", RENDER_TYPE.REPORT.toString()).toUpperCase()); //$NON-NLS-1$
+    } else if(pathParams != null && pathParams.getStringParameter("renderMode", null) != null) {
+        renderMode = RENDER_TYPE.valueOf
+            (pathParams.getStringParameter("renderMode", RENDER_TYPE.REPORT.toString()).toUpperCase()); //$NON-NLS-1$
+    }
+
+    // If render mode is not passed in the request or path parameter, then we will assume that the render type is REPORT
+    if(renderMode == null) {
+        renderMode = RENDER_TYPE.REPORT;
+    }
 
     RepositoryFile prptFile = unifiedRepository.getFile(path);
 
@@ -147,6 +166,41 @@ public class ReportContentGenerator extends SimpleContentGenerator {
     return requestParams;
   }
 
+    private IParameterProvider pathParameters;
+
+    public IParameterProvider getPathParameters() {
+    if (pathParameters != null) {
+      return pathParameters;
+    }
+
+    IParameterProvider pathParams = parameterProviders.get("path");
+
+    final String subscriptionId = pathParams.getStringParameter("subscription-id", null); //$NON-NLS-1$
+    if (!StringUtils.isEmpty(subscriptionId)) {
+      final ISubscriptionRepository subscriptionRepository = PentahoSystem.get(ISubscriptionRepository.class,
+          userSession);
+      final ISubscription subscription = subscriptionRepository.getSubscription(subscriptionId, userSession);
+      final ISubscribeContent content = subscription.getContent();
+
+      final Map<String, Object> contentParameters = content.getParameters();
+      final SimpleParameterSetter parameters = new SimpleParameterSetter();
+      parameters.setParameters(contentParameters);
+
+      SubscriptionHelper.getSubscriptionParameters(subscriptionId, parameters, userSession);
+
+      // add all parameters that were on the url, if any, they will override subscription (editing)
+      final Iterator pathParamIterator = pathParams.getParameterNames();
+      while (pathParamIterator.hasNext()) {
+        final String param = (String) pathParamIterator.next();
+        parameters.setParameter(param, pathParams.getParameter(param));
+      }
+
+      pathParams = parameters;
+    }
+    pathParameters = pathParams;
+    return pathParams;
+  }
+
   public ISubscription getSubscription() {
     final String subscriptionId = getRequestParameters().getStringParameter("subscription-id", null); //$NON-NLS-1$
     if (StringUtils.isEmpty(subscriptionId)) {
@@ -186,9 +240,21 @@ public class ReportContentGenerator extends SimpleContentGenerator {
 
   public String getMimeType() {
     final IParameterProvider requestParams = getRequestParameters();
+    final IParameterProvider pathParams = getPathParameters();
+    RENDER_TYPE renderMode = null;
+    String path = null;
     IUnifiedRepository unifiedRepository = PentahoSystem.get(IUnifiedRepository.class, null);
-    final RENDER_TYPE renderMode = RENDER_TYPE.valueOf
-        (requestParams.getStringParameter("renderMode", RENDER_TYPE.REPORT.toString()).toUpperCase()); //$NON-NLS-1$
+    if(requestParams != null && requestParams.getStringParameter("renderMode", null) != null) {
+        renderMode = RENDER_TYPE.valueOf
+            (requestParams.getStringParameter("renderMode", RENDER_TYPE.REPORT.toString()).toUpperCase()); //$NON-NLS-1$
+    } else if(pathParams != null && pathParams.getStringParameter("renderMode", null) != null) {
+        renderMode = RENDER_TYPE.valueOf
+            (pathParams.getStringParameter("renderMode", RENDER_TYPE.REPORT.toString()).toUpperCase()); //$NON-NLS-1$
+    }
+    // If render mode is not passed in the request or path parameter, then we will assume that the render type is REPORT
+    if(renderMode == null) {
+        renderMode = RENDER_TYPE.REPORT;
+    }
 
     if (renderMode.equals(RENDER_TYPE.XML)) {
       return "text/xml"; //$NON-NLS-1$
@@ -198,7 +264,12 @@ public class ReportContentGenerator extends SimpleContentGenerator {
       // perhaps we can invent our own mime-type or use application/zip?
       return "application/octet-stream"; //$NON-NLS-1$
     }
-    final String path = requestParams.getStringParameter("path", ""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+    if(requestParams != null && requestParams.getStringParameter("path", null) != null) {
+        path = requestParams.getStringParameter("path", ""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+    } else if(pathParams != null && pathParams.getStringParameter("path", null) != null) {
+        path = pathParams.getStringParameter("path", ""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+    }
+
     RepositoryFile prptFile = unifiedRepository.getFile(path);
 
     final SimpleReportingComponent reportComponent = new SimpleReportingComponent();
