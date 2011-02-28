@@ -12,6 +12,19 @@ import org.pentaho.reporting.engine.classic.core.util.NullOutputStream;
 
 public class PDFOutput
 {
+  private PageableReportProcessor createProcessor(final MasterReport report,
+                                                    final int yieldRate,
+                                                    final OutputStream outputStream) throws ReportProcessingException
+    {
+      final PdfOutputProcessor outputProcessor = new PdfOutputProcessor(report.getConfiguration(), outputStream);
+      final PageableReportProcessor proc = new PageableReportProcessor(report, outputProcessor);
+      if (yieldRate > 0)
+      {
+        proc.addReportProgressListener(new YieldReportListener(yieldRate));
+      }
+      return proc;
+  }
+
   public static int paginate(final MasterReport report,
                                  final int yieldRate) throws ReportProcessingException, IOException
   {
@@ -36,31 +49,20 @@ public class PDFOutput
     }
   }
 
-  public static boolean generate(final MasterReport report,
-                                 final OutputStream outputStream,
-                                 final int yieldRate) throws ReportProcessingException, IOException
-  {
-    PageableReportProcessor proc = null;
-    try
+    public boolean generate(final MasterReport report,
+                          final int acceptedPage,
+                          final OutputStream outputStream,
+                          final int yieldRate) throws ReportProcessingException, IOException
     {
-      final PdfOutputProcessor outputProcessor = new PdfOutputProcessor(report.getConfiguration(), outputStream);
-      proc = new PageableReportProcessor(report, outputProcessor);
-      if (yieldRate > 0)
-      {
-        proc.addReportProgressListener(new YieldReportListener(yieldRate));
-      }
-      proc.processReport();
-      proc.close();
-      proc = null;
-      outputStream.close();
-      return true;
+        final PageableReportProcessor proc = createProcessor(report, yieldRate, outputStream);
+        try
+        {
+          proc.processReport();
+          return true;
+        }
+        finally
+        {
+          proc.close();
+        }
     }
-    finally
-    {
-      if (proc != null)
-      {
-        proc.close();
-      }
-    }
-  }
 }
