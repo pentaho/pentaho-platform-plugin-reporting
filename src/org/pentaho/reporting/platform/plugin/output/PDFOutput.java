@@ -12,7 +12,7 @@ import org.pentaho.reporting.engine.classic.core.util.NullOutputStream;
 
 public class PDFOutput
 {
-  private PageableReportProcessor createProcessor(final MasterReport report,
+  private static PageableReportProcessor createProcessor(final MasterReport report,
                                                     final int yieldRate,
                                                     final OutputStream outputStream) throws ReportProcessingException
     {
@@ -49,8 +49,7 @@ public class PDFOutput
     }
   }
 
-    public boolean generate(final MasterReport report,
-                          final int acceptedPage,
+    public static boolean generate(final MasterReport report,
                           final OutputStream outputStream,
                           final int yieldRate) throws ReportProcessingException, IOException
     {
