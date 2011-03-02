@@ -1,0 +1,56 @@
+<action-sequence>
+	<name>test1.xaction</name>
+	<version>1</version>
+	<title>JFreeReport HTML Example</title>
+	<logging-level>debug</logging-level>
+	<documentation>
+		<author>Michael D'Amour</author>
+		<description><![CDATA[This is an example report produced by the Pentaho Reporting Component.]]></description>
+		<icon>/style/icons/jfree1.png</icon>
+		<help>just testing...</help>
+		<result-type>report</result-type>
+	</documentation>
+
+	<inputs>
+		<outputType type="string">
+			<default-value>text/html</default-value>
+			<sources>
+				<request>outputType</request>
+			</sources>
+		</outputType>
+	</inputs>
+
+	<outputs>
+   	  <outputstream type="content">
+   		  <destinations>
+   			 <response>content</response>
+   		  </destinations>
+   	  </outputstream>
+	</outputs>
+
+	<resources>
+		<reportDefinition>
+			<solution-file>
+				<location>report.prpt</location>
+				<mime-type>application/zip</mime-type>
+			</solution-file>
+		</reportDefinition>
+	</resources>
+
+	<actions>
+		<action-definition> 
+			<component-name>org.pentaho.platform.engine.services.solution.PojoComponent</component-name>
+			<action-inputs>
+				<outputType type="string" />
+			</action-inputs>
+            <action-outputs>
+        	  <outputstream type="content"/>
+            </action-outputs>
+			<component-definition>
+				<class>org.pentaho.reporting.platform.plugin.SimpleReportingComponent</class>
+			</component-definition>
+			<action-name>Test the test POJO</action-name>
+			<logging-level>DEBUG</logging-level>
+		</action-definition>
+	</actions>
+</action-sequence>
