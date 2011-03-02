@@ -135,7 +135,11 @@ public class PentahoJndiDatasourceConnectionProvider implements ConnectionProvid
     }
   }
 
-  public String getJndiName()
+    public Object getConnectionHash() {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    public String getJndiName()
   {
     return jndiName;
   }
