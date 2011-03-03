@@ -10,10 +10,12 @@ import org.pentaho.platform.api.engine.IServiceManager;
 import org.pentaho.platform.api.engine.ISolutionEngine;
 import org.pentaho.platform.api.engine.IPentahoDefinableObjectFactory.Scope;
 import org.pentaho.platform.api.repository.ISolutionRepository;
+import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
 import org.pentaho.platform.engine.services.solution.SolutionEngine;
 import org.pentaho.platform.plugin.services.pluginmgr.SystemPathXmlPluginProvider;
 import org.pentaho.platform.plugin.services.pluginmgr.servicemgr.DefaultServiceManager;
 import org.pentaho.platform.repository.solution.filebased.FileBasedSolutionRepository;
+import org.pentaho.platform.repository2.unified.fs.FileSystemBackedUnifiedRepository;
 import org.pentaho.reporting.platform.plugin.repository.PentahoNameGenerator;
 import org.pentaho.reporting.platform.plugin.repository.TempDirectoryNameGenerator;
 import org.pentaho.test.platform.engine.core.MicroPlatform;
@@ -33,9 +35,9 @@ public class ReportingComponentTest extends TestCase {
   protected void setUp() throws Exception {
     // TODO Auto-generated method stub
     super.setUp();
-    microPlatform = new MicroPlatform("tests/integration-tests/resource/");
+    microPlatform = new MicroPlatform("resource/");
     microPlatform.define(ISolutionEngine.class, SolutionEngine.class);
-    microPlatform.define(ISolutionRepository.class, FileBasedSolutionRepository.class);
+    microPlatform.define(IUnifiedRepository.class, FileSystemBackedUnifiedRepository.class);
     microPlatform.define(IPluginProvider.class, SystemPathXmlPluginProvider.class);
     microPlatform.define(IServiceManager.class, DefaultServiceManager.class, Scope.GLOBAL);
     microPlatform.define(PentahoNameGenerator.class, TempDirectoryNameGenerator.class, Scope.GLOBAL);
@@ -54,7 +56,7 @@ public class ReportingComponentTest extends TestCase {
     // create an instance of the component
     SimpleReportingComponent rc = new SimpleReportingComponent();
     // create/set the InputStream
-    FileInputStream reportDefinition = new FileInputStream("tests/integration-tests/resource/solution/test/reporting/report.prpt"); //$NON-NLS-1$
+    FileInputStream reportDefinition = new FileInputStream("resource/solution/test/reporting/report.prpt"); //$NON-NLS-1$
     Map<String,Object> inputs = new HashMap<String, Object>();
     inputs.put(SimpleReportingComponent.REPORT_DEFINITION_INPUT, reportDefinition);
     rc.setInputs(inputs);
@@ -75,7 +77,7 @@ public class ReportingComponentTest extends TestCase {
     // create an instance of the component
     SimpleReportingComponent rc = new SimpleReportingComponent();
     // create/set the InputStream
-    FileInputStream reportDefinition = new FileInputStream("tests/integration-tests/resource/solution/test/reporting/report.prpt"); //$NON-NLS-1$
+    FileInputStream reportDefinition = new FileInputStream("resource/solution/test/reporting/report.prpt"); //$NON-NLS-1$
     rc.setReportDefinitionInputStream(reportDefinition);
     rc.setOutputType("application/pdf"); //$NON-NLS-1$
 
@@ -93,7 +95,7 @@ public class ReportingComponentTest extends TestCase {
     // create an instance of the component
     SimpleReportingComponent rc = new SimpleReportingComponent();
     // create/set the InputStream
-    FileInputStream reportDefinition = new FileInputStream("tests/integration-tests/resource/solution/test/reporting/report.prpt"); //$NON-NLS-1$
+    FileInputStream reportDefinition = new FileInputStream("resource/solution/test/reporting/report.prpt"); //$NON-NLS-1$
     rc.setReportDefinitionInputStream(reportDefinition);
     rc.setOutputType("text/html"); //$NON-NLS-1$
 
