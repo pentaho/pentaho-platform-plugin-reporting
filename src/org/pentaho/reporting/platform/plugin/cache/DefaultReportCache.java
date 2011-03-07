@@ -255,6 +255,11 @@ public class DefaultReportCache implements ReportCache
         this.parent.close();
       }
     }
+
+    public Object getReportLock()
+    {
+      return parent.getOutputHandler().getReportLock();
+    }
   }
 
   public DefaultReportCache()

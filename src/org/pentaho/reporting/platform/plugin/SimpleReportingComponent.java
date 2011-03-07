@@ -1049,14 +1049,16 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
         log.warn(Messages.getInstance().getString("ReportPlugin.warnUnprocessableRequest", outputType));
         return false;
       }
-
-      try
+      synchronized (reportOutputHandler.getReportLock())
       {
-        return reportOutputHandler.generate(report, acceptedPage, outputStream, getYieldRate());
-      }
-      finally
-      {
-        reportOutputHandler.close();
+        try
+        {
+          return reportOutputHandler.generate(report, acceptedPage, outputStream, getYieldRate());
+        }
+        finally
+        {
+          reportOutputHandler.close();
+        }
       }
     }
     catch (Throwable t)
@@ -1229,15 +1231,17 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
         log.warn(Messages.getInstance().getString("ReportPlugin.warnUnprocessableRequest", outputType));
         return 0;
       }
-      try
+      synchronized (reportOutputHandler.getReportLock())
       {
-        return reportOutputHandler.paginate(report, getYieldRate());
+        try
+        {
+          return reportOutputHandler.paginate(report, getYieldRate());
+        }
+        finally
+        {
+          reportOutputHandler.close();
+        }
       }
-      finally
-      {
-        reportOutputHandler.close();
-      }
-
     }
     catch (Throwable t)
     {

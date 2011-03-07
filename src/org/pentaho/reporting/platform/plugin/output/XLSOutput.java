@@ -35,6 +35,11 @@ public class XLSOutput implements ReportOutputHandler
     }
   }
 
+  public Object getReportLock()
+  {
+    return this;
+  }
+
   public int paginate(final MasterReport report,
                       final int yieldRate)
       throws ReportProcessingException, IOException

@@ -8,12 +8,16 @@ import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
 import org.pentaho.reporting.engine.classic.core.layout.output.YieldReportListener;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.base.PageableReportProcessor;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.pdf.PdfOutputProcessor;
-import org.pentaho.reporting.engine.classic.core.util.NullOutputStream;
 
 public class PDFOutput implements ReportOutputHandler
 {
   public PDFOutput()
   {
+  }
+
+  public Object getReportLock()
+  {
+    return this;
   }
 
   private PageableReportProcessor createProcessor(final MasterReport report,
