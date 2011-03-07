@@ -43,6 +43,10 @@ public class StreamContentRepoHtmlOutput extends StreamHtmlOutput
     super(contentHandlerPattern);
   }
 
+  public Object getReportLock()
+  {
+    return this;
+  }
 
   public boolean generate(final MasterReport report,
                           final int acceptedPage,

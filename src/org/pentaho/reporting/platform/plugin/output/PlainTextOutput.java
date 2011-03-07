@@ -15,6 +15,15 @@ public class PlainTextOutput implements ReportOutputHandler
 {
   private ProxyOutputStream proxyOutputStream;
 
+  public PlainTextOutput()
+  {
+  }
+
+  public Object getReportLock()
+  {
+    return this;
+  }
+
   public int paginate(final MasterReport report,
                       final int yieldRate) throws ReportProcessingException, IOException, ContentIOException
   {

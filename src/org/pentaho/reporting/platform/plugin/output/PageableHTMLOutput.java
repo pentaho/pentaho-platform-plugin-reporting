@@ -36,6 +36,11 @@ public class PageableHTMLOutput implements ReportOutputHandler
     this.contentHandlerPattern = contentHandlerPattern;
   }
 
+  public Object getReportLock()
+  {
+    return this;
+  }
+
   public String getContentHandlerPattern()
   {
     return contentHandlerPattern;

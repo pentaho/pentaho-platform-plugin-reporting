@@ -12,6 +12,14 @@ import org.pentaho.reporting.libraries.repository.ContentIOException;
 
 public class CSVOutput implements ReportOutputHandler
 {
+  public CSVOutput()
+  {
+  }
+
+  public Object getReportLock()
+  {
+    return this;
+  }
 
   public int paginate(final MasterReport report,
                       final int yieldRate) throws ReportProcessingException, IOException

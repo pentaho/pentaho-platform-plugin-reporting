@@ -39,4 +39,6 @@ public interface ReportOutputHandler
       throws ReportProcessingException, IOException, ContentIOException;
 
   public void close();
+
+  public Object getReportLock();
 }
