@@ -33,19 +33,22 @@ public class PlainParameterUI extends SimplePanel implements ParameterUI
     {
       final SuggestBox textBox = (SuggestBox) event.getSource();
       final String text = textBox.getText();
-      String value = labelToValueMap.get(text);
-      if (value == null)
+
+      String value;
+      if (listParameter)
       {
-        value = text;
-      }
-      if (ReportViewerUtil.isEmpty(value))
-      {
-        controller.getParameterMap().setSelectedValue(parameterName, null);
+        value = labelToValueMap.get(text);
+        if (text == null && strict == false)
+        {
+          value = text;
+        }
       }
       else
       {
-        controller.getParameterMap().setSelectedValue(parameterName, value);
+        value = text;
       }
+
+      controller.getParameterMap().setSelectedValue(parameterName, value);
       if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER)
       {
         // on enter, force update
@@ -88,6 +91,8 @@ public class PlainParameterUI extends SimplePanel implements ParameterUI
   }
 
   private SuggestBox textBox;
+  private boolean listParameter;
+  private boolean strict;
 
   public PlainParameterUI(final ParameterControllerPanel controller, final Parameter parameterElement)
   {
@@ -105,6 +110,8 @@ public class PlainParameterUI extends SimplePanel implements ParameterUI
       }
     }
 
+    strict = parameterElement.isStrict();
+    listParameter = parameterElement.isList();
     textBox = new SuggestBox(oracle);
 
     if (selections.isEmpty())

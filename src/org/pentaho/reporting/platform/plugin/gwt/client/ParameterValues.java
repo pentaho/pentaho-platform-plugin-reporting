@@ -113,7 +113,7 @@ public class ParameterValues
     {
       final String key = URL.encodeComponent(entry.getKey());
       final ArrayList<String> list = entry.getValue();
-      for (final String value : list)
+      if (list.isEmpty())
       {
         if (b.length() > 0)
         {
@@ -121,8 +121,21 @@ public class ParameterValues
         }
         b.append(key);
         b.append('=');
-        b.append(URL.encodeComponent(value));
       }
+      else
+      {
+        for (final String value : list)
+        {
+          if (b.length() > 0)
+          {
+            b.append("&");
+          }
+          b.append(key);
+          b.append('=');
+          b.append(URL.encodeComponent(value));
+        }
+      }
+
     }
     return b.toString();
   }

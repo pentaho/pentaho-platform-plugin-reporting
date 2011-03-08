@@ -25,14 +25,7 @@ public class TextAreaParameterUI extends SimplePanel implements ParameterUI
     {
       final TextArea textBox = (TextArea) event.getSource();
       final String value = textBox.getText();
-      if (ReportViewerUtil.isEmpty(value))
-      {
-        controller.getParameterMap().setSelectedValue(parameterName, null);
-      }
-      else
-      {
-        controller.getParameterMap().setSelectedValue(parameterName, value);
-      }
+      controller.getParameterMap().setSelectedValue(parameterName, value);
       if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER)
       {
         // on enter, force update
