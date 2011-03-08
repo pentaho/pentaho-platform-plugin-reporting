@@ -614,6 +614,7 @@ public class ParameterXmlContentHandler
         final ListParameter asListParam = (ListParameter) parameter;
         parameterElement.setAttribute("is-multi-select", String.valueOf(asListParam.isAllowMultiSelection())); //$NON-NLS-1$ //$NON-NLS-2$
         parameterElement.setAttribute("is-strict", String.valueOf(asListParam.isStrictValueCheck())); //$NON-NLS-1$ //$NON-NLS-2$
+        parameterElement.setAttribute("is-list", "true"); //$NON-NLS-1$ //$NON-NLS-2$
 
         final Element valuesElement = document.createElement("values"); //$NON-NLS-1$
         parameterElement.appendChild(valuesElement);
@@ -684,6 +685,7 @@ public class ParameterXmlContentHandler
         // apply defaults, this is the easy case
         parameterElement.setAttribute("is-multi-select", "false"); //$NON-NLS-1$ //$NON-NLS-2$
         parameterElement.setAttribute("is-strict", "false"); //$NON-NLS-1$ //$NON-NLS-2$
+        parameterElement.setAttribute("is-list", "false"); //$NON-NLS-1$ //$NON-NLS-2$
 
         if (selections != null)
         {

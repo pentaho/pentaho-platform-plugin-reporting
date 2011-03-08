@@ -11,7 +11,6 @@ import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 import java.util.TimeZone;
-
 import javax.swing.table.TableModel;
 
 import org.pentaho.commons.connection.IPentahoResultSet;
@@ -40,11 +39,11 @@ public class ReportContentUtil
 {
 
   public static Object computeParameterValue(final ParameterContext parameterContext,
-                                       final ParameterDefinitionEntry parameterDefinition,
-                                       final Object value)
+                                             final ParameterDefinitionEntry parameterDefinition,
+                                             final Object value)
       throws ReportProcessingException
   {
-    if (value == null || "".equals(value))
+    if (value == null)
     {
       // there are still buggy report definitions out there ...
       return null;
@@ -146,6 +145,7 @@ public class ReportContentUtil
     final String valueAsString = String.valueOf(rawValue);
     if (StringUtils.isEmpty(valueAsString))
     {
+      // none of the converters accept empty strings as valid input. So we can return null instead.
       return null;
     }
 
@@ -280,8 +280,8 @@ public class ReportContentUtil
   }
 
   private static Date parseDateStrict(final ParameterDefinitionEntry parameterEntry,
-                                final ParameterContext context,
-                                final String value) throws ParseException
+                                      final ParameterContext context,
+                                      final String value) throws ParseException
   {
     final String timezoneSpec = parameterEntry.getParameterAttribute
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TIMEZONE, context);

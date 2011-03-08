@@ -210,10 +210,6 @@ public class ReportContentGenerator extends SimpleContentGenerator
       {
         continue;
       }
-      if ("".equals(paramValue))
-      {
-        continue;
-      }
       // only actually add inputs who don't have NULL values
       inputs.put(paramName, paramValue);
     }

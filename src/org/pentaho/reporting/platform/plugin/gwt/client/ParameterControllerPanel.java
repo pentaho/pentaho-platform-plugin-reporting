@@ -535,6 +535,7 @@ public class ParameterControllerPanel extends VerticalPanel
         final Parameter parameter = new Parameter(name);
         parameter.setMandatory("true".equals(parameterElement.getAttribute("is-mandatory")));// NON-NLS
         parameter.setStrict("true".equals(parameterElement.getAttribute("is-strict")));// NON-NLS
+        parameter.setList("true".equals(parameterElement.getAttribute("is-list")));// NON-NLS
         parameter.setMultiSelect("true".equals(parameterElement.getAttribute("is-multi-select")));// NON-NLS
         parameter.setType(parameterElement.getAttribute("type"));// NON-NLS
         parameter.setTimezoneHint(parameterElement.getAttribute("timezone-hint"));// NON-NLS

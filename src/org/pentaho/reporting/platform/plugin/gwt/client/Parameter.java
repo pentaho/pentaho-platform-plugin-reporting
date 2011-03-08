@@ -25,6 +25,7 @@ public class Parameter
   private boolean multiSelect;
   private boolean mandatory;
   private String timezoneHint;
+  private boolean list;
 
   public Parameter(final String name)
   {
@@ -122,6 +123,16 @@ public class Parameter
   public void setMandatory(final boolean mandatory)
   {
     this.mandatory = mandatory;
+  }
+
+  public boolean isList()
+  {
+    return list;
+  }
+
+  public void setList(final boolean list)
+  {
+    this.list = list;
   }
 
   public String getAttribute(final String name)
