@@ -3,6 +3,7 @@ package org.pentaho.reporting.platform.plugin.cache;
 import java.util.Map;
 
 import org.pentaho.reporting.engine.classic.core.cache.DataCacheKey;
+import org.pentaho.reporting.libraries.base.util.ObjectUtilities;
 import org.pentaho.reporting.platform.plugin.ParameterXmlContentHandler;
 
 /**
@@ -58,7 +59,7 @@ public class ReportCacheKey extends DataCacheKey
 
     final ReportCacheKey that = (ReportCacheKey) o;
 
-    if (sessionId != null ? !sessionId.equals(that.sessionId) : that.sessionId != null)
+    if (ObjectUtilities.equal(sessionId, that.sessionId) == false)
     {
       return false;
     }
