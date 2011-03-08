@@ -30,6 +30,7 @@ import org.pentaho.reporting.platform.plugin.output.ReportOutputHandler;
 public class DefaultReportCache implements ReportCache
 {
   private static String SESSION_ATTRIBUTE = DefaultReportCache.class.getName() + "-Cache";
+  private static String LISTENER_ADDED_ATTRIBUTE = DefaultReportCache.class.getName() + "-ListenerAdded";
   private static final String CACHE_NAME = "report-output-handlers";
   private static final Log logger = LogFactory.getLog(DefaultReportCache.class);
 
@@ -117,7 +118,7 @@ public class DefaultReportCache implements ReportCache
       {
         return;
       }
-
+      
       if (closed == false)
       {
         outputHandler.close();
@@ -264,11 +265,25 @@ public class DefaultReportCache implements ReportCache
 
   public DefaultReportCache()
   {
-    PentahoSystem.addLogoutListener(new LogoutHandler());
+    final IPentahoSession session = PentahoSessionHolder.getSession();
+    synchronized (session)
+    {
+      if (Boolean.TRUE.equals(session.getAttribute(LISTENER_ADDED_ATTRIBUTE)))
+      {
+        return;
+      }
+      PentahoSystem.addLogoutListener(new LogoutHandler());
+      session.setAttribute(LISTENER_ADDED_ATTRIBUTE, Boolean.TRUE);
+    }
   }
 
   public ReportOutputHandler get(final ReportCacheKey key)
   {
+    if (key.getSessionId() == null)
+    {
+      return null;
+    }
+
     final IPentahoSession session = PentahoSessionHolder.getSession();
     logger.debug("id: " + session.getId() + " - Cache.get(..) started");
     synchronized (session)
@@ -294,7 +309,7 @@ public class DefaultReportCache implements ReportCache
         logger.debug("id: " + session.getId() + " - Cache.get(..): No element in cache for key: " + key.getSessionId());
         return null;
       }
-
+      
       final Object o = element.getObjectValue();
       if (o instanceof CacheHolder == false)
       {
@@ -316,11 +331,16 @@ public class DefaultReportCache implements ReportCache
 
   public ReportOutputHandler put(final ReportCacheKey key, final ReportOutputHandler report)
   {
+    if (key.getSessionId() == null)
+    {
+      return report;
+    }
+
     if (report instanceof CachedReportOutputHandler)
     {
       throw new IllegalStateException();
     }
-
+    
     final IPentahoSession session = PentahoSessionHolder.getSession();
     logger.debug("id: " + session.getId() + " - Cache.put(..) started");
     synchronized (session)
