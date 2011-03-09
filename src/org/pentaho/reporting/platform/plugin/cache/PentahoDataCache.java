@@ -4,10 +4,10 @@ import javax.swing.table.TableModel;
 
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
+import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.core.cache.DataCache;
 import org.pentaho.reporting.engine.classic.core.cache.DataCacheKey;
 import org.pentaho.reporting.engine.classic.core.cache.DataCacheManager;
-import org.pentaho.reporting.engine.classic.core.cache.InMemoryDataCache;
 
 /**
  * A simple data cache that wraps around the plain in-memory data-cache. That cache is stored on the user's
@@ -75,7 +75,12 @@ public class PentahoDataCache implements DataCache
     DataCache dataCache = (DataCache) session.getAttribute(SESSION_ATTRIBUTE);
     if (dataCache == null)
     {
-      dataCache = new InMemoryDataCache();
+      dataCache = PentahoSystem.get(DataCache.class);
+      if (dataCache == null)
+      {
+        // shield us from invalid spring configs
+        return model;
+      }
       session.setAttribute(SESSION_ATTRIBUTE, dataCache);
     }
     return dataCache.put(key, model);
