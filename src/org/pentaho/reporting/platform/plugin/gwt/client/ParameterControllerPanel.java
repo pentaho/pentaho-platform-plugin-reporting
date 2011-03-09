@@ -137,7 +137,7 @@ public class ParameterControllerPanel extends VerticalPanel
         // Without a selection, a parameter is <null>.
         parameterMap = new ParameterValues();
         final ParameterGroup[] parameterGroups = parameterDefinition.getParameterGroups();
-        for (final ParameterGroup group: parameterGroups)
+        for (final ParameterGroup group : parameterGroups)
         {
           for (final Parameter parameterElement : group.getParameters())
           {
@@ -155,6 +155,11 @@ public class ParameterControllerPanel extends VerticalPanel
               }
               parameterMap.setSelectedValues(parameterName, parameterSelections.toArray(new String[parameterSelections.size()]));
             }
+            else
+            {
+              parameterMap.setSelectedValue(parameterName, null);
+            }
+
           }
         }
 
@@ -573,7 +578,20 @@ public class ParameterControllerPanel extends VerticalPanel
         {
           final Element valueElement = (Element) list.item(videx);
           final String label = valueElement.getAttribute("label"); // NON-NLS
-          final String value = valueElement.getAttribute("value"); // NON-NLS
+          String value;
+          if ("true".equals(valueElement.getAttribute("null")))
+          {
+            value = null;
+          }
+          else
+          {
+            value = valueElement.getAttribute("value"); // NON-NLS
+            if (value == null)
+            {
+              // XML parser treats empty strings like undefined attributes.
+              value = "";
+            }
+          }
           String type = valueElement.getAttribute("type"); // NON-NLS
           if (ReportViewerUtil.isEmpty(type))
           {
@@ -672,7 +690,11 @@ public class ParameterControllerPanel extends VerticalPanel
             }
             parameterMap.setSelectedValues(parameterName, parameterSelections.toArray(new String[parameterSelections.size()]));
           }
-          
+          else
+          {
+            parameterMap.setSelectedValue(parameterName, null);
+          }
+
           if (parameterElement.isHidden())
           {
             continue;
@@ -735,7 +757,8 @@ public class ParameterControllerPanel extends VerticalPanel
           if (parametersElement.isSubscribe())
           {
             final CaptionPanel parameterGroupCaptionPanel = new CaptionPanel();
-            if(groupLabel != null && !groupLabel.equals("")) {
+            if (groupLabel != null && !groupLabel.equals(""))
+            {
               parameterGroupCaptionPanel.setCaptionText(groupLabel);
             }
             parameterGroupCaptionPanel.setStyleName("parameter"); //$NON-NLS-1$
@@ -1033,7 +1056,7 @@ public class ParameterControllerPanel extends VerticalPanel
       renderType = RENDER_TYPE.XML;
     }
     final RequestBuilder requestBuilder = new RequestBuilder(RequestBuilder.POST,
-        ReportViewerUtil.buildReportUrl(renderType, parameterMap));
+        ReportViewerUtil.buildReportUrl(renderType, parameterMap, parameterDefinition));
     parameterRequestCallback.setSubmitMode(submitMode);
     requestBuilder.setCallback(parameterRequestCallback);
     try
@@ -1081,7 +1104,7 @@ public class ParameterControllerPanel extends VerticalPanel
   private void showReport()
   {
     final RENDER_TYPE renderType = subscriptionPressed ? RENDER_TYPE.SUBSCRIBE : RENDER_TYPE.REPORT;
-    container.parametersReady(parameterMap, renderType);
+    container.setUrl(ReportViewerUtil.buildReportUrl(renderType, parameterMap, parameterDefinition));
   }
 
   private void showBlankPage()

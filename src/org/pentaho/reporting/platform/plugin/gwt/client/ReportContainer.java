@@ -11,7 +11,6 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import org.pentaho.gwt.widgets.client.utils.i18n.ResourceBundle;
 import org.pentaho.gwt.widgets.client.utils.string.StringUtils;
-import org.pentaho.reporting.platform.plugin.gwt.client.ReportViewer.RENDER_TYPE;
 
 public class ReportContainer extends VerticalPanel
 {
@@ -98,9 +97,9 @@ public class ReportContainer extends VerticalPanel
     parameterControllerPanel.setVisible(false);
   }
 
-  public void parametersReady(final ParameterValues parameterMap, final RENDER_TYPE renderType)
+  public void setUrl(final String url)
   {
-    url = ReportViewerUtil.buildReportUrl(renderType, parameterMap);
+    this.url = url;
   }
 
   public void showBlank()
