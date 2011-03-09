@@ -133,6 +133,8 @@ public class ParameterControllerPanel extends VerticalPanel
         }
 
         // create a new parameter value map
+        // Only add parameter if there is at least one selection.
+        // Without a selection, a parameter is <null>.
         parameterMap = new ParameterValues();
         final ParameterGroup[] parameterGroups = parameterDefinition.getParameterGroups();
         for (final ParameterGroup group: parameterGroups)
@@ -141,15 +143,18 @@ public class ParameterControllerPanel extends VerticalPanel
           {
             final String parameterName = parameterElement.getName(); //$NON-NLS-1$
             final List<ParameterSelection> list = parameterElement.getSelections();
-            final ArrayList<String> parameterSelections = new ArrayList<String>();
-            for (final ParameterSelection selection : list)
+            if (list.isEmpty() == false)
             {
-              if (selection.isSelected())
+              final ArrayList<String> parameterSelections = new ArrayList<String>();
+              for (final ParameterSelection selection : list)
               {
-                parameterSelections.add(selection.getValue());
+                if (selection.isSelected())
+                {
+                  parameterSelections.add(selection.getValue());
+                }
               }
+              parameterMap.setSelectedValues(parameterName, parameterSelections.toArray(new String[parameterSelections.size()]));
             }
-            parameterMap.setSelectedValues(parameterName, parameterSelections.toArray(new String[parameterSelections.size()]));
           }
         }
 
@@ -655,16 +660,19 @@ public class ParameterControllerPanel extends VerticalPanel
         {
           final String parameterName = parameterElement.getName(); //$NON-NLS-1$
           final List<ParameterSelection> list = parameterElement.getSelections();
-          final ArrayList<String> parameterSelections = new ArrayList<String>();
-          for (final ParameterSelection selection : list)
+          if (list.isEmpty() == false)
           {
-            if (selection.isSelected())
+            final ArrayList<String> parameterSelections = new ArrayList<String>();
+            for (final ParameterSelection selection : list)
             {
-              parameterSelections.add(selection.getValue());
+              if (selection.isSelected())
+              {
+                parameterSelections.add(selection.getValue());
+              }
             }
+            parameterMap.setSelectedValues(parameterName, parameterSelections.toArray(new String[parameterSelections.size()]));
           }
-          parameterMap.setSelectedValues(parameterName, parameterSelections.toArray(new String[parameterSelections.size()]));
-
+          
           if (parameterElement.isHidden())
           {
             continue;
