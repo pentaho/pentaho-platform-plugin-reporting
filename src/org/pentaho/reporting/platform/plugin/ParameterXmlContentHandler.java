@@ -652,11 +652,22 @@ public class ParameterXmlContentHandler
           valueElement.setAttribute("label", String.valueOf(value)); //$NON-NLS-1$ //$NON-NLS-2$
           valueElement.setAttribute("type", elementValueType.getName()); //$NON-NLS-1$
 
-          if (key instanceof Number) {
-            BigDecimal bd = new BigDecimal(String.valueOf(key));
+          if (key instanceof Number)
+          {
+            final BigDecimal bd = new BigDecimal(String.valueOf(key));
             valueElement.setAttribute("selected", String.valueOf(selectionSet.contains(bd)));//$NON-NLS-1$
             handledValues.remove(bd);
-          } else {
+          }
+          else if (key == null)
+          {
+            if (selections == null || selectionSet.contains(null))
+            {
+              valueElement.setAttribute("selected", "true");//$NON-NLS-1$
+              handledValues.remove(null);
+            }
+          }
+          else
+          {
             valueElement.setAttribute("selected", String.valueOf(selectionSet.contains(key)));//$NON-NLS-1$
             handledValues.remove(key);
           }

@@ -112,6 +112,20 @@ public class ParameterDefinition
     return null;
   }
 
+  public boolean isParameterDefined(final String name)
+  {
+    final Collection<ParameterGroup> parameterGroupCollection = parameters.values();
+    for (final ParameterGroup parameterGroup : parameterGroupCollection)
+    {
+      final Parameter parameter = parameterGroup.getParameter(name);
+      if (parameter != null)
+      {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public boolean isEmpty()
   {
     return parameters.isEmpty();

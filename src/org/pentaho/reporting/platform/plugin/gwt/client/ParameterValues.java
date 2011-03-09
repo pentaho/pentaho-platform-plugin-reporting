@@ -1,10 +1,12 @@
 package org.pentaho.reporting.platform.plugin.gwt.client;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
 import com.google.gwt.http.client.URL;
+import com.google.gwt.user.client.Window;
 
 /**
  * Todo: Document me!
@@ -17,6 +19,7 @@ import com.google.gwt.http.client.URL;
 public class ParameterValues
 {
   private HashMap<String, ArrayList<String>> backend;
+  private boolean trace;
 
   public ParameterValues()
   {
@@ -25,18 +28,17 @@ public class ParameterValues
 
   public void setSelectedValue(final String parameter, final String value)
   {
-    if (value == null)
-    {
-      setSelectedValues(parameter, new String[0]);
-    }
-    else
-    {
-      setSelectedValues(parameter, new String[]{value});
-    }
+    setSelectedValues(parameter, new String[]{value});
   }
 
   public void setSelectedValues(final String parameter, final String[] values)
   {
+    if (values.length == 0)
+    {
+      backend.remove(parameter);
+      return;
+    }
+    
     ArrayList<String> strings = backend.get(parameter);
     if (strings == null)
     {
@@ -44,20 +46,11 @@ public class ParameterValues
       backend.put(parameter, strings);
     }
     strings.clear();
-    for (int i = 0; i < values.length; i++)
-    {
-      final String value = values[i];
-      strings.add(value);
-    }
+    strings.addAll(Arrays.asList(values));
   }
 
   public void addSelectedValue(final String parameter, final String value)
   {
-    if (value == null)
-    {
-      throw new NullPointerException();
-    }
-
     ArrayList<String> strings = backend.get(parameter);
     if (strings == null)
     {
@@ -69,11 +62,6 @@ public class ParameterValues
 
   public void removeSelectedValue(final String parameter, final String value)
   {
-    if (value == null)
-    {
-      throw new NullPointerException();
-    }
-
     final ArrayList<String> strings = backend.get(parameter);
     if (strings == null)
     {
@@ -96,7 +84,7 @@ public class ParameterValues
     final ArrayList<String> strings = backend.get(name);
     if (strings == null)
     {
-      return new String[0];
+      return null;
     }
     return strings.toArray(new String[strings.size()]);
   }
@@ -113,29 +101,21 @@ public class ParameterValues
     {
       final String key = URL.encodeComponent(entry.getKey());
       final ArrayList<String> list = entry.getValue();
-      if (list.isEmpty())
+      for (final String value : list)
       {
+        if (value == null)
+        {
+          continue;
+        }
+
         if (b.length() > 0)
         {
           b.append("&");
         }
         b.append(key);
         b.append('=');
+        b.append(URL.encodeComponent(value));
       }
-      else
-      {
-        for (final String value : list)
-        {
-          if (b.length() > 0)
-          {
-            b.append("&");
-          }
-          b.append(key);
-          b.append('=');
-          b.append(URL.encodeComponent(value));
-        }
-      }
-
     }
     return b.toString();
   }

@@ -41,7 +41,7 @@ public class ReportViewerUtil
    */
   public static String normalizeParameterValue(final Parameter parameter, String type, final String selection)
   {
-    if (selection == null || selection.length() == 0)
+    if (selection == null)
     {
       return null;
     }
@@ -233,7 +233,8 @@ public class ReportViewerUtil
    * @return the generated URL
    */
   public static String buildReportUrl(final ReportViewer.RENDER_TYPE renderType,
-                                      final ParameterValues reportParameterMap)
+                                      final ParameterValues reportParameterMap,
+                                      final ParameterDefinition parameterDefinition)
   {
 
     if (reportParameterMap == null)
@@ -266,17 +267,15 @@ public class ReportViewerUtil
         final String value = valueList[i];
         if (value == null)
         {
-          encodedList[i] = (""); //$NON-NLS-1$
+          encodedList[i] = null; //$NON-NLS-1$
         }
         else
         {
-          encodedList[i] = (value);
+          encodedList[i] = value;
         }
       }
-      // Window.alert("Paramter-Value: " + key);
       parameters.setSelectedValues(key, encodedList);
     }
-
 
     // history token parameters will override default parameters (already on URL)
     // but they will not override user submitted parameters
@@ -285,6 +284,11 @@ public class ReportViewerUtil
     {
       for (final String key : historyParams.getParameterNames())
       {
+        if (parameterDefinition != null && parameterDefinition.isParameterDefined(key))
+        {
+          // a known parameter that has a <null> value
+          continue;
+        }
         if (parameters.containsParameter(key))
         {
           continue;
@@ -301,7 +305,7 @@ public class ReportViewerUtil
           final String value = valueList[i];
           if (value == null)
           {
-            encodedList[i] = (""); //$NON-NLS-1$
+            encodedList[i] = null; //$NON-NLS-1$
           }
           else
           {
@@ -321,6 +325,11 @@ public class ReportViewerUtil
       for (final String rawkey : requestParams.keySet())
       {
         final String key = URL.decodeComponent(rawkey);
+        if (parameterDefinition != null && parameterDefinition.isParameterDefined(key))
+        {
+          // a known parameter that has a <null> value
+          continue;
+        }
         if ("renderMode".equals(key))
         {
           continue;
@@ -343,7 +352,7 @@ public class ReportViewerUtil
           final String value = valueList.get(i);
           if (value == null)
           {
-            encodedList[i] = (""); //$NON-NLS-1$
+            encodedList[i] = null; //$NON-NLS-1$
           }
           else
           {
@@ -354,7 +363,7 @@ public class ReportViewerUtil
         parameters.setSelectedValues(key, encodedList);
       }
     }
-
+    
     final String parametersAsString = parameters.toURL();
     if (History.getToken().equals(parametersAsString) == false)
     {
