@@ -1,6 +1,6 @@
 package org.pentaho.reporting.platform.plugin.cache;
 
-import java.util.List;
+import java.util.Set;
 
 import javax.swing.table.TableModel;
 
@@ -29,9 +29,13 @@ public class PentahoDataCache implements DataCache, ILogoutListener {
 
   private static final String CACHE_NAME = "report-dataset-cache";
 
-  private static class CompositeKey {
-    String sessionId;
-    DataCacheKey dataCacheKey;
+  /**
+   * this as a public class so that if necessary someone can get access to a session
+   * key and clear the cache in their own way via javascript rule / etc
+   */
+  public static class CompositeKey {
+    public String sessionId;
+    public DataCacheKey dataCacheKey;
     
     public CompositeKey(String sessionId, DataCacheKey dataCacheKey) {
       this.sessionId = sessionId;
@@ -99,19 +103,29 @@ public class PentahoDataCache implements DataCache, ILogoutListener {
     {
       if(cacheManager != null) 
       {
-        List cachedObjects = cacheManager.getAllValuesFromRegionCache(CACHE_NAME);
-        if (cachedObjects != null) 
-        {
-          for (Object k : cachedObjects) 
+        try {
+          Set cachedObjects = cacheManager.getAllKeysFromRegionCache(CACHE_NAME);
+          if (cachedObjects != null) 
           {
-            if (k instanceof CompositeKey) 
+            for (Object k : cachedObjects) 
             {
-              CompositeKey key = (CompositeKey) k;
-              if(key.sessionId.equals(session.getId())) 
+              if (k instanceof CompositeKey) 
               {
-                cacheManager.removeFromRegionCache(CACHE_NAME, key);
+                CompositeKey key = (CompositeKey) k;
+                if(key.sessionId.equals(session.getId())) 
+                {
+                  cacheManager.removeFromRegionCache(CACHE_NAME, key);
+                }
               }
             }
+          }
+        } catch (NullPointerException e) {
+          // due to a known issue in hibernate cache
+          // the getAll* methods of ICacheManager throw a NullPointerException if 
+          // cache values are null (this can happen due to cache object timeouts)
+          // please see: http://opensource.atlassian.com/projects/hibernate/browse/HHH-3248
+          if (log.isDebugEnabled()) {
+            log.debug("", e);
           }
         }
       }
