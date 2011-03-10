@@ -119,7 +119,7 @@ public class PentahoDataCache implements DataCache, ILogoutListener {
               }
             }
           }
-        } catch (NullPointerException e) {
+        } catch (Throwable e) {
           // due to a known issue in hibernate cache
           // the getAll* methods of ICacheManager throw a NullPointerException if 
           // cache values are null (this can happen due to cache object timeouts)
