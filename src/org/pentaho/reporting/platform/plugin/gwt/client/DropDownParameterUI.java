@@ -34,7 +34,7 @@ public class DropDownParameterUI extends SimplePanel implements ParameterUI
       {
         if (listBox.isItemSelected(i))
         {
-          selectedItems.add(listBox.getValue(i));
+          selectedItems.add(values.get(i));
         }
       }
       controller.getParameterMap().setSelectedValues
@@ -43,11 +43,13 @@ public class DropDownParameterUI extends SimplePanel implements ParameterUI
   }
 
   private ListBox listBox;
+  private ArrayList<String> values;
 
   public DropDownParameterUI(final ParameterControllerPanel controller, final Parameter parameterElement)
   {
     listBox = new ListBox(false);
     listBox.setVisibleItemCount(1);
+    values = new ArrayList<String>();
 
     boolean hasSelection = false;
     final List<ParameterSelection> choices = parameterElement.getSelections();
@@ -56,7 +58,8 @@ public class DropDownParameterUI extends SimplePanel implements ParameterUI
       final ParameterSelection choiceElement = choices.get(i);
       final String choiceLabel = choiceElement.getLabel(); //$NON-NLS-1$
       final String choiceValue = choiceElement.getValue(); //$NON-NLS-1$
-      listBox.addItem(choiceLabel, choiceValue);
+      listBox.addItem(choiceLabel, String.valueOf(i));
+      values.add(choiceValue);
       final boolean selected = choiceElement.isSelected();
       listBox.setItemSelected(i, selected);
       if (selected)

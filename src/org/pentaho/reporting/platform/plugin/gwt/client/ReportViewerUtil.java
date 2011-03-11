@@ -284,11 +284,6 @@ public class ReportViewerUtil
     {
       for (final String key : historyParams.getParameterNames())
       {
-        if (parameterDefinition != null && parameterDefinition.isParameterDefined(key))
-        {
-          // a known parameter that has a <null> value
-          continue;
-        }
         if (parameters.containsParameter(key))
         {
           continue;
@@ -325,11 +320,6 @@ public class ReportViewerUtil
       for (final String rawkey : requestParams.keySet())
       {
         final String key = URL.decodeComponent(rawkey);
-        if (parameterDefinition != null && parameterDefinition.isParameterDefined(key))
-        {
-          // a known parameter that has a <null> value
-          continue;
-        }
         if ("renderMode".equals(key))
         {
           continue;
