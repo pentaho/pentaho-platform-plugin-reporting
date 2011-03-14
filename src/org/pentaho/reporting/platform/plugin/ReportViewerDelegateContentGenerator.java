@@ -1,5 +1,19 @@
 package org.pentaho.reporting.platform.plugin;
-
+/*
+ * Copyright 2006 - 2008 Pentaho Corporation.  All rights reserved.
+ * This software was developed by Pentaho Corporation and is provided under the terms
+ * of the Mozilla Public License, Version 1.1, or any later version. You may not use
+ * this file except in compliance with the license. If you need a copy of the license,
+ * please go to http://www.mozilla.org/MPL/MPL-1.1.txt. The Original Code is the Pentaho
+ * BI Platform.  The Initial Developer is Pentaho Corporation.
+ *
+ * Software distributed under the Mozilla Public License is distributed on an "AS IS"
+ * basis, WITHOUT WARRANTY OF ANY KIND, either express or  implied. Please refer to
+ * the license for the specific language governing your rights and limitations.
+ *
+ * Created Feb 14, 2011
+ * @author rmansoor
+ */
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.pentaho.platform.api.engine.IPluginManager;
@@ -13,13 +27,6 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-/**
- * Created by IntelliJ IDEA.
- * User: rmansoor
- * Date: 2/14/11
- * Time: 12:58 PM
- * To change this template use File | Settings | File Templates.
- */
 public class ReportViewerDelegateContentGenerator extends SimpleContentGenerator {
     private static final long serialVersionUID = 1L;
 
@@ -34,7 +41,7 @@ public class ReportViewerDelegateContentGenerator extends SimpleContentGenerator
     public void createContent(OutputStream outputStream) throws Exception {
         IPluginResourceLoader pluginResourceLoader = PentahoSystem.get(IPluginResourceLoader.class);
         IPluginManager pluginManager = PentahoSystem.get(IPluginManager.class);
-        ClassLoader classLoader = pluginManager.getClassLoader("Pentaho Reporting Plugin");
+        ClassLoader classLoader = pluginManager.getClassLoader("reporting");
         InputStream inputStream = pluginResourceLoader.getResourceAsStream(classLoader, "/reportviewer/report.html");
         int val;
         while ((val = inputStream.read()) != -1) {

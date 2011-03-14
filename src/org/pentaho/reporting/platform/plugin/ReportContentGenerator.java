@@ -70,7 +70,7 @@ public class ReportContentGenerator extends SimpleContentGenerator {
         renderMode = RENDER_TYPE.REPORT;
     }
 
-    RepositoryFile prptFile = unifiedRepository.getFile(path);
+    RepositoryFile prptFile = unifiedRepository.getFile(idTopath(path));
 
 
     try {
@@ -78,7 +78,7 @@ public class ReportContentGenerator extends SimpleContentGenerator {
         case DOWNLOAD: {
           final DownloadReportContentHandler contentHandler = new DownloadReportContentHandler(userSession,
               parameterProviders.get("path"));
-          contentHandler.createDownloadContent(outputStream, prptFile.getPath());
+          contentHandler.createDownloadContent(outputStream, idTopath(prptFile.getPath()));
           break;
         }
         case REPORT: {
@@ -270,7 +270,7 @@ public class ReportContentGenerator extends SimpleContentGenerator {
         path = pathParams.getStringParameter("path", ""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     }
 
-    RepositoryFile prptFile = unifiedRepository.getFile(path);
+    RepositoryFile prptFile = unifiedRepository.getFile(idTopath(path));
 
     final SimpleReportingComponent reportComponent = new SimpleReportingComponent();
     final Map<String, Object> inputs = createInputs(requestParams);
@@ -303,7 +303,13 @@ public class ReportContentGenerator extends SimpleContentGenerator {
         return null;
   }
 
-
+  private String idTopath(String id) {
+    String path = id.replace(":", "/");
+    if(path != null && path.length() > 0 && path.charAt(0) != '/') {
+        path = "/" + path;
+    }
+    return path;
+  }
 }
 
 

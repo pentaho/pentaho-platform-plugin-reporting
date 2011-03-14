@@ -49,7 +49,7 @@ public class DownloadReportContentHandler
                                      final String path) throws IOException
   {
     final IUnifiedRepository repository = PentahoSystem.get(IUnifiedRepository.class, userSession);
-    final RepositoryFile file = repository.getFile(path);
+    final RepositoryFile file = repository.getFile(idTopath(path));
     final HttpServletResponse response = (HttpServletResponse) pathProvider.getParameter("httpresponse"); //$NON-NLS-1$ //$NON-NLS-2$
 
     // if the user has PERM_CREATE, we'll allow them to pull it for now, this is as relaxed
@@ -74,4 +74,11 @@ public class DownloadReportContentHandler
     }
   }
 
+  private String idTopath(String id) {
+    String path = id.replace(":", "/");
+    if(path != null && path.length() > 0 && path.charAt(0) != '/') {
+        path = "/" + path;
+    }
+    return path;
+  }
 }

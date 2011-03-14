@@ -227,18 +227,18 @@ public class ReportViewerUtil
   public static String buildReportUrl(final ReportViewer.RENDER_TYPE renderType,
                                       final ParameterValues reportParameterMap)
   {
-
+    final String FILES = "files/";
     if (reportParameterMap == null)
     {
       throw new NullPointerException();
     }
     String reportPath = Window.Location.getPath();
-    reportPath = reportPath.replace("viewer", "output");
+    reportPath = reportPath.replace("app", "content");
     reportPath += "?renderMode=" + renderType; // NON-NLS
     if(reportPath.indexOf("&path") < 0) {
-        int start = reportPath.indexOf("files");
-        int end = reportPath.indexOf(":");
-        String path = reportPath.substring(start+"files".length(), end);
+        int start = reportPath.indexOf(FILES);
+        int end = reportPath.lastIndexOf("/");
+        String path = reportPath.substring(start+FILES.length(), end);
         reportPath +="&path=" + path;
     }
     if(reportPath.indexOf("&locale") < 0) {

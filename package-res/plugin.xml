@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<plugin title="Pentaho Reporting Plugin">
+<plugin title="reporting">
 
    <lifecycle-listener class="org.pentaho.reporting.platform.plugin.LifecycleListener"/>
 
@@ -22,19 +22,19 @@
           <!-- for any of these urls, you can add layout=flow to the url -->
           <operation>
             <id>RUN</id>
-            <perspective>viewer</perspective>
+            <perspective>app</perspective>
           </operation>
           <operation>
             <id>NEWWINDOW</id>
-            <perspective>viewer</perspective>
+            <perspective>app</perspective>
           </operation>
           <operation>
             <id>SCHEDULE_NEW</id>
-            <perspective>viewer</perspective>
+            <perspective>app</perspective>
           </operation>
           <operation>
             <id>SCHEDULE_EDIT</id>
-            <perspective>viewer</perspective>
+            <perspective>app</perspective>
           </operation>
           <operation>
             <id>BACKGROUND</id>
@@ -46,7 +46,7 @@
       </content-type>
     </content-types>
 
-    <content-generator id="reporting viewer" type="prpt:viewer">
+    <content-generator id="reporting viewer" type="prpt/app">
       <classname>org.pentaho.reporting.platform.plugin.ReportViewerDelegateContentGenerator</classname>
       <fileinfo-classname>org.pentaho.reporting.platform.plugin.ReportFileMetaDataProvider</fileinfo-classname>
       <title>Reporting Viewer Plugin</title>
