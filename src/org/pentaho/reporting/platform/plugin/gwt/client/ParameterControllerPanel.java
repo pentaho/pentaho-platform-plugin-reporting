@@ -865,7 +865,7 @@ public class ParameterControllerPanel extends VerticalPanel
     {
       listener.showBlank();
     }
-    final RequestBuilder requestBuilder = new RequestBuilder(RequestBuilder.POST,
+    final RequestBuilder requestBuilder = new RequestBuilder(RequestBuilder.GET,
         ReportViewerUtil.buildReportUrl(RENDER_TYPE.XML, parameterMap));
     parameterRequestCallback.setIsOnChange(isOnChange);
     requestBuilder.setCallback(parameterRequestCallback);
