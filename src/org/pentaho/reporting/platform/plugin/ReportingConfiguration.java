@@ -55,12 +55,12 @@ public class ReportingConfiguration extends PropertyLookupParser implements Conf
     return cfg;
   }
 
-  public Iterator findPropertyKeys(final String prefix)
+  public Iterator<String> findPropertyKeys(final String prefix)
   {
     return config.findPropertyKeys(prefix);
   }
 
-  public Enumeration getConfigProperties()
+  public Enumeration<String> getConfigProperties()
   {
     return config.getConfigProperties();
   }
