@@ -233,14 +233,14 @@ public class ReportViewerUtil
       throw new NullPointerException();
     }
     String reportPath = Window.Location.getPath();
-    reportPath = reportPath.replace("app", "content");
+    reportPath = reportPath.replace("viewer", "generatedContent");
     reportPath += "?renderMode=" + renderType; // NON-NLS
-    if(reportPath.indexOf("&path") < 0) {
-        int start = reportPath.indexOf(FILES);
-        int end = reportPath.lastIndexOf("/");
-        String path = reportPath.substring(start+FILES.length(), end);
-        reportPath +="&path=" + path;
-    }
+//    if(reportPath.indexOf("&path") < 0) {
+//        int start = reportPath.indexOf(FILES);
+//        int end = reportPath.lastIndexOf("/");
+//        String path = reportPath.substring(start+FILES.length(), end);
+//        reportPath +="&path=" + path;
+//    }
     if(reportPath.indexOf("&locale") < 0) {
         String localeName = StringUtils.defaultIfEmpty(Window.Location.getParameter("locale"), getLanguagePreference()); //$NON-NLS-1$
         reportPath += "&locale=" + localeName;
