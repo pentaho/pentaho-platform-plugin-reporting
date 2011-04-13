@@ -34,4 +34,12 @@
     </copy>
   </target>
 
+  <target name="install">
+    <deltree dir="${install.target-dir}/pentaho-solutions/system/reporting/reportviewer"/>
+    <delete failonerror="false" file="${install.target-dir}/pentaho-solutions/system/reporting/plugin.xml"/>
+    <delete failonerror="false" file="${install.target-dir}/pentaho-solutions/system/reporting/settings.xml"/>
+    <copydir src="bin/gwt/output" dest="${install.target-dir}/pentaho-solutions/system/reporting"/>
+    <copydir src="package-res" dest="${install.target-dir}/pentaho-solutions/system/reporting"/>
+  </target>
+
 </project>

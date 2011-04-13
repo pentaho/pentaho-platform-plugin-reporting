@@ -20,6 +20,7 @@ import org.pentaho.platform.api.repository.ISubscriptionRepository;
 import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
 import org.pentaho.platform.api.repository2.unified.RepositoryFile;
 import org.pentaho.platform.engine.core.solution.ActionInfo;
+import org.pentaho.platform.engine.core.solution.SimpleParameterProvider;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.engine.services.solution.SimpleContentGenerator;
 import org.pentaho.platform.engine.services.solution.SimpleParameterSetter;
@@ -94,21 +95,33 @@ public class ReportContentGenerator extends SimpleContentGenerator {
         }
         case XML: {
           // create inputs from request parameters
-          final ParameterXmlContentHandler parameterXmlContentHandler = new ParameterXmlContentHandler(this);
+          final ParameterXmlContentHandler parameterXmlContentHandler = new ParameterXmlContentHandler(this, true);
+          parameterXmlContentHandler.createParameterContent(outputStream, prptFile.getId());
+          break;
+        }
+        case PARAMETER:
+        {
+          // create inputs from request parameters
+          final ParameterXmlContentHandler parameterXmlContentHandler = new ParameterXmlContentHandler(this, false);
           parameterXmlContentHandler.createParameterContent(outputStream, prptFile.getId());
           break;
         }
         default:
           throw new IllegalArgumentException();
       }
-    } catch (Exception ex) {
+    }
+    catch (Exception ex)
+    {
       final String exceptionMessage = ex.getMessage() != null ? ex.getMessage() : ex.getClass().getName();
       log.error(exceptionMessage, ex);
 
-      if (outputStream != null) {
+      if (outputStream != null)
+      {
         outputStream.write(exceptionMessage.getBytes("UTF-8")); //$NON-NLS-1$
         outputStream.flush();
-      } else {
+      }
+      else
+      {
         throw new IllegalArgumentException();
       }
     }
@@ -136,6 +149,11 @@ public class ReportContentGenerator extends SimpleContentGenerator {
   public IParameterProvider getRequestParameters() {
     if (requestParameters != null) {
       return requestParameters;
+    }
+
+    if (parameterProviders == null)
+    {
+      return new SimpleParameterProvider();
     }
 
     IParameterProvider requestParams = parameterProviders.get(IParameterProvider.SCOPE_REQUEST);
@@ -216,16 +234,20 @@ public class ReportContentGenerator extends SimpleContentGenerator {
     return createInputs(getRequestParameters());
   }
 
-  private static Map<String, Object> createInputs(final IParameterProvider requestParams) {
+  protected static Map<String, Object> createInputs(final IParameterProvider requestParams)
+  {
     final Map<String, Object> inputs = new HashMap<String, Object>();
+    if (requestParams == null)
+    {
+      return inputs;
+    }
+
     final Iterator paramIter = requestParams.getParameterNames();
     while (paramIter.hasNext()) {
       final String paramName = (String) paramIter.next();
       final Object paramValue = requestParams.getParameter(paramName);
-      if (paramValue == null) {
-        continue;
-      }
-      if ("".equals(paramValue)) {
+      if (paramValue == null)
+      {
         continue;
       }
       // only actually add inputs who don't have NULL values
@@ -234,11 +256,13 @@ public class ReportContentGenerator extends SimpleContentGenerator {
     return inputs;
   }
 
-  public Log getLogger() {
+  public Log getLogger()
+  {
     return log;
   }
 
-  public String getMimeType() {
+  public String getMimeType()
+  {
     final IParameterProvider requestParams = getRequestParameters();
     final IParameterProvider pathParams = getPathParameters();
     RENDER_TYPE renderMode = null;
@@ -256,7 +280,8 @@ public class ReportContentGenerator extends SimpleContentGenerator {
         renderMode = RENDER_TYPE.REPORT;
     }
 
-    if (renderMode.equals(RENDER_TYPE.XML)) {
+    if (renderMode.equals(RENDER_TYPE.XML) ||
+        renderMode.equals(RENDER_TYPE.PARAMETER)) {
       return "text/xml"; //$NON-NLS-1$
     } else if (renderMode.equals(RENDER_TYPE.SUBSCRIBE)) {
       return SimpleReportingComponent.MIME_TYPE_HTML;
@@ -275,7 +300,6 @@ public class ReportContentGenerator extends SimpleContentGenerator {
     final SimpleReportingComponent reportComponent = new SimpleReportingComponent();
     final Map<String, Object> inputs = createInputs(requestParams);
     reportComponent.setDefaultOutputTarget(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE);
-    reportComponent.setSession(userSession);
     reportComponent.setReportFileId(prptFile.getId());
     reportComponent.setInputs(inputs);
     return reportComponent.getMimeType();

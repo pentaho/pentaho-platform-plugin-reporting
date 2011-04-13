@@ -43,7 +43,7 @@ public class SubscribeContentHandler
                                      final Serializable fileId)
       throws ResourceException, IOException
   {
-    final MasterReport report = ReportCreator.createReport(fileId, userSession);
+    final MasterReport report = ReportCreator.createReport(fileId);
     final ParameterDefinitionEntry parameterDefinitions[] = report.getParameterDefinition().getParameterDefinitions();
     final String result = saveSubscription(parameterDefinitions, fileId.toString());
     outputStream.write(result.getBytes());

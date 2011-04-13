@@ -14,7 +14,7 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.SuggestBox;
 import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
 
-public class PlainParameterUI extends SimplePanel
+public class PlainParameterUI extends SimplePanel implements ParameterUI
 {
   private final Map<String, String> labelToValueMap = new HashMap<String, String>();
 
@@ -33,23 +33,26 @@ public class PlainParameterUI extends SimplePanel
     {
       final SuggestBox textBox = (SuggestBox) event.getSource();
       final String text = textBox.getText();
-      String value = labelToValueMap.get(text);
-      if (value == null)
+
+      String value;
+      if (listParameter)
       {
-        value = text;
-      }
-      if (ReportViewerUtil.isEmpty(value))
-      {
-        controller.getParameterMap().setSelectedValue(parameterName, null);
+        value = labelToValueMap.get(text);
+        if (text == null && strict == false)
+        {
+          value = text;
+        }
       }
       else
       {
-        controller.getParameterMap().setSelectedValue(parameterName, value);
+        value = text;
       }
+
+      controller.getParameterMap().setSelectedValue(parameterName, value);
       if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER)
       {
         // on enter, force update
-        controller.fetchParameters(false);
+        controller.fetchParameters(ParameterControllerPanel.ParameterSubmitMode.USERINPUT);
       }
     }
 
@@ -82,9 +85,14 @@ public class PlainParameterUI extends SimplePanel
       {
         controller.getParameterMap().setSelectedValue(parameterName, value);
       }
+      controller.fetchParameters(ParameterControllerPanel.ParameterSubmitMode.USERINPUT);
     }
 
   }
+
+  private SuggestBox textBox;
+  private boolean listParameter;
+  private boolean strict;
 
   public PlainParameterUI(final ParameterControllerPanel controller, final Parameter parameterElement)
   {
@@ -102,27 +110,40 @@ public class PlainParameterUI extends SimplePanel
       }
     }
 
-    final SuggestBox textBox = new SuggestBox(oracle);
+    strict = parameterElement.isStrict();
+    listParameter = parameterElement.isList();
+    textBox = new SuggestBox(oracle);
+
     if (selections.isEmpty())
     {
       textBox.setText(""); //$NON-NLS-1$
     }
     else
     {
-      final ParameterSelection parameterSelection = selections.get(0);
-      final String labelText = parameterSelection.getLabel();
-      if (labelText != null && labelText.length() > 0)
+      ParameterSelection parameterSelection = null;
+      for (int i = 0; i < selections.size(); i++)
       {
+        final ParameterSelection selection = selections.get(i);
+        if (selection.isSelected())
+        {
+          parameterSelection = selection;
+        }
+      }
+
+      if (parameterSelection != null)
+      {
+        final String labelText = parameterSelection.getLabel();
         textBox.setText(labelText);
       }
-      else
-      {
-        textBox.setValue(parameterSelection.getValue());
-      }
     }
+
     textBox.addSelectionHandler(new PlainParameterSelectionHandler(controller, parameterElement.getName()));
     textBox.addKeyUpHandler(new PlainParameterKeyUpHandler(controller, parameterElement.getName()));
     setWidget(textBox);
   }
 
+  public void setEnabled(final boolean enabled)
+  {
+    textBox.getTextBox().setEnabled(enabled);
+  }
 }

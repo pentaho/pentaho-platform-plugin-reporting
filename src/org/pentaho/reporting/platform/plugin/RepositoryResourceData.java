@@ -37,8 +37,6 @@ import org.pentaho.reporting.libraries.resourceloader.loader.AbstractResourceDat
  */
 public class RepositoryResourceData extends AbstractResourceData {
 
-  public static final String PENTAHO_REPOSITORY_KEY = "pentahoRepositoryKey"; //$NON-NLS-1$
-
   private String filename;
   private ResourceKey key;
 
@@ -66,8 +64,8 @@ public class RepositoryResourceData extends AbstractResourceData {
    */
   public InputStream getResourceAsStream(ResourceManager caller) throws ResourceLoadingException {
     try {
-      IUnifiedRepository unifiedRepository = PentahoSystem.get(IUnifiedRepository.class, PentahoSessionHolder.getSession());
-      SimpleRepositoryFileData fileData = unifiedRepository.getDataForRead(key.getIdentifier().toString(), SimpleRepositoryFileData.class);
+      IUnifiedRepository unifiedRepository = PentahoSystem.get(IUnifiedRepository.class);
+      SimpleRepositoryFileData fileData = unifiedRepository.getDataForRead(key.getIdentifierAsString(), SimpleRepositoryFileData.class);
       return fileData.getStream();
     } catch (UnifiedRepositoryException ex) {
       // might be due to access denial

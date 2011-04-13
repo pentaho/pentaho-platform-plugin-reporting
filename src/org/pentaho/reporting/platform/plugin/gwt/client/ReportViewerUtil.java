@@ -41,7 +41,7 @@ public class ReportViewerUtil
    */
   public static String normalizeParameterValue(final Parameter parameter, String type, final String selection)
   {
-    if (selection == null || selection.length() == 0)
+    if (selection == null)
     {
       return null;
     }
@@ -74,11 +74,13 @@ public class ReportViewerUtil
           }
           if (timezoneHint == null)
           {
+//            Window.alert("No Timezone hint given for " + parameter.getName());
             return selection;
           }
 
           // update the parameter definition, so that the datepickerUI can work properly ...
           parameter.setTimezoneHint(timezoneHint);
+//          Window.alert("No Timezone given for " + parameter.getName());
           return selection;
         }
 
@@ -94,6 +96,11 @@ public class ReportViewerUtil
           {
             return selection;
           }
+//          Window.alert("Selection is not in same TZ " + parameter.getName() + " " + timezoneHint + " " + selection);
+        }
+        else
+        {
+//          Window.alert("TZ Hint " + parameter.getName() + " " + timezoneHint + " " + selection);
         }
 
         // the resulting time will have the same universal time as the original one, but the string
@@ -136,36 +143,37 @@ public class ReportViewerUtil
    * Converts a time from a arbitary timezone into the local timezone. The timestamp value remains unchanged,
    * but the string representation changes to reflect the give timezone.
    *
-   * @param originalTimestamp
-   * @param targetTimeZoneOffset
-   * @return
+   * @param originalTimestamp the timestamp as string from the server.
+   * @param targetTimeZoneOffsetInMinutes the target timezone offset in minutes from GMT
+   * @return the converted timestamp string.
    */
   public static String convertTimeStampToTimeZone(final String originalTimestamp,
-                                                  final int targetTimeZoneOffset)
+                                                  final int targetTimeZoneOffsetInMinutes)
   {
     final DateTimeFormat localDate = DateTimeFormat.getFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
 
     final Date dateLocal = parseWithoutTimezone(originalTimestamp);
-    final Date dateUniversal = parseWithTimezone(originalTimestamp);
+    final Date dateUtc = parseWithTimezone(originalTimestamp);
+    final String offsetText = TimeZoneOffsets.formatOffset(targetTimeZoneOffsetInMinutes);
+    final long date = dateLocal.getTime() + (targetTimeZoneOffsetInMinutes * 60000) +
+        (dateUtc.getTime() - dateLocal.getTime()) - (getNativeTimezoneOffset() * 60000);
 
-    final int localTimeToUTCOffset = getNativeTimezoneOffset(new Date().getTime()) - targetTimeZoneOffset;
-    final int serverTimeToLocalTimeOffset = (int) ((dateUniversal.getTime() - dateLocal.getTime()) / 60000);
-    final int serverTimeToUTCOffset = localTimeToUTCOffset - serverTimeToLocalTimeOffset;
-
-    final String offsetText = TimeZoneOffsets.formatOffset(serverTimeToUTCOffset);
-    final Date localWithShift = new Date(dateLocal.getTime() - serverTimeToUTCOffset);
-    return localDate.format(localWithShift) + offsetText;
+//    Window.alert("Converting: LocalDate:" + dateLocal + " vs UTC:" + dateUtc +
+//        " \n Offset:" + offsetText + " Min:" + targetTimeZoneOffsetInMinutes +
+//        " \n Native: " + getNativeTimezoneOffset());
+    final Date localWithShift = new Date(date);
+    final String dateAsText = localDate.format(localWithShift) + offsetText;
+    return dateAsText;
   }
 
   /**
    * Returns the current native time-zone offset from UTC to local time.
    *
-   * @param milliseconds the milliseconds of a date, to evaluate summer/winter time
    * @return the offset in minutes.
    */
-  public static native int getNativeTimezoneOffset(final double milliseconds)
+  public static native int getNativeTimezoneOffset()
     /*-{
-      return (new Date(milliseconds).getTimezoneOffset());
+      return -(new Date().getTimezoneOffset());
     }-*/;
 
   public static String extractTimezoneHintFromData(final String dateString)
@@ -225,7 +233,8 @@ public class ReportViewerUtil
    * @return the generated URL
    */
   public static String buildReportUrl(final ReportViewer.RENDER_TYPE renderType,
-                                      final ParameterValues reportParameterMap)
+                                      final ParameterValues reportParameterMap,
+                                      final ParameterDefinition parameterDefinition)
   {
     final String FILES = "files/";
     if (reportParameterMap == null)
@@ -262,17 +271,15 @@ public class ReportViewerUtil
         final String value = valueList[i];
         if (value == null)
         {
-          encodedList[i] = (""); //$NON-NLS-1$
+          encodedList[i] = null; //$NON-NLS-1$
         }
         else
         {
-          encodedList[i] = (value);
+          encodedList[i] = value;
         }
       }
-      // Window.alert("Paramter-Value: " + key);
       parameters.setSelectedValues(key, encodedList);
     }
-
 
     // history token parameters will override default parameters (already on URL)
     // but they will not override user submitted parameters
@@ -297,7 +304,7 @@ public class ReportViewerUtil
           final String value = valueList[i];
           if (value == null)
           {
-            encodedList[i] = (""); //$NON-NLS-1$
+            encodedList[i] = null; //$NON-NLS-1$
           }
           else
           {
@@ -321,20 +328,25 @@ public class ReportViewerUtil
         {
           continue;
         }
+        if ("::session".equals(key))
+        {
+          // session IDs are generated on the server, not via URL. We discard all such parameters on the URL.
+          continue;
+        }
 
         if (parameters.containsParameter(key))
         {
           continue;
         }
 
-        final List<String> valueList = requestParams.get(key);
+        final List<String> valueList = requestParams.get(rawkey);
         final String[] encodedList = new String[valueList.size()];
         for (int i = 0; i < valueList.size(); i++)
         {
           final String value = valueList.get(i);
           if (value == null)
           {
-            encodedList[i] = (""); //$NON-NLS-1$
+            encodedList[i] = null; //$NON-NLS-1$
           }
           else
           {
@@ -361,12 +373,29 @@ public class ReportViewerUtil
 
     if (GWT.isScript() == false)
     {
+      // Build a dev/test url
+      System.out.println("Computed path was: " + reportPath);
       reportPath = reportPath.substring(1);
-      reportPath = "?solution=steel-wheels&path=reports&name=Inventory.prpt" + reportPath; //$NON-NLS-1$
-      final String url = "http://localhost:8080/pentaho/content/reporting" + reportPath + "&userid=joe&password=password"; //$NON-NLS-1$ //$NON-NLS-2$
-      System.out.println(url);
+      
+      if(!reportPath.contains("solution")) {
+        reportPath = reportPath + "&solution=steel-wheels&path=reports&name=Inventory.prpt"; //$NON-NLS-1$
+      }
+      if(!reportPath.contains("path")) {
+        reportPath = reportPath + "&path=reports"; //$NON-NLS-1$
+      }
+      if(!reportPath.contains("name")) {
+        reportPath = reportPath + "&name=Inventory.prpt"; //$NON-NLS-1$
+      }
+      
+      final String url = "http://localhost:8080/pentaho/content/reporting?" + reportPath + "&userid=joe&password=password"; //$NON-NLS-1$ //$NON-NLS-2$
+      System.out.println("Using development url: " + url);
       return url;
     }
+/*    else
+    {
+      Window.alert("Computed-URL: " + reportPath);
+    }
+    */
     return reportPath;
   }
 

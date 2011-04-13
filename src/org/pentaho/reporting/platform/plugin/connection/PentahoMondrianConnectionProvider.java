@@ -1,6 +1,8 @@
 package org.pentaho.reporting.platform.plugin.connection;
 
+import java.util.ArrayList;
 import java.util.Properties;
+
 import javax.sql.DataSource;
 
 import mondrian.olap.Connection;
@@ -12,14 +14,6 @@ import org.pentaho.reporting.engine.classic.core.ReportDataFactoryException;
 import org.pentaho.reporting.engine.classic.extensions.datasources.mondrian.DefaultMondrianConnectionProvider;
 import org.pentaho.reporting.libraries.base.util.StringUtils;
 
-/**
- * Todo: Document me!
- * <p/>
- * Date: 15.04.2010
- * Time: 19:30:57
- *
- * @author Thomas Morgner.
- */
 public class PentahoMondrianConnectionProvider extends DefaultMondrianConnectionProvider
 {
   public static final String MDX_CONNECTION_MAPPER_KEY = "Mondrian-UserRoleMapper"; //$NON-NLS-1$
@@ -33,12 +27,29 @@ public class PentahoMondrianConnectionProvider extends DefaultMondrianConnection
   {
     try
     {
-      final String catalog = properties.getProperty("Catalog");
       final String role = properties.getProperty("Role");
       if (StringUtils.isEmpty(role))
       {
         // Only if the action sequence/requester hasn't already injected a role in here do this.
-        if(PentahoSystem.getObjectFactory().objectDefined(MDX_CONNECTION_MAPPER_KEY)) {
+        final String catalog = properties.getProperty("Catalog");
+        final String roleFromPentaho = computeRoleString(catalog);
+        if (StringUtils.isEmpty(roleFromPentaho) == false)
+        {
+          properties.setProperty("Role", roleFromPentaho);
+        }
+      }
+      return super.createConnection(properties, dataSource);
+    }
+    catch (PentahoAccessControlException e)
+    {
+      throw new ReportDataFactoryException("Failed to map roles", e);
+    }
+  }
+
+  private String computeRoleString(final String catalog) throws PentahoAccessControlException
+  {
+    if(PentahoSystem.getObjectFactory().objectDefined(MDX_CONNECTION_MAPPER_KEY))
+    {
           final IConnectionUserRoleMapper mondrianUserRoleMapper =
               PentahoSystem.get(IConnectionUserRoleMapper.class, MDX_CONNECTION_MAPPER_KEY, null);
           if (mondrianUserRoleMapper != null)
@@ -60,12 +71,21 @@ public class PentahoMondrianConnectionProvider extends DefaultMondrianConnection
                 }
                 buff.append(aRole.replaceAll(",", ",,"));
               }
-              properties.setProperty("Role", buff.toString());
+          return buff.toString();
             }
           }
         }
+    return null;
       }
-      return super.createConnection(properties, dataSource);
+
+  public Object getConnectionHash(final Properties properties) throws ReportDataFactoryException
+  {
+    try
+    {
+      final ArrayList<Object> hash = (ArrayList<Object>) super.getConnectionHash(properties);
+      final String catalog = properties.getProperty("Catalog");
+      hash.add(computeRoleString(catalog));
+      return hash;
     }
     catch (PentahoAccessControlException e)
     {

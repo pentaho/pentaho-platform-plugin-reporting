@@ -23,33 +23,21 @@ import org.pentaho.reporting.platform.plugin.messages.Messages;
  */
 public class PentahoCubeFileProvider extends DefaultCubeFileProvider
 {
-  private String definedFile;
-
   public PentahoCubeFileProvider(final String definedFile)
   {
-    this.definedFile = definedFile;
-  }
-
-  public String getDefinedFile()
-  {
-    return definedFile;
+    setMondrianCubeFile(definedFile);
   }
 
   public String getCubeFile(final ResourceManager resourceManager,
                             final ResourceKey contextKey) throws ReportDataFactoryException
   {
-    final String superDef = getDefinedFile();
+    final String superDef = getMondrianCubeFile();
     if (superDef == null)
     {
       throw new ReportDataFactoryException(Messages.getInstance().getString("ReportPlugin.noSchemaDefined")); //$NON-NLS-1$
     }
 
     final File cubeFile = new File(superDef);
-    if (cubeFile.exists())
-    {
-      return superDef;
-    }
-
     final String name = cubeFile.getName();
     final List<MondrianCatalog> catalogs =
         MondrianCatalogHelper.getInstance().listCatalogs(PentahoSessionHolder.getSession(), false);

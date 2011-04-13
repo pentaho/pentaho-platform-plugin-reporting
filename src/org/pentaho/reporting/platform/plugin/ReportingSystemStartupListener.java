@@ -16,12 +16,17 @@ package org.pentaho.reporting.platform.plugin;
  * @author mbatchel, mdamour
  */
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.api.engine.IPentahoSystemListener;
-import org.pentaho.platform.util.logging.Logger;
 import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
+import org.pentaho.reporting.platform.plugin.messages.Messages;
 
-public class ReportingSystemStartupListener implements IPentahoSystemListener {
+public class ReportingSystemStartupListener implements IPentahoSystemListener
+{
+  private static final Log logger = LogFactory.getLog(ReportingSystemStartupListener.class);
+
   public ReportingSystemStartupListener()
   {
   }
@@ -48,13 +53,20 @@ public class ReportingSystemStartupListener implements IPentahoSystemListener {
         {
           ClassicEngineBoot.setUserConfig(new ReportingConfiguration());
           ClassicEngineBoot.getInstance().start();
-          Logger.debug(ClassicEngineBoot.class.getName(), ClassicEngineBoot.class.getSimpleName() + " startup invoked"); //$NON-NLS-1$
+          logger.debug(Messages.getInstance().getString("ReportPlugin.logDebugStartBoot")); //$NON-NLS-1$
+
+          if (ClassicEngineBoot.getInstance().isBootFailed())
+          {
+            logger.warn(Messages.getInstance().getString("ReportPlugin.logErrorGeneralBootError"),
+                ClassicEngineBoot.getInstance().getBootFailureReason()); //$NON-NLS-1$
+          }
           return true;
         }
       }
-    } catch (Exception ex)
+    }
+    catch (Exception ex)
     {
-      Logger.warn(ReportingSystemStartupListener.class.getName(), "Failed to startup: " + ReportingSystemStartupListener.class.getSimpleName(), ex); //$NON-NLS-1$
+      logger.warn(Messages.getInstance().getString("ReportPlugin.logErrorFatalBootError"), ex); //$NON-NLS-1$
     }
     return false;
   }

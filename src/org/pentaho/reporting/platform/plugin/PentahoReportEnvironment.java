@@ -13,8 +13,8 @@ import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.engine.security.SecurityHelper;
 import org.pentaho.platform.util.messages.LocaleHelper;
 import org.pentaho.reporting.engine.classic.core.DefaultReportEnvironment;
-import org.pentaho.reporting.engine.classic.core.modules.output.csv.CSVQuoter;
 import org.pentaho.reporting.libraries.base.config.Configuration;
+import org.pentaho.reporting.libraries.base.util.CSVQuoter;
 import org.pentaho.reporting.platform.plugin.messages.Messages;
 import org.springframework.security.Authentication;
 import org.springframework.security.GrantedAuthority;
@@ -22,11 +22,20 @@ import org.springframework.security.GrantedAuthority;
 public class PentahoReportEnvironment extends DefaultReportEnvironment
 {
   private static final Log logger = LogFactory.getLog(PentahoReportEnvironment.class);
-  private HashMap<String,String> cache;
+  private HashMap<String, String> cache;
+  private String clText;
+  private String clId;
 
   public PentahoReportEnvironment(final Configuration configuration)
   {
+    this(configuration, null);
+  }
+
+  public PentahoReportEnvironment(final Configuration configuration,
+                                  final String clText)
+  {
     super(configuration);
+    this.clText = clText;
   }
 
   public String getEnvironmentProperty(final String key)
@@ -36,16 +45,22 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
       throw new NullPointerException();
     }
 
+    if ("contentLink".equals(key))
+    {
+      return clText;
+    }
+
     if (cache == null)
     {
-      cache = new HashMap<String,String>();
+      cache = new HashMap<String, String>();
     }
+
     final String cached = cache.get(key);
     if (cached != null)
     {
       return cached;
     }
-    
+
     final IPentahoSession session = PentahoSessionHolder.getSession();
     if (PentahoSystem.getApplicationContext() != null)
     {
@@ -72,7 +87,8 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
         final String hostColonPort = getHostColonPort(fullyQualifiedServerUrl);
         cache.put(key, hostColonPort);
         return hostColonPort;
-      } if ("requestContextPath".equals(key)) //$NON-NLS-1$
+      }
+      else if ("requestContextPath".equals(key)) //$NON-NLS-1$
       {
         final String requestContextPath = PentahoRequestContextHolder.getRequestContext().getContextPath();
         cache.put(key, requestContextPath);
@@ -99,33 +115,30 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
     {
       if ("username".equals(key)) //$NON-NLS-1$
       {
-        Authentication authentication = SecurityHelper.getAuthentication(session, true);
+        final Authentication authentication = SecurityHelper.getAuthentication(session, true);
         final String userName = authentication.getName();
         cache.put(key, userName);
         return userName;
       }
       else if ("roles".equals(key)) //$NON-NLS-1$
       {
-        Authentication authentication = SecurityHelper.getAuthentication(session, true);
-        final StringBuffer property = new StringBuffer();
-        //noinspection unchecked
-        final GrantedAuthority[] roles =
-            authentication.getAuthorities();
+        final Authentication authentication = SecurityHelper.getAuthentication(session, true);
+        final StringBuilder property = new StringBuilder();
+        final GrantedAuthority[] roles = authentication.getAuthorities();
         if (roles == null)
         {
           return null;
         }
 
         final int rolesSize = roles.length;
-        if (rolesSize > 0)
+        final CSVQuoter quoter = new CSVQuoter(',', '"');//$NON-NLS-1$
+        for (int i = 0; i < rolesSize; i++)
         {
-          final CSVQuoter quoter = new CSVQuoter(",");//$NON-NLS-1$
-          property.append(roles[0]);
-          for (int i = 1; i < rolesSize; i++)
+          if (i != 0)
           {
             property.append(",");//$NON-NLS-1$
-            property.append(quoter.doQuoting(roles[i].getAuthority()));
           }
+          property.append(quoter.doQuoting(roles[i].getAuthority()));
         }
         return property.toString();
       }
@@ -135,6 +148,12 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
         final Object attribute = session.getAttribute(key.substring("session:".length()));//$NON-NLS-1$
         return String.valueOf(attribute);
       }
+      else if (key.startsWith("global:"))
+      {
+        final Object attribute = PentahoSystem.getGlobalParameters().getParameter(key.substring("global:".length()));//$NON-NLS-1$
+        return String.valueOf(attribute);
+      }
+      
     }
     else
     {
@@ -169,7 +188,7 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
     try
     {
       final URL url = new URL(fullyQualifiedServerUrl);
-      return url.getHost() + ":" + url.getPort();//$NON-NLS-1$ 
+      return url.getHost() + ":" + url.getPort();//$NON-NLS-1$
     }
     catch (Exception e)
     {

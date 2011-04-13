@@ -17,6 +17,7 @@ import org.pentaho.platform.api.repository2.unified.RepositoryFile;
 import org.pentaho.platform.engine.core.audit.AuditHelper;
 import org.pentaho.platform.engine.core.audit.MessageTypes;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
+import org.pentaho.platform.util.UUIDUtil;
 import org.pentaho.platform.util.web.MimeHelper;
 import org.pentaho.reporting.engine.classic.core.AttributeNames;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
@@ -34,10 +35,11 @@ import org.pentaho.reporting.platform.plugin.messages.Messages;
  */
 public class ExecuteReportContentHandler
 {
+  private static final String FORCED_BUFFERED_WRITING = "org.pentaho.reporting.engine.classic.core.modules.output.table.html.ForceBufferedWriting";
   private static final Log logger = LogFactory.getLog(ExecuteReportContentHandler.class);
+
   private IPentahoSession userSession;
   private ReportContentGenerator contentGenerator;
-  private static final String FORCED_BUFFERED_WRITING = "org.pentaho.reporting.engine.classic.core.modules.output.table.html.ForceBufferedWriting";
 
   public ExecuteReportContentHandler(final ReportContentGenerator contentGenerator)
   {
@@ -57,9 +59,14 @@ public class ExecuteReportContentHandler
     StagingHandler reportStagingHandler = null;
     try
     {
+      final Object rawSessionId = inputs.get(ParameterXmlContentHandler.SYS_PARAM_SESSION_ID);
+      if ((rawSessionId instanceof String) == false || "".equals(rawSessionId))
+      {
+        inputs.put(ParameterXmlContentHandler.SYS_PARAM_SESSION_ID, UUIDUtil.getUUIDAsString());
+      }
+
       // produce rendered report
       final SimpleReportingComponent reportComponent = new SimpleReportingComponent();
-      reportComponent.setSession(userSession);
       reportComponent.setReportFileId(fileId);
       reportComponent.setPaginateOutput(true);
       reportComponent.setDefaultOutputTarget(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE);
@@ -203,12 +210,14 @@ public class ExecuteReportContentHandler
       {
         reportStagingHandler.close();
       }
+      
       final long end = System.currentTimeMillis();
       AuditHelper.audit(userSession.getId(), userSession.getName(), fileId.toString(),
           contentGenerator.getObjectName(), getClass().getName(), result, contentGenerator.getInstanceId(),
           "", ((float) (end - start) / 1000), contentGenerator); //$NON-NLS-1$
     }
   }
+
 
   private void sendErrorResponse(final HttpServletResponse response,
                                  final OutputStream outputStream,

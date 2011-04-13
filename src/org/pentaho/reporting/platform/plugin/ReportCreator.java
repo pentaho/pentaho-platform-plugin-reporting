@@ -22,7 +22,6 @@ import java.io.Serializable;
 import java.net.URL;
 import java.util.HashMap;
 
-import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.modules.parser.base.ReportGenerator;
 import org.pentaho.reporting.libraries.resourceloader.Resource;
@@ -39,20 +38,6 @@ public class ReportCreator
     final ReportGenerator generator = ReportGenerator.createInstance();
     final InputSource repDefInputSource = new InputSource(inputStream);
     return generator.parseReport(repDefInputSource, url);
-  }
-
-  /**
-   * @deprecated Use the one without the session instead.
-   * @param fileId
-   * @param session
-   * @return
-   * @throws ResourceException
-   * @throws IOException
-   */
-  public static MasterReport createReport(final Serializable fileId,
-                                          IPentahoSession session) throws ResourceException, IOException
-  {
-    return createReport(fileId);
   }
 
   public static MasterReport createReport(final Serializable fileId) throws ResourceException, IOException

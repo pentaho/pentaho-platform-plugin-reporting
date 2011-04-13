@@ -625,6 +625,12 @@ public class TimeZoneOffsets
     map.put("Zulu", 0);
   }
 
+  /**
+   * Returns the timezone offset in minutes.
+   *
+   * @param timezone
+   * @return
+   */
   public int getOffset(final String timezone)
   {
     final Integer integer = map.get(timezone);

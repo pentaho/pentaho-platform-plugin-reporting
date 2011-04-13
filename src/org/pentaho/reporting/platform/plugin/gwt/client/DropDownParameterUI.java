@@ -8,7 +8,7 @@ import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.SimplePanel;
 
-public class DropDownParameterUI extends SimplePanel
+public class DropDownParameterUI extends SimplePanel implements ParameterUI
 {
   private class ListBoxChangeHandler implements ChangeHandler
   {
@@ -24,25 +24,32 @@ public class DropDownParameterUI extends SimplePanel
 
     public void onChange(final ChangeEvent event)
     {
-      final ListBox listBox = (ListBox) event.getSource();
+      updateSelection((ListBox) event.getSource());
+      controller.fetchParameters(ParameterControllerPanel.ParameterSubmitMode.USERINPUT);
+    }
+    
+    public void updateSelection(ListBox listBox) {
       final ArrayList<String> selectedItems = new ArrayList<String>();
       for (int i = 0; i < listBox.getItemCount(); i++)
       {
         if (listBox.isItemSelected(i))
         {
-          selectedItems.add(listBox.getValue(i));
+          selectedItems.add(values.get(i));
         }
       }
       controller.getParameterMap().setSelectedValues
           (parameterName, selectedItems.toArray(new String[selectedItems.size()]));
-      controller.fetchParameters(true);
     }
   }
 
+  private ListBox listBox;
+  private ArrayList<String> values;
+
   public DropDownParameterUI(final ParameterControllerPanel controller, final Parameter parameterElement)
   {
-    final ListBox listBox = new ListBox(false);
+    listBox = new ListBox(false);
     listBox.setVisibleItemCount(1);
+    values = new ArrayList<String>();
 
     boolean hasSelection = false;
     final List<ParameterSelection> choices = parameterElement.getSelections();
@@ -51,7 +58,8 @@ public class DropDownParameterUI extends SimplePanel
       final ParameterSelection choiceElement = choices.get(i);
       final String choiceLabel = choiceElement.getLabel(); //$NON-NLS-1$
       final String choiceValue = choiceElement.getValue(); //$NON-NLS-1$
-      listBox.addItem(choiceLabel, choiceValue);
+      listBox.addItem(choiceLabel, String.valueOf(i));
+      values.add(choiceValue);
       final boolean selected = choiceElement.isSelected();
       listBox.setItemSelected(i, selected);
       if (selected)
@@ -60,18 +68,20 @@ public class DropDownParameterUI extends SimplePanel
       }
     }
 
-    // only force selection if we're using a 'drop-down' style
-    if (hasSelection == false) //$NON-NLS-1$
-    {
-      if (listBox.getItemCount() > 0)
-      {
-        listBox.setItemSelected(0, true);
-        controller.getParameterMap().setSelectedValue(parameterElement.getName(), listBox.getValue(0));
-      }
-    }
+    ListBoxChangeHandler lbChangeHandler = new ListBoxChangeHandler(controller, parameterElement.getName());
+    listBox.addChangeHandler(lbChangeHandler);
 
-    listBox.addChangeHandler(new ListBoxChangeHandler(controller, parameterElement.getName()));
+    if (hasSelection == false) {
+      listBox.setSelectedIndex(0);
+    }
+    
+    lbChangeHandler.updateSelection(listBox);
+    
     setWidget(listBox);
   }
 
+  public void setEnabled(final boolean enabled)
+  {
+    listBox.setEnabled(enabled); 
+  }
 }

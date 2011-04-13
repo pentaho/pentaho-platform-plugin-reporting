@@ -21,7 +21,7 @@ import org.pentaho.gwt.widgets.client.utils.string.StringUtils;
 /**
  * Global container class that performs a controlled initialization of the viewer application.
  * The true magic happens in the ReportContainer class.
- * 
+ *
  */
 public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback
 {
@@ -38,7 +38,7 @@ public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback
 
   public enum RENDER_TYPE
   {
-    REPORT, XML, SUBSCRIBE, DOWNLOAD
+    REPORT, XML, PARAMETER, SUBSCRIBE, DOWNLOAD
   }
 
   public void onModuleLoad()

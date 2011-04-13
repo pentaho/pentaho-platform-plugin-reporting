@@ -29,10 +29,9 @@ import org.pentaho.reporting.libraries.base.util.MemoryByteArrayOutputStream;
  */
 public class StagingHandler
 {
-
-  private final static Log logger = LogFactory.getLog(StagingHandler.class);
-
+  private static final Log logger = LogFactory.getLog(StagingHandler.class);
   private static final StagingMode DEFAULT = StagingMode.THRU;
+
   private OutputStream destination;
   private TrackingOutputStream stagingStream;
   private File tmpFile;
