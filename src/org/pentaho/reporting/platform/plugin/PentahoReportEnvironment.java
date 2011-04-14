@@ -22,9 +22,8 @@ import org.springframework.security.GrantedAuthority;
 public class PentahoReportEnvironment extends DefaultReportEnvironment
 {
   private static final Log logger = LogFactory.getLog(PentahoReportEnvironment.class);
-  private HashMap<String, String> cache;
+  private HashMap<String, Object> cache;
   private String clText;
-  private String clId;
 
   public PentahoReportEnvironment(final Configuration configuration)
   {
@@ -38,7 +37,7 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
     this.clText = clText;
   }
 
-  public String getEnvironmentProperty(final String key)
+  public Object getEnvironmentProperty(final String key)
   {
     if (key == null)
     {
@@ -52,10 +51,10 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
 
     if (cache == null)
     {
-      cache = new HashMap<String, String>();
+      cache = new HashMap<String, Object>();
     }
 
-    final String cached = cache.get(key);
+    final Object cached = cache.get(key);
     if (cached != null)
     {
       return cached;
@@ -145,13 +144,11 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
 
       if (key.startsWith("session:"))//$NON-NLS-1$
       {
-        final Object attribute = session.getAttribute(key.substring("session:".length()));//$NON-NLS-1$
-        return String.valueOf(attribute);
+        return session.getAttribute(key.substring("session:".length()));//$NON-NLS-1$
       }
       else if (key.startsWith("global:"))
       {
-        final Object attribute = PentahoSystem.getGlobalParameters().getParameter(key.substring("global:".length()));//$NON-NLS-1$
-        return String.valueOf(attribute);
+        return PentahoSystem.getGlobalParameters().getParameter(key.substring("global:".length()));//$NON-NLS-1$
       }
       
     }
