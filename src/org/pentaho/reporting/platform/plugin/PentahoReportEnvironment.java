@@ -22,8 +22,9 @@ import org.springframework.security.GrantedAuthority;
 public class PentahoReportEnvironment extends DefaultReportEnvironment
 {
   private static final Log logger = LogFactory.getLog(PentahoReportEnvironment.class);
-  private HashMap<String, Object> cache;
+  private HashMap<String, String> cache;
   private String clText;
+  private String clId;
 
   public PentahoReportEnvironment(final Configuration configuration)
   {
@@ -37,7 +38,7 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
     this.clText = clText;
   }
 
-  public Object getEnvironmentProperty(final String key)
+  public String getEnvironmentProperty(final String key)
   {
     if (key == null)
     {
@@ -51,10 +52,10 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
 
     if (cache == null)
     {
-      cache = new HashMap<String, Object>();
+      cache = new HashMap<String, String>();
     }
 
-    final Object cached = cache.get(key);
+    final String cached = cache.get(key);
     if (cached != null)
     {
       return cached;
@@ -144,13 +145,15 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
 
       if (key.startsWith("session:"))//$NON-NLS-1$
       {
-        return session.getAttribute(key.substring("session:".length()));//$NON-NLS-1$
+        final Object attribute = session.getAttribute(key.substring("session:".length()));//$NON-NLS-1$
+        return String.valueOf(attribute);
       }
       else if (key.startsWith("global:"))
       {
-        return PentahoSystem.getGlobalParameters().getParameter(key.substring("global:".length()));//$NON-NLS-1$
+        final Object attribute = PentahoSystem.getGlobalParameters().getParameter(key.substring("global:".length()));//$NON-NLS-1$
+        return String.valueOf(attribute);
       }
-      
+
     }
     else
     {
@@ -163,7 +166,12 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
       }
     }
 
-    return super.getEnvironmentProperty(key);
+    final Object environmentProperty = super.getEnvironmentProperty(key);
+    if (environmentProperty == null)
+    {
+      return null;
+    }
+    return String.valueOf(environmentProperty);
   }
 
   private String getBaseServerURL(final String fullyQualifiedServerUrl)
