@@ -3,7 +3,6 @@ package org.pentaho.reporting.platform.plugin;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.net.URL;
 import java.util.Collection;
@@ -16,11 +15,10 @@ import javax.print.PrintServiceLookup;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.pentaho.platform.api.engine.IAcceptsRuntimeInputs;
+import org.pentaho.platform.api.action.IStreamProcessingAction;
+import org.pentaho.platform.api.action.IStreamingAction;
+import org.pentaho.platform.api.action.IVarArgsAction;
 import org.pentaho.platform.api.engine.IActionSequenceResource;
-import org.pentaho.platform.api.engine.IPentahoSession;
-import org.pentaho.platform.api.engine.IStreamingPojo;
-import org.pentaho.platform.engine.core.system.PentahoRequestContextHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.core.AttributeNames;
 import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
@@ -45,7 +43,6 @@ import org.pentaho.reporting.libraries.base.config.Configuration;
 import org.pentaho.reporting.libraries.base.util.CSVQuoter;
 import org.pentaho.reporting.libraries.base.util.StringUtils;
 import org.pentaho.reporting.libraries.resourceloader.ResourceException;
-import org.pentaho.reporting.libraries.xmlns.common.ParserUtil;
 import org.pentaho.reporting.platform.plugin.cache.DefaultReportCache;
 import org.pentaho.reporting.platform.plugin.cache.NullReportCache;
 import org.pentaho.reporting.platform.plugin.cache.ReportCache;
@@ -55,25 +52,21 @@ import org.pentaho.reporting.platform.plugin.output.CSVOutput;
 import org.pentaho.reporting.platform.plugin.output.EmailOutput;
 import org.pentaho.reporting.platform.plugin.output.PDFOutput;
 import org.pentaho.reporting.platform.plugin.output.PNGOutput;
-import org.pentaho.reporting.platform.plugin.output.PageableContentRepoHtmlOutput;
-import org.pentaho.reporting.platform.plugin.output.PageableHTMLOutput;
 import org.pentaho.reporting.platform.plugin.output.PlainTextOutput;
 import org.pentaho.reporting.platform.plugin.output.RTFOutput;
 import org.pentaho.reporting.platform.plugin.output.ReportOutputHandler;
-import org.pentaho.reporting.platform.plugin.output.StreamContentRepoHtmlOutput;
-import org.pentaho.reporting.platform.plugin.output.StreamHtmlOutput;
 import org.pentaho.reporting.platform.plugin.output.XLSOutput;
 import org.pentaho.reporting.platform.plugin.output.XLSXOutput;
 import org.pentaho.reporting.platform.plugin.output.XmlPageableOutput;
 import org.pentaho.reporting.platform.plugin.output.XmlTableOutput;
 
-public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntimeInputs
+public class SimpleReportingAction implements IStreamProcessingAction, IStreamingAction, IVarArgsAction
 {
 
   /**
    * The logging for logging messages from this component
    */
-  private static final Log log = LogFactory.getLog(SimpleReportingComponent.class);
+  private static final Log log = LogFactory.getLog(SimpleReportingAction.class);
 
   public static final String OUTPUT_TARGET = "output-target"; //$NON-NLS-1$
 
@@ -102,7 +95,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   public static final String PRINTER_NAME = "printer-name"; //$NON-NLS-1$
   public static final String DASHBOARD_MODE = "dashboard-mode"; //$NON-NLS-1$
   private static final String MIME_GENERIC_FALLBACK = "application/octet-stream"; //$NON-NLS-1$
-  public static final String PNG_EXPORT_TYPE = "pageable/X-AWT-Graphics;image-type=png";
+  public static final String PNG_EXPORT_TYPE = "pageable/X-AWT-Graphics;image-type=png"; //$NON-NLS-1$
 
 
   /**
@@ -126,10 +119,9 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   private Map<String, Object> inputs;
   private OutputStream outputStream;
   private InputStream reportDefinitionInputStream;
-  private Boolean useContentRepository;
   private IActionSequenceResource reportDefinition;
-  private Serializable fileId;
-  private boolean paginateOutput;
+  private String reportDefinitionPath;
+  private boolean paginateOutput = false;
   private int acceptedPage;
   private int pageCount;
   private boolean dashboardMode;
@@ -142,13 +134,11 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   /*
    * Default constructor
    */
-
-  public SimpleReportingComponent()
+  public SimpleReportingAction()
   {
     this.inputs = Collections.emptyMap();
     acceptedPage = -1;
     pageCount = -1;
-    useContentRepository = Boolean.FALSE;
     defaultOutputTarget = HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE;
   }
 
@@ -227,29 +217,30 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    *
    * @param reportDefinitionInputStream any kind of InputStream which contains a valid report-definition
    */
-  public void setReportDefinitionInputStream(final InputStream reportDefinitionInputStream)
+  public void setInputStream(InputStream reportDefinitionInputStream)
   {
     this.reportDefinitionInputStream = reportDefinitionInputStream;
   }
 
+  
   /**
    * Returns the path to the report definition (for platform use this is a path in the solution repository)
    *
    * @return reportdefinitionPath
    */
-  public Serializable getReportFileId()
+  public String getReportDefinitionPath()
   {
-    return fileId;
+    return reportDefinitionPath;
   }
 
   /**
    * Sets the path to the report definition (platform path)
    *
-   * @param fileId the path to the report definition.
+   * @param reportDefinitionPath the path to the report definition.
    */
-  public void setReportFileId(final Serializable fileId)
+  public void setReportDefinitionPath(String reportDefinitionPath)
   {
-    this.fileId = fileId;
+    this.reportDefinitionPath = reportDefinitionPath;
   }
 
   /**
@@ -282,16 +273,6 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     this.acceptedPage = acceptedPage;
   }
 
-  /**
-   * This method sets the IPentahoSession to use in order to access the pentaho platform file repository and content repository.
-   *
-   * @param session a valid pentaho session
-   * @deprecated No longer used.
-   */
-  public void setSession(final IPentahoSession session)
-  {
-  }
-
   public boolean isDashboardMode()
   {
     return dashboardMode;
@@ -302,6 +283,10 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     this.dashboardMode = dashboardMode;
   }
 
+  public String getMimeType(String ignored) {
+    return getMimeType();
+  }
+  
   /**
    * This method returns the mime-type for the streaming output based on the effective output target.
    *
@@ -402,21 +387,6 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   }
 
   /**
-   * Gets the useContentRepository flag, needed by subclasses, such as with interactive adhoc
-   *
-   * @return useContentRepository
-   */
-  public boolean getUseContentRepository() 
-  {
-    return useContentRepository;
-  }
-  
-  public void setUseContentRepository(final Boolean useContentRepository)
-  {
-    this.useContentRepository = useContentRepository;
-  }
-
-  /**
    * This method checks if the output is targeting a printer
    *
    * @return true if the output is supposed to go to a printer
@@ -473,54 +443,19 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   /**
    * This method sets the map of *all* the inputs which are available to this component. This allows us to use action-sequence inputs as parameters for our
    * reports.
-   *
-   * @param inputs a Map containing inputs
+   * 
+   * @param inputs
+   *          a Map containing inputs
    */
-  public void setInputs(final Map<String, Object> inputs)
+  public void setVarArgs(Map<String, Object> inputs)
   {
     if (inputs == null)
     {
       this.inputs = Collections.emptyMap();
       return;
     }
-
+    
     this.inputs = inputs;
-    if (inputs.containsKey(OUTPUT_TYPE))
-    {
-      setOutputType(String.valueOf(inputs.get(OUTPUT_TYPE)));
-    }
-    if (inputs.containsKey(OUTPUT_TARGET))
-    {
-      setOutputTarget(String.valueOf(inputs.get(OUTPUT_TARGET)));
-    }
-    if (inputs.containsKey(REPORT_DEFINITION_INPUT))
-    {
-      setReportDefinitionInputStream((InputStream) inputs.get(REPORT_DEFINITION_INPUT));
-    }
-    if (inputs.containsKey(USE_CONTENT_REPOSITORY))
-    {
-      setUseContentRepository((Boolean) inputs.get(USE_CONTENT_REPOSITORY));
-    }
-    if (inputs.containsKey(PAGINATE_OUTPUT))
-    {
-      paginateOutput = "true".equals(String.valueOf(inputs.get(PAGINATE_OUTPUT))); //$NON-NLS-1$
-    }
-    if (inputs.containsKey(ACCEPTED_PAGE))
-    {
-      acceptedPage = ParserUtil.parseInt(String.valueOf(inputs.get(ACCEPTED_PAGE)), -1); //$NON-NLS-1$
-    }
-    if (inputs.containsKey(PRINT))
-    {
-      print = "true".equals(String.valueOf(inputs.get(PRINT))); //$NON-NLS-1$
-    }
-    if (inputs.containsKey(PRINTER_NAME))
-    {
-      printer = String.valueOf(inputs.get(PRINTER_NAME));
-    }
-    if (inputs.containsKey(DASHBOARD_MODE))
-    {
-      dashboardMode = "true".equals(String.valueOf(inputs.get(DASHBOARD_MODE))); //$NON-NLS-1$
-    }
   }
 
   // ----------------------------------------------------------------------------
@@ -571,9 +506,9 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
         // load the report definition as an action-sequence resource
         report = ReportCreator.createReport(reportDefinition.getAddress());
       }
-      else if (fileId != null)
+      else if (reportDefinitionPath != null)
       {
-        report = ReportCreator.createReport(fileId);
+        report = ReportCreator.createReport(reportDefinitionPath);
       }
       else
       {
@@ -981,7 +916,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    */
   public boolean validate() throws Exception
   {
-    if (reportDefinition == null && reportDefinitionInputStream == null && fileId == null)
+    if (reportDefinition == null && reportDefinitionInputStream == null && reportDefinitionPath == null)
     {
       log.error(Messages.getInstance().getString("ReportPlugin.reportDefinitionNotProvided")); //$NON-NLS-1$
       return false;
@@ -999,13 +934,21 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     return true;
   }
 
+
+  public void execute() throws Exception
+  {
+    if(!_execute()) {
+      throw new Exception("execution failed for an unspecified reason");
+    }
+  }
+  
   /**
    * Perform the primary function of this component, this is, to execute. This method will be invoked immediately following a successful validate().
    *
    * @return true if successful execution
    * @throws Exception
    */
-  public boolean execute() throws Exception
+  public boolean _execute() throws Exception
   {
     final MasterReport report = getReport();
 
@@ -1099,89 +1042,86 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       }
     }
 
-    final ReportOutputHandler reportOutputHandler;
-      if (HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE.equals(outputType))
+    ReportOutputHandler reportOutputHandler = null;
+    if (HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE.equals(outputType))
+    {
+      if (dashboardMode)
       {
-        if (dashboardMode)
-        {
-          report.getReportConfiguration().setConfigProperty(HtmlTableModule.BODY_FRAGMENT, "true");
-        }
-        if (useContentRepository)
-        {
-          // use the content repository
-        final Configuration globalConfig = ClassicEngineBoot.getInstance().getGlobalConfig();
-        final String contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN,
-              globalConfig.getConfigProperty("org.pentaho.web.resource.ContentHandler")); //$NON-NLS-1$
-        reportOutputHandler = new PageableContentRepoHtmlOutput(contentHandlerPattern);
-        }
-        else
-        {
-          // don't use the content repository
-        final Configuration globalConfig = ClassicEngineBoot.getInstance().getGlobalConfig();
-        String contentHandlerPattern = PentahoRequestContextHolder.getRequestContext().getContextPath();
-        contentHandlerPattern += (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN,
-            globalConfig.getConfigProperty("org.pentaho.web.ContentHandler")); //$NON-NLS-1$
-        reportOutputHandler = new PageableHTMLOutput(contentHandlerPattern);
-        }
+        report.getReportConfiguration().setConfigProperty(HtmlTableModule.BODY_FRAGMENT, "true");
       }
+      // use the content repository
+      final Configuration globalConfig = ClassicEngineBoot.getInstance().getGlobalConfig();
+//      if (useContentRepository)
+//      {
+//        final String contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN,
+//              globalConfig.getConfigProperty("org.pentaho.web.resource.ContentHandler")); //$NON-NLS-1$
+//        reportOutputHandler = new PageableContentRepoHtmlOutput(contentHandlerPattern);
+//      }
+//      else
+//      {
+//        String contentHandlerPattern = PentahoRequestContextHolder.getRequestContext().getContextPath();
+//        contentHandlerPattern += (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN,
+//            globalConfig.getConfigProperty("org.pentaho.web.ContentHandler")); //$NON-NLS-1$
+//        reportOutputHandler = new PageableHTMLOutput(contentHandlerPattern);
+//      }
+    }
     else if (HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE.equals(outputType))
+    {
+      if (dashboardMode)
       {
-        if (dashboardMode)
-        {
-          report.getReportConfiguration().setConfigProperty(HtmlTableModule.BODY_FRAGMENT, "true");
-        }
-        if (useContentRepository)
-        {
-          // use the content repository
-        final Configuration globalConfig = ClassicEngineBoot.getInstance().getGlobalConfig();
-        final String contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN,
-            globalConfig.getConfigProperty("org.pentaho.web.resource.ContentHandler")); //$NON-NLS-1$
-        reportOutputHandler = new StreamContentRepoHtmlOutput(contentHandlerPattern);
-        }
-        else
-        {
-        final Configuration globalConfig = ClassicEngineBoot.getInstance().getGlobalConfig();
-        String contentHandlerPattern = PentahoRequestContextHolder.getRequestContext().getContextPath();
-        contentHandlerPattern += (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN,
-            globalConfig.getConfigProperty("org.pentaho.web.ContentHandler")); //$NON-NLS-1$
-          // don't use the content repository
-        reportOutputHandler = new StreamHtmlOutput(contentHandlerPattern);
-        }
+        report.getReportConfiguration().setConfigProperty(HtmlTableModule.BODY_FRAGMENT, "true");
       }
+      // use the content repository
+      final Configuration globalConfig = ClassicEngineBoot.getInstance().getGlobalConfig();
+//      if (useContentRepository)
+//      {
+//        final String contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN,
+//            globalConfig.getConfigProperty("org.pentaho.web.resource.ContentHandler")); //$NON-NLS-1$
+//        reportOutputHandler = new StreamContentRepoHtmlOutput(contentHandlerPattern);
+//      }
+//      else
+//      {
+//        String contentHandlerPattern = PentahoRequestContextHolder.getRequestContext().getContextPath();
+//        contentHandlerPattern += (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN,
+//            globalConfig.getConfigProperty("org.pentaho.web.ContentHandler")); //$NON-NLS-1$
+//          // don't use the content repository
+//        reportOutputHandler = new StreamHtmlOutput(contentHandlerPattern);
+//      }
+    }
     else if (PNG_EXPORT_TYPE.equals(outputType))
-      {
+    {
       reportOutputHandler = new PNGOutput();
-      }
+    }
     else if (XmlPageableModule.PAGEABLE_XML_EXPORT_TYPE.equals(outputType))
-      {
+    {
       reportOutputHandler = new XmlPageableOutput();
-      }
+    }
     else if (XmlTableModule.TABLE_XML_EXPORT_TYPE.equals(outputType))
-      {
+    {
       reportOutputHandler = new XmlTableOutput();
-      }
+    }
     else if (PdfPageableModule.PDF_EXPORT_TYPE.equals(outputType))
-      {
+    {
       reportOutputHandler = new PDFOutput();
-      }
+    }
     else if (ExcelTableModule.EXCEL_FLOW_EXPORT_TYPE.equals(outputType))
-      {
+    {
       final InputStream templateInputStream = (InputStream) getInput(XLS_WORKBOOK_PARAM, null);
       reportOutputHandler = new XLSOutput(templateInputStream);
-      }
+    }
     else if (ExcelTableModule.XLSX_FLOW_EXPORT_TYPE.equals(outputType))
-      {
+    {
       final InputStream templateInputStream = (InputStream) getInput(XLS_WORKBOOK_PARAM, null);
       reportOutputHandler = new XLSXOutput(templateInputStream);
-      }
+    }
     else if (CSVTableModule.TABLE_CSV_STREAM_EXPORT_TYPE.equals(outputType))
-      {
+    {
       reportOutputHandler = new CSVOutput();
-      }
+    }
     else if (RTFTableModule.TABLE_RTF_FLOW_EXPORT_TYPE.equals(outputType))
-      {
+    {
       reportOutputHandler = new RTFOutput();
-      }
+    }
     else if (MIME_TYPE_EMAIL.equals(outputType))
     {
       reportOutputHandler = new EmailOutput();
@@ -1193,7 +1133,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     else
     {
       return null;
-  }
+    }
 
     return cache.put(reportCacheKey, reportOutputHandler);
   }
