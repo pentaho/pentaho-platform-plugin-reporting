@@ -47,7 +47,5 @@
       </content-type>
     </content-types>
 
-    <bean id="SimpleReportingComponent" class="org.pentaho.reporting.platform.plugin.SimpleReportingComponent"/>
-
 </plugin>
 
