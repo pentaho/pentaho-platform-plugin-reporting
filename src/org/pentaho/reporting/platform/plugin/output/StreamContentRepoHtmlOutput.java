@@ -48,7 +48,7 @@ public class StreamContentRepoHtmlOutput extends StreamHtmlOutput
     return this;
   }
 
-  public boolean generate(final MasterReport report,
+  public int generate(final MasterReport report,
                           final int acceptedPage,
                           final OutputStream outputStream,
                           final int yieldRate)
@@ -97,7 +97,7 @@ public class StreamContentRepoHtmlOutput extends StreamHtmlOutput
     }
 
     outputStream.flush();
-    return true;
+    return 0;
   }
 
 }

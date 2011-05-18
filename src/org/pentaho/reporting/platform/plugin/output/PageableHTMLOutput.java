@@ -128,31 +128,7 @@ public class PageableHTMLOutput implements ReportOutputHandler
     printer.setDataWriter(dataLocation, dataNameGenerator);
   }
 
-  public int paginate(final MasterReport report,
-                      final int yieldRate) throws ReportProcessingException, IOException, ContentIOException
-  {
-    if (proc == null)
-    {
-      proc = createReportProcessor(report, yieldRate);
-    }
-    reinitOutputTarget();
-    try
-    {
-      if (proc.isPaginated() == false)
-      {
-        proc.paginate();
-      }
-    }
-    finally
-    {
-      printer.setContentWriter(null, null);
-      printer.setDataWriter(null, null);
-    }
-
-    return proc.getLogicalPageCount();
-  }
-
-  public boolean generate(final MasterReport report,
+  public int generate(final MasterReport report,
                           final int acceptedPage,
                           final OutputStream outputStream,
                           final int yieldRate)
@@ -176,6 +152,7 @@ public class PageableHTMLOutput implements ReportOutputHandler
     try
     {
       proc.processReport();
+      return proc.getLogicalPageCount();
     }
     finally
     {
@@ -183,7 +160,6 @@ public class PageableHTMLOutput implements ReportOutputHandler
       printer.setContentWriter(null, null);
       printer.setDataWriter(null, null);
     }
-    return true;
   }
 
   public void close()

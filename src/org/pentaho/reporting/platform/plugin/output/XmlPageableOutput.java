@@ -25,17 +25,6 @@ public class XmlPageableOutput implements ReportOutputHandler
     return this;
   }
 
-  public int paginate(final MasterReport report,
-                      final int yieldRate) throws ReportProcessingException, IOException
-  {
-    if (proc == null)
-    {
-      proc = createProcessor(report, yieldRate);
-    }
-    proc.paginate();
-    return proc.getPhysicalPageCount();
-  }
-
   private PageableReportProcessor createProcessor(final MasterReport report, final int yieldRate)
       throws ReportProcessingException
   {
@@ -50,7 +39,7 @@ public class XmlPageableOutput implements ReportOutputHandler
     return proc;
   }
 
-  public boolean generate(final MasterReport report,
+  public int generate(final MasterReport report,
                           final int acceptedPage,
                           final OutputStream outputStream,
                           final int yieldRate) throws ReportProcessingException, IOException
@@ -69,7 +58,7 @@ public class XmlPageableOutput implements ReportOutputHandler
       }
       proxyOutputStream.setParent(outputStream);
       proc.processReport();
-      return true;
+      return proc.getPhysicalPageCount();
     }
     finally
     {

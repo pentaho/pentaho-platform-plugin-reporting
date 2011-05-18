@@ -905,9 +905,9 @@ public class ParameterXmlContentHandler
     reportComponent.setAcceptedPage(-1);
 
     // we can ONLY get the # of pages by asking the report to run
-    if (reportComponent.validate())
+    if (reportComponent.validate() && reportComponent.execute())
     {
-      final int totalPageCount = reportComponent.paginate();
+      final int totalPageCount = reportComponent.getPageCount();
       if (totalPageCount == 0)
       {
         return;

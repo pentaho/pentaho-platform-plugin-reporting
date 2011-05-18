@@ -21,13 +21,7 @@ public class RTFOutput implements ReportOutputHandler
     return this;
   }
 
-  public int paginate(final MasterReport report,
-                      final int yieldRate) throws ReportProcessingException, IOException
-  {
-    return 0;
-  }
-
-  public boolean generate(final MasterReport report,
+  public int generate(final MasterReport report,
                           final int acceptedPage,
                           final OutputStream outputStream,
                           final int yieldRate) throws ReportProcessingException, IOException
@@ -42,7 +36,7 @@ public class RTFOutput implements ReportOutputHandler
     try
     {
       proc.processReport();
-      return true;
+      return 0;
     }
     finally
     {
