@@ -19,6 +19,7 @@ import org.pentaho.platform.api.action.IStreamProcessingAction;
 import org.pentaho.platform.api.action.IStreamingAction;
 import org.pentaho.platform.api.action.IVarArgsAction;
 import org.pentaho.platform.api.engine.IActionSequenceResource;
+import org.pentaho.platform.engine.core.system.PentahoRequestContextHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.core.AttributeNames;
 import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
@@ -52,9 +53,11 @@ import org.pentaho.reporting.platform.plugin.output.CSVOutput;
 import org.pentaho.reporting.platform.plugin.output.EmailOutput;
 import org.pentaho.reporting.platform.plugin.output.PDFOutput;
 import org.pentaho.reporting.platform.plugin.output.PNGOutput;
+import org.pentaho.reporting.platform.plugin.output.PageableHTMLOutput;
 import org.pentaho.reporting.platform.plugin.output.PlainTextOutput;
 import org.pentaho.reporting.platform.plugin.output.RTFOutput;
 import org.pentaho.reporting.platform.plugin.output.ReportOutputHandler;
+import org.pentaho.reporting.platform.plugin.output.StreamHtmlOutput;
 import org.pentaho.reporting.platform.plugin.output.XLSOutput;
 import org.pentaho.reporting.platform.plugin.output.XLSXOutput;
 import org.pentaho.reporting.platform.plugin.output.XmlPageableOutput;
@@ -1051,19 +1054,10 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
       }
       // use the content repository
       final Configuration globalConfig = ClassicEngineBoot.getInstance().getGlobalConfig();
-//      if (useContentRepository)
-//      {
-//        final String contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN,
-//              globalConfig.getConfigProperty("org.pentaho.web.resource.ContentHandler")); //$NON-NLS-1$
-//        reportOutputHandler = new PageableContentRepoHtmlOutput(contentHandlerPattern);
-//      }
-//      else
-//      {
-//        String contentHandlerPattern = PentahoRequestContextHolder.getRequestContext().getContextPath();
-//        contentHandlerPattern += (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN,
-//            globalConfig.getConfigProperty("org.pentaho.web.ContentHandler")); //$NON-NLS-1$
-//        reportOutputHandler = new PageableHTMLOutput(contentHandlerPattern);
-//      }
+      String contentHandlerPattern = PentahoRequestContextHolder.getRequestContext().getContextPath();
+      contentHandlerPattern += (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN,
+          globalConfig.getConfigProperty("org.pentaho.web.ContentHandler")); //$NON-NLS-1$
+      reportOutputHandler = new PageableHTMLOutput(contentHandlerPattern);
     }
     else if (HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE.equals(outputType))
     {
@@ -1073,20 +1067,11 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
       }
       // use the content repository
       final Configuration globalConfig = ClassicEngineBoot.getInstance().getGlobalConfig();
-//      if (useContentRepository)
-//      {
-//        final String contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN,
-//            globalConfig.getConfigProperty("org.pentaho.web.resource.ContentHandler")); //$NON-NLS-1$
-//        reportOutputHandler = new StreamContentRepoHtmlOutput(contentHandlerPattern);
-//      }
-//      else
-//      {
-//        String contentHandlerPattern = PentahoRequestContextHolder.getRequestContext().getContextPath();
-//        contentHandlerPattern += (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN,
-//            globalConfig.getConfigProperty("org.pentaho.web.ContentHandler")); //$NON-NLS-1$
-//          // don't use the content repository
-//        reportOutputHandler = new StreamHtmlOutput(contentHandlerPattern);
-//      }
+      String contentHandlerPattern = PentahoRequestContextHolder.getRequestContext().getContextPath();
+      contentHandlerPattern += (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN,
+          globalConfig.getConfigProperty("org.pentaho.web.ContentHandler")); //$NON-NLS-1$
+        // don't use the content repository
+      reportOutputHandler = new StreamHtmlOutput(contentHandlerPattern);
     }
     else if (PNG_EXPORT_TYPE.equals(outputType))
     {
