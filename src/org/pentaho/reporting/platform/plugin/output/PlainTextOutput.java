@@ -24,13 +24,7 @@ public class PlainTextOutput implements ReportOutputHandler
     return this;
   }
 
-  public int paginate(final MasterReport report,
-                      final int yieldRate) throws ReportProcessingException, IOException, ContentIOException
-  {
-    return 0;
-  }
-
-  public boolean generate(final MasterReport report,
+  public int generate(final MasterReport report,
                           final int acceptedPage,
                           final OutputStream outputStream,
                           final int yieldRate) throws ReportProcessingException, IOException, ContentIOException
@@ -44,13 +38,13 @@ public class PlainTextOutput implements ReportOutputHandler
         proc.paginate();
       }
       proc.processReport();
+      return 0;
     }
     finally
     {
       proc.close();
       proxyOutputStream.setParent(null);
     }
-    return true;
   }
 
   private PageableReportProcessor create(final MasterReport report, final int yieldRate)

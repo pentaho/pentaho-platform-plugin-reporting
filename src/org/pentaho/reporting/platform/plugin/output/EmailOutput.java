@@ -39,7 +39,7 @@ public class EmailOutput implements ReportOutputHandler
     return 0;
   }
 
-  public boolean generate(final MasterReport report,
+  public int generate(final MasterReport report,
                           final int acceptedPage,
                           final OutputStream outputStream,
                           final int yieldRate) throws ReportProcessingException, IOException, ContentIOException
@@ -47,7 +47,7 @@ public class EmailOutput implements ReportOutputHandler
     final IApplicationContext ctx = PentahoSystem.getApplicationContext();
     if (ctx == null)
     {
-      return false;
+      return -1;
     }
 
     try
@@ -76,7 +76,7 @@ public class EmailOutput implements ReportOutputHandler
         dataRepository.writeEmail(outputStream);
 
         outputStream.flush();
-        return true;
+        return 0;
       }
       finally
       {

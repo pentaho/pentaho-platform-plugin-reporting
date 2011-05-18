@@ -23,12 +23,6 @@ public class XmlTableOutput implements ReportOutputHandler
     return this;
   }
 
-  public int paginate(final MasterReport report,
-                      final int yieldRate) throws ReportProcessingException, IOException
-  {
-    return 0;
-  }
-
   private StreamReportProcessor createProcessor(final MasterReport report,
                                                 final int yieldRate)
       throws ReportProcessingException
@@ -45,7 +39,7 @@ public class XmlTableOutput implements ReportOutputHandler
     return proc;
   }
 
-  public boolean generate(final MasterReport report,
+  public int generate(final MasterReport report,
                           final int acceptedPage,
                           final OutputStream outputStream,
                           final int yieldRate) throws ReportProcessingException, IOException
@@ -59,7 +53,7 @@ public class XmlTableOutput implements ReportOutputHandler
 
       proxyOutputStream.setParent(outputStream);
       proc.processReport();
-      return true;
+      return 0;
     }
     finally
     {

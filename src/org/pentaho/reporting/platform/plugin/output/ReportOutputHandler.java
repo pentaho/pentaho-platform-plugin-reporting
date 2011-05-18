@@ -28,11 +28,7 @@ public interface ReportOutputHandler
    * @throws IOException if there is an IO error.
    * @throws ContentIOException if there is an IO error.
    */
-  public int paginate(final MasterReport report,
-                             final int yieldRate)
-      throws ReportProcessingException, IOException, ContentIOException;
-
-  public boolean generate(final MasterReport report,
+  public int generate(final MasterReport report,
                                  final int acceptedPage,
                                  final OutputStream outputStream,
                                  final int yieldRate)

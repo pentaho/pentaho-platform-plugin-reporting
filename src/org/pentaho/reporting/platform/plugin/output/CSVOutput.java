@@ -21,13 +21,7 @@ public class CSVOutput implements ReportOutputHandler
     return this;
   }
 
-  public int paginate(final MasterReport report,
-                      final int yieldRate) throws ReportProcessingException, IOException
-  {
-    return 0;
-  }
-
-  public boolean generate(final MasterReport report,
+  public int generate(final MasterReport report,
                           final int acceptedPage,
                           final OutputStream outputStream,
                           final int yieldRate) throws ReportProcessingException, IOException, ContentIOException
@@ -44,7 +38,7 @@ public class CSVOutput implements ReportOutputHandler
     {
       proc.processReport();
       proc.close();
-      return true;
+      return 0;
     }
     finally
     {

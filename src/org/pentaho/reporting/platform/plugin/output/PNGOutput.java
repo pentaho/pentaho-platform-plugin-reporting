@@ -29,23 +29,6 @@ public class PNGOutput implements ReportOutputHandler
     return this;
   }
 
-  public int paginate(final MasterReport report,
-                      final int yieldRate)
-      throws ReportProcessingException, IOException, ContentIOException
-  {
-    if (proc == null)
-    {
-      proc = create(report, yieldRate);
-    }
-
-    if (proc.isPaginated() == false)
-    {
-      proc.paginate();
-    }
-
-    return proc.getNumberOfPages();
-  }
-
   public void close()
   {
     if (proc != null)
@@ -54,7 +37,7 @@ public class PNGOutput implements ReportOutputHandler
     }
   }
 
-  public boolean generate(final MasterReport report,
+  public int generate(final MasterReport report,
                           final int acceptedPage,
                           final OutputStream outputStream,
                           final int yieldRate)
@@ -73,7 +56,7 @@ public class PNGOutput implements ReportOutputHandler
 
     if (pageCount <= acceptedPage)
     {
-      return false;
+      return -1;
     }
 
     final BufferedImage image = createImage(proc.getPageFormat(acceptedPage));
@@ -95,7 +78,7 @@ public class PNGOutput implements ReportOutputHandler
     outputStream.write(data);
     outputStream.flush();
     outputStream.close();
-    return true;
+    return proc.getNumberOfPages();
   }
 
   private PrintReportProcessor create(final MasterReport report, final int yieldRate)

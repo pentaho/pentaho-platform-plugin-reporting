@@ -152,7 +152,7 @@ public class PageableHTMLOutput implements ReportOutputHandler
     return proc.getLogicalPageCount();
   }
 
-  public boolean generate(final MasterReport report,
+  public int generate(final MasterReport report,
                           final int acceptedPage,
                           final OutputStream outputStream,
                           final int yieldRate)
@@ -176,6 +176,7 @@ public class PageableHTMLOutput implements ReportOutputHandler
     try
     {
       proc.processReport();
+      return proc.getLogicalPageCount();
     }
     finally
     {
@@ -183,7 +184,6 @@ public class PageableHTMLOutput implements ReportOutputHandler
       printer.setContentWriter(null, null);
       printer.setDataWriter(null, null);
     }
-    return true;
   }
 
   public void close()

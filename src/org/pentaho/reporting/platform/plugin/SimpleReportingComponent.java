@@ -1056,7 +1056,8 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       {
         try
         {
-          return reportOutputHandler.generate(report, acceptedPage, outputStream, getYieldRate());
+          pageCount = reportOutputHandler.generate(report, acceptedPage, outputStream, getYieldRate());
+       	  return pageCount != -1;
         }
         finally
         {
@@ -1197,61 +1198,6 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     }
 
     return cache.put(reportCacheKey, reportOutputHandler);
-  }
-
-  /**
-   * Perform a pagination run.
-   *
-   * @return the number of pages or streams generated.
-   * @throws IOException       if an IO error occurred while loading the report.
-   * @throws ResourceException if a resource loading error occurred.
-   */
-  public int paginate() throws IOException, ResourceException
-  {
-    final MasterReport report = getReport();
-
-    try
-    {
-      final ParameterContext parameterContext = new DefaultParameterContext(report);
-      // open parameter context
-      final ValidationResult vr = applyInputsToReportParameters(parameterContext, null);
-      if (vr.isEmpty() == false)
-      {
-        return 0;
-      }
-
-      parameterContext.close();
-
-      if (isPrint())
-      {
-        return 0;
-      }
-
-      final String outputType = computeEffectiveOutputTarget();
-      final ReportOutputHandler reportOutputHandler = createOutputHandlerForOutputType(outputType);
-      if (reportOutputHandler == null)
-      {
-        log.warn(Messages.getInstance().getString("ReportPlugin.warnUnprocessableRequest", outputType));
-        return 0;
-      }
-      synchronized (reportOutputHandler.getReportLock())
-      {
-        try
-        {
-          return reportOutputHandler.paginate(report, getYieldRate());
-        }
-        finally
-        {
-          reportOutputHandler.close();
-        }
-      }
-    }
-    catch (Throwable t)
-    {
-      log.error(Messages.getInstance().getString("ReportPlugin.executionFailed"), t); //$NON-NLS-1$
-    }
-    // lets not pretend we were successfull, if the export type was not a valid one.
-    return 0;
   }
 
   protected String getViewerSessionId()

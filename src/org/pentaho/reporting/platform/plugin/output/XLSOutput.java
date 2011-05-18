@@ -40,13 +40,6 @@ public class XLSOutput implements ReportOutputHandler
     return this;
   }
 
-  public int paginate(final MasterReport report,
-                      final int yieldRate)
-      throws ReportProcessingException, IOException
-  {
-    return 0;
-  }
-
   private FlowReportProcessor createProcessor(final MasterReport report, final int yieldRate)
       throws ReportProcessingException
   {
@@ -63,7 +56,7 @@ public class XLSOutput implements ReportOutputHandler
     return reportProcessor;
   }
 
-  public boolean generate(final MasterReport report,
+  public int generate(final MasterReport report,
                           final int acceptedPage,
                           final OutputStream outputStream,
                           final int yieldRate)
@@ -81,7 +74,7 @@ public class XLSOutput implements ReportOutputHandler
 
       reportProcessor.processReport();
       outputStream.flush();
-      return true;
+      return 0;
     }
     finally
     {
