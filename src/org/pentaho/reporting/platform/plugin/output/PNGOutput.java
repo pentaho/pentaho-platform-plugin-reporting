@@ -37,6 +37,10 @@ public class PNGOutput implements ReportOutputHandler
     }
   }
 
+  public int paginate(MasterReport report, int yieldRate) throws ReportProcessingException, IOException, ContentIOException {
+    return 0;
+  }
+  
   public int generate(final MasterReport report,
                           final int acceptedPage,
                           final OutputStream outputStream,
@@ -78,7 +82,7 @@ public class PNGOutput implements ReportOutputHandler
     outputStream.write(data);
     outputStream.flush();
     outputStream.close();
-    return proc.getNumberOfPages();
+    return 0;
   }
 
   private PrintReportProcessor create(final MasterReport report, final int yieldRate)

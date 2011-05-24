@@ -1,5 +1,4 @@
 body {
-  background-color: white;
   color: black;
   font-family: Tahoma, Arial, Helvetica, sans-serif;
   font-size: 10pt;
@@ -93,8 +92,6 @@ body {
 }
 
 .parameter-submit-panel {
-	background-color: #cccccc;
-	border-top: 1px solid #777777;
 	padding: 3px 0px 3px 10px;
 	margin-top: 10px;
 }
@@ -193,6 +190,7 @@ body {
   padding-top: 5px;
   padding-bottom: 5px;
   padding-left: 10px;
+  margin-top: 5px;
 }
 
 .pageControllerButton {
@@ -338,4 +336,13 @@ td.datePickerMonth {
   overflow:hidden;
   height: 0px;
   width: 0px;
+}
+
+
+
+.parameter-content-panel {
+	background-color: #9f9f9f;
+	border: 1px solid black;
+	margin: 0px 10px 10px 10px;
+	padding: 10px;
 }

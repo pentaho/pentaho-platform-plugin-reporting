@@ -38,7 +38,18 @@ public class XmlPageableOutput implements ReportOutputHandler
     }
     return proc;
   }
-
+  
+  public int paginate(final MasterReport report,
+      final int yieldRate) throws ReportProcessingException, IOException
+  {
+    if (proc == null)
+    {
+      proc = createProcessor(report, yieldRate);
+    }
+    proc.paginate();
+    return proc.getPhysicalPageCount();
+  }
+  
   public int generate(final MasterReport report,
                           final int acceptedPage,
                           final OutputStream outputStream,

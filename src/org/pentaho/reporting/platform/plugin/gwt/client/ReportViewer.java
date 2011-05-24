@@ -131,12 +131,14 @@ public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback
     }
 
     final DialogBox dialogBox = new DialogBox(false, true);
+    dialogBox.setStylePrimaryName("pentaho-dialog");
     dialogBox.setText(title);
 
     final Frame frame = new Frame(url);
     frame.setSize(width, height);
 
     final Button okButton = new Button(messages.getString("ok", "OK")); //$NON-NLS-1$ //$NON-NLS-2$
+    okButton.setStyleName("pentaho-button");
     okButton.addClickHandler(new ClickHandler()
     {
       public void onClick(final ClickEvent event)

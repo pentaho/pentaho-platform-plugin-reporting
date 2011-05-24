@@ -9,6 +9,7 @@ import org.pentaho.reporting.engine.classic.core.layout.output.ReportProcessor;
 import org.pentaho.reporting.engine.classic.core.layout.output.YieldReportListener;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.base.FlowReportProcessor;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.rtf.FlowRTFOutputProcessor;
+import org.pentaho.reporting.libraries.repository.ContentIOException;
 
 public class RTFOutput implements ReportOutputHandler
 {
@@ -21,6 +22,10 @@ public class RTFOutput implements ReportOutputHandler
     return this;
   }
 
+  public int paginate(MasterReport report, int yieldRate) throws ReportProcessingException, IOException, ContentIOException {
+    return 0;
+  }
+  
   public int generate(final MasterReport report,
                           final int acceptedPage,
                           final OutputStream outputStream,

@@ -434,6 +434,7 @@ public class ReportViewerUtil
     }
 
     final DialogBox dialogBox = new DialogBox(false, true);
+    dialogBox.setStylePrimaryName("pentaho-dialog");
     dialogBox.setText(title);
     final VerticalPanel dialogContent = new VerticalPanel();
     DOM.setStyleAttribute(dialogContent.getElement(), "padding", "0px 5px 0px 5px"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -443,6 +444,7 @@ public class ReportViewerUtil
     buttonPanel.setWidth("100%"); //$NON-NLS-1$
     buttonPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
     final Button okButton = new Button(messages.getString("ok", "OK")); //$NON-NLS-1$ //$NON-NLS-2$
+    okButton.setStyleName("pentaho-button");
     okButton.addClickHandler(new ClickHandler()
     {
       public void onClick(final ClickEvent event)

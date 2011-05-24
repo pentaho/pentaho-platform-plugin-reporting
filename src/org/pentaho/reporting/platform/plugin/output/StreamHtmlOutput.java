@@ -55,6 +55,10 @@ public class StreamHtmlOutput implements ReportOutputHandler
         ("org.pentaho.reporting.platform.plugin.AlwaysDeleteHtmlDataFiles"));
   }
 
+  public int paginate(MasterReport report, int yieldRate) throws ReportProcessingException, IOException, ContentIOException {
+    return 0;
+  }
+  
   public int generate(final MasterReport report,
                           final int acceptedPage,
                           final OutputStream outputStream,

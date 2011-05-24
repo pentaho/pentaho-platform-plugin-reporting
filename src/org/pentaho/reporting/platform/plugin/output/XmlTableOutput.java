@@ -8,6 +8,7 @@ import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
 import org.pentaho.reporting.engine.classic.core.layout.output.YieldReportListener;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.base.StreamReportProcessor;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.xml.XmlTableOutputProcessor;
+import org.pentaho.reporting.libraries.repository.ContentIOException;
 
 public class XmlTableOutput implements ReportOutputHandler
 {
@@ -39,6 +40,10 @@ public class XmlTableOutput implements ReportOutputHandler
     return proc;
   }
 
+  public int paginate(MasterReport report, int yieldRate) throws ReportProcessingException, IOException, ContentIOException {
+    return 0;
+  }
+  
   public int generate(final MasterReport report,
                           final int acceptedPage,
                           final OutputStream outputStream,
