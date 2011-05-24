@@ -34,6 +34,10 @@ public interface ReportOutputHandler
                                  final int yieldRate)
       throws ReportProcessingException, IOException, ContentIOException;
 
+  public int paginate(final MasterReport report,
+      final int yieldRate)
+      throws ReportProcessingException, IOException, ContentIOException;  
+  
   public void close();
 
   public Object getReportLock();

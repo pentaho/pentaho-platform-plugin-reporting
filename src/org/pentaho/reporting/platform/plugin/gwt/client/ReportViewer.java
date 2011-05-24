@@ -21,7 +21,7 @@ import org.pentaho.gwt.widgets.client.utils.string.StringUtils;
 /**
  * Global container class that performs a controlled initialization of the viewer application.
  * The true magic happens in the ReportContainer class.
- *
+ * 
  */
 public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback
 {
@@ -131,12 +131,14 @@ public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback
     }
 
     final DialogBox dialogBox = new DialogBox(false, true);
+    dialogBox.setStylePrimaryName("pentaho-dialog");
     dialogBox.setText(title);
 
     final Frame frame = new Frame(url);
     frame.setSize(width, height);
 
     final Button okButton = new Button(messages.getString("ok", "OK")); //$NON-NLS-1$ //$NON-NLS-2$
+    okButton.setStyleName("pentaho-button");
     okButton.addClickHandler(new ClickHandler()
     {
       public void onClick(final ClickEvent event)

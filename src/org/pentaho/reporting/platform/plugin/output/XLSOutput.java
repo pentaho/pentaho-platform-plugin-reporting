@@ -12,6 +12,7 @@ import org.pentaho.reporting.engine.classic.core.layout.output.YieldReportListen
 import org.pentaho.reporting.engine.classic.core.modules.output.table.base.FlowReportProcessor;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.xls.FlowExcelOutputProcessor;
 import org.pentaho.reporting.libraries.base.util.IOUtils;
+import org.pentaho.reporting.libraries.repository.ContentIOException;
 
 public class XLSOutput implements ReportOutputHandler
 {
@@ -56,6 +57,10 @@ public class XLSOutput implements ReportOutputHandler
     return reportProcessor;
   }
 
+  public int paginate(MasterReport report, int yieldRate) throws ReportProcessingException, IOException, ContentIOException {
+    return 0;
+  }
+  
   public int generate(final MasterReport report,
                           final int acceptedPage,
                           final OutputStream outputStream,

@@ -43,6 +43,7 @@ import com.google.gwt.xml.client.NodeList;
 import com.google.gwt.xml.client.XMLParser;
 import org.pentaho.gwt.widgets.client.utils.i18n.ResourceBundle;
 import org.pentaho.reporting.platform.plugin.gwt.client.ReportViewer.RENDER_TYPE;
+import org.pentaho.reporting.platform.plugin.gwt.client.images.DisclosureImages;
 import org.pentaho.reporting.platform.plugin.gwt.client.images.PageImages;
 
 public class ParameterControllerPanel extends VerticalPanel
@@ -446,8 +447,8 @@ public class ParameterControllerPanel extends VerticalPanel
   public ParameterControllerPanel(final ReportContainer container, final ResourceBundle messages)
   {
     focusComponent = new TextBox();
-    focusComponent.setHeight("1px");
-    focusComponent.setWidth("1px");
+    focusComponent.setHeight("0px");
+    focusComponent.setWidth("0px");
     focusComponent.setStylePrimaryName("parameter-panel-focus-widget");
 
     this.messages = messages;
@@ -457,16 +458,17 @@ public class ParameterControllerPanel extends VerticalPanel
     parameterMap = new ParameterValues();
     parameterWidgets = new ArrayList<ParameterUI>();
 
-    parameterDisclosurePanel = new DisclosurePanel(messages.getString("reportParameters", "Report Parameters")); //$NON-NLS-1$ //$NON-NLS-2$
-    parameterDisclosurePanel.setStyleName("parameter-disclosure"); //$NON-NLS-1$
+    parameterDisclosurePanel = new DisclosurePanel(DisclosureImages.images, messages.getString("reportParameters", "Report Parameters"), true); //$NON-NLS-1$ //$NON-NLS-2$
+    parameterDisclosurePanel.setStyleName("pentaho-disclosure-panel"); //$NON-NLS-1$
     parameterDisclosurePanel.setOpen(true);
-    parameterDisclosurePanel.setAnimationEnabled(true);
     parameterDisclosurePanel.setWidth("100%"); //$NON-NLS-1$
 
     submitParametersButton = new Button(messages.getString("viewReport", "View Report")); //$NON-NLS-1$ //$NON-NLS-2$
+    submitParametersButton.setStyleName("pentaho-button");
     submitParametersButton.addClickHandler(new SubmitParameterListener(false));
 
     submitSubscriptionButton = new Button(messages.getString("schedule", "Schedule")); //$NON-NLS-1$ //$NON-NLS-2$
+    submitSubscriptionButton.setStyleName("pentaho-button");
     submitSubscriptionButton.addClickHandler(new SubmitParameterListener(true));
 
     submitParametersOnChangeCheckBox = new CheckBox(messages.getString("autoSubmit", "Auto-Submit")); //$NON-NLS-1$ //$NON-NLS-2$
@@ -804,7 +806,13 @@ public class ParameterControllerPanel extends VerticalPanel
 
         parameterContainer.add(submitPanel);
 
-        parameterDisclosurePanel.setContent(parameterContainer);
+        SimplePanel parameterPanelWrapper = new SimplePanel();
+        parameterPanelWrapper.setWidget(parameterContainer);
+        parameterPanelWrapper.setStyleName("parameter-content-panel");
+        parameterPanelWrapper.getElement().addClassName("pentaho-rounded-panel-bottom-lr");
+        parameterPanelWrapper.getElement().addClassName("pentaho-shadow");
+        
+        parameterDisclosurePanel.setContent(parameterPanelWrapper);
         add(parameterDisclosurePanel);
       }
 

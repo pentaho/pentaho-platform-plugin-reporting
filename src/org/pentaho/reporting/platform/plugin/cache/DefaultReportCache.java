@@ -233,6 +233,12 @@ public class DefaultReportCache implements ReportCache
       this.parent.setReportInUse(true);
     }
 
+    public int paginate(final MasterReport report, final int yieldRate)
+        throws ReportProcessingException, IOException, ContentIOException
+    {
+      return parent.getOutputHandler().paginate(report, yieldRate);
+    }
+
     public int generate(final MasterReport report,
                             final int acceptedPage,
                             final OutputStream outputStream,
