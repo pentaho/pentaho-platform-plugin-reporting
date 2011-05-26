@@ -11,7 +11,7 @@
 
   <bean id="prpt" class="org.pentaho.reporting.platform.plugin.ReportContentGenerator" scope="prototype"/>
   <bean id="prpt.viewer" class="org.pentaho.reporting.platform.plugin.ReportViewerDelegateContentGenerator" scope="prototype"/>
+  <bean id="prpt.backgroundExecution" class="org.pentaho.reporting.platform.plugin.SimpleReportingAction" scope="prototype"/>
   
   <bean id="SimpleReportingComponent" class="org.pentaho.reporting.platform.plugin.SimpleReportingComponent" scope="prototype"/>
-  <bean id="SimpleReportingAction" class="org.pentaho.reporting.platform.plugin.SimpleReportingAction" scope="prototype"/>
 </beans>
