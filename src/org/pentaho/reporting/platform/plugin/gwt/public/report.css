@@ -328,18 +328,6 @@ td.datePickerMonth {
   filter:alpha(opacity=20);
 }
 
-.parameter-panel-focus-widget{
-  border: 0px none;
-  padding: 0px;
-  margin: 0px;
-  clip: rect(0,0,0,0);
-  overflow:hidden;
-  height: 0px;
-  width: 0px;
-}
-
-
-
 .parameter-content-panel {
 	background-color: #9f9f9f;
 	border: 1px solid black;
