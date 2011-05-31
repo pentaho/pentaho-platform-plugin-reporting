@@ -190,34 +190,6 @@ public class ParameterControllerPanel extends VerticalPanel
     }
   }
 
-  private static class MouseHandler implements MouseOverHandler, MouseOutHandler
-  {
-    public MouseHandler()
-    {
-    }
-
-    public void onMouseOut(final MouseOutEvent event)
-    {
-      final Object source = event.getSource();
-      if (source instanceof Image)
-      {
-        final Image image = (Image) source;
-        image.removeStyleDependentName("hover"); //$NON-NLS-1$
-      }
-    }
-
-    public void onMouseOver(final MouseOverEvent event)
-    {
-      final Object source = event.getSource();
-      if (source instanceof Image)
-      {
-        final Image image = (Image) source;
-        DOM.setStyleAttribute(image.getElement(), "backgroundColor", ""); //$NON-NLS-1$ //$NON-NLS-2$
-        image.addStyleDependentName("hover"); //$NON-NLS-1$
-      }
-    }
-  }
-
   private class GotoFirstPageClickHandler implements ClickHandler
   {
     private int finalAcceptedPage;
@@ -885,32 +857,77 @@ public class ParameterControllerPanel extends VerticalPanel
     // set of params are default back to zero (page 1)
     parameterMap.setSelectedValue("accepted-page", String.valueOf(finalAcceptedPage)); //$NON-NLS-1$
 
-    final MouseHandler mouseHandler = new MouseHandler();
-
     final Image backToFirstPage = PageImages.images.backToFirstPage().createImage();
-    backToFirstPage.addMouseOverHandler(mouseHandler);
-    backToFirstPage.addMouseOutHandler(mouseHandler);
     backToFirstPage.setStyleName("pageControllerButton"); //$NON-NLS-1$
-    backToFirstPage.addClickHandler(new GotoFirstPageClickHandler(finalAcceptedPage));
-
+    if (finalAcceptedPage <= 0) {
+      PageImages.images.backToFirstPageDisabled().applyTo(backToFirstPage);
+    } else {
+      backToFirstPage.addClickHandler(new GotoFirstPageClickHandler(finalAcceptedPage));
+      backToFirstPage.addMouseOverHandler(new MouseOverHandler() {
+        public void onMouseOver(MouseOverEvent event) {
+          PageImages.images.backToFirstPageHover().applyTo(backToFirstPage);
+        }
+      });
+      backToFirstPage.addMouseOutHandler(new MouseOutHandler() {
+        public void onMouseOut(MouseOutEvent event) {
+          PageImages.images.backToFirstPage().applyTo(backToFirstPage);
+        }
+      });
+    }
+    
     final Image backPage = PageImages.images.backButton().createImage();
-    backPage.addMouseOverHandler(mouseHandler);
-    backPage.addMouseOutHandler(mouseHandler);
     backPage.setStyleName("pageControllerButton"); //$NON-NLS-1$
-    backPage.addClickHandler(new GotoPrevPageClickHandler(finalAcceptedPage));
+    if (finalAcceptedPage <= 0) {
+      PageImages.images.backButtonDisabled().applyTo(backPage);
+    } else {
+      backPage.addClickHandler(new GotoPrevPageClickHandler(finalAcceptedPage));
+      backPage.addMouseOverHandler(new MouseOverHandler() {
+        public void onMouseOver(MouseOverEvent event) {
+          PageImages.images.backButtonHover().applyTo(backPage);
+        }
+      });
+      backPage.addMouseOutHandler(new MouseOutHandler() {
+        public void onMouseOut(MouseOutEvent event) {
+          PageImages.images.backButton().applyTo(backPage);
+        }
+      });
+    }
 
     final Image forwardPage = PageImages.images.forwardButton().createImage();
-    forwardPage.addMouseOverHandler(mouseHandler);
-    forwardPage.addMouseOutHandler(mouseHandler);
     forwardPage.setStyleName("pageControllerButton"); //$NON-NLS-1$
-    forwardPage.addClickHandler(new GotoNextPageClickHandler(finalAcceptedPage, finalPageCount));
-
+    if (finalAcceptedPage + 1 >= finalPageCount) {
+      PageImages.images.forwardButtonDisabled().applyTo(forwardPage);
+    } else {
+      forwardPage.addClickHandler(new GotoNextPageClickHandler(finalAcceptedPage, finalPageCount));
+      forwardPage.addMouseOverHandler(new MouseOverHandler() {
+        public void onMouseOver(MouseOverEvent event) {
+          PageImages.images.forwardButtonHover().applyTo(forwardPage);
+        }
+      });
+      forwardPage.addMouseOutHandler(new MouseOutHandler() {
+        public void onMouseOut(MouseOutEvent event) {
+          PageImages.images.forwardButton().applyTo(forwardPage);
+        }
+      });
+    }
+    
     final Image forwardToLastPage = PageImages.images.forwardToLastPage().createImage();
-    forwardToLastPage.addMouseOverHandler(mouseHandler);
-    forwardToLastPage.addMouseOutHandler(mouseHandler);
     forwardToLastPage.setStyleName("pageControllerButton"); //$NON-NLS-1$
-    forwardToLastPage.addClickHandler(new GotoLastPageClickHandler(finalAcceptedPage, finalPageCount));
-
+    if (finalAcceptedPage + 1 >= finalPageCount) {
+      PageImages.images.forwardToLastPageDisabled().applyTo(forwardToLastPage);
+    } else {
+      forwardToLastPage.addClickHandler(new GotoLastPageClickHandler(finalAcceptedPage, finalPageCount));
+      forwardToLastPage.addMouseOverHandler(new MouseOverHandler() {
+        public void onMouseOver(MouseOverEvent event) {
+          PageImages.images.forwardToLastPageHover().applyTo(forwardToLastPage);
+        }
+      });
+      forwardToLastPage.addMouseOutHandler(new MouseOutHandler() {
+        public void onMouseOut(MouseOutEvent event) {
+          PageImages.images.forwardToLastPage().applyTo(forwardToLastPage);
+        }
+      });
+    }
 
     pageBox = new TextBox();
     pageBox.setTextAlignment(TextBox.ALIGN_RIGHT);
