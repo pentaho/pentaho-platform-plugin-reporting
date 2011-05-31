@@ -896,7 +896,7 @@ public class ParameterXmlContentHandler
   }
 
   private static void appendPageCount(final SimpleReportingComponent reportComponent, final Element parameters)
-      throws Exception
+    throws Exception
   {
     reportComponent.setOutputStream(new NullOutputStream());
 
@@ -905,9 +905,9 @@ public class ParameterXmlContentHandler
     reportComponent.setAcceptedPage(-1);
 
     // we can ONLY get the # of pages by asking the report to run
-    if (reportComponent.validate() && reportComponent.execute())
+    if (reportComponent.validate())
     {
-      final int totalPageCount = reportComponent.getPageCount();
+      final int totalPageCount = reportComponent.paginate();
       if (totalPageCount == 0)
       {
         return;
@@ -919,7 +919,6 @@ public class ParameterXmlContentHandler
       parameters.setAttribute(SimpleReportingComponent.ACCEPTED_PAGE, String.valueOf(acceptedPage)); //$NON-NLS-1$
     }
   }
-
 
   private void hideSubscriptionParameter(final boolean subscribe,
                                          final Map<String, ParameterDefinitionEntry> parameters)
