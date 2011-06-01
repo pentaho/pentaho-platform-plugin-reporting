@@ -3,24 +3,11 @@
 		<title>Report Web Viewer</title>
 		<link rel="shortcut icon" href="favicon.ico" />
 		
-    	<link rel="stylesheet" type="text/css" href="/pentaho-style/style/core/mainStyles.css"/>
-		
         <!--   Temporary fix for GWT localization BISERVER-3640 -->
         <script src="../../../js/browserLocale.js" type="text/javascript"></script>
-        
-        
-    	<script type="text/javascript">
-    	//<![CDATA[
 
-	      var phoConfig = {
-    	    theme_resources : { core: ["mainStyles.css", "jquery.jscrollpane.js","jquery.mousewheel.js", "mwheelIntent.js"], local: []}
-    	  };
-
-	      //]]>
-    	</script>        
-        
-    	<script language="javascript" src="/pentaho-style/style/ThemeResources.js"></script>
-
+        <script type="text/javascript" src="webcontext.js?context=analyzer"></script>
+    
         <script type="text/javascript">
           if(window.parent && window.parent.addGlassPaneListener){
             window.parent.addGlassPaneListener(
