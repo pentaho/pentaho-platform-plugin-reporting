@@ -755,11 +755,18 @@ public class ParameterControllerPanel extends VerticalPanel
             }
             parameterGroupCaptionPanel.setStyleName("parameter"); //$NON-NLS-1$
             parameterGroupCaptionPanel.setContentWidget(parameterGroupPanel);
-            parameterContainer.add(parameterGroupCaptionPanel);
+
+            final Panel panel = new SimplePanel();
+            panel.setStyleName("parameter-wrapper");
+            panel.add(parameterGroupCaptionPanel);
+            parameterContainer.add(panel);
           }
           else
           {
-            parameterContainer.add(parameterGroupPanel);
+            final Panel panel = new SimplePanel();
+            panel.setStyleName("parameter-wrapper");
+            panel.add(parameterGroupPanel);
+            parameterContainer.add(panel);
           }
         }
       }
