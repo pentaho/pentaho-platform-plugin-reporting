@@ -1,14 +1,43 @@
 package org.pentaho.reporting.platform.plugin.gwt.client;
 
-import com.google.gwt.event.dom.client.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.event.dom.client.KeyUpHandler;
+import com.google.gwt.event.dom.client.MouseOutEvent;
+import com.google.gwt.event.dom.client.MouseOutHandler;
+import com.google.gwt.event.dom.client.MouseOverEvent;
+import com.google.gwt.event.dom.client.MouseOverHandler;
 import com.google.gwt.event.logical.shared.OpenEvent;
 import com.google.gwt.event.logical.shared.OpenHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.http.client.*;
-import com.google.gwt.user.client.DOM;
+import com.google.gwt.http.client.Request;
+import com.google.gwt.http.client.RequestBuilder;
+import com.google.gwt.http.client.RequestCallback;
+import com.google.gwt.http.client.RequestException;
+import com.google.gwt.http.client.Response;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.*;
+import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.CaptionPanel;
+import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.DisclosurePanel;
+import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.HasVerticalAlignment;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.Panel;
+import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.xml.client.Document;
 import com.google.gwt.xml.client.Element;
 import com.google.gwt.xml.client.NodeList;
@@ -17,10 +46,6 @@ import org.pentaho.gwt.widgets.client.utils.i18n.ResourceBundle;
 import org.pentaho.reporting.platform.plugin.gwt.client.ReportViewer.RENDER_TYPE;
 import org.pentaho.reporting.platform.plugin.gwt.client.images.DisclosureImages;
 import org.pentaho.reporting.platform.plugin.gwt.client.images.PageImages;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 
 public class ParameterControllerPanel extends VerticalPanel
 {
@@ -699,11 +724,18 @@ public class ParameterControllerPanel extends VerticalPanel
             }
             parameterGroupCaptionPanel.setStyleName("parameter"); //$NON-NLS-1$
             parameterGroupCaptionPanel.setContentWidget(parameterGroupPanel);
-            parameterContainer.add(parameterGroupCaptionPanel);
+
+            final Panel panel = new SimplePanel();
+            panel.setStyleName("parameter-wrapper");
+            panel.add(parameterGroupCaptionPanel);
+            parameterContainer.add(panel);
           }
           else
           {
-            parameterContainer.add(parameterGroupPanel);
+            final Panel panel = new SimplePanel();
+            panel.setStyleName("parameter-wrapper");
+            panel.add(parameterGroupPanel);
+            parameterContainer.add(panel);
           }
         }
       }
