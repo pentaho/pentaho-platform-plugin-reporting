@@ -91,6 +91,18 @@ body {
 	border: 1px solid #777777;
 }
 
+.IE .parameter-application .pentaho-disclosure-panel-open {
+	padding-top: 0px;
+	padding-left: 0px;
+	padding-right: 0px;
+}
+
+.IE .parameter-application .pentaho-disclosure-panel-closed {
+	padding-top: 0px;
+	padding-left: 0px;
+	padding-right: 0px;
+}
+
 .parameter-submit-panel {
 	padding: 3px 0px 3px 10px;
 	margin-top: 10px;
@@ -333,6 +345,11 @@ td.datePickerMonth {
 	border: 1px solid black;
 	margin: 0px 10px 10px 10px;
 	padding: 10px;
+}
+
+.IE .parameter-content-panel {
+	margin: 0px;
+	padding: 0px;
 }
 
 .parameter-wrapper {
