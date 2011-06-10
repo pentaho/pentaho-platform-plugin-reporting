@@ -1111,10 +1111,8 @@ public class ParameterControllerPanel extends VerticalPanel
       if (inputElements != null && inputElements.getLength() > 0) {
         for (int i = 0; i < inputElements.getLength(); i++ ) {
           com.google.gwt.dom.client.Element elem = inputElements.getItem(i);
-          if (elem.getAttribute("type").equalsIgnoreCase("text")) {
+          if (elem.getAttribute("type").equalsIgnoreCase("checkbox")) {
             elem.focus();
-            // after setting the focus, also set the text so the cursor ends up at the end...
-            elem.setAttribute("value", elem.getAttribute("value"));
             break;
           }
         }
