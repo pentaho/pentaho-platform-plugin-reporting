@@ -1187,8 +1187,6 @@ public class ParameterControllerPanel extends VerticalPanel
           if (elem.getAttribute("type").equalsIgnoreCase("text"))
           {
             elem.focus();
-            // after setting the focus, also set the text so the cursor ends up at the end...
-            elem.setAttribute("value", elem.getAttribute("value"));
             break;
           }
         }
