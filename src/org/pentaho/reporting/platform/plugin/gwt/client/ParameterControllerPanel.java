@@ -1139,14 +1139,12 @@ public class ParameterControllerPanel extends VerticalPanel
   // fix for BISERVER-6027 & BISERVER-4512 - set the focus into a textbox element to allow IE mouse access in these elements
   private void forceFocus() {
     try {
-      com.google.gwt.dom.client.NodeList<com.google.gwt.dom.client.Element> inputElements = parameterDisclosurePanel.getElement().getElementsByTagName("input");
+      com.google.gwt.dom.client.NodeList<com.google.gwt.dom.client.Element> inputElements = getElement().getElementsByTagName("input");
       if (inputElements != null && inputElements.getLength() > 0) {
         for (int i = 0; i < inputElements.getLength(); i++ ) {
           com.google.gwt.dom.client.Element elem = inputElements.getItem(i);
-          if (elem.getAttribute("type").equalsIgnoreCase("text")) {
+          if (elem.getAttribute("type").equalsIgnoreCase("checkbox")) {
             elem.focus();
-            // after setting the focus, also set the text so the cursor ends up at the end...
-            elem.setAttribute("value", elem.getAttribute("value"));
             break;
           }
         }
