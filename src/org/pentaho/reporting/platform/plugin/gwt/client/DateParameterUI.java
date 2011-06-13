@@ -188,6 +188,7 @@ public class DateParameterUI extends SimplePanel implements ParameterUI
 
     final DefaultFormat format = new DefaultFormat(createFormat(parameterElement.getAttribute("data-format"))); // NON-NLS
     datePicker = new DateBox(new PentahoDatePicker(), date, format);
+    datePicker.getElement().setAttribute("paramType", "date");
 
     selectionHandler = new DateParameterSelectionHandler(controller, parameterElement);
     datePicker.getTextBox().addChangeHandler(selectionHandler);
