@@ -1111,10 +1111,13 @@ public class ParameterControllerPanel extends VerticalPanel
       if (inputElements != null && inputElements.getLength() > 0) {
         for (int i = 0; i < inputElements.getLength(); i++ ) {
           com.google.gwt.dom.client.Element elem = inputElements.getItem(i);
-          if (elem.getAttribute("type").equalsIgnoreCase("checkbox")) {
-            elem.focus();
-            break;
-          }
+          if ("text".equalsIgnoreCase(elem.getAttribute("type"))) {
+            if (!"date".equalsIgnoreCase(elem.getAttribute("paramType"))) {
+              // only focus things which are not date boxes
+              elem.focus();
+              break;
+            }
+          }          
         }
       }
     } catch (Exception e) {
