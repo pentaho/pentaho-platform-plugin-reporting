@@ -159,6 +159,7 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
     {
       if (key.startsWith("session:") ||//$NON-NLS-1$
           key.equals("username") ||//$NON-NLS-1$
+          key.startsWith("global:") ||//$NON-NLS-1$
           key.equals("roles"))//$NON-NLS-1$
       {
         logger.warn(Messages.getInstance().getString("ReportPlugin.warnNoSession"));
@@ -184,8 +185,9 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
     catch (Exception e)
     {
       // ignore
+      logger.warn(Messages.getInstance().getString("ReportPlugin.warnNoBaseServerURL"), e);
     }
-    return fullyQualifiedServerUrl;
+    return null;
   }
 
   private String getHostColonPort(final String fullyQualifiedServerUrl)
@@ -198,8 +200,9 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
     catch (Exception e)
     {
       // ignore
+      logger.warn(Messages.getInstance().getString("ReportPlugin.warnNoHostColonPort"), e);
     }
-    return fullyQualifiedServerUrl;
+    return null;
   }
 
   public Locale getLocale()
