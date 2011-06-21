@@ -12,21 +12,25 @@ import org.pentaho.reporting.libraries.repository.Repository;
  *
  * @author Thomas Morgner
  */
-public class ReportContentRepository implements Repository {
+public class ReportContentRepository implements Repository
+{
   private DefaultMimeRegistry mimeRegistry;
 
   private ReportContentLocation root;
 
-  public ReportContentRepository(final IContentLocation root, final String actionName) {
+  public ReportContentRepository(final IContentLocation root, final String actionName)
+  {
     this.root = new ReportContentLocation(root, this, actionName);
     this.mimeRegistry = new DefaultMimeRegistry();
   }
 
-  public ContentLocation getRoot() throws ContentIOException {
+  public ContentLocation getRoot() throws ContentIOException
+  {
     return root;
   }
 
-  public MimeRegistry getMimeRegistry() {
+  public MimeRegistry getMimeRegistry()
+  {
     return mimeRegistry;
   }
 }

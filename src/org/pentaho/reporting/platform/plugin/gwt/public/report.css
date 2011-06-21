@@ -1,5 +1,4 @@
 body {
-  background-color: white;
   color: black;
   font-family: Tahoma, Arial, Helvetica, sans-serif;
   font-size: 10pt;
@@ -20,7 +19,7 @@ body {
   font-size: 10pt;
 }
 
-.gwt-ToggleButton-up {
+.gwt-ToggleButton-up, .gwt-ToggleButton-up-disabled {
   background-image: url(buttonbg.gif);
   padding: 3px;
   margin: 2px;
@@ -45,7 +44,7 @@ body {
 
 }
 
-.gwt-ToggleButton-down {
+.gwt-ToggleButton-down, .gwt-ToggleButton-down-disabled {
   background-image: url(buttonbg.gif);
   padding: 2px;
   margin: 2px;
@@ -92,14 +91,25 @@ body {
 	border: 1px solid #777777;
 }
 
+.IE .parameter-application .pentaho-disclosure-panel-open {
+	padding-top: 0px;
+	padding-left: 0px;
+	padding-right: 0px;
+}
+
+.IE .parameter-application .pentaho-disclosure-panel-closed {
+	padding-top: 0px;
+	padding-left: 0px;
+	padding-right: 0px;
+}
+
 .parameter-submit-panel {
-	background-color: #cccccc;
-	border-top: 1px solid #777777;
 	padding: 3px 0px 3px 10px;
 	margin-top: 10px;
 }
 
 .parameter-container {
+  table-layout: fixed;
 }
 
 .parameter {
@@ -193,10 +203,10 @@ body {
   padding-top: 5px;
   padding-bottom: 5px;
   padding-left: 10px;
+  margin-top: 5px;
 }
 
 .pageControllerButton {
-  border: 1px solid #777777;
   cursor: pointer;
   cursor: hand;
 }
@@ -244,8 +254,8 @@ body {
 }
 .datePickerDay {
   padding: 4px;
-  cursor: hand;
   cursor: pointer;
+  cursor: hand;
 }
 .datePickerDayIsToday {
   border: 1px solid black;
@@ -277,7 +287,7 @@ body {
 }
 td.datePickerMonth {
   text-align: center;
-  vertical-align: center;
+  vertical-align: middle;
   white-space: nowrap;
   font-size: 70%;
   font-weight: bold;
@@ -286,8 +296,8 @@ td.datePickerMonth {
 .datePickerNextButton {
   font-size: 120%;
   line-height: 1em;
-  cursor: hand;
   cursor: pointer;
+  cursor: hand;
   padding: 0px 4px;
 }
 
@@ -328,4 +338,22 @@ td.datePickerMonth {
   z-index:250;
   cursor: progress;
   filter:alpha(opacity=20);
-} 
+}
+
+.parameter-content-panel {
+	background-color: #9f9f9f;
+	border: 1px solid black;
+	margin: 0px 10px 10px 10px;
+	padding: 10px;
+}
+
+.IE .parameter-content-panel {
+	margin: 0px;
+	padding: 0px;
+}
+
+.parameter-wrapper {
+  overflow-x: auto;
+  width: 100%;
+  max-width: 100%;
+}

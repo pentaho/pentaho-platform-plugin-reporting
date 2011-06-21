@@ -1,5 +1,6 @@
 package org.pentaho.reporting.platform.plugin.gwt.client;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -10,52 +11,80 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.gwt.xml.client.Element;
-import com.google.gwt.xml.client.NodeList;
 
-public class CheckBoxParameterUI extends SimplePanel
+public class CheckBoxParameterUI extends SimplePanel implements ParameterUI
 {
 
-  private class ButtonParameterClickHandler implements ClickHandler
+  private class CheckBoxParameterClickHandler implements ClickHandler
   {
     private ParameterControllerPanel controller;
+    private String parameterName;
     private String choiceValue;
-    private String renderType;
-    private List<String> parameterSelections;
 
-    public ButtonParameterClickHandler(final List<String> parameterSelections, final ParameterControllerPanel controller, final String choiceValue,
-        final String renderType)
+    public CheckBoxParameterClickHandler(final ParameterControllerPanel controller,
+                                         final String parameterName,
+                                         final String choiceValue)
     {
       this.controller = controller;
+      this.parameterName = parameterName;
       this.choiceValue = choiceValue;
-      this.renderType = renderType;
-      this.parameterSelections = parameterSelections;
     }
 
-    public void onClick(ClickEvent event)
+    public void onClick(final ClickEvent event)
     {
-      CheckBox button = (CheckBox) event.getSource();
+      final CheckBox button = (CheckBox) event.getSource();
       // if we are render radio buttons, we've got to clear the list
-      if ("radio".equalsIgnoreCase(renderType)) //$NON-NLS-1$
-      {
-        parameterSelections.clear();
-      }
-      else
-      {
-        // remove element if it's already there (prevent dups for checkbox)
-        parameterSelections.remove(choiceValue);
-      }
+      // remove element if it's already there (prevent dups for checkbox)
+      final ParameterValues parameterValues = controller.getParameterMap();
+      parameterValues.removeSelectedValue(parameterName, choiceValue);
+
       if (button.getValue())
       {
-        parameterSelections.add(choiceValue);
+        parameterValues.addSelectedValue(parameterName, choiceValue);
       }
-      controller.fetchParameters(true);
+      controller.fetchParameters(ParameterControllerPanel.ParameterSubmitMode.USERINPUT);
     }
   }
 
-  public CheckBoxParameterUI(final ParameterControllerPanel controller, final List<String> parameterSelections, final Element parameterElement)
+
+  private class RadioButtonParameterClickHandler implements ClickHandler
   {
-    final String parameterName = parameterElement.getAttribute("name"); //$NON-NLS-1$
+    private ParameterControllerPanel controller;
+    private String parameterName;
+    private String choiceValue;
+
+    public RadioButtonParameterClickHandler(final ParameterControllerPanel controller,
+                                         final String parameterName,
+                                         final String choiceValue)
+    {
+      this.controller = controller;
+      this.parameterName = parameterName;
+      this.choiceValue = choiceValue;
+    }
+
+    public void onClick(final ClickEvent event)
+    {
+      final CheckBox button = (CheckBox) event.getSource();
+      // if we are render radio buttons, we've got to clear the list
+      if (button.getValue())
+      {
+        controller.getParameterMap().setSelectedValue(parameterName, choiceValue);
+      }
+      else
+      {
+        controller.getParameterMap().setSelectedValue(parameterName, null);
+      }
+      controller.fetchParameters(ParameterControllerPanel.ParameterSubmitMode.USERINPUT);
+    }
+  }
+
+  private ArrayList<CheckBox> buttons;
+
+  public CheckBoxParameterUI(final ParameterControllerPanel controller,
+                             final Parameter parameterElement)
+  {
+    buttons = new ArrayList<CheckBox>();
+    final String parameterName = parameterElement.getName(); //$NON-NLS-1$
     String renderType = parameterElement.getAttribute("parameter-render-type"); //$NON-NLS-1$
     if (renderType != null)
     {
@@ -68,7 +97,7 @@ public class CheckBoxParameterUI extends SimplePanel
     }
 
     // build button ui
-    CellPanel buttonPanel = null;
+    final CellPanel buttonPanel;
     if ("vertical".equalsIgnoreCase(layout)) //$NON-NLS-1$
     {
       buttonPanel = new VerticalPanel();
@@ -77,28 +106,38 @@ public class CheckBoxParameterUI extends SimplePanel
     {
       buttonPanel = new HorizontalPanel();
     }
-    NodeList choices = parameterElement.getElementsByTagName("value-choice"); //$NON-NLS-1$
-    for (int i = 0; i < choices.getLength(); i++)
+    final List<ParameterSelection> selections = parameterElement.getSelections();
+    for (int i = 0; i < selections.size(); i++)
     {
-      final Element choiceElement = (Element) choices.item(i);
-      final String choiceLabel = choiceElement.getAttribute("label"); //$NON-NLS-1$
-      final String choiceValue = choiceElement.getAttribute("value"); //$NON-NLS-1$
-      CheckBox tmpButton = new RadioButton(parameterName, choiceLabel);
-      if ("checkbox".equalsIgnoreCase(renderType)) //$NON-NLS-1$
+      final ParameterSelection choiceElement = selections.get(i);
+      final String choiceLabel = choiceElement.getLabel(); //$NON-NLS-1$
+      final String choiceValue = choiceElement.getValue(); //$NON-NLS-1$
+      final CheckBox tmpButton;
+      if ("checkbox".equals(renderType)) //$NON-NLS-1$
       {
         tmpButton = new CheckBox(choiceLabel);
+        tmpButton.addClickHandler(new CheckBoxParameterClickHandler(controller, parameterName, choiceValue));
       }
-      if (parameterSelections.contains(choiceValue))
+      else
       {
-        tmpButton.setValue(true);
+        tmpButton = new RadioButton(parameterName, choiceLabel);
+        tmpButton.addClickHandler(new RadioButtonParameterClickHandler(controller, parameterName, choiceValue));
       }
-      final CheckBox button = tmpButton;
-      button.setTitle(choiceValue);
+      tmpButton.setValue(choiceElement.isSelected());
+      tmpButton.setTitle(choiceValue);
       // set checked based on selections list
-      button.addClickHandler(new ButtonParameterClickHandler(parameterSelections, controller, choiceValue, renderType));
-      buttonPanel.add(button);
+      buttonPanel.add(tmpButton);
+      buttons.add(tmpButton);
     }
     setWidget(buttonPanel);
   }
 
+  public void setEnabled(final boolean enabled)
+  {
+    for (int i = 0; i < buttons.size(); i++)
+    {
+      final CheckBox checkBox = buttons.get(i);
+      checkBox.setEnabled(enabled);
+    }
+  }
 }

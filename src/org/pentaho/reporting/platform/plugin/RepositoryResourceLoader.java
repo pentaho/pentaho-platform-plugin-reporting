@@ -16,12 +16,10 @@
  */
 package org.pentaho.reporting.platform.plugin;
 
-import java.io.File;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.pentaho.reporting.libraries.base.util.IOUtils;
 import org.pentaho.reporting.libraries.resourceloader.ResourceData;
 import org.pentaho.reporting.libraries.resourceloader.ResourceException;
 import org.pentaho.reporting.libraries.resourceloader.ResourceKey;
@@ -33,7 +31,7 @@ import org.pentaho.reporting.platform.plugin.messages.Messages;
 
 /**
  * This class is implemented to support loading solution files from the pentaho repository into pentaho-reporting
- * 
+ *
  * @author Will Gorman/Michael D'Amour
  */
 public class RepositoryResourceLoader implements ResourceLoader
@@ -47,7 +45,9 @@ public class RepositoryResourceLoader implements ResourceLoader
 
   public static final String WIN_PATH_SEPARATOR = "\\"; //$NON-NLS-1$
 
-  /** keep track of the resource manager */
+  /**
+   * keep track of the resource manager
+   */
   private ResourceManager manager;
 
   /**
@@ -59,9 +59,8 @@ public class RepositoryResourceLoader implements ResourceLoader
 
   /**
    * set the resource manager
-   * 
-   * @param manager
-   *          resource manager
+   *
+   * @param manager resource manager
    */
   public void setResourceManager(final ResourceManager manager)
   {
@@ -70,7 +69,7 @@ public class RepositoryResourceLoader implements ResourceLoader
 
   /**
    * get the resource manager
-   * 
+   *
    * @return resource manager
    */
   public ResourceManager getManager()
@@ -80,7 +79,7 @@ public class RepositoryResourceLoader implements ResourceLoader
 
   /**
    * get the schema name, in this case it's always "solution"
-   * 
+   *
    * @return the schema name
    */
   public String getSchema()
@@ -90,9 +89,8 @@ public class RepositoryResourceLoader implements ResourceLoader
 
   /**
    * create a resource data object
-   * 
-   * @param key
-   *          resource key
+   *
+   * @param key resource key
    * @return resource data
    * @throws ResourceLoadingException
    */
@@ -103,8 +101,8 @@ public class RepositoryResourceLoader implements ResourceLoader
 
   /**
    * see if the pentaho resource loader can support the content key path
-   * 
-   * @param key the key that should be checked whether it is a solution key.
+   *
+   * @param key the resource key.
    * @return true if class supports the content key.
    */
   public boolean isSupportedKey(final ResourceKey key)
@@ -118,9 +116,11 @@ public class RepositoryResourceLoader implements ResourceLoader
 
   /**
    * create a new key based on the values provided
-   * 
-   * @return new resource key
-   * @throws ResourceKeyCreationException
+   *
+   * @param value       the key value.
+   * @param factoryKeys map of values.
+   * @return new resource key.
+   * @throws ResourceKeyCreationException if an error occurred.
    */
   public ResourceKey createKey(final Object value, final Map factoryKeys) throws ResourceKeyCreationException
   {
@@ -138,47 +138,46 @@ public class RepositoryResourceLoader implements ResourceLoader
 
   /**
    * derive a key from an existing key, used when a relative path is given.
-   * 
-   * @param parent
-   *          the parent key
-   * @param data
-   *          the new data to be keyed
+   *
+   * @param parent the parent key
+   * @param data   the new data to be keyed
    * @return derived key
    * @throws ResourceKeyCreationException
    */
-  public ResourceKey deriveKey(final ResourceKey parent, final String path, final Map data)
-      throws ResourceKeyCreationException
+  public ResourceKey deriveKey(final ResourceKey parent,
+                               String path,
+                               final Map data) throws ResourceKeyCreationException
   {
 
     // update url to absolute path if currently a relative path
-    if (path.startsWith(getSchema() + SCHEMA_SEPARATOR) == false)
+    if (!path.startsWith(getSchema() + SCHEMA_SEPARATOR))
     {
-      return createKey(path, data);
-    }
-
-    // we are looking for the current directory specified by the parent. currently
-    // the pentaho system uses the native File.separator, so we need to support it
-    // we're simply looking for the last "/" or "\" in the parent's url.
-    final String parentPath = (String) parent.getIdentifier();
-    final String absolutePath = IOUtils.getInstance().getAbsolutePath(path, parentPath);
-    final String normalizedPath;
-    if (File.pathSeparatorChar != '/')
-    {
-      normalizedPath = absolutePath.replace('/', File.pathSeparatorChar);
-    }
-    else
-    {
-      normalizedPath = absolutePath;
+      // we are looking for the current directory specified by the parent. currently
+      // the pentaho system uses the native File.separator, so we need to support it
+      // we're simply looking for the last "/" or "\" in the parent's url.
+      final int winindex = ((String) parent.getIdentifier()).lastIndexOf(WIN_PATH_SEPARATOR);
+      final int regindex = ((String) parent.getIdentifier()).lastIndexOf(PATH_SEPARATOR);
+      int dirindex = 0;
+      if (winindex > regindex)
+      {
+        dirindex = winindex + WIN_PATH_SEPARATOR.length();
+      }
+      else
+      {
+        dirindex = regindex + PATH_SEPARATOR.length();
+      }
+      path = ((String) parent.getIdentifier()).substring(0, dirindex) + path;
     }
     final Map derivedValues = new HashMap(parent.getFactoryParameters());
     if (data != null)
     {
       derivedValues.putAll(data);
     }
-    return new ResourceKey(getSchema(), normalizedPath, derivedValues);
+    return new ResourceKey(getSchema(), path, derivedValues);
   }
 
-  public ResourceKey deserialize(final ResourceKey bundleKey, final String stringKey) throws ResourceKeyCreationException
+  public ResourceKey deserialize(final ResourceKey bundleKey,
+                                 final String stringKey) throws ResourceKeyCreationException
   {
     // For now, we are just going to have to pass on this one
     throw new ResourceKeyCreationException(Messages.getInstance().getString("ReportPlugin.cannotDeserializeZipResourceKey")); //$NON-NLS-1$

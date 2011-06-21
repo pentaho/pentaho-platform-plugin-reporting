@@ -1,24 +1,19 @@
 package org.pentaho.reporting.platform.plugin.output;
 
-import org.pentaho.reporting.engine.classic.core.layout.output.FlowSelector;
-import org.pentaho.reporting.engine.classic.core.layout.output.LogicalPageKey;
+import org.pentaho.reporting.engine.classic.core.modules.output.pageable.base.SinglePageFlowSelector;
 
-public class ReportPageSelector implements FlowSelector
+/**
+ * @deprecated 
+ */
+public class ReportPageSelector extends SinglePageFlowSelector
 {
-
-  private int acceptedPage;
-
   public ReportPageSelector(final int acceptedPage)
   {
-    this.acceptedPage = acceptedPage;
+    super(acceptedPage, true);
   }
 
-  public boolean isLogicalPageAccepted(final LogicalPageKey key)
+  public ReportPageSelector(final int acceptedPage, final boolean logicalPage)
   {
-    if (key == null)
-    {
-      return false;
-    }
-    return key.getPosition() == acceptedPage;
+    super(acceptedPage, logicalPage);
   }
 }

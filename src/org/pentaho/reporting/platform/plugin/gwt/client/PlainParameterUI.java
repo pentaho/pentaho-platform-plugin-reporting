@@ -13,39 +13,46 @@ import com.google.gwt.user.client.ui.MultiWordSuggestOracle;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.SuggestBox;
 import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
-import com.google.gwt.xml.client.Element;
-import com.google.gwt.xml.client.NodeList;
 
-public class PlainParameterUI extends SimplePanel
+public class PlainParameterUI extends SimplePanel implements ParameterUI
 {
   private final Map<String, String> labelToValueMap = new HashMap<String, String>();
 
   private class PlainParameterKeyUpHandler implements KeyUpHandler
   {
     private ParameterControllerPanel controller;
-    private List<String> parameterSelections;
+    private String parameterName;
 
-    public PlainParameterKeyUpHandler(ParameterControllerPanel controller, List<String> parameterSelections)
+    public PlainParameterKeyUpHandler(final ParameterControllerPanel controller, final String parameterName)
     {
       this.controller = controller;
-      this.parameterSelections = parameterSelections;
+      this.parameterName = parameterName;
     }
 
-    public void onKeyUp(KeyUpEvent event)
+    public void onKeyUp(final KeyUpEvent event)
     {
-      SuggestBox textBox = (SuggestBox) event.getSource();
-      parameterSelections.clear();
-      String text = textBox.getText();
-      String value = labelToValueMap.get(text);
-      if (value == null)
+      final SuggestBox textBox = (SuggestBox) event.getSource();
+      final String text = textBox.getText();
+
+      String value;
+      if (listParameter)
+      {
+        value = labelToValueMap.get(text);
+        if (text == null && strict == false)
+        {
+          value = text;
+        }
+      }
+      else
       {
         value = text;
       }
-      parameterSelections.add(value);
+
+      controller.getParameterMap().setSelectedValue(parameterName, value);
       if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER)
       {
         // on enter, force update
-        controller.fetchParameters(false);
+        controller.fetchParameters(ParameterControllerPanel.ParameterSubmitMode.USERINPUT);
       }
     }
 
@@ -53,60 +60,90 @@ public class PlainParameterUI extends SimplePanel
 
   private class PlainParameterSelectionHandler implements SelectionHandler<Suggestion>
   {
-    private List<String> parameterSelections;
+    private ParameterControllerPanel controller;
+    private String parameterName;
 
-    public PlainParameterSelectionHandler(final List<String> parameterSelections)
+    public PlainParameterSelectionHandler(final ParameterControllerPanel controller, final String parameterName)
     {
-      this.parameterSelections = parameterSelections;
+      this.controller = controller;
+      this.parameterName = parameterName;
     }
 
-    public void onSelection(SelectionEvent<Suggestion> event)
+    public void onSelection(final SelectionEvent<Suggestion> event)
     {
-      // SuggestBox textBox = (SuggestBox) event.getSource();
-      parameterSelections.clear();
-      String text = event.getSelectedItem().getReplacementString();
+      final String text = event.getSelectedItem().getReplacementString();
       String value = labelToValueMap.get(text);
       if (value == null)
       {
         value = text;
       }
-      parameterSelections.add(value);
+      if (ReportViewerUtil.isEmpty(value))
+      {
+        controller.getParameterMap().setSelectedValue(parameterName, null);
+      }
+      else
+      {
+        controller.getParameterMap().setSelectedValue(parameterName, value);
+      }
+      controller.fetchParameters(ParameterControllerPanel.ParameterSubmitMode.USERINPUT);
     }
 
   }
 
-  public PlainParameterUI(final ParameterControllerPanel controller, final List<String> parameterSelections, final Element parameterElement)
+  private SuggestBox textBox;
+  private boolean listParameter;
+  private boolean strict;
+
+  public PlainParameterUI(final ParameterControllerPanel controller, final Parameter parameterElement)
   {
-    // unknown, or PlainParameter
-    final Map<String, String> valueToLabelMap = new HashMap<String, String>();
-
-    MultiWordSuggestOracle oracle = new MultiWordSuggestOracle();
-    NodeList choices = parameterElement.getElementsByTagName("value-choice"); //$NON-NLS-1$
-    for (int i = 0; i < choices.getLength(); i++)
+    final MultiWordSuggestOracle oracle = new MultiWordSuggestOracle();
+    final List<ParameterSelection> selections = parameterElement.getSelections();
+    for (int i = 0; i < selections.size(); i++)
     {
-      final Element choiceElement = (Element) choices.item(i);
-      final String choiceLabel = choiceElement.getAttribute("label"); //$NON-NLS-1$
-      final String choiceValue = choiceElement.getAttribute("value"); //$NON-NLS-1$
-      oracle.add(choiceLabel);
-      labelToValueMap.put(choiceLabel, choiceValue);
-      valueToLabelMap.put(choiceValue, choiceLabel);
-    }
-
-    final SuggestBox textBox = new SuggestBox(oracle);
-    textBox.setText(""); //$NON-NLS-1$
-    for (String text : parameterSelections)
-    {
-      String labelText = valueToLabelMap.get(text);
-      if (labelText == null)
+      final ParameterSelection choiceElement = selections.get(i);
+      final String choiceValue = choiceElement.getValue(); //$NON-NLS-1$
+      final String choiceLabel = choiceElement.getLabel(); //$NON-NLS-1$
+      if (choiceLabel != null && choiceLabel.length() > 0)
       {
-        labelText = text;
+        oracle.add(choiceLabel);
+        labelToValueMap.put(choiceLabel, choiceValue);
       }
-      // we need to get the label for the value
-      textBox.setText(textBox.getText() + labelText);
     }
-    textBox.addSelectionHandler(new PlainParameterSelectionHandler(parameterSelections));
-    textBox.addKeyUpHandler(new PlainParameterKeyUpHandler(controller, parameterSelections));
+
+    strict = parameterElement.isStrict();
+    listParameter = parameterElement.isList();
+    textBox = new SuggestBox(oracle);
+
+    if (selections.isEmpty())
+    {
+      textBox.setText(""); //$NON-NLS-1$
+    }
+    else
+    {
+      ParameterSelection parameterSelection = null;
+      for (int i = 0; i < selections.size(); i++)
+      {
+        final ParameterSelection selection = selections.get(i);
+        if (selection.isSelected())
+        {
+          parameterSelection = selection;
+        }
+      }
+
+      if (parameterSelection != null)
+      {
+        final String labelText = parameterSelection.getLabel();
+        textBox.setText(labelText);
+      }
+    }
+
+    textBox.addSelectionHandler(new PlainParameterSelectionHandler(controller, parameterElement.getName()));
+    textBox.addKeyUpHandler(new PlainParameterKeyUpHandler(controller, parameterElement.getName()));
     setWidget(textBox);
   }
 
+  public void setEnabled(final boolean enabled)
+  {
+    textBox.getTextBox().setEnabled(enabled);
+  }
 }

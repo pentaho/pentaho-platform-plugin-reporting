@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema attributeFormDefault="unqualified"
+           elementFormDefault="qualified"
+           xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns="http://reporting.pentaho.org/namespaces/parameter/1.0"
+           targetNamespace="http://reporting.pentaho.org/namespaces/parameter/1.0">
+
+  <xs:element name="parameters" type="parametersType"/>
+
+  <xs:complexType name="parametersType">
+    <xs:sequence>
+      <xs:element type="parameterType" name="parameter" maxOccurs="unbounded" minOccurs="0"/>
+      <xs:element type="errorsType" name="errors" maxOccurs="unbounded" minOccurs="0"/>
+    </xs:sequence>
+    <xs:attribute type="xs:boolean" name="is-prompt-needed" use="optional"/>
+    <xs:attribute type="xs:boolean" name="paginate" use="optional"/>
+    <xs:attribute type="xs:boolean" name="subscribe" use="optional"/>
+    <xs:attribute type="xs:string" name="layout" use="optional"/>
+    <xs:attribute type="xs:int" name="accepted-page" use="optional"/>
+    <xs:attribute type="xs:int" name="page-count" use="optional"/>
+    <xs:attribute type="xs:boolean" name="autoSubmit" use="optional"/>
+    <xs:attribute type="xs:boolean" name="autoSubmitUI" use="optional"/>
+  </xs:complexType>
+
+  <xs:complexType name="parameterType">
+    <xs:sequence>
+      <xs:element type="attributeType" name="attribute" maxOccurs="1" minOccurs="0"/>
+      <xs:element type="valuesType" name="values" maxOccurs="1" minOccurs="0"/>
+    </xs:sequence>
+    <xs:attribute type="xs:string" name="name" use="required"/>
+    <xs:attribute type="xs:string" name="type" use="required"/>
+    <xs:attribute type="xs:string" name="timezone-hint" use="optional"/>
+    <xs:attribute type="xs:boolean" name="is-strict" use="optional"/> <!-- was is-strict -->
+    <xs:attribute type="xs:boolean" name="is-multi-select" use="optional"/>
+    <xs:attribute type="xs:boolean" name="is-mandatory" use="optional"/>
+  </xs:complexType>
+
+  <xs:complexType name="errorsType">
+    <xs:sequence>
+      <xs:element type="errorType" name="error" maxOccurs="unbounded" minOccurs="0"/>
+      <xs:element type="globalErrorType" name="global-error" maxOccurs="unbounded" minOccurs="0"/>
+    </xs:sequence>
+
+  </xs:complexType>
+
+  <xs:complexType name="errorType">
+    <xs:attribute type="xs:string" name="message" use="required"/>
+    <xs:attribute type="xs:string" name="parameter" use="required"/>
+  </xs:complexType>
+
+  <xs:complexType name="globalErrorType">
+    <xs:attribute type="xs:string" name="message" use="required"/>
+  </xs:complexType>
+
+  <xs:complexType name="valuesType">
+    <xs:sequence>
+      <xs:element type="valueType" name="value" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="valueType">
+    <xs:attribute type="xs:string" name="label" use="optional"/>
+    <xs:attribute type="xs:string" name="type" use="required"/>
+    <xs:attribute type="xs:string" name="value" use="required"/>
+    <xs:attribute type="xs:boolean" name="selected" use="required"/>
+  </xs:complexType>
+
+  <xs:complexType name="attributeType">
+    <xs:attribute type="xs:string" name="namespace" use="required"
+                  default="http://reporting.pentaho.org/namespaces/engine/parameter-attributes/core"/>
+    <xs:attribute type="xs:string" name="name" use="required"/>
+    <xs:attribute type="xs:string" name="value" use="required"/>
+  </xs:complexType>
+</xs:schema>
