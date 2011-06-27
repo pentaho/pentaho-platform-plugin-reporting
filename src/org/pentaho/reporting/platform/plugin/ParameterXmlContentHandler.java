@@ -888,7 +888,7 @@ public class ParameterXmlContentHandler
     if (reportComponent.validate())
     {
       final int totalPageCount = reportComponent.paginate();
-      if (totalPageCount <= 1)
+      if (totalPageCount == 0)
       {
         return;
       }

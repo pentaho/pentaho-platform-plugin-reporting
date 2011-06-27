@@ -130,7 +130,7 @@ public class StreamHtmlOutput implements ReportOutputHandler
     }
 
     outputStream.flush();
-    return 1;
+    return 0;
   }
 
 }
