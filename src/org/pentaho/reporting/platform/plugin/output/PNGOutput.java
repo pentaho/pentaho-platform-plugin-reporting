@@ -29,6 +29,10 @@ public class PNGOutput implements ReportOutputHandler
     return this;
   }
 
+  public boolean supportsPagination() {
+    return false;
+  }
+
   public void close()
   {
     if (proc != null)

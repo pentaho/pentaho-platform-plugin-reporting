@@ -968,6 +968,29 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   }
 
   /**
+   * Determines if the output type supports pagination or not.
+   *
+   * @return True if the output type supports pagination.
+   */
+  public boolean outputSupportsPagination() {
+    try {
+      final String outputType = computeEffectiveOutputTarget();
+      final ReportOutputHandler reportOutputHandler = createOutputHandlerForOutputType(outputType);
+      if (reportOutputHandler == null)
+      {
+        log.warn(Messages.getInstance().getString("ReportPlugin.warnUnprocessableRequest", outputType));
+      } else {
+        return reportOutputHandler.supportsPagination();
+      }
+    }
+    catch (Throwable t)
+    {
+      log.error(Messages.getInstance().getString("ReportPlugin.executionFailed"), t); //$NON-NLS-1$
+    }
+    return false;
+  }
+
+  /**
    * This method will determine if the component instance 'is valid.' The validate() is called after all of the bean 'setters' have been called, so we may
    * validate on the actual values, not just the presence of inputs as we were historically accustomed to.
    * <p/>

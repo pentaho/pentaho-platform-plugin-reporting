@@ -907,12 +907,11 @@ public class ParameterXmlContentHandler
     // we can ONLY get the # of pages by asking the report to run
     if (reportComponent.validate())
     {
-      final int totalPageCount = reportComponent.paginate();
-      if (totalPageCount == 0)
+      if (!reportComponent.outputSupportsPagination())
       {
         return;
       }
-
+      final int totalPageCount = reportComponent.paginate();
       parameters.setAttribute(SimpleReportingComponent.PAGINATE_OUTPUT, "true"); //$NON-NLS-1$
       parameters.setAttribute("page-count", String.valueOf(totalPageCount)); //$NON-NLS-1$ //$NON-NLS-2$
       // use the saved value (we changed it to -1 for performance)

@@ -50,6 +50,10 @@ public class CSVOutput implements ReportOutputHandler
     }
   }
 
+  public boolean supportsPagination() {
+    return false;
+  }
+
   public void close()
   {
 

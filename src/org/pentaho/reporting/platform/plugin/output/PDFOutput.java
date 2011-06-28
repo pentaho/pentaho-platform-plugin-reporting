@@ -55,6 +55,10 @@ public class PDFOutput implements ReportOutputHandler
     }
   }
 
+  public boolean supportsPagination() {
+    return false;
+  }
+
   public void close()
   {
   }

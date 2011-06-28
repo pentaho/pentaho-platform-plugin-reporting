@@ -85,6 +85,10 @@ public class XmlPageableOutput implements ReportOutputHandler
     }
   }
 
+  public boolean supportsPagination() {
+    return true;
+  }
+
   public void close()
   {
     if (proc != null)

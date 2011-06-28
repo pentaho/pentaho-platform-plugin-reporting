@@ -65,6 +65,10 @@ public class PlainTextOutput implements ReportOutputHandler
     return proc;
   }
 
+  public boolean supportsPagination() {
+    return false;
+  }
+
   public void close()
   {
   }

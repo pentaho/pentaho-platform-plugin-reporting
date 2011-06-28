@@ -248,6 +248,10 @@ public class DefaultReportCache implements ReportCache
       return parent.getOutputHandler().generate(report, acceptedPage, outputStream, yieldRate);
     }
 
+    public boolean supportsPagination() {
+      return parent.getOutputHandler().supportsPagination();
+    }
+
     public void close()
     {
       this.parent.setReportInUse(false);

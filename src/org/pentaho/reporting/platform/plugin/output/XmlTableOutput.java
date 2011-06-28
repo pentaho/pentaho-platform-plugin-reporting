@@ -67,6 +67,10 @@ public class XmlTableOutput implements ReportOutputHandler
     }
   }
 
+  public boolean supportsPagination() {
+    return false;
+  }
+
   public void close()
   {
     if (proc != null)

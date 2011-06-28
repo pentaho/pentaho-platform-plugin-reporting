@@ -44,6 +44,10 @@ public class StreamHtmlOutput implements ReportOutputHandler
     return contentHandlerPattern;
   }
 
+  public boolean supportsPagination() {
+    return false;
+  }
+
   public void close()
   {
 
@@ -56,7 +60,7 @@ public class StreamHtmlOutput implements ReportOutputHandler
   }
 
   public int paginate(MasterReport report, int yieldRate) throws ReportProcessingException, IOException, ContentIOException {
-    return 0;
+    return 1;
   }
   
   public int generate(final MasterReport report,
@@ -130,7 +134,7 @@ public class StreamHtmlOutput implements ReportOutputHandler
     }
 
     outputStream.flush();
-    return 0;
+    return 1;
   }
 
 }
