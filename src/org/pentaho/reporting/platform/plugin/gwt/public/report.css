@@ -15,59 +15,6 @@ body {
   width:100%; 
 }
 
-.gwt-ToggleButton {
-  font-size: 10pt;
-}
-
-.gwt-ToggleButton-up, .gwt-ToggleButton-up-disabled {
-  background-image: url(buttonbg.gif);
-  padding: 3px;
-  margin: 2px;
-  background-color: #E8F1FF;
-  border-width: 1px;
-  border-style: solid;
-  border-color: white #a0a0a0 #a0a0a0 white;
-  cursor: pointer;
-  cursor: hand;
-}
-
-.gwt-ToggleButton-up-hovering {
-  background-image: url(buttonhoverbg.gif);
-  padding: 3px;
-  margin: 2px;
-  background-color: #E8F1FF;
-  border-width: 1px;
-  border-style: solid;
-  border-color: white black black white;
-  cursor: pointer;
-  cursor: hand;
-
-}
-
-.gwt-ToggleButton-down, .gwt-ToggleButton-down-disabled {
-  background-image: url(buttonbg.gif);
-  padding: 2px;
-  margin: 2px;
-  background-color: #E8F1FF;
-  border-width: 2px;
-  border-style: solid;
-  border-color: black white white black;
-  cursor: pointer;
-  cursor: hand;
-}
-
-.gwt-ToggleButton-down-hovering {
-  background-image: url(buttonhoverbg.gif);
-  padding: 2px;
-  margin: 2px;
-  background-color: #E8F1FF;
-  border-width: 2px;
-  border-style: solid;
-  border-color: black white white black;
-  cursor: pointer;
-  cursor: hand;
-}
-
 .parameter-disclosure {
 }
 
