@@ -5,8 +5,8 @@ import java.util.List;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.user.client.ui.CellPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.ToggleButton;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -72,7 +72,7 @@ public class ToggleButtonParameterUI extends SimplePanel implements ParameterUI
     final boolean multiSelect = parameterElement.isMultiSelect(); //$NON-NLS-1$ //$NON-NLS-2$
 
     // build button ui
-    final CellPanel buttonPanel;
+    final Panel buttonPanel;
     if ("vertical".equals(layout)) //$NON-NLS-1$
     {
       buttonPanel = new VerticalPanel();
@@ -90,6 +90,7 @@ public class ToggleButtonParameterUI extends SimplePanel implements ParameterUI
       final String choiceLabel = choiceElement.getLabel(); //$NON-NLS-1$
       final String choiceValue = choiceElement.getValue(); //$NON-NLS-1$
       final ToggleButton toggleButton = new ToggleButton(choiceLabel);
+      toggleButton.setStyleName("pentaho-toggle-button");
       toggleButton.setTitle(choiceValue);
       toggleButton.setDown(choiceElement.isSelected());
       buttonList.add(toggleButton);
