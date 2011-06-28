@@ -91,7 +91,11 @@ public class XLSXOutput implements ReportOutputHandler
 
   }
 
-  public void close()
+  public boolean supportsPagination() {
+    return false;
+  }
+
+    public void close()
   {
   }
 }

@@ -49,6 +49,10 @@ public class RTFOutput implements ReportOutputHandler
     }
   }
 
+  public boolean supportsPagination() {
+    return false;
+  }
+
   public void close()
   {
 

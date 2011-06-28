@@ -90,6 +90,10 @@ public class EmailOutput implements ReportOutputHandler
 
   }
 
+  public boolean supportsPagination() {
+    return false;
+  }
+
   public void close()
   {
 
