@@ -2,31 +2,32 @@
 	<head>
 		<title>Report Web Viewer</title>
 		<link rel="shortcut icon" href="favicon.ico" />
+		<link rel="stylesheet" type="text/css" media="screen" href="../../../mantle/Widgets.css" /> 
 		
         <!--   Temporary fix for GWT localization BISERVER-3640 -->
         <script src="../../../js/browserLocale.js" type="text/javascript"></script>
 
-        <script type="text/javascript" src="webcontext.js?context=analyzer"></script>
-    
-        <script type="text/javascript">
-          if(window.parent && window.parent.addGlassPaneListener){
-            window.parent.addGlassPaneListener(
-              new function() {
-                this.glassPaneShown = function() {
-                  var iframes = document.getElementsByTagName("iframe");
-                  for(var i=0; i<iframes.length; i++){
-                    iframes[i].style.display = "none";
-                  }
-                }
-                this.glassPaneHidden = function() {
-                  var iframes = document.getElementsByTagName("iframe");
-                  for(var i=0; i<iframes.length; i++){
-                    iframes[i].style.display = "";
-                  }
-                }
-           });
-          }
-        </script>
+    <script type="text/javascript" src="webcontext.js?context=analyzer"></script>
+
+    <script type="text/javascript">
+      if(window.parent && window.parent.addGlassPaneListener){
+        window.parent.addGlassPaneListener(
+          new function() {
+            this.glassPaneShown = function() {
+              var iframes = document.getElementsByTagName("iframe");
+              for(var i=0; i<iframes.length; i++){
+                iframes[i].style.display = "none";
+              }
+            }
+            this.glassPaneHidden = function() {
+              var iframes = document.getElementsByTagName("iframe");
+              for(var i=0; i<iframes.length; i++){
+                iframes[i].style.display = "";
+              }
+            }
+       });
+      }
+    </script>
 	</head>
 
 	<body scroll="no">

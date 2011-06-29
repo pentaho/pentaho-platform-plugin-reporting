@@ -7,6 +7,8 @@ import org.pentaho.gwt.widgets.client.listbox.CustomListBox;
 import org.pentaho.gwt.widgets.client.listbox.DefaultListItem;
 import org.pentaho.gwt.widgets.client.listbox.ListItem;
 
+import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.ChangeListener;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -70,6 +72,7 @@ public class DropDownParameterUI extends SimplePanel implements ParameterUI
 
     ListBoxChangeHandler lbChangeHandler = new ListBoxChangeHandler(controller, parameterElement.getName());
     listBox.addChangeListener(lbChangeHandler);
+    listBox.setTableLayout("auto");
 
     if (hasSelection == false) {
       listBox.setSelectedIndex(0);
