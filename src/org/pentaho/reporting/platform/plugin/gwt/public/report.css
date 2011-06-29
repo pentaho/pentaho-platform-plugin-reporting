@@ -304,3 +304,7 @@ td.datePickerMonth {
   width: 100%;
   max-width: 100%;
 }
+
+.custom-list-item  .gwt-Label {
+  font-size: 0.85em;
+}
