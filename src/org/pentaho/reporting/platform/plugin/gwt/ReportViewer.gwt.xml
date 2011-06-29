@@ -4,7 +4,7 @@
 	<inherits name='com.google.gwt.user.User'/>
 	<inherits name='com.google.gwt.xml.XML'/>
 
-	<inherits name='org.pentaho.gwt.widgets.client.Widgets' />
+	<inherits name='org.pentaho.gwt.widgets.Widgets' />
 	<inherits name='org.pentaho.gwt.widgets.client.datepicker.DatePicker' />
 	<inherits name='org.pentaho.gwt.widgets.client.utils.i18n.I18N'/>
 	<inherits name='org.pentaho.gwt.widgets.client.utils.string.StringUtils' />
