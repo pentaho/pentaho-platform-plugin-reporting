@@ -131,6 +131,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   private int acceptedPage;
   private int pageCount;
   private boolean dashboardMode;
+  private boolean injectCustomScrollbars = true;
   /*
    * These fields are for enabling printing
    */
@@ -300,6 +301,14 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     this.dashboardMode = dashboardMode;
   }
 
+  public boolean isInjectCustomScrollbars() {
+    return injectCustomScrollbars;
+  }
+  
+  public void setInjectCustomScrollbars(boolean injectCustomScrollbars) {
+    this.injectCustomScrollbars = injectCustomScrollbars;    
+  }
+  
   /**
    * This method returns the mime-type for the streaming output based on the effective output target.
    *
@@ -1128,11 +1137,12 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       {
         report.getReportConfiguration().setConfigProperty(HtmlTableModule.BODY_FRAGMENT, "true");
       }
-      
-      report.setAttribute(AttributeNames.Html.NAMESPACE, AttributeNames.Html.EXTRA_RAW_HEADER_CONTENT, "<script type='text/javascript' src='webcontext.js?context=reporting'></script>");
-      report.setAttribute(AttributeNames.Html.NAMESPACE, AttributeNames.Html.EXTRA_RAW_CONTENT, "<div id='report-scroll-panel' class='scroll-panel'>");
-      report.setAttribute(AttributeNames.Html.NAMESPACE, AttributeNames.Html.EXTRA_RAW_FOOTER_CONTENT, "</div><script type=\"text/javascript\">function setupReportScroll() {$('body').css('overflow', 'hidden'); $('#report-scroll-panel').height($(window).height()); $('.scroll-panel').jScrollPane({showArrows: true, reinitialiseOnImageLoad: true});} setupReportScroll(); window.onresize = setupReportScroll;</script>");
-      
+      if (injectCustomScrollbars)
+      {
+        report.setAttribute(AttributeNames.Html.NAMESPACE, AttributeNames.Html.EXTRA_RAW_HEADER_CONTENT, "<script type='text/javascript' src='webcontext.js?context=reporting'></script>");
+        report.setAttribute(AttributeNames.Html.NAMESPACE, AttributeNames.Html.EXTRA_RAW_CONTENT, "<div id='report-scroll-panel' class='scroll-panel'>");
+        report.setAttribute(AttributeNames.Html.NAMESPACE, AttributeNames.Html.EXTRA_RAW_FOOTER_CONTENT, "</div><script type=\"text/javascript\">function setupReportScroll() {$('body').css('overflow', 'hidden'); $('#report-scroll-panel').height($(window).height()); $('.scroll-panel').jScrollPane({showArrows: true, reinitialiseOnImageLoad: true});} setupReportScroll(); window.onresize = setupReportScroll;</script>");
+      }
       if (useContentRepository)
       {
         // use the content repository
@@ -1157,11 +1167,12 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       {
         report.getReportConfiguration().setConfigProperty(HtmlTableModule.BODY_FRAGMENT, "true");
       }
-      
-      report.setAttribute(AttributeNames.Html.NAMESPACE, AttributeNames.Html.EXTRA_RAW_HEADER_CONTENT, "<script type='text/javascript' src='webcontext.js?context=reporting'></script>");
-      report.setAttribute(AttributeNames.Html.NAMESPACE, AttributeNames.Html.EXTRA_RAW_CONTENT, "<div id='report-scroll-panel' class='scroll-panel'>");
-      report.setAttribute(AttributeNames.Html.NAMESPACE, AttributeNames.Html.EXTRA_RAW_FOOTER_CONTENT, "</div><script type=\"text/javascript\">function setupReportScroll() {$('body').css('overflow', 'hidden'); $('#report-scroll-panel').height($(window).height()); $('.scroll-panel').jScrollPane({showArrows: true, reinitialiseOnImageLoad: true});} setupReportScroll(); window.onresize = setupReportScroll;</script>");
-      
+      if (injectCustomScrollbars)
+      {
+        report.setAttribute(AttributeNames.Html.NAMESPACE, AttributeNames.Html.EXTRA_RAW_HEADER_CONTENT, "<script type='text/javascript' src='webcontext.js?context=reporting'></script>");
+        report.setAttribute(AttributeNames.Html.NAMESPACE, AttributeNames.Html.EXTRA_RAW_CONTENT, "<div id='report-scroll-panel' class='scroll-panel'>");
+        report.setAttribute(AttributeNames.Html.NAMESPACE, AttributeNames.Html.EXTRA_RAW_FOOTER_CONTENT, "</div><script type=\"text/javascript\">function setupReportScroll() {$('body').css('overflow', 'hidden'); $('#report-scroll-panel').height($(window).height()); $('.scroll-panel').jScrollPane({showArrows: true, reinitialiseOnImageLoad: true});} setupReportScroll(); window.onresize = setupReportScroll;</script>");
+      }
       if (useContentRepository)
       {
         // use the content repository
