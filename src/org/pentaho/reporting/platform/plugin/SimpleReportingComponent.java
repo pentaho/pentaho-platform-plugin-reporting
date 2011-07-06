@@ -65,7 +65,6 @@ import org.pentaho.reporting.platform.plugin.output.XLSXOutput;
 import org.pentaho.reporting.platform.plugin.output.XmlPageableOutput;
 import org.pentaho.reporting.platform.plugin.output.XmlTableOutput;
 
-
 public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntimeInputs
 {
 
@@ -132,6 +131,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   private int acceptedPage;
   private int pageCount;
   private boolean dashboardMode;
+  private boolean injectCustomScrollbars = true;
   /*
    * These fields are for enabling printing
    */
@@ -301,6 +301,14 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     this.dashboardMode = dashboardMode;
   }
 
+  public boolean isInjectCustomScrollbars() {
+    return injectCustomScrollbars;
+  }
+  
+  public void setInjectCustomScrollbars(boolean injectCustomScrollbars) {
+    this.injectCustomScrollbars = injectCustomScrollbars;    
+  }
+  
   /**
    * This method returns the mime-type for the streaming output based on the effective output target.
    *
@@ -399,7 +407,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   {
     this.outputStream = outputStream;
   }
-  
+
   /**
    * Gets the useContentRepository flag, needed by subclasses, such as with interactive adhoc
    *
@@ -455,7 +463,6 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     this.printer = printer;
   }
 
-
   /**
    * Get the inputs, needed by subclasses, such as with interactive adhoc
    *
@@ -469,7 +476,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     }
     return Collections.EMPTY_MAP;
   }
-  
+
   /**
    * This method sets the map of *all* the inputs which are available to this component. This allows us to use action-sequence inputs as parameters for our
    * reports.
@@ -540,7 +547,6 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     return defaultValue;
   }
 
-  
   /**
    * Sets the MasterReport for the report-definition, needed by subclasses, such as with interactive adhoc
    *
@@ -1080,7 +1086,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
         try
         {
           pageCount = reportOutputHandler.generate(report, acceptedPage, outputStream, getYieldRate());
-       	  return pageCount != -1;
+          return pageCount != -1;
         }
         finally
         {
@@ -1131,11 +1137,12 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       {
         report.getReportConfiguration().setConfigProperty(HtmlTableModule.BODY_FRAGMENT, "true");
       }
-      
-      report.setAttribute(AttributeNames.Html.NAMESPACE, AttributeNames.Html.EXTRA_RAW_HEADER_CONTENT, "<script type='text/javascript' src='webcontext.js?context=reporting'></script>");
-      report.setAttribute(AttributeNames.Html.NAMESPACE, AttributeNames.Html.EXTRA_RAW_CONTENT, "<div id='report-scroll-panel' class='scroll-panel'>");
-      report.setAttribute(AttributeNames.Html.NAMESPACE, AttributeNames.Html.EXTRA_RAW_FOOTER_CONTENT, "</div><script type=\"text/javascript\">function setupReportScroll() {$('body').css('overflow', 'hidden'); $('#report-scroll-panel').height($(window).height()); $('.scroll-panel').jScrollPane({showArrows: true, reinitialiseOnImageLoad: true});} setupReportScroll(); window.onresize = setupReportScroll;</script>");
-      
+      if (injectCustomScrollbars)
+      {
+        report.setAttribute(AttributeNames.Html.NAMESPACE, AttributeNames.Html.EXTRA_RAW_HEADER_CONTENT, "<script type='text/javascript' src='webcontext.js?context=reporting'></script>");
+        report.setAttribute(AttributeNames.Html.NAMESPACE, AttributeNames.Html.EXTRA_RAW_CONTENT, "<div id='report-scroll-panel' class='scroll-panel'>");
+        report.setAttribute(AttributeNames.Html.NAMESPACE, AttributeNames.Html.EXTRA_RAW_FOOTER_CONTENT, "</div><script type=\"text/javascript\">function setupReportScroll() {$('body').css('overflow', 'hidden'); $('#report-scroll-panel').height($(window).height()); $('.scroll-panel').jScrollPane({showArrows: true, reinitialiseOnImageLoad: true});} setupReportScroll(); window.onresize = setupReportScroll;</script>");
+      }
       if (useContentRepository)
       {
         // use the content repository
@@ -1160,11 +1167,12 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       {
         report.getReportConfiguration().setConfigProperty(HtmlTableModule.BODY_FRAGMENT, "true");
       }
-      
-      report.setAttribute(AttributeNames.Html.NAMESPACE, AttributeNames.Html.EXTRA_RAW_HEADER_CONTENT, "<script type='text/javascript' src='webcontext.js?context=reporting'></script>");
-      report.setAttribute(AttributeNames.Html.NAMESPACE, AttributeNames.Html.EXTRA_RAW_CONTENT, "<div id='report-scroll-panel' class='scroll-panel'>");
-      report.setAttribute(AttributeNames.Html.NAMESPACE, AttributeNames.Html.EXTRA_RAW_FOOTER_CONTENT, "</div><script type=\"text/javascript\">function setupReportScroll() {$('body').css('overflow', 'hidden'); $('#report-scroll-panel').height($(window).height()); $('.scroll-panel').jScrollPane({showArrows: true, reinitialiseOnImageLoad: true});} setupReportScroll(); window.onresize = setupReportScroll;</script>");
-      
+      if (injectCustomScrollbars)
+      {
+        report.setAttribute(AttributeNames.Html.NAMESPACE, AttributeNames.Html.EXTRA_RAW_HEADER_CONTENT, "<script type='text/javascript' src='webcontext.js?context=reporting'></script>");
+        report.setAttribute(AttributeNames.Html.NAMESPACE, AttributeNames.Html.EXTRA_RAW_CONTENT, "<div id='report-scroll-panel' class='scroll-panel'>");
+        report.setAttribute(AttributeNames.Html.NAMESPACE, AttributeNames.Html.EXTRA_RAW_FOOTER_CONTENT, "</div><script type=\"text/javascript\">function setupReportScroll() {$('body').css('overflow', 'hidden'); $('#report-scroll-panel').height($(window).height()); $('.scroll-panel').jScrollPane({showArrows: true, reinitialiseOnImageLoad: true});} setupReportScroll(); window.onresize = setupReportScroll;</script>");
+      }
       if (useContentRepository)
       {
         // use the content repository
@@ -1287,7 +1295,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     // lets not pretend we were successfull, if the export type was not a valid one.
     return 0;
   }
-
+  
   protected String getViewerSessionId()
   {
     if (inputs == null)
