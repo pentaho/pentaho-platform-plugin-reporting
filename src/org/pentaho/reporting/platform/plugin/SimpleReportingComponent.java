@@ -1131,6 +1131,11 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       {
         report.getReportConfiguration().setConfigProperty(HtmlTableModule.BODY_FRAGMENT, "true");
       }
+      
+      report.setAttribute(AttributeNames.Html.NAMESPACE, AttributeNames.Html.EXTRA_RAW_HEADER_CONTENT, "<script type='text/javascript' src='webcontext.js?context=reporting'></script>");
+      report.setAttribute(AttributeNames.Html.NAMESPACE, AttributeNames.Html.EXTRA_RAW_CONTENT, "<div id='report-scroll-panel' class='scroll-panel'>");
+      report.setAttribute(AttributeNames.Html.NAMESPACE, AttributeNames.Html.EXTRA_RAW_FOOTER_CONTENT, "</div><script type=\"text/javascript\">function setupReportScroll() {$('body').css('overflow', 'hidden'); $('#report-scroll-panel').height($(window).height()); $('.scroll-panel').jScrollPane({showArrows: true, reinitialiseOnImageLoad: true});} setupReportScroll(); window.onresize = setupReportScroll;</script>");
+      
       if (useContentRepository)
       {
         // use the content repository
@@ -1155,6 +1160,11 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       {
         report.getReportConfiguration().setConfigProperty(HtmlTableModule.BODY_FRAGMENT, "true");
       }
+      
+      report.setAttribute(AttributeNames.Html.NAMESPACE, AttributeNames.Html.EXTRA_RAW_HEADER_CONTENT, "<script type='text/javascript' src='webcontext.js?context=reporting'></script>");
+      report.setAttribute(AttributeNames.Html.NAMESPACE, AttributeNames.Html.EXTRA_RAW_CONTENT, "<div id='report-scroll-panel' class='scroll-panel'>");
+      report.setAttribute(AttributeNames.Html.NAMESPACE, AttributeNames.Html.EXTRA_RAW_FOOTER_CONTENT, "</div><script type=\"text/javascript\">function setupReportScroll() {$('body').css('overflow', 'hidden'); $('#report-scroll-panel').height($(window).height()); $('.scroll-panel').jScrollPane({showArrows: true, reinitialiseOnImageLoad: true});} setupReportScroll(); window.onresize = setupReportScroll;</script>");
+      
       if (useContentRepository)
       {
         // use the content repository
