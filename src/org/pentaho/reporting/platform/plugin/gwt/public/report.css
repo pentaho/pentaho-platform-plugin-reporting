@@ -280,11 +280,8 @@ td.datePickerMonth {
 }
 
 .modalDialogPageBackground {
-  opacity: 0.20;
-  background-color:  #000000;
   z-index:250;
   cursor: progress;
-  filter:alpha(opacity=20);
 }
 
 .parameter-content-panel {
