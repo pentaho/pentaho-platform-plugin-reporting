@@ -91,6 +91,25 @@ public class ToggleButtonParameterUI extends SimplePanel implements ParameterUI
       final String choiceValue = choiceElement.getValue(); //$NON-NLS-1$
       final ToggleButton toggleButton = new ToggleButton(choiceLabel);
       toggleButton.setStyleName("pentaho-toggle-button");
+      if ("vertical".equals(layout)) {
+        toggleButton.addStyleName("pentaho-toggle-button-vertical");
+      } else {
+        toggleButton.addStyleName("pentaho-toggle-button-horizontal");
+      }
+      if (i==0) {
+        if ("vertical".equals(layout)) {
+          toggleButton.addStyleName("pentaho-toggle-button-vertical-first");
+        } else {
+          toggleButton.addStyleName("pentaho-toggle-button-horizontal-first");
+        }
+      }
+      if (i==choices.size()-1) {
+        if ("vertical".equals(layout)) {
+          toggleButton.addStyleName("pentaho-toggle-button-vertical-last");
+        } else {
+          toggleButton.addStyleName("pentaho-toggle-button-horizontal-last");
+        }
+      }
       toggleButton.setTitle(choiceValue);
       toggleButton.setDown(choiceElement.isSelected());
       buttonList.add(toggleButton);
