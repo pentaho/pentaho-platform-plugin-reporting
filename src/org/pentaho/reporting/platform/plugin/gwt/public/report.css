@@ -72,6 +72,7 @@ body {
 .parameter-label {
 	font-size: 10pt;
 	font-weight: bold;
+  white-space: nowrap;
 }
 
 .parameter-error-label {
@@ -300,6 +301,10 @@ td.datePickerMonth {
   overflow-x: auto;
   width: 100%;
   max-width: 100%;
+}
+.IE .parameter-wrapper {
+  /* account for the scrollbar taking up vertical space when present */
+  padding-bottom: 16px
 }
 
 .custom-list-item  .gwt-Label {
