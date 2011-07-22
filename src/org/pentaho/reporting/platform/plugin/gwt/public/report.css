@@ -310,3 +310,7 @@ td.datePickerMonth {
 .custom-list-item  .gwt-Label {
   font-size: 0.85em;
 }
+
+.text-parse-error {
+  color: #900000;
+}

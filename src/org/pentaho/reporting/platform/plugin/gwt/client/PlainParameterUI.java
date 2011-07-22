@@ -31,12 +31,11 @@ public class PlainParameterUI extends SimplePanel implements ParameterUI
 
     public void onKeyUp(final KeyUpEvent event)
     {
-      final SuggestBox textBox = (SuggestBox) event.getSource();
-      final String text = textBox.getText();
-
       String value;
       if (listParameter)
       {
+        final SuggestBox textBox = (SuggestBox) event.getSource();
+        final String text = textBox.getText();
         value = labelToValueMap.get(text);
         if (text == null && strict == false)
         {
@@ -45,10 +44,29 @@ public class PlainParameterUI extends SimplePanel implements ParameterUI
       }
       else
       {
-        value = text;
+        value = textBox.getText();
       }
 
-      controller.getParameterMap().setSelectedValue(parameterName, value);
+      if (dataFormat != null)
+      {
+        try
+        {
+          textBox.getTextBox().setStyleName("");
+          final String text = ReportViewerUtil.createTransportObject(parameterElement, dataFormat.parse(value));
+          controller.getParameterMap().setSelectedValue(parameterName, text);
+        }
+        catch (Exception e)
+        {
+          textBox.getTextBox().setStyleName("text-parse-error");
+          // ignore partial values ..
+//          controller.getParameterMap().setSelectedValue(null, value);
+        }
+      }
+      else
+      {
+        controller.getParameterMap().setSelectedValue(parameterName, value);
+      }
+
       if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER)
       {
         // on enter, force update
@@ -93,9 +111,12 @@ public class PlainParameterUI extends SimplePanel implements ParameterUI
   private SuggestBox textBox;
   private boolean listParameter;
   private boolean strict;
+  private TextFormat dataFormat;
+  private Parameter parameterElement;
 
   public PlainParameterUI(final ParameterControllerPanel controller, final Parameter parameterElement)
   {
+    this.parameterElement = parameterElement;
     final MultiWordSuggestOracle oracle = new MultiWordSuggestOracle();
     final List<ParameterSelection> selections = parameterElement.getSelections();
     for (int i = 0; i < selections.size(); i++)
@@ -113,6 +134,19 @@ public class PlainParameterUI extends SimplePanel implements ParameterUI
     strict = parameterElement.isStrict();
     listParameter = parameterElement.isList();
     textBox = new SuggestBox(oracle);
+
+    final String dataType = parameterElement.getType();
+    if (parameterElement.isList())
+    {
+      // formatting and lists are mutually exclusive.
+      dataFormat = null;
+    }
+    else
+    {
+      final String dataFormatText = parameterElement.getAttribute("data-format");
+      dataFormat = ReportViewerUtil.createTextFormat(dataFormatText, dataType);
+    }
+
 
     if (selections.isEmpty())
     {
@@ -133,7 +167,22 @@ public class PlainParameterUI extends SimplePanel implements ParameterUI
       if (parameterSelection != null)
       {
         final String labelText = parameterSelection.getLabel();
-        textBox.setText(labelText);
+        if (dataFormat != null)
+        {
+          final Object rawObject = ReportViewerUtil.createRawObject(labelText, parameterElement);
+          if (rawObject != null)
+          {
+            textBox.setText(dataFormat.format(rawObject));
+          }
+          else
+          {
+            textBox.setText(labelText);
+          }
+        }
+        else
+        {
+          textBox.setText(labelText);
+        }
       }
     }
 
