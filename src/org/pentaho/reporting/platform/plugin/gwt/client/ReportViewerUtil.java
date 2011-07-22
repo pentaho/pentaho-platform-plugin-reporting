@@ -143,7 +143,7 @@ public class ReportViewerUtil
    * Converts a time from a arbitary timezone into the local timezone. The timestamp value remains unchanged,
    * but the string representation changes to reflect the give timezone.
    *
-   * @param originalTimestamp the timestamp as string from the server.
+   * @param originalTimestamp             the timestamp as string from the server.
    * @param targetTimeZoneOffsetInMinutes the target timezone offset in minutes from GMT
    * @return the converted timestamp string.
    */
@@ -172,9 +172,9 @@ public class ReportViewerUtil
    * @return the offset in minutes.
    */
   public static native int getNativeTimezoneOffset()
-    /*-{
-      return -(new Date().getTimezoneOffset());
-    }-*/;
+  /*-{
+    return -(new Date().getTimezoneOffset());
+  }-*/;
 
   public static String extractTimezoneHintFromData(final String dateString)
   {
@@ -353,7 +353,7 @@ public class ReportViewerUtil
         parameters.setSelectedValues(key, encodedList);
       }
     }
-    
+
     final String parametersAsString = parameters.toURL();
     if (History.getToken().equals(parametersAsString) == false)
     {
@@ -369,17 +369,20 @@ public class ReportViewerUtil
       // Build a dev/test url
       System.out.println("Computed path was: " + reportPath);
       reportPath = reportPath.substring(1);
-      
-      if(!reportPath.contains("solution")) {
+
+      if (!reportPath.contains("solution"))
+      {
         reportPath = reportPath + "&solution=steel-wheels&path=reports&name=Inventory.prpt"; //$NON-NLS-1$
       }
-      if(!reportPath.contains("path")) {
+      if (!reportPath.contains("path"))
+      {
         reportPath = reportPath + "&path=reports"; //$NON-NLS-1$
       }
-      if(!reportPath.contains("name")) {
+      if (!reportPath.contains("name"))
+      {
         reportPath = reportPath + "&name=Inventory.prpt"; //$NON-NLS-1$
       }
-      
+
       final String url = "http://localhost:8080/pentaho/content/reporting?" + reportPath + "&userid=joe&password=password"; //$NON-NLS-1$ //$NON-NLS-2$
       System.out.println("Using development url: " + url);
       return url;
@@ -464,4 +467,167 @@ public class ReportViewerUtil
     return text == null || "".equals(text);
   }
 
+  public static TextFormat createTextFormat(final String pattern, final String dataType)
+  {
+    if (Number.class.getName().equals(dataType) ||
+        Byte.class.getName().equals(dataType) ||
+        Short.class.getName().equals(dataType) ||
+        Integer.class.getName().equals(dataType) ||
+        Long.class.getName().equals(dataType) ||
+        Float.class.getName().equals(dataType) ||
+        Double.class.getName().equals(dataType) ||
+        "java.math.BigDecimal".equals(dataType) ||
+        "java.math.BigInteger".equals(dataType))
+    {
+      return new NumberTextFormat(pattern);
+    }
+    else if (java.util.Date.class.getName().equals(dataType) ||
+        java.sql.Date.class.getName().equals(dataType) ||
+        java.sql.Time.class.getName().equals(dataType) ||
+        java.sql.Timestamp.class.getName().equals(dataType))
+    {
+      return new DateTextFormat(pattern);
+    }
+    else
+    {
+      return null;
+    }
+  }
+
+  public static Object createRawObject(final String value, final Parameter parameterElement)
+  {
+    final String dataType = parameterElement.getType();
+    if (Number.class.getName().equals(dataType) ||
+        Byte.class.getName().equals(dataType) ||
+        Short.class.getName().equals(dataType) ||
+        Integer.class.getName().equals(dataType) ||
+        Long.class.getName().equals(dataType) ||
+        Float.class.getName().equals(dataType) ||
+        Double.class.getName().equals(dataType) ||
+        "java.math.BigDecimal".equals(dataType) ||
+        "java.math.BigInteger".equals(dataType))
+    {
+      return new Double(value);
+    }
+    else if (java.util.Date.class.getName().equals(dataType) ||
+        java.sql.Date.class.getName().equals(dataType) ||
+        java.sql.Time.class.getName().equals(dataType) ||
+        java.sql.Timestamp.class.getName().equals(dataType))
+    {
+      return parseDate(parameterElement, value);
+    }
+    else
+    {
+      return null;
+    }
+  }
+
+  public static DateTimeFormat createDateTransportFormat(final Parameter parameter)
+  {
+    final String timezone = parameter.getAttribute("timezone");
+    final String timezoneHint = parameter.getTimezoneHint();
+    if ("client".equals(timezone))
+    {
+      return DateTimeFormat.getFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+    }
+    else
+    {
+      // Take the date string as it comes from the server, cut out the timezone information - the
+      // server will supply its own here.
+      if (timezoneHint != null && timezoneHint.length() > 0)
+      {
+        return DateTimeFormat.getFormat("yyyy-MM-dd'T'HH:mm:ss.SSS" + "'" + timezoneHint + "'");
+      }
+      else
+      {
+        if ("server".equals(timezone) || timezone == null)
+        {
+          return DateTimeFormat.getFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
+        }
+        else if ("utc".equals(timezone))
+        {
+          return DateTimeFormat.getFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'+0000'");
+        }
+        else
+        {
+          return DateTimeFormat.getFormat
+              ("yyyy-MM-dd'T'HH:mm:ss.SSS'" + TimeZoneOffsets.getInstance().getOffsetAsString(timezone) + "'");
+        }
+      }
+    }
+  }
+
+
+  public static Date parseDate(final Parameter parameterElement, final String text)
+  {
+    final String timezoneMode = parameterElement.getAttribute("timezone");
+    if ("client".equals(timezoneMode))
+    {
+      try
+      {
+        return ReportViewerUtil.parseWithTimezone(text);
+      }
+      catch (Exception e)
+      {
+        // invalid date string ..
+      }
+    }
+
+    try
+    {
+      return ReportViewerUtil.parseWithoutTimezone(text);
+    }
+    catch (Exception e)
+    {
+      // invalid date string ..
+    }
+
+    try
+    {
+      // we use crippled dates as long as we have no safe and well-defined way to
+      // pass date and time parameters from the server to the client and vice versa. we have to
+      // parse the ISO-date the server supplies by default as date-only date-string.
+      if (text.length() == 10)
+      {
+        try
+        {
+          return DateTimeFormat.getFormat("yyyy-MM-dd").parse(text);
+        }
+        catch (Exception e)
+        {
+          // invalid date string ..
+        }
+      }
+    }
+    catch (Exception e)
+    {
+      // invalid date string ..
+    }
+
+    try
+    {
+      return new Date(Long.parseLong(text));
+    }
+    catch (Exception e)
+    {
+      // invalid number as well
+    }
+    return null;
+  }
+
+  public static String createTransportObject(final Parameter parameter, final Object value)
+  {
+    if (value == null)
+    {
+      return null;
+    }
+    
+    if (value instanceof Date)
+    {
+      final Date d = (Date) value;
+      return createDateTransportFormat(parameter).format(d);
+    }
+    // number formats are simple
+    return value.toString();
+  }
 }

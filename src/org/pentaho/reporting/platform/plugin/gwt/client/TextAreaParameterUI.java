@@ -25,7 +25,25 @@ public class TextAreaParameterUI extends SimplePanel implements ParameterUI
     {
       final TextArea textBox = (TextArea) event.getSource();
       final String value = textBox.getText();
-      controller.getParameterMap().setSelectedValue(parameterName, value);
+      if (dataFormat != null)
+      {
+        try
+        {
+          textBox.setStyleName("");
+          final String text = ReportViewerUtil.createTransportObject(parameterElement, dataFormat.parse(value));
+          controller.getParameterMap().setSelectedValue(parameterName, text);
+        }
+        catch (Exception e)
+        {
+          textBox.setStyleName("text-parse-error");
+          // ignore partial values ..
+//          controller.getParameterMap().setSelectedValue(null, value);
+        }
+      }
+      else
+      {
+        controller.getParameterMap().setSelectedValue(parameterName, value);
+      }
       if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER)
       {
         // on enter, force update
@@ -36,11 +54,28 @@ public class TextAreaParameterUI extends SimplePanel implements ParameterUI
   }
 
   private TextArea textBox;
+  private TextFormat dataFormat;
+  private Parameter parameterElement;
 
   public TextAreaParameterUI(final ParameterControllerPanel controller, final Parameter parameterElement)
   {
+    this.parameterElement = parameterElement;
     final List<ParameterSelection> selections = parameterElement.getSelections();
     textBox = new TextArea();
+
+    final String dataType = parameterElement.getType();
+    if (parameterElement.isList())
+    {
+      // formatting and lists are mutually exclusive.
+      dataFormat = null;
+    }
+    else
+    {
+      // ParameterAttributeNames.Core.DATA_FORMAT
+      final String dataFormatText = parameterElement.getAttribute("data-format");
+      dataFormat = ReportViewerUtil.createTextFormat(dataFormatText, dataType);
+    }
+
     if (selections.isEmpty())
     {
       textBox.setText(""); //$NON-NLS-1$
@@ -60,7 +95,22 @@ public class TextAreaParameterUI extends SimplePanel implements ParameterUI
       if (parameterSelection != null)
       {
         final String labelText = parameterSelection.getLabel();
-        textBox.setText(labelText);
+        if (dataFormat != null)
+        {
+          final Object rawObject = ReportViewerUtil.createRawObject(labelText, parameterElement);
+          if (rawObject != null)
+          {
+            textBox.setText(dataFormat.format(rawObject));
+          }
+          else
+          {
+            textBox.setText(labelText);
+          }
+        }
+        else
+        {
+          textBox.setText(labelText);
+        }
       }
     }
     textBox.addKeyUpHandler(new PlainParameterKeyUpHandler(controller, parameterElement.getName()));
