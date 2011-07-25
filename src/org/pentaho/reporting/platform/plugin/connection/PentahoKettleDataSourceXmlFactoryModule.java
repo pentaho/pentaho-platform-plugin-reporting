@@ -4,14 +4,6 @@ import org.pentaho.reporting.engine.classic.extensions.datasources.kettle.parser
 import org.pentaho.reporting.libraries.xmlns.parser.XmlReadHandler;
 import org.pentaho.reporting.libraries.xmlns.parser.XmlDocumentInfo;
 
-/**
- * Todo: Document me!
- * <p/>
- * Date: 15.01.2010
- * Time: 20:03:12
- *
- * @author Thomas Morgner.
- */
 public class PentahoKettleDataSourceXmlFactoryModule extends KettleDataSourceXmlFactoryModule
 {
   public PentahoKettleDataSourceXmlFactoryModule()

@@ -13,14 +13,6 @@ import org.pentaho.reporting.libraries.resourceloader.ResourceManager;
 import org.pentaho.reporting.libraries.base.util.IOUtils;
 import org.pentaho.reporting.platform.plugin.messages.Messages;
 
-/**
- * Todo: Document me!
- * <p/>
- * Date: 25.08.2009
- * Time: 10:24:38
- *
- * @author Thomas Morgner.
- */
 public class PentahoCubeFileProvider extends DefaultCubeFileProvider
 {
   public PentahoCubeFileProvider(final String definedFile)

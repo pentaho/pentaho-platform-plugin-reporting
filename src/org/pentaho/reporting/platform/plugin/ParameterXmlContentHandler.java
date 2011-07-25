@@ -74,14 +74,6 @@ import org.pentaho.reporting.platform.plugin.messages.Messages;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-/**
- * Todo: Document me!
- * <p/>
- * Date: 22.07.2010
- * Time: 16:24:30
- *
- * @author Thomas Morgner.
- */
 public class ParameterXmlContentHandler
 {
   private static class OutputParameterCollector

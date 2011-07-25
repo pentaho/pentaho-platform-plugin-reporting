@@ -8,14 +8,6 @@ import java.util.Map;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Window;
 
-/**
- * Todo: Document me!
- * <p/>
- * Date: 22.07.2010
- * Time: 18:08:49
- *
- * @author Thomas Morgner.
- */
 public class ParameterValues
 {
   private HashMap<String, ArrayList<String>> backend;

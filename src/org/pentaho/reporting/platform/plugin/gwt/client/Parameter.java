@@ -4,14 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-/**
- * Todo: Document me!
- * <p/>
- * Date: 22.07.2010
- * Time: 13:47:30
- *
- * @author Thomas Morgner.
- */
 public class Parameter
 {
   public static final String CORE_NAMESPACE =

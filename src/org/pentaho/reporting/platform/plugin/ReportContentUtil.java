@@ -27,14 +27,6 @@ import org.pentaho.reporting.engine.classic.core.util.beans.ValueConverter;
 import org.pentaho.reporting.libraries.base.util.StringUtils;
 import org.pentaho.reporting.platform.plugin.messages.Messages;
 
-/**
- * Todo: Document me!
- * <p/>
- * Date: 28.07.2010
- * Time: 14:02:11
- *
- * @author Thomas Morgner.
- */
 public class ReportContentUtil
 {
 

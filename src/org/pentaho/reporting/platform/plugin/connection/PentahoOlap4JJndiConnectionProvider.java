@@ -12,14 +12,6 @@ import org.pentaho.platform.api.engine.ObjectFactoryException;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.extensions.datasources.olap4j.connections.OlapConnectionProvider;
 
-/**
- * Todo: Document me!
- * <p/>
- * Date: 25.08.2010
- * Time: 16:25:27
- *
- * @author Thomas Morgner.
- */
 public class PentahoOlap4JJndiConnectionProvider implements OlapConnectionProvider
 {
   private String jndiName;

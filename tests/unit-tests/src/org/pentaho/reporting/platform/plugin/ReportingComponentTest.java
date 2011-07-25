@@ -34,7 +34,6 @@ public class ReportingComponentTest extends TestCase {
   
   @Override
   protected void setUp() throws Exception {
-    // TODO Auto-generated method stub
     super.setUp();
     microPlatform = new MicroPlatform("tests/integration-tests/resource/");
     microPlatform.define(ISolutionEngine.class, SolutionEngine.class);

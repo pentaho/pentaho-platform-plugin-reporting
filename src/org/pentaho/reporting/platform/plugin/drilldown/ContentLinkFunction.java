@@ -20,14 +20,6 @@ import org.pentaho.reporting.libraries.formula.typing.Type;
 import org.pentaho.reporting.libraries.formula.typing.coretypes.TextType;
 import org.pentaho.reporting.libraries.formula.typing.sequence.RecursiveSequence;
 
-/**
- * Todo: Document me!
- * <p/>
- * Date: 14.01.11
- * Time: 16:46
- *
- * @author Thomas Morgner.
- */
 public class ContentLinkFunction implements Function
 {
   public ContentLinkFunction()

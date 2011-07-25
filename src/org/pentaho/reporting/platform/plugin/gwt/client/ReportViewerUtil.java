@@ -22,14 +22,6 @@ import org.pentaho.gwt.widgets.client.utils.i18n.ResourceBundle;
 import org.pentaho.gwt.widgets.client.utils.string.StringTokenizer;
 import org.pentaho.gwt.widgets.client.utils.string.StringUtils;
 
-/**
- * Todo: Document me!
- * <p/>
- * Date: 22.07.2010
- * Time: 11:11:15
- *
- * @author Thomas Morgner.
- */
 public class ReportViewerUtil
 {
   private ReportViewerUtil()

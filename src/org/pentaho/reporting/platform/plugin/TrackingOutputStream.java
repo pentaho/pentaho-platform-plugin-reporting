@@ -3,14 +3,6 @@ package org.pentaho.reporting.platform.plugin;
 import java.io.IOException;
 import java.io.OutputStream;
 
-/**
- * Todo: Document me!
- * <p/>
- * Date: 22.07.2010
- * Time: 15:53:55
- *
- * @author Thomas Morgner.
- */
 public class TrackingOutputStream extends OutputStream
 {
   private int trackingSize;

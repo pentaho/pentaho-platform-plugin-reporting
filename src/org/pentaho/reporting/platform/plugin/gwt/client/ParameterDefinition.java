@@ -4,14 +4,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 
-/**
- * Todo: Document me!
- * <p/>
- * Date: 22.07.2010
- * Time: 13:46:41
- *
- * @author Thomas Morgner.
- */
 public class ParameterDefinition
 {
   private ProcessingState processingState;

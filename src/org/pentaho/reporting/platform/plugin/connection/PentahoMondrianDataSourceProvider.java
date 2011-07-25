@@ -9,14 +9,6 @@ import org.pentaho.platform.api.engine.ObjectFactoryException;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.extensions.datasources.mondrian.DataSourceProvider;
 
-/**
- * Todo: Document me!
- * <p/>
- * Date: 25.08.2009
- * Time: 18:45:33
- *
- * @author Thomas Morgner.
- */
 public class PentahoMondrianDataSourceProvider implements DataSourceProvider
 {
   private String dataSourceName;

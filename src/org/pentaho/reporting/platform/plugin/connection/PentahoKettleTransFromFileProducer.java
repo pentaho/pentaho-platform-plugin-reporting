@@ -6,14 +6,6 @@ import org.pentaho.reporting.engine.classic.extensions.datasources.kettle.Kettle
 import org.pentaho.reporting.libraries.resourceloader.ResourceKey;
 import org.pentaho.reporting.platform.plugin.RepositoryResourceLoader;
 
-/**
- * Todo: Document me!
- * <p/>
- * Date: 05.01.2010
- * Time: 17:42:40
- *
- * @author Thomas Morgner.
- */
 public class PentahoKettleTransFromFileProducer extends KettleTransFromFileProducer
 {
   public PentahoKettleTransFromFileProducer(final String repositoryName,

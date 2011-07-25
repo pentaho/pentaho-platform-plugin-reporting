@@ -6,14 +6,6 @@ import org.pentaho.reporting.engine.classic.extensions.datasources.mondrian.Mond
 import org.pentaho.reporting.engine.classic.extensions.datasources.mondrian.parser.BandedMDXDataSourceReadHandler;
 import org.xml.sax.SAXException;
 
-/**
- * Todo: Document me!
- * <p/>
- * Date: 16.04.2010
- * Time: 16:31:30
- *
- * @author Thomas Morgner.
- */
 public class PentahoBandedMdxDataSourceReadHandler extends BandedMDXDataSourceReadHandler
 {
   public PentahoBandedMdxDataSourceReadHandler()

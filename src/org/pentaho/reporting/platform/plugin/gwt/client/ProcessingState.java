@@ -1,13 +1,5 @@
 package org.pentaho.reporting.platform.plugin.gwt.client;
 
-/**
- * Todo: Document me!
- * <p/>
- * Date: 22.07.2010
- * Time: 14:12:01
- *
- * @author Thomas Morgner.
- */
 public class ProcessingState
 {
   private int page;

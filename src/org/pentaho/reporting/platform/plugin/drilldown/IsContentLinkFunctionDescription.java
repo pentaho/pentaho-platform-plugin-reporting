@@ -7,14 +7,6 @@ import org.pentaho.reporting.libraries.formula.typing.Type;
 import org.pentaho.reporting.libraries.formula.typing.coretypes.AnyType;
 import org.pentaho.reporting.libraries.formula.typing.coretypes.LogicalType;
 
-/**
- * Todo: Document me!
- * <p/>
- * Date: 21.12.10
- * Time: 15:26
- *
- * @author Thomas Morgner.
- */
 public class IsContentLinkFunctionDescription extends AbstractFunctionDescription
 {
   public IsContentLinkFunctionDescription()

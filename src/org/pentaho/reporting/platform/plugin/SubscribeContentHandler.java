@@ -5,6 +5,8 @@ import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.List;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.pentaho.platform.api.engine.IParameterProvider;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.api.repository.ISchedule;
@@ -19,16 +21,9 @@ import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterDefinitionEntry;
 import org.pentaho.reporting.libraries.resourceloader.ResourceException;
 
-/**
- * Todo: Document me!
- * <p/>
- * Date: 22.07.2010
- * Time: 16:15:52
- *
- * @author Thomas Morgner.
- */
 public class SubscribeContentHandler
 {
+  private static final Log logger = LogFactory.getLog(SubscribeContentHandler.class);
   private ReportContentGenerator contentGenerator;
   private IPentahoSession userSession;
 
@@ -128,7 +123,7 @@ public class SubscribeContentHandler
     }
     else
     {
-      // TODO log an error
+      logger.warn(Messages.getInstance().getString("SubscriptionHelper.USER_SUBSCRIPTION_NOT_CREATE"));
       return Messages.getInstance().getString("SubscriptionHelper.USER_SUBSCRIPTION_NOT_CREATE"); //$NON-NLS-1$
     }
   }

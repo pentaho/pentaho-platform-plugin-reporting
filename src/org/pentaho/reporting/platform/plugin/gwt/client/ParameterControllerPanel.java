@@ -554,7 +554,6 @@ public class ParameterControllerPanel extends VerticalPanel
         final int length = attributes.getLength();
         for (int aidx = 0; aidx < length; aidx++)
         {
-          // todo support additional namespaces ..
           final Element item = (Element) attributes.item(aidx);
           final String namespace = item.getAttribute("namespace");
           final String attrName = item.getAttribute("name");
