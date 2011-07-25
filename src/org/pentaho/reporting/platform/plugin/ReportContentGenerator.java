@@ -61,7 +61,8 @@ public class ReportContentGenerator extends SimpleContentGenerator
         case REPORT:
         {
           // create inputs from request parameters
-          final ExecuteReportContentHandler executeReportContentHandler = new ExecuteReportContentHandler(this);
+          final ExecuteReportContentHandler executeReportContentHandler =
+              new ExecuteReportContentHandler(this, parameterProviders.get("path"));
           executeReportContentHandler.createReportContent(outputStream, reportDefinitionPath);
           break;
         }

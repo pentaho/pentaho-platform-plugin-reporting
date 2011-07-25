@@ -3,6 +3,7 @@ package org.pentaho.reporting.platform.plugin;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Map;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.logging.Log;
@@ -20,31 +21,95 @@ import org.pentaho.reporting.engine.classic.core.AttributeNames;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlTableModule;
 import org.pentaho.reporting.engine.classic.core.util.StagingMode;
+import org.pentaho.reporting.libraries.base.util.IOUtils;
 import org.pentaho.reporting.platform.plugin.messages.Messages;
 
-/**
- * Todo: Document me!
- * <p/>
- * Date: 22.07.2010
- * Time: 16:02:06
- *
- * @author Thomas Morgner.
- */
 public class ExecuteReportContentHandler
 {
   private static final String FORCED_BUFFERED_WRITING = "org.pentaho.reporting.engine.classic.core.modules.output.table.html.ForceBufferedWriting";
+
   private static final Log logger = LogFactory.getLog(ExecuteReportContentHandler.class);
+  private static final StagingMode DEFAULT = StagingMode.THRU;
 
   private IPentahoSession userSession;
   private ReportContentGenerator contentGenerator;
+  private IParameterProvider pathProvider;
 
-  public ExecuteReportContentHandler(final ReportContentGenerator contentGenerator)
+  public ExecuteReportContentHandler(final ReportContentGenerator contentGenerator,
+                                     final IParameterProvider pathProvider)
   {
     this.contentGenerator = contentGenerator;
+    this.pathProvider = pathProvider;
     this.userSession = contentGenerator.getUserSession();
   }
 
   public void createReportContent(final OutputStream outputStream, final String reportDefinitionPath) throws Exception
+  {
+    // Check whether we should forward ..
+    final HttpServletResponse response = (HttpServletResponse) pathProvider.getParameter("httpresponse"); //$NON-NLS-1$ //$NON-NLS-2$
+    final HttpServletRequest request = (HttpServletRequest) pathProvider.getParameter("httprequest"); //$NON-NLS-1$
+    if (request == null || response == null || isRedirectEnabled() == false)
+    {
+      doExport(outputStream, reportDefinitionPath);
+      return;
+    }
+
+    final String fileContent = pathProvider.getStringParameter("path", null);
+    if (fileContent.startsWith("/execute/"))
+    {
+      doExport(outputStream, reportDefinitionPath);
+    }
+    else
+    {
+      // get the mime type for the report ..
+      final SimpleReportingComponent reportComponent = new SimpleReportingComponent();
+      reportComponent.setReportDefinitionPath(reportDefinitionPath);
+      reportComponent.setPaginateOutput(true);
+      reportComponent.setDefaultOutputTarget(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE);
+      final Map<String, Object> inputs = contentGenerator.createInputs();
+      reportComponent.setInputs(inputs);
+      // add all inputs (request parameters) to report component so that we can compute the mime type properly 
+      final String mimeType = reportComponent.getMimeType();
+      final String extension = MimeHelper.getExtension(mimeType);
+
+      final String fileName = IOUtils.getInstance().stripFileExtension(reportDefinitionPath);
+      final String requestURI = getUrl(request, fileName + extension);
+      response.sendRedirect(requestURI);
+    }
+  }
+
+  private boolean isRedirectEnabled()
+  {
+    final String redirect = PentahoSystem.getSystemSetting("report-execute-redirect-to-virtual-file", "true"); //$NON-NLS-1$
+    if ("false".equals(redirect))
+    {
+      return false;
+    }
+    return true;
+  }
+
+  public static String getUrl(final HttpServletRequest req,
+                              String reportDefinitionPath)
+  {
+    final StringBuffer reqUrl = req.getRequestURL();
+    reqUrl.append("/execute/");
+    reportDefinitionPath = reportDefinitionPath.replace("?", "");
+    reportDefinitionPath = reportDefinitionPath.replace("&", "");
+    reportDefinitionPath = reportDefinitionPath.replace("*", "");
+    reportDefinitionPath = reportDefinitionPath.replace("=", "");
+    reportDefinitionPath = reportDefinitionPath.replace("../", "");
+
+    reqUrl.append(reportDefinitionPath);
+    final String queryString = req.getQueryString();   // d=789
+    if (queryString != null)
+    {
+      reqUrl.append("?");
+      reqUrl.append(queryString);
+    }
+    return reqUrl.toString();
+  }
+
+  private void doExport(final OutputStream outputStream, final String reportDefinitionPath) throws Exception
   {
     final long start = System.currentTimeMillis();
     final Map<String, Object> inputs = contentGenerator.createInputs();
@@ -69,25 +134,8 @@ public class ExecuteReportContentHandler
       reportComponent.setDefaultOutputTarget(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE);
       reportComponent.setInputs(inputs);
 
-      StagingMode stagingMode = null;
-      final Object o = inputs.get("report-staging-mode");
-      if (o != null)
-      {
-        try
-        {
-          stagingMode = StagingMode.valueOf(String.valueOf(o));
-        }
-        catch (IllegalArgumentException ie)
-        {
-          logger.trace("Staging mode was specified but invalid");
-        }
-      }
       final MasterReport report = reportComponent.getReport();
-      if (stagingMode == null)
-      {
-        stagingMode = (StagingMode) report.getAttribute
-            (AttributeNames.Pentaho.NAMESPACE, AttributeNames.Pentaho.STAGING_MODE);
-      }
+      final StagingMode stagingMode = getStagingMode(inputs, report);
       reportStagingHandler = new StagingHandler(outputStream, stagingMode, this.userSession);
 
       if (reportStagingHandler.isFullyBuffered())
@@ -169,7 +217,7 @@ public class ExecuteReportContentHandler
           // Send headers before we begin execution
           response.setHeader("Content-Disposition", "inline; filename=\"" + filename + extension + "\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
           response.setHeader("Content-Description", file.getFileName()); //$NON-NLS-1$
-          response.setHeader("Cache-Control", "private, max-age=0, must-revalidate");
+          response.setHeader("Cache-Control", "private, max-age=0, must-revalidate");//$NON-NLS-1$
         }
         if (reportComponent.execute())
         {
@@ -179,7 +227,7 @@ public class ExecuteReportContentHandler
             {
               response.setHeader("Content-Disposition", "inline; filename=\"" + filename + extension + "\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
               response.setHeader("Content-Description", file.getFileName()); //$NON-NLS-1$
-              response.setHeader("Cache-Control", "private, max-age=0, must-revalidate");
+              response.setHeader("Cache-Control", "private, max-age=0, must-revalidate");//$NON-NLS-1$
               response.setContentLength(reportStagingHandler.getWrittenByteCount());
             }
           }
@@ -207,7 +255,7 @@ public class ExecuteReportContentHandler
       {
         reportStagingHandler.close();
       }
-      
+
       final long end = System.currentTimeMillis();
       AuditHelper.audit(userSession.getId(), userSession.getName(), reportDefinitionPath,
           contentGenerator.getObjectName(), getClass().getName(), result, contentGenerator.getInstanceId(),
@@ -215,6 +263,56 @@ public class ExecuteReportContentHandler
     }
   }
 
+  private StagingMode getStagingMode(final Map<String, Object> inputs,
+                                     final MasterReport report)
+  {
+    final Object o = inputs.get("report-staging-mode");
+    if (o != null)
+    {
+      try
+      {
+        return StagingMode.valueOf(String.valueOf(o));
+      }
+      catch (IllegalArgumentException ie)
+      {
+        logger.trace("Staging mode was specified but invalid");
+      }
+    }
+
+    StagingMode mode = (StagingMode) report.getAttribute
+        (AttributeNames.Pentaho.NAMESPACE, AttributeNames.Pentaho.STAGING_MODE);
+    if (mode == null)
+    {
+      logger.trace("Looking at default settings for mode"); //$NON-NLS-1$
+      // Unable to use the plugin settings.xml because the
+      // classloader for the ReportContentGenerator isn't the plugin classloader
+      // IPluginResourceLoader resLoader = PentahoSystem.get(IPluginResourceLoader.class, null);
+      // String defaultStagingMode = resLoader.getPluginSetting(ReportContentGenerator.class, "settings/report-staging-mode"); //$NON-NLS-1$
+      //
+      // So - get default setting from the pentaho.xml instead
+      String defaultStagingMode = PentahoSystem.getSystemSetting("report-staging-mode", null); //$NON-NLS-1$
+      if (defaultStagingMode == null)
+      {
+        // workaround for a bug in getPluginSetting that ignores the default passed in
+        defaultStagingMode = DEFAULT.toString();//$NON-NLS-1$
+        logger.trace("Nothing in settings/staging-mode - defaulting to MEMORY"); //$NON-NLS-1$
+      }
+      else
+      {
+        logger.trace("Read " + defaultStagingMode + " from settings/report-staging-mode");            //$NON-NLS-1$//$NON-NLS-2$
+      }
+      try
+      {
+        mode = StagingMode.valueOf(defaultStagingMode.toUpperCase());
+        logger.trace("Staging mode set from default - " + mode); //$NON-NLS-1$
+      }
+      catch (IllegalArgumentException badStringInSettings)
+      {
+        mode = DEFAULT; // default state - handling staging in memory by default.
+      }
+    }
+    return mode;
+  }
 
   private void sendErrorResponse(final HttpServletResponse response,
                                  final OutputStream outputStream,
