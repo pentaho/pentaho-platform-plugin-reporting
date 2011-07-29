@@ -40,6 +40,7 @@
     <delete failonerror="false" file="${install.target-dir}/pentaho-solutions/system/reporting/settings.xml"/>
     <copydir src="bin/gwt/output" dest="${install.target-dir}/pentaho-solutions/system/reporting"/>
     <copydir src="package-res" dest="${install.target-dir}/pentaho-solutions/system/reporting"/>
+    <copy failonerror="true" todir="${install.lib-dir}" file="${dist.dir}/${ivy.artifact.id}-${project.revision}.jar"/>
   </target>
 
 </project>
