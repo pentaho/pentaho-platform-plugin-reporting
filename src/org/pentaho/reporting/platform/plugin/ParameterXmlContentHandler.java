@@ -1,5 +1,24 @@
 package org.pentaho.reporting.platform.plugin;
 
+import java.io.OutputStream;
+import java.lang.reflect.Array;
+import java.math.BigDecimal;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.TimeZone;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.pentaho.platform.api.engine.IParameterProvider;
@@ -10,7 +29,11 @@ import org.pentaho.platform.api.repository.ISubscription;
 import org.pentaho.platform.api.repository.ISubscriptionRepository;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.util.UUIDUtil;
-import org.pentaho.reporting.engine.classic.core.*;
+import org.pentaho.reporting.engine.classic.core.AttributeNames;
+import org.pentaho.reporting.engine.classic.core.MasterReport;
+import org.pentaho.reporting.engine.classic.core.ReportDataFactoryException;
+import org.pentaho.reporting.engine.classic.core.ReportElement;
+import org.pentaho.reporting.engine.classic.core.Section;
 import org.pentaho.reporting.engine.classic.core.function.Expression;
 import org.pentaho.reporting.engine.classic.core.function.FormulaExpression;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.pdf.PdfPageableModule;
@@ -19,7 +42,19 @@ import org.pentaho.reporting.engine.classic.core.modules.output.table.csv.CSVTab
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlTableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.rtf.RTFTableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.xls.ExcelTableModule;
-import org.pentaho.reporting.engine.classic.core.parameters.*;
+import org.pentaho.reporting.engine.classic.core.parameters.AbstractParameter;
+import org.pentaho.reporting.engine.classic.core.parameters.DefaultParameterContext;
+import org.pentaho.reporting.engine.classic.core.parameters.ListParameter;
+import org.pentaho.reporting.engine.classic.core.parameters.ParameterAttributeNames;
+import org.pentaho.reporting.engine.classic.core.parameters.ParameterContext;
+import org.pentaho.reporting.engine.classic.core.parameters.ParameterContextWrapper;
+import org.pentaho.reporting.engine.classic.core.parameters.ParameterDefinitionEntry;
+import org.pentaho.reporting.engine.classic.core.parameters.ParameterValues;
+import org.pentaho.reporting.engine.classic.core.parameters.PlainParameter;
+import org.pentaho.reporting.engine.classic.core.parameters.ReportParameterDefinition;
+import org.pentaho.reporting.engine.classic.core.parameters.StaticListParameter;
+import org.pentaho.reporting.engine.classic.core.parameters.ValidationMessage;
+import org.pentaho.reporting.engine.classic.core.parameters.ValidationResult;
 import org.pentaho.reporting.engine.classic.core.style.ElementStyleKeys;
 import org.pentaho.reporting.engine.classic.core.util.NullOutputStream;
 import org.pentaho.reporting.engine.classic.core.util.ReportParameterValues;
@@ -38,18 +73,6 @@ import org.pentaho.reporting.libraries.formula.parser.FormulaParser;
 import org.pentaho.reporting.platform.plugin.messages.Messages;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import java.io.OutputStream;
-import java.lang.reflect.Array;
-import java.math.BigDecimal;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.*;
 
 /**
  * Todo: Document me!
@@ -353,6 +376,7 @@ public class ParameterXmlContentHandler
       parameters = document.createElement(GROUP_PARAMETERS); //$NON-NLS-1$
       parameters.setAttribute("is-prompt-needed", String.valueOf(vr.isEmpty() == false)); //$NON-NLS-1$ //$NON-NLS-2$
       parameters.setAttribute("subscribe", String.valueOf(subscribe)); //$NON-NLS-1$ //$NON-NLS-2$
+      parameters.setAttribute("ignore-biserver-5538", "true");
 
       // check if pagination is allowed and turned on
 
@@ -479,11 +503,24 @@ public class ParameterXmlContentHandler
     for (final ParameterDefinitionEntry parameter : reportParameters.values())
     {
       final String parameterName = parameter.getName();
+      final Object parameterFromReport = parameterValues.get(parameterName);
+      if (parameterFromReport != null)
+      {
+        // always prefer the report parameter. The user's input has been filtered already and values
+        // may have been replaced by a post-processing formula.
+        //
+        realInputs.put(parameterName, parameterFromReport);
+        continue;
+      }
+
+      // the parameter values collection only contains declared parameter. So everything else will
+      // be handled now. This is also the time to handle rejected parameter. For these parameter,
+      // the calculated value for the report is <null>.
       final Object value = inputs.get(parameterName);
       if (value == null)
       {
         // have no value, so we use the default value ..
-        realInputs.put(parameterName, parameterValues.get(parameterName));
+        realInputs.put(parameterName, null);
         continue;
       }
 
@@ -496,7 +533,7 @@ public class ParameterXmlContentHandler
         }
         else
         {
-          realInputs.put(parameterName, parameterValues.get(parameterName));
+          realInputs.put(parameterName, null);
         }
       }
       catch (Exception be)

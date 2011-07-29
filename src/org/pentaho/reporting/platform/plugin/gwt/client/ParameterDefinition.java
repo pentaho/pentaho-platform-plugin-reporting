@@ -4,14 +4,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 
-/**
- * Todo: Document me!
- * <p/>
- * Date: 22.07.2010
- * Time: 13:46:41
- *
- * @author Thomas Morgner.
- */
 public class ParameterDefinition
 {
   private ProcessingState processingState;
@@ -23,6 +15,7 @@ public class ParameterDefinition
   private LinkedHashMap<String, ParameterGroup> parameters;
   private boolean autoSubmitUI;
   private boolean subscribe;
+  private boolean ignoreBiServer5538;
 
   public ParameterDefinition()
   {
@@ -185,5 +178,15 @@ public class ParameterDefinition
     }
 
     return parameters.toArray(new Parameter[parameters.size()]);
+  }
+
+  public void setIgnoreBiServer5538(final boolean ignoreBiServer5538)
+  {
+    this.ignoreBiServer5538 = ignoreBiServer5538;
+  }
+
+  public boolean isIgnoreBiServer5538()
+  {
+    return ignoreBiServer5538;
   }
 }

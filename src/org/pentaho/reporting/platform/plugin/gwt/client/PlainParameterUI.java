@@ -31,29 +31,29 @@ public class PlainParameterUI extends SimplePanel implements ParameterUI
 
     public void onKeyUp(final KeyUpEvent event)
     {
-      String value;
       if (listParameter)
       {
         final SuggestBox textBox = (SuggestBox) event.getSource();
         final String text = textBox.getText();
-        value = labelToValueMap.get(text);
-        if (text == null && strict == false)
+        String value = labelToValueMap.get(text);
+        if (value == null)
         {
+          // If the input cannot be mapped into a valid value from the server, send the server the raw input.
+          // The server will reject the input if the parameter is strictly validating, but unless a replacement input
+          // gets calculated on the server side, we will get the invalid input back so that the user can correct it.
           value = text;
         }
-      }
-      else
-      {
-        value = textBox.getText();
-      }
 
-      if (dataFormat != null)
+        controller.getParameterMap().setSelectedValue(parameterName, value);
+      }
+      else if (dataFormat != null)
       {
         try
         {
           textBox.getTextBox().setStyleName("");
-          final String text = ReportViewerUtil.createTransportObject(parameterElement, dataFormat.parse(value));
-          controller.getParameterMap().setSelectedValue(parameterName, text);
+          final String transportObject =
+              ReportViewerUtil.createTransportObject(parameterElement, dataFormat.parse(textBox.getText()));
+          controller.getParameterMap().setSelectedValue(parameterName, transportObject);
         }
         catch (Exception e)
         {
@@ -64,7 +64,7 @@ public class PlainParameterUI extends SimplePanel implements ParameterUI
       }
       else
       {
-        controller.getParameterMap().setSelectedValue(parameterName, value);
+        controller.getParameterMap().setSelectedValue(parameterName, textBox.getText());
       }
 
       if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER)

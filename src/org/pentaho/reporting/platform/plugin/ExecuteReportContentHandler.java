@@ -228,7 +228,7 @@ public class ExecuteReportContentHandler
               response.setHeader("Content-Disposition", "inline; filename=\"" + filename + extension + "\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
               response.setHeader("Content-Description", file.getFileName()); //$NON-NLS-1$
               response.setHeader("Cache-Control", "private, max-age=0, must-revalidate");
-              response.setHeader("Content-Size", String.valueOf(reportStagingHandler.getWrittenByteCount()));
+              response.setContentLength(reportStagingHandler.getWrittenByteCount());
             }
           }
           if (logger.isDebugEnabled())
