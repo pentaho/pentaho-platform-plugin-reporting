@@ -42,7 +42,8 @@ public class ReportContentUtil
     }
 
     final Class valueType = parameterDefinition.getValueType();
-    if (isAllowMultiSelect(parameterDefinition) && Collection.class.isInstance(value))
+    final boolean allowMultiSelect = isAllowMultiSelect(parameterDefinition);
+    if (allowMultiSelect && Collection.class.isInstance(value))
     {
       final Collection c = (Collection) value;
       final Class componentType;
@@ -84,7 +85,7 @@ public class ReportContentUtil
       }
       return array;
     }
-    else if (isAllowMultiSelect(parameterDefinition))
+    else if (allowMultiSelect)
     {
       // if the parameter allows multi selections, wrap this single input in an array
       // and re-call addParameter with it

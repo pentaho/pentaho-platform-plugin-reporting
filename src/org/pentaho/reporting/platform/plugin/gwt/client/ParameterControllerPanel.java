@@ -22,7 +22,6 @@ import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
-import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.CaptionPanel;
@@ -89,7 +88,6 @@ public class ParameterControllerPanel extends VerticalPanel
         ReportViewerUtil.showErrorDialog(messages, response.getText()); //$NON-NLS-1$
         return;
       }
-
 
       final Element parametersElement = resultDoc.getDocumentElement();
 
@@ -188,7 +186,6 @@ public class ParameterControllerPanel extends VerticalPanel
       container.init();
     }
 
-
   }
 
   private class SubmitParameterListener implements ClickHandler
@@ -212,34 +209,6 @@ public class ParameterControllerPanel extends VerticalPanel
         subscriptionPressed = onSubscribe;
         // async call
         fetchParameters(ParameterSubmitMode.MANUAL);
-      }
-    }
-  }
-
-  private static class MouseHandler implements MouseOverHandler, MouseOutHandler
-  {
-    public MouseHandler()
-    {
-    }
-
-    public void onMouseOut(final MouseOutEvent event)
-    {
-      final Object source = event.getSource();
-      if (source instanceof Image)
-      {
-        final Image image = (Image) source;
-        image.removeStyleDependentName("hover"); //$NON-NLS-1$
-      }
-    }
-
-    public void onMouseOver(final MouseOverEvent event)
-    {
-      final Object source = event.getSource();
-      if (source instanceof Image)
-      {
-        final Image image = (Image) source;
-        DOM.setStyleAttribute(image.getElement(), "backgroundColor", ""); //$NON-NLS-1$ //$NON-NLS-2$
-        image.addStyleDependentName("hover"); //$NON-NLS-1$
       }
     }
   }
@@ -418,6 +387,14 @@ public class ParameterControllerPanel extends VerticalPanel
     }
   }
 
+  private class GrabFocusHandler implements OpenHandler<DisclosurePanel>
+  {
+    public void onOpen(final OpenEvent<DisclosurePanel> disclosurePanelOpenEvent)
+    {
+      forceFocus();
+    }
+  }
+
   private ParameterRequestCallback parameterRequestCallback = new ParameterRequestCallback();
   private ReportContainer container;
 
@@ -437,7 +414,6 @@ public class ParameterControllerPanel extends VerticalPanel
   private TextBox pageBox;
   private boolean enabled;
 
-
   public ParameterControllerPanel(final ReportContainer container, final ResourceBundle messages)
   {
     this.messages = messages;
@@ -453,13 +429,7 @@ public class ParameterControllerPanel extends VerticalPanel
     parameterDisclosurePanel.setWidth("100%"); //$NON-NLS-1$
 
     // fix for BISERVER-6027 - on open of the panel, set the focus to the focusWidget
-    parameterDisclosurePanel.addOpenHandler(new OpenHandler<DisclosurePanel>()
-    {
-      public void onOpen(OpenEvent<DisclosurePanel> disclosurePanelOpenEvent)
-      {
-        forceFocus();
-      }
-    });
+    parameterDisclosurePanel.addOpenHandler(new GrabFocusHandler());
 
     submitParametersButton = new Button(messages.getString("viewReport", "View Report")); //$NON-NLS-1$ //$NON-NLS-2$
     submitParametersButton.setStyleName("pentaho-button");
@@ -510,6 +480,7 @@ public class ParameterControllerPanel extends VerticalPanel
   {
     final ParameterDefinition parameterDefinition = new ParameterDefinition();
     parameterDefinition.setPromptNeeded("true".equals(element.getAttribute("is-prompt-needed"))); // NON-NLS
+    parameterDefinition.setIgnoreBiServer5538("true".equals(element.getAttribute("ignore-biserver-5538"))); // NON-NLS
     parameterDefinition.setPaginate("true".equals(element.getAttribute("paginate")));// NON-NLS
     parameterDefinition.setSubscribe("true".equals(element.getAttribute("subscribe")));// NON-NLS
     parameterDefinition.setLayout(element.getAttribute("layout"));// NON-NLS
@@ -702,7 +673,7 @@ public class ParameterControllerPanel extends VerticalPanel
           parameterPanel.setTitle(tooltip);
           parameterPanel.add(parameterLabel);
 
-          final Widget parameterWidget = buildParameterWidget(parameterElement);
+          final Widget parameterWidget = buildParameterWidget(parametersElement, parameterElement);
           if (parameterWidget == null)
           {
             continue;
@@ -802,7 +773,7 @@ public class ParameterControllerPanel extends VerticalPanel
 
         parameterContainer.add(submitPanel);
 
-        SimplePanel parameterPanelWrapper = new SimplePanel();
+        final SimplePanel parameterPanelWrapper = new SimplePanel();
         parameterPanelWrapper.setWidget(parameterContainer);
         parameterPanelWrapper.setStyleName("parameter-content-panel");
         parameterPanelWrapper.getElement().addClassName("pentaho-rounded-panel-bottom-lr");
@@ -921,35 +892,49 @@ public class ParameterControllerPanel extends VerticalPanel
 
     final Image backToFirstPage = PageImages.images.backToFirstPage().createImage();
     backToFirstPage.setStyleName("pageControllerButton"); //$NON-NLS-1$
-    if (finalAcceptedPage <= 0) {
+    if (finalAcceptedPage <= 0)
+    {
       PageImages.images.backToFirstPageDisabled().applyTo(backToFirstPage);
-    } else {
+    }
+    else
+    {
       backToFirstPage.addClickHandler(new GotoFirstPageClickHandler(finalAcceptedPage));
-      backToFirstPage.addMouseOverHandler(new MouseOverHandler() {
-        public void onMouseOver(MouseOverEvent event) {
+      backToFirstPage.addMouseOverHandler(new MouseOverHandler()
+      {
+        public void onMouseOver(final MouseOverEvent event)
+        {
           PageImages.images.backToFirstPageHover().applyTo(backToFirstPage);
         }
       });
-      backToFirstPage.addMouseOutHandler(new MouseOutHandler() {
-        public void onMouseOut(MouseOutEvent event) {
+      backToFirstPage.addMouseOutHandler(new MouseOutHandler()
+      {
+        public void onMouseOut(final MouseOutEvent event)
+        {
           PageImages.images.backToFirstPage().applyTo(backToFirstPage);
         }
       });
     }
-    
+
     final Image backPage = PageImages.images.backButton().createImage();
     backPage.setStyleName("pageControllerButton"); //$NON-NLS-1$
-    if (finalAcceptedPage <= 0) {
+    if (finalAcceptedPage <= 0)
+    {
       PageImages.images.backButtonDisabled().applyTo(backPage);
-    } else {
+    }
+    else
+    {
       backPage.addClickHandler(new GotoPrevPageClickHandler(finalAcceptedPage));
-      backPage.addMouseOverHandler(new MouseOverHandler() {
-        public void onMouseOver(MouseOverEvent event) {
+      backPage.addMouseOverHandler(new MouseOverHandler()
+      {
+        public void onMouseOver(final MouseOverEvent event)
+        {
           PageImages.images.backButtonHover().applyTo(backPage);
         }
       });
-      backPage.addMouseOutHandler(new MouseOutHandler() {
-        public void onMouseOut(MouseOutEvent event) {
+      backPage.addMouseOutHandler(new MouseOutHandler()
+      {
+        public void onMouseOut(final MouseOutEvent event)
+        {
           PageImages.images.backButton().applyTo(backPage);
         }
       });
@@ -957,35 +942,49 @@ public class ParameterControllerPanel extends VerticalPanel
 
     final Image forwardPage = PageImages.images.forwardButton().createImage();
     forwardPage.setStyleName("pageControllerButton"); //$NON-NLS-1$
-    if (finalAcceptedPage + 1 >= finalPageCount) {
+    if (finalAcceptedPage + 1 >= finalPageCount)
+    {
       PageImages.images.forwardButtonDisabled().applyTo(forwardPage);
-    } else {
+    }
+    else
+    {
       forwardPage.addClickHandler(new GotoNextPageClickHandler(finalAcceptedPage, finalPageCount));
-      forwardPage.addMouseOverHandler(new MouseOverHandler() {
-        public void onMouseOver(MouseOverEvent event) {
+      forwardPage.addMouseOverHandler(new MouseOverHandler()
+      {
+        public void onMouseOver(final MouseOverEvent event)
+        {
           PageImages.images.forwardButtonHover().applyTo(forwardPage);
         }
       });
-      forwardPage.addMouseOutHandler(new MouseOutHandler() {
-        public void onMouseOut(MouseOutEvent event) {
+      forwardPage.addMouseOutHandler(new MouseOutHandler()
+      {
+        public void onMouseOut(final MouseOutEvent event)
+        {
           PageImages.images.forwardButton().applyTo(forwardPage);
         }
       });
     }
-    
+
     final Image forwardToLastPage = PageImages.images.forwardToLastPage().createImage();
     forwardToLastPage.setStyleName("pageControllerButton"); //$NON-NLS-1$
-    if (finalAcceptedPage + 1 >= finalPageCount) {
+    if (finalAcceptedPage + 1 >= finalPageCount)
+    {
       PageImages.images.forwardToLastPageDisabled().applyTo(forwardToLastPage);
-    } else {
+    }
+    else
+    {
       forwardToLastPage.addClickHandler(new GotoLastPageClickHandler(finalAcceptedPage, finalPageCount));
-      forwardToLastPage.addMouseOverHandler(new MouseOverHandler() {
-        public void onMouseOver(MouseOverEvent event) {
+      forwardToLastPage.addMouseOverHandler(new MouseOverHandler()
+      {
+        public void onMouseOver(final MouseOverEvent event)
+        {
           PageImages.images.forwardToLastPageHover().applyTo(forwardToLastPage);
         }
       });
-      forwardToLastPage.addMouseOutHandler(new MouseOutHandler() {
-        public void onMouseOut(MouseOutEvent event) {
+      forwardToLastPage.addMouseOutHandler(new MouseOutHandler()
+      {
+        public void onMouseOut(final MouseOutEvent event)
+        {
           PageImages.images.forwardToLastPage().applyTo(forwardToLastPage);
         }
       });
@@ -1028,7 +1027,8 @@ public class ParameterControllerPanel extends VerticalPanel
     return pageControlPanelWrapper;
   }
 
-  private Widget buildParameterWidget(final Parameter parameterElement)
+  private Widget buildParameterWidget(final ParameterDefinition parameterDefinition,
+                                      final Parameter parameterElement)
   {
     String renderType = parameterElement.getAttribute("parameter-render-type"); //$NON-NLS-1$
     if (renderType != null)
@@ -1046,7 +1046,6 @@ public class ParameterControllerPanel extends VerticalPanel
       return null;
     }
 
-
     if ("radio".equals(renderType) || "checkbox".equals(renderType)) //$NON-NLS-1$ //$NON-NLS-2$
     {
       return new CheckBoxParameterUI(this, parameterElement);
@@ -1061,7 +1060,7 @@ public class ParameterControllerPanel extends VerticalPanel
     }
     else if ("dropdown".equals(renderType)) //$NON-NLS-1$ //$NON-NLS-2$
     {
-      return new DropDownParameterUI(this, parameterElement);
+      return new DropDownParameterUI(this, parameterDefinition, parameterElement);
     }
     else if ("datepicker".equals(renderType)) //$NON-NLS-1$
     {
@@ -1171,20 +1170,16 @@ public class ParameterControllerPanel extends VerticalPanel
   {
     try
     {
-      if (parameterDisclosurePanel.isOpen() == false)
-      {
-        return;
-      }
-
-      com.google.gwt.dom.client.NodeList<com.google.gwt.dom.client.Element> inputElements =
-          parameterDisclosurePanel.getElement().getElementsByTagName("input");
+      final com.google.gwt.dom.client.NodeList<com.google.gwt.dom.client.Element> inputElements = getElement().getElementsByTagName("input");
       if (inputElements != null && inputElements.getLength() > 0)
       {
         for (int i = 0; i < inputElements.getLength(); i++)
         {
-          com.google.gwt.dom.client.Element elem = inputElements.getItem(i);
-          if ("text".equalsIgnoreCase(elem.getAttribute("type"))) {
-            if (!"date".equalsIgnoreCase(elem.getAttribute("paramType"))) {
+          final com.google.gwt.dom.client.Element elem = inputElements.getItem(i);
+          if ("text".equalsIgnoreCase(elem.getAttribute("type")))
+          {
+            if (!"date".equalsIgnoreCase(elem.getAttribute("paramType")))
+            {
               // only focus things which are not date boxes
               elem.focus();
               break;
@@ -1198,5 +1193,4 @@ public class ParameterControllerPanel extends VerticalPanel
 
     }
   }
-
 }

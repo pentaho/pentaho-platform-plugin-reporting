@@ -366,6 +366,7 @@ public class ParameterXmlContentHandler
       parameters = document.createElement(GROUP_PARAMETERS); //$NON-NLS-1$
       parameters.setAttribute("is-prompt-needed", String.valueOf(vr.isEmpty() == false)); //$NON-NLS-1$ //$NON-NLS-2$
       parameters.setAttribute("subscribe", String.valueOf(subscribe)); //$NON-NLS-1$ //$NON-NLS-2$
+      parameters.setAttribute("ignore-biserver-5538", "true");
 
       // check if pagination is allowed and turned on
 
@@ -492,11 +493,24 @@ public class ParameterXmlContentHandler
     for (final ParameterDefinitionEntry parameter : reportParameters.values())
     {
       final String parameterName = parameter.getName();
+      final Object parameterFromReport = parameterValues.get(parameterName);
+      if (parameterFromReport != null)
+      {
+        // always prefer the report parameter. The user's input has been filtered already and values
+        // may have been replaced by a post-processing formula.
+        //
+        realInputs.put(parameterName, parameterFromReport);
+        continue;
+      }
+
+      // the parameter values collection only contains declared parameter. So everything else will
+      // be handled now. This is also the time to handle rejected parameter. For these parameter,
+      // the calculated value for the report is <null>.
       final Object value = inputs.get(parameterName);
       if (value == null)
       {
         // have no value, so we use the default value ..
-        realInputs.put(parameterName, parameterValues.get(parameterName));
+        realInputs.put(parameterName, null);
         continue;
       }
 
@@ -509,7 +523,7 @@ public class ParameterXmlContentHandler
         }
         else
         {
-          realInputs.put(parameterName, parameterValues.get(parameterName));
+          realInputs.put(parameterName, null);
         }
       }
       catch (Exception be)

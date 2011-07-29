@@ -55,7 +55,7 @@ public class ExecuteReportContentHandler
     }
 
     final String fileContent = pathProvider.getStringParameter("path", null);
-    if (fileContent.startsWith("/execute/"))
+    if (fileContent != null && fileContent.startsWith("/execute/"))
     {
       doExport(outputStream, reportDefinitionPath);
     }
@@ -98,7 +98,6 @@ public class ExecuteReportContentHandler
     reportDefinitionPath = reportDefinitionPath.replace("*", "");
     reportDefinitionPath = reportDefinitionPath.replace("=", "");
     reportDefinitionPath = reportDefinitionPath.replace("../", "");
-
     reqUrl.append(reportDefinitionPath);
     final String queryString = req.getQueryString();   // d=789
     if (queryString != null)
