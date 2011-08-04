@@ -61,6 +61,19 @@ public class PageableHTMLOutput implements ReportOutputHandler
     return printer;
   }
 
+  public void setPrinter(AllItemsHtmlPrinter printer)
+  {
+    this.printer = printer;
+  }  
+  
+  public PageableReportProcessor getReportProcessor() {
+    return proc;
+  }
+
+  public void setReportProcessor(PageableReportProcessor proc) {
+    this.proc = proc;
+  }  
+  
   protected PageableReportProcessor createReportProcessor(final MasterReport report, final int yieldRate)
       throws ReportProcessingException
   {
