@@ -46,8 +46,15 @@ public class ExecuteReportContentHandler
   public void createReportContent(final OutputStream outputStream, final String reportDefinitionPath) throws Exception
   {
     // Check whether we should forward ..
-    final HttpServletResponse response = (HttpServletResponse) pathProvider.getParameter("httpresponse"); //$NON-NLS-1$ //$NON-NLS-2$
-    final HttpServletRequest request = (HttpServletRequest) pathProvider.getParameter("httprequest"); //$NON-NLS-1$
+    final HttpServletResponse response;
+    final HttpServletRequest request;
+    if (pathProvider != null) {
+      response = (HttpServletResponse) pathProvider.getParameter("httpresponse"); //$NON-NLS-1$ //$NON-NLS-2$
+      request = (HttpServletRequest) pathProvider.getParameter("httprequest"); //$NON-NLS-1$
+    } else {
+      response = null;
+      request = null;
+    }
     if (request == null || response == null || isRedirectEnabled() == false)
     {
       doExport(outputStream, reportDefinitionPath);

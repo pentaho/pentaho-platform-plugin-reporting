@@ -39,8 +39,9 @@ public class PageableContentRepoHtmlOutput extends PageableHTMLOutput
     setProxyOutputStream(new ProxyOutputStream());
 
     final PageableHtmlOutputProcessor outputProcessor = new PageableHtmlOutputProcessor(report.getConfiguration());
-    final HtmlPrinter printer = new AllItemsHtmlPrinter(report.getResourceManager());
+    final AllItemsHtmlPrinter printer = new AllItemsHtmlPrinter(report.getResourceManager());
     printer.setUrlRewriter(new PentahoURLRewriter(getContentHandlerPattern(), true));
+    setPrinter(printer);
     outputProcessor.setPrinter(printer);
 
     final PageableReportProcessor proc = new PageableReportProcessor(report, outputProcessor);
@@ -48,7 +49,8 @@ public class PageableContentRepoHtmlOutput extends PageableHTMLOutput
     {
       proc.addReportProgressListener(new YieldReportListener(yieldRate));
     }
-    return super.createReportProcessor(report, yieldRate);
+    setReportProcessor(proc);
+    return proc;
   }
 
   protected void reinitOutputTarget() throws ReportProcessingException, ContentIOException
