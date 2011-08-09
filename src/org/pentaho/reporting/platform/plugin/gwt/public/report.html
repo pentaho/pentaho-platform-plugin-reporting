@@ -6,7 +6,18 @@
 		
         <!--   Temporary fix for GWT localization BISERVER-3640 -->
         <script src="../../../js/browserLocale.js" type="text/javascript"></script>
-
+    <script type="text/javascript">
+      if(document.all){
+        var fixHeight = function(){
+          var content = document.getElementById("content");
+          content.style.width = document.body.clientWidth + "px";
+          content.style.height = document.body.clientHeight+ "px";
+          
+        };
+        window.attachEvent("onresize", fixHeight);
+        window.attachEvent("onload", fixHeight);
+      }
+    </script>
     <script type="text/javascript" src="webcontext.js?context=reporting"></script>
 
     <script type="text/javascript">
@@ -31,7 +42,7 @@
 	</head>
 
 	<body>
-	  <div id="content">
+	  <div id="content" style="">
 	  </div>
 	</body>
 
