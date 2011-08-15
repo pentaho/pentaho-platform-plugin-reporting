@@ -16,58 +16,86 @@ import org.pentaho.reporting.engine.classic.core.modules.output.table.html.AllIt
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlOutputProcessor;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlPrinter;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.StreamHtmlOutputProcessor;
-import org.pentaho.reporting.engine.classic.core.modules.output.table.html.URLRewriter;
 import org.pentaho.reporting.engine.classic.extensions.modules.mailer.MailURLRewriter;
 import org.pentaho.reporting.libraries.repository.ContentIOException;
 import org.pentaho.reporting.libraries.repository.ContentLocation;
 import org.pentaho.reporting.libraries.repository.DefaultNameGenerator;
-import org.pentaho.reporting.libraries.repository.NameGenerator;
 import org.pentaho.reporting.libraries.repository.email.EmailRepository;
 
-public class EmailOutput
+public class EmailOutput implements ReportOutputHandler
 {
-  private EmailOutput()
+  public EmailOutput()
   {
   }
 
-  public static boolean generate(final MasterReport report,
-                                 final OutputStream outputStream,
-                                 final int yieldRate)
-      throws ReportProcessingException, IOException, ContentIOException, MessagingException
+  public Object getReportLock()
+  {
+    return this;
+  }
+
+  public int paginate(final MasterReport report,
+                      final int yieldRate) throws ReportProcessingException, IOException, ContentIOException
+  {
+    return 0;
+  }
+
+  public int generate(final MasterReport report,
+                          final int acceptedPage,
+                          final OutputStream outputStream,
+                          final int yieldRate) throws ReportProcessingException, IOException, ContentIOException
   {
     final IApplicationContext ctx = PentahoSystem.getApplicationContext();
     if (ctx == null)
     {
-      return false;
+      return -1;
     }
 
-    final Properties props = new Properties();
-    final Session session = Session.getInstance(props);
-    final EmailRepository dataRepository = new EmailRepository(session);
-
-    final URLRewriter rewriter = new MailURLRewriter();
-    final ContentLocation dataLocation = dataRepository.getRoot();
-    final NameGenerator dataNameGenerator = new DefaultNameGenerator(dataLocation);
-
-    final HtmlOutputProcessor outputProcessor = new StreamHtmlOutputProcessor(report.getConfiguration());
-    final HtmlPrinter printer = new AllItemsHtmlPrinter(report.getResourceManager());
-    printer.setContentWriter(dataLocation, new DefaultNameGenerator(dataLocation, "index", "html"));//$NON-NLS-1$//$NON-NLS-2$
-    printer.setDataWriter(dataLocation, dataNameGenerator);
-    printer.setUrlRewriter(rewriter);
-    outputProcessor.setPrinter(printer);
-
-    final StreamReportProcessor sp = new StreamReportProcessor(report, outputProcessor);
-    if (yieldRate > 0)
+    try
     {
-      sp.addReportProgressListener(new YieldReportListener(yieldRate));
-    }
-    sp.processReport();
-    dataRepository.writeEmail(outputStream);
-    sp.close();
+      final Properties props = new Properties();
+      final Session session = Session.getInstance(props);
+      final EmailRepository dataRepository = new EmailRepository(session);
+      final ContentLocation dataLocation = dataRepository.getRoot();
 
-    outputStream.flush();
-    outputStream.close();
-    return true;
+      final HtmlOutputProcessor outputProcessor = new StreamHtmlOutputProcessor(report.getConfiguration());
+      final HtmlPrinter printer = new AllItemsHtmlPrinter(report.getResourceManager());
+      printer.setContentWriter(dataLocation, new DefaultNameGenerator(dataLocation, "index", "html"));//$NON-NLS-1$//$NON-NLS-2$
+      printer.setDataWriter(dataLocation, new DefaultNameGenerator(dataLocation));
+      printer.setUrlRewriter(new MailURLRewriter());
+      outputProcessor.setPrinter(printer);
+
+      final StreamReportProcessor sp = new StreamReportProcessor(report, outputProcessor);
+      if (yieldRate > 0)
+      {
+        sp.addReportProgressListener(new YieldReportListener(yieldRate));
+      }
+
+      try
+      {
+        sp.processReport();
+        dataRepository.writeEmail(outputStream);
+
+        outputStream.flush();
+        return 0;
+      }
+      finally
+      {
+        sp.close();
+      }
+    }
+    catch (MessagingException e)
+    {
+      throw new ReportProcessingException("Error", e);
+    }
+
   }
 
+  public boolean supportsPagination() {
+    return false;
+  }
+
+  public void close()
+  {
+
+  }
 }

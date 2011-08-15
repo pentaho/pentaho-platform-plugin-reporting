@@ -4,6 +4,7 @@
 	<inherits name='com.google.gwt.user.User'/>
 	<inherits name='com.google.gwt.xml.XML'/>
 
+	<inherits name='org.pentaho.gwt.widgets.Widgets' />
 	<inherits name='org.pentaho.gwt.widgets.client.datepicker.DatePicker' />
 	<inherits name='org.pentaho.gwt.widgets.client.utils.i18n.I18N'/>
 	<inherits name='org.pentaho.gwt.widgets.client.utils.string.StringUtils' />
@@ -11,12 +12,12 @@
     <set-property name="gwt.suppressNonStaticFinalFieldWarnings" value="true" /> 
 
     <!-- This set of locales is here to support various number, date and currency formats -->
-    <extend-property name="locale" values="ar"/>
     <extend-property name="locale" values="de"/>
     <extend-property name="locale" values="en"/>
     <extend-property name="locale" values="en_GB"/>
     <extend-property name="locale" values="en_US"/>
     <extend-property name="locale" values="es"/>
+    <extend-property name="locale" values="ar"/>
     <extend-property name="locale" values="fi"/>
     <extend-property name="locale" values="fr"/>
     <extend-property name="locale" values="it"/>

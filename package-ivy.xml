@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ivy-module version="2.0" xmlns:m="http://ant.apache.org/ivy/maven">
-    <info organisation="${ivy.artifact.group}" module="${ivy.artifact.id}-package" revision="${project.revision}" />
+    <info organisation="${ivy.artifact.group}" module="${package.id}" revision="${project.revision}" />
     
     <configurations>
     	<conf name="default"/>
@@ -9,7 +9,7 @@
     </configurations>
     
     <publications>
-    	<artifact name="${ivy.artifact.id}-package" type="zip"/>
+    	<artifact name="${package.id}" type="zip"/>
     </publications>
     
     <dependencies defaultconf="default->default"/>

@@ -25,9 +25,19 @@ public interface PageImages extends ImageBundle {
   public static final PageImages images = (PageImages) GWT.create(PageImages.class);
 
   AbstractImagePrototype backButton();
+  AbstractImagePrototype backButtonDisabled();
+  AbstractImagePrototype backButtonHover();
+  
   AbstractImagePrototype backToFirstPage();
+  AbstractImagePrototype backToFirstPageDisabled();
+  AbstractImagePrototype backToFirstPageHover();
 
   AbstractImagePrototype forwardButton();
+  AbstractImagePrototype forwardButtonDisabled();
+  AbstractImagePrototype forwardButtonHover();
+  
   AbstractImagePrototype forwardToLastPage();
+  AbstractImagePrototype forwardToLastPageDisabled();
+  AbstractImagePrototype forwardToLastPageHover();
 
 }

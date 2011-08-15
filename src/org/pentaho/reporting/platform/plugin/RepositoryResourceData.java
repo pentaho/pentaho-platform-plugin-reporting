@@ -19,11 +19,9 @@ package org.pentaho.reporting.platform.plugin;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 
-import org.pentaho.platform.api.engine.IActionSequenceResource;
 import org.pentaho.platform.api.engine.ISolutionFile;
 import org.pentaho.platform.api.repository.ISolutionRepository;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
-import org.pentaho.platform.engine.services.actionsequence.ActionSequenceResource;
 import org.pentaho.reporting.libraries.resourceloader.ResourceData;
 import org.pentaho.reporting.libraries.resourceloader.ResourceKey;
 import org.pentaho.reporting.libraries.resourceloader.ResourceLoadingException;
@@ -32,23 +30,24 @@ import org.pentaho.reporting.libraries.resourceloader.loader.AbstractResourceDat
 
 /**
  * This class is implemented to support loading solution files from the pentaho repository into JFreeReport
- *
+ * 
  * @author Will Gorman/Michael D'Amour
  */
-public class RepositoryResourceData extends AbstractResourceData
-{
+public class RepositoryResourceData extends AbstractResourceData {
+
+  public static final String PENTAHO_REPOSITORY_KEY = "pentahoRepositoryKey"; //$NON-NLS-1$
+
   private String filename;
   private ResourceKey key;
 
   /**
    * constructor which takes a resource key for data loading specifics
-   *
-   * @param key resource key
+   * 
+   * @param key
+   *          resource key
    */
-  public RepositoryResourceData(final ResourceKey key)
-  {
-    if (key == null)
-    {
+  public RepositoryResourceData(final ResourceKey key) {
+    if (key == null) {
       throw new NullPointerException();
     }
 
@@ -58,21 +57,16 @@ public class RepositoryResourceData extends AbstractResourceData
 
   /**
    * gets a resource stream from the runtime context.
-   *
-   * @param caller resource manager
+   * 
+   * @param caller
+   *          resource manager
    * @return input stream
    */
-  public InputStream getResourceAsStream(final ResourceManager caller) throws ResourceLoadingException
-  {
-    try
-    {
-      final ISolutionRepository solutionRepository = PentahoSystem.get(ISolutionRepository.class);
-      final IActionSequenceResource resource = new ActionSequenceResource
-          ("", IActionSequenceResource.SOLUTION_FILE_RESOURCE, "application/octet-stream", key.getIdentifier().toString());
-      return solutionRepository.getResourceInputStream(resource, false, ISolutionRepository.ACTION_EXECUTE);
-    }
-    catch (FileNotFoundException e)
-    {
+  public InputStream getResourceAsStream(ResourceManager caller) throws ResourceLoadingException {
+    try {
+      ISolutionRepository solutionRepository = PentahoSystem.get(ISolutionRepository.class);
+      return solutionRepository.getResourceInputStream(key.getIdentifierAsString(), false, ISolutionRepository.ACTION_EXECUTE);
+    } catch (FileNotFoundException e) {
       // might be due to access denial
       throw new ResourceLoadingException(e.getLocalizedMessage(), e);
     }
@@ -80,14 +74,13 @@ public class RepositoryResourceData extends AbstractResourceData
 
   /**
    * returns a requested attribute, currently only supporting filename.
-   *
-   * @param lookupKey attribute requested
+   * 
+   * @param key
+   *          attribute requested
    * @return attribute value
    */
-  public Object getAttribute(final String lookupKey)
-  {
-    if (lookupKey.equals(ResourceData.FILENAME))
-    {
+  public Object getAttribute(String lookupKey) {
+    if (lookupKey.equals(ResourceData.FILENAME)) {
       return filename;
     }
     return null;
@@ -95,34 +88,29 @@ public class RepositoryResourceData extends AbstractResourceData
 
   /**
    * return the version number
-   *
-   * @param caller resource manager
+   * 
+   * @param caller
+   *          resource manager
+   * 
    * @return version
    */
-  public long getVersion(final ResourceManager caller) throws ResourceLoadingException
-  {
-    final ISolutionRepository solutionRepository = PentahoSystem.get(ISolutionRepository.class);
-    final IActionSequenceResource resource = new ActionSequenceResource
-        ("", IActionSequenceResource.SOLUTION_FILE_RESOURCE, "application/octet-stream", key.getIdentifier().toString());
-    final ISolutionFile file = solutionRepository.getSolutionFile(resource, ISolutionRepository.ACTION_EXECUTE);
+  public long getVersion(ResourceManager caller) throws ResourceLoadingException {
+    ISolutionRepository solutionRepository = PentahoSystem.get(ISolutionRepository.class);
+    ISolutionFile file = solutionRepository.getSolutionFile(key.getIdentifier().toString(), ISolutionRepository.ACTION_EXECUTE);
     // if we got a FileNotFoundException on getResourceInputStream then we will get a null file; avoid NPE
-    if (file != null)
-    {
+    if (file != null) {
       return file.getLastModified();
-    }
-    else
-    {
+    } else {
       return -1;
     }
   }
 
   /**
    * get the resource key
-   *
+   * 
    * @return resource key
    */
-  public ResourceKey getKey()
-  {
+  public ResourceKey getKey() {
     return key;
   }
 }

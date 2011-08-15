@@ -5,74 +5,68 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Array;
 import java.net.URL;
-import java.sql.Time;
-import java.sql.Timestamp;
-import java.text.DateFormatSymbols;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.Map;
 import javax.print.DocFlavor;
 import javax.print.PrintService;
 import javax.print.PrintServiceLookup;
-import javax.swing.table.TableModel;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.pentaho.commons.connection.IPentahoResultSet;
 import org.pentaho.platform.api.engine.IAcceptsRuntimeInputs;
 import org.pentaho.platform.api.engine.IActionSequenceResource;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.api.engine.IStreamingPojo;
-import org.pentaho.platform.api.repository.IContentRepository;
+import org.pentaho.platform.engine.core.system.PentahoRequestContextHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
-import org.pentaho.platform.plugin.action.jfreereport.helper.PentahoTableModel;
-import org.pentaho.platform.util.messages.LocaleHelper;
 import org.pentaho.reporting.engine.classic.core.AttributeNames;
 import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
-import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
 import org.pentaho.reporting.engine.classic.core.metadata.ReportProcessTaskRegistry;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.pdf.PdfPageableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.plaintext.PlainTextPageableModule;
+import org.pentaho.reporting.engine.classic.core.modules.output.pageable.xml.XmlPageableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.csv.CSVTableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlTableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.rtf.RTFTableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.xls.ExcelTableModule;
-import org.pentaho.reporting.engine.classic.core.modules.parser.base.ReportGenerator;
+import org.pentaho.reporting.engine.classic.core.modules.output.table.xml.XmlTableModule;
 import org.pentaho.reporting.engine.classic.core.parameters.DefaultParameterContext;
-import org.pentaho.reporting.engine.classic.core.parameters.ListParameter;
-import org.pentaho.reporting.engine.classic.core.parameters.ParameterAttributeNames;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterContext;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterDefinitionEntry;
 import org.pentaho.reporting.engine.classic.core.parameters.ValidationMessage;
 import org.pentaho.reporting.engine.classic.core.parameters.ValidationResult;
 import org.pentaho.reporting.engine.classic.core.util.ReportParameterValues;
-import org.pentaho.reporting.engine.classic.core.util.beans.BeanException;
-import org.pentaho.reporting.engine.classic.core.util.beans.ConverterRegistry;
-import org.pentaho.reporting.engine.classic.core.util.beans.ValueConverter;
 import org.pentaho.reporting.engine.classic.extensions.modules.java14print.Java14PrintUtil;
 import org.pentaho.reporting.libraries.base.config.Configuration;
+import org.pentaho.reporting.libraries.base.util.CSVQuoter;
 import org.pentaho.reporting.libraries.base.util.StringUtils;
 import org.pentaho.reporting.libraries.resourceloader.ResourceException;
+import org.pentaho.reporting.libraries.xmlns.common.ParserUtil;
+import org.pentaho.reporting.platform.plugin.cache.DefaultReportCache;
+import org.pentaho.reporting.platform.plugin.cache.NullReportCache;
+import org.pentaho.reporting.platform.plugin.cache.ReportCache;
+import org.pentaho.reporting.platform.plugin.cache.ReportCacheKey;
 import org.pentaho.reporting.platform.plugin.messages.Messages;
 import org.pentaho.reporting.platform.plugin.output.CSVOutput;
 import org.pentaho.reporting.platform.plugin.output.EmailOutput;
-import org.pentaho.reporting.platform.plugin.output.HTMLOutput;
 import org.pentaho.reporting.platform.plugin.output.PDFOutput;
+import org.pentaho.reporting.platform.plugin.output.PNGOutput;
+import org.pentaho.reporting.platform.plugin.output.PageableContentRepoHtmlOutput;
 import org.pentaho.reporting.platform.plugin.output.PageableHTMLOutput;
 import org.pentaho.reporting.platform.plugin.output.PlainTextOutput;
 import org.pentaho.reporting.platform.plugin.output.RTFOutput;
+import org.pentaho.reporting.platform.plugin.output.ReportOutputHandler;
+import org.pentaho.reporting.platform.plugin.output.StreamContentRepoHtmlOutput;
+import org.pentaho.reporting.platform.plugin.output.StreamHtmlOutput;
 import org.pentaho.reporting.platform.plugin.output.XLSOutput;
-import org.xml.sax.InputSource;
+import org.pentaho.reporting.platform.plugin.output.XLSXOutput;
+import org.pentaho.reporting.platform.plugin.output.XmlPageableOutput;
+import org.pentaho.reporting.platform.plugin.output.XmlTableOutput;
 
 public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntimeInputs
 {
-  private static final String PARAMETERFORMAT = "yyyy-MM-dd"; //$NON-NLS-1$
 
   /**
    * The logging for logging messages from this component
@@ -86,9 +80,12 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   public static final String MIME_TYPE_EMAIL = "mime-message/text/html"; //$NON-NLS-1$
   public static final String MIME_TYPE_PDF = "application/pdf"; //$NON-NLS-1$
   public static final String MIME_TYPE_XLS = "application/vnd.ms-excel"; //$NON-NLS-1$
+  public static final String MIME_TYPE_XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"; //$NON-NLS-1$
   public static final String MIME_TYPE_RTF = "application/rtf"; //$NON-NLS-1$
   public static final String MIME_TYPE_CSV = "text/csv"; //$NON-NLS-1$
   public static final String MIME_TYPE_TXT = "text/plain"; //$NON-NLS-1$
+  public static final String MIME_TYPE_XML = "application/xml"; //$NON-NLS-1$
+  public static final String MIME_TYPE_PNG = "image/png"; //$NON-NLS-1$
 
   public static final String XLS_WORKBOOK_PARAM = "workbook"; //$NON-NLS-1$
 
@@ -103,6 +100,8 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   public static final String PRINTER_NAME = "printer-name"; //$NON-NLS-1$
   public static final String DASHBOARD_MODE = "dashboard-mode"; //$NON-NLS-1$
   private static final String MIME_GENERIC_FALLBACK = "application/octet-stream"; //$NON-NLS-1$
+  public static final String PNG_EXPORT_TYPE = "pageable/X-AWT-Graphics;image-type=png";
+
 
   /**
    * Static initializer block to guarantee that the ReportingComponent will be in a state where the reporting engine will be booted. We have a system listener
@@ -120,17 +119,17 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    */
   private String outputType;
   private String outputTarget;
+  private String defaultOutputTarget;
   private MasterReport report;
   private Map<String, Object> inputs;
   private OutputStream outputStream;
   private InputStream reportDefinitionInputStream;
-  private Boolean useContentRepository = Boolean.FALSE;
+  private Boolean useContentRepository;
   private IActionSequenceResource reportDefinition;
   private String reportDefinitionPath;
-  private IPentahoSession session;
-  private boolean paginateOutput = false;
-  private int acceptedPage = -1;
-  private int pageCount = -1;
+  private boolean paginateOutput;
+  private int acceptedPage;
+  private int pageCount;
   private boolean dashboardMode;
   /*
    * These fields are for enabling printing
@@ -145,11 +144,30 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   public SimpleReportingComponent()
   {
     this.inputs = Collections.emptyMap();
+    acceptedPage = -1;
+    pageCount = -1;
+    useContentRepository = Boolean.FALSE;
+    defaultOutputTarget = HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE;
   }
 
   // ----------------------------------------------------------------------------
   // BEGIN BEAN METHODS
   // ----------------------------------------------------------------------------
+
+
+  public String getDefaultOutputTarget()
+  {
+    return defaultOutputTarget;
+  }
+
+  public void setDefaultOutputTarget(final String defaultOutputTarget)
+  {
+    if (defaultOutputTarget == null)
+    {
+      throw new NullPointerException();
+    }
+    this.defaultOutputTarget = defaultOutputTarget;
+  }
 
   public String getOutputTarget()
   {
@@ -266,10 +284,10 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    * This method sets the IPentahoSession to use in order to access the pentaho platform file repository and content repository.
    *
    * @param session a valid pentaho session
+   * @deprecated No longer used.
    */
   public void setSession(final IPentahoSession session)
   {
-    this.session = session;
   }
 
   public boolean isDashboardMode()
@@ -295,7 +313,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       final String outputTarget = computeEffectiveOutputTarget();
       if (log.isDebugEnabled())
       {
-        log.debug(Messages.getInstance().getString("ReportPlugin.logComputedOutputTarget", outputTarget)); //$NON-NLS-1$
+        log.debug(Messages.getInstance().getString("ReportPlugin.logComputedOutputTarget", outputTarget));
       }
       if (HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE.equals(outputTarget))
       {
@@ -308,6 +326,10 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       if (ExcelTableModule.EXCEL_FLOW_EXPORT_TYPE.equals(outputTarget))
       {
         return SimpleReportingComponent.MIME_TYPE_XLS;
+      }
+      if (ExcelTableModule.XLSX_FLOW_EXPORT_TYPE.equals(outputTarget))
+      {
+        return SimpleReportingComponent.MIME_TYPE_XLSX;
       }
       if (CSVTableModule.TABLE_CSV_STREAM_EXPORT_TYPE.equals(outputTarget))
       {
@@ -329,27 +351,39 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       {
         return SimpleReportingComponent.MIME_TYPE_EMAIL;
       }
+      if (XmlTableModule.TABLE_XML_EXPORT_TYPE.equals(outputTarget))
+      {
+        return SimpleReportingComponent.MIME_TYPE_XML;
+      }
+      if (XmlPageableModule.PAGEABLE_XML_EXPORT_TYPE.equals(outputTarget))
+      {
+        return SimpleReportingComponent.MIME_TYPE_XML;
+      }
+      if (PNG_EXPORT_TYPE.equals(outputTarget))
+      {
+        return SimpleReportingComponent.MIME_TYPE_PNG;
+      }
     }
     catch (IOException e)
     {
       if (log.isDebugEnabled())
       {
-        log.warn(Messages.getInstance().getString("ReportPlugin.logErrorMimeTypeFull"), e); //$NON-NLS-1$
+        log.warn(Messages.getInstance().getString("ReportPlugin.logErrorMimeTypeFull"), e);
       }
       else if (log.isWarnEnabled())
       {
-        log.warn(Messages.getInstance().getString("ReportPlugin.logErrorMimeTypeShort", e.getMessage())); //$NON-NLS-1$
+        log.warn(Messages.getInstance().getString("ReportPlugin.logErrorMimeTypeShort", e.getMessage()));
       }
     }
     catch (ResourceException e)
     {
       if (log.isDebugEnabled())
       {
-        log.warn(Messages.getInstance().getString("ReportPlugin.logErrorMimeTypeFull"), e); //$NON-NLS-1$
+        log.warn(Messages.getInstance().getString("ReportPlugin.logErrorMimeTypeFull"), e);
       }
       else if (log.isWarnEnabled())
       {
-        log.warn(Messages.getInstance().getString("ReportPlugin.logErrorMimeTypeShort", e.getMessage())); //$NON-NLS-1$
+        log.warn(Messages.getInstance().getString("ReportPlugin.logErrorMimeTypeShort", e.getMessage()));
       }
     }
     return MIME_GENERIC_FALLBACK;
@@ -365,19 +399,19 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     this.outputStream = outputStream;
   }
 
-  public OutputStream getOutputStream()
+  /**
+   * Gets the useContentRepository flag, needed by subclasses, such as with interactive adhoc
+   *
+   * @return useContentRepository
+   */
+  public boolean getUseContentRepository() 
   {
-    return outputStream;
+    return useContentRepository;
   }
-
+  
   public void setUseContentRepository(final Boolean useContentRepository)
   {
     this.useContentRepository = useContentRepository;
-  }
-
-  public Boolean isUseContentRepository()
-  {
-    return useContentRepository;
   }
 
   /**
@@ -420,6 +454,19 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     this.printer = printer;
   }
 
+  /**
+   * Get the inputs, needed by subclasses, such as with interactive adhoc
+   *
+   * @return immutable input map
+   */
+  public Map<String, Object> getInputs() 
+  {
+    if (inputs != null) 
+    {
+      return Collections.unmodifiableMap(inputs);
+    }
+    return Collections.EMPTY_MAP;
+  }
 
   /**
    * This method sets the map of *all* the inputs which are available to this component. This allows us to use action-sequence inputs as parameters for our
@@ -455,10 +502,10 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     if (inputs.containsKey(PAGINATE_OUTPUT))
     {
       paginateOutput = "true".equals(String.valueOf(inputs.get(PAGINATE_OUTPUT))); //$NON-NLS-1$
-      if (paginateOutput && inputs.containsKey(ACCEPTED_PAGE))
-      {
-        acceptedPage = Integer.parseInt(String.valueOf(inputs.get(ACCEPTED_PAGE))); //$NON-NLS-1$
-      }
+    }
+    if (inputs.containsKey(ACCEPTED_PAGE))
+    {
+      acceptedPage = ParserUtil.parseInt(String.valueOf(inputs.get(ACCEPTED_PAGE)), -1); //$NON-NLS-1$
     }
     if (inputs.containsKey(PRINT))
     {
@@ -492,6 +539,17 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   }
 
   /**
+   * Sets the MasterReport for the report-definition, needed by subclasses, such as with interactive adhoc
+   *
+   * @return nothing
+   */
+  public void setReport(MasterReport report) {
+    this.report = report;
+    final String clText = extractContentLinkSpec();
+    report.setReportEnvironment(new PentahoReportEnvironment(report.getConfiguration(), clText));
+  }
+  
+  /**
    * Get the MasterReport for the report-definition, the MasterReport object will be cached as needed, using the PentahoResourceLoader.
    *
    * @return a parsed MasterReport object
@@ -504,27 +562,87 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     {
       if (reportDefinitionInputStream != null)
       {
-        final ReportGenerator generator = ReportGenerator.createInstance();
-        final InputSource repDefInputSource = new InputSource(reportDefinitionInputStream);
-        report = generator.parseReport(repDefInputSource, getDefinedResourceURL(null));
+        report = ReportCreator.createReport(reportDefinitionInputStream, getDefinedResourceURL(null));
       }
       else if (reportDefinition != null)
       {
         // load the report definition as an action-sequence resource
-        report = ReportCreator.createReport(reportDefinition.getAddress(), session);
+        report = ReportCreator.createReport(reportDefinition.getAddress());
+      }
+      else if (reportDefinitionPath != null)
+      {
+        report = ReportCreator.createReport(reportDefinitionPath);
       }
       else
       {
-        report = ReportCreator.createReport(reportDefinitionPath, session);
+        throw new ResourceException();
       }
-      report.setReportEnvironment(new PentahoReportEnvironment(report.getConfiguration()));
+
+      final String clText = extractContentLinkSpec();
+      report.setReportEnvironment(new PentahoReportEnvironment(report.getConfiguration(), clText));
     }
 
     return report;
   }
 
+  private String extractContentLinkSpec()
+  {
+    if (inputs == null)
+    {
+      return null;
+    }
+
+    final Object clRaw = inputs.get(ParameterXmlContentHandler.SYS_PARAM_CONTENT_LINK);
+    if (clRaw == null)
+    {
+      return null;
+    }
+
+    if (clRaw instanceof Collection)
+    {
+      final Collection c = (Collection) clRaw;
+      final CSVQuoter quoter = new CSVQuoter(',', '"');
+      final StringBuilder b = new StringBuilder();
+      for (final Object o : c)
+      {
+        final String s = quoter.doQuoting(String.valueOf(o));
+        if (b.length() > 0)
+        {
+          b.append(',');
+        }
+        b.append(s);
+      }
+      return b.toString();
+    }
+
+    if (clRaw.getClass().isArray())
+    {
+      final CSVQuoter quoter = new CSVQuoter(',', '"');
+      final StringBuilder b = new StringBuilder();
+      for (int i = 0, size = Array.getLength(clRaw); i < size; i++)
+      {
+        final Object o = Array.get(clRaw, i);
+        final String s = quoter.doQuoting(String.valueOf(o));
+        if (b.length() > 0)
+        {
+          b.append(',');
+        }
+        b.append(s);
+      }
+      return b.toString();
+    }
+    else
+    {
+      return String.valueOf(clRaw);
+    }
+  }
+
   private boolean isValidOutputType(final String outputType)
   {
+    if (PNG_EXPORT_TYPE.equals(outputType))
+    {
+      return true;
+    }
     return ReportProcessTaskRegistry.getInstance().isExportTypeRegistered(outputType);
   }
 
@@ -573,11 +691,11 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
         final String mappedLegacyType = mapOutputTypeToOutputTarget(preferredOutputTypeString);
         if (mappedLegacyType != null)
         {
-          log.warn(Messages.getInstance().getString("ReportPlugin.warnLegacyLockedOutput", preferredOutputTypeString)); //$NON-NLS-1$
+          log.warn(Messages.getInstance().getString("ReportPlugin.warnLegacyLockedOutput", preferredOutputTypeString));
           return mappedLegacyType;
         }
 
-        log.warn(Messages.getInstance().getString("ReportPlugin.warnInvalidLockedOutput", preferredOutputTypeString)); //$NON-NLS-1$
+        log.warn(Messages.getInstance().getString("ReportPlugin.warnInvalidLockedOutput", preferredOutputTypeString));
       }
     }
 
@@ -586,7 +704,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     {
       if (isValidOutputType(outputTarget) == false)
       {
-        log.warn(Messages.getInstance().getString("ReportPlugin.warnInvalidOutputTarget", outputTarget)); //$NON-NLS-1$
+        log.warn(Messages.getInstance().getString("ReportPlugin.warnInvalidOutputTarget", outputTarget));
       }
       // if a engine-level output target is given, use it as it is. We can assume that the user knows how to
       // map from that to a real mime-type.
@@ -612,23 +730,28 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       final String mappedLegacyType = mapOutputTypeToOutputTarget(preferredOutputTypeString);
       if (mappedLegacyType != null)
       {
-        log.warn(Messages.getInstance().getString("ReportPlugin.warnLegacyPreferredOutput", preferredOutputTypeString)); //$NON-NLS-1$
+        log.warn(Messages.getInstance().getString("ReportPlugin.warnLegacyPreferredOutput", preferredOutputTypeString));
         return mappedLegacyType;
       }
 
-      log.warn(Messages.getInstance().getString("ReportPlugin.warnInvalidPreferredOutput", //$NON-NLS-1$
-          preferredOutputTypeString, HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE));
-      return HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE;
+      log.warn(Messages.getInstance().getString("ReportPlugin.warnInvalidPreferredOutput",
+          preferredOutputTypeString, getDefaultOutputTarget()));
+      return getDefaultOutputTarget();
     }
 
     if (StringUtils.isEmpty(getOutputTarget()) == false || StringUtils.isEmpty(getOutputType()) == false)
     {
       // if you have come that far, it means you really messed up. Sorry, this error is not a error caused
       // by our legacy code - it is more likely that you just entered values that are totally wrong.
-      log.error(Messages.getInstance().getString("ReportPlugin.warnInvalidOutputType", getOutputType(), //$NON-NLS-1$
-          HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE));
+      log.error(Messages.getInstance().getString("ReportPlugin.warnInvalidOutputType", getOutputType(),
+          getDefaultOutputTarget()));
     }
-    return HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE;
+    return getDefaultOutputTarget();
+  }
+
+  public String getComputedOutputTarget() throws IOException, ResourceException
+  {
+    return computeEffectiveOutputTarget();
   }
 
   private String mapOutputTypeToOutputTarget(final String outputType)
@@ -647,6 +770,14 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       }
       return HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE;
     }
+    if (MIME_TYPE_XML.equals(outputType))
+    {
+      if (isPaginateOutput())
+      {
+        return XmlTableModule.TABLE_XML_EXPORT_TYPE;
+      }
+      return XmlPageableModule.PAGEABLE_XML_EXPORT_TYPE;
+    }
     if (MIME_TYPE_PDF.equals(outputType))
     {
       return PdfPageableModule.PDF_EXPORT_TYPE;
@@ -659,6 +790,10 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     {
       return ExcelTableModule.EXCEL_FLOW_EXPORT_TYPE;
     }
+    if (MIME_TYPE_XLSX.equals(outputType))
+    {
+      return ExcelTableModule.XLSX_FLOW_EXPORT_TYPE;
+    }
     if (MIME_TYPE_EMAIL.equals(outputType))
     {
       return MIME_TYPE_EMAIL;
@@ -670,12 +805,12 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
 
     if ("pdf".equalsIgnoreCase(outputType)) //$NON-NLS-1$
     {
-      log.warn(Messages.getInstance().getString("ReportPlugin.warnDeprecatedPDF")); //$NON-NLS-1$
+      log.warn(Messages.getInstance().getString("ReportPlugin.warnDeprecatedPDF"));
       return PdfPageableModule.PDF_EXPORT_TYPE;
     }
     else if ("html".equalsIgnoreCase(outputType)) //$NON-NLS-1$
     {
-      log.warn(Messages.getInstance().getString("ReportPlugin.warnDeprecatedHTML")); //$NON-NLS-1$
+      log.warn(Messages.getInstance().getString("ReportPlugin.warnDeprecatedHTML"));
       if (isPaginateOutput())
       {
         return HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE;
@@ -684,22 +819,22 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     }
     else if ("csv".equalsIgnoreCase(outputType)) //$NON-NLS-1$
     {
-      log.warn(Messages.getInstance().getString("ReportPlugin.warnDeprecatedCSV")); //$NON-NLS-1$
+      log.warn(Messages.getInstance().getString("ReportPlugin.warnDeprecatedCSV"));
       return CSVTableModule.TABLE_CSV_STREAM_EXPORT_TYPE;
     }
     else if ("rtf".equalsIgnoreCase(outputType)) //$NON-NLS-1$
     {
-      log.warn(Messages.getInstance().getString("ReportPlugin.warnDeprecatedRTF")); //$NON-NLS-1$
+      log.warn(Messages.getInstance().getString("ReportPlugin.warnDeprecatedRTF"));
       return RTFTableModule.TABLE_RTF_FLOW_EXPORT_TYPE;
     }
     else if ("xls".equalsIgnoreCase(outputType)) //$NON-NLS-1$
     {
-      log.warn(Messages.getInstance().getString("ReportPlugin.warnDeprecatedXLS")); //$NON-NLS-1$
+      log.warn(Messages.getInstance().getString("ReportPlugin.warnDeprecatedXLS"));
       return ExcelTableModule.EXCEL_FLOW_EXPORT_TYPE;
     }
     else if ("txt".equalsIgnoreCase(outputType)) //$NON-NLS-1$
     {
-      log.warn(Messages.getInstance().getString("ReportPlugin.warnDeprecatedTXT")); //$NON-NLS-1$
+      log.warn(Messages.getInstance().getString("ReportPlugin.warnDeprecatedTXT"));
       return PlainTextPageableModule.PLAINTEXT_EXPORT_TYPE;
     }
     return null;
@@ -711,7 +846,8 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    * @param report  a MasterReport object to apply parameters to
    * @param context a ParameterContext for which the parameters will be under
    * @deprecated use the single parameter version instead. This method will now fail with an error if the
-   *             report passed in is not the same as the report this component has.
+   *             report passed in is not the same as the report this component has. This method will be removed in
+   *             version 4.0.
    */
   public void applyInputsToReportParameters(final MasterReport report, final ParameterContext context)
   {
@@ -719,29 +855,31 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     {
       if (getReport() != report)
       {
-        throw new IllegalStateException(Messages.getInstance().getString("ReportPlugin.errorForeignReportInput")); //$NON-NLS-1$
+        throw new IllegalStateException(Messages.getInstance().getString("ReportPlugin.errorForeignReportInput"));
       }
       final ValidationResult validationResult = applyInputsToReportParameters(context, null);
       if (validationResult.isEmpty() == false)
       {
-        throw new IllegalStateException(Messages.getInstance().getString("ReportPlugin.errorApplyInputsFailed")); //$NON-NLS-1$
+        throw new IllegalStateException(Messages.getInstance().getString("ReportPlugin.errorApplyInputsFailed"));
       }
     }
     catch (IOException e)
     {
-      throw new IllegalStateException(Messages.getInstance().getString("ReportPlugin.errorApplyInputsFailed"), e); //$NON-NLS-1$
+      throw new IllegalStateException(Messages.getInstance().getString("ReportPlugin.errorApplyInputsFailed"), e);
     }
     catch (ResourceException e)
     {
-      throw new IllegalStateException(Messages.getInstance().getString("ReportPlugin.errorApplyInputsFailed"), e); //$NON-NLS-1$
+      throw new IllegalStateException(Messages.getInstance().getString("ReportPlugin.errorApplyInputsFailed"), e);
     }
   }
 
   /**
-   * Apply inputs (if any) to corresponding report parameters, care is taken when checking parameter types to perform any necessary casting and conversion.
+   * Apply inputs (if any) to corresponding report parameters, care is taken when
+   * checking parameter types to perform any necessary casting and conversion.
    *
    * @param context          a ParameterContext for which the parameters will be under
    * @param validationResult the validation result that will hold the warnings. If null, a new one will be created.
+   * @return the validation result containing any parameter validation errors.
    * @throws java.io.IOException if the report of this component could not be parsed.
    * @throws ResourceException   if the report of this component could not be parsed.
    */
@@ -762,238 +900,27 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       for (final ParameterDefinitionEntry param : params)
       {
         final String paramName = param.getName();
-        Object value = inputs.get(paramName);
-        final Object defaultValue = param.getDefaultValue(context);
-        if (value == null && defaultValue != null)
-        {
-          value = defaultValue;
-        }
         try
         {
-          addParameter(context, parameterValues, param, value);
+          final Object computedParameter = ReportContentUtil.computeParameterValue(context, param, inputs.get(paramName));
+          parameterValues.put(param.getName(), computedParameter);
+          if (log.isInfoEnabled())
+          {
+            log.info(Messages.getInstance().getString("ReportPlugin.infoParameterValues",
+                paramName, String.valueOf(inputs.get(paramName)), String.valueOf(computedParameter)));
+          }
         }
         catch (Exception e)
         {
-          if (log.isDebugEnabled())
+          if (log.isWarnEnabled())
           {
-            log.warn(Messages.getInstance().getString("ReportPlugin.logErrorParametrization"), e); //$NON-NLS-1$
+            log.warn(Messages.getInstance().getString("ReportPlugin.logErrorParametrization"), e);
           }
           validationResult.addError(paramName, new ValidationMessage(e.getMessage()));
         }
       }
     }
     return validationResult;
-  }
-
-  private Object convert(final ParameterContext context,
-                         final ParameterDefinitionEntry parameter,
-                         final Class targetType, final Object rawValue)
-      throws ReportProcessingException
-  {
-    if (targetType == null)
-    {
-      throw new NullPointerException();
-    }
-
-    if (rawValue == null)
-    {
-      return null;
-    }
-    if (targetType.isInstance(rawValue))
-    {
-      return rawValue;
-    }
-
-    if (targetType.isAssignableFrom(TableModel.class) && IPentahoResultSet.class.isAssignableFrom(rawValue.getClass()))
-    {
-      // wrap IPentahoResultSet to simulate TableModel
-      return new PentahoTableModel((IPentahoResultSet) rawValue);
-    }
-
-    final String valueAsString = String.valueOf(rawValue);
-    if (StringUtils.isEmpty(valueAsString))
-    {
-      return null;
-    }
-
-    if (targetType.equals(Timestamp.class))
-    {
-      try
-      {
-        final SimpleDateFormat format = new SimpleDateFormat(PARAMETERFORMAT);
-        format.setLenient(false);
-        final Date date = format.parse(valueAsString);
-        return new Timestamp(date.getTime());
-      }
-      catch (ParseException pe)
-      {
-        // ignore, we try to parse it as real date now ..
-      }
-    }
-    else if (targetType.equals(Time.class))
-    {
-      try
-      {
-        final SimpleDateFormat format = new SimpleDateFormat(PARAMETERFORMAT);
-        format.setLenient(false);
-        final Date date = format.parse(valueAsString);
-        return new Time(date.getTime());
-      }
-      catch (ParseException pe)
-      {
-        // ignore, we try to parse it as real date now ..
-      }
-    }
-    else if (targetType.equals(java.sql.Date.class))
-    {
-      try
-      {
-        final SimpleDateFormat format = new SimpleDateFormat(PARAMETERFORMAT);
-        format.setLenient(false);
-        final Date date = format.parse(valueAsString);
-        return new java.sql.Date(date.getTime());
-      }
-      catch (ParseException pe)
-      {
-        // ignore, we try to parse it as real date now ..
-      }
-    }
-    else if (targetType.equals(Date.class))
-    {
-      try
-      {
-        final SimpleDateFormat format = new SimpleDateFormat(PARAMETERFORMAT);
-        format.setLenient(false);
-        final Date date = format.parse(valueAsString);
-        return new Date(date.getTime());
-      }
-      catch (ParseException pe)
-      {
-        // ignore, we try to parse it as real date now ..
-      }
-    }
-
-    final String dataFormat = parameter.getParameterAttribute(ParameterAttributeNames.Core.NAMESPACE,
-        ParameterAttributeNames.Core.DATA_FORMAT, context);
-    if (dataFormat != null)
-    {
-      try
-      {
-        if (Number.class.isAssignableFrom(targetType))
-        {
-          final DecimalFormat format = new DecimalFormat(dataFormat, new DecimalFormatSymbols(LocaleHelper.getLocale()));
-          format.setParseBigDecimal(true);
-          final Number number = format.parse(valueAsString);
-          final String asText = ConverterRegistry.toAttributeValue(number);
-          return ConverterRegistry.toPropertyValue(asText, targetType);
-        }
-        else if (Date.class.isAssignableFrom(targetType))
-        {
-          final SimpleDateFormat format = new SimpleDateFormat(dataFormat, new DateFormatSymbols(LocaleHelper.getLocale()));
-          format.setLenient(false);
-          final Date number = format.parse(valueAsString);
-          final String asText = ConverterRegistry.toAttributeValue(number);
-          return ConverterRegistry.toPropertyValue(asText, targetType);
-        }
-      }
-      catch (Exception e)
-      {
-        // again, ignore it .
-      }
-    }
-
-    final ValueConverter valueConverter = ConverterRegistry.getInstance().getValueConverter(targetType);
-    if (valueConverter != null)
-    {
-      try
-      {
-        return valueConverter.toPropertyValue(valueAsString);
-      }
-      catch (BeanException e)
-      {
-        throw new ReportProcessingException(Messages.getInstance().getString
-            ("ReportPlugin.unableToConvertParameter", parameter.getName())); //$NON-NLS-1$
-      }
-    }
-    return rawValue;
-  }
-
-  private void addParameter(final ParameterContext report,
-                            final ReportParameterValues parameterValues,
-                            final ParameterDefinitionEntry param,
-                            final Object value)
-      throws ReportProcessingException
-  {
-    if (value == null)
-    {
-      parameterValues.put(param.getName(), null);
-      return;
-    }
-
-    if (isAllowMultiSelect(param) && Collection.class.isInstance(value))
-    {
-      final Collection c = (Collection) value;
-      final Class componentType;
-      if (param.getValueType().isArray())
-      {
-        componentType = param.getValueType().getComponentType();
-      }
-      else
-      {
-        componentType = param.getValueType();
-      }
-
-      final int length = c.size();
-      final Object[] sourceArray = c.toArray();
-      final Object array = Array.newInstance(componentType, length);
-      for (int i = 0; i < length; i++)
-      {
-        Array.set(array, i, convert(report, param, componentType, sourceArray[i]));
-      }
-      parameterValues.put(param.getName(), array);
-    }
-    else if (value.getClass().isArray())
-    {
-      final Class componentType;
-      if (param.getValueType().isArray())
-      {
-        componentType = param.getValueType().getComponentType();
-      }
-      else
-      {
-        componentType = param.getValueType();
-      }
-
-      final int length = Array.getLength(value);
-      final Object array = Array.newInstance(componentType, length);
-      for (int i = 0; i < length; i++)
-      {
-        Array.set(array, i, convert(report, param, componentType, Array.get(value, i)));
-      }
-      parameterValues.put(param.getName(), array);
-    }
-    else if (isAllowMultiSelect(param))
-    {
-      // if the parameter allows multi selections, wrap this single input in an array
-      // and re-call addParameter with it
-      final Object[] array = new Object[1];
-      array[0] = value;
-      addParameter(report, parameterValues, param, array);
-    }
-    else
-    {
-      parameterValues.put(param.getName(), convert(report, param, param.getValueType(), value));
-    }
-  }
-
-  private boolean isAllowMultiSelect(final ParameterDefinitionEntry parameter)
-  {
-    if (parameter instanceof ListParameter)
-    {
-      final ListParameter listParameter = (ListParameter) parameter;
-      return listParameter.isAllowMultiSelection();
-    }
-    return false;
   }
 
   private URL getDefinedResourceURL(final URL defaultValue)
@@ -1041,6 +968,29 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   }
 
   /**
+   * Determines if the output type supports pagination or not.
+   *
+   * @return True if the output type supports pagination.
+   */
+  public boolean outputSupportsPagination() {
+    try {
+      final String outputType = computeEffectiveOutputTarget();
+      final ReportOutputHandler reportOutputHandler = createOutputHandlerForOutputType(outputType);
+      if (reportOutputHandler == null)
+      {
+        log.warn(Messages.getInstance().getString("ReportPlugin.warnUnprocessableRequest", outputType));
+      } else {
+        return reportOutputHandler.supportsPagination();
+      }
+    }
+    catch (Throwable t)
+    {
+      log.error(Messages.getInstance().getString("ReportPlugin.executionFailed"), t); //$NON-NLS-1$
+    }
+    return false;
+  }
+
+  /**
    * This method will determine if the component instance 'is valid.' The validate() is called after all of the bean 'setters' have been called, so we may
    * validate on the actual values, not just the presence of inputs as we were historically accustomed to.
    * <p/>
@@ -1057,14 +1007,14 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       log.error(Messages.getInstance().getString("ReportPlugin.reportDefinitionNotProvided")); //$NON-NLS-1$
       return false;
     }
-    if (reportDefinition != null && reportDefinitionPath != null && session == null)
-    {
-      log.error(Messages.getInstance().getString("ReportPlugin.noUserSession")); //$NON-NLS-1$
-      return false;
-    }
     if (outputStream == null && print == false)
     {
       log.error(Messages.getInstance().getString("ReportPlugin.outputStreamRequired")); //$NON-NLS-1$
+      return false;
+    }
+    if (inputs == null)
+    {
+      log.error(Messages.getInstance().getString("ReportPlugin.inputParameterRequired")); //$NON-NLS-1$
       return false;
     }
     return true;
@@ -1082,9 +1032,8 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
 
     try
     {
-      final ParameterContext parameterContext = new DefaultParameterContext(report);
+      final DefaultParameterContext parameterContext = new DefaultParameterContext(report);
       // open parameter context
-      parameterContext.open();
       final ValidationResult vr = applyInputsToReportParameters(parameterContext, null);
       if (vr.isEmpty() == false)
       {
@@ -1117,83 +1066,24 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       }
 
       final String outputType = computeEffectiveOutputTarget();
-      final Configuration globalConfig = ClassicEngineBoot.getInstance().getGlobalConfig();
-      if (HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE.equals(outputType))
+      final ReportOutputHandler reportOutputHandler = createOutputHandlerForOutputType(outputType);
+      if (reportOutputHandler == null)
       {
-        if (dashboardMode)
+        log.warn(Messages.getInstance().getString("ReportPlugin.warnUnprocessableRequest", outputType));
+        return false;
+      }
+      synchronized (reportOutputHandler.getReportLock())
+      {
+        try
         {
-          report.getReportConfiguration().setConfigProperty(HtmlTableModule.BODY_FRAGMENT, "true"); //$NON-NLS-1$
+          pageCount = reportOutputHandler.generate(report, acceptedPage, outputStream, getYieldRate());
+          return pageCount != -1;
         }
-        if (useContentRepository)
+        finally
         {
-          // use the content repository
-          final String contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN,
-              globalConfig.getConfigProperty("org.pentaho.web.resource.ContentHandler")); //$NON-NLS-1$
-          final IContentRepository contentRepository = PentahoSystem.get(IContentRepository.class, session);
-          pageCount = PageableHTMLOutput.generate(report, outputStream, getYieldRate(),
-              contentRepository, contentHandlerPattern, getAcceptedPage());
-          return true;
-        }
-        else
-        {
-          // don't use the content repository
-          final String contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN,
-              globalConfig.getConfigProperty("org.pentaho.web.ContentHandler")); //$NON-NLS-1$
-          pageCount = PageableHTMLOutput.generate(report, outputStream, getYieldRate(),
-              null, contentHandlerPattern, getAcceptedPage());
-          return true;
+          reportOutputHandler.close();
         }
       }
-      if (HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE.equals(outputType))
-      {
-        if (dashboardMode)
-        {
-          report.getReportConfiguration().setConfigProperty(HtmlTableModule.BODY_FRAGMENT, "true"); //$NON-NLS-1$
-        }
-        if (useContentRepository)
-        {
-          // use the content repository
-          final String contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN,
-                  globalConfig.getConfigProperty("org.pentaho.web.resource.ContentHandler")); //$NON-NLS-1$
-          final IContentRepository contentRepository = PentahoSystem.get(IContentRepository.class, session);
-          return HTMLOutput.generate(report, outputStream, contentRepository, contentHandlerPattern, getYieldRate());
-        }
-        else
-        {
-          final String contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN,
-              globalConfig.getConfigProperty("org.pentaho.web.ContentHandler")); //$NON-NLS-1$
-          // don't use the content repository
-          return HTMLOutput.generate(report, outputStream, null, contentHandlerPattern, getYieldRate());
-        }
-      }
-      if (PdfPageableModule.PDF_EXPORT_TYPE.equals(outputType))
-      {
-        return PDFOutput.generate(report, outputStream, getYieldRate());
-      }
-      if (ExcelTableModule.EXCEL_FLOW_EXPORT_TYPE.equals(outputType))
-      {
-        final InputStream templateInputStream = (InputStream) getInput(XLS_WORKBOOK_PARAM, null);
-        return XLSOutput.generate(report, outputStream, templateInputStream, getYieldRate());
-      }
-      if (CSVTableModule.TABLE_CSV_STREAM_EXPORT_TYPE.equals(outputType))
-      {
-        return CSVOutput.generate(report, outputStream, getYieldRate());
-      }
-      if (RTFTableModule.TABLE_RTF_FLOW_EXPORT_TYPE.equals(outputType))
-      {
-        return RTFOutput.generate(report, outputStream, getYieldRate());
-      }
-      if (MIME_TYPE_EMAIL.equals(outputType))
-      {
-        return EmailOutput.generate(report, outputStream, getYieldRate()); //$NON-NLS-1$
-      }
-      if (PlainTextPageableModule.PLAINTEXT_EXPORT_TYPE.equals(outputType))
-      {
-        return PlainTextOutput.generate(report, outputStream, getYieldRate());
-      }
-
-      log.warn(Messages.getInstance().getString("ReportPlugin.warnUnprocessableRequest", outputType)); //$NON-NLS-1$
-
     }
     catch (Throwable t)
     {
@@ -1201,6 +1091,202 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     }
     // lets not pretend we were successfull, if the export type was not a valid one.
     return false;
+  }
+
+  protected ReportOutputHandler createOutputHandlerForOutputType(final String outputType) throws IOException
+  {
+    if (inputs == null)
+    {
+      throw new IllegalStateException("Inputs are null, this component did not validate properly");
+    }
+
+    final Object attribute = report.getAttribute(AttributeNames.Pentaho.NAMESPACE, AttributeNames.Pentaho.REPORT_CACHE);
+    final ReportCacheKey reportCacheKey = new ReportCacheKey(getViewerSessionId(), inputs);
+    ReportCache cache;
+    if (Boolean.FALSE.equals(attribute))
+    {
+      cache = new NullReportCache();
+    }
+    else
+    {
+      cache = PentahoSystem.get(ReportCache.class);
+      if (cache == null)
+      {
+        cache = new DefaultReportCache();
+      }
+      final ReportOutputHandler outputHandler = cache.get(reportCacheKey);
+      if (outputHandler != null)
+      {
+        return outputHandler;
+      }
+    }
+
+    final ReportOutputHandler reportOutputHandler;
+    if (HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE.equals(outputType))
+    {
+      if (dashboardMode)
+      {
+        report.getReportConfiguration().setConfigProperty(HtmlTableModule.BODY_FRAGMENT, "true");
+      }
+      if (useContentRepository)
+      {
+        // use the content repository
+        final Configuration globalConfig = ClassicEngineBoot.getInstance().getGlobalConfig();
+        final String contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN,
+            globalConfig.getConfigProperty("org.pentaho.web.resource.ContentHandler")); //$NON-NLS-1$
+        reportOutputHandler = new PageableContentRepoHtmlOutput(contentHandlerPattern);
+      }
+      else
+      {
+        // don't use the content repository
+        final Configuration globalConfig = ClassicEngineBoot.getInstance().getGlobalConfig();
+        String contentHandlerPattern = PentahoRequestContextHolder.getRequestContext().getContextPath();
+        contentHandlerPattern += (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN,
+            globalConfig.getConfigProperty("org.pentaho.web.ContentHandler")); //$NON-NLS-1$
+        reportOutputHandler = new PageableHTMLOutput(contentHandlerPattern);
+      }
+    }
+    else if (HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE.equals(outputType))
+    {
+      if (dashboardMode)
+      {
+        report.getReportConfiguration().setConfigProperty(HtmlTableModule.BODY_FRAGMENT, "true");
+      }
+      if (useContentRepository)
+      {
+        // use the content repository
+        final Configuration globalConfig = ClassicEngineBoot.getInstance().getGlobalConfig();
+        final String contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN,
+            globalConfig.getConfigProperty("org.pentaho.web.resource.ContentHandler")); //$NON-NLS-1$
+        reportOutputHandler = new StreamContentRepoHtmlOutput(contentHandlerPattern);
+      }
+      else
+      {
+        final Configuration globalConfig = ClassicEngineBoot.getInstance().getGlobalConfig();
+        String contentHandlerPattern = PentahoRequestContextHolder.getRequestContext().getContextPath();
+        contentHandlerPattern += (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN,
+            globalConfig.getConfigProperty("org.pentaho.web.ContentHandler")); //$NON-NLS-1$
+        // don't use the content repository
+        reportOutputHandler = new StreamHtmlOutput(contentHandlerPattern);
+      }
+    }
+    else if (PNG_EXPORT_TYPE.equals(outputType))
+    {
+      reportOutputHandler = new PNGOutput();
+    }
+    else if (XmlPageableModule.PAGEABLE_XML_EXPORT_TYPE.equals(outputType))
+    {
+      reportOutputHandler = new XmlPageableOutput();
+    }
+    else if (XmlTableModule.TABLE_XML_EXPORT_TYPE.equals(outputType))
+    {
+      reportOutputHandler = new XmlTableOutput();
+    }
+    else if (PdfPageableModule.PDF_EXPORT_TYPE.equals(outputType))
+    {
+      reportOutputHandler = new PDFOutput();
+    }
+    else if (ExcelTableModule.EXCEL_FLOW_EXPORT_TYPE.equals(outputType))
+    {
+      final InputStream templateInputStream = (InputStream) getInput(XLS_WORKBOOK_PARAM, null);
+      reportOutputHandler = new XLSOutput(templateInputStream);
+    }
+    else if (ExcelTableModule.XLSX_FLOW_EXPORT_TYPE.equals(outputType))
+    {
+      final InputStream templateInputStream = (InputStream) getInput(XLS_WORKBOOK_PARAM, null);
+      reportOutputHandler = new XLSXOutput(templateInputStream);
+    }
+    else if (CSVTableModule.TABLE_CSV_STREAM_EXPORT_TYPE.equals(outputType))
+    {
+      reportOutputHandler = new CSVOutput();
+    }
+    else if (RTFTableModule.TABLE_RTF_FLOW_EXPORT_TYPE.equals(outputType))
+    {
+      reportOutputHandler = new RTFOutput();
+    }
+    else if (MIME_TYPE_EMAIL.equals(outputType))
+    {
+      reportOutputHandler = new EmailOutput();
+    }
+    else if (PlainTextPageableModule.PLAINTEXT_EXPORT_TYPE.equals(outputType))
+    {
+      reportOutputHandler = new PlainTextOutput();
+    }
+    else
+    {
+      return null;
+    }
+
+    return cache.put(reportCacheKey, reportOutputHandler);
+  }
+
+  /**
+   * Perform a pagination run.
+   *
+   * @return the number of pages or streams generated.
+   * @throws IOException       if an IO error occurred while loading the report.
+   * @throws ResourceException if a resource loading error occurred.
+   */
+  public int paginate() throws IOException, ResourceException
+  {
+    final MasterReport report = getReport();
+
+    try
+    {
+      final ParameterContext parameterContext = new DefaultParameterContext(report);
+      // open parameter context
+      final ValidationResult vr = applyInputsToReportParameters(parameterContext, null);
+      if (vr.isEmpty() == false)
+      {
+        return 0;
+      }
+
+      parameterContext.close();
+
+      if (isPrint())
+      {
+        return 0;
+      }
+
+      final String outputType = computeEffectiveOutputTarget();
+      final ReportOutputHandler reportOutputHandler = createOutputHandlerForOutputType(outputType);
+      if (reportOutputHandler == null)
+      {
+        log.warn(Messages.getInstance().getString("ReportPlugin.warnUnprocessableRequest", outputType));
+        return 0;
+      }
+      synchronized (reportOutputHandler.getReportLock())
+      {
+        try
+        {
+          return reportOutputHandler.paginate(report, getYieldRate());
+        }
+        finally
+        {
+          reportOutputHandler.close();
+        }
+      }
+    }
+    catch (Throwable t)
+    {
+      log.error(Messages.getInstance().getString("ReportPlugin.executionFailed"), t); //$NON-NLS-1$
+    }
+    // lets not pretend we were successfull, if the export type was not a valid one.
+    return 0;
+  }
+  
+  protected String getViewerSessionId()
+  {
+    if (inputs == null)
+    {
+      return null;
+    }
+    final Object o = inputs.get(ParameterXmlContentHandler.SYS_PARAM_SESSION_ID);
+    if (o instanceof String)
+    {
+      return String.valueOf(o);
+    }
+    return null;
   }
 
 }

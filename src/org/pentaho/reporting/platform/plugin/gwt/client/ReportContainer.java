@@ -3,70 +3,80 @@ package org.pentaho.reporting.platform.plugin.gwt.client;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-
-import org.pentaho.gwt.widgets.client.utils.i18n.ResourceBundle;
-import org.pentaho.gwt.widgets.client.utils.string.StringUtils;
-import org.pentaho.reporting.platform.plugin.gwt.client.ReportViewer.RENDER_TYPE;
 
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Frame;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
+import org.pentaho.gwt.widgets.client.utils.i18n.ResourceBundle;
+import org.pentaho.gwt.widgets.client.utils.string.StringUtils;
 
-public class ReportContainer extends VerticalPanel implements IParameterSubmissionListener
+public class ReportContainer extends VerticalPanel
 {
-  private ParameterControllerPanel parameterControllerPanel;
-  private Frame reportContainer;
-  private ReportViewer viewer;
-  private String url = "about:blank"; //$NON-NLS-1$
-
-  public ReportContainer(final ReportViewer viewer, ResourceBundle messages)
+  private class ReportContentFrame extends Frame
   {
-    this.viewer = viewer;
-    parameterControllerPanel = new ParameterControllerPanel(viewer, this, messages);
-    parameterControllerPanel.addParameterSubmissionListener(this);
-    reportContainer = new Frame() {
-      
-      public void onBrowserEvent(Event event) {
-        super.onBrowserEvent(event);
-        if (event.getTypeInt() == Event.ONLOAD) {
-          if (StringUtils.isEmpty(url) == false && url.equals("about:blank") == false) { //$NON-NLS-1$
-            WaitPopup.getInstance().setVisible(false);
-          }
-        }
-      }
-      
-      protected void onLoad() {
-        super.onLoad();
-        if (StringUtils.isEmpty(url) == false && url.equals("about:blank") == false) { //$NON-NLS-1$
+
+    public void onBrowserEvent(final Event event)
+    {
+      super.onBrowserEvent(event);
+      if (event.getTypeInt() == Event.ONLOAD)
+      {
+        if (StringUtils.isEmpty(url) == false && url.equals(ABOUT_BLANK) == false)
+        {
           WaitPopup.getInstance().setVisible(false);
         }
       }
+    }
 
-      public void setUrl(String url) {
-        if (StringUtils.isEmpty(url) == false && url.equals("about:blank") == false) { //$NON-NLS-1$
-          WaitPopup.getInstance().setVisible(true);
-        }
-        // ie is not responding to onload
-        Timer t = new Timer() {
-          public void run() {
-            WaitPopup.getInstance().setVisible(false);
-          }
-        };
-        t.schedule(1000);
-        super.setUrl(url);
+    protected void onLoad()
+    {
+      super.onLoad();
+      if (StringUtils.isEmpty(url) == false && url.equals(ABOUT_BLANK) == false)
+      {
+        WaitPopup.getInstance().setVisible(false);
       }
-      
-    };
+    }
+
+    public void setUrl(final String url)
+    {
+      if (StringUtils.isEmpty(url) == false && url.equals(ABOUT_BLANK) == false)
+      {
+        WaitPopup.getInstance().setVisible(true);
+      }
+      super.setUrl(url);
+      // ie is not responding to onload
+      final Timer t = new Timer()
+      {
+        public void run()
+        {
+          WaitPopup.getInstance().setVisible(false);
+        }
+      };
+      t.schedule(1000);
+    }
+
+  }
+
+  private static final String ABOUT_BLANK = "about:blank";
+
+  private ParameterControllerPanel parameterControllerPanel;
+  private Frame reportContainer;
+  private String url = ABOUT_BLANK;
+
+  public ReportContainer(final ResourceBundle messages)
+  {
+    reportContainer = new ReportContentFrame();
     reportContainer.sinkEvents(Event.ONLOAD);
-    
+
+    parameterControllerPanel = new ParameterControllerPanel(this, messages);
+
     init();
   }
 
-  public void init() {
-	reportContainer.setUrl("about:blank"); //$NON-NLS-1$
+  public void init()
+  {
+    reportContainer.setUrl(ABOUT_BLANK);
     reportContainer.setVisible(true);
     clear();
     reportContainer.setHeight("100%"); //$NON-NLS-1$
@@ -79,7 +89,7 @@ public class ReportContainer extends VerticalPanel implements IParameterSubmissi
     makeFullHeight(reportContainer, this);
     reportContainer.setUrl(url);
   }
-  
+
   public void hideParameterController()
   {
     parameterControllerPanel.clear();
@@ -87,20 +97,20 @@ public class ReportContainer extends VerticalPanel implements IParameterSubmissi
     parameterControllerPanel.setVisible(false);
   }
 
-  public void parametersReady(Map<String, List<String>> parameterMap, RENDER_TYPE renderType)
+  public void setUrl(final String url)
   {
-    url = viewer.buildReportUrl(renderType, parameterMap, parameterControllerPanel.isAutoSubmit());
+    this.url = url;
   }
 
   public void showBlank()
   {
     // build url for the report to actually render
     reportContainer.setVisible(false);
-    url = "about:blank"; //$NON-NLS-1$
+    url = ABOUT_BLANK;
     reportContainer.setUrl(url); //$NON-NLS-1$
   }
 
-  private void makeFullHeight(Widget widget, Widget stopWidget)
+  private static void makeFullHeight(final Widget widget, final Widget stopWidget)
   {
     final List<com.google.gwt.dom.client.Element> parentList = new ArrayList<com.google.gwt.dom.client.Element>();
     com.google.gwt.dom.client.Element parent = widget.getElement();
