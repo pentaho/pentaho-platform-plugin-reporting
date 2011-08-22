@@ -70,10 +70,10 @@ public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback
 
   private native void setupNativeHooks(ReportViewer viewer)
     /*-{
+      if ($wnd.reportViewer_openUrlInDialog) {
+        return;
+      }
       $wnd.reportViewer_openUrlInDialog = function(title, message, width, height) {
-        viewer.@org.pentaho.reporting.platform.plugin.gwt.client.ReportViewer::openUrlInDialog(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)(title, message, width, height);
-      };
-      top.reportViewer_openUrlInDialog = function(title, message, width, height) {
         viewer.@org.pentaho.reporting.platform.plugin.gwt.client.ReportViewer::openUrlInDialog(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)(title, message, width, height);
       };
       $wnd.reportViewer_hide = function() {
