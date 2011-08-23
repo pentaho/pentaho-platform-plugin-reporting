@@ -70,12 +70,27 @@ public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback
 
   private native void setupNativeHooks(ReportViewer viewer)
   /*-{
-    if ($wnd.reportViewer_openUrlInDialog) {
+    if ($wnd.reportViewer_openUrlInDialog || top.reportViewer_openUrlInDialog) {
       return;
     }
-    $wnd.reportViewer_openUrlInDialog = function(title, message, width, height) {
-      viewer.@org.pentaho.reporting.platform.plugin.gwt.client.ReportViewer::openUrlInDialog(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)(title, message, width, height);
-    };
+    if (!top.mantle_initialized) {
+      top.mantle_openTab = function(name, title, url) {
+        window.open(url, '_blank');
+      }
+    }
+    if (top.mantle_initialized) {
+      top.reportViewer_openUrlInDialog = function(title, url, width, height) {
+        top.urlCommand(url, title, true, width, height);
+      }
+    } else {
+      top.reportViewer_openUrlInDialog = function(title, url, width, height) {
+        width += '';
+        height += '';
+        viewer.@org.pentaho.reporting.platform.plugin.gwt.client.ReportViewer::openUrlInDialog(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)(title, url, width, height);
+      }
+    }
+    
+    $wnd.reportViewer_openUrlInDialog = top.reportViewer_openUrlInDialog;
     $wnd.reportViewer_hide = function() {
       viewer.@org.pentaho.reporting.platform.plugin.gwt.client.ReportViewer::hide()();
     };
