@@ -8,46 +8,68 @@ import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
 import org.pentaho.reporting.engine.classic.core.layout.output.YieldReportListener;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.base.PageableReportProcessor;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.plaintext.PageableTextOutputProcessor;
-import org.pentaho.reporting.engine.classic.core.modules.output.pageable.plaintext.PlainTextPageableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.plaintext.driver.TextFilePrinterDriver;
-import org.pentaho.reporting.engine.classic.core.util.StringUtil;
+import org.pentaho.reporting.libraries.repository.ContentIOException;
 
-public class PlainTextOutput
+public class PlainTextOutput implements ReportOutputHandler
 {
+  private ProxyOutputStream proxyOutputStream;
 
-  public static boolean generate(final MasterReport report,
-                                 final OutputStream outputStream,
-                                 final int yieldRate) throws ReportProcessingException, IOException
+  public PlainTextOutput()
   {
-    final float charPerInch = StringUtil.parseFloat(report.getReportConfiguration().getConfigProperty
-        (PlainTextPageableModule.CHARS_PER_INCH), 12.0f);
-    final float linesPerInch = StringUtil.parseFloat(report.getReportConfiguration().getConfigProperty
-        (PlainTextPageableModule.LINES_PER_INCH), 6.0f);
+  }
 
-    final TextFilePrinterDriver driver = new TextFilePrinterDriver(outputStream, charPerInch, linesPerInch);
-    
-    PageableReportProcessor proc = null;
+  public Object getReportLock()
+  {
+    return this;
+  }
+
+  public int paginate(MasterReport report, int yieldRate) throws ReportProcessingException, IOException, ContentIOException {
+    return 0;
+  }
+  
+  public int generate(final MasterReport report,
+                          final int acceptedPage,
+                          final OutputStream outputStream,
+                          final int yieldRate) throws ReportProcessingException, IOException, ContentIOException
+  {
+    final PageableReportProcessor proc = create(report, yieldRate);
+    proxyOutputStream.setParent(outputStream);
     try
     {
-      final PageableTextOutputProcessor outputProcessor = new PageableTextOutputProcessor(driver, report.getConfiguration());
-
-      proc = new PageableReportProcessor(report, outputProcessor);
-      if (yieldRate > 0)
+      if (proc.isPaginated() == false)
       {
-        proc.addReportProgressListener(new YieldReportListener(yieldRate));
+        proc.paginate();
       }
       proc.processReport();
-      proc.close();
-      proc = null;
-      outputStream.close();
-      return true;
+      return 0;
     }
     finally
     {
-      if (proc != null)
-      {
-        proc.close();
-      }
+      proc.close();
+      proxyOutputStream.setParent(null);
     }
+  }
+
+  private PageableReportProcessor create(final MasterReport report, final int yieldRate)
+      throws ReportProcessingException
+  {
+    proxyOutputStream = new ProxyOutputStream();
+    final TextFilePrinterDriver driver = new TextFilePrinterDriver(proxyOutputStream, 12, 6);
+    final PageableTextOutputProcessor outputProcessor = new PageableTextOutputProcessor(driver, report.getConfiguration());
+    final PageableReportProcessor proc = new PageableReportProcessor(report, outputProcessor);
+    if (yieldRate > 0)
+    {
+      proc.addReportProgressListener(new YieldReportListener(yieldRate));
+    }
+    return proc;
+  }
+
+  public boolean supportsPagination() {
+    return false;
+  }
+
+  public void close()
+  {
   }
 }

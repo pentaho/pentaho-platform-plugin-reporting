@@ -9,39 +9,52 @@ import org.pentaho.reporting.engine.classic.core.layout.output.ReportProcessor;
 import org.pentaho.reporting.engine.classic.core.layout.output.YieldReportListener;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.base.FlowReportProcessor;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.rtf.FlowRTFOutputProcessor;
+import org.pentaho.reporting.libraries.repository.ContentIOException;
 
-public class RTFOutput
+public class RTFOutput implements ReportOutputHandler
 {
-  private RTFOutput()
+  public RTFOutput()
   {
   }
 
-  public static boolean generate(final MasterReport report,
-                                 final OutputStream outputStream,
-                                 final int yieldRate) throws ReportProcessingException, IOException
+  public Object getReportLock()
   {
-    ReportProcessor proc = null;
+    return this;
+  }
+
+  public int paginate(MasterReport report, int yieldRate) throws ReportProcessingException, IOException, ContentIOException {
+    return 0;
+  }
+  
+  public int generate(final MasterReport report,
+                          final int acceptedPage,
+                          final OutputStream outputStream,
+                          final int yieldRate) throws ReportProcessingException, IOException
+  {
+    final FlowRTFOutputProcessor target = new FlowRTFOutputProcessor(report.getConfiguration(), outputStream, report.getResourceManager());
+    final ReportProcessor proc = new FlowReportProcessor(report, target);
+
+    if (yieldRate > 0)
+    {
+      proc.addReportProgressListener(new YieldReportListener(yieldRate));
+    }
     try
     {
-      final FlowRTFOutputProcessor target = new FlowRTFOutputProcessor(report.getConfiguration(), outputStream, report.getResourceManager());
-      proc = new FlowReportProcessor(report, target);
-
-      if (yieldRate > 0)
-      {
-        proc.addReportProgressListener(new YieldReportListener(yieldRate));
-      }
       proc.processReport();
-      proc.close();
-      proc = null;
-      outputStream.close();
-      return true;
+      return 0;
     }
     finally
     {
-      if (proc != null)
-      {
-        proc.close();
-      }
+      proc.close();
     }
+  }
+
+  public boolean supportsPagination() {
+    return false;
+  }
+
+  public void close()
+  {
+
   }
 }

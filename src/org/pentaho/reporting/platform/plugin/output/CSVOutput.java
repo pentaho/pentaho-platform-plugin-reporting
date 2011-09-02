@@ -8,36 +8,54 @@ import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
 import org.pentaho.reporting.engine.classic.core.layout.output.YieldReportListener;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.base.StreamReportProcessor;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.csv.StreamCSVOutputProcessor;
+import org.pentaho.reporting.libraries.repository.ContentIOException;
 
-public class CSVOutput
+public class CSVOutput implements ReportOutputHandler
 {
-
-  public static boolean generate(final MasterReport report,
-                                 final OutputStream outputStream,
-                                 final int yieldRate) throws ReportProcessingException, IOException
+  public CSVOutput()
   {
-    StreamReportProcessor proc = null;
+  }
+
+  public Object getReportLock()
+  {
+    return this;
+  }
+
+  public int paginate(MasterReport report, int yieldRate) throws ReportProcessingException, IOException, ContentIOException {
+    return 0;
+  }
+  
+  public int generate(final MasterReport report,
+                          final int acceptedPage,
+                          final OutputStream outputStream,
+                          final int yieldRate) throws ReportProcessingException, IOException, ContentIOException
+  {
+    final StreamCSVOutputProcessor target = new StreamCSVOutputProcessor(report.getConfiguration(), outputStream);
+    final StreamReportProcessor proc = new StreamReportProcessor(report, target);
+
+    if (yieldRate > 0)
+    {
+      proc.addReportProgressListener(new YieldReportListener(yieldRate));
+    }
+    
     try
     {
-      final StreamCSVOutputProcessor target = new StreamCSVOutputProcessor(report.getConfiguration(), outputStream);
-      proc = new StreamReportProcessor(report, target);
-
-      if (yieldRate > 0)
-      {
-        proc.addReportProgressListener(new YieldReportListener(yieldRate));
-      }
       proc.processReport();
       proc.close();
-      proc = null;
-      outputStream.close();
-      return true;
+      return 0;
     }
     finally
     {
-      if (proc != null)
-      {
-        proc.close();
-      }
+      proc.close();
     }
+  }
+
+  public boolean supportsPagination() {
+    return false;
+  }
+
+  public void close()
+  {
+
   }
 }

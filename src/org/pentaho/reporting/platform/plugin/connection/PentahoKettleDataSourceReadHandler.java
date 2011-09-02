@@ -33,7 +33,7 @@ public class PentahoKettleDataSourceReadHandler extends KettleDataSourceReadHand
                                               final String tagName,
                                               final Attributes atts) throws SAXException
   {
-    if (tagName.equals("query-file")) //$NON-NLS-1$
+    if (tagName.equals("query-file"))
     {
       final AbstractKettleTransformationReadHandler queryReadHandler = new PentahoKettleTransFromFileReadHandler();
       addQueryHandler(queryReadHandler);

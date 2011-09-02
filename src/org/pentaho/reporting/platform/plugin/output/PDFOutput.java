@@ -8,35 +8,58 @@ import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
 import org.pentaho.reporting.engine.classic.core.layout.output.YieldReportListener;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.base.PageableReportProcessor;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.pdf.PdfOutputProcessor;
+import org.pentaho.reporting.libraries.repository.ContentIOException;
 
-public class PDFOutput
+public class PDFOutput implements ReportOutputHandler
 {
-
-  public static boolean generate(final MasterReport report,
-                                 final OutputStream outputStream, 
-                                 final int yieldRate) throws ReportProcessingException, IOException
+  public PDFOutput()
   {
-    PageableReportProcessor proc = null;
+  }
+
+  public Object getReportLock()
+  {
+    return this;
+  }
+
+  private PageableReportProcessor createProcessor(final MasterReport report,
+                                                  final int yieldRate,
+                                                  final OutputStream outputStream) throws ReportProcessingException
+  {
+    final PdfOutputProcessor outputProcessor = new PdfOutputProcessor(report.getConfiguration(), outputStream);
+    final PageableReportProcessor proc = new PageableReportProcessor(report, outputProcessor);
+    if (yieldRate > 0)
+    {
+      proc.addReportProgressListener(new YieldReportListener(yieldRate));
+    }
+    return proc;
+  }
+
+  public int paginate(MasterReport report, int yieldRate) throws ReportProcessingException, IOException, ContentIOException {
+    return 0;
+  }
+  
+  public int generate(final MasterReport report,
+                          final int acceptedPage,
+                          final OutputStream outputStream,
+                          final int yieldRate) throws ReportProcessingException, IOException
+  {
+    final PageableReportProcessor proc = createProcessor(report, yieldRate, outputStream);
     try
     {
-      final PdfOutputProcessor outputProcessor = new PdfOutputProcessor(report.getConfiguration(), outputStream);
-      proc = new PageableReportProcessor(report, outputProcessor);
-      if (yieldRate > 0)
-      {
-        proc.addReportProgressListener(new YieldReportListener(yieldRate));
-      }
       proc.processReport();
-      proc.close();
-      proc = null;
-      outputStream.close();
-      return true;
+      return 0;
     }
     finally
     {
-      if (proc != null)
-      {
-        proc.close();
-      }
+      proc.close();
     }
+  }
+
+  public boolean supportsPagination() {
+    return false;
+  }
+
+  public void close()
+  {
   }
 }

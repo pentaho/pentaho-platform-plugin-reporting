@@ -1,9 +1,9 @@
 package org.pentaho.reporting.platform.plugin.connection;
 
 import org.pentaho.platform.engine.core.system.PentahoSystem;
-import org.pentaho.reporting.engine.classic.extensions.datasources.mondrian.AbstractMDXDataFactory;
 import org.pentaho.reporting.engine.classic.extensions.datasources.mondrian.MondrianConnectionProvider;
 import org.pentaho.reporting.engine.classic.extensions.datasources.mondrian.parser.BandedMDXDataSourceReadHandler;
+import org.pentaho.reporting.engine.classic.extensions.datasources.mondrian.AbstractMDXDataFactory;
 import org.xml.sax.SAXException;
 
 /**

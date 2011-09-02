@@ -54,7 +54,7 @@ public class PentahoCubeFileProvider extends DefaultCubeFileProvider
     final List<MondrianCatalog> catalogs =
         MondrianCatalogHelper.getInstance().listCatalogs(PentahoSessionHolder.getSession(), false);
 
-    for (final MondrianCatalog cat : catalogs)
+    for (MondrianCatalog cat : catalogs)
     {
       final String definition = cat.getDefinition();
       final String definitionFileName = IOUtils.getInstance().getFileName(definition);

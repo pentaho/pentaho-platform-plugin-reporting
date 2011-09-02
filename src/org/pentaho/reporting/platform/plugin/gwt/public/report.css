@@ -1,10 +1,10 @@
 body {
-  background-color: white;
   color: black;
   font-family: Tahoma, Arial, Helvetica, sans-serif;
   font-size: 10pt;
   margin: 0px;
   padding: 0px;
+  overflow: hidden;
 }
 
 .gwt-Frame {
@@ -14,59 +14,6 @@ body {
   frameborder: 0;
   overflow:visible; 
   width:100%; 
-}
-
-.gwt-ToggleButton {
-  font-size: 10pt;
-}
-
-.gwt-ToggleButton-up {
-  background-image: url(buttonbg.gif);
-  padding: 3px;
-  margin: 2px;
-  background-color: #E8F1FF;
-  border-width: 1px;
-  border-style: solid;
-  border-color: white #a0a0a0 #a0a0a0 white;
-  cursor: pointer;
-  cursor: hand;
-}
-
-.gwt-ToggleButton-up-hovering {
-  background-image: url(buttonhoverbg.gif);
-  padding: 3px;
-  margin: 2px;
-  background-color: #E8F1FF;
-  border-width: 1px;
-  border-style: solid;
-  border-color: white black black white;
-  cursor: pointer;
-  cursor: hand;
-
-}
-
-.gwt-ToggleButton-down {
-  background-image: url(buttonbg.gif);
-  padding: 2px;
-  margin: 2px;
-  background-color: #E8F1FF;
-  border-width: 2px;
-  border-style: solid;
-  border-color: black white white black;
-  cursor: pointer;
-  cursor: hand;
-}
-
-.gwt-ToggleButton-down-hovering {
-  background-image: url(buttonhoverbg.gif);
-  padding: 2px;
-  margin: 2px;
-  background-color: #E8F1FF;
-  border-width: 2px;
-  border-style: solid;
-  border-color: black white white black;
-  cursor: pointer;
-  cursor: hand;
 }
 
 .parameter-disclosure {
@@ -92,14 +39,25 @@ body {
 	border: 1px solid #777777;
 }
 
+.IE .parameter-application .pentaho-disclosure-panel-open {
+	padding-top: 0px;
+	padding-left: 0px;
+	padding-right: 0px;
+}
+
+.IE .parameter-application .pentaho-disclosure-panel-closed {
+	padding-top: 0px;
+	padding-left: 0px;
+	padding-right: 0px;
+}
+
 .parameter-submit-panel {
-	background-color: #cccccc;
-	border-top: 1px solid #777777;
 	padding: 3px 0px 3px 10px;
 	margin-top: 10px;
 }
 
 .parameter-container {
+  table-layout: fixed;
 }
 
 .parameter {
@@ -115,6 +73,7 @@ body {
 .parameter-label {
 	font-size: 10pt;
 	font-weight: bold;
+  white-space: nowrap;
 }
 
 .parameter-error-label {
@@ -193,10 +152,10 @@ body {
   padding-top: 5px;
   padding-bottom: 5px;
   padding-left: 10px;
+  margin-top: 5px;
 }
 
 .pageControllerButton {
-  border: 1px solid #777777;
   cursor: pointer;
   cursor: hand;
 }
@@ -244,8 +203,8 @@ body {
 }
 .datePickerDay {
   padding: 4px;
-  cursor: hand;
   cursor: pointer;
+  cursor: hand;
 }
 .datePickerDayIsToday {
   border: 1px solid black;
@@ -277,7 +236,7 @@ body {
 }
 td.datePickerMonth {
   text-align: center;
-  vertical-align: center;
+  vertical-align: middle;
   white-space: nowrap;
   font-size: 70%;
   font-weight: bold;
@@ -286,8 +245,8 @@ td.datePickerMonth {
 .datePickerNextButton {
   font-size: 120%;
   line-height: 1em;
-  cursor: hand;
   cursor: pointer;
+  cursor: hand;
   padding: 0px 4px;
 }
 
@@ -323,9 +282,36 @@ td.datePickerMonth {
 }
 
 .modalDialogPageBackground {
-  opacity: 0.20;
-  background-color:  #000000;
   z-index:250;
   cursor: progress;
-  filter:alpha(opacity=20);
-} 
+}
+
+.parameter-content-panel {
+	background-color: #9f9f9f;
+	border: 1px solid black;
+	margin: 0px 10px 10px 10px;
+	padding: 10px;
+}
+
+.IE .parameter-content-panel {
+	margin: 0px;
+	padding: 0px;
+}
+
+.parameter-wrapper {
+  overflow-x: auto;
+  width: 100%;
+  max-width: 100%;
+}
+.IE .parameter-wrapper {
+  /* account for the scrollbar taking up vertical space when present */
+  padding-bottom: 16px
+}
+
+.custom-list-item  .gwt-Label {
+  font-size: 0.85em;
+}
+
+.text-parse-error {
+  color: #900000;
+}
