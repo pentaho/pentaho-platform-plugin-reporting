@@ -814,7 +814,7 @@ public class ParameterControllerPanel extends VerticalPanel
     }
     catch (Exception e)
     {
-      Window.alert("Failed in Build parameter panel");
+      Window.alert("Failed in Build parameter panel: " + e);
     }
   }
 
