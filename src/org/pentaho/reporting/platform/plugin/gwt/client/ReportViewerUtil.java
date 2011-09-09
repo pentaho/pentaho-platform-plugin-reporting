@@ -143,7 +143,7 @@ public class ReportViewerUtil
    * Converts a time from a arbitary timezone into the local timezone. The timestamp value remains unchanged,
    * but the string representation changes to reflect the give timezone.
    *
-   * @param originalTimestamp the timestamp as string from the server.
+   * @param originalTimestamp             the timestamp as string from the server.
    * @param targetTimeZoneOffsetInMinutes the target timezone offset in minutes from GMT
    * @return the converted timestamp string.
    */
@@ -172,9 +172,9 @@ public class ReportViewerUtil
    * @return the offset in minutes.
    */
   public static native int getNativeTimezoneOffset()
-    /*-{
-      return -(new Date().getTimezoneOffset());
-    }-*/;
+  /*-{
+    return -(new Date().getTimezoneOffset());
+  }-*/;
 
   public static String extractTimezoneHintFromData(final String dateString)
   {
@@ -353,7 +353,7 @@ public class ReportViewerUtil
         parameters.setSelectedValues(key, encodedList);
       }
     }
-    
+
     final String parametersAsString = parameters.toURL();
     if (History.getToken().equals(parametersAsString) == false)
     {
@@ -369,17 +369,20 @@ public class ReportViewerUtil
       // Build a dev/test url
       System.out.println("Computed path was: " + reportPath);
       reportPath = reportPath.substring(1);
-      
-      if(!reportPath.contains("solution")) {
+
+      if (!reportPath.contains("solution"))
+      {
         reportPath = reportPath + "&solution=steel-wheels&path=reports&name=Inventory.prpt"; //$NON-NLS-1$
       }
-      if(!reportPath.contains("path")) {
+      if (!reportPath.contains("path"))
+      {
         reportPath = reportPath + "&path=reports"; //$NON-NLS-1$
       }
-      if(!reportPath.contains("name")) {
+      if (!reportPath.contains("name"))
+      {
         reportPath = reportPath + "&name=Inventory.prpt"; //$NON-NLS-1$
       }
-      
+
       final String url = "http://localhost:8080/pentaho/content/reporting?" + reportPath + "&userid=joe&password=password"; //$NON-NLS-1$ //$NON-NLS-2$
       System.out.println("Using development url: " + url);
       return url;
@@ -466,26 +469,37 @@ public class ReportViewerUtil
 
   public static TextFormat createTextFormat(final String pattern, final String dataType)
   {
-    if (Number.class.getName().equals(dataType) ||
-        Byte.class.getName().equals(dataType) ||
-        Short.class.getName().equals(dataType) ||
-        Integer.class.getName().equals(dataType) ||
-        Long.class.getName().equals(dataType) ||
-        Float.class.getName().equals(dataType) ||
-        Double.class.getName().equals(dataType) ||
-        "java.math.BigDecimal".equals(dataType) ||
-        "java.math.BigInteger".equals(dataType))
+    if (StringUtils.isEmpty(pattern))
     {
-      return new NumberTextFormat(pattern);
+      return null;
     }
-    else if (java.util.Date.class.getName().equals(dataType) ||
-        java.sql.Date.class.getName().equals(dataType) ||
-        java.sql.Time.class.getName().equals(dataType) ||
-        java.sql.Timestamp.class.getName().equals(dataType))
+    try
     {
-      return new DateTextFormat(pattern);
+      if (Number.class.getName().equals(dataType) ||
+          Byte.class.getName().equals(dataType) ||
+          Short.class.getName().equals(dataType) ||
+          Integer.class.getName().equals(dataType) ||
+          Long.class.getName().equals(dataType) ||
+          Float.class.getName().equals(dataType) ||
+          Double.class.getName().equals(dataType) ||
+          "java.math.BigDecimal".equals(dataType) ||
+          "java.math.BigInteger".equals(dataType))
+      {
+        return new NumberTextFormat(pattern);
+      }
+      else if (java.util.Date.class.getName().equals(dataType) ||
+          java.sql.Date.class.getName().equals(dataType) ||
+          java.sql.Time.class.getName().equals(dataType) ||
+          java.sql.Timestamp.class.getName().equals(dataType))
+      {
+        return new DateTextFormat(pattern);
+      }
+      else
+      {
+        return null;
+      }
     }
-    else
+    catch (Exception e)
     {
       return null;
     }
