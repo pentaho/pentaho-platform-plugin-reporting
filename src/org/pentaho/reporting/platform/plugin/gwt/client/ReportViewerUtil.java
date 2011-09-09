@@ -458,29 +458,40 @@ public class ReportViewerUtil
   {
     return text == null || "".equals(text);
   }
-
+  
   public static TextFormat createTextFormat(final String pattern, final String dataType)
   {
-    if (Number.class.getName().equals(dataType) ||
-        Byte.class.getName().equals(dataType) ||
-        Short.class.getName().equals(dataType) ||
-        Integer.class.getName().equals(dataType) ||
-        Long.class.getName().equals(dataType) ||
-        Float.class.getName().equals(dataType) ||
-        Double.class.getName().equals(dataType) ||
-        "java.math.BigDecimal".equals(dataType) ||
-        "java.math.BigInteger".equals(dataType))
+    if (StringUtils.isEmpty(pattern))
     {
-      return new NumberTextFormat(pattern);
+      return null;
     }
-    else if (java.util.Date.class.getName().equals(dataType) ||
-        java.sql.Date.class.getName().equals(dataType) ||
-        java.sql.Time.class.getName().equals(dataType) ||
-        java.sql.Timestamp.class.getName().equals(dataType))
+    try
     {
-      return new DateTextFormat(pattern);
+      if (Number.class.getName().equals(dataType) ||
+          Byte.class.getName().equals(dataType) ||
+          Short.class.getName().equals(dataType) ||
+          Integer.class.getName().equals(dataType) ||
+          Long.class.getName().equals(dataType) ||
+          Float.class.getName().equals(dataType) ||
+          Double.class.getName().equals(dataType) ||
+          "java.math.BigDecimal".equals(dataType) ||
+          "java.math.BigInteger".equals(dataType))
+      {
+        return new NumberTextFormat(pattern);
+      }
+      else if (java.util.Date.class.getName().equals(dataType) ||
+          java.sql.Date.class.getName().equals(dataType) ||
+          java.sql.Time.class.getName().equals(dataType) ||
+          java.sql.Timestamp.class.getName().equals(dataType))
+      {
+        return new DateTextFormat(pattern);
+      }
+      else
+      {
+        return null;
+      }
     }
-    else
+    catch (Exception e)
     {
       return null;
     }
