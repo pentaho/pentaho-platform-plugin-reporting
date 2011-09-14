@@ -62,7 +62,8 @@ public class ExecuteReportContentHandler
     }
 
     final String fileContent = pathProvider.getStringParameter("path", null);
-    if (fileContent != null && fileContent.startsWith("/execute/"))
+    if ("post".equalsIgnoreCase(request.getMethod()) ||
+        fileContent != null && fileContent.startsWith("/execute/"))
     {
       doExport(outputStream, reportDefinitionPath);
     }
