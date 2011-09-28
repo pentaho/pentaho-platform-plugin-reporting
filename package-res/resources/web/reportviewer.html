@@ -1,0 +1,202 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns:pho="http:/www.pentaho.com">
+<head>
+    <title>Report Web Viewer</title>
+
+    <script language="javascript" type="text/javascript" src="webcontext.js?context=cdftest"></script>
+
+    <!-- from cdf_include.html -->
+    <!-- CDF Scripts -->
+    <!-- 
+    <script language="javascript" type="text/javascript" src="../../js/pentaho-ajax.js"></script>
+    <script language="javascript" type="text/javascript" src="../../js/options.js"></script>
+     -->
+    <script language="javascript" type="text/javascript" src="../../../pentaho-cdf/js/jquery.js"></script>
+    <script language="javascript" type="text/javascript" src="../../../pentaho-cdf/js/jquery-impromptu.3.1.js"></script>
+    <script language="javascript" type="text/javascript" src="../../../pentaho-cdf/js/jquery.ui.js"></script>
+    <script language="javascript" type="text/javascript" src="../../../pentaho-cdf/js/jquery.bgiframe.js"></script>
+    
+    <script language="javascript" type="text/javascript" src="../../../pentaho-cdf/js/jquery.dimensions.js"></script>
+    <script language="javascript" type="text/javascript" src="../../../pentaho-cdf/js/jquery.jdMenu.js"></script>
+    <script language="javascript" type="text/javascript" src="../../../pentaho-cdf/js/jquery.positionBy.js"></script>
+    <script language="javascript" type="text/javascript" src="../../../pentaho-cdf/js/jquery.tooltip.js"></script>
+    <script language="javascript" type="text/javascript" src="../../../pentaho-cdf/js/jquery.blockUI.js"></script>
+    <script language="javascript" type="text/javascript" src="../../../pentaho-cdf/js/jquery.eventstack.js"></script>
+    <!-- 
+    <script language="javascript" type="text/javascript" src="../../../pentaho-cdf/js/MetaLayer/MetaLayer.js"></script>
+    <script language="javascript" type="text/javascript" src="../../../pentaho-cdf/js/greybox/AJS.js"></script>
+    <script language="javascript" type="text/javascript" src="../../../pentaho-cdf/js/greybox/AJS_fx.js"></script>
+    <script language="javascript" type="text/javascript" src="../../../pentaho-cdf/js/greybox/gb_scripts.js"></script>
+    <script language="javascript" type="text/javascript" src="../../adhoc/js/common/ui/calendar/calendar.js"></script>
+    <script language="javascript" type="text/javascript" src="../../adhoc/js/common/ui/calendar/calendar-setup.js"></script>
+    <script language="javascript" type="text/javascript" src="../../adhoc/js/common/ui/calendar/lang/calendar-en.js"></script>
+     -->
+    <script language="javascript" type="text/javascript" src="../../../pentaho-cdf/js/Base.js"></script>
+    <script language="javascript" type="text/javascript" src="../../../pentaho-cdf/js/Dashboards.js"></script>
+    <script language="javascript" type="text/javascript" src="../../../pentaho-cdf/js/CoreComponents.js"></script>
+    <!-- 
+    <script language="javascript" type="text/javascript" src="../../../pentaho-cdf/js/NavigationComponents.js"></script>
+    <script language="javascript" type="text/javascript" src="../../../pentaho-cdf/js/MapComponents.js"></script>
+    <script language="javascript" type="text/javascript" src="../../../pentaho-cdf/js/OlapUtils.js"></script>
+    -->
+    <link rel="stylesheet" href="../../../pentaho-cdf/js/jquery.tooltip.css" type="text/css" />
+    <link rel="stylesheet" href="../../../pentaho-cdf/js/jquery.jdMenu.css" type="text/css" />
+    <link rel="stylesheet" href="../../../pentaho-cdf/js/jquery.jdMenu.slate.css" type="text/css" />
+    <link rel="stylesheet" href="../../../pentaho-cdf/js/jquery-impromptu.css" type="text/css" />
+    <link rel="stylesheet" href="../../../pentaho-cdf/js/cdf.css" type="text/css" />
+
+    <link rel="stylesheet" type="text/css" href="../../../dashboards/resources/ext/css/ext-all.css" />
+    <link rel="stylesheet" type="text/css" href="../../../dashboards/resources/ext/css/xtheme-gray.css" />
+    
+    <script type="text/javascript" src="../../../dashboards/resources/ext/combined_compressed.js"></script>
+
+    <link rel="stylesheet" href="../../reportviewer/report.css" type="text/css" />
+    <link rel="stylesheet" href="../../../common-ui/resources/web/prompting/pentaho-prompting.css" type="text/css" />
+
+    <script type="text/javascript" src="../../../common-ui/resources/web/prompting/pentaho-prompting.js"></script>
+    <script type="text/javascript" src="../../../common-ui/resources/web/prompting/pentaho-prompting-builders.js"></script>
+    <script type="text/javascript" src="../../../common-ui/resources/web/prompting/pentaho-prompting-components.js"></script>
+  
+    
+    
+    <!--<script type="text/javascript" src="dashboards/resources/ext/ext-all.js"></script>-->
+    
+    <!-- 
+    <link rel="stylesheet" href="../../adhoc/js/common/ui/calendar/calendar-win2k-1.css" type="text/css" />
+     -->
+    <script language="javascript">
+    
+     var SimileAjax = {};
+     Dashboards.blockUIwithDrag = function() {
+        $.blockUI.defaults.message = '';
+        $.blockUI.defaults.css.left = '0%';
+        $.blockUI.defaults.css.top = '0%';
+        $.blockUI.defaults.css.marginLeft = '85px';
+        $.blockUI.defaults.css.width = '100%';
+        $.blockUI.defaults.css.height = '100%';
+        $.blockUI.defaults.css.opacity = '1';
+        $.blockUI.defaults.css.backgroundColor = '#ffffcc';
+        $.blockUI.defaults.css['-webkit-border-radius'] = '10px'; 
+        $.blockUI.defaults.css['-moz-border-radius'] = '10px';
+    
+        $.blockUI.defaults.overlayCSS.backgroundColor = 'transparent';
+        $.blockUI.defaults.overlayCSS.opacity = '0.6';
+        $.blockUI.defaults.overlayCSS.cursor = 'wait';
+          // There's an issue with BlockUI and IE 8. As we don't even use this feature from CDF, it's hidden here.
+          $.blockUI.defaults.showOverlay = false;
+        $.blockUI();
+      }
+    
+    </script>
+    <script language="javascript" type="text/javascript" src="../../../pentaho-cdf/js/simile/ajax/scripts/json.js"></script>
+    <!-- end cdf_include.html -->
+  </head>
+  <body>
+    <div id="promptPanel"></div>
+    <div id="report"><iframe id="report-frame" class="gwt-Frame" style="width: 100%; height: 100%;"
+      frameborder="0"></iframe></div>
+  </body>
+</table>
+
+<script language="javascript" type="text/javascript">
+
+var SubmitReportComponent = BaseComponent.extend({
+  listeners: ["submit"],
+
+  update: function() {
+    if (pentaho.common.prompting.paramDefn.promptNeeded) {
+      $('#' + this.htmlObject).attr('src', 'about:blank');
+      return; // Don't do anything if we need to prompt
+    }
+    var options = pentaho.common.prompting.paramDefn.getParameterValues();
+    options['renderMode'] = 'REPORT';
+    options["solution"] = Dashboards.getQueryParameter("solution");
+    options["path"] = Dashboards.getQueryParameter("path");
+    options["name"] = Dashboards.getQueryParameter("name");
+
+    // Never send the session back. This is generated by the server.
+    delete options['::session'];
+
+    var url = "/pentaho/content/reporting?";
+    var params = [];
+    var addParam = function(encodedKey, value) {
+      if(value.length > 0) {
+        params.push(encodedKey + '=' + encodeURIComponent(value));
+      }
+    }
+    $.each(options, function(key, value) {
+      if (value === null || typeof value == 'undefined') {
+        return; // continue
+      }
+      var encodedKey = encodeURIComponent(key);
+      if ($.isArray(value)) {
+        var val = [];
+        $.each(value, function(i, v) {
+          addParam(encodedKey, v);
+        });
+      } else {
+        addParam(encodedKey, value);
+      }
+    });
+    url += params.join("&");
+    $('#' + this.htmlObject).attr("src", url);
+
+//    $.ajax({
+//        url: url,
+//        data: options,
+//        dataType:"html",
+//        success: function(reportHtml){
+//          $("#"+this.htmlObject).html(reportHtml);
+//        }.bind(this)
+//      });
+  }
+});
+
+function load() {
+    reportViewerParameterLookup = function() {
+      var paramDefn = pentaho.common.prompting.paramDefn;
+      var options = paramDefn ? paramDefn.getParameterValues() : {};
+      options['renderMode'] = paramDefn ? 'PARAMETER' : 'XML';
+      options['solution'] = Dashboards.getQueryParameter('solution');
+      options['path'] = Dashboards.getQueryParameter('path');
+      options['name'] = Dashboards.getQueryParameter('name');
+
+      // Never send the session back. This is generated by the server.
+      delete options['::session'];
+
+      var paramDefn;
+      $.ajax({
+        async: false,
+        cache: false,
+        type: 'POST',
+        url: webAppPath + '/content/reporting',
+        data: options,
+        dataType:'text',
+        success: function(xmlString){
+          try {
+            paramDefn = pentaho.common.prompting.parseParameterDefinition(xmlString);
+          } catch (e) {
+            alert('Error parsing parameter xml. ' + e); // TODO Replace with error dialog
+          }
+        },
+        error: function(xml) {
+          alert('error loading parameter information: ' + xml); // TODO replace with error dialog
+        }
+      });
+      return paramDefn;
+    }
+
+    pentaho.common.prompting.createPromptPanel({
+      destinationId: 'promptPanel', 
+      paramDefn: reportViewerParameterLookup(),
+      refreshParamDefnCallback: reportViewerParameterLookup,
+      extraComponents: [{type: 'SubmitReportComponent', htmlObject: 'report-frame'}]
+    });
+}
+
+load();
+
+</script>
+
+  </body>
+</html>

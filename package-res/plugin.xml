@@ -7,6 +7,7 @@
    <static-paths>
      <!-- this translates to /pentaho/content/reporting/resources/* -->
      <static-path url="/reporting/reportviewer" localFolder="reportviewer"/>
+     <static-path url="/reporting/resources" localFolder="resources"/>
    </static-paths>
 
     <menu-items/>
@@ -26,7 +27,7 @@
           </operation>
           <operation>
             <id>NEWWINDOW</id>
-            <command>content/reporting/reportviewer/report.html?solution={solution}&amp;path={path}&amp;name={name}&amp;locale={locale}</command>
+            <command>content/reporting/resources/web/reportviewer.html?solution={solution}&amp;path={path}&amp;name={name}&amp;locale={locale}</command>
           </operation>
           <operation>
             <id>SCHEDULE_NEW</id>
