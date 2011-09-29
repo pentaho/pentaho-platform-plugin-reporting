@@ -690,32 +690,35 @@ public class ParameterXmlContentHandler
 
         }
 
-        for (final Object key : handledValues)
-        {
-          final Element valueElement = document.createElement("value"); //$NON-NLS-1$
-          valuesElement.appendChild(valueElement);
-
-          valueElement.setAttribute("label", Messages.getInstance().getString("ReportPlugin.autoParameter", String.valueOf(key))); //$NON-NLS-1$ //$NON-NLS-2$
-          valueElement.setAttribute("type", elementValueType.getName()); //$NON-NLS-1$
-
-          if (key instanceof Number) {
-            BigDecimal bd = new BigDecimal(String.valueOf(key));
-            valueElement.setAttribute("selected", String.valueOf(selectionSet.contains(bd)));//$NON-NLS-1$
-          } else {
-            valueElement.setAttribute("selected", String.valueOf(selectionSet.contains(key)));//$NON-NLS-1$
-          }
-
-          if (key == null)
+        // Only add invalid values to the selection list for non-strict parameters
+        if (!asListParam.isStrictValueCheck()) {
+          for (final Object key : handledValues)
           {
-            valueElement.setAttribute("null", "true"); //$NON-NLS-1$ //$NON-NLS-2$
+            final Element valueElement = document.createElement("value"); //$NON-NLS-1$
+            valuesElement.appendChild(valueElement);
+  
+            valueElement.setAttribute("label", Messages.getInstance().getString("ReportPlugin.autoParameter", String.valueOf(key))); //$NON-NLS-1$ //$NON-NLS-2$
+            valueElement.setAttribute("type", elementValueType.getName()); //$NON-NLS-1$
+  
+            if (key instanceof Number) {
+              BigDecimal bd = new BigDecimal(String.valueOf(key));
+              valueElement.setAttribute("selected", String.valueOf(selectionSet.contains(bd)));//$NON-NLS-1$
+            } else {
+              valueElement.setAttribute("selected", String.valueOf(selectionSet.contains(key)));//$NON-NLS-1$
+            }
+  
+            if (key == null)
+            {
+              valueElement.setAttribute("null", "true"); //$NON-NLS-1$ //$NON-NLS-2$
+            }
+            else
+            {
+              valueElement.setAttribute("null", "false"); //$NON-NLS-1$ //$NON-NLS-2$
+              valueElement.setAttribute("value",
+                  convertParameterValueToString(parameter, parameterContext, key, elementValueType)); //$NON-NLS-1$ //$NON-NLS-2$
+            }
+  
           }
-          else
-          {
-            valueElement.setAttribute("null", "false"); //$NON-NLS-1$ //$NON-NLS-2$
-            valueElement.setAttribute("value",
-                convertParameterValueToString(parameter, parameterContext, key, elementValueType)); //$NON-NLS-1$ //$NON-NLS-2$
-          }
-
         }
       }
       else if (parameter instanceof PlainParameter)
