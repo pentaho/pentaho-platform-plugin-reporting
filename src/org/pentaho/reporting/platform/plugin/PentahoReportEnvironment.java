@@ -115,14 +115,14 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
     {
       if ("username".equals(key)) //$NON-NLS-1$
       {
-        final Authentication authentication = SecurityHelper.getAuthentication(session, true);
+        final Authentication authentication = SecurityHelper.getAuthentication();
         final String userName = authentication.getName();
         cache.put(key, userName);
         return userName;
       }
       else if ("roles".equals(key)) //$NON-NLS-1$
       {
-        final Authentication authentication = SecurityHelper.getAuthentication(session, true);
+        final Authentication authentication = SecurityHelper.getAuthentication();
         final StringBuilder property = new StringBuilder();
         final GrantedAuthority[] roles = authentication.getAuthorities();
         if (roles == null)

@@ -16,11 +16,13 @@
  */
 package org.pentaho.reporting.platform.plugin;
 
-import java.io.FileNotFoundException;
 import java.io.InputStream;
 
 import org.pentaho.platform.api.engine.ISolutionFile;
 import org.pentaho.platform.api.repository.ISolutionRepository;
+import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
+import org.pentaho.platform.api.repository2.unified.UnifiedRepositoryException;
+import org.pentaho.platform.api.repository2.unified.data.simple.SimpleRepositoryFileData;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.libraries.resourceloader.ResourceData;
 import org.pentaho.reporting.libraries.resourceloader.ResourceKey;
@@ -62,11 +64,12 @@ public class RepositoryResourceData extends AbstractResourceData {
    */
   public InputStream getResourceAsStream(final ResourceManager caller) throws ResourceLoadingException {
     try {
-      final ISolutionRepository solutionRepository = PentahoSystem.get(ISolutionRepository.class);
-      return solutionRepository.getResourceInputStream(key.getIdentifierAsString(), false, ISolutionRepository.ACTION_EXECUTE);
-    } catch (FileNotFoundException e) {
+      IUnifiedRepository unifiedRepository = PentahoSystem.get(IUnifiedRepository.class);
+      SimpleRepositoryFileData fileData = unifiedRepository.getDataForRead(key.getIdentifierAsString(), SimpleRepositoryFileData.class);
+      return fileData.getStream();
+    } catch (UnifiedRepositoryException ex) {
       // might be due to access denial
-      throw new ResourceLoadingException(e.getLocalizedMessage(), e);
+      throw new ResourceLoadingException(ex.getLocalizedMessage(), ex);
     }
   }
 
