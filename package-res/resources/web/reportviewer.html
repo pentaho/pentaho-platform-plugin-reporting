@@ -5,7 +5,6 @@
 
     <script language="javascript" type="text/javascript" src="webcontext.js?context=reportviewer"></script>
 
-    <!-- from cdf_include.html -->
     <!-- CDF Scripts -->
     <!-- 
     <script language="javascript" type="text/javascript" src="../../js/pentaho-ajax.js"></script>
@@ -23,15 +22,7 @@
     <script language="javascript" type="text/javascript" src="../../../pentaho-cdf/js/jquery.tooltip.js"></script>
     <script language="javascript" type="text/javascript" src="../../../pentaho-cdf/js/jquery.blockUI.js"></script>
     <script language="javascript" type="text/javascript" src="../../../pentaho-cdf/js/jquery.eventstack.js"></script>
-    <!-- 
-    <script language="javascript" type="text/javascript" src="../../../pentaho-cdf/js/MetaLayer/MetaLayer.js"></script>
-    <script language="javascript" type="text/javascript" src="../../../pentaho-cdf/js/greybox/AJS.js"></script>
-    <script language="javascript" type="text/javascript" src="../../../pentaho-cdf/js/greybox/AJS_fx.js"></script>
-    <script language="javascript" type="text/javascript" src="../../../pentaho-cdf/js/greybox/gb_scripts.js"></script>
-    <script language="javascript" type="text/javascript" src="../../adhoc/js/common/ui/calendar/calendar.js"></script>
-    <script language="javascript" type="text/javascript" src="../../adhoc/js/common/ui/calendar/calendar-setup.js"></script>
-    <script language="javascript" type="text/javascript" src="../../adhoc/js/common/ui/calendar/lang/calendar-en.js"></script>
-     -->
+
     <script language="javascript" type="text/javascript" src="../../../pentaho-cdf/js/Base.js"></script>
     <script language="javascript" type="text/javascript" src="../../../pentaho-cdf/js/Dashboards.js"></script>
     <script language="javascript" type="text/javascript" src="../../../pentaho-cdf/js/CoreComponents.js"></script>
@@ -46,30 +37,18 @@
     <link rel="stylesheet" href="../../../pentaho-cdf/js/jquery-impromptu.css" type="text/css" />
     <link rel="stylesheet" href="../../../pentaho-cdf/js/cdf.css" type="text/css" />
 
-    <link rel="stylesheet" type="text/css" href="../../../dashboards/resources/ext/css/ext-all.css" />
-    <link rel="stylesheet" type="text/css" href="../../../dashboards/resources/ext/css/xtheme-gray.css" />
-    
-    <script type="text/javascript" src="../../../dashboards/resources/ext/combined_compressed.js"></script>
-
-    <link rel="stylesheet" href="../../reportviewer/report.css" type="text/css" />
     <link rel="stylesheet" href="../../../common-ui/resources/web/prompting/pentaho-prompting.css" type="text/css" />
-
-    <script type="text/javascript" src="reportviewer.js"></script>
+    <link rel="stylesheet" href="../../reportviewer/report.css" type="text/css" />
 
     <script type="text/javascript" src="../../../common-ui/resources/web/formatter/formatter.nocache.js"></script>
     <script type="text/javascript" src="../../../common-ui/resources/web/prompting/pentaho-prompting.js"></script>
     <script type="text/javascript" src="../../../common-ui/resources/web/prompting/pentaho-prompting-builders.js"></script>
     <script type="text/javascript" src="../../../common-ui/resources/web/prompting/pentaho-prompting-components.js"></script>
-  
-    
-    
-    <!--<script type="text/javascript" src="dashboards/resources/ext/ext-all.js"></script>-->
-    
-    <!-- 
-    <link rel="stylesheet" href="../../adhoc/js/common/ui/calendar/calendar-win2k-1.css" type="text/css" />
-     -->
+
+    <script type="text/javascript" src="reportviewer.js"></script>
+    <script type="text/javascript" src="reportviewer-messages.js"></script>
+
     <script language="javascript">
-    
      var SimileAjax = {};
      Dashboards.blockUIwithDrag = function() {
         $.blockUI.defaults.message = '';
@@ -89,83 +68,32 @@
           // There's an issue with BlockUI and IE 8. As we don't even use this feature from CDF, it's hidden here.
           $.blockUI.defaults.showOverlay = false;
         $.blockUI();
-      }
-    
+      }    
     </script>
     <script language="javascript" type="text/javascript" src="../../../pentaho-cdf/js/simile/ajax/scripts/json.js"></script>
-    <!-- end cdf_include.html -->
   </head>
   <body>
     <div id="promptPanel"></div>
-    <div id="report"><iframe id="report-frame" class="gwt-Frame" style="width: 100%; height: 100%;"
+    <div><iframe id="report" class="gwt-Frame" style="width: 100%; height: 100%;"
       frameborder="0"></iframe></div>
   </body>
 </table>
 
 <script language="javascript" type="text/javascript">
-
-var SubmitReportComponent = BaseComponent.extend({
-  listeners: ["submit"],
-
-  update: function() {
-    if (pentaho.common.prompting.paramDefn.promptNeeded) {
-      $('#' + this.htmlObject).attr('src', 'about:blank');
-      return; // Don't do anything if we need to prompt
-    }
-    var options = pentaho.common.prompting.paramDefn.getParameterValues();
-    options['renderMode'] = 'REPORT';
-    options["solution"] = Dashboards.getQueryParameter("solution");
-    options["path"] = Dashboards.getQueryParameter("path");
-    options["name"] = Dashboards.getQueryParameter("name");
-
-    // Never send the session back. This is generated by the server.
-    delete options['::session'];
-
-    var url = "/pentaho/content/reporting?";
-    var params = [];
-    var addParam = function(encodedKey, value) {
-      if(value.length > 0) {
-        params.push(encodedKey + '=' + encodeURIComponent(value));
-      }
-    }
-    $.each(options, function(key, value) {
-      if (value === null || typeof value == 'undefined') {
-        return; // continue
-      }
-      var encodedKey = encodeURIComponent(key);
-      if ($.isArray(value)) {
-        var val = [];
-        $.each(value, function(i, v) {
-          addParam(encodedKey, v);
-        });
-      } else {
-        addParam(encodedKey, value);
-      }
-    });
-    url += params.join("&");
-    $('#' + this.htmlObject).attr("src", url);
-
-//    $.ajax({
-//        url: url,
-//        data: options,
-//        dataType:"html",
-//        success: function(reportHtml){
-//          $("#"+this.htmlObject).html(reportHtml);
-//        }.bind(this)
-//      });
-  }
-});
-
+/**
+ * Load the Report Viewer
+ */
 function load() {
-    // Provide a custom parameter normalization method unique to report viewer
-    pentaho.common.prompting.normalizeParameterValue = ReportViewer.normalizeParameterValue.bind(ReportViewer);
+    var paramDefn = ReportViewer.fetchParameterDefinition();
+    var panel = new pentaho.common.prompting.PromptPanel(
+      'promptPanel',
+      paramDefn,
+      ReportViewer.submitReport,
+      ReportViewer.fetchParameterDefinition);
 
-    pentaho.common.prompting.createPromptPanel({
-      destinationId: 'promptPanel', 
-      paramDefn: ReportViewer.fetchParameterDefinition(),
-      refreshParamDefnCallback: ReportViewer.fetchParameterDefinition,
-      extraComponents: [{type: 'SubmitReportComponent', htmlObject: 'report-frame'}]
-    });
+    ReportViewer.configurePromptPanel(panel);
+
+    panel.init();
 }
 
 /**
