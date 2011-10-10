@@ -1,9 +1,64 @@
 var ReportViewer = {
 
-  configurePromptPanel: function(panel) {
-    panel.createTextFormatter = ReportViewer.createTextFormatter;
+  /**
+   * Current prompt panel used by this report viewer.
+   */
+  panel: undefined,
+
+  load: function() {
+    this.createRequiredHooks();
+
+    var paramDefn = ReportViewer.fetchParameterDefinition();
+
+    this.panel = new pentaho.common.prompting.PromptPanel(
+      'promptPanel',
+      paramDefn,
+      ReportViewer.submitReport,
+      ReportViewer.fetchParameterDefinition);
+
+    // Provide our own text formatter
+    this.panel.createTextFormatter = ReportViewer.createTextFormatter;
+
+    // Provide our own i18n function
     var msgs = new ReportViewerMessages();
-    panel.getString = msgs.getString.bind(msgs);
+    this.panel.getString = msgs.getString.bind(msgs);
+
+    this.panel.init();
+  },
+
+  createRequiredHooks: function() {
+    if (window.reportViewer_openUrlInDialog || top.reportViewer_openUrlInDialog) {
+      return;
+    }
+    if (!top.mantle_initialized) {
+      top.mantle_openTab = function(name, title, url) {
+        window.open(url, '_blank');
+      }
+    }
+    if (top.mantle_initialized) {
+      top.reportViewer_openUrlInDialog = function(title, url, width, height) {
+        top.urlCommand(url, title, true, width, height);
+      }
+    } else {
+      top.reportViewer_openUrlInDialog = ReportViewer.openUrlInDialog;
+    }
+    window.reportViewer_openUrlInDialog = top.reportViewer_openUrlInDialog;
+    window.reportViewer_hide = ReportViewer.hide;
+  },
+
+  openUrlInDialog: function() {
+    alert("not implemented");
+  },
+
+  /**
+   * Hide the prompt panel.
+   * TODO: With new style changes, should this disable the toolbar? Hiding the panel without disabling the toolbar
+   * button wont be a nice user experience.
+   */
+  hide: function() {
+    if (this.panel) {
+      this.panel.hide();
+    }
   },
 
   parameterParser: new pentaho.common.prompting.ParameterXmlParser(),

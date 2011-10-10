@@ -81,28 +81,12 @@
 
 <script language="javascript" type="text/javascript">
 /**
- * Load the Report Viewer
- */
-function load() {
-    var paramDefn = ReportViewer.fetchParameterDefinition();
-    var panel = new pentaho.common.prompting.PromptPanel(
-      'promptPanel',
-      paramDefn,
-      ReportViewer.submitReport,
-      ReportViewer.fetchParameterDefinition);
-
-    ReportViewer.configurePromptPanel(panel);
-
-    panel.init();
-}
-
-/**
  * This is called when the formatter gwt module has been loaded. We depend on this so we'll load the prompt after 
  * the formatter has been loaded.
  */
 gwtModuleLoaded = function(moduleName) {
   if (moduleName === 'formatter') {
-    load();
+    ReportViewer.load();
   }
 }
 </script>
