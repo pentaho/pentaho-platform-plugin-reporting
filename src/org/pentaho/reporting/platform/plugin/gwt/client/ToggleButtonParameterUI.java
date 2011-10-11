@@ -5,13 +5,13 @@ import java.util.List;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.user.client.ui.CellPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.ToggleButton;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
-public class ToggleButtonParameterUI extends SimplePanel
+public class ToggleButtonParameterUI extends SimplePanel implements ParameterUI
 {
   private class ToggleButtonParameterClickHandler implements ClickHandler
   {
@@ -60,9 +60,11 @@ public class ToggleButtonParameterUI extends SimplePanel
           parameterValues.addSelectedValue(parameterName, choiceValue);
         }
       }
-      controller.fetchParameters(true);
+      controller.fetchParameters(ParameterControllerPanel.ParameterSubmitMode.USERINPUT);
     }
   }
+
+  private ArrayList<ToggleButton> buttonList;
 
   public ToggleButtonParameterUI(final ParameterControllerPanel controller, final Parameter parameterElement)
   {
@@ -70,7 +72,7 @@ public class ToggleButtonParameterUI extends SimplePanel
     final boolean multiSelect = parameterElement.isMultiSelect(); //$NON-NLS-1$ //$NON-NLS-2$
 
     // build button ui
-    final CellPanel buttonPanel;
+    final Panel buttonPanel;
     if ("vertical".equals(layout)) //$NON-NLS-1$
     {
       buttonPanel = new VerticalPanel();
@@ -80,7 +82,7 @@ public class ToggleButtonParameterUI extends SimplePanel
       buttonPanel = new HorizontalPanel();
     }
     // need a button list so we can clear other selections for button-single mode
-    final List<ToggleButton> buttonList = new ArrayList<ToggleButton>();
+    buttonList = new ArrayList<ToggleButton>();
     final List<ParameterSelection> choices = parameterElement.getSelections();
     for (int i = 0; i < choices.size(); i++)
     {
@@ -88,6 +90,30 @@ public class ToggleButtonParameterUI extends SimplePanel
       final String choiceLabel = choiceElement.getLabel(); //$NON-NLS-1$
       final String choiceValue = choiceElement.getValue(); //$NON-NLS-1$
       final ToggleButton toggleButton = new ToggleButton(choiceLabel);
+      toggleButton.setStyleName("pentaho-toggle-button");
+      if ("vertical".equals(layout)) {
+        toggleButton.addStyleName("pentaho-toggle-button-vertical");
+      } else {
+        toggleButton.addStyleName("pentaho-toggle-button-horizontal");
+      }
+      if (i==0 && choices.size()==1) {
+        toggleButton.addStyleName("pentaho-toggle-button-single");
+      } else {
+        if (i==0) {
+          if ("vertical".equals(layout)) {
+            toggleButton.addStyleName("pentaho-toggle-button-vertical-first");
+          } else {
+            toggleButton.addStyleName("pentaho-toggle-button-horizontal-first");
+          }
+        }
+        if (i==choices.size()-1) {
+          if ("vertical".equals(layout)) {
+            toggleButton.addStyleName("pentaho-toggle-button-vertical-last");
+          } else {
+            toggleButton.addStyleName("pentaho-toggle-button-horizontal-last");
+          }
+        }
+      }
       toggleButton.setTitle(choiceValue);
       toggleButton.setDown(choiceElement.isSelected());
       buttonList.add(toggleButton);
@@ -98,4 +124,12 @@ public class ToggleButtonParameterUI extends SimplePanel
     setWidget(buttonPanel);
   }
 
+  public void setEnabled(final boolean enabled)
+  {
+    for (int i = 0; i < buttonList.size(); i++)
+    {
+      final ToggleButton button = buttonList.get(i);
+      button.setEnabled(enabled);
+    }
+  }
 }

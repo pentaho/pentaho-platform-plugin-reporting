@@ -19,20 +19,10 @@ import org.pentaho.platform.util.UUIDUtil;
 import org.pentaho.reporting.engine.classic.core.util.StagingMode;
 import org.pentaho.reporting.libraries.base.util.MemoryByteArrayOutputStream;
 
-/**
- * Todo: Document me!
- * <p/>
- * Date: 22.07.2010
- * Time: 15:55:14
- *
- * @author Thomas Morgner.
- */
 public class StagingHandler
 {
-
   private final static Log logger = LogFactory.getLog(StagingHandler.class);
 
-  private static final StagingMode DEFAULT = StagingMode.THRU;
   private OutputStream destination;
   private TrackingOutputStream stagingStream;
   private File tmpFile;
@@ -47,10 +37,14 @@ public class StagingHandler
     {
       throw new NullPointerException();
     }
+    if (stagingMode == null)
+    {
+      throw new NullPointerException();
+    }
 
     this.userSession = userSession;
     this.destination = outputStream;
-    initializeHandler(stagingMode);
+    initialize(stagingMode);
   }
 
   public StagingMode getStagingMode()
@@ -73,44 +67,6 @@ public class StagingHandler
     {
       return true;
     }
-  }
-
-  private void initializeHandler(final StagingMode stagingModeInput) throws IOException
-  {
-    StagingMode mode = stagingModeInput;
-    logger.trace("initializeHandler - ReportContentGenerator"); //$NON-NLS-1$
-    if (mode == null)
-    {
-      logger.trace("Looking at default settings for mode"); //$NON-NLS-1$
-      // Unable to use the plugin settings.xml because the
-      // classloader for the ReportContentGenerator isn't the plugin classloader
-      // IPluginResourceLoader resLoader = PentahoSystem.get(IPluginResourceLoader.class, null);
-      // String defaultStagingMode = resLoader.getPluginSetting(ReportContentGenerator.class, "settings/report-staging-mode"); //$NON-NLS-1$
-      //
-      // So - get default setting from the pentaho.xml instead
-      String defaultStagingMode = PentahoSystem.getSystemSetting("report-staging-mode", null); //$NON-NLS-1$
-      if (defaultStagingMode == null)
-      {
-        // workaround for a bug in getPluginSetting that ignores the default passed in
-        defaultStagingMode = DEFAULT.toString();//$NON-NLS-1$
-        logger.trace("Nothing in settings/staging-mode - defaulting to MEMORY"); //$NON-NLS-1$
-      }
-      else
-      {
-        logger.trace("Read " + defaultStagingMode + " from settings/report-staging-mode");            //$NON-NLS-1$//$NON-NLS-2$
-      }
-      try
-      {
-        mode = StagingMode.valueOf(defaultStagingMode.toUpperCase());
-        logger.trace("Staging mode set from default - " + mode); //$NON-NLS-1$
-      }
-      catch (IllegalArgumentException badStringInSettings)
-      {
-        mode = DEFAULT; // default state - handling staging in memory by default.
-      }
-    }
-
-    initialize(mode);
   }
 
   private void initialize(final StagingMode mode)

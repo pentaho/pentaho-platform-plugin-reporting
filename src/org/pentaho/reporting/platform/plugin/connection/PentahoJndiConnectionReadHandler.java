@@ -62,17 +62,17 @@ public class PentahoJndiConnectionReadHandler extends AbstractXmlReadHandler imp
     {
       return null;
     }
-    if ("path".equals(tagName)) //$NON-NLS-1$
+    if ("path".equals(tagName))
     {
       pathReadHandler = new StringReadHandler();
       return pathReadHandler;
     }
-    if ("username".equals(tagName)) //$NON-NLS-1$
+    if ("username".equals(tagName))
     {
       usernameReadHandler = new StringReadHandler();
       return usernameReadHandler;
     }
-    if ("password".equals(tagName)) //$NON-NLS-1$
+    if ("password".equals(tagName))
     {
       passwordReadHandler = new StringReadHandler();
       return passwordReadHandler;

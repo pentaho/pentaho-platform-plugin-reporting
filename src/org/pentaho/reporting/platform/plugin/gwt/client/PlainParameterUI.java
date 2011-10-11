@@ -14,7 +14,7 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.SuggestBox;
 import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
 
-public class PlainParameterUI extends SimplePanel
+public class PlainParameterUI extends SimplePanel implements ParameterUI
 {
   private final Map<String, String> labelToValueMap = new HashMap<String, String>();
 
@@ -31,25 +31,46 @@ public class PlainParameterUI extends SimplePanel
 
     public void onKeyUp(final KeyUpEvent event)
     {
-      final SuggestBox textBox = (SuggestBox) event.getSource();
-      final String text = textBox.getText();
-      String value = labelToValueMap.get(text);
-      if (value == null)
+      if (listParameter)
       {
-        value = text;
+        final SuggestBox textBox = (SuggestBox) event.getSource();
+        final String text = textBox.getText();
+        String value = labelToValueMap.get(text);
+        if (value == null)
+        {
+          // If the input cannot be mapped into a valid value from the server, send the server the raw input.
+          // The server will reject the input if the parameter is strictly validating, but unless a replacement input
+          // gets calculated on the server side, we will get the invalid input back so that the user can correct it.
+          value = text;
+        }
+
+        controller.getParameterMap().setSelectedValue(parameterName, value);
       }
-      if (ReportViewerUtil.isEmpty(value))
+      else if (dataFormat != null)
       {
-        controller.getParameterMap().setSelectedValue(parameterName, null);
+        try
+        {
+          textBox.getTextBox().setStyleName("");
+          final String transportObject =
+              ReportViewerUtil.createTransportObject(parameterElement, dataFormat.parse(textBox.getText()));
+          controller.getParameterMap().setSelectedValue(parameterName, transportObject);
+        }
+        catch (Exception e)
+        {
+          textBox.getTextBox().setStyleName("text-parse-error");
+          // ignore partial values ..
+//          controller.getParameterMap().setSelectedValue(null, value);
+        }
       }
       else
       {
-        controller.getParameterMap().setSelectedValue(parameterName, value);
+        controller.getParameterMap().setSelectedValue(parameterName, textBox.getText());
       }
+
       if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER)
       {
         // on enter, force update
-        controller.fetchParameters(false);
+        controller.fetchParameters(ParameterControllerPanel.ParameterSubmitMode.USERINPUT);
       }
     }
 
@@ -82,12 +103,20 @@ public class PlainParameterUI extends SimplePanel
       {
         controller.getParameterMap().setSelectedValue(parameterName, value);
       }
+      controller.fetchParameters(ParameterControllerPanel.ParameterSubmitMode.USERINPUT);
     }
 
   }
 
+  private SuggestBox textBox;
+  private boolean listParameter;
+  private boolean strict;
+  private TextFormat dataFormat;
+  private Parameter parameterElement;
+
   public PlainParameterUI(final ParameterControllerPanel controller, final Parameter parameterElement)
   {
+    this.parameterElement = parameterElement;
     final MultiWordSuggestOracle oracle = new MultiWordSuggestOracle();
     final List<ParameterSelection> selections = parameterElement.getSelections();
     for (int i = 0; i < selections.size(); i++)
@@ -102,27 +131,68 @@ public class PlainParameterUI extends SimplePanel
       }
     }
 
-    final SuggestBox textBox = new SuggestBox(oracle);
+    strict = parameterElement.isStrict();
+    listParameter = parameterElement.isList();
+    textBox = new SuggestBox(oracle);
+
+    final String dataType = parameterElement.getType();
+    if (parameterElement.isList())
+    {
+      // formatting and lists are mutually exclusive.
+      dataFormat = null;
+    }
+    else
+    {
+      final String dataFormatText = parameterElement.getAttribute("data-format");
+      dataFormat = ReportViewerUtil.createTextFormat(dataFormatText, dataType);
+    }
+
+
     if (selections.isEmpty())
     {
       textBox.setText(""); //$NON-NLS-1$
     }
     else
     {
-      final ParameterSelection parameterSelection = selections.get(0);
-      final String labelText = parameterSelection.getLabel();
-      if (labelText != null && labelText.length() > 0)
+      ParameterSelection parameterSelection = null;
+      for (int i = 0; i < selections.size(); i++)
       {
-        textBox.setText(labelText);
+        final ParameterSelection selection = selections.get(i);
+        if (selection.isSelected())
+        {
+          parameterSelection = selection;
+        }
       }
-      else
+
+      if (parameterSelection != null)
       {
-        textBox.setValue(parameterSelection.getValue());
+        final String labelText = parameterSelection.getLabel();
+        if (dataFormat != null)
+        {
+          final Object rawObject = ReportViewerUtil.createRawObject(labelText, parameterElement);
+          if (rawObject != null)
+          {
+            textBox.setText(dataFormat.format(rawObject));
+          }
+          else
+          {
+            textBox.setText(labelText);
+          }
+        }
+        else
+        {
+          textBox.setText(labelText);
+        }
       }
     }
+
     textBox.addSelectionHandler(new PlainParameterSelectionHandler(controller, parameterElement.getName()));
     textBox.addKeyUpHandler(new PlainParameterKeyUpHandler(controller, parameterElement.getName()));
     setWidget(textBox);
   }
 
+  public void setEnabled(final boolean enabled)
+  {
+    textBox.getTextBox().setEnabled(enabled);
+  }
 }

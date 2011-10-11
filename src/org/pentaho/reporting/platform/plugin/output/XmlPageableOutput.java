@@ -6,63 +6,97 @@ import java.io.OutputStream;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
 import org.pentaho.reporting.engine.classic.core.layout.output.YieldReportListener;
+import org.pentaho.reporting.engine.classic.core.modules.output.pageable.base.AllPageFlowSelector;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.base.PageableReportProcessor;
+import org.pentaho.reporting.engine.classic.core.modules.output.pageable.base.SinglePageFlowSelector;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.xml.XmlPageOutputProcessor;
-import org.pentaho.reporting.engine.classic.core.util.NullOutputStream;
 
-public class XmlPageableOutput
+public class XmlPageableOutput implements ReportOutputHandler
 {
-  public static int paginate(final MasterReport report,
-                             final int yieldRate) throws ReportProcessingException, IOException
+  private PageableReportProcessor proc;
+  private ProxyOutputStream proxyOutputStream;
+
+  public XmlPageableOutput()
   {
-    PageableReportProcessor proc = null;
+  }
+
+  public Object getReportLock()
+  {
+    return this;
+  }
+
+  private PageableReportProcessor createProcessor(final MasterReport report, final int yieldRate)
+      throws ReportProcessingException
+  {
+    proxyOutputStream = new ProxyOutputStream();
+    final XmlPageOutputProcessor outputProcessor = new XmlPageOutputProcessor(report.getConfiguration(), proxyOutputStream);
+
+    final PageableReportProcessor proc = new PageableReportProcessor(report, outputProcessor);
+    if (yieldRate > 0)
+    {
+      proc.addReportProgressListener(new YieldReportListener(yieldRate));
+    }
+    return proc;
+  }
+  
+  public int paginate(final MasterReport report,
+      final int yieldRate) throws ReportProcessingException, IOException
+  {
+    if (proc == null)
+    {
+      proc = createProcessor(report, yieldRate);
+    }
+    proc.paginate();
+    return proc.getPhysicalPageCount();
+  }
+  
+  public int generate(final MasterReport report,
+                          final int acceptedPage,
+                          final OutputStream outputStream,
+                          final int yieldRate) throws ReportProcessingException, IOException
+  {
+    if (proc == null)
+    {
+      proc = createProcessor(report, yieldRate);
+    }
+
     try
     {
-      final XmlPageOutputProcessor outputProcessor = new XmlPageOutputProcessor(report.getConfiguration(), new NullOutputStream());
-
-      proc = new PageableReportProcessor(report, outputProcessor);
-      if (yieldRate > 0)
+      if (acceptedPage >= 0)
       {
-        proc.addReportProgressListener(new YieldReportListener(yieldRate));
+        final XmlPageOutputProcessor outputProcessor = (XmlPageOutputProcessor) proc.getOutputProcessor();
+        outputProcessor.setFlowSelector(new SinglePageFlowSelector(acceptedPage, false));
       }
+      proxyOutputStream.setParent(outputStream);
       proc.processReport();
       return proc.getPhysicalPageCount();
     }
     finally
     {
-      if (proc != null)
+      if (acceptedPage >= 0)
       {
-        proc.close();
+        final XmlPageOutputProcessor outputProcessor = (XmlPageOutputProcessor) proc.getOutputProcessor();
+        outputProcessor.setFlowSelector(new AllPageFlowSelector());
+      }
+      if (proxyOutputStream != null)
+      {
+        proxyOutputStream.setParent(null);
       }
     }
   }
 
-  public static boolean generate(final MasterReport report,
-                                 final OutputStream outputStream,
-                                 final int yieldRate) throws ReportProcessingException, IOException
-  {
-    PageableReportProcessor proc = null;
-    try
-    {
-      final XmlPageOutputProcessor outputProcessor = new XmlPageOutputProcessor(report.getConfiguration(), outputStream);
+  public boolean supportsPagination() {
+    return true;
+  }
 
-      proc = new PageableReportProcessor(report, outputProcessor);
-      if (yieldRate > 0)
-      {
-        proc.addReportProgressListener(new YieldReportListener(yieldRate));
-      }
-      proc.processReport();
+  public void close()
+  {
+    if (proc != null)
+    {
       proc.close();
       proc = null;
-      outputStream.close();
-      return true;
+      proxyOutputStream = null;
     }
-    finally
-    {
-      if (proc != null)
-      {
-        proc.close();
-      }
-    }
+
   }
 }

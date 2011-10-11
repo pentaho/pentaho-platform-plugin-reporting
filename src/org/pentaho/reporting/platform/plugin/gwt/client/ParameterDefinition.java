@@ -4,14 +4,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 
-/**
- * Todo: Document me!
- * <p/>
- * Date: 22.07.2010
- * Time: 13:46:41
- *
- * @author Thomas Morgner.
- */
 public class ParameterDefinition
 {
   private ProcessingState processingState;
@@ -20,10 +12,10 @@ public class ParameterDefinition
   private boolean paginate;
   private String layout;
   private Boolean autoSubmit;
-  private boolean showParameterUi;
   private LinkedHashMap<String, ParameterGroup> parameters;
   private boolean autoSubmitUI;
   private boolean subscribe;
+  private boolean ignoreBiServer5538;
 
   public ParameterDefinition()
   {
@@ -43,12 +35,16 @@ public class ParameterDefinition
 
   public boolean isShowParameterUi()
   {
-    return showParameterUi;
-  }
-
-  public void setShowParameterUi(final boolean showParameterUi)
-  {
-    this.showParameterUi = showParameterUi;
+    final Parameter parameter = getParameter("showParameters");
+    if (parameter == null)
+    {
+      return true;
+    }
+    if (parameter.isSelectedValue("false"))
+    {
+      return false;
+    }
+    return true;
   }
 
   public boolean isPromptNeeded()
@@ -143,6 +139,15 @@ public class ParameterDefinition
     this.autoSubmitUI = autoSubmitUI;
   }
 
+  public boolean isAllowAutosubmit()
+  {
+    if (autoSubmit != null)
+    {
+      return autoSubmit;
+    }
+    return autoSubmitUI;
+  }
+
   public boolean isSubscribe()
   {
     return subscribe;
@@ -173,5 +178,15 @@ public class ParameterDefinition
     }
 
     return parameters.toArray(new Parameter[parameters.size()]);
+  }
+
+  public void setIgnoreBiServer5538(final boolean ignoreBiServer5538)
+  {
+    this.ignoreBiServer5538 = ignoreBiServer5538;
+  }
+
+  public boolean isIgnoreBiServer5538()
+  {
+    return ignoreBiServer5538;
   }
 }

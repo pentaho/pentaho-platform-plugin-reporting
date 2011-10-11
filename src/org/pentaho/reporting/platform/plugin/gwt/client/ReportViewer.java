@@ -38,7 +38,7 @@ public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback
 
   public enum RENDER_TYPE
   {
-    REPORT, XML, SUBSCRIBE, DOWNLOAD
+    REPORT, XML, PARAMETER, SUBSCRIBE, DOWNLOAD
   }
 
   public void onModuleLoad()
@@ -67,19 +67,34 @@ public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback
     panel.clear();
     panel.add(container);
   }
-
+  
   private native void setupNativeHooks(ReportViewer viewer)
-    /*-{
-      $wnd.reportViewer_openUrlInDialog = function(title, message, width, height) {
-        viewer.@org.pentaho.reporting.platform.plugin.gwt.client.ReportViewer::openUrlInDialog(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)(title, message, width, height);
-      };
-      top.reportViewer_openUrlInDialog = function(title, message, width, height) {
-        viewer.@org.pentaho.reporting.platform.plugin.gwt.client.ReportViewer::openUrlInDialog(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)(title, message, width, height);
-      };
-      $wnd.reportViewer_hide = function() {
-        viewer.@org.pentaho.reporting.platform.plugin.gwt.client.ReportViewer::hide()();
-      };
-    }-*/;
+  /*-{
+    if ($wnd.reportViewer_openUrlInDialog || top.reportViewer_openUrlInDialog) {
+      return;
+    }
+    if (!top.mantle_initialized) {
+      top.mantle_openTab = function(name, title, url) {
+        window.open(url, '_blank');
+      }
+    }
+    if (top.mantle_initialized) {
+      top.reportViewer_openUrlInDialog = function(title, url, width, height) {
+        top.urlCommand(url, title, true, width, height);
+      }
+    } else {
+      top.reportViewer_openUrlInDialog = function(title, url, width, height) {
+        width += '';
+        height += '';
+        viewer.@org.pentaho.reporting.platform.plugin.gwt.client.ReportViewer::openUrlInDialog(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)(title, url, width, height);
+      }
+    }
+    
+    $wnd.reportViewer_openUrlInDialog = top.reportViewer_openUrlInDialog;
+    $wnd.reportViewer_hide = function() {
+      viewer.@org.pentaho.reporting.platform.plugin.gwt.client.ReportViewer::hide()();
+    };
+  }-*/;
 
   private void hide()
   {
@@ -131,12 +146,14 @@ public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback
     }
 
     final DialogBox dialogBox = new DialogBox(false, true);
+    dialogBox.setStylePrimaryName("pentaho-dialog");
     dialogBox.setText(title);
 
     final Frame frame = new Frame(url);
     frame.setSize(width, height);
 
     final Button okButton = new Button(messages.getString("ok", "OK")); //$NON-NLS-1$ //$NON-NLS-2$
+    okButton.setStyleName("pentaho-button");
     okButton.addClickHandler(new ClickHandler()
     {
       public void onClick(final ClickEvent event)
