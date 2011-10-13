@@ -1,0 +1,976 @@
+html { overflow: hidden;}
+
+.body {
+    overflow: hidden;
+}
+
+.table {
+    border: 1px solid #808080;
+}
+
+#contentArea {
+    z-index:0;
+    width: 100%;
+    height: 100%;
+    top: 0px;
+    left: 0px;
+    overflow: hidden;
+	  display: block;
+}
+
+#sidepanel {
+    display:block;
+    padding: 10px 0px 0px 10px;
+    height: 100%;
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    z-index: 10;
+    width: 260px;
+}
+
+#sidepanelinner {
+    height: 100%;
+    width: 100%;
+}
+
+.sidePanelCollapsed {
+  width: 22px;
+}
+
+.cursorPointer {
+  cursor: pointer;
+}
+
+#sidepanelheader {
+  width:100%;
+  text-align: right;
+}
+
+#sidepaneltabs {
+  width: 255px;
+  height: 100%;
+  display: block;
+  padding-left: 5px;
+  clear:both;
+}
+
+#toppanelouter {
+}
+
+#toppanelinner {
+    border: 0px;
+    width: 100%;
+    top: 0px;
+    left: 0px;
+    z-index: 10;
+}
+	
+#toppanel {
+  padding: 10px 10px 0px 10px;
+}
+
+#reportControlPanel {
+	margin: 0px 10px 0px 10px;
+  max-height: 200px;
+  background-color: #d4d6db;
+  border: 1px solid rgba(0, 0, 0, 0.59375);
+}
+
+.dropTarget:hover {
+	background-color: #cbefa3;
+}
+
+.dropTarget.dojoDndContainerOver {
+	background-color: #cbefa3;
+}
+
+#promptPanel {
+  max-height: 200px;
+  overflow: auto;
+}
+
+#filterPanelTable {
+  width:100%;
+  height: 100%;
+}
+
+#filterPanelTitle {
+  padding-top: 20px;
+  padding-left: 20px;
+  padding-right: 20px;
+  color: #000000;
+}
+
+.reportControlSectionTitle {
+  padding: 4px 10px 0px 10px;
+}
+
+.reportControlSection {
+  overflow: auto; /* To allow height to grow as needed */
+  background-color: #ffffff;
+  border: 1px solid #464f57;
+  padding: 2px;
+}
+
+.layoutPanelHint {
+  color: #898b8f;
+  font-size: .85em;
+  text-align: center;
+}
+
+.reportControlSectionHint {
+  font-size: 1.2em;
+  margin-top: 25px;
+  text-align: center;
+  width: 100%;
+}
+
+#filterList {
+  margin-top: 2px;
+  overflow: auto;
+}
+
+.filterItemContainer {
+	-moz-border-radius: 4px;
+  -webkit-border-radius: 4px;
+  border-radius: 4px;
+}
+
+.filterItemContainer:hover {
+  background-color: #a9eac9;
+}
+
+.filterButton {
+  cursor: pointer;
+  padding-right: 3px;
+}
+
+#reportArea {
+  margin-top: 8px;
+  overflow: auto;
+  /* Required to be position: relative for IE7 so that the reportPageOutline can be properly scrolled and will not overflow. */
+  position: relative;
+}
+
+.dj_ie7 #reportArea {
+ top: 8px;
+}
+
+.report {
+  /* Firefox */
+  -moz-box-shadow: 1px 1px 6px 0px #000000;
+  /* Safari/Chrome */
+  -webkit-box-shadow: 1px 1px 6px 0px #000000;
+  /* Standard form */
+  box-shadow: 1px 1px 6px 0px #000000;
+
+  padding: 8px 8px 8px 8px;
+}
+
+#reportPageOutline {
+  position: relative;
+  margin-left: auto;
+  margin-right: auto;
+  width: 700px;
+}
+
+#reportPageSpacer {
+  height: 12px;
+}
+
+#reportContent {
+    background-color: #ffffff;
+    z-index: 5;
+    padding: 10px;
+    /*width: to be set by view.resize();*/
+    border: black 1px solid;
+    height: 100px;
+    width: 700px;
+}
+
+#fieldlistContainer {
+	border-top: 1px solid #9f9f9f; 
+	border-bottom: 1px solid #9f9f9f; 
+  margin: 0px;
+	width: 100%; 
+	height:400px; 
+	overflow : auto;
+  background-color: white;
+  white-space: nowrap;
+}
+
+#templatelist {
+    width: 400px;
+    height: 300px;
+    overflow: auto;
+}
+
+.fieldset {
+    width:220px;
+}
+
+#templatelisttbl {
+    width: 100%
+}
+
+.templateicon {
+    width: 200px;
+    height: 140px;
+}
+
+.templaterow {
+    color: #000000;
+    padding: 3px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.templaterowselected {
+    background-color: #000044;
+    color: #ffffff;
+    padding: 3px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.category {
+	cursor: pointer;
+}
+
+.categoryIndicator {
+	cursor: pointer;
+}
+
+.field {
+	margin-left: 16px;
+	padding-left: 16px;
+	height: 16px;
+}
+
+.hidden {
+	display: none !important;
+}
+
+.dialog-content {
+    height:auto;
+}
+
+.dijitDialogUnderlay { opacity: 0.0; cursor: wait;}
+
+.tundra .dijitTabInnerDiv {
+    padding-left: 3px;
+    padding-right: 3px;
+}
+
+.plabel {
+    font-weight: normal;
+    padding: 2px 0 0 4px;
+}
+
+.pfield {
+    font-weight: bold;
+    padding: 2px 0 0 4px;
+}
+
+.tundra .dijitTooltipContainer {
+    border: 0px;
+    padding: 0px;
+    background: none;
+}
+
+.tundra .dijitToolbar {
+}
+
+.plainDijitToolbar {
+    background: none;
+    border: 0px;
+}
+
+.tundra .dijitButtonNode {
+    border-width: 0px;
+    background: none;
+}
+
+.tundra .dijitButtonDisabled .tundra .dijitDropDownButtonDisabled .tundra .dijitToggleButtonDisabled .tundra .dijitComboButtonDisabled {
+    border-width: 0px;
+    background: none;
+}
+
+.tundra .dijitSelect {
+    border: 1px solid #444444;
+}
+
+.tundra .dijitEditorIcon {
+    background-image: url("images/editorIconsEnabled.png");
+}
+
+.tundra .dijitDisabled .dijitEditorIcon {
+    background-image: url("images/editorIconsDisabled.png");
+}
+
+.tundra .dijitEditorIconIndent {
+    background-image: url("images/indicator_circle_ball.gif");
+    background-position: 0;
+}
+
+.tundra .dijitDisabled .dijitEditorIconIndent {
+    background-image: url("images/indicator_circle_ball_stop.png");
+    background-position: 0;
+}
+
+.dijitEditorIconFilter {
+  background-position: -378px;
+}
+
+.pentaho_dijitEditorIconExport {
+  background-image: url("images/file_export.png");
+  background-repeat: no-repeat;
+	width: 18px;
+	height: 18px;
+	text-align: center;
+}
+
+.optionsButtonLabel {
+    width: 0px;
+    displayx: none;
+}
+
+.optionsButton {
+    height:20px;
+}
+
+.tabpanel {
+    padding: 0px;
+    margin: 0px;
+    width: 100%;
+}
+
+#groupsorttable {
+    background-color:white;
+    border-bottom:1px solid #9F9F9F;
+    border-top:1px solid #9F9F9F;
+    display:block;
+    height:auto;
+    margin:0;
+    padding:2px 0 0 4px;
+    width:100%;
+}
+
+#fieldsorttable {
+    background-color:white;
+    border-bottom:1px solid #9F9F9F;
+    border-top:1px solid #9F9F9F;
+    height:auto;
+    margin:0;
+    padding:2px 0 0 4px;
+    width:100%;
+}
+
+.newGroupTarget {
+    background-image: url("images/bg.png");
+	background-repeat: repeat;
+	border: 1px dashed #d3d3d3;
+    padding: 5px 0px 5px 0px;
+	float: left;
+	margin: 0px 0px 5px 0px;
+	text-align: center;
+}
+
+.newGroupTargetLabel {
+	float: left;
+	background-color: #D3D3D3;
+	color: #000;
+	padding: 5px;
+	position: relative;
+	bottom: -2px;
+	display:none;
+}
+
+.dragNewColumnArea {
+    background-image: url("images/bg.png");
+	background-repeat: repeat;
+	border: 1px dashed #d3d3d3;
+    padding: 5px 0px 5px 0px;
+	float: left;
+	margin: 0px 0px 5px 0px;
+	text-align: center;
+}
+
+.dragNewColumnsAreaLabel {
+	float: left;
+	background-color: #D3D3D3;
+	color: #000;
+	padding: 5px;
+	position: relative;
+	bottom: -2px;
+	display:none;
+}
+
+.resizeRegion {
+  position: fixed;
+  width: 12px;
+  display: block;
+}
+
+.resizeHandle {
+  display: none;
+  width: 100%;
+  height: 100%;
+  background: no-repeat url('images/resize_grabber.png');
+  cursor: e-resize;
+}
+
+.resizeIndicator {
+  position: fixed;
+  display: block;
+  width: 5px;
+  border-right: 3px solid black;
+  opacity: 0.3;
+  /* for IE */
+  filter: alpha(opacity=30);
+}
+
+.trashcan {
+	position: absolute;
+	z-index: 51;
+  background: url("images/trashcan.png") no-repeat scroll;/* 4px 2px transparent; */
+  height: 150px;
+  width: 128px;
+}
+
+.trashcan:hover {
+  background: url("images/trashcan_full.png") no-repeat scroll;
+}
+
+.trashcan.dojoDndContainerOver {
+  background: url("images/trashcan_full.png") no-repeat scroll;
+}
+
+.roundedbutton{
+    cursor: pointer;
+}
+
+.roundedbutton-left{
+    background:transparent url(images/button_puc_left.png) repeat scroll 0 0;
+    height:27px;
+    width:7px;
+    white-space: nowrap;
+}
+.roundedbutton-right{
+    background:transparent url(images/button_puc_right.png) repeat scroll 0 0;
+    height:27px;
+    width:7px;
+    white-space: nowrap;   
+}
+
+.roundedbutton-middle{
+    background:transparent url(images/button_puc_middle.png) repeat-x scroll 0 0;
+    -moz-user-select: none;
+    line-height: 22px;
+    height:27px;
+    white-space: nowrap;
+}
+.tundra .dijitTabContainerTopStrip {
+    background: none;
+    border: 0px;
+}
+
+.colorbox{
+    widthx:106px;
+    height:100%;
+    border:1px solid #ffffff;
+}
+
+.colorboxOuter{
+    widthx:108px;
+    height:100%;
+    border:1px solid #646464;
+    background-color:#ffffff;
+}
+
+.usedColorTable {
+    border:1px solid #84a9d1;
+    widthx:16px;
+    height:14px;
+    padding:2px;
+    background-color:#ffffff;
+}
+
+.usedColorTableCell {
+    border:1px solid #999999;
+    width:14px;
+    height:14px;
+    padding:0px;
+}
+
+.usedColorTableDiv {
+    border:1px solid #ffffff;
+    width:14px;
+    height:12px;
+}
+
+.tundra .dojoxColorPicker {
+    width: 50px;
+    overflow: hidden;
+}
+
+.bannerlabel {
+    width: 100%;
+    background-color: #cecece;
+}
+
+#modelSelectDialog {
+  width: 370px;
+  z-index: 40;
+}
+
+#modelSelectDialogContentTable {
+  padding: 0px;
+  margin: 0px;
+  width: 100%;
+}
+
+.flex {
+  width: 100%;
+}
+
+.top {
+  vertical-align: top;
+}
+
+#model-list {
+  overflow: auto;
+  width: 100%;
+}
+
+#messageDialogBox {
+  width: 300px !important;
+  z-index: 50;
+}
+
+.fontlist {
+  width: 120px;
+  font-size: 8pt;
+}
+
+.fontsize {
+  width: 55px;
+  font-size: 8pt;
+}
+
+#menu-container {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  display: block;
+  z-index: 5;
+}
+
+#glasspane {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 100%;
+  background-color: #000000;
+  opacity: 0.5;
+  z-index: 30;
+}
+
+
+.dropIndicatorHorizontal {
+    float: left;
+    height: 10px;
+    width: 100%;
+    position: absolute;
+    z-index: 30;
+}
+
+.dropIndicatorVertical {
+    float: left;
+    height: 100%;
+    width: 6px;
+    position: absolute;
+    z-index: 25;
+}
+
+.dropActiveHorizontal {
+    background:transparent url(images/group_line_bg_active.png) repeat-x;
+}
+
+.dropActiveVertical {
+    background:transparent url(images/col_line_bg_active.png) repeat-y;
+}
+
+.dropHiliteHorizontal {
+    background:transparent url(images/group_line_bg_aadditional.png) repeat-x;
+}
+
+.dropHiliteVertical {
+    background:transparent url(images/col_line_bg_additional.png) repeat-y;
+}
+
+.dropLeftArrow{
+    float: left;
+    position: absolute;
+    width: 16px;
+    height: 14px;
+    background:transparent url(images/left_arrow.png);
+}
+
+.dropRightArrow{
+    float: left;
+    position: absolute;
+    width: 16px;
+    height: 14px;
+    background:transparent url(images/right_arrow.png);
+}
+
+.dropTopArrow{
+    float: left;
+    position: absolute;
+    width: 16px;
+    height: 14px;
+    background:transparent url(images/top_arrow.png);
+}
+
+.dropBottomArrow{
+    float: left;
+    position: absolute;
+    width: 16px;
+    height: 14px;
+    background:transparent url(images/bottom_arrow.png);
+}
+
+.flag {
+background: transparent url('images/flag-right.png') no-repeat scroll top right; 
+position: absolute;
+top: 12px;
+left: 40px;
+display: block;
+float: left;
+height: 41px;
+margin-right: 6px;
+padding-right: 40px;
+text-decoration: none;
+text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.15), 0 1px 0 rgba(255, 255, 255, 0.8);
+color: #000000;
+font-family: Tahoma, Arial, Helvetica, sans-serif;
+font-size:11px;
+}
+
+.flag span {
+background: transparent url('images/flag-left.png') no-repeat; 
+display: block;
+line-height: 22px; 
+padding: 5px 2px 15px 8px;
+} 
+
+#bottompanel {
+    position: absolute;
+    bottom: 0px;
+    left: 0px;
+    display:block;
+    border-top: 1px solid #808080;
+    height: 38px;
+}
+
+.menuimagebutton {
+    width: 16px;
+    height: 16px;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    background: transparent url('images/options_menu_arrow.png') no-repeat scroll top right; 
+}
+
+.splash-content {
+  /* fallback color */
+  background: #000000;
+  /* Safari/Chrome */
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(0, #000000), color-stop(0.9, #666666));
+  /* Firefox */
+  background: -moz-linear-gradient(#000000, #666666 90%) repeat scroll 0 0 transparent;
+
+  /* IE 7-9 */
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr = '#000000', endColorstr = '#666666');
+}
+
+.splashimage {
+    padding-top: 25px;
+}
+
+.splashtitle {
+    padding-top: 25px;
+    color: white;
+    font-size: 1.3em;
+    vertical-align: top;
+    heightx: 60px;
+}
+
+.splashtext {
+    color: white;
+    padding-left: 30px;
+    padding-top: 25px;
+    vertical-align: top;
+    line-height: 2em;
+}
+
+.filteredField {
+  background-image: url('images/filter_sm.png');
+  background-repeat: no-repeat;
+  background-position: 2px 2px;
+}
+
+.dijitTooltipBelow {
+	/* leave room for arrow above content */
+	padding-top: 25px;
+}
+
+.dijitTooltipAbove {
+	/* leave room for arrow below content */
+	padding-bottom: 14px;
+}
+
+ .dijitTooltipABRight .dijitTooltipConnector {
+	/* above or below tooltip, but the arrow appears on the right,
+		and the right edges of target and tooltip are aligned rather than the left */
+	left: auto !important;
+	right: 10px;
+}
+
+.dijitTooltipBelow .dijitTooltipConnector {
+	/* the arrow piece for tooltips below an element */
+	top: 0;
+	left: 5px;
+	background:url("images/connector_top.png") no-repeat top left;
+	width:36px;
+	height:17px;
+}
+
+.dj_ie  .dijitTooltipBelow .dijitTooltipConnector {
+	/* use gif for IE7 too, due to png rendering problems on fade-in (see http://trac.dojotoolkit.org/ticket/6555) */
+	background-image: url("images/connector_top.gif");
+}
+
+ .dijitTooltipAbove .dijitTooltipConnector {
+	/* the arrow piece for tooltips above an element */
+	bottom: 0;
+	left: 5px;
+	background:url("images/connector_bottom.png") no-repeat top left;
+	width:36px;
+	height:17px;
+}
+.dj_ie  .dijitTooltipAbove .dijitTooltipConnector {
+	background-image: url("images/connector_bottom.gif");
+}
+.dj_ie6  .dijitTooltipAbove .dijitTooltipConnector {
+	bottom: -3px;
+}
+
+ .dijitTooltipLeft {
+	padding-right: 14px;
+}
+ .dijitTooltipLeft .dijitTooltipConnector {
+	/* the arrow piece for tooltips to the left of an element, bottom borders aligned */
+	right: 0;
+	background:url("images/connector_right.png") no-repeat top left;
+	width:17px;
+	height:36px;
+}
+.dj_ie  .dijitTooltipLeft .dijitTooltipConnector {
+	background-image: url("images/connector_right.gif");
+}
+
+ .dijitTooltipRight {
+	padding-left: 14px;
+}
+ .dijitTooltipRight .dijitTooltipConnector {
+	/* the arrow piece for tooltips to the right of an element, bottom borders aligned */
+	left: 0;
+	background:url("images/connector_left.png") no-repeat top left;
+	width:17px;
+	height:36px;
+}
+
+.pir-tooltip {
+    padding-top: 13px;
+}
+
+.pir-tooltip-title {
+    height: 18px;
+}
+
+#labelsEditTooltipDialogContent {
+    /* Fix for IE7 to prevent dailog from being too wide */
+    width: 200px;
+}
+
+#labelseditbox {
+    /* Fix for IE7 to prevent dailog from being too wide */
+    width: 186px;
+}
+
+#queryOptionsDialogContent {
+    /* Fix for IE7 to prevent dailog from being too wide */
+    width: 15em;
+}
+
+.templatePickerImg {
+    width:180px;
+    height:218px;
+    padding-top: 15px;
+}
+
+.templatePickerImg hover {
+    border: 1px lime;
+}
+
+.tabpanel {
+    border: 1px solid #000000;
+}
+
+.dj_ie7 .sortAsc {
+    display:inline;
+}
+
+.sortAsc {
+    width: 14px;
+    display:inline-block;
+    background:url("images/sort_up.png") no-repeat center right;
+}
+
+.dj_ie7 .sortDesc {
+    display:inline;
+}
+
+.sortDesc {
+    width: 14px;
+    display:inline-block;
+    background:url("images/sort_down.png") no-repeat center right;
+}
+
+.pentaho-selection-dialog-outer {
+    padding:2px 2px 2px 2px;
+    border: 1px solid #000000;
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.pentaho-selection-dialog-inner {
+    
+  background: #30363a;
+  /* Safari/Chrome */
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(0, #30363a), color-stop(1, #575d62));
+  /* Firefox */
+  background: -moz-linear-gradient(#30363a, #575d62 100%) repeat scroll 0 0 transparent;
+
+}
+
+.pageSetupDialogPortrait {
+	cursor: pointer;
+	float: left;
+	padding-right: 8px;
+	width: 76px;
+  height: 88px;
+	background-image: url(images/portrait_off.png);
+	background-repeat: no-repeat;
+}
+
+.pageSetupDialogPortrait:hover {
+	background-image: url(images/portrait_on.png);
+}
+
+.pageSetupDialogPortraitSelected {
+	background-image: url(images/portrait_on.png);
+}
+
+.pageSetupDialogLandscape {
+	float: left;
+	width: 76px;
+  height: 88px;
+  cursor: pointer;
+	background-image: url(images/landscape_off.png);
+	background-repeat: no-repeat;
+}
+
+.pageSetupDialogLandscape:hover {
+  background-image: url(images/landscape_on.png);
+}
+
+.pageSetupDialogLandscapeSelected {
+	background-image: url(images/landscape_on.png);
+}
+
+.pageSetupDialogOrientationLabel {
+	position: relative;
+	top: 66px;
+}
+
+.tundra .dijitMenu,
+.tundra .dijitMenuBar {
+	border: 1px solid #000000;
+	margin: 0;
+	padding: 0;
+	background-color: #ffffff;
+}
+
+.tundra .pentaho-MenuItemSelected {
+	background-color: #ff0000;
+	color:#fff;
+}
+
+.tundra .dijitMenuPassive .dijitMenuItemHover,
+.tundra .dijitMenuItemSelected {
+	background-color: #87df27;
+	color:#000000;
+}
+
+.tundra .dijitTextBox {
+  background-color: white;
+}
+
+.tundra .dijitCheckedMenuItemIcon {
+	background-image: url('/pentaho-style/style/images/checkbox-empty.png');
+	background-position: 0px;
+}
+
+.dj_ie6 .tundra .dijitCheckedMenuItemIcon {
+	background-image: url('/pentaho-style/style/images/checkbox-empty.png');
+}
+
+.tundra .dijitCheckedMenuItemChecked .dijitCheckedMenuItemIcon {
+	background-image: url('/pentaho-style/style/images/checkbox.png');
+	background-position: 0px;
+}
+
+.selected {
+    background-color: lime;
+    color: #000000;
+}
+
+.closeIcon {
+    width: 16px;
+    height: 16px;
+	background:url("../../../common-ui/resources/themes/images/close_sm_disabled.png") no-repeat;
+    display:inline-block;
+}
+
+.closeIconHover {
+    width: 16px;
+    height: 16px;
+    background:url("../../../common-ui/resources/themes/images/close_sm.png") no-repeat;
+}
+
+.pentaho-shadow-padding {
+    padding-right: 8px; 
+    padding-bottom: 8px;
+}
+
+#startupHintslbl2 {
+    padding-right: 8px;
+}
+
+#hidehintsbtn-cell {
+    padding-right: 8px;
+}

@@ -2,25 +2,106 @@ var ReportViewer = {
 
   load: function() {
     this.createRequiredHooks();
+    if(!top.mantle_initialized) {
+      dojo.addClass(document.body, 'pentaho-page-background');
+    }
 
+    dojo.connect(dijit.byId('toolbar.parameterToggle'), "onClick", this, function() {
+      this.view.togglePromptPanel();
+    }.bind(this));
+
+    // TODO Make this a singleton. Finish i18n impl.
+    var msgs = new ReportViewerMessages();
+    var pc = dijit.byId('pageControl');
+    pc.registerLocalizationLookup(msgs.getString.bind(msgs));
+
+    this.view.resize();
+  },
+
+  view: {
+    init: function(init, promptPanel) {
+      this.showPromptPanel(promptPanel.paramDefn.showParameterUI());
+      init.call(promptPanel);
+      this.refreshPageControl(promptPanel);
+    },
+
+    refreshPageControl: function(promptPanel) {
+      var pc = dijit.byId('pageControl');
+      pc.registerPageNumberChangeCallback(undefined);
+      if (!promptPanel.paramDefn.paginate) {
+        pc.setPageCount(1);
+        pc.setPageNumber(1);
+        // pc.disable();
+      } else {
+        var total = promptPanel.paramDefn.totalPages;
+        var page = promptPanel.paramDefn.page;
+        // We can't accept pages out of range. This can happen if we are on a page and then change a parameter value
+        // resulting in a new report with less pages. When this happens we'll just reduce the accepted page.
+        page = Math.max(0, Math.min(page, total - 1));
+
+        // add our default page, so we can keep this between selections of other parameters, otherwise it will not be on the
+        // set of params are default back to zero (page 1)
+        promptPanel.setParameterValue(promptPanel.paramDefn.getParameter('accepted-page'), '' + page);
+        pc.setPageCount(total);
+        pc.setPageNumber(page + 1);
+      }
+      pc.registerPageNumberChangeCallback(function(pageNumber) {
+        this.pageChanged(promptPanel, pageNumber);
+      }.bind(this));
+    },
+
+    pageChanged: function(promptPanel, pageNumber) {
+      promptPanel.setParameterValue(promptPanel.paramDefn.getParameter('accepted-page'), '' + (pageNumber - 1));
+      promptPanel.submit(promptPanel);
+    },
+
+    togglePromptPanel: function() {
+      this.showPromptPanel(dijit.byId('toolbar.parameterToggle').checked);
+    },
+
+    showPromptPanel: function(visible) {
+      if (visible) {
+        dijit.byId('toolbar.parameterToggle').set('checked', true);
+        dojo.removeClass('reportControlPanel', 'hidden');
+      } else {
+        dijit.byId('toolbar.parameterToggle').set('checked', false);
+        dojo.addClass('reportControlPanel', 'hidden');
+      }
+      this.resize();
+    },
+
+    resize: function() {
+      var ra = dojo.byId('reportArea');
+      var c = dojo.coords(ra);
+      var windowHeight = dojo.dnd.getViewport().h;
+      dojo.style(ra, "height", (windowHeight - c.t) + 'px');
+    }
+  },
+
+  createPromptPanel: function() {
     var paramDefn = ReportViewer.fetchParameterDefinition();
 
-    this.panel = new pentaho.common.prompting.PromptPanel(
+    var panel = new pentaho.common.prompting.PromptPanel(
       'promptPanel',
       paramDefn);
-    this.panel.submit = ReportViewer.submitReport;
-    this.panel.getParameterDefinition = ReportViewer.fetchParameterDefinition.bind(ReportViewer);
-    this.panel.schedule = ReportViewer.scheduleReport;
+    panel.submit = ReportViewer.submitReport;
+    panel.getParameterDefinition = ReportViewer.fetchParameterDefinition.bind(ReportViewer);
+    panel.schedule = ReportViewer.scheduleReport;
 
     // Provide our own text formatter
-    this.panel.createDataTransportFormatter = ReportViewer.createDataTransportFormatter.bind(ReportViewer);
-    this.panel.createFormatter = ReportViewer.createFormatter.bind(ReportViewer);
+    panel.createDataTransportFormatter = ReportViewer.createDataTransportFormatter.bind(ReportViewer);
+    panel.createFormatter = ReportViewer.createFormatter.bind(ReportViewer);
+
+    var init = panel.init;
+    panel.init = function() {
+      this.view.init(init, panel);
+    }.bind(this);
 
     // Provide our own i18n function
     var msgs = new ReportViewerMessages();
-    this.panel.getString = msgs.getString.bind(msgs);
+    panel.getString = msgs.getString.bind(msgs);
 
-    this.panel.init();
+    panel.init();
   },
 
   createRequiredHooks: function() {
@@ -95,14 +176,24 @@ var ReportViewer = {
 
   /**
    * Loads the parameter xml definition from the server.
+   * @param promptPanel panel to fetch parameter definition for
+   * @param mode Render Mode to request from server: {INITIAL, MANUAL, USERINPUT}. If not provided, INITIAL will be used.
    */
-  fetchParameterDefinition: function(promptPanel) {
+  fetchParameterDefinition: function(promptPanel, mode) {
     var options = this.getUrlParameters();
     // If we aren't passed a prompt panel this is the first request
     if (promptPanel) {
       $.extend(options, promptPanel.getParameterValues());
     }
-    options['renderMode'] = promptPanel ? 'PARAMETER' : 'XML';
+
+    options['renderMode'] = 'XML';
+
+    if (mode === 'USERINPUT' && !promptPanel.paramDefn.allowAutoSubmit()) {
+      // only parameter without pagination of content ..
+      options['renderMode'] = 'PARAMETER';
+    }
+
+    // options['renderMode'] = promptPanel ? 'XML': 'PARAMETER';
 
     // Never send the session back. This is generated by the server.
     delete options['::session'];
@@ -173,7 +264,24 @@ var ReportViewer = {
     params.push("name=" + Dashboards.getQueryParameter("name"));
 
     url += params.join("&");
-    $('#report').attr("src", url);
+    var iframe = $('#reportContent');
+    iframe.attr("src", url);
+    iframe.load(function() {
+      var t = $(this);
+      var d = $(this.contentWindow.document);
+      t.height(d.height());
+      t.width(d.width());
+
+      $('#reportPageOutline').width($('#reportContent').outerWidth());
+      // var reportContent = dojo.byId('reportContent');
+      // var pageOutlineWidth = dojo.coords(reportContent).w;
+      //   // + dojo.style(reportContent, "paddingLeft")
+      //   // + dojo.style(reportContent, "paddingRight")
+      //   // + dojo.style(reportContent, "borderLeftWidth")
+      //   // + dojo.style(reportContent, "borderRightWidth");
+      // dojo.style(dojo.byId("reportPageOutline"), "width", pageOutlineWidth + "px");
+    });
+    this.view.resize();
   },
 
   submitReport: function(promptPanel) {

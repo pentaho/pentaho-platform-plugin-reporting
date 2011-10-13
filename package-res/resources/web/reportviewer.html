@@ -37,8 +37,10 @@
     <link rel="stylesheet" href="../../../pentaho-cdf/js/jquery-impromptu.css" type="text/css" />
     <link rel="stylesheet" href="../../../pentaho-cdf/js/cdf.css" type="text/css" />
 
+    <link rel="stylesheet" type="text/css" href="../../../common-ui/resources/web/dojo/dijit/themes/pentaho/pentaho.css"/>
     <link rel="stylesheet" href="../../../common-ui/resources/web/prompting/pentaho-prompting.css" type="text/css" />
     <link rel="stylesheet" href="../../reportviewer/report.css" type="text/css" />
+    <link rel="stylesheet" href="reportviewer.css" type="text/css" />
 
     <script type="text/javascript" src="../../../common-ui/resources/web/formatter/formatter.nocache.js"></script>
     <script type="text/javascript" src="../../../common-ui/resources/web/prompting/pentaho-prompting.js"></script>
@@ -49,8 +51,7 @@
     <script type="text/javascript" src="reportviewer-messages.js"></script>
     <script type="text/javascript" src="reportviewer-timeutil.js"></script>
 
-
-    <link rel="stylesheet" type="text/css" href="../../../common-ui/resources/web/dojo/dijit/themes/pentaho/pentaho.css"/>
+    <script language='javascript' type='text/javascript' src='../../../common-ui/resources/web/locale/Messages.js'></script>
 
     <script language="javascript">
 
@@ -58,7 +59,7 @@
         modulePaths: {
             'pentaho.common': "../pentaho/common"
         },
-        parseOnLoad: false,
+        parseOnLoad: true,
         baseUrl: '../../../common-ui/resources/web/dojo/dojo/'
       };
 
@@ -92,14 +93,48 @@
           // There's an issue with BlockUI and IE 8. As we don't even use this feature from CDF, it's hidden here.
           $.blockUI.defaults.showOverlay = false;
         $.blockUI();
-      }    
+      }
     </script>
     <script language="javascript" type="text/javascript" src="../../../pentaho-cdf/js/simile/ajax/scripts/json.js"></script>
+    <script type="text/javascript">
+
+      // dojo.require('dojo.parser');
+      dojo.require('pentaho.common.Menu');
+      dojo.require('pentaho.common.MenuItem');
+      dojo.require('pentaho.common.PageControl');
+
+      dojo.ready(function() {
+        ReportViewer.load();
+      });
+    </script>
   </head>
-  <body class="tundra body">
-    <div id="promptPanel"></div>
-    <div><iframe id="report" class="gwt-Frame" style="width: 100%; height: 100%;"
-      frameborder="0"></iframe></div>
+  <body class="tundra body" onresize="if (ReportViewer) { ReportViewer.view.resize(); }">
+    <div id="toppanel" class="pentaho-transparent">
+      <div id="toppanelinner" >
+        <div id="toolbarlinner2" dojoType="dijit.Toolbar" class="pentaho-rounded-panel2-shadowed pentaho-padding-sm pentaho-shine pentaho-background">
+          <div id="toolbar" dojoType="dijit.Toolbar" >
+            <div id="pageControl" dojoType="pentaho.common.PageControl" class="dijitInline"></div>
+            <span dojoType="dijit.ToolbarSeparator"></span>
+            <div id="toolbar.parameterToggle" dojoType="dijit.form.ToggleButton" iconClass="dijitEditorIcon dijitEditorIconFilter" showLabel="false">Parameters</div>              
+          </div>
+        </div>
+
+        <div id="reportControlPanel" class="hidden pentaho-rounded-panel-bottom-lr pentaho-shadow">
+          <div id="promptPanel" class="container dojoDndTarget dojoDndHorizontal dojoDndContainer pentaho-rounded-panel-bottom-lr"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <div id="reportArea" class="pentaho-transparent" scrollexception="true">
+      <div id="reportPageOutline" class="pentaho-rounded-panel2-shadowed pentaho-padding-lg pentaho-background">
+        <iframe id="reportContent" frameborder="0"></iframe>
+      </div>
+      <div id="reportPageSpacer"></div>
+    </div>
+
+    <!-- <div><iframe id="report" class="gwt-Frame" style="width: 100%; height: 100%;"
+      frameborder="0"></iframe></div> -->
   </body>
 </table>
 
@@ -110,7 +145,7 @@
  */
 gwtModuleLoaded = function(moduleName) {
   if (moduleName === 'formatter') {
-    ReportViewer.load();
+    ReportViewer.createPromptPanel();
   }
 }
 </script>
