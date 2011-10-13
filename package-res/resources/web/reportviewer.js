@@ -13,7 +13,8 @@ var ReportViewer = {
     this.panel.schedule = ReportViewer.scheduleReport;
 
     // Provide our own text formatter
-    this.panel.createTextFormatter = ReportViewer.createTextFormatter;
+    this.panel.createDataTransportFormatter = ReportViewer.createDataTransportFormatter.bind(ReportViewer);
+    this.panel.createFormatter = ReportViewer.createFormatter.bind(ReportViewer);
 
     // Provide our own i18n function
     var msgs = new ReportViewerMessages();
@@ -40,6 +41,14 @@ var ReportViewer = {
     }
     window.reportViewer_openUrlInDialog = top.reportViewer_openUrlInDialog;
     window.reportViewer_hide = ReportViewer.hide;
+  },
+
+  getLocale: function() {
+    var locale = this.getUrlParameters().locale;
+    if (locale && locale.length > 2) {
+      locale = locale.substring(0, 2);
+    }
+    return locale;
   },
 
   openUrlInDialog: function() {
@@ -114,7 +123,6 @@ var ReportViewer = {
           if (currentAutoSubmit != undefined) {
             newParamDefn.autoSubmitUI = currentAutoSubmit;
           }
-          newParamDefn.createTextFormatter = ReportViewer.createTextFormatter.bind(ReportViewer);
         } catch (e) {
           alert('Error parsing parameter xml: ' + e); // TODO Replace with error dialog
         }
@@ -177,25 +185,40 @@ var ReportViewer = {
   },
 
   /**
+   * Create a text formatter that formats to/from text. This is designed to convert between data formatted as a string
+   * and the Reporting Engine's expected format for that object type.
+   * e.g. "01/01/2003" <-> "2003-01-01T00:00:00.000-0500"
+   */
+  createDataTransportFormatter: function(paramDefn, parameter, pattern) {
+    var formatterType = this._formatTypeMap[parameter.type];
+    if (formatterType == 'number') {
+      return {
+        format: function(object) {
+          return formatter.format(object);
+        },
+        parse: function(s) {
+          return '' + formatter.parse(s);
+        }
+      }
+    } else if (formatterType == 'date') {
+      return this._createDateTransportFormatter(parameter);
+    }
+  },
+
+  /**
    * Create a text formatter that can convert between a parameter's defined format and the transport
    * format the Pentaho Reporting Engine expects.
    */
-  createTextFormatter: function(paramDefn, parameter, pattern) {
+  createFormatter: function(paramDefn, parameter, pattern) {
     if (!jsTextFormatter) {
       console.log("Unable to find formatter module. No text formatting will be possible.");
       return;
     }
+    // Create a formatter if a date format was provided and we're not a list parameter type. They are
+    // mutually exclusive.
     var dataFormat = pattern || parameter.attributes['data-format'];
-    if (!parameter.list) {
-      var formatter;
-      if (dataFormat) {
-        formatter = jsTextFormatter.createFormatter(parameter.type, dataFormat);
-      } else {
-        formatter = jsTextFormatter.createDefaultDateFormatter();
-      }
-      return ReportViewer._createDataTransportFormatter(parameter, formatter);
-    } else {
-      return;
+    if (!parameter.list && dataFormat) {
+      return jsTextFormatter.createFormatter(parameter.type, dataFormat);
     }
   },
 
@@ -402,6 +425,6 @@ var ReportViewer = {
     var time = localDate.getTime() + (offset * 60000) + (utcDate.getTime() - localDate.getTime() - (nativeOffset * 60000));
     var localDateWithShift = new Date(time);
 
-    return this.dateFormatters['with-timezone'].format(localDateWithShift) + offsetText;
+    return this.dateFormatters['without-timezone'].format(localDateWithShift) + offsetText;
   }
 };

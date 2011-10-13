@@ -49,7 +49,30 @@
     <script type="text/javascript" src="reportviewer-messages.js"></script>
     <script type="text/javascript" src="reportviewer-timeutil.js"></script>
 
+
+    <link rel="stylesheet" type="text/css" href="../../../common-ui/resources/web/dojo/dijit/themes/pentaho/pentaho.css"/>
+
     <script language="javascript">
+
+      var djConfig = {
+        modulePaths: {
+            'pentaho.common': "../pentaho/common"
+        },
+        parseOnLoad: false,
+        baseUrl: '../../../common-ui/resources/web/dojo/dojo/'
+      };
+
+      // Set up locale
+      djConfig.locale = ReportViewer.getLocale();
+
+      var jsset = Dashboards.getQueryParameter("jsset");
+      if( jsset == '' ) {
+        document.write("<scr"+"ipt language='javascript' type='text/javascript' src='../../../common-ui/resources/web/dojo/dojo/dojo-all.js'></scr"+"ipt>");
+      }
+      else {
+        document.write("<scr"+"ipt language='javascript' type='text/javascript' src='../../../common-ui/resources/web/dojo/dojo/dojo-all.js.uncompressed.js'></scr"+"ipt>");
+      }
+
      var SimileAjax = {};
      Dashboards.blockUIwithDrag = function() {
         $.blockUI.defaults.message = '';
@@ -73,7 +96,7 @@
     </script>
     <script language="javascript" type="text/javascript" src="../../../pentaho-cdf/js/simile/ajax/scripts/json.js"></script>
   </head>
-  <body>
+  <body class="tundra body">
     <div id="promptPanel"></div>
     <div><iframe id="report" class="gwt-Frame" style="width: 100%; height: 100%;"
       frameborder="0"></iframe></div>
