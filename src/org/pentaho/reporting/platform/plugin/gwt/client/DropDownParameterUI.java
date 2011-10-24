@@ -3,14 +3,16 @@ package org.pentaho.reporting.platform.plugin.gwt.client;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.gwt.event.dom.client.ChangeEvent;
-import com.google.gwt.event.dom.client.ChangeHandler;
-import com.google.gwt.user.client.ui.ListBox;
+import com.google.gwt.user.client.ui.ChangeListener;
 import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.Widget;
+import org.pentaho.gwt.widgets.client.listbox.CustomListBox;
+import org.pentaho.gwt.widgets.client.listbox.DefaultListItem;
+import org.pentaho.gwt.widgets.client.listbox.ListItem;
 
-public class DropDownParameterUI extends SimplePanel
+public class DropDownParameterUI extends SimplePanel implements ParameterUI
 {
-  private class ListBoxChangeHandler implements ChangeHandler
+  private class ListBoxChangeHandler implements ChangeListener
   {
     private ParameterControllerPanel controller;
     private String parameterName;
@@ -22,56 +24,102 @@ public class DropDownParameterUI extends SimplePanel
       this.parameterName = parameterName;
     }
 
-    public void onChange(final ChangeEvent event)
+    public void onChange(final Widget sender)
     {
-      final ListBox listBox = (ListBox) event.getSource();
+      updateSelection((CustomListBox) sender);
+      controller.fetchParameters(ParameterControllerPanel.ParameterSubmitMode.USERINPUT);
+    }
+
+    public void updateSelection(final CustomListBox listBox)
+    {
       final ArrayList<String> selectedItems = new ArrayList<String>();
-      for (int i = 0; i < listBox.getItemCount(); i++)
+      for (final ListItem item : listBox.getSelectedItems())
       {
-        if (listBox.isItemSelected(i))
-        {
-          selectedItems.add(listBox.getValue(i));
-        }
+        selectedItems.add((String) item.getValue());
       }
       controller.getParameterMap().setSelectedValues
           (parameterName, selectedItems.toArray(new String[selectedItems.size()]));
-      controller.fetchParameters(true);
     }
   }
 
-  public DropDownParameterUI(final ParameterControllerPanel controller, final Parameter parameterElement)
+  private CustomListBox listBox;
+
+  public DropDownParameterUI(final ParameterControllerPanel controller,
+                             final ParameterDefinition parameterDefinition,
+                             final Parameter parameterElement)
   {
-    final ListBox listBox = new ListBox(false);
-    listBox.setVisibleItemCount(1);
+    listBox = new CustomListBox();
+    listBox.setMultiSelect(false);
+    listBox.setVisibleRowCount(1);
 
     boolean hasSelection = false;
     final List<ParameterSelection> choices = parameterElement.getSelections();
     for (int i = 0; i < choices.size(); i++)
     {
       final ParameterSelection choiceElement = choices.get(i);
-      final String choiceLabel = choiceElement.getLabel(); //$NON-NLS-1$
-      final String choiceValue = choiceElement.getValue(); //$NON-NLS-1$
-      listBox.addItem(choiceLabel, choiceValue);
-      final boolean selected = choiceElement.isSelected();
-      listBox.setItemSelected(i, selected);
-      if (selected)
+      if (choiceElement.isSelected())
       {
         hasSelection = true;
+        break;
       }
     }
 
-    // only force selection if we're using a 'drop-down' style
-    if (hasSelection == false) //$NON-NLS-1$
+    if (parameterDefinition.isIgnoreBiServer5538())
     {
-      if (listBox.getItemCount() > 0)
+      // If there is no empty selection, and no value is selected, create one. This way, we can represent
+      // the unselected state.
+      if (hasSelection == false)
       {
-        listBox.setItemSelected(0, true);
-        controller.getParameterMap().setSelectedValue(parameterElement.getName(), listBox.getValue(0));
+        final DefaultListItem item = new DefaultListItem(" ");
+        item.setValue(null);
+        listBox.addItem(item);
+        listBox.setSelectedIndex(0);
       }
     }
 
-    listBox.addChangeHandler(new ListBoxChangeHandler(controller, parameterElement.getName()));
+    for (int i = 0; i < choices.size(); i++)
+    {
+      final ParameterSelection choiceElement = choices.get(i);
+      final String choiceLabel = choiceElement.getLabel(); //$NON-NLS-1$
+      final String choiceValue = choiceElement.getValue(); //$NON-NLS-1$
+
+      final DefaultListItem item = new DefaultListItem(choiceLabel);
+      item.setValue(choiceValue);
+
+      listBox.addItem(item);
+      final boolean selected = choiceElement.isSelected();
+      if (selected)
+      {
+        listBox.setSelectedIndex(i);
+      }
+    }
+
+    final ListBoxChangeHandler lbChangeHandler = new ListBoxChangeHandler(controller, parameterElement.getName());
+    listBox.addChangeListener(lbChangeHandler);
+    listBox.setTableLayout("auto");
+
+
+    if (parameterDefinition.isIgnoreBiServer5538() == false)
+    {
+      // This sort of magic invalidates the parameter calculation on the server and shows a bogus
+      // error message to the user when the server complains about a invalid or missing value while
+      // we silently select the first value.
+
+      // The reporting plugin now contains a local override that disables this fix. Dashboards and
+      // all other users of the parameter UI may proceed with their magic show.
+      if (hasSelection == false)
+      {
+        listBox.setSelectedIndex(0);
+      }
+    }
+
+    lbChangeHandler.updateSelection(listBox);
+
     setWidget(listBox);
   }
 
+  public void setEnabled(final boolean enabled)
+  {
+    listBox.setEnabled(enabled);
+  }
 }

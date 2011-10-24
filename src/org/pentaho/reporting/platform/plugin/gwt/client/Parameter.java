@@ -25,6 +25,7 @@ public class Parameter
   private boolean multiSelect;
   private boolean mandatory;
   private String timezoneHint;
+  private boolean list;
 
   public Parameter(final String name)
   {
@@ -124,6 +125,16 @@ public class Parameter
     this.mandatory = mandatory;
   }
 
+  public boolean isList()
+  {
+    return list;
+  }
+
+  public void setList(final boolean list)
+  {
+    this.list = list;
+  }
+
   public String getAttribute(final String name)
   {
     return getAttribute(CORE_NAMESPACE, name);
@@ -132,6 +143,27 @@ public class Parameter
   public List<ParameterSelection> getSelections()
   {
     return selections;
+  }
+
+  public boolean isSelectedValue(final String selection)
+  {
+    for (int i = 0; i < selections.size(); i++)
+    {
+      final ParameterSelection parameterSelection = selections.get(i);
+      if (parameterSelection.isSelected() == false)
+      {
+        continue;
+      }
+      if (selection == null && parameterSelection.getValue() == null)
+      {
+        return true;
+      }
+      if (selection != null && selection.equals(parameterSelection.getValue()))
+      {
+        return true;
+      }
+    }
+    return false;
   }
 
   public boolean isHidden()

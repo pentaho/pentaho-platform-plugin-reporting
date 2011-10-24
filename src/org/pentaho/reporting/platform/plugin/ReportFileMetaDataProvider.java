@@ -52,7 +52,7 @@ public class ReportFileMetaDataProvider extends SolutionFileMetaAdapter
   {
     try
     {
-      final DocumentMetaData metaData = loadMetaData(solutionFile.getFullPath());
+      final DocumentMetaData metaData = loadMetaData(solutionFile.getSolutionPath() + "/" + solutionFile.getFileName()); //$NON-NLS-1$
       final String title = (String) metaData.getBundleAttribute
           (ODFMetaAttributeNames.DublinCore.NAMESPACE, ODFMetaAttributeNames.DublinCore.TITLE);
       final String author = (String) metaData.getBundleAttribute

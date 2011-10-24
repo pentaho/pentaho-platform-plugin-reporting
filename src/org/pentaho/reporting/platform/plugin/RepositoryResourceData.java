@@ -65,7 +65,7 @@ public class RepositoryResourceData extends AbstractResourceData {
   public InputStream getResourceAsStream(ResourceManager caller) throws ResourceLoadingException {
     try {
       ISolutionRepository solutionRepository = PentahoSystem.get(ISolutionRepository.class);
-      return solutionRepository.getResourceInputStream(key.getIdentifier().toString(), false, ISolutionRepository.ACTION_EXECUTE);
+      return solutionRepository.getResourceInputStream(key.getIdentifierAsString(), false, ISolutionRepository.ACTION_EXECUTE);
     } catch (FileNotFoundException e) {
       // might be due to access denial
       throw new ResourceLoadingException(e.getLocalizedMessage(), e);
