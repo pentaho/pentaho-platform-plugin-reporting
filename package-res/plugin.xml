@@ -18,7 +18,7 @@
       <content-type type="prpt" mime-type="application/zip">
         <title>Pentaho Report</title>
         <description>Pentaho Report Bundle</description>
-        <icon-url>content/reporting/reportviewer/prptFileType.png</icon-url>
+        <icon-url>content/reporting/reportviewer/images/prptFileType.png</icon-url>
         <operations>
           <!-- for any of these urls, you can add layout=flow to the url -->
           <operation>
@@ -27,7 +27,7 @@
           </operation>
           <operation>
             <id>NEWWINDOW</id>
-            <command>content/reporting/resources/web/reportviewer.html?solution={solution}&amp;path={path}&amp;name={name}&amp;locale={locale}</command>
+            <command>content/reporting/reportviewer/report.html?solution={solution}&amp;path={path}&amp;name={name}&amp;locale={locale}</command>
           </operation>
           <operation>
             <id>SCHEDULE_NEW</id>

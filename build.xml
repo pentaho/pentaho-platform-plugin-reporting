@@ -28,10 +28,12 @@
     </copy-->
     <copy todir="${approot.stage.dir}">
       <fileset dir="${package.resdir}" />
-      <fileset dir="${gwt.output.dir}">
-        <exclude name=".gwt-tmp/" />
-        <exclude name="*-aux/" />
-      </fileset>
+    </copy>
+    <copy todir="${approot.stage.dir}/gwt">
+	  <fileset dir="${gwt.output.dir}">
+		<exclude name=".gwt-tmp/" />
+		<exclude name="*-aux/" />
+	  </fileset>
     </copy>
   </target>
 
