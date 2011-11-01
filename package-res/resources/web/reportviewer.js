@@ -6,7 +6,7 @@ var ReportViewer = {
       dojo.addClass(document.body, 'pentaho-page-background');
     }
 
-    dojo.connect(dijit.byId('toolbar.parameterToggle'), "onClick", this, function() {
+    dojo.connect(dijit.byId('toolbar-parameterToggle'), "onClick", this, function() {
       this.view.togglePromptPanel();
     }.bind(this));
 
@@ -56,15 +56,15 @@ var ReportViewer = {
     },
 
     togglePromptPanel: function() {
-      this.showPromptPanel(dijit.byId('toolbar.parameterToggle').checked);
+      this.showPromptPanel(dijit.byId('toolbar-parameterToggle').checked);
     },
 
     showPromptPanel: function(visible) {
       if (visible) {
-        dijit.byId('toolbar.parameterToggle').set('checked', true);
+        dijit.byId('toolbar-parameterToggle').set('checked', true);
         dojo.removeClass('reportControlPanel', 'hidden');
       } else {
-        dijit.byId('toolbar.parameterToggle').set('checked', false);
+        dijit.byId('toolbar-parameterToggle').set('checked', false);
         dojo.addClass('reportControlPanel', 'hidden');
       }
       this.resize();
@@ -132,8 +132,15 @@ var ReportViewer = {
     return locale;
   },
 
-  openUrlInDialog: function() {
-    alert("not implemented");
+  openUrlInDialog: function(title, url, width, height) {
+    if (this.dialog === undefined) {
+      dojo.require('pentaho.reportviewer.ReportDialog');
+      this.dialog = new pentaho.reportviewer.ReportDialog();
+      // TODO Make this a singleton. Finish i18n impl.
+      var msgs = new ReportViewerMessages();
+      this.dialog.setLocalizationLookupFunction(msgs.getString.bind(msgs));
+    }
+    this.dialog.open(title, url, width, height);
   },
 
   /**

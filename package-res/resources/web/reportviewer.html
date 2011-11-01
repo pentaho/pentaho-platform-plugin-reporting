@@ -3,6 +3,10 @@
 <head>
     <title>Report Web Viewer</title>
 
+    <!-- Include CDF styles first to make sure they can be properly overridden -->
+    <link rel="stylesheet" href="../../../pentaho-cdf/js/cdf.css" type="text/css" />
+
+
     <script language="javascript" type="text/javascript" src="webcontext.js?context=reportviewer"></script>
 
     <!-- CDF Scripts -->
@@ -35,7 +39,6 @@
     <link rel="stylesheet" href="../../../pentaho-cdf/js/jquery.jdMenu.css" type="text/css" />
     <link rel="stylesheet" href="../../../pentaho-cdf/js/jquery.jdMenu.slate.css" type="text/css" />
     <link rel="stylesheet" href="../../../pentaho-cdf/js/jquery-impromptu.css" type="text/css" />
-    <link rel="stylesheet" href="../../../pentaho-cdf/js/cdf.css" type="text/css" />
 
     <link rel="stylesheet" type="text/css" href="../../../common-ui/resources/web/dojo/dijit/themes/pentaho/pentaho.css"/>
     <link rel="stylesheet" href="../../../common-ui/resources/web/prompting/pentaho-prompting.css" type="text/css" />
@@ -57,9 +60,10 @@
 
       var djConfig = {
         modulePaths: {
-            'pentaho.common': "../pentaho/common"
+            'pentaho.common': '../pentaho/common',
+            'pentaho.reportviewer': '../../../../../reporting/resources/web'
         },
-        parseOnLoad: true,
+        parseOnLoad: false,
         baseUrl: '../../../common-ui/resources/web/dojo/dojo/'
       };
 
@@ -97,13 +101,15 @@
     </script>
     <script language="javascript" type="text/javascript" src="../../../pentaho-cdf/js/simile/ajax/scripts/json.js"></script>
     <script type="text/javascript">
-
-      // dojo.require('dojo.parser');
+      dojo.requireLocalization("dojo.cldr", "number");
+      dojo.requireLocalization("dojo.cldr", "gregorian");
+      dojo.require("dojo.parser");
       dojo.require('pentaho.common.Menu');
       dojo.require('pentaho.common.MenuItem');
       dojo.require('pentaho.common.PageControl');
 
       dojo.ready(function() {
+        dojo.parser.parse();
         ReportViewer.load();
       });
     </script>
@@ -115,7 +121,7 @@
           <div id="toolbar" dojoType="dijit.Toolbar" >
             <div id="pageControl" dojoType="pentaho.common.PageControl" class="dijitInline"></div>
             <span dojoType="dijit.ToolbarSeparator"></span>
-            <div id="toolbar.parameterToggle" dojoType="dijit.form.ToggleButton" iconClass="dijitEditorIcon dijitEditorIconFilter" showLabel="false">Parameters</div>              
+            <div id="toolbar-parameterToggle" dojoType="dijit.form.ToggleButton" iconClass="dijitEditorIcon dijitEditorIconFilter" showLabel="false">Parameters</div>              
           </div>
         </div>
 
@@ -133,8 +139,6 @@
       <div id="reportPageSpacer"></div>
     </div>
 
-    <!-- <div><iframe id="report" class="gwt-Frame" style="width: 100%; height: 100%;"
-      frameborder="0"></iframe></div> -->
   </body>
 </table>
 

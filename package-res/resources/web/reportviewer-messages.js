@@ -1,6 +1,7 @@
 var ReportViewerMessages = function() {
   this._bundle = {
-    'submitButtonText': 'View Report'
+    'submitButtonText': 'View Report',
+    'OK': 'Ok'
   }
 
   /**
