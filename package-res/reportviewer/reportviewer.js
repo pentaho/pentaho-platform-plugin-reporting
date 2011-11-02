@@ -1,25 +1,47 @@
 var ReportViewer = {
-
   load: function() {
+    dojo.require('pentaho.common.Messages');
+    Messages.addUrlBundle('reportviewer', '../../ws-run/ReportViewerLocalizationService/getJSONBundle');
+
     this.createRequiredHooks();
-    if(!top.mantle_initialized) {
-      dojo.addClass(document.body, 'pentaho-page-background');
-    }
+
+    this.view.updatePageBackground();
 
     dojo.connect(dijit.byId('toolbar-parameterToggle'), "onClick", this, function() {
       this.view.togglePromptPanel();
     }.bind(this));
 
-    // TODO Make this a singleton. Finish i18n impl.
-    var msgs = new ReportViewerMessages();
     var pc = dijit.byId('pageControl');
-    pc.registerLocalizationLookup(msgs.getString.bind(msgs));
+    pc.registerLocalizationLookup(Messages.getString);
 
     this.view.resize();
+
+    $('#reportContent').load(function() {
+      // Schedule the resize after the document has been rendered and CSS applied
+      setTimeout(ReportViewer.view.resizeIframe.bind(this));
+    });
   },
 
   view: {
+    /**
+     * Update the page background when we're not in PUC or we're embedded in an
+     * iframe to make sure the translucent styling has some contrast.
+     */
+    updatePageBackground: function() {
+      /**
+       * If we're not in PUC or we're in an iframe
+       */
+      if(!top.mantle_initialized || top !== self) {
+        dojo.addClass(document.body, 'pentaho-page-background');
+      }
+    },
+
     init: function(init, promptPanel) {
+      if (!promptPanel.paramDefn.showParameterUI()) {
+        // Hide the toolbar elements
+        dojo.addClass('toolbar-parameter-separator', 'hidden');
+        dojo.addClass('toolbar-parameterToggle', 'hidden');
+      }
       this.showPromptPanel(promptPanel.paramDefn.showParameterUI());
       init.call(promptPanel);
       this.refreshPageControl(promptPanel);
@@ -74,7 +96,34 @@ var ReportViewer = {
       var ra = dojo.byId('reportArea');
       var c = dojo.coords(ra);
       var windowHeight = dojo.dnd.getViewport().h;
-      dojo.style(ra, "height", (windowHeight - c.t) + 'px');
+
+      dojo.marginBox(ra, {h: windowHeight - c.t});
+    },
+
+    resizeIframe: function() {
+      var t = $(this);
+      // TODO This does not work when the content's height is reduced due to a reload.
+      var d = $(this.contentWindow.document);
+      t.height(d.height());
+      t.width(d.width());
+
+      // var cHeight = t.contents().height();
+      // var cWidth = t.contents().width();
+      // t.height(cHeight);
+      // t.width(cWidth);
+
+      // var d = $(this).contents().find('body');
+      // t.height(d.outerHeight());
+      // t.width(d.outerWidth());
+
+      // t.height(this.contentWindow.document.body.scrollHeight);
+      // t.height(this.contentWindow.document.body.scrollWidth);
+
+      // t.height($(this).contents().find('body')[0].offsetHeight);
+      // t.height($(this).contents().find('body')[0].offsetWidth);
+
+      $('#reportPageOutline').width($('#reportContent').outerWidth());
+      ReportViewer.view.resize();
     }
   },
 
@@ -98,13 +147,12 @@ var ReportViewer = {
     }.bind(this);
 
     // Provide our own i18n function
-    var msgs = new ReportViewerMessages();
-    panel.getString = msgs.getString.bind(msgs);
+    panel.getString = Messages.getString;
 
     panel.init();
   },
 
-  createRequiredHooks: function() {
+  createRequiredHooks: function(promptPanel) {
     if (window.reportViewer_openUrlInDialog || top.reportViewer_openUrlInDialog) {
       return;
     }
@@ -136,20 +184,17 @@ var ReportViewer = {
     if (this.dialog === undefined) {
       dojo.require('pentaho.reportviewer.ReportDialog');
       this.dialog = new pentaho.reportviewer.ReportDialog();
-      // TODO Make this a singleton. Finish i18n impl.
-      var msgs = new ReportViewerMessages();
-      this.dialog.setLocalizationLookupFunction(msgs.getString.bind(msgs));
+      this.dialog.setLocalizationLookupFunction(Messages.getString);
     }
     this.dialog.open(title, url, width, height);
   },
 
   /**
-   * Hide the prompt panel.
-   * TODO: With new style changes, should this disable the toolbar? Hiding the panel without disabling the toolbar
-   * button wont be a nice user experience.
+   * Hide the Report Viewer toolbar.
    */
-  hide: function(promptPanel) {
-    promptPanel.hide();
+  hide: function() {
+    $('#toppanel').empty();
+    ReportViewer.view.resize();
   },
 
   parameterParser: new pentaho.common.prompting.ParameterXmlParser(),
@@ -173,7 +218,7 @@ var ReportViewer = {
 
       if (urlParams[paramName] !== undefined) {
         paramVal = $.isArray(urlParams[paramName]) 
-          ? urlParams[paramName].push(paramVal)
+          ? urlParams[paramName].concat([paramVal])
           : [urlParams[paramName], paramVal];
       }
       urlParams[paramName] = paramVal;
@@ -237,8 +282,14 @@ var ReportViewer = {
       $('#' + this.htmlObject).attr('src', 'about:blank');
       return; // Don't do anything if we need to prompt
     }
-    var options = promptPanel.getParameterValues();
+    var options = this.getUrlParameters();
+    $.extend(options, promptPanel.getParameterValues());
     options['renderMode'] = renderMode;
+
+    // SimpleReportingComponent expects name to be set
+    if (options['name'] === undefined) {
+      options['name'] = options['action'];
+    }
 
     // Never send the session back. This is generated by the server.
     delete options['::session'];
@@ -265,30 +316,9 @@ var ReportViewer = {
       }
     });
 
-    // Add file params after so they're not encoded twice
-    params.push("solution=" + Dashboards.getQueryParameter("solution"));
-    params.push("path=" + Dashboards.getQueryParameter("path"));
-    params.push("name=" + Dashboards.getQueryParameter("name"));
-
     url += params.join("&");
     var iframe = $('#reportContent');
     iframe.attr("src", url);
-    iframe.load(function() {
-      var t = $(this);
-      var d = $(this.contentWindow.document);
-      t.height(d.height());
-      t.width(d.width());
-
-      $('#reportPageOutline').width($('#reportContent').outerWidth());
-      // var reportContent = dojo.byId('reportContent');
-      // var pageOutlineWidth = dojo.coords(reportContent).w;
-      //   // + dojo.style(reportContent, "paddingLeft")
-      //   // + dojo.style(reportContent, "paddingRight")
-      //   // + dojo.style(reportContent, "borderLeftWidth")
-      //   // + dojo.style(reportContent, "borderRightWidth");
-      // dojo.style(dojo.byId("reportPageOutline"), "width", pageOutlineWidth + "px");
-    });
-    this.view.resize();
   },
 
   submitReport: function(promptPanel) {
@@ -308,11 +338,11 @@ var ReportViewer = {
     var formatterType = this._formatTypeMap[parameter.type];
     if (formatterType == 'number') {
       return {
-        format: function(object) {
-          return formatter.format(object);
+        format: function(number) {
+          return '' + number;
         },
         parse: function(s) {
-          return '' + formatter.parse(s);
+          return s;
         }
       }
     } else if (formatterType == 'date') {

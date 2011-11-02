@@ -2,6 +2,8 @@
 <html xmlns:pho="http:/www.pentaho.com">
 <head>
     <title>Report Web Viewer</title>
+    
+    <link rel="shortcut icon" href="images/favicon.ico" />
 
     <!-- Include CDF styles first to make sure they can be properly overridden -->
     <link rel="stylesheet" href="../../pentaho-cdf/js/cdf.css" type="text/css" />
@@ -46,12 +48,12 @@
     <link rel="stylesheet" href="reportviewer.css" type="text/css" />
 
     <script type="text/javascript" src="../../common-ui/resources/web/formatter/formatter.nocache.js"></script>
+    <script type="text/javascript" src="../../common-ui/resources/web/repo/pentaho-ajax.js"></script>
     <script type="text/javascript" src="../../common-ui/resources/web/prompting/pentaho-prompting.js"></script>
     <script type="text/javascript" src="../../common-ui/resources/web/prompting/pentaho-prompting-builders.js"></script>
     <script type="text/javascript" src="../../common-ui/resources/web/prompting/pentaho-prompting-components.js"></script>
 
     <script type="text/javascript" src="reportviewer.js"></script>
-    <script type="text/javascript" src="reportviewer-messages.js"></script>
     <script type="text/javascript" src="reportviewer-timeutil.js"></script>
 
     <script language='javascript' type='text/javascript' src='../../common-ui/resources/web/locale/Messages.js'></script>
@@ -61,7 +63,7 @@
       var djConfig = {
         modulePaths: {
             'pentaho.common': '../pentaho/common',
-            'pentaho.reportviewer': '../../../../../reporting/resources/web'
+            'pentaho.reportviewer': '../../../../../reporting/reportviewer'
         },
         parseOnLoad: false,
         baseUrl: '../../common-ui/resources/web/dojo/dojo/'
@@ -101,9 +103,8 @@
     </script>
     <script language="javascript" type="text/javascript" src="../../pentaho-cdf/js/simile/ajax/scripts/json.js"></script>
     <script type="text/javascript">
-      dojo.requireLocalization("dojo.cldr", "number");
-      dojo.requireLocalization("dojo.cldr", "gregorian");
-      dojo.require("dojo.parser");
+      dojo.require('dojo.parser');
+      dojo.require('pentaho.common.Messages');
       dojo.require('pentaho.common.Menu');
       dojo.require('pentaho.common.MenuItem');
       dojo.require('pentaho.common.PageControl');
@@ -120,15 +121,14 @@
         <div id="toolbarlinner2" dojoType="dijit.Toolbar" class="pentaho-rounded-panel2-shadowed pentaho-padding-sm pentaho-shine pentaho-background">
           <div id="toolbar" dojoType="dijit.Toolbar" >
             <div id="pageControl" dojoType="pentaho.common.PageControl" class="dijitInline"></div>
-            <span dojoType="dijit.ToolbarSeparator"></span>
-            <div id="toolbar-parameterToggle" dojoType="dijit.form.ToggleButton" iconClass="dijitEditorIcon dijitEditorIconFilter" showLabel="false">Parameters</div>              
+            <span id="toolbar-parameter-separator" dojoType="dijit.ToolbarSeparator"></span>
+            <div id="toolbar-parameterToggle" dojoType="dijit.form.ToggleButton" iconClass="dijitEditorIcon dijitEditorIconFilter" showLabel="false">!Parameters!</div>
           </div>
         </div>
 
         <div id="reportControlPanel" class="hidden pentaho-rounded-panel-bottom-lr pentaho-shadow">
           <div id="promptPanel" class="container dojoDndTarget dojoDndHorizontal dojoDndContainer pentaho-rounded-panel-bottom-lr"></div>
         </div>
-
       </div>
     </div>
 
@@ -136,7 +136,6 @@
       <div id="reportPageOutline" class="pentaho-rounded-panel2-shadowed pentaho-padding-lg pentaho-background">
         <iframe id="reportContent" frameborder="0"></iframe>
       </div>
-      <div id="reportPageSpacer"></div>
     </div>
 
   </body>

@@ -7,7 +7,7 @@
    <static-paths>
      <!-- this translates to /pentaho/content/reporting/resources/* -->
      <static-path url="/reporting/reportviewer" localFolder="reportviewer"/>
-     <static-path url="/reporting/resources" localFolder="resources"/>
+     <static-path url="/reporting/gwt" localFolder="gwt"/>
    </static-paths>
 
     <menu-items/>
@@ -56,6 +56,11 @@
     </content-generator>
 
     <bean id="SimpleReportingComponent" class="org.pentaho.reporting.platform.plugin.SimpleReportingComponent"/>
+
+    <webservice  
+	  id="ReportViewerLocalizationService"
+	  type="xml" 
+	  class="org.pentaho.reporting.platform.plugin.LocalizationService"/>
 
 </plugin>
 
