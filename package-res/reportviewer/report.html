@@ -112,7 +112,7 @@
 
       dojo.ready(function() {
         dojo.parser.parse();
-        ReportViewer.load();
+        ReportViewer.moduleLoaded('dojo');
       });
     </script>
   </head>
@@ -123,12 +123,12 @@
           <div id="toolbar" dojoType="dijit.Toolbar" >
             <div id="pageControl" dojoType="pentaho.common.PageControl" class="dijitInline"></div>
             <span id="toolbar-parameter-separator" dojoType="dijit.ToolbarSeparator"></span>
-            <div id="toolbar-parameterToggle" dojoType="dijit.form.ToggleButton" iconClass="dijitEditorIcon dijitEditorIconParameters" showLabel="false">!Parameters!</div>
+            <div id="toolbar-parameterToggle" dojoType="dijit.form.ToggleButton" iconClass="dijitEditorIcon dijitEditorIconParameters" showLabel="false">Parameters</div>
           </div>
         </div>
 
         <div id="reportControlPanel" class="hidden pentaho-rounded-panel-bottom-lr pentaho-shadow">
-          <div id="promptPanel" class="container dojoDndTarget dojoDndHorizontal dojoDndContainer pentaho-rounded-panel-bottom-lr"></div>
+          <div id="promptPanel" class="pentaho-rounded-panel-bottom-lr"></div>
         </div>
       </div>
     </div>
@@ -152,7 +152,7 @@
  */
 gwtModuleLoaded = function(moduleName) {
   if (moduleName === 'formatter') {
-    ReportViewer.createPromptPanel();
+    ReportViewer.moduleLoaded('formatter');
   }
 }
 </script>

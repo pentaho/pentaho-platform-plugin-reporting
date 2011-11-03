@@ -10,14 +10,12 @@ html { overflow: hidden;}
 
 #reportControlPanel {
 	margin: 0px 10px 0px 10px;
-  max-height: 200px;
   background-color: #d4d6db;
   border: 1px solid rgba(0, 0, 0, 0.59375);
 }
 
-#promptPanel {
-  max-height: 200px;
-  overflow: auto;
+div.prompt-panel {
+  max-height: 150px;
 }
 
 #reportArea {
@@ -219,8 +217,4 @@ html { overflow: hidden;}
 .pentaho-shadow-padding {
     padding-right: 8px; 
     padding-bottom: 8px;
-}
-
-.auto-complete-checkbox {
-  padding: 0 0 0 4px;
 }

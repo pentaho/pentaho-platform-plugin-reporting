@@ -1,5 +1,32 @@
 var ReportViewer = {
-  load: function() {
+
+  requiredModules: ['formatter', 'dojo'],
+
+  /**
+   * Inform the report viewer that a module has been loaded. When all required modules have been loaded the report
+   * viewer will load itself.
+   */
+  moduleLoaded: function(name) {
+    if (this._requiredModules === undefined) {
+      // Create a private required modules hash where the value represents if it has been loaded
+      this._requiredModules = {};
+      $.each(this.requiredModules, function(i, m) {
+        this._requiredModules[m] = false; // Modules are by default not loaded
+      }.bind(this));
+    }
+    this._requiredModules[name] = true;
+
+    var everythingLoaded = true;
+    $.each(this._requiredModules, function(i, m) {
+      everythingLoaded &= m;
+      return !everythingLoaded; // break when any module is not loaded
+    });
+    if (everythingLoaded) {
+      ReportViewer._load();
+    }
+  },
+
+  _load: function() {
     dojo.require('pentaho.common.Messages');
     Messages.addUrlBundle('reportviewer', '../../ws-run/ReportViewerLocalizationService/getJSONBundle');
     this.view.localize();
@@ -18,6 +45,8 @@ var ReportViewer = {
       // Schedule the resize after the document has been rendered and CSS applied
       setTimeout(ReportViewer.view.resizeIframe.bind(this));
     });
+
+    this.createPromptPanel();
   },
 
   view: {
