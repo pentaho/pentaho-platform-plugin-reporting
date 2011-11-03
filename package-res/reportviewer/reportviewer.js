@@ -2,6 +2,7 @@ var ReportViewer = {
   load: function() {
     dojo.require('pentaho.common.Messages');
     Messages.addUrlBundle('reportviewer', '../../ws-run/ReportViewerLocalizationService/getJSONBundle');
+    this.view.localize();
 
     this.createRequiredHooks();
 
@@ -10,9 +11,6 @@ var ReportViewer = {
     dojo.connect(dijit.byId('toolbar-parameterToggle'), "onClick", this, function() {
       this.view.togglePromptPanel();
     }.bind(this));
-
-    var pc = dijit.byId('pageControl');
-    pc.registerLocalizationLookup(Messages.getString);
 
     this.view.resize();
 
@@ -23,6 +21,14 @@ var ReportViewer = {
   },
 
   view: {
+    /**
+     * Localize the Report Viewer.
+     */
+    localize: function() {
+      $('#toolbar-parameterToggle').attr('title', Messages.getString('parameterToolbarItem_title'));
+      dijit.byId('pageControl').registerLocalizationLookup(Messages.getString);
+    },
+
     /**
      * Update the page background when we're not in PUC or we're embedded in an
      * iframe to make sure the translucent styling has some contrast.
