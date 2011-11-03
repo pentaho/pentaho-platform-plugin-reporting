@@ -82,16 +82,8 @@ html { overflow: hidden;}
     border: 0px;
 }
 
-.tundra .dijitEditorIcon {
-    background-image: url("images/editorIconsEnabled.png");
-}
-
-.tundra .dijitDisabled .dijitEditorIcon {
-    background-image: url("images/editorIconsDisabled.png");
-}
-
-.dijitEditorIconFilter {
-  background-position: -378px;
+.dijitEditorIconParameters {
+  background: url("../../common-ui/resources/themes/images/options.png") 1px 1px no-repeat !important;
 }
 
 .dijitTooltipBelow {
