@@ -132,32 +132,24 @@ var ReportViewer = {
       var c = dojo.coords(ra);
       var windowHeight = dojo.dnd.getViewport().h;
 
-      dojo.marginBox(ra, {h: windowHeight - c.t});
+      dojo.marginBox(ra, {h: windowHeight - c.y});
     },
 
     resizeIframe: function() {
       var t = $(this);
-      // TODO This does not work when the content's height is reduced due to a reload.
+      // Reset the iframe height before polling its contents so the size is correct.
+      t.width(0);
+      t.height(0);
+
       var d = $(this.contentWindow.document);
-      t.height(d.height());
       t.width(d.width());
 
-      // var cHeight = t.contents().height();
-      // var cWidth = t.contents().width();
-      // t.height(cHeight);
-      // t.width(cWidth);
-
-      // var d = $(this).contents().find('body');
-      // t.height(d.outerHeight());
-      // t.width(d.outerWidth());
-
-      // t.height(this.contentWindow.document.body.scrollHeight);
-      // t.height(this.contentWindow.document.body.scrollWidth);
-
-      // t.height($(this).contents().find('body')[0].offsetHeight);
-      // t.height($(this).contents().find('body')[0].offsetWidth);
-
-      $('#reportPageOutline').width($('#reportContent').outerWidth());
+      if ($.browser.msie) {
+        t.height(t.contents().find('body')[0].scrollHeight + 16);
+      } else {
+        t.height(t.contents().find('html').height());
+      }
+      $('#reportPageOutline').width(t.outerWidth());
       ReportViewer.view.resize();
     },
 

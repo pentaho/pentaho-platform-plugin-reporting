@@ -8,15 +8,13 @@
     <!-- Include CDF styles first to make sure they can be properly overridden -->
     <link rel="stylesheet" href="../../pentaho-cdf/js/cdf.css" type="text/css" />
 
-
-    <script language="javascript" type="text/javascript" src="webcontext.js?context=reportviewer"></script>
+    <script language="javascript" type="text/javascript" src="webcontext.js?context=reporting"></script>
 
     <!-- CDF Scripts -->
-    <!-- 
-    <script language="javascript" type="text/javascript" src="../../js/pentaho-ajax.js"></script>
-    <script language="javascript" type="text/javascript" src="../../js/options.js"></script>
-     -->
+    <!--
+      Do not load another jquery. We'll rely on the one provided via webcontext.js.
     <script language="javascript" type="text/javascript" src="../../pentaho-cdf/js/jquery.js"></script>
+    -->
     <script language="javascript" type="text/javascript" src="../../pentaho-cdf/js/jquery-impromptu.3.1.js"></script>
     <script language="javascript" type="text/javascript" src="../../pentaho-cdf/js/jquery.ui.js"></script>
     <script language="javascript" type="text/javascript" src="../../pentaho-cdf/js/jquery.bgiframe.js"></script>
@@ -44,7 +42,6 @@
 
     <link rel="stylesheet" type="text/css" href="../../common-ui/resources/web/dojo/dijit/themes/pentaho/pentaho.css"/>
     <link rel="stylesheet" href="../../common-ui/resources/web/prompting/pentaho-prompting.css" type="text/css" />
-    <link rel="stylesheet" href="../../reportviewer/report.css" type="text/css" />
     <link rel="stylesheet" href="reportviewer.css" type="text/css" />
 
     <script type="text/javascript" src="../../common-ui/resources/web/formatter/formatter.nocache.js"></script>
@@ -59,7 +56,6 @@
     <script language='javascript' type='text/javascript' src='../../common-ui/resources/web/locale/Messages.js'></script>
 
     <script language="javascript">
-
       var djConfig = {
         modulePaths: {
             'pentaho.common': '../pentaho/common',
@@ -69,7 +65,7 @@
         baseUrl: '../../common-ui/resources/web/dojo/dojo/'
       };
 
-      // Set up locale
+      // Set up locale for Dojo
       djConfig.locale = ReportViewer.getLocale();
 
       var jsset = Dashboards.getQueryParameter("jsset");
@@ -93,11 +89,11 @@
         $.blockUI.defaults.css['-webkit-border-radius'] = '10px'; 
         $.blockUI.defaults.css['-moz-border-radius'] = '10px';
     
-        $.blockUI.defaults.overlayCSS.backgroundColor = 'transparent';
+        $.blockUI.defaults.overlayCSS.backgroundColor = '#000000';
         $.blockUI.defaults.overlayCSS.opacity = '0.6';
         $.blockUI.defaults.overlayCSS.cursor = 'wait';
           // There's an issue with BlockUI and IE 8. As we don't even use this feature from CDF, it's hidden here.
-          $.blockUI.defaults.showOverlay = false;
+          // $.blockUI.defaults.showOverlay = false;
         $.blockUI();
       }
     </script>

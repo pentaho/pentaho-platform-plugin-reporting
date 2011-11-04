@@ -9,6 +9,7 @@ html { overflow: hidden;}
 }
 
 #reportControlPanel {
+  max-height: 220px;
 	margin: 0px 10px 0px 10px;
   background-color: #d4d6db;
   border: 1px solid rgba(0, 0, 0, 0.59375);
@@ -42,12 +43,11 @@ div.prompt-panel {
 
 #reportContent {
   background-color: #ffffff;
-  z-index: 5;
-  padding: 10px;
+  padding: 10px 10px 10px 2px;
   border: black 1px solid;
-  height: 100px;
+  height: 500px;
   /* Initial width, will be updated by onresize() */
-  width: 678px; /* 700 - (padding + border) */
+  width: 686px; /* 700 - (padding + border) */
 }
 
 .hidden {
