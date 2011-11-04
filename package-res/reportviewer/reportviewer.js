@@ -142,13 +142,9 @@ var ReportViewer = {
       t.height(0);
 
       var d = $(this.contentWindow.document);
+      t.height(d.height());
       t.width(d.width());
 
-      if ($.browser.msie) {
-        t.height(t.contents().find('body')[0].scrollHeight + 16);
-      } else {
-        t.height(t.contents().find('html').height());
-      }
       $('#reportPageOutline').width(t.outerWidth());
       ReportViewer.view.resize();
     },
