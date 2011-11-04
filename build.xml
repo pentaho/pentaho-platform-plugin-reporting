@@ -29,11 +29,13 @@
     <copy todir="${approot.stage.dir}">
       <fileset dir="${package.resdir}" />
     </copy>
-    <copy todir="${approot.stage.dir}/gwt">
+    <copy todir="${approot.stage.dir}/reportviewer/gwt">
 	  <fileset dir="${gwt.output.dir}">
 		<exclude name=".gwt-tmp/" />
 		<exclude name="*-aux/" />
 	  </fileset>
+      <!-- Remove top-level directory when copying -->
+      <mapper type="regexp" from="^([^/]*)/(.*)$$" to="\2"/>
     </copy>
   </target>
 
