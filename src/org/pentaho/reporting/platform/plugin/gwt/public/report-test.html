@@ -1,0 +1,54 @@
+<html>
+	<head>
+		<title>Report Web Viewer (GWT Test Page)</title>
+		<link rel="shortcut icon" href="favicon.ico" />
+		<link rel="stylesheet" type="text/css" media="screen" href="../../../../mantle/Widgets.css" /> 
+		
+        <!--   Temporary fix for GWT localization BISERVER-3640 -->
+        <script src="../../../../js/browserLocale.js" type="text/javascript"></script>
+    <script type="text/javascript">
+      if(document.all){
+        var fixHeight = function(){
+          var content = document.getElementById("content");
+          content.style.width = document.body.clientWidth + "px";
+          content.style.height = document.body.clientHeight+ "px";
+          
+        };
+        window.attachEvent("onresize", fixHeight);
+        window.attachEvent("onload", fixHeight);
+      }
+    </script>
+    <script type="text/javascript" src="webcontext.js?context=reporting"></script>
+
+    <script type="text/javascript">
+      if(window.parent && window.parent.addGlassPaneListener){
+        window.parent.addGlassPaneListener(
+          new function() {
+            this.glassPaneShown = function() {
+              var iframes = document.getElementsByTagName("iframe");
+              for(var i=0; i<iframes.length; i++){
+                iframes[i].style.display = "none";
+              }
+            }
+            this.glassPaneHidden = function() {
+              var iframes = document.getElementsByTagName("iframe");
+              for(var i=0; i<iframes.length; i++){
+                iframes[i].style.display = "";
+              }
+            }
+       });
+      }
+    </script>
+	</head>
+
+	<body>
+	  <div id="content" style="">
+	  </div>
+	</body>
+
+	<script language='javascript' src='reportviewer.nocache.js'></script>
+	
+	<!-- OPTIONAL: include this if you want history support -->
+	<iframe id="__gwt_historyFrame" style="width:0px;height:0px;border:0;display:none"></iframe>
+
+</html>
