@@ -61,9 +61,13 @@ public class ExecuteReportContentHandler
       return;
     }
 
-    final String fileContent = pathProvider.getStringParameter("path", null);
-    if (fileContent != null && fileContent.startsWith("/execute/"))
+    final String fileContent = pathProvider.getStringParameter("path", null);//$NON-NLS-1$
+    if ("post".equalsIgnoreCase(request.getMethod()) ||//$NON-NLS-1$
+        (fileContent != null && fileContent.startsWith("/execute/")))//$NON-NLS-1$
     {
+      // we only do the export if the path starts with "/execute/". If there is no path information,
+      // the the user called the content generator directory. If there is some other path, then someone
+      // uses the wrong path.
       doExport(outputStream, reportDefinitionPath);
     }
     else
@@ -75,12 +79,12 @@ public class ExecuteReportContentHandler
       reportComponent.setDefaultOutputTarget(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE);
       final Map<String, Object> inputs = contentGenerator.createInputs();
       reportComponent.setInputs(inputs);
-      // add all inputs (request parameters) to report component so that we can compute the mime type properly 
+      // add all inputs (request parameters) to report component so that we can compute the mime type properly
       final String mimeType = reportComponent.getMimeType();
       final String extension = MimeHelper.getExtension(mimeType);
 
       final String fileName = IOUtils.getInstance().stripFileExtension(reportDefinitionPath);
-      final String requestURI = getUrl(request, fileName + extension);
+      final String requestURI = getUrl(request, extension == null ? fileName + ".prpt" : fileName + extension);
       response.sendRedirect(requestURI);
     }
   }
