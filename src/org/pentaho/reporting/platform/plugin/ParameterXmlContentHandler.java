@@ -435,12 +435,10 @@ public class ParameterXmlContentHandler
         inputs.put("showParameters", Boolean.TRUE); // NON-NLS
       }
 
-
+      final ParameterContextWrapper wrapper = new ParameterContextWrapper(parameterContext, vr.getParameterValues());
       for (final ParameterDefinitionEntry parameter : reportParameters.values())
       {
         final Object selections = inputs.get(parameter.getName());
-        final ParameterContextWrapper wrapper = new ParameterContextWrapper
-            (parameterContext, vr.getParameterValues());
         parameters.appendChild(createParameterElement(parameter, wrapper, selections));
       }
 
