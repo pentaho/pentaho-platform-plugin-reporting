@@ -336,6 +336,13 @@ public class ParameterXmlContentHandler
   public void createParameterContent(final OutputStream outputStream,
                                      final String reportDefinitionPath) throws Exception
   {
+    createParameterContent(outputStream, reportDefinitionPath, null);
+  }
+
+  public void createParameterContent(final OutputStream outputStream,
+                                     final String reportDefinitionPath,
+                                     MasterReport report) throws Exception
+  {
     final Object rawSessionId = inputs.get(ParameterXmlContentHandler.SYS_PARAM_SESSION_ID);
     if ((rawSessionId instanceof String) == false || "".equals(rawSessionId))
     {
@@ -352,11 +359,14 @@ public class ParameterXmlContentHandler
 
     final SimpleReportingComponent reportComponent = new SimpleReportingComponent();
     reportComponent.setReportDefinitionPath(reportDefinitionPath);
+    if (report != null) {
+      reportComponent.setReport(report);
+    }
     reportComponent.setPaginateOutput(true);
     reportComponent.setDefaultOutputTarget(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE);
     reportComponent.setInputs(inputs);
 
-    final MasterReport report = reportComponent.getReport();
+    report = reportComponent.getReport();
 
     final DefaultParameterContext parameterContext = new DefaultParameterContext(report);
     final ValidationResult vr;
