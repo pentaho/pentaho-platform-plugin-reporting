@@ -841,7 +841,7 @@ public class ParameterXmlContentHandler
     }
   }
 
-  private static String convertParameterValueToString(final ParameterDefinitionEntry parameter,
+  public static String convertParameterValueToString(final ParameterDefinitionEntry parameter,
                                                       final ParameterContext context,
                                                       final Object value,
                                                       final Class type) throws BeanException
