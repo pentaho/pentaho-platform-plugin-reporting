@@ -188,8 +188,7 @@ var ReportViewer = {
   },
 
   createPromptPanel: function() {
-    var paramDefn = ReportViewer.fetchParameterDefinition();
-
+    ReportViewer.fetchParameterDefinition(undefined, function(paramDefn) {
     var panel = new pentaho.common.prompting.PromptPanel(
       'promptPanel',
       paramDefn);
@@ -210,6 +209,7 @@ var ReportViewer = {
     panel.getString = Messages.getString;
 
     panel.init();
+    }.bind(this));
   },
 
   createRequiredHooks: function(promptPanel) {
@@ -291,7 +291,7 @@ var ReportViewer = {
    * @param promptPanel panel to fetch parameter definition for
    * @param mode Render Mode to request from server: {INITIAL, MANUAL, USERINPUT}. If not provided, INITIAL will be used.
    */
-  fetchParameterDefinition: function(promptPanel, mode) {
+  fetchParameterDefinition: function(promptPanel, callback, mode) {
     var options = this.getUrlParameters();
     // If we aren't passed a prompt panel this is the first request
     if (promptPanel) {
@@ -311,7 +311,7 @@ var ReportViewer = {
     delete options['::session'];
 
     var authenticationCallback = function() {
-      var newParamDefn = ReportViewer.fetchParameterDefinition.call(this, promptPanel, mode);
+      var newParamDefn = ReportViewer.fetchParameterDefinition.call(this, promptPanel, callback, mode);
       promptPanel.refresh(newParamDefn);
     }.bind(this);
 
@@ -329,7 +329,7 @@ var ReportViewer = {
         }
         try {
           newParamDefn = ReportViewer.parseParameterDefinition(xmlString);
-          // Make sure we retrain the current auto-submit setting
+          // Make sure we retain the current auto-submit setting
           var currentAutoSubmit = promptPanel ? promptPanel.getAutoSubmitSetting() : undefined;
           if (currentAutoSubmit != undefined) {
             newParamDefn.autoSubmitUI = currentAutoSubmit;
@@ -342,7 +342,7 @@ var ReportViewer = {
         alert('Error loading parameter information: ' + xml); // TODO replace with error dialog
       }
     });
-    return newParamDefn;
+    callback(newParamDefn);
   },
 
   _updateReport: function(promptPanel, renderMode) {
