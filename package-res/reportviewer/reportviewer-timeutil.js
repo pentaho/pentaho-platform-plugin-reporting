@@ -1,7 +1,7 @@
 /**
  * Timezone Utility to generate a timezone offset string from a given timezone.
  */
-ReportViewer.timeutil = {
+var ReportTimeUtil = {
   offsets: {
     "ACT": 570,
     "AET": 600,
