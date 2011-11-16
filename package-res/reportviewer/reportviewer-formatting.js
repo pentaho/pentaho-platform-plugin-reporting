@@ -235,7 +235,7 @@ var ReportFormatUtil = {
     var utcDate = this.dateFormatters['with-timezone'].parse(value);
     var offsetText = ReportTimeUtil.formatOffset(offset);
 
-    var nativeOffset = -(new Date().getTimezoneOffset());
+    var nativeOffset = -(new Date(localDate).getTimezoneOffset());
 
     var time = localDate.getTime() + (offset * 60000) + (utcDate.getTime() - localDate.getTime() - (nativeOffset * 60000));
     var localDateWithShift = new Date(time);
