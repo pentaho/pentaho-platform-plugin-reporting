@@ -159,7 +159,10 @@ var ReportViewer = {
       if (blocker) {
         messageBox.setButtons([]);
       } else {
-        var closeFunc = messageBox.hide.bind(messageBox);
+        var closeFunc = function() {
+          Dashboards.hideProgressIndicator();
+          messageBox.hide.call(messageBox);
+        }
 
         if(!button1Text) {
           button1Text = Messages.getString('OK');
@@ -183,6 +186,7 @@ var ReportViewer = {
           messageBox.setButtons([button1Text]);
         }
       }
+      Dashboards.showProgressIndicator();
       messageBox.show();
     }
   },
@@ -315,6 +319,16 @@ var ReportViewer = {
       promptPanel.refresh(newParamDefn);
     }.bind(this);
 
+    var showFatalError = function(e) {
+      var errorMsg = Messages.getString('ErrorParsingParamXmlMessage');
+      if (console) {
+        console.log(errorMsg + ": " + e);
+      }
+      ReportViewer.view.showMessageBox(
+        errorMsg,
+        Messages.getString('FatalErrorTitle'));
+    };
+
     var newParamDefn;
     $.ajax({
       async: false,
@@ -335,12 +349,10 @@ var ReportViewer = {
             newParamDefn.autoSubmitUI = currentAutoSubmit;
           }
         } catch (e) {
-          alert('Error parsing parameter xml: ' + e); // TODO Replace with error dialog
+          showFatalError(e);
         }
       }.bind(this),
-      error: function(xml) {
-        alert('Error loading parameter information: ' + xml); // TODO replace with error dialog
-      }
+      error: showFatalError
     });
     callback(newParamDefn);
   },

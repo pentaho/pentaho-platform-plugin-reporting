@@ -94,6 +94,8 @@
         $.blockUI.defaults.overlayCSS.backgroundColor = '#000000';
         $.blockUI.defaults.overlayCSS.opacity = '0.6';
         $.blockUI.defaults.overlayCSS.cursor = 'wait';
+        // Place it below the message box
+        $.blockUI.defaults.overlayCSS['z-index'] = '900';
           // There's an issue with BlockUI and IE 8. As we don't even use this feature from CDF, it's hidden here.
           // $.blockUI.defaults.showOverlay = false;
         $.blockUI();
