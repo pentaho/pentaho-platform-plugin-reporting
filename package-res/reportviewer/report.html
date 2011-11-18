@@ -51,6 +51,7 @@
     <script type="text/javascript" src="../../common-ui/resources/web/prompting/pentaho-prompting-components.js"></script>
 
     <script type="text/javascript" src="reportviewer.js"></script>
+    <script type="text/javascript" src="reportviewer-prompt.js"></script>
     <script type="text/javascript" src="reportviewer-timeutil.js"></script>
     <script type="text/javascript" src="reportviewer-formatting.js"></script>
 
@@ -67,8 +68,11 @@
         baseUrl: '../../common-ui/resources/web/dojo/dojo/'
       });
 
+      var prompt = new pentaho.reporting.Prompt();
+      var viewer = new pentaho.reporting.Viewer(prompt);
+
       // Set up locale for Dojo
-      djConfig.locale = ReportViewer.getLocale();
+      djConfig.locale = viewer.getLocale();
 
       var jsset = Dashboards.getQueryParameter("jsset");
       if( jsset == '' ) {
@@ -112,11 +116,11 @@
 
       dojo.ready(function() {
         dojo.parser.parse();
-        ReportViewer.moduleLoaded('dojo');
+        prompt.moduleLoaded('dojo');
       });
     </script>
   </head>
-  <body class="tundra body" onresize="if (ReportViewer) { ReportViewer.view.resize(); }">
+  <body class="tundra body" onresize="if (viewer) { viewer.view.resize(); }">
     <div id="toppanel" class="pentaho-transparent">
       <div id="toppanelinner" >
         <div id="toolbarlinner2" dojoType="dijit.Toolbar" class="pentaho-rounded-panel2-shadowed pentaho-padding-sm pentaho-shine pentaho-background">
@@ -152,7 +156,7 @@
  */
 gwtModuleLoaded = function(moduleName) {
   if (moduleName === 'formatter') {
-    ReportViewer.moduleLoaded('formatter');
+    prompt.moduleLoaded('formatter');
   }
 }
 </script>
