@@ -24,7 +24,7 @@ public class QuerylessDataFactory extends PmdDataFactory {
   public void initialize(final Configuration pConfiguration,
       final ResourceManager resourceManager,
       final ResourceKey contextKey,
-      final ResourceBundleFactory resourceBundleFactory) {
+      final ResourceBundleFactory resourceBundleFactory) throws ReportDataFactoryException {
 
     this.configuration = pConfiguration;
     super.initialize(pConfiguration, resourceManager, contextKey, resourceBundleFactory);
