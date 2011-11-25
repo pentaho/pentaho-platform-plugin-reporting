@@ -72,7 +72,7 @@
       var viewer = new pentaho.reporting.Viewer(prompt);
 
       // Set up locale for Dojo
-      djConfig.locale = viewer.getLocale();
+      djConfig.locale = prompt.getLocale();
 
       var jsset = Dashboards.getQueryParameter("jsset");
       if( jsset == '' ) {

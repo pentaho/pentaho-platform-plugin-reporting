@@ -17,19 +17,26 @@ doh.register("Report Viewer Tests", [
   {
     name: "1. Test Report Viewer Object",
     runTest: function() {
-      doh.assertTrue(ReportViewer);
+      doh.assertTrue(pentaho.reporting.Viewer);
+      doh.assertTrue(pentaho.reporting.Prompt);
     }
   },
   {
     name: "2. Handle Session Timeout",
     runTest: function() {
-      doh.assertFalse(ReportViewer.isLoginPageContent("ok response"));
-      doh.assertTrue(ReportViewer.isLoginPageContent("j_spring_security_check"));
+      var prompting = new pentaho.reporting.Prompt();
+      doh.assertFalse(prompting.isSessionTimeoutResponse("ok response"));
+      doh.assertTrue(prompting.isSessionTimeoutResponse("j_spring_security_check"));
+      var handled = false;
+      prompting.handleSessionTimeout = function() {
+        handled = true;
+      }
 
-      // Prevent any attempts to reauthenticate
-      ReportViewer.reauthenticate = function() {}
-      doh.assertFalse(ReportViewer.handleSessionTimeout("ok response"));
-      doh.assertTrue(ReportViewer.handleSessionTimeout("j_spring_security_check"));
+      prompting.checkSessionTimeout("ok response");
+      doh.assertFalse(handled);
+
+      prompting.checkSessionTimeout("j_spring_security_check");
+      doh.assertTrue(handled);
     }
   },
   {
@@ -37,7 +44,9 @@ doh.register("Report Viewer Tests", [
     runTest: function() {
       doh.assertFalse(window.reportViewer_openUrlInDialog);
       doh.assertFalse(window.reportViewer_hide);
-      ReportViewer.createRequiredHooks();
+      var prompt = new pentaho.reporting.Prompt();
+      var viewer = new pentaho.reporting.Viewer(prompt);
+      viewer.createRequiredHooks();
       doh.assertTrue(window.reportViewer_openUrlInDialog);
       doh.assertTrue(window.reportViewer_hide);
     }

@@ -2,6 +2,10 @@ var pentaho = pentaho || {};
 pentaho.reporting = pentaho.reporting || {};
 
 pentaho.reporting.Viewer = function(reportPrompt) {
+  if (!reportPrompt) {
+  	alert("report prompt is required");
+  	return;
+  }
   var v = {
     prompt: reportPrompt,
 
@@ -27,12 +31,9 @@ pentaho.reporting.Viewer = function(reportPrompt) {
         setTimeout(resizeIframe(this));
       });
 
-      this.prompt.onFatalError = this.onFatalError.bind(this);
-
       this.prompt.schedule = this.scheduleReport.bind(this);
       this.prompt.submit = this.submitReport.bind(this);
 
-      this.prompt.handleSessionTimeout = this.handleSessionTimeout.bind(this);
       var decorated = this.prompt.initPromptPanel.bind(this.prompt);
 
       this.prompt.initPromptPanel = function() {
@@ -145,47 +146,6 @@ pentaho.reporting.Viewer = function(reportPrompt) {
 
         $('#reportPageOutline').width(t.outerWidth());
         this.resize();
-      },
-
-      showMessageBox: function( message, dialogTitle, button1Text, button1Callback, button2Text, button2Callback, blocker ) {
-
-        var messageBox = dijit.byId('messageBox');
-
-        messageBox.setTitle(dialogTitle);
-        messageBox.setMessage(message);
-        
-        if (blocker) {
-          messageBox.setButtons([]);
-        } else {
-          var closeFunc = function() {
-            Dashboards.hideProgressIndicator();
-            messageBox.hide.call(messageBox);
-          }
-
-          if(!button1Text) {
-            button1Text = Messages.getString('OK');
-          }
-          if(!button1Callback) {
-            button1Callback = closeFunc;
-          }
-
-          messageBox.onCancel = closeFunc;
-
-          if(button2Text) {
-            messageBox.callbacks = [
-              button1Callback, 
-              button2Callback
-            ];
-            messageBox.setButtons([button1Text,button2Text]);
-          } else {
-            messageBox.callbacks = [
-              button1Callback 
-            ];
-            messageBox.setButtons([button1Text]);
-          }
-        }
-        Dashboards.showProgressIndicator();
-        messageBox.show();
       }
     },
 
@@ -209,14 +169,6 @@ pentaho.reporting.Viewer = function(reportPrompt) {
       window.reportViewer_hide = this.hide.bind(this);
     },
 
-    getLocale: function() {
-      var locale = this.prompt.getUrlParameters().locale;
-      if (locale && locale.length > 2) {
-        locale = locale.substring(0, 2);
-      }
-      return locale;
-    },
-
     openUrlInDialog: function(title, url, width, height) {
       if (this.dialog === undefined) {
         dojo.require('pentaho.reportviewer.ReportDialog');
@@ -232,16 +184,6 @@ pentaho.reporting.Viewer = function(reportPrompt) {
     hide: function() {
       $('#toppanel').empty();
       this.view.resize();
-    },
-
-    onFatalError: function(e) {
-      var errorMsg = Messages.getString('ErrorParsingParamXmlMessage');
-      if (console) {
-        console.log(errorMsg + ": " + e);
-      }
-      this.view.showMessageBox(
-        errorMsg,
-        Messages.getString('FatalErrorTitle'));
     },
 
     _updateReport: function(promptPanel, renderMode) {
@@ -294,39 +236,6 @@ pentaho.reporting.Viewer = function(reportPrompt) {
 
     scheduleReport: function(promptPanel) {
       this._updateReport(promptPanel, 'SUBSCRIBE');
-    },
-
-    /**
-     * Prompts the user to relog in if they're within PUC, otherwise displays a dialog
-     * indicating their session has expired.
-     *
-     * @return true if the session has timed out
-     */
-    handleSessionTimeout: function(content, arguments) {
-      var callback = function() {
-        var newParamDefn = this.prompt.fetchParameterDefinition.apply(this.prompt, arguments);
-        this.prompt.panel.refresh(newParamDefn);
-      }.bind(this);
-      this.reauthenticate(callback);
-    },
-
-    reauthenticate: function(f) {
-      if(top.mantle_initialized) {
-        var callback = {
-          loginCallback : f
-        }
-        window.parent.authenticate(callback);
-      } else {
-        this.view.showMessageBox(
-          Messages.getString('SessionExpiredComment'),
-          Messages.getString('SessionExpired'),
-          Messages.getString('OK'), 
-          this.view.closeMessageBox,
-          undefined,
-          undefined,
-          true
-        );
-      }
     }
   }
 
