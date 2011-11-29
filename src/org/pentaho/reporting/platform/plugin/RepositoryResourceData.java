@@ -1,14 +1,14 @@
 /*
- * This program is free software; you can redistribute it and/or modify it under the
- * terms of the GNU Lesser General Public License, version 2.1 as published by the Free Software
+ * This program is free software; you can redistribute it and/or modify it under the 
+ * terms of the GNU Lesser General Public License, version 2.1 as published by the Free Software 
  * Foundation.
  *
- * You should have received a copy of the GNU Lesser General Public License along with this
- * program; if not, you can obtain a copy at http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
- * or from the Free Software Foundation, Inc.,
+ * You should have received a copy of the GNU Lesser General Public License along with this 
+ * program; if not, you can obtain a copy at http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html 
+ * or from the Free Software Foundation, Inc., 
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; 
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
@@ -18,11 +18,11 @@ package org.pentaho.reporting.platform.plugin;
 
 import java.io.InputStream;
 
-import org.pentaho.platform.api.engine.ISolutionFile;
-import org.pentaho.platform.api.repository.ISolutionRepository;
 import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
+import org.pentaho.platform.api.repository2.unified.RepositoryFile;
 import org.pentaho.platform.api.repository2.unified.UnifiedRepositoryException;
 import org.pentaho.platform.api.repository2.unified.data.simple.SimpleRepositoryFileData;
+import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.libraries.resourceloader.ResourceData;
 import org.pentaho.reporting.libraries.resourceloader.ResourceKey;
@@ -32,7 +32,7 @@ import org.pentaho.reporting.libraries.resourceloader.loader.AbstractResourceDat
 
 /**
  * This class is implemented to support loading solution files from the pentaho repository into JFreeReport
- *
+ * 
  * @author Will Gorman/Michael D'Amour
  */
 public class RepositoryResourceData extends AbstractResourceData {
@@ -42,7 +42,7 @@ public class RepositoryResourceData extends AbstractResourceData {
 
   /**
    * constructor which takes a resource key for data loading specifics
-   *
+   * 
    * @param key
    *          resource key
    */
@@ -57,15 +57,16 @@ public class RepositoryResourceData extends AbstractResourceData {
 
   /**
    * gets a resource stream from the runtime context.
-   *
+   * 
    * @param caller
    *          resource manager
    * @return input stream
    */
-  public InputStream getResourceAsStream(final ResourceManager caller) throws ResourceLoadingException {
+  public InputStream getResourceAsStream(ResourceManager caller) throws ResourceLoadingException {
     try {
       IUnifiedRepository unifiedRepository = PentahoSystem.get(IUnifiedRepository.class);
-      SimpleRepositoryFileData fileData = unifiedRepository.getDataForRead(key.getIdentifierAsString(), SimpleRepositoryFileData.class);
+      RepositoryFile repositoryFile = unifiedRepository.getFile(key.getIdentifierAsString());
+      SimpleRepositoryFileData fileData = unifiedRepository.getDataForRead(repositoryFile.getId(), SimpleRepositoryFileData.class);
       return fileData.getStream();
     } catch (UnifiedRepositoryException ex) {
       // might be due to access denial
@@ -75,7 +76,7 @@ public class RepositoryResourceData extends AbstractResourceData {
 
   /**
    * returns a requested attribute, currently only supporting filename.
-   *
+   * 
    * @param lookupKey
    *          attribute requested
    * @return attribute value
@@ -89,26 +90,30 @@ public class RepositoryResourceData extends AbstractResourceData {
 
   /**
    * return the version number
-   *
+   * 
    * @param caller
    *          resource manager
-   *
+   * 
    * @return version
    */
-  public long getVersion(final ResourceManager caller) throws ResourceLoadingException {
-    final ISolutionRepository solutionRepository = PentahoSystem.get(ISolutionRepository.class);
-    final ISolutionFile file = solutionRepository.getSolutionFile(key.getIdentifier().toString(), ISolutionRepository.ACTION_EXECUTE);
-    // if we got a FileNotFoundException on getResourceInputStream then we will get a null file; avoid NPE
-    if (file != null) {
-      return file.getLastModified();
-    } else {
+  public long getVersion(ResourceManager caller) throws ResourceLoadingException {
+    IUnifiedRepository unifiedRepository = PentahoSystem.get(IUnifiedRepository.class, PentahoSessionHolder.getSession());
+    try {
+      RepositoryFile repositoryFile = unifiedRepository.getFile(key.getIdentifier().toString());
+      // if we got a FileNotFoundException on getResourceInputStream then we will get a null file; avoid NPE
+      if (repositoryFile != null) {
+        return repositoryFile.getLastModifiedDate().getTime();
+      } else {
+        return -1;
+      }
+    } catch(UnifiedRepositoryException ex) {
       return -1;
     }
   }
 
   /**
    * get the resource key
-   *
+   * 
    * @return resource key
    */
   public ResourceKey getKey() {
