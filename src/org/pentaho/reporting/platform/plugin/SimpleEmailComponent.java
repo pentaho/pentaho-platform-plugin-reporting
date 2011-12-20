@@ -34,11 +34,6 @@ import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.util.messages.LocaleHelper;
 import org.pentaho.reporting.platform.plugin.messages.Messages;
 
-/**
- * Creation-Date: 27.09.2009, 00:30:00
- *
- * @author Pedro Alves - WebDetails
- */
 public class SimpleEmailComponent implements IAcceptsRuntimeInputs
 {
 
@@ -48,7 +43,6 @@ public class SimpleEmailComponent implements IAcceptsRuntimeInputs
   private static final Log log = LogFactory.getLog(SimpleEmailComponent.class);
   private static final String MAILER = "smtpsend"; //$NON-NLS-1$
   private Map<String, Object> inputs;
-  private String outputType;
 
   // Inputs
   public static final String INPUT_TO = "to";
@@ -228,26 +222,6 @@ public class SimpleEmailComponent implements IAcceptsRuntimeInputs
   private IContentItem attachmentContent3;
 
   /**
-   * Sets the mime-type for determining which report output type to generate. This should be a mime-type for consistency with streaming output mime-types.
-   *
-   * @param outputType the desired output type (mime-type) for the report engine to generate
-   */
-  public void setOutputType(final String outputType)
-  {
-    this.outputType = outputType;
-  }
-
-  /**
-   * Gets the output type, this should be a mime-type for consistency with streaming output mime-types.
-   *
-   * @return the current output type for the report
-   */
-  public String getOutputType()
-  {
-    return outputType;
-  }
-
-  /**
    * This method sets the map of *all* the inputs which are available to this component. This allows us to use action-sequence inputs as parameters for our
    * reports.
    *
@@ -280,11 +254,11 @@ public class SimpleEmailComponent implements IAcceptsRuntimeInputs
     }
     if (inputs.containsKey(INPUT_MESSAGEPLAIN))
     {
-      setMessagePlain((String) inputs.get(INPUT_MESSAGEPLAIN));
+      setMessagePlain(inputs.get(INPUT_MESSAGEPLAIN));
     }
     if (inputs.containsKey(INPUT_MESSAGEHTML))
     {
-      setMessageHtml((String) inputs.get(INPUT_MESSAGEHTML));
+      setMessageHtml(inputs.get(INPUT_MESSAGEHTML));
     }
     if (inputs.containsKey(INPUT_MIMEMESSAGE))
     {
@@ -422,8 +396,6 @@ public class SimpleEmailComponent implements IAcceptsRuntimeInputs
     {
 
       // Rebuild a MimeMessage and use this one
-
-      final MimeBodyPart original = new MimeBodyPart();
       final MimeMessage originalMimeMessage = new MimeMessage(session, getMimeMessage().getInputStream());
       final MimeMultipart relatedMultipart = (MimeMultipart) originalMimeMessage.getContent();
 
@@ -628,17 +600,6 @@ public class SimpleEmailComponent implements IAcceptsRuntimeInputs
     }
 
     return session;
-
-  }
-
-  /**
-   * This method returns the output-type for the streaming output, it is the same as what is returned by getOutputType() for consistency.
-   *
-   * @return the mime-type for the streaming output
-   */
-  public String getMimeType()
-  {
-    return outputType;
   }
 
   private static class EmailAuthenticator extends Authenticator

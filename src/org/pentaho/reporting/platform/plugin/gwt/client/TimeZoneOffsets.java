@@ -2,6 +2,7 @@ package org.pentaho.reporting.platform.plugin.gwt.client;
 
 import java.util.HashMap;
 
+/** @noinspection HardCodedStringLiteral*/
 public class TimeZoneOffsets
 {
   private static TimeZoneOffsets instance;
