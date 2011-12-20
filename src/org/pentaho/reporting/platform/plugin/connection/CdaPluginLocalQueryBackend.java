@@ -92,7 +92,7 @@ public class CdaPluginLocalQueryBackend extends CdaQueryBackend
     }
   }
 
-  public static String callPlugin(final String pluginName,
+  private static String callPlugin(final String pluginName,
                                   final String method,
                                   final IParameterProvider params) throws ReportDataFactoryException
   {
