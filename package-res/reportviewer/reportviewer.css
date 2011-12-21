@@ -10,9 +10,13 @@ html { overflow: hidden;}
 
 #reportControlPanel {
   max-height: 220px;
-	margin: 0px 10px 0px 10px;
+  margin: 0px 10px 10px 10px;
   background-color: #d4d6db;
   border: 1px solid rgba(0, 0, 0, 0.59375);
+}
+
+.styled >* #reportControlPanel {
+  margin: 0px 10px 0px 10px;
 }
 
 div.prompt-panel {
@@ -43,6 +47,9 @@ div.prompt-panel {
 
 #reportContent {
   background-color: #ffffff;
+}
+
+.styled >* #reportContent {
   padding: 10px 10px 10px 2px;
   border: black 1px solid;
   height: 500px;

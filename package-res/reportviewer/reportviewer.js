@@ -126,8 +126,33 @@ pentaho.reporting.Viewer = function(reportPrompt) {
         this.resize();
       },
 
+      isPageStyled: function() {
+        return $('#reportArea').length === 1;
+      },
+
+      updatePageStyling: function(styled) {
+        var currentlyStyled = this.isPageStyled();
+        if (styled) {
+          // Style the report iframe if it's not already styled
+          if (!currentlyStyled) {
+            var iframe = $('#reportContent');
+            $('body').addClass('styled');
+            iframe.wrap('<div id="reportArea" class="pentaho-transparent" scrollexception="true"/>');
+            iframe.wrap('<div id="reportPageOutline" class="pentaho-rounded-panel2-shadowed pentaho-padding-lg pentaho-background"/>');
+          }
+        } else {
+          // Unwrap the report iframe if not already styled
+          if (currentlyStyled) {
+            $('body').removeClass('styled');
+            var iframe = $('#reportContent').unwrap().unwrap();
+            iframe.css('width', '100%');
+          }
+        }
+        this.resize();
+      },
+
       resize: function() {
-        var ra = dojo.byId('reportArea');
+        var ra = dojo.byId(this.isPageStyled() ? 'reportArea' : 'reportContent');
         var c = dojo.coords(ra);
         var windowHeight = dojo.dnd.getViewport().h;
 
@@ -135,6 +160,9 @@ pentaho.reporting.Viewer = function(reportPrompt) {
       },
 
       resizeIframe: function(iframe) {
+        if (!this.isPageStyled()) {
+          return;
+        }
         var t = $(iframe);
         // Reset the iframe height before polling its contents so the size is correct.
         t.width(0);
@@ -226,6 +254,10 @@ pentaho.reporting.Viewer = function(reportPrompt) {
       });
 
       url += params.join("&");
+
+      // Update page styling based on HTML output or not
+      this.view.updatePageStyling(options['output-target'].indexOf('html') != -1);
+
       var iframe = $('#reportContent');
       iframe.attr("src", url);
     },
