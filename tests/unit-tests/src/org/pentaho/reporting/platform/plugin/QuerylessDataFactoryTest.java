@@ -1,47 +1,33 @@
 package org.pentaho.reporting.platform.plugin;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
-
 import junit.framework.TestCase;
-
-import org.osjava.sj.loader.convert.DataSourceConverter;
 import org.pentaho.di.core.exception.KettleException;
-import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
-import org.pentaho.platform.engine.core.system.StandaloneSession;
-import org.pentaho.platform.plugin.action.kettle.KettleSystemListener;
-import org.pentaho.reporting.engine.classic.core.AbstractReportDefinition;
 import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
-import org.pentaho.reporting.engine.classic.core.CompoundDataFactory;
-import org.pentaho.reporting.engine.classic.core.DataFactory;
-import org.pentaho.reporting.engine.classic.core.DefaultResourceBundleFactory;
-import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.MetaTableModel;
 import org.pentaho.reporting.engine.classic.core.ParameterDataRow;
 import org.pentaho.reporting.engine.classic.core.ReportDataFactoryException;
-import org.pentaho.reporting.engine.classic.core.ResourceBundleFactory;
+import org.pentaho.reporting.engine.classic.core.metadata.DataFactoryRegistry;
 import org.pentaho.reporting.engine.classic.core.util.CloseableTableModel;
 import org.pentaho.reporting.engine.classic.extensions.datasources.pmd.PmdConnectionProvider;
-import org.pentaho.reporting.engine.classic.extensions.datasources.pmd.PmdDataFactory;
-import org.pentaho.reporting.engine.classic.extensions.datasources.pmd.PmdDataFactoryModule;
 import org.pentaho.reporting.libraries.base.boot.ModuleInitializeException;
 import org.pentaho.reporting.libraries.resourceloader.ResourceException;
-import org.pentaho.reporting.libraries.resourceloader.ResourceManager;
 import org.pentaho.reporting.platform.plugin.datasources.QuerylessDataFactory;
 import org.pentaho.reporting.platform.plugin.messages.Messages;
+
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
+import java.io.IOException;
+import java.util.Date;
 
 @SuppressWarnings({ "all" })
 public class QuerylessDataFactoryTest extends TestCase implements TableModelListener {
 
   public void setUp() {
     ClassicEngineBoot.getInstance().start();
+  }
+
+  public void testQuerylessDataFactoryRegistered() {
+    assertTrue(DataFactoryRegistry.getInstance().isRegistered(QuerylessDataFactory.class.getName()));
   }
 
   public void testQuerylessDataFactory() throws ReportDataFactoryException, KettleException, ModuleInitializeException,
