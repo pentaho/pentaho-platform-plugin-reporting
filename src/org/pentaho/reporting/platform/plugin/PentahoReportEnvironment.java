@@ -18,6 +18,7 @@ import org.pentaho.reporting.libraries.base.util.CSVQuoter;
 import org.pentaho.reporting.platform.plugin.messages.Messages;
 import org.springframework.security.Authentication;
 import org.springframework.security.GrantedAuthority;
+import org.springframework.security.context.SecurityContextHolder;
 
 public class PentahoReportEnvironment extends DefaultReportEnvironment
 {
@@ -116,6 +117,10 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
       if ("username".equals(key)) //$NON-NLS-1$
       {
         final Authentication authentication = SecurityHelper.getAuthentication();
+        if (authentication == null)
+        {
+          return null;
+        }
         final String userName = authentication.getName();
         cache.put(key, userName);
         return userName;
@@ -123,13 +128,17 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
       else if ("roles".equals(key)) //$NON-NLS-1$
       {
         final Authentication authentication = SecurityHelper.getAuthentication();
-        final StringBuilder property = new StringBuilder();
+        if (authentication == null)
+        {
+          return null;
+        }
         final GrantedAuthority[] roles = authentication.getAuthorities();
         if (roles == null)
         {
           return null;
         }
 
+        final StringBuilder property = new StringBuilder();
         final int rolesSize = roles.length;
         final CSVQuoter quoter = new CSVQuoter(',', '"');//$NON-NLS-1$
         for (int i = 0; i < rolesSize; i++)
