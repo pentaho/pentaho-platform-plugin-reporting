@@ -32,7 +32,7 @@ pentaho.reporting.Prompt = function() {
 
     _load: function() {
       dojo.require('pentaho.common.Messages');
-      Messages.addUrlBundle('reportviewer', '../../ws-run/ReportViewerLocalizationService/getJSONBundle');
+      pentaho.common.Messages.addUrlBundle('reportviewer', '../../ws-run/ReportViewerLocalizationService/getJSONBundle');
     },
 
     /**
@@ -55,7 +55,7 @@ pentaho.reporting.Prompt = function() {
         this.panel.createFormatter = ReportFormatUtil.createFormatter.bind(ReportFormatUtil);
 
         // Provide our own i18n function
-        this.panel.getString = Messages.getString;
+        this.panel.getString = pentaho.common.Messages.getString;
 
         this.initPromptPanel();
       }.bind(this));
@@ -127,9 +127,9 @@ pentaho.reporting.Prompt = function() {
         window.parent.authenticate(callback);
       } else {
         this.showMessageBox(
-          Messages.getString('SessionExpiredComment'),
-          Messages.getString('SessionExpired'),
-          Messages.getString('OK'), 
+          pentaho.common.Messages.getString('SessionExpiredComment'),
+          pentaho.common.Messages.getString('SessionExpired'),
+          pentaho.common.Messages.getString('OK'),
           undefined,
           undefined,
           undefined,
@@ -244,7 +244,7 @@ pentaho.reporting.Prompt = function() {
         }
 
         if(!button1Text) {
-          button1Text = Messages.getString('OK');
+          button1Text = pentaho.common.Messages.getString('OK');
         }
         if(!button1Callback) {
           button1Callback = closeFunc;
@@ -275,13 +275,13 @@ pentaho.reporting.Prompt = function() {
      * @param e Error/exception encountered
      */
     onFatalError: function(e) {
-      var errorMsg = Messages.getString('ErrorParsingParamXmlMessage');
+      var errorMsg = pentaho.common.Messages.getString('ErrorParsingParamXmlMessage');
       if (console) {
         console.log(errorMsg + ": " + e);
       }
       this.showMessageBox(
         errorMsg,
-        Messages.getString('FatalErrorTitle'));
+        pentaho.common.Messages.getString('FatalErrorTitle'));
     }
   }
 }

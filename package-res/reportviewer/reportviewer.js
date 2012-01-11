@@ -11,7 +11,7 @@ pentaho.reporting.Viewer = function(reportPrompt) {
 
     _load: function() {
       dojo.require('pentaho.common.Messages');
-      Messages.addUrlBundle('reportviewer', '../../ws-run/ReportViewerLocalizationService/getJSONBundle');
+      pentaho.common.Messages.addUrlBundle('reportviewer', '../../ws-run/ReportViewerLocalizationService/getJSONBundle');
       this.view.localize();
 
       this.createRequiredHooks();
@@ -53,8 +53,8 @@ pentaho.reporting.Viewer = function(reportPrompt) {
        * Localize the Report Viewer.
        */
       localize: function() {
-        $('#toolbar-parameterToggle').attr('title', Messages.getString('parameterToolbarItem_title'));
-        dijit.byId('pageControl').registerLocalizationLookup(Messages.getString);
+        $('#toolbar-parameterToggle').attr('title', pentaho.common.Messages.getString('parameterToolbarItem_title'));
+        dijit.byId('pageControl').registerLocalizationLookup(pentaho.common.Messages.getString);
       },
 
       /**
@@ -201,7 +201,7 @@ pentaho.reporting.Viewer = function(reportPrompt) {
       if (this.dialog === undefined) {
         dojo.require('pentaho.reportviewer.ReportDialog');
         this.dialog = new pentaho.reportviewer.ReportDialog();
-        this.dialog.setLocalizationLookupFunction(Messages.getString);
+        this.dialog.setLocalizationLookupFunction(pentaho.common.Messages.getString);
       }
       this.dialog.open(title, url, width, height);
     },
