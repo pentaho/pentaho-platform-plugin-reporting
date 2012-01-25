@@ -95,8 +95,10 @@ public class PentahoJndiDatasourceConnectionProvider implements ConnectionProvid
           final Connection connection = dataSource.getConnection(realUser, realPassword);
           if (connection == null)
           {
+            datasourceService.clearDataSource(jndiName);
             throw new SQLException("JNDI DataSource is invalid; it returned null without throwing a meaningful error.");
           }
+          return connection;
         }
         catch (UnsupportedOperationException uoe)
         {
@@ -108,15 +110,17 @@ public class PentahoJndiDatasourceConnectionProvider implements ConnectionProvid
           }
           return connection;
         }
-
-        final Connection nativeConnection = dataSource.getConnection();
-        if (nativeConnection == null)
+        catch (SQLException ex)
         {
-          // clear datasource cache
-          datasourceService.clearDataSource(jndiName);
-          throw new SQLException(Messages.getErrorString("PentahoDatasourceConnectionProvider.ERROR_0001_INVALID_CONNECTION", jndiName)); //$NON-NLS-1$
+          final Connection nativeConnection = dataSource.getConnection();
+          if (nativeConnection == null)
+          {
+            // clear datasource cache
+            datasourceService.clearDataSource(jndiName);
+            throw new SQLException(Messages.getErrorString("PentahoDatasourceConnectionProvider.ERROR_0001_INVALID_CONNECTION", jndiName)); //$NON-NLS-1$
+          }
+          return nativeConnection;
         }
-        return nativeConnection;
       }
       else
       {
