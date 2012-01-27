@@ -263,6 +263,14 @@ pentaho.reporting.Viewer = function(reportPrompt) {
     },
 
     submitReport: function(promptPanel) {
+      if (!promptPanel.getAutoSubmitSetting()) {
+        // FETCH page info before rendering report
+        prompt.fetchParameterDefinition(promptPanel, function(newParamDefn) {
+          promptPanel.refresh(newParamDefn);
+          this._updateReport(promptPanel, 'REPORT');
+        }.bind(this), 'MANUAL');
+        return;
+      }
       this._updateReport(promptPanel, 'REPORT');
     },
 
