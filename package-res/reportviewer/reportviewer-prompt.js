@@ -4,6 +4,9 @@ pentaho.reporting = pentaho.reporting || {};
 pentaho.reporting.Prompt = function() {
 
   return {
+    // The current render mode
+    mode: 'INITIAL',
+
     _requiredModules: ['formatter', 'dojo'],
 
     /**
@@ -157,6 +160,8 @@ pentaho.reporting.Prompt = function() {
         $.extend(options, promptPanel.getParameterValues());
       }
 
+      // Store mode so we can check if we need to refresh the report content or not in the view
+      this.mode = mode;
       switch(mode) {
         case 'INITIAL':
         options['renderMode'] = 'PARAMETER';
@@ -205,7 +210,6 @@ pentaho.reporting.Prompt = function() {
             }
           } catch (e) {
             this.onFatalError(e);
-            invokeCallback = false;
           }
         }.bind(this),
         error: function(e) {

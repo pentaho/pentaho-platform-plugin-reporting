@@ -49,6 +49,9 @@ pentaho.reporting.Viewer = function(reportPrompt) {
     },
 
     view: {
+      // The last known report width so we can set an empty page to a decent width so it doesn't change drastically between refreshes.
+      lastWidth: 700,
+
       /**
        * Localize the Report Viewer.
        */
@@ -77,14 +80,25 @@ pentaho.reporting.Viewer = function(reportPrompt) {
           dojo.addClass('toolbar-parameterToggle', 'hidden');
         }
         this.showPromptPanel(promptPanel.paramDefn.showParameterUI());
+        this.showReportContent(!promptPanel.paramDefn.promptNeeded && (promptPanel.paramDefn.allowAutoSubmit() || prompt.mode === 'MANUAL'));
         init.call(promptPanel);
         this.refreshPageControl(promptPanel);
+      },
+
+      showReportContent: function(visible) {
+        var toggle = visible ? dojo.removeClass : dojo.addClass;
+        var selector = this.isPageStyled() ? 'reportArea' : 'reportContent';
+        toggle(selector, 'hidden');
+        if (!visible) {
+          $('#reportContent').attr("src", 'about:blank');
+        }
       },
 
       refreshPageControl: function(promptPanel) {
         var pc = dijit.byId('pageControl');
         pc.registerPageNumberChangeCallback(undefined);
         if (!promptPanel.paramDefn.paginate) {
+          promptPanel.setParameterValue(promptPanel.paramDefn.getParameter('accepted-page'), '-1');
           pc.setPageCount(1);
           pc.setPageNumber(1);
           // pc.disable();
@@ -164,16 +178,28 @@ pentaho.reporting.Viewer = function(reportPrompt) {
           return;
         }
         var t = $(iframe);
+
+        if (t.attr('src') === 'about:blank') {
+          // use the last known report width (or the default) so we don't drastically change the width between refreshes
+          t.width(this.lastWidth); // matches report.css: .styled >* #reportContent
+          t.height(200);
+
+          $('#reportPageOutline').width(t.outerWidth() + 14);
+          this.resize();
+        } else {
         // Reset the iframe height before polling its contents so the size is correct.
         t.width(0);
         t.height(0);
 
         var d = $(iframe.contentWindow.document);
         t.height(d.height());
-        t.width(d.width());
+
+          this.lastWidth = d.width();
+          t.width(this.lastWidth);
 
         $('#reportPageOutline').width(t.outerWidth());
         this.resize();
+      }
       }
     },
 
