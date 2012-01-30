@@ -25,6 +25,7 @@ import org.pentaho.platform.api.data.IDatasourceService;
 import org.pentaho.platform.api.engine.ObjectFactoryException;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.core.modules.misc.datafactory.sql.ConnectionProvider;
+import org.pentaho.reporting.libraries.base.util.StringUtils;
 
 /**
  * @author wseyler
@@ -62,7 +63,7 @@ public class PentahoJndiDatasourceConnectionProvider implements ConnectionProvid
       {
         final String realUser;
         final String realPassword;
-        if (username != null)
+        if (StringUtils.isEmpty(this.username) == false)
         {
           realUser = username;
         }
@@ -70,7 +71,7 @@ public class PentahoJndiDatasourceConnectionProvider implements ConnectionProvid
         {
           realUser = user;
         }
-        if (this.password != null)
+        if (StringUtils.isEmpty(this.password) == false)
         {
           realPassword = this.password;
         }
@@ -79,7 +80,7 @@ public class PentahoJndiDatasourceConnectionProvider implements ConnectionProvid
           realPassword = password;
         }
 
-        if (realUser == null)
+        if (StringUtils.isEmpty(realUser))
         {
           final Connection connection = dataSource.getConnection();
           if (connection == null)
