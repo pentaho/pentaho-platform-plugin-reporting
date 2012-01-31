@@ -256,6 +256,10 @@ public class ParameterXmlContentHandler
   private static final String GROUP_PARAMETERS = "parameters";
   private static final String SYS_PARAM_TAB_NAME = "::TabName";
   private static final String SYS_PARAM_TAB_ACTIVE = "::TabActive";
+  
+  private static final String SYS_PARAM_HTML_PROPORTIONAL_WIDTH = "htmlProportionalWidth";
+  private static final String CONFIG_PARAM_HTML_PROPORTIONAL_WIDTH = 
+      "org.pentaho.reporting.engine.classic.core.modules.output.table.html.ProportionalColumnWidths";
 
   public ParameterXmlContentHandler(final ReportContentGenerator contentGenerator,
                                     final boolean paginate)
@@ -306,7 +310,8 @@ public class ParameterXmlContentHandler
       parameter.put("print", createGenericBooleanSystemParameter("print", false, false)); // NON-NLS
       parameter.put("printer-name", createGenericSystemParameter("printer-name", false, false)); // NON-NLS
       parameter.put(SYS_PARAM_RENDER_MODE, createRenderModeSystemParameter()); // NON-NLS
-
+      parameter.put(SYS_PARAM_HTML_PROPORTIONAL_WIDTH, createGenericBooleanSystemParameter(SYS_PARAM_HTML_PROPORTIONAL_WIDTH, false, true));
+      
       systemParameter = Collections.unmodifiableMap(parameter);
     }
 
@@ -455,7 +460,10 @@ public class ParameterXmlContentHandler
         inputs.put("showParameters", Boolean.TRUE); // NON-NLS
       }
 
-
+      // Adding proportional width config parameter
+      String proportionalWidth = report.getReportConfiguration().getConfigProperty(CONFIG_PARAM_HTML_PROPORTIONAL_WIDTH);
+      inputs.put(SYS_PARAM_HTML_PROPORTIONAL_WIDTH,  Boolean.valueOf(proportionalWidth));
+      
       for (final ParameterDefinitionEntry parameter : reportParameters.values())
       {
         final Object selections = inputs.get(parameter.getName());

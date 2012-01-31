@@ -282,7 +282,9 @@ pentaho.reporting.Viewer = function(reportPrompt) {
       url += params.join("&");
 
       // Update page styling based on HTML output or not
-      this.view.updatePageStyling(options['output-target'].indexOf('html') != -1);
+      var proportionalWidth = options['htmlProportionalWidth'] == "true";
+      var isHtml = options['output-target'].indexOf('html') != -1;
+      this.view.updatePageStyling(isHtml && !proportionalWidth);
 
       var iframe = $('#reportContent');
       iframe.attr("src", url);
