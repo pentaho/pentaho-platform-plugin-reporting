@@ -181,9 +181,8 @@ pentaho.reporting.Prompt = function() {
       delete options['::session'];
       var args = arguments;
       var newParamDefn;
-      var invokeCallback = true;
       $.ajax({
-        async: false,
+        async: true,
         cache: false,
         type: 'POST',
         url: this.getParameterUrl(),
@@ -198,7 +197,6 @@ pentaho.reporting.Prompt = function() {
 
             if (mode === 'INITIAL' && newParamDefn.allowAutoSubmit()) {
               this.fetchParameterDefinition(undefined, callback);
-              invokeCallback = false;
               return;
             }
             // Attempt to refetch with pagination
@@ -208,6 +206,7 @@ pentaho.reporting.Prompt = function() {
             if (currentAutoSubmit != undefined) {
               newParamDefn.autoSubmitUI = currentAutoSubmit;
             }
+            callback(newParamDefn);
           } catch (e) {
             this.onFatalError(e);
           }
@@ -217,12 +216,8 @@ pentaho.reporting.Prompt = function() {
             return;
           }
           this.onFatalError(e);
-          invokeCallback = false;
         }.bind(this)
       });
-      if (invokeCallback) {
-      callback(newParamDefn);
-      }
     },
 
     getParameterUrl: function() {
