@@ -31,6 +31,8 @@ public class DateTimeTest extends TestCase
     super(name);
   }
 
+/** Removing unmaintained unit tests **/
+/*
   public void testOffsetCalculation1() throws ParseException
   {
     final String originalTimestamp = "2010-10-01T00:00:00.000+0000";
@@ -60,7 +62,8 @@ public class DateTimeTest extends TestCase
     System.out.println((t1 - t2) / 60000);
     assertEquals(t1, t2);
   }
-
+*/
+  
   private String normalizeDate(final String originalTimestamp, final int targetTimeZoneOffsetInMinutes)
       throws ParseException
   {
