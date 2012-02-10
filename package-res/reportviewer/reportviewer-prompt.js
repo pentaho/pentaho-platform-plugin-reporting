@@ -1,4 +1,4 @@
-var pentaho = pentaho || {};
+pentaho = typeof pentaho == "undefined" ? {} : pentaho;
 pentaho.reporting = pentaho.reporting || {};
 
 pentaho.reporting.Prompt = function() {
