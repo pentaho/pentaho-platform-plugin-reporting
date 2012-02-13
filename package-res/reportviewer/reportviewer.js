@@ -23,12 +23,13 @@ pentaho.reporting.Viewer = function(reportPrompt) {
       }.bind(this));
 
       this.view.resize();
-      var resizeIframe = function(iframe) {
-        this.view.resizeIframe(iframe);
-      }.bind(this);
+      var viewResizeIframe = this.view.resizeIframe.bind(this.view);
       $('#reportContent').load(function() {
+    	var iframe = this;
         // Schedule the resize after the document has been rendered and CSS applied
-        setTimeout(resizeIframe(this));
+        setTimeout(function() {
+          viewResizeIframe(iframe);
+        });
       });
 
       this.prompt.schedule = this.scheduleReport.bind(this);
