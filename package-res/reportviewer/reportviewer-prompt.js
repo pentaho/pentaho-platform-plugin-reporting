@@ -26,7 +26,7 @@ pentaho.reporting.Prompt = function() {
       var everythingLoaded = true;
       $.each(this.__requiredModules, function(i, m) {
         everythingLoaded &= m;
-        return !everythingLoaded; // break when any module is not loaded
+        return everythingLoaded; // break when any module is not loaded
       });
       if (everythingLoaded) {
         this._load();
