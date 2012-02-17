@@ -9,6 +9,7 @@ html { overflow: hidden;}
 }
 
 #reportControlPanel {
+  max-height: 370px;
   margin: 0px 10px 10px 10px;
   background-color: #d4d6db;
   border: 1px solid rgba(0, 0, 0, 0.59375);
