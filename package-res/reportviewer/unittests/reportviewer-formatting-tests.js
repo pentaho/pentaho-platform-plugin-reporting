@@ -107,14 +107,49 @@ doh.register("Report Viewer Data Formatting Tests", [
 
       var d = dateFormatter.parse(dateString);
       var dateMillis = referenceDate.getTime() - (referenceDate.getTime() % 100000);
-      doh.assertEqual(dateMillis, d);
+      doh.assertEqual(dateMillis, d.getTime());
     }
   },
   {
     name: "Convert Timestamp to Timezone - During Daylight Saving Time",
     runTest: function() {
+      // During summer time, PST becomes PDT and the offset changes from -0800 to -0700.
+      // EST is now EDT with the offset changing from -0500 to -0400.
+      //
+      // This test proves that the convertTimeStampToTimeZone is unaware of the DST.
+      //
+      // If the test were to run correctly, the server (estDate) would be a +0400 date
+      // and the expected response would be a +0700 date-string. This requires a true
+      // date-system with time-zone awareness and thus is not really feasible in today's
+      // browsers.
       var expectedPstDateString = '2011-10-14T14:07:00.000-0800'
       var estDateString = '2011-10-14T17:07:00.000-0500';
+      var pstDateString = ReportFormatUtil.convertTimeStampToTimeZone(estDateString, 'PST');
+
+      doh.assertEqual(expectedPstDateString, pstDateString);
+    }
+  },
+  {
+    name: "Convert Timestamp to Timezone - In Daylight Saving Time Week (PRD-3650)",
+    // Using : http://www.timeanddate.com/worldclock/fixedtime.html?msg=Test&iso=20111108T1905&p1=297&ah=1
+    // From Tuesday, November 8, 2011 at 7:05 PM until 8:05 PM London time
+    //
+    // London	Tue 7:05 PM	Tue 8:05 PM
+    // San Francisco	Tue 11:05 AM	Tue 12:05 PM
+    //
+
+    // Using : http://www.timeanddate.com/worldclock/fixedtime.html?msg=Test&iso=20111101T1905&p1=297&ah=1
+    // From Tuesday, November 1, 2011 at 7:05 PM until 8:05 PM Birmingham time
+    //
+    // London Tue 7:05 PM	Tue 8:05 PM
+    // San Francisco *	Tue 12:05 PM	Tue 1:05 PM
+
+    // During the first week of the DST/non-DST switch-over, the US is out of sync with
+    // Europe. You can see a one hour difference in the time-zones during that week.
+
+    runTest: function() {
+      var expectedPstDateString = '2011-11-01T12:07:00.000-0800'
+      var estDateString = '2011-11-01T19:07:00.000+0000';
       var pstDateString = ReportFormatUtil.convertTimeStampToTimeZone(estDateString, 'PST');
 
       doh.assertEqual(expectedPstDateString, pstDateString);

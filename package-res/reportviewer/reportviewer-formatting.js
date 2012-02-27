@@ -110,23 +110,16 @@ var ReportFormatUtil = {
         }
         // Take the date string as it comes from the server, cut out the timezone information - the
         // server will supply its own here.
-        if (parameter.timezoneHint) {
-          if (!this.dateFormatters[parameter.timezoneHint]) {
-            this.dateFormatters[parameter.timezoneHint] = jsTextFormatter.createFormatter('date', "yyyy-MM-dd'T'HH:mm:ss.SSS" + "'" + parameter.timezoneHint + "'");
-          }
-          return this.dateFormatters[parameter.timezoneHint].format(date);
+        if ('server' === timezone || !timezone) {
+          return this.dateFormatters['without-timezone'].format(date);
+        } else if ('utc' === timezone) {
+          return this.dateFormatters['utc'].format(date);
         } else {
-          if ('server' === timezone || !timezone) {
-            return this.dateFormatters['without-timezone'].format(date);
-          } else if ('utc' === timezone) {
-            return this.dateFormatters['utc'].format(date);
-          } else {
-            var offset = ReportTimeUtil.getOffsetAsString(timezone);
-            if (!this.dateFormatters[offset]) {
-              this.dateFormatters[offset] = jsTextFormatter.createFormatter('date', "yyyy-MM-dd'T'HH:mm:ss.SSS'" + offset + "'");
-            }
-            return this.dateFormatters[offset].format(date);
+          var offset = ReportTimeUtil.getOffsetAsString(timezone);
+          if (!this.dateFormatters[offset]) {
+            this.dateFormatters[offset] = jsTextFormatter.createFormatter('date', "yyyy-MM-dd'T'HH:mm:ss.SSS'" + offset + "'");
           }
+          return this.dateFormatters[offset].format(date);
         }
       }.bind(this),
       parse: function(s) {
