@@ -221,7 +221,7 @@ pentaho.reporting.Prompt = function() {
     },
 
     getParameterUrl: function() {
-      return '/pentaho/content/reporting';
+      return CONTEXT_PATH + 'content/reporting';
     },
 
     getUrlParameters: function() {
