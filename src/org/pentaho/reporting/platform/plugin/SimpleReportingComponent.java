@@ -217,6 +217,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   public void setReportDefinition(final IActionSequenceResource reportDefinition)
   {
     this.reportDefinition = reportDefinition;
+    this.report = null;
   }
 
   /**
@@ -228,6 +229,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   public void setReportDefinitionInputStream(final InputStream reportDefinitionInputStream)
   {
     this.reportDefinitionInputStream = reportDefinitionInputStream;
+    this.report = null;
   }
 
   /**
@@ -248,6 +250,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   public void setReportDefinitionPath(final String reportDefinitionPath)
   {
     this.reportDefinitionPath = reportDefinitionPath;
+    this.report = null;
   }
 
   /**
