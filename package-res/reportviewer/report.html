@@ -8,33 +8,11 @@
     <!-- Include CDF styles first to make sure they can be properly overridden -->
     <link rel="stylesheet" href="../../pentaho-cdf/js/cdf.css" type="text/css" />
 
+    <script type="text/javascript" src="../../../js/require.js"></script>
+    <script type="text/javascript" src="../../../js/require-cfg.js"></script>
+
     <script language="javascript" type="text/javascript" src="webcontext.js?context=reporting"></script>
 
-    <!-- CDF Scripts -->
-    <!--
-      Do not load another jquery. We'll rely on the one provided via webcontext.js.
-    <script language="javascript" type="text/javascript" src="../../pentaho-cdf/js/jquery.js"></script>
-    -->
-    <script language="javascript" type="text/javascript" src="../../pentaho-cdf/js/jquery-impromptu.3.1.js"></script>
-    <script language="javascript" type="text/javascript" src="../../pentaho-cdf/js/jquery.ui.js"></script>
-    <script language="javascript" type="text/javascript" src="../../pentaho-cdf/js/jquery.bgiframe.js"></script>
-    
-    <!-- Including jquery.dimensions.js breaks the JQuery UI Autocomplete Menu position -->
-    <!--<script language="javascript" type="text/javascript" src="../../pentaho-cdf/js/jquery.dimensions.js"></script>-->
-    <script language="javascript" type="text/javascript" src="../../pentaho-cdf/js/jquery.jdMenu.js"></script>
-    <script language="javascript" type="text/javascript" src="../../pentaho-cdf/js/jquery.positionBy.js"></script>
-    <script language="javascript" type="text/javascript" src="../../pentaho-cdf/js/jquery.tooltip.js"></script>
-    <script language="javascript" type="text/javascript" src="../../pentaho-cdf/js/jquery.blockUI.js"></script>
-    <script language="javascript" type="text/javascript" src="../../pentaho-cdf/js/jquery.eventstack.js"></script>
-
-    <script language="javascript" type="text/javascript" src="../../pentaho-cdf/js/Base.js"></script>
-    <script language="javascript" type="text/javascript" src="../../pentaho-cdf/js/Dashboards.js"></script>
-    <script language="javascript" type="text/javascript" src="../../pentaho-cdf/js/CoreComponents.js"></script>
-    <!-- 
-    <script language="javascript" type="text/javascript" src="../../pentaho-cdf/js/NavigationComponents.js"></script>
-    <script language="javascript" type="text/javascript" src="../../pentaho-cdf/js/MapComponents.js"></script>
-    <script language="javascript" type="text/javascript" src="../../pentaho-cdf/js/OlapUtils.js"></script>
-    -->
     <link rel="stylesheet" href="../../pentaho-cdf/js/jquery.tooltip.css" type="text/css" />
     <link rel="stylesheet" href="../../pentaho-cdf/js/jquery.jdMenu.css" type="text/css" />
     <link rel="stylesheet" href="../../pentaho-cdf/js/jquery.jdMenu.slate.css" type="text/css" />
@@ -44,66 +22,54 @@
     <link rel="stylesheet" href="../../common-ui/resources/web/prompting/pentaho-prompting.css" type="text/css" />
     <link rel="stylesheet" href="reportviewer.css" type="text/css" />
 
-    <script type="text/javascript" src="../../common-ui/resources/web/formatter/formatter.nocache.js"></script>
-    <script type="text/javascript" src="../../common-ui/resources/web/repo/pentaho-ajax.js"></script>
-    <script type="text/javascript" src="../../common-ui/resources/web/prompting/pentaho-prompting.js"></script>
-    <script type="text/javascript" src="../../common-ui/resources/web/prompting/pentaho-prompting-builders.js"></script>
-    <script type="text/javascript" src="../../common-ui/resources/web/prompting/pentaho-prompting-components.js"></script>
+    <script language="javascript" type="text/javascript">
+      // Provide somewhere for cdf/simile/ajax/scripts/json to inject itself into
+      var SimileAjax = {};
 
-    <script type="text/javascript" src="reportviewer.js"></script>
-    <script type="text/javascript" src="reportviewer-prompt.js"></script>
-    <script type="text/javascript" src="reportviewer-timeutil.js"></script>
-    <script type="text/javascript" src="reportviewer-formatting.js"></script>
-
-    <script language="javascript">
-
-      $.extend(djConfig, {
-        modulePaths: {
-            'pentaho.common': '../pentaho/common',
-            'pentaho.reportviewer': '../../../../../reporting/reportviewer'
-        },
-        parseOnLoad: false,
-        baseUrl: '../../common-ui/resources/web/dojo/dojo/'
-      });
-
-      var prompt = new pentaho.reporting.Prompt();
-      var viewer = new pentaho.reporting.Viewer(prompt);
-
-      // Set up locale for Dojo
-      djConfig.locale = prompt.getLocale();
-
-      var jsset = Dashboards.getQueryParameter("jsset");
-      if( jsset == '' ) {
-        document.write("<scr"+"ipt language='javascript' type='text/javascript' src='../../common-ui/resources/web/dojo/dojo/dojo-all.js'></scr"+"ipt>");
-      }
-      else {
-        document.write("<scr"+"ipt language='javascript' type='text/javascript' src='../../common-ui/resources/web/dojo/dojo/dojo-all.js.uncompressed.js'></scr"+"ipt>");
-      }
-
-     var SimileAjax = {};
-     Dashboards.blockUIwithDrag = function() {
-        $.blockUI.defaults.message = '';
-        $.blockUI.defaults.css.left = '0%';
-        $.blockUI.defaults.css.top = '0%';
-        $.blockUI.defaults.css.marginLeft = '85px';
-        $.blockUI.defaults.css.width = '100%';
-        $.blockUI.defaults.css.height = '100%';
-        $.blockUI.defaults.css.opacity = '1';
-        $.blockUI.defaults.css.backgroundColor = '#ffffcc';
-        $.blockUI.defaults.css['-webkit-border-radius'] = '10px'; 
-        $.blockUI.defaults.css['-moz-border-radius'] = '10px';
-    
-        $.blockUI.defaults.overlayCSS.backgroundColor = '#000000';
-        $.blockUI.defaults.overlayCSS.opacity = '0.6';
-        $.blockUI.defaults.overlayCSS.cursor = 'wait';
-        // Place it below the message box
-        $.blockUI.defaults.overlayCSS['z-index'] = '900';
-          // There's an issue with BlockUI and IE 8. As we don't even use this feature from CDF, it's hidden here.
-          // $.blockUI.defaults.showOverlay = false;
-        $.blockUI();
+      /**
+       * This is called when the formatter gwt module has been loaded. We depend on this so we'll load the prompt after 
+       * the formatter has been loaded.
+       */
+      gwtModuleLoaded = function(moduleName) {
+        if (moduleName === 'formatter') {
+          pen.require(['dojo', 'reportviewer/reportviewer-main-module', 'reportviewer/reportviewer', 'reportviewer/reportviewer-prompt'], function(a, b, Viewer, Prompt) {
+            window.prompt = new Prompt();
+            window.viewer = new Viewer(prompt);
+            window.prompt.load();
+          });
+        }
       }
     </script>
-    <script language="javascript" type="text/javascript" src="../../pentaho-cdf/js/simile/ajax/scripts/json.js"></script>
+
+    <script type="text/javascript" src="../../common-ui/resources/web/util/util.js"></script>
+
+    <script language="javascript">
+      pen.require(['common-ui/util/util'], function(util) {
+        $.extend(djConfig, {
+          // Set up locale for Dojo
+          locale: util.getLocale(),
+          modulePaths: {
+              'pentaho.common': '../pentaho/common',
+              'pentaho.reportviewer': '../../../../../reporting/reportviewer'
+          },
+          parseOnLoad: false,
+          baseUrl: '../../common-ui/resources/web/dojo/dojo/'
+        });
+
+        // Load the compressed dojo if we're not in debug mode
+        if( util.getUrlParameters().jsset != 'orig' ) {
+          document.write("<scr"+"ipt language='javascript' type='text/javascript' src='../../common-ui/resources/web/dojo/dojo/dojo-all.js'></scr"+"ipt>");
+          document.write("<scr"+"ipt language='javascript' type='text/javascript' src='reportviewer-app.js'></scr"+"ipt>");
+        }
+        else {
+          document.write("<scr"+"ipt language='javascript' type='text/javascript' src='../../common-ui/resources/web/dojo/dojo/dojo-all.js.uncompressed.js'></scr"+"ipt>");
+          document.write("<scr"+"ipt language='javascript' type='text/javascript' src='reportviewer-main-module.js'></scr"+"ipt>");
+        }
+      });
+    </script>
+
+    <script type="text/javascript" src="../../common-ui/resources/web/formatter/formatter.nocache.js"></script>
+
     <script type="text/javascript">
       dojo.require('dojo.parser');
       dojo.require('pentaho.common.Messages');
@@ -114,7 +80,32 @@
 
       dojo.ready(function() {
         dojo.parser.parse();
-        prompt.moduleLoaded('dojo');
+        // Dojo is now available, modules depending on it may now load.
+        pen.define('dojo');
+      });
+
+      pen.require(['cdf/Dashboards'], function() {
+        Dashboards.blockUIwithDrag = function() {
+          $.blockUI.defaults.message = '';
+          $.blockUI.defaults.css.left = '0%';
+          $.blockUI.defaults.css.top = '0%';
+          $.blockUI.defaults.css.marginLeft = '85px';
+          $.blockUI.defaults.css.width = '100%';
+          $.blockUI.defaults.css.height = '100%';
+          $.blockUI.defaults.css.opacity = '1';
+          $.blockUI.defaults.css.backgroundColor = '#ffffcc';
+          $.blockUI.defaults.css['-webkit-border-radius'] = '10px'; 
+          $.blockUI.defaults.css['-moz-border-radius'] = '10px';
+      
+          $.blockUI.defaults.overlayCSS.backgroundColor = '#000000';
+          $.blockUI.defaults.overlayCSS.opacity = '0.6';
+          $.blockUI.defaults.overlayCSS.cursor = 'wait';
+          // Place it below the message box
+          $.blockUI.defaults.overlayCSS['z-index'] = '900';
+            // There's an issue with BlockUI and IE 8. As we don't even use this feature from CDF, it's hidden here.
+            // $.blockUI.defaults.showOverlay = false;
+          $.blockUI();
+        }
       });
     </script>
   </head>
@@ -141,23 +132,9 @@
       </div>
     </div>
 
-
     <div id="messageBox" dojoType="pentaho.common.MessageBox" title="" style="width:400px; display:none;">
     </div>
   </body>
 </table>
-
-<script language="javascript" type="text/javascript">
-/**
- * This is called when the formatter gwt module has been loaded. We depend on this so we'll load the prompt after 
- * the formatter has been loaded.
- */
-gwtModuleLoaded = function(moduleName) {
-  if (moduleName === 'formatter') {
-    prompt.moduleLoaded('formatter');
-  }
-}
-</script>
-
   </body>
 </html>

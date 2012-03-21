@@ -62,5 +62,9 @@
 	  type="xml" 
 	  class="org.pentaho.reporting.platform.plugin.LocalizationService"/>
 
+    <external-resources>
+      <!-- Example Prompting component that replaces the default prompt labels. Uncomment to use. -->
+      <!-- <file context="reporting">content/reporting/reportviewer/reportviewer-sample-component.js</file> -->
+    </external-resources>
 </plugin>
 

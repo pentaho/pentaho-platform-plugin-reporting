@@ -11,6 +11,9 @@
 
   <!-- Import the common_build.xml file which contains all the default tasks -->
   <import file="./build-res/subfloor-gwt.xml" />
+  <import file="build-res/subfloor-js.xml" />
+
+
   <property name="install.lib-dir" value="${install.target-dir}/tomcat/webapps/pentaho/WEB-INF/lib/"/>
 
   <!--
@@ -19,8 +22,25 @@
       FOUND IN common_build.xml.
     -->
 
+  <target name="resolve" depends="subfloor-gwt.resolve,subfloor-js.resolve-js"/>
+
+  <target name="stage-js-build" depends="subfloor-js.build-js,subfloor-js.package-js-output">
+    <!-- Move build JS into proper staging area and remove js build staging area -->
+    <copy todir="${approot.stage.dir}/reportviewer">
+      <fileset dir="${js.build.output.dir}">
+        <include name="reportviewer-app.js"/>
+      </fileset>
+      <fileset dir="${js.build.output.dir}/reportviewer">
+        <include name="*.js"/>
+      </fileset>
+    </copy>
+
+    <!-- Remove the scripts/ directory that subfloor-js staged -->
+    <delete dir="${approot.stage.dir}/scripts"/>
+  </target>
+
   <!-- override the subfloor assemble target to do special assembly from the war directory -->
-  <target name="assemble" depends="gwt-compile,assemble.init">
+  <target name="assemble" depends="gwt-compile,assemble.init,stage-js-build">
     <!--copy todir="${approot.stage.dir}/lib">
       <fileset dir="${lib.dir}" excludes="pentaho-bi-platform-*.jar" />
       <fileset file="${dist.dir}/${ivy.artifact.id}-${project.revision}.jar" />

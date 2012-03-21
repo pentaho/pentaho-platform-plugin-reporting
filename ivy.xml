@@ -11,6 +11,7 @@
     	<conf name="codegen-mac"   extends="codegen"/>
     	<conf name="codegen-win"   extends="codegen"/>
     	<conf name="codegen-linux" extends="codegen"/>
+      <conf name="js"/>
     </configurations>
 
     <publications>
@@ -48,5 +49,15 @@
         <dependency org="${pentaho-platform.group}" name="pentaho-bi-platform-test-foundation" rev="${dependency.pentaho-platform.revision}"  changing="true" conf="test->default"/>
         <dependency org="junit" name="junit" rev="4.4" conf="test->default" />
         <dependency org="hsqldb" name="hsqldb" rev="1.8.0" conf="test->default" transitive="false"/>
+
+
+      <!-- JavaScript dependencies -->
+      <dependency org="pentaho" name="common-ui" rev="TRUNK-SNAPSHOT" conf="js->default" transitive="false">
+        <artifact name="common-ui" type="js" ext="zip" m:classifier="js"/>
+      </dependency>
+
+      <dependency org="pentaho" name="pentaho-cdf" rev="4.5-SNAPSHOT" conf="js->default" transitive="false">
+        <artifact name="pentaho-cdf" type="js" ext="zip" m:classifier="js"/>
+      </dependency>
     </dependencies>
 </ivy-module>
