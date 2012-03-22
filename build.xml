@@ -24,23 +24,13 @@
 
   <target name="resolve" depends="subfloor-gwt.resolve,subfloor-js.resolve-js"/>
 
-  <target name="stage-js-build" depends="subfloor-js.build-js,subfloor-js.package-js-output">
-    <!-- Move build JS into proper staging area and remove js build staging area -->
-    <copy todir="${approot.stage.dir}/reportviewer">
-      <fileset dir="${js.build.output.dir}">
-        <include name="reportviewer-app.js"/>
-      </fileset>
-      <fileset dir="${js.build.output.dir}/reportviewer">
-        <include name="*.js"/>
-      </fileset>
-    </copy>
-
+  <target name="stage-js-build">
     <!-- Remove the scripts/ directory that subfloor-js staged -->
-    <delete dir="${approot.stage.dir}/scripts"/>
+    <!--<delete dir="${approot.stage.dir}/scripts"/>-->
   </target>
 
   <!-- override the subfloor assemble target to do special assembly from the war directory -->
-  <target name="assemble" depends="gwt-compile,assemble.init,stage-js-build">
+  <target name="assemble" depends="gwt-compile,assemble.init,build-js,package-js-output">
     <!--copy todir="${approot.stage.dir}/lib">
       <fileset dir="${lib.dir}" excludes="pentaho-bi-platform-*.jar" />
       <fileset file="${dist.dir}/${ivy.artifact.id}-${project.revision}.jar" />
@@ -56,6 +46,21 @@
 	  </fileset>
       <!-- Remove top-level directory when copying -->
       <mapper type="regexp" from="^([^/]*)/(.*)$$" to="\2"/>
+    </copy>
+    <!-- Copy the js build output -->
+    <copy todir="${approot.stage.dir}/reportviewer" overwrite="true">
+      <!-- Remove top-level directory when copying -->
+      <flattenmapper/>
+      <fileset dir="${js.build.output.dir}">
+        <!-- Entire application -->
+        <include name="reportviewer-app.js"/>
+        <!-- Processed main module -->
+        <include name="reportviewer/reportviewer-main-module.js"/>
+      </fileset>
+    </copy>
+    <!-- Copy dojo output into staging area -->
+    <copy todir="${approot.stage.dir}/reportviewer/dojo">
+      <fileset dir="${js.script.package.dest}/dojo"/>
     </copy>
   </target>
 

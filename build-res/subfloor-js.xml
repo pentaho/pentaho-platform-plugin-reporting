@@ -77,24 +77,20 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   <property name="js.script.package.dest" value="${approot.stage.dir}/scripts"/>
   <property name="js.dojo.module.name" value="dojo-custom"/>
 
-
-  <target name="js.clean"
-          description="Cleans all the files generated from a build with the exception of IVY-downloaded jars (see clean-all)">
-    <delete dir="${js.module.script.agg.dir}"/>
-  </target>
-
   <target name="resolve-js">
     <ivy:resolve file="ivy.xml" conf="js"/>
     <ivy:retrieve conf="js" pattern="${js.lib.dir}/[module]-[revision](-[classifier]).[ext]"/>
   </target>
 
-  <target name="clean-js">
-    <delete dir="${js.lib.dir}" />
+  <target name="clean-js"
+          description="Cleans all the files generated from a build with the exception of IVY-downloaded jars (see clean-all)">
+    <delete dir="${js.script.package.dest}"/>
+    <delete dir="${js.build.output.dir}"/>
+    <delete dir="${js.module.script.agg.dir}"/>
+    <delete dir="${js.dojo.src}"/>
   </target>
 
-  <target name="build-js" depends="install-antcontrib">
-    <delete dir="${js.build.output.dir}"/>
-    <delete dir="${js.module.script.agg.dir}" />
+  <target name="build-js" depends="install-antcontrib,clean-js">
     <echo message="js.module.script.agg.dir: ${js.module.script.agg.dir}"/>
     <mkdir dir="${js.module.script.agg.dir}" />
 
@@ -141,7 +137,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     <java classname="org.mozilla.javascript.tools.shell.Main"
           fork="true"
           classpathref="build.classpath"
-          args="build-res/pentaho-js-build/r.js -o ${js.build.file}">
+          args="build-res/pentaho-js-build/r.js -o ${js.build.file}"
+          failonerror="true">
     </java>
     <antcall target="build-dojo"/>
   </target>
@@ -167,7 +164,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
     <java classname="org.mozilla.javascript.tools.shell.Main"
           dir="${js.dojo.src}/util/buildscripts"
-          fork="true">
+          fork="true"
+          failonerror="true">
 
       <arg value="build.js"/>
       <arg value="action=release"/>
@@ -198,7 +196,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
       <fileset dir="${js.dojo.src}/dijit/themes/pentaho"/>
     </copy>
 
-    <copy todir="${stage.dir}/dojo-release" overwrite="true">
+    <copy todir="${stage.dir}/dojo-release" overwrite="true" failonerror="false">
       <fileset dir="${js.dojo.script.dir}">
         <include name="**/*"/>
       </fileset>
@@ -282,12 +280,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
   <target name="package-js-output">
-    <copy todir="${approot.stage.dir}/scripts" overwrite="true">
+    <copy todir="${js.script.package.dest}" overwrite="true">
       <fileset dir="${js.module.script.dir}">
         <include name="**/*"/>
       </fileset>
     </copy>
-    <copy todir="${approot.stage.dir}/scripts" overwrite="true">
+    <copy todir="${js.script.package.dest}" overwrite="true">
       <fileset dir="${js.build.output.dir}">
         <include name="*"/>
       </fileset>
@@ -296,8 +294,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     <if>
     <available file="${stage.dir}/dojo-release"/>
     <then>
-    <mkdir dir="${approot.stage.dir}/scripts/dojo"/>
-    <copy todir="${approot.stage.dir}/scripts/dojo" overwrite="true">
+    <mkdir dir="${js.script.package.dest}/dojo"/>
+    <copy todir="${js.script.package.dest}/dojo" overwrite="true">
       <fileset dir="${stage.dir}/dojo-release">
         <include name="**/*"/>
       </fileset>
@@ -308,8 +306,21 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     </if>
   </target>
 
+  <!--
+    Checks if Dojo source is available
+  -->
+  <target name="dojo.check">
+    <condition property="dojo.available">
+      <and>
+        <available file="${js.dojo.src}/dijit" type="dir"/>
+        <available file="${js.dojo.src}/dojo" type="dir"/>
+        <available file="${js.dojo.src}/dojox" type="dir"/>
+        <available file="${js.dojo.src}/util" type="dir"/>
+      </and>
+    </condition>
+  </target>
 
-  <target name="install-dojo" if="js.requires.dojo" depends="install-antcontrib">
+  <target name="install-dojo" if="js.requires.dojo" depends="install-antcontrib,dojo.check" unless="dojo.available">
 
     <if>
       <available file="${js.dojo.root}/${js.dojo-artifact}.zip"/>
@@ -318,17 +329,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         <mkdir dir="${js.dojo.root}"/>
         <get src="http://download.dojotoolkit.org/release-${js.dojo.version}/${js.dojo-artifact}.zip"
              dest="${js.dojo.root}/${js.dojo-artifact}.zip"/>
-
-        <unzip src="${js.dojo.root}/${js.dojo-artifact}.zip" dest="${js.dojo.root}"/>
-
-        <copy verbose="true" todir="${js.dojo.src}/util/buildscripts" overwrite="true">
-          <fileset dir="build-res/licenses">
-            <include name="*.txt"/>
-          </fileset>
-          <mapper type="glob" from="dojo_*" to="*"/>
-        </copy>
       </else>
     </if>
+
+    <unzip src="${js.dojo.root}/${js.dojo-artifact}.zip" dest="${js.dojo.root}"/>
+
+    <copy verbose="true" todir="${js.dojo.src}/util/buildscripts" overwrite="true">
+      <fileset dir="build-res/licenses">
+        <include name="*.txt"/>
+      </fileset>
+      <mapper type="glob" from="dojo_*" to="*"/>
+    </copy>
   </target>
 
 </project>

@@ -1,3 +1,7 @@
+/**
+ * We must enumerate all dependencies because our modules use pen.define and their dependencies will not be detected
+ * by RequireJS.
+ */
 require([
   'cdf/jquery',
   'cdf/jquery-impromptu.3.1',

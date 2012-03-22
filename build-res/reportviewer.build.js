@@ -1,6 +1,6 @@
 ({
   appDir: "./module-scripts",
-  optimize: "uglify",
+  optimize: "none",
   baseUrl: ".",
   dir: "../bin/scriptOutput",
   //Put in a mapping so that 'requireLib' in the

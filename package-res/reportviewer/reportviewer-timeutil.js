@@ -1,7 +1,7 @@
 /**
  * Timezone Utility to generate a timezone offset string from a given timezone.
  */
-define(function() {
+pen.define(function() {
   return {
     offsets: {
       "ACT": 570,

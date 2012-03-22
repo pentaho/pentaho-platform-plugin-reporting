@@ -1,4 +1,4 @@
-define(['common-ui/prompting/pentaho-prompting','reportviewer/reportviewer-timeutil'], function(p, ReportTimeUtil) {
+pen.define(['common-ui/prompting/pentaho-prompting','reportviewer/reportviewer-timeutil'], function(p, ReportTimeUtil) {
   return {
     /**
      * Create a text formatter that formats to/from text. This is designed to convert between data formatted as a string

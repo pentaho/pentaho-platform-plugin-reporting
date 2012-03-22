@@ -52,11 +52,11 @@
 
 
       <!-- JavaScript dependencies -->
-      <dependency org="pentaho" name="common-ui" rev="TRUNK-SNAPSHOT" conf="js->default" transitive="false">
+      <dependency org="pentaho" name="common-ui" rev="TRUNK-SNAPSHOT" conf="js->default" transitive="false" changing="true">
         <artifact name="common-ui" type="js" ext="zip" m:classifier="js"/>
       </dependency>
 
-      <dependency org="pentaho" name="pentaho-cdf" rev="4.5-SNAPSHOT" conf="js->default" transitive="false">
+      <dependency org="pentaho" name="pentaho-cdf" rev="4.5-SNAPSHOT" conf="js->default" transitive="false" changing="true">
         <artifact name="pentaho-cdf" type="js" ext="zip" m:classifier="js"/>
       </dependency>
     </dependencies>

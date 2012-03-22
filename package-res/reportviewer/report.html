@@ -45,23 +45,31 @@
 
     <script language="javascript">
       pen.require(['common-ui/util/util'], function(util) {
-        $.extend(djConfig, {
-          // Set up locale for Dojo
-          locale: util.getLocale(),
-          modulePaths: {
-              'pentaho.common': '../pentaho/common',
-              'pentaho.reportviewer': '../../../../../reporting/reportviewer'
-          },
-          parseOnLoad: false,
-          baseUrl: '../../common-ui/resources/web/dojo/dojo/'
-        });
-
         // Load the compressed dojo if we're not in debug mode
         if( util.getUrlParameters().jsset != 'orig' ) {
-          document.write("<scr"+"ipt language='javascript' type='text/javascript' src='../../common-ui/resources/web/dojo/dojo/dojo-all.js'></scr"+"ipt>");
+          $.extend(djConfig, {
+            // Set up locale for Dojo
+            locale: util.getLocale(),
+            modulePaths: {
+              'pentaho.common': '../../../../common-ui/resources/web/dojo/pentaho/common'
+            },
+            parseOnLoad: false,
+            baseUrl: 'dojo/dojo/'
+          });
+          document.write("<scr"+"ipt language='javascript' type='text/javascript' src='dojo/dojo/dojo-reportviewer.js'></scr"+"ipt>");
           document.write("<scr"+"ipt language='javascript' type='text/javascript' src='reportviewer-app.js'></scr"+"ipt>");
         }
         else {
+          $.extend(djConfig, {
+            // Set up locale for Dojo
+            locale: util.getLocale(),
+            modulePaths: {
+                'pentaho.common': '../pentaho/common',
+                'pentaho.reportviewer': '../../../../../reporting/reportviewer/dojo/pentaho/reportviewer'
+            },
+            parseOnLoad: false,
+            baseUrl: '../../common-ui/resources/web/dojo/dojo/'
+          });
           document.write("<scr"+"ipt language='javascript' type='text/javascript' src='../../common-ui/resources/web/dojo/dojo/dojo-all.js.uncompressed.js'></scr"+"ipt>");
           document.write("<scr"+"ipt language='javascript' type='text/javascript' src='reportviewer-main-module.js'></scr"+"ipt>");
         }
