@@ -36,6 +36,10 @@
             window.prompt = new Prompt();
             window.viewer = new Viewer(prompt);
             window.prompt.load();
+
+            $(window).resize(function() {
+              viewer.view.resize();
+            });
           });
         }
       }
@@ -117,7 +121,7 @@
       });
     </script>
   </head>
-  <body class="tundra body styled" onresize="if (viewer) { viewer.view.resize(); }">
+  <body class="tundra body styled">
     <div id="toppanel" class="pentaho-transparent">
       <div id="toppanelinner" >
         <div id="toolbarlinner2" dojoType="dijit.Toolbar" class="pentaho-rounded-panel2-shadowed pentaho-padding-sm pentaho-shine pentaho-background">
