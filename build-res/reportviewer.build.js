@@ -7,7 +7,8 @@
   //modules section below will refer to the require.js
   //contents.
   paths: {
-    requireLib: 'require'
+    requireLib: 'require',
+    'local': 'common-ui/util/local'
   },
 
   //Indicates the namespace to use for require/requirejs/define.

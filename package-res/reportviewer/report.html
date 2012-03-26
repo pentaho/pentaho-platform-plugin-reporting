@@ -32,22 +32,16 @@
        */
       gwtModuleLoaded = function(moduleName) {
         if (moduleName === 'formatter') {
-          pen.require(['dojo', 'reportviewer/reportviewer-main-module', 'reportviewer/reportviewer', 'reportviewer/reportviewer-prompt'], function(a, b, Viewer, Prompt) {
-            window.prompt = new Prompt();
-            window.viewer = new Viewer(prompt);
-            window.prompt.load();
-
-            $(window).resize(function() {
-              viewer.view.resize();
+          // Once the GWT JSTextFormatter is loaded we can depend on other modules we need and then load the report viewer
+          pen.require(['common-ui/util/util'], function() {
+            pen.require(['local'], function(local) {
+              local.define('formatter');
             });
           });
         }
       }
-    </script>
 
-    <script type="text/javascript" src="../../common-ui/resources/web/util/util.js"></script>
-
-    <script language="javascript">
+      var dependencies = [];
       pen.require(['common-ui/util/util'], function(util) {
         // Load the compressed dojo if we're not in debug mode
         if( util.getUrlParameters().jsset != 'orig' ) {
@@ -60,10 +54,9 @@
             parseOnLoad: false,
             baseUrl: 'dojo/dojo/'
           });
-          document.write("<scr"+"ipt language='javascript' type='text/javascript' src='dojo/dojo/dojo-reportviewer.js'></scr"+"ipt>");
-          document.write("<scr"+"ipt language='javascript' type='text/javascript' src='reportviewer-app.js'></scr"+"ipt>");
-        }
-        else {
+          dependencies.push('dojo/dojo/dojo-reportviewer.js');
+          dependencies.push('reportviewer-app.js'); 
+        } else {
           $.extend(djConfig, {
             // Set up locale for Dojo
             locale: util.getLocale(),
@@ -74,52 +67,66 @@
             parseOnLoad: false,
             baseUrl: '../../common-ui/resources/web/dojo/dojo/'
           });
-          document.write("<scr"+"ipt language='javascript' type='text/javascript' src='../../common-ui/resources/web/dojo/dojo/dojo-all.js.uncompressed.js'></scr"+"ipt>");
-          document.write("<scr"+"ipt language='javascript' type='text/javascript' src='reportviewer-main-module.js'></scr"+"ipt>");
+          dependencies.push('../../common-ui/resources/web/dojo/dojo/dojo-all.js');
+          dependencies.push('reportviewer-main-module'); 
         }
+
+        pen.require(dependencies, function() {
+          // Additional requires are in this block to prevent the loading of individual resources when we're working in compressed mode
+          pen.require(['cdf/Dashboards'], function() {
+            // Override Dashboard's loading/glasspane while loading to omit the animation
+            Dashboards.blockUIwithDrag = function() {
+              $.blockUI.defaults.message = '';
+              $.blockUI.defaults.css.left = '0%';
+              $.blockUI.defaults.css.top = '0%';
+              $.blockUI.defaults.css.marginLeft = '85px';
+              $.blockUI.defaults.css.width = '100%';
+              $.blockUI.defaults.css.height = '100%';
+              $.blockUI.defaults.css.opacity = '1';
+              $.blockUI.defaults.css.backgroundColor = '#ffffcc';
+              $.blockUI.defaults.css['-webkit-border-radius'] = '10px'; 
+              $.blockUI.defaults.css['-moz-border-radius'] = '10px';
+          
+              $.blockUI.defaults.overlayCSS.backgroundColor = '#000000';
+              $.blockUI.defaults.overlayCSS.opacity = '0.6';
+              $.blockUI.defaults.overlayCSS.cursor = 'wait';
+              // Place it below the message box
+              $.blockUI.defaults.overlayCSS['z-index'] = '900';
+                // There's an issue with BlockUI and IE 8. As we don't even use this feature from CDF, it's hidden here.
+                // $.blockUI.defaults.showOverlay = false;
+              $.blockUI();
+            }
+          });
+
+          // Load and launch the report viewer application
+          pen.require(['local!dojo', 'local!formatter', 'cdf/Dashboards', 'reportviewer/reportviewer', 'reportviewer/reportviewer-prompt'], function(dojo, formatter, dashboards, Viewer, Prompt) {
+            window.prompt = new Prompt();
+            window.viewer = new Viewer(prompt);
+            window.prompt.load();
+
+            $(window).resize(function() {
+              viewer.view.resize();
+            });
+          });
+
+          dojo.require('dojo.parser');
+          dojo.require('pentaho.common.Messages');
+          dojo.require('pentaho.common.MessageBox');
+          dojo.require('pentaho.common.Menu');
+          dojo.require('pentaho.common.MenuItem');
+          dojo.require('pentaho.common.PageControl');
+
+          dojo.ready(function() {
+            dojo.parser.parse();
+            // Dojo is now available, modules depending on it may now load.
+            pen.require(['local'], function(local) {
+              local.define('dojo');
+            });
+          });
+        });
       });
     </script>
-
     <script type="text/javascript" src="../../common-ui/resources/web/formatter/formatter.nocache.js"></script>
-
-    <script type="text/javascript">
-      dojo.require('dojo.parser');
-      dojo.require('pentaho.common.Messages');
-      dojo.require('pentaho.common.MessageBox');
-      dojo.require('pentaho.common.Menu');
-      dojo.require('pentaho.common.MenuItem');
-      dojo.require('pentaho.common.PageControl');
-
-      dojo.ready(function() {
-        dojo.parser.parse();
-        // Dojo is now available, modules depending on it may now load.
-        pen.define('dojo');
-      });
-
-      pen.require(['cdf/Dashboards'], function() {
-        Dashboards.blockUIwithDrag = function() {
-          $.blockUI.defaults.message = '';
-          $.blockUI.defaults.css.left = '0%';
-          $.blockUI.defaults.css.top = '0%';
-          $.blockUI.defaults.css.marginLeft = '85px';
-          $.blockUI.defaults.css.width = '100%';
-          $.blockUI.defaults.css.height = '100%';
-          $.blockUI.defaults.css.opacity = '1';
-          $.blockUI.defaults.css.backgroundColor = '#ffffcc';
-          $.blockUI.defaults.css['-webkit-border-radius'] = '10px'; 
-          $.blockUI.defaults.css['-moz-border-radius'] = '10px';
-      
-          $.blockUI.defaults.overlayCSS.backgroundColor = '#000000';
-          $.blockUI.defaults.overlayCSS.opacity = '0.6';
-          $.blockUI.defaults.overlayCSS.cursor = 'wait';
-          // Place it below the message box
-          $.blockUI.defaults.overlayCSS['z-index'] = '900';
-            // There's an issue with BlockUI and IE 8. As we don't even use this feature from CDF, it's hidden here.
-            // $.blockUI.defaults.showOverlay = false;
-          $.blockUI();
-        }
-      });
-    </script>
   </head>
   <body class="tundra body styled">
     <div id="toppanel" class="pentaho-transparent">
