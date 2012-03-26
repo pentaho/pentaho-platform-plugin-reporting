@@ -1,4 +1,4 @@
-pen.define(['reportviewer/reportviewer-prompt', 'reportviewer/reportviewer-timeutil', 'reportviewer/reportviewer-formatting'], function() {
+pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'reportviewer/reportviewer-timeutil', 'reportviewer/reportviewer-formatting'], function(util) {
   return function(reportPrompt) {
     if (!reportPrompt) {
     	alert("report prompt is required");
@@ -244,7 +244,7 @@ pen.define(['reportviewer/reportviewer-prompt', 'reportviewer/reportviewer-timeu
           $('#' + this.htmlObject).attr('src', 'about:blank');
           return; // Don't do anything if we need to prompt
         }
-        var options = this.prompt.getUrlParameters();
+        var options = util.getUrlParameters();
         $.extend(options, promptPanel.getParameterValues());
         options['renderMode'] = renderMode;
 

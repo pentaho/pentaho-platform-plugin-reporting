@@ -1,4 +1,4 @@
-pen.define(['reportviewer/reportviewer-formatting'], function(ReportFormatUtil) {
+pen.define(['common-ui/util/util', 'reportviewer/reportviewer-formatting'], function(util, ReportFormatUtil) {
   return function() {
     return {
       // The current render mode
@@ -125,7 +125,7 @@ pen.define(['reportviewer/reportviewer-formatting'], function(ReportFormatUtil) 
        * @param mode Render Mode to request from server: {INITIAL, MANUAL, USERINPUT}. If not provided, INITIAL will be used.
        */
       fetchParameterDefinition: function(promptPanel, callback, mode) {
-        var options = this.getUrlParameters();
+        var options = util.getUrlParameters();
         // If we aren't passed a prompt panel this is the first request
         if (promptPanel) {
           $.extend(options, promptPanel.getParameterValues());
@@ -193,36 +193,6 @@ pen.define(['reportviewer/reportviewer-formatting'], function(ReportFormatUtil) 
 
       getParameterUrl: function() {
         return CONTEXT_PATH + 'content/reporting';
-      },
-
-      getUrlParameters: function() {
-        var urlParams = {};
-        var e,
-            a = /\+/g,  // Regex for replacing addition symbol with a space
-            reg = /([^&=]+)=?([^&]*)/g,
-            decode = function (s) { return decodeURIComponent(s.replace(a, " ")); },
-            query = window.location.search.substring(1);
-
-        while (e = reg.exec(query)) {
-          var paramName = decode(e[1]);
-          var paramVal = decode(e[2]);
-
-          if (urlParams[paramName] !== undefined) {
-            paramVal = $.isArray(urlParams[paramName])
-              ? urlParams[paramName].concat([paramVal])
-              : [urlParams[paramName], paramVal];
-          }
-          urlParams[paramName] = paramVal;
-        }
-        return urlParams;
-      },
-
-      getLocale: function() {
-        var locale = this.getUrlParameters().locale;
-        if (locale && locale.length > 2) {
-          locale = locale.substring(0, 2);
-        }
-        return locale;
       },
 
       showMessageBox: function( message, dialogTitle, button1Text, button1Callback, button2Text, button2Callback, blocker ) {
