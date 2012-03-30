@@ -73,7 +73,7 @@
 
         pen.require(dependencies, function() {
           // Additional requires are in this block to prevent the loading of individual resources when we're working in compressed mode
-          pen.require(['cdf/Dashboards'], function() {
+          pen.require(['cdf/jquery.blockUI', 'cdf/Dashboards'], function() {
             // Override Dashboard's loading/glasspane while loading to omit the animation
             Dashboards.blockUIwithDrag = function() {
               $.blockUI.defaults.message = '';
