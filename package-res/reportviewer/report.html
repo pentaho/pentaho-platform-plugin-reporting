@@ -27,7 +27,7 @@
 	   * This is called when the formatter gwt module has been loaded. We depend on this so we'll load the prompt after 
 	   * the formatter has been loaded.
 	   */
-	  gwtModuleLoaded = function(moduleName) {
+	  var gwtModuleLoaded = function(moduleName) {
 	    if (moduleName === 'formatter') {
 	      // Once the GWT JSTextFormatter is loaded we can depend on other modules we need and then load the report viewer
 	      pen.require(['common-ui/util/util'], function() {
