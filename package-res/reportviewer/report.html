@@ -21,25 +21,28 @@
     <link rel="stylesheet" type="text/css" href="../../common-ui/resources/web/dojo/dijit/themes/pentaho/pentaho.css"/>
     <link rel="stylesheet" href="../../common-ui/resources/web/prompting/pentaho-prompting.css" type="text/css" />
     <link rel="stylesheet" href="reportviewer.css" type="text/css" />
-
+    
+    <script language="javascript" type="text/javascript">
+	  /**
+	   * This is called when the formatter gwt module has been loaded. We depend on this so we'll load the prompt after 
+	   * the formatter has been loaded.
+	   */
+	  gwtModuleLoaded = function(moduleName) {
+	    if (moduleName === 'formatter') {
+	      // Once the GWT JSTextFormatter is loaded we can depend on other modules we need and then load the report viewer
+	      pen.require(['common-ui/util/util'], function() {
+	        pen.require(['local'], function(local) {
+	          local.define('formatter');
+	        });
+	      });
+	    }
+	  }
+    </script>
+    <script type="text/javascript" src="../../common-ui/resources/web/formatter/formatter.nocache.js"></script>
+    
     <script language="javascript" type="text/javascript">
       // Provide somewhere for cdf/simile/ajax/scripts/json to inject itself into
       var SimileAjax = {};
-
-      /**
-       * This is called when the formatter gwt module has been loaded. We depend on this so we'll load the prompt after 
-       * the formatter has been loaded.
-       */
-      gwtModuleLoaded = function(moduleName) {
-        if (moduleName === 'formatter') {
-          // Once the GWT JSTextFormatter is loaded we can depend on other modules we need and then load the report viewer
-          pen.require(['common-ui/util/util'], function() {
-            pen.require(['local'], function(local) {
-              local.define('formatter');
-            });
-          });
-        }
-      }
 
       var dependencies = [];
       pen.require(['common-ui/util/util'], function(util) {
@@ -126,7 +129,6 @@
         });
       });
     </script>
-    <script type="text/javascript" src="../../common-ui/resources/web/formatter/formatter.nocache.js"></script>
   </head>
   <body class="tundra body styled">
     <div id="toppanel" class="pentaho-transparent">
