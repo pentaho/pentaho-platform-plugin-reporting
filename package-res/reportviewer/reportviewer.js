@@ -203,9 +203,15 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'reportvie
       },
 
       createRequiredHooks: function(promptPanel) {
-        if (window.reportViewer_openUrlInDialog || top.reportViewer_openUrlInDialog) {
-          return;
+        try{
+          if (window.reportViewer_openUrlInDialog || top.reportViewer_openUrlInDialog) {
+            return;
+          }
         }
+        catch(err){
+          return; // [PIR-543] - IE 9.0.5 throws a Permission Denied error
+        }
+
         if (!top.mantle_initialized) {
           top.mantle_openTab = function(name, title, url) {
             window.open(url, '_blank');
