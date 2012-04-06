@@ -203,6 +203,10 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'reportvie
       },
 
       createRequiredHooks: function(promptPanel) {
+    	
+    	// [PIR-543] - Allow new/refreshed reports to re-attach or override instance functions in the top window object
+    	// Top window functions may become orphaned due to content linking refresh or when a report tab in PUC is closed
+    	/*
         try{
           if (window.reportViewer_openUrlInDialog || top.reportViewer_openUrlInDialog) {
             return;
@@ -211,6 +215,7 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'reportvie
         catch(err){
           return; // [PIR-543] - IE 9.0.5 throws a Permission Denied error
         }
+		*/
 
         if (!top.mantle_initialized) {
           top.mantle_openTab = function(name, title, url) {
