@@ -859,6 +859,14 @@ public class ParameterXmlContentHandler
       return null;
     }
 
+    // PIR-652
+    if(value instanceof Object[]){
+      Object[] o = (Object[])value;
+      if(o.length == 1){
+        return String.valueOf(o[0]);
+      }
+    }
+
     final ValueConverter valueConverter = ConverterRegistry.getInstance().getValueConverter(type);
     if (valueConverter == null)
     {
