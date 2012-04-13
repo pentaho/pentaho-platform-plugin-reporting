@@ -72,6 +72,21 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'reportvie
           }
         },
 
+        /**
+         * Sets the report content visible if it should be:
+         *  - Prompts are valid
+         *  - The prompt panel allows auto-submit or the prompts were changed by the user
+         *
+         * We must always show the report content if we're not in 'REPORT' render mode because this area is used to provide
+         * feedback to the user.
+         *
+         * @param promptPanel The current prompt panel
+         * @param renderMode Current render mode: 'REPORT' or 'SUBSCRIBE'
+         */
+        updateReportContentVisibility: function (promptPanel, renderMode) {
+          this.showReportContent(renderMode === 'SUBSCRIBE' || (!promptPanel.paramDefn.promptNeeded && (promptPanel.paramDefn.allowAutoSubmit() || prompt.mode === 'MANUAL')));
+        },
+
         init: function(init, promptPanel) {
           if (!promptPanel.paramDefn.showParameterUI()) {
             // Hide the toolbar elements
@@ -79,7 +94,7 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'reportvie
             dojo.addClass('toolbar-parameterToggle', 'hidden');
           }
           this.showPromptPanel(promptPanel.paramDefn.showParameterUI());
-          this.showReportContent(!promptPanel.paramDefn.promptNeeded && (promptPanel.paramDefn.allowAutoSubmit() || prompt.mode === 'MANUAL'));
+          this.updateReportContentVisibility(promptPanel, 'REPORT');
           init.call(promptPanel);
           this.refreshPageControl(promptPanel);
         },
@@ -291,10 +306,13 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'reportvie
 
         url += params.join("&");
 
-        // Update page styling based on HTML output or not
+        // Update page styling based on HTML output or not and if we're not scheduling
         var proportionalWidth = options['htmlProportionalWidth'] == "true";
         var isHtml = options['output-target'].indexOf('html') != -1;
-        this.view.updatePageStyling(isHtml && !proportionalWidth);
+        var isSubscribe = renderMode === 'SUBSCRIBE';
+        this.view.updateReportContentVisibility(promptPanel, renderMode)
+        this.view.updatePageStyling(!isSubscribe && isHtml && !proportionalWidth);
+
 
         var iframe = $('#reportContent');
         iframe.attr("src", url);
