@@ -93,10 +93,32 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'reportvie
             dojo.addClass('toolbar-parameter-separator', 'hidden');
             dojo.addClass('toolbar-parameterToggle', 'hidden');
           }
+
+          init.call(promptPanel);
+          this.configureLayout(promptPanel);
+        },
+
+        /**
+         * Configure the report viewer's layout based on the loaded parameter definition.
+         *
+         * @param promptPanel A prompt panel whose settings should be used to configure the report viewer
+         */
+        configureLayout: function(promptPanel) {
           this.showPromptPanel(promptPanel.paramDefn.showParameterUI());
           this.updateReportContentVisibility(promptPanel, 'REPORT');
-          init.call(promptPanel);
           this.refreshPageControl(promptPanel);
+
+          if (!promptPanel.paramDefn.paginate && !promptPanel.paramDefn.showParameterUI()) {
+            // Hide the toolbar when it would be empty and unstyle the report so it's the only visible element when both the
+            // pagination controls and the parameter UI are hidden
+            dojo.addClass('toppanel', 'hidden');
+            this.updatePageStyling(false);
+          } else {
+            // Make sure the toolbar is visible
+            dojo.removeClass('toppanel', 'hidden');
+          }
+
+          this.resize();
         },
 
         showReportContent: function(visible) {
@@ -141,6 +163,7 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'reportvie
 
         togglePromptPanel: function() {
           this.showPromptPanel(dijit.byId('toolbar-parameterToggle').checked);
+          this.resize();
         },
 
         showPromptPanel: function(visible) {
@@ -151,7 +174,6 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'reportvie
             dijit.byId('toolbar-parameterToggle').set('checked', false);
             dojo.addClass('reportControlPanel', 'hidden');
           }
-          this.resize();
         },
 
         isPageStyled: function() {
