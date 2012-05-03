@@ -525,6 +525,7 @@ public class ParameterControllerPanel extends VerticalPanel
         final int length = attributes.getLength();
         for (int aidx = 0; aidx < length; aidx++)
         {
+          // todo support additional namespaces ..
           final Element item = (Element) attributes.item(aidx);
           final String namespace = item.getAttribute("namespace");
           final String attrName = item.getAttribute("name");
@@ -1143,8 +1144,7 @@ public class ParameterControllerPanel extends VerticalPanel
 
     if (promptNeeded)
     {
-      ReportViewerUtil.showMessageDialog
-          (messages, messages.getString("missingParameter", "Missing Parameter"), message); //$NON-NLS-1$ //$NON-NLS-2$
+      ReportViewerUtil.showMessageDialog(messages, messages.getString("missingParameter", "Missing Parameter"), message); //$NON-NLS-1$ //$NON-NLS-2$
     }
     return promptNeeded;
   }
@@ -1190,7 +1190,8 @@ public class ParameterControllerPanel extends VerticalPanel
     }
     catch (Exception e)
     {
-
+      // ignore
     }
   }
+
 }

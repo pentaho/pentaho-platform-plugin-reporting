@@ -6,6 +6,14 @@ import org.pentaho.reporting.engine.classic.core.cache.DataCacheKey;
 import org.pentaho.reporting.libraries.base.util.ObjectUtilities;
 import org.pentaho.reporting.platform.plugin.ParameterXmlContentHandler;
 
+/**
+ * Todo: Document me!
+ * <p/>
+ * Date: 03.02.11
+ * Time: 17:49
+ *
+ * @author Thomas Morgner.
+ */
 public class ReportCacheKey extends DataCacheKey
 {
   private String sessionId;

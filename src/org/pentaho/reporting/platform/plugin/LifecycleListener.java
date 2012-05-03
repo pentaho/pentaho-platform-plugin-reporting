@@ -9,7 +9,7 @@ public class LifecycleListener implements IPluginLifecycleListener
   public void init() throws PluginLifecycleException
   {
     // load reporting plugin
-    final ReportingSystemStartupListener startupListener = new ReportingSystemStartupListener();
+    ReportingSystemStartupListener startupListener = new ReportingSystemStartupListener();
     startupListener.startup(null);
   }
 

@@ -26,8 +26,8 @@ import org.pentaho.reporting.platform.plugin.messages.Messages;
 
 public class ExecuteReportContentHandler
 {
-  private static final String FORCED_BUFFERED_WRITING = "org.pentaho.reporting.engine.classic.core.modules.output.table.html.ForceBufferedWriting";
-
+  private static final String FORCED_BUFFERED_WRITING =
+      "org.pentaho.reporting.engine.classic.core.modules.output.table.html.ForceBufferedWriting";
   private static final Log logger = LogFactory.getLog(ExecuteReportContentHandler.class);
   private static final StagingMode DEFAULT = StagingMode.THRU;
 
@@ -61,13 +61,10 @@ public class ExecuteReportContentHandler
       return;
     }
 
-    final String fileContent = pathProvider.getStringParameter("path", null);//$NON-NLS-1$
-    if ("post".equalsIgnoreCase(request.getMethod()) ||//$NON-NLS-1$
-        (fileContent != null && fileContent.startsWith("/execute/")))//$NON-NLS-1$
+    final String fileContent = pathProvider.getStringParameter("path", null);
+    if ("post".equalsIgnoreCase(request.getMethod()) ||
+        fileContent != null && fileContent.startsWith("/execute/"))
     {
-      // we only do the export if the path starts with "/execute/". If there is no path information,
-      // the the user called the content generator directory. If there is some other path, then someone
-      // uses the wrong path.
       doExport(outputStream, reportDefinitionPath);
     }
     else
@@ -84,7 +81,7 @@ public class ExecuteReportContentHandler
       final String extension = MimeHelper.getExtension(mimeType);
 
       final String fileName = IOUtils.getInstance().stripFileExtension(reportDefinitionPath);
-      final String requestURI = getUrl(request, extension == null ? fileName + ".prpt" : fileName + extension);
+      final String requestURI = getUrl(request, fileName + extension);
       response.sendRedirect(requestURI);
     }
   }
@@ -127,18 +124,19 @@ public class ExecuteReportContentHandler
         contentGenerator.getObjectName(), getClass().getName(), MessageTypes.INSTANCE_START,
         contentGenerator.getInstanceId(), "", 0, contentGenerator); //$NON-NLS-1$
 
+    final Object rawSessionId = inputs.get(ParameterXmlContentHandler.SYS_PARAM_SESSION_ID);
+    if ((rawSessionId instanceof String) == false || "".equals(rawSessionId))
+    {
+      inputs.put(ParameterXmlContentHandler.SYS_PARAM_SESSION_ID, UUIDUtil.getUUIDAsString());
+    }
+
     String result = MessageTypes.INSTANCE_END;
     StagingHandler reportStagingHandler = null;
     try
     {
-      final Object rawSessionId = inputs.get(ParameterXmlContentHandler.SYS_PARAM_SESSION_ID);
-      if ((rawSessionId instanceof String) == false || "".equals(rawSessionId))
-      {
-        inputs.put(ParameterXmlContentHandler.SYS_PARAM_SESSION_ID, UUIDUtil.getUUIDAsString());
-      }
-
       // produce rendered report
       final SimpleReportingComponent reportComponent = new SimpleReportingComponent();
+      reportComponent.setSession(userSession);
       reportComponent.setReportDefinitionPath(reportDefinitionPath);
       reportComponent.setPaginateOutput(true);
       reportComponent.setDefaultOutputTarget(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE);
@@ -151,7 +149,7 @@ public class ExecuteReportContentHandler
       if (reportStagingHandler.isFullyBuffered())
       {
         // it is safe to disable the buffered writing for the report now that we have a
-        // extra buffering in place.
+        // extra buffering in place. 
         report.getReportConfiguration().setConfigProperty(FORCED_BUFFERED_WRITING, "false");
       }
 
@@ -227,7 +225,7 @@ public class ExecuteReportContentHandler
           // Send headers before we begin execution
           response.setHeader("Content-Disposition", "inline; filename=\"" + filename + extension + "\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
           response.setHeader("Content-Description", file.getFileName()); //$NON-NLS-1$
-          response.setHeader("Cache-Control", "private, max-age=0, must-revalidate");//$NON-NLS-1$
+          response.setHeader("Cache-Control", "private, max-age=0, must-revalidate");
         }
         if (reportComponent.execute())
         {
@@ -237,7 +235,7 @@ public class ExecuteReportContentHandler
             {
               response.setHeader("Content-Disposition", "inline; filename=\"" + filename + extension + "\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
               response.setHeader("Content-Description", file.getFileName()); //$NON-NLS-1$
-              response.setHeader("Cache-Control", "private, max-age=0, must-revalidate");//$NON-NLS-1$
+              response.setHeader("Cache-Control", "private, max-age=0, must-revalidate");
               response.setContentLength(reportStagingHandler.getWrittenByteCount());
             }
           }
@@ -265,7 +263,6 @@ public class ExecuteReportContentHandler
       {
         reportStagingHandler.close();
       }
-
       final long end = System.currentTimeMillis();
       AuditHelper.audit(userSession.getId(), userSession.getName(), reportDefinitionPath,
           contentGenerator.getObjectName(), getClass().getName(), result, contentGenerator.getInstanceId(),

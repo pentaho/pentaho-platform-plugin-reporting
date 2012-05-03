@@ -24,12 +24,9 @@ import org.pentaho.reporting.platform.plugin.messages.Messages;
 public class ReportFileMetaDataProvider extends SolutionFileMetaAdapter
 {
   private static final Log logger = LogFactory.getLog(ReportFileMetaDataProvider.class);
-  private ResourceManager resourceManager;
 
   public ReportFileMetaDataProvider()
   {
-    this.resourceManager = new ResourceManager();
-    this.resourceManager.registerDefaults();
   }
 
   public void setLogger(final ILogger logger)
@@ -38,6 +35,8 @@ public class ReportFileMetaDataProvider extends SolutionFileMetaAdapter
 
   private DocumentMetaData loadMetaData(final String reportDefinitionPath) throws ResourceException
   {
+    final ResourceManager resourceManager = new ResourceManager();
+    resourceManager.registerDefaults();
     final HashMap helperObjects = new HashMap();
     // add the runtime context so that PentahoResourceData class can get access
     // to the solution repo

@@ -10,10 +10,8 @@
   <xs:complexType name="parametersType">
     <xs:sequence>
       <xs:element type="parameterType" name="parameter" maxOccurs="unbounded" minOccurs="0"/>
-      <xs:element type="outputParameterType" name="output-parameter" maxOccurs="unbounded" minOccurs="0"/>
       <xs:element type="errorsType" name="errors" maxOccurs="unbounded" minOccurs="0"/>
     </xs:sequence>
-    <xs:attribute type="xs:boolean" name="show-parameter-ui" use="optional"/>
     <xs:attribute type="xs:boolean" name="is-prompt-needed" use="optional"/>
     <xs:attribute type="xs:boolean" name="paginate" use="optional"/>
     <xs:attribute type="xs:boolean" name="subscribe" use="optional"/>
@@ -24,11 +22,6 @@
     <xs:attribute type="xs:boolean" name="autoSubmitUI" use="optional"/>
   </xs:complexType>
 
-  <xs:complexType name="outputParameterType">
-    <xs:attribute type="xs:string" name="name" use="required"/>
-    <!-- whatever else you need -->
-  </xs:complexType>
-
   <xs:complexType name="parameterType">
     <xs:sequence>
       <xs:element type="attributeType" name="attribute" maxOccurs="1" minOccurs="0"/>
@@ -36,7 +29,7 @@
     </xs:sequence>
     <xs:attribute type="xs:string" name="name" use="required"/>
     <xs:attribute type="xs:string" name="type" use="required"/>
-    <xs:attribute type="xs:string" name="timezone-hint" use="required"/>
+    <xs:attribute type="xs:string" name="timezone-hint" use="optional"/>
     <xs:attribute type="xs:boolean" name="is-strict" use="optional"/> <!-- was is-strict -->
     <xs:attribute type="xs:boolean" name="is-multi-select" use="optional"/>
     <xs:attribute type="xs:boolean" name="is-mandatory" use="optional"/>

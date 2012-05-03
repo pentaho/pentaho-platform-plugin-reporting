@@ -885,45 +885,14 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    * @return the validation result containing any parameter validation errors.
    * @throws java.io.IOException if the report of this component could not be parsed.
    * @throws ResourceException   if the report of this component could not be parsed.
+   * @deprecated As of release 4.5, replaced by {@link ReportContentUtil#applyInputsToReportParameters(MasterReport, ParameterContext, Map, ValidationResult)}
    */
+  @Deprecated
   public ValidationResult applyInputsToReportParameters(final ParameterContext context,
                                                         ValidationResult validationResult)
       throws IOException, ResourceException
   {
-    if (validationResult == null)
-    {
-      validationResult = new ValidationResult();
-    }
-    // apply inputs to report
-    if (inputs != null)
-    {
-      final MasterReport report = getReport();
-      final ParameterDefinitionEntry[] params = report.getParameterDefinition().getParameterDefinitions();
-      final ReportParameterValues parameterValues = report.getParameterValues();
-      for (final ParameterDefinitionEntry param : params)
-      {
-        final String paramName = param.getName();
-        try
-        {
-          final Object computedParameter = ReportContentUtil.computeParameterValue(context, param, inputs.get(paramName));
-          parameterValues.put(param.getName(), computedParameter);
-          if (log.isInfoEnabled())
-          {
-            log.info(Messages.getInstance().getString("ReportPlugin.infoParameterValues",
-                paramName, String.valueOf(inputs.get(paramName)), String.valueOf(computedParameter)));
-          }
-        }
-        catch (Exception e)
-        {
-          if (log.isWarnEnabled())
-          {
-            log.warn(Messages.getInstance().getString("ReportPlugin.logErrorParametrization"), e);
-          }
-          validationResult.addError(paramName, new ValidationMessage(e.getMessage()));
-        }
-      }
-    }
-    return validationResult;
+    return ReportContentUtil.applyInputsToReportParameters(getReport(), context, inputs, validationResult);
   }
 
   private URL getDefinedResourceURL(final URL defaultValue)

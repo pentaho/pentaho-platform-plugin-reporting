@@ -1,51 +1,63 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ivy-module version="2.0" xmlns:m="http://ant.apache.org/ivy/maven">
     <info organisation="${ivy.artifact.group}" module="${ivy.artifact.id}" revision="${project.revision}" />
-    
+
     <configurations>
     	<conf name="default"/>
     	<conf name="runtime"/>
-    	<conf name="source" />    	
+    	<conf name="source" />
     	<conf name="test" visibility="private"/>
     	<conf name="codegen"       />
     	<conf name="codegen-mac"   extends="codegen"/>
     	<conf name="codegen-win"   extends="codegen"/>
     	<conf name="codegen-linux" extends="codegen"/>
+      <conf name="js"/>
     </configurations>
-    
+
     <publications>
 	    <artifact name="${ivy.artifact.id}" type="jar" conf="default"/>
 	    <artifact name="${ivy.artifact.id}" m:classifier="sources" type="source" ext="jar" conf="source"/>
-    </publications>   
-    
+    </publications>
+
     <dependencies defaultconf="default->default">
         <!--  internal dependencies -->
         <dependency org="${ivy.artifact.group}"     name="pentaho-reporting-engine-classic-extensions" rev="${dependency.pentaho-reporting.revision}"           changing="true" />
         <dependency org="${pentaho-platform.group}" name="pentaho-bi-platform-plugin-services" rev="${dependency.pentaho-platform.revision}"  changing="true" />
         <dependency org="${pentaho-platform.group}" name="pentaho-bi-platform-plugin-actions" rev="${dependency.pentaho-platform.revision}"  changing="true" />
+		<dependency org="${ivy.artifact.group}" name="pentaho-reporting-engine-classic-extensions-cda" rev="${dependency.pentaho-reporting.revision}" transitive="true" changing="true" />
 		<dependency org="${ivy.artifact.group}" name="pentaho-reporting-engine-classic-extensions-mondrian" rev="${dependency.pentaho-reporting.revision}" transitive="true" changing="true" />
 		<dependency org="${ivy.artifact.group}" name="pentaho-reporting-engine-classic-extensions-olap4j" rev="${dependency.pentaho-reporting.revision}" transitive="true" changing="true" />
 		<dependency org="${ivy.artifact.group}" name="pentaho-reporting-engine-classic-extensions-pmd" rev="${dependency.pentaho-reporting.revision}" transitive="true" changing="true" />
       <dependency org="${ivy.artifact.group}" name="pentaho-reporting-engine-classic-extensions-kettle" rev="${dependency.pentaho-reporting.revision}" transitive="true" changing="true" />
       <dependency org="${ivy.artifact.group}" name="pentaho-reporting-engine-classic-extensions-drill-down" rev="${dependency.pentaho-reporting.revision}" transitive="true" changing="true" />
-      <dependency org="${ivy.artifact.group}" name="pentaho-reporting-engine-classic-extensions-cda" rev="${dependency.pentaho-reporting.revision}" transitive="true" changing="true" />
+
+
 
         <!--  Codegen dependencies -->
-        <dependency org="com.google.gwt" name="gwt-user" rev="2.4.0" conf="codegen->default"/>
+        <dependency org="com.google.gwt" name="gwt-user" rev="2.0.3" conf="codegen->default"/>
         <!-- it doesn't matter what platform of gwt-dev we use here. GWT compile only cares about the API part of the jar -->
-        <dependency org="com.google.gwt" name="gwt-dev"  rev="2.4.0" conf="codegen->default"/>
+        <dependency org="com.google.gwt" name="gwt-dev"  rev="2.0.3" conf="codegen->default"/>
 		<dependency org="pentaho" name="pentaho-gwt-widgets" rev="${dependency.pentaho-gwt-widgets.revision}" conf="codegen->default" changing="true">
 			<artifact name="pentaho-gwt-widgets"/>
 			<artifact name="pentaho-gwt-widgets" type="source" ext="jar" m:classifier="sources"/>
 		</dependency>
 		<dependency org="com.google.code.gwtx" name="gwtx" rev="1.5.2" conf="codegen->default"/>
-        <dependency org="com.google.gwt" name="gwt-incubator" rev="2.1.0" conf="codegen->default"/>
-        <dependency org="com.allen_sauer" name="gwt-dnd" rev="3.1.1"       conf="codegen->default"/>
+        <dependency org="com.google.gwt" name="gwt-incubator" rev="2.0.1" conf="codegen->default"/>
+        <dependency org="com.allen_sauer" name="gwt-dnd" rev="3.0.1"       conf="codegen->default"/>
 
         <!--  test dependencies -->
         <dependency org="${pentaho-platform.group}" name="pentaho-bi-platform-test-foundation" rev="${dependency.pentaho-platform.revision}"  changing="true" conf="test->default"/>
         <dependency org="junit" name="junit" rev="4.4" conf="test->default" />
         <dependency org="hsqldb" name="hsqldb" rev="1.8.0" conf="test->default" transitive="false"/>
-    </dependencies>
 
- </ivy-module>
+
+      <!-- JavaScript dependencies -->
+      <dependency org="pentaho" name="common-ui" rev="${dependency.common-ui.revision}" conf="js->default" transitive="false" changing="true">
+        <artifact name="common-ui" type="js" ext="zip" m:classifier="js"/>
+      </dependency>
+
+      <dependency org="pentaho" name="pentaho-cdf" rev="${dependency.pentaho-cdf-plugin.revision}" conf="js->default" transitive="false" changing="true">
+        <artifact name="pentaho-cdf" type="js" ext="zip" m:classifier="js"/>
+      </dependency>
+    </dependencies>
+</ivy-module>

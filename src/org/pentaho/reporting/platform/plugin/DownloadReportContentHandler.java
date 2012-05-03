@@ -10,6 +10,14 @@ import org.pentaho.platform.api.engine.ISolutionFile;
 import org.pentaho.platform.api.repository.ISolutionRepository;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 
+/**
+ * Todo: Document me!
+ * <p/>
+ * Date: 22.07.2010
+ * Time: 15:57:44
+ *
+ * @author Thomas Morgner.
+ */
 public class DownloadReportContentHandler
 {
   private IPentahoSession userSession;

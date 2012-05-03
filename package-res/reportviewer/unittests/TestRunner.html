@@ -1,0 +1,110 @@
+<html>
+    <head>
+
+        <!-- start customized section -->
+        <title>Pentaho Reporting Client-Side Unit Tests</title>
+        <!-- end customized section -->
+
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+        <!-- start customized section: fixup URLs if necessary -->
+        <link rel="stylesheet" type="text/css" href="../../../common-ui/resources/web/dojo/util/doh/runner.css"/>    
+        <link rel="stylesheet" type="text/css" href="../../../common-ui/resources/web/dojo/dijit/themes/pentaho/pentaho.css"/>
+        <script type="text/javascript">
+            //<![CDATA[
+            window.dojoUrl = "../../../common-ui/resources/web/dojo/dojo/dojo-all.js.uncompressed.js";
+            //]]>
+        </script>
+        <!-- end url fixup section -->
+
+        <!-- start RequireJS scripts -->
+        <script type="text/javascript" src="../../../../js/require.js"></script>
+        <script type="text/javascript" src="../../../../js/require-cfg.js"></script>
+        <!-- end RequireJS scripts -->
+
+
+        <!-- start customized section: configure the dojo modules here -->
+        <script type="text/javascript">
+            //<![CDATA[
+                var djConfig = { 
+                    modulePaths: { },
+                    baseUrl: '../../../common-ui/resources/web/dojo/dojo/',
+                    parseOnLoad: false
+                };
+            //]]>
+        </script>
+        <!-- enddojo section -->
+
+        <!-- start customized section: fixup URLs if necessary -->
+        <script type="text/javascript" src="../../../common-ui/resources/web/dojo/dojo/dojo-all.js.uncompressed.js"></script>
+        <!-- end url fixup section -->
+
+        <script type="text/javascript">
+            //<![CDATA[
+                dojo.ready(doLoad);
+
+                function doLoad() {
+                    dojo.parser.parse();
+                    setupTestRunner();
+
+                    pen.define('dojo');
+                }
+
+                gwtModuleLoaded = function(module) {
+                    if (module === 'formatter') {
+                        // Load the tests
+                        pen.require([
+                          'reportviewer/unittests/reportviewer-tests',
+                          'reportviewer/unittests/reportviewer-formatting-tests'
+                        ]);
+                    }
+                }
+            //]]>
+        </script>
+
+        <!-- start customized section: reference your dependencies here -->
+        <script type="text/javascript" src="webcontext.js?context=reporting-tests"></script>
+        <!-- start prompting dependencies -->
+        <script type="text/javascript" src="../../../common-ui/resources/web/formatter/formatter.nocache.js"></script>
+        <!--
+        <script language="javascript" type="text/javascript" src="../../../pentaho-cdf/js/jquery.ui.js"></script>
+        <script language="javascript" type="text/javascript" src="../../../pentaho-cdf/js/jquery.blockUI.js"></script>
+        <script language="javascript" type="text/javascript" src="../../../pentaho-cdf/js/Base.js"></script>
+        <script language="javascript" type="text/javascript" src="../../../pentaho-cdf/js/Dashboards.js"></script>
+        <script language="javascript" type="text/javascript" src="../../../pentaho-cdf/js/CoreComponents.js"></script>
+        -->
+        <!-- end prompting dependencies -->
+        <!--
+        <script type="text/javascript" src="../../../common-ui/resources/web/prompting/pentaho-prompting.js"></script>
+        <script type="text/javascript" src="../../../common-ui/resources/web/prompting/pentaho-prompting-builders.js"></script>
+        <script type="text/javascript" src="../../../common-ui/resources/web/prompting/pentaho-prompting-components.js"></script>
+        -->
+
+        <!-- end dependencies -->
+
+        <!-- start customized section: reference your instrumented code or the code you want tested -->
+        <!--
+        <script type='text/javascript' djConfig='isDebug: true' src="../reportviewer.js"></script>
+        <script type='text/javascript' djConfig='isDebug: true' src="../reportviewer-prompt.js"></script>
+        <script type='text/javascript' djConfig='isDebug: true' src="../reportviewer-formatting.js"></script>
+        <script type='text/javascript' djConfig='isDebug: true' src="../reportviewer-timeutil.js"></script>
+        -->
+        <!-- end instrumented code -->
+
+        <!-- start customized section: fixup URLs if necessary -->
+        <script language="javascript" type="text/javascript" src="../../../common-ui/resources/web/dojo/util/doh/runner.js"></script>
+        <script language="javascript" type="text/javascript" src="../../../common-ui/resources/web/dojo/util/doh/runner2.js"></script>
+        <!-- end url fixup section -->
+
+        <!-- start customized section: reference your unit test files here -->
+        <!--
+        <script type='text/javascript' djConfig='isDebug: true' src='reportviewer-tests.js'></script>
+        <script type='text/javascript' djConfig='isDebug: true' src='reportviewer-formatting-tests.js'></script>
+        -->
+        <!-- end unit tests section -->
+
+    </head>
+    <body style="padding:10px; background-color: white">
+    </body>
+
+</html>

@@ -7,6 +7,14 @@ import org.pentaho.reporting.libraries.formula.typing.Type;
 import org.pentaho.reporting.libraries.formula.typing.coretypes.AnyType;
 import org.pentaho.reporting.libraries.formula.typing.coretypes.TextType;
 
+/**
+ * Todo: Document me!
+ * <p/>
+ * Date: 14.01.11
+ * Time: 17:07
+ *
+ * @author Thomas Morgner.
+ */
 public class ContentLinkFunctionDescription extends AbstractFunctionDescription
 {
   public ContentLinkFunctionDescription()

@@ -28,6 +28,14 @@ import org.pentaho.reporting.platform.plugin.repository.PentahoNameGenerator;
 import org.pentaho.reporting.platform.plugin.repository.PentahoURLRewriter;
 import org.pentaho.reporting.platform.plugin.repository.ReportContentRepository;
 
+/**
+ * Todo: Document me!
+ * <p/>
+ * Date: 02.02.11
+ * Time: 17:27
+ *
+ * @author Thomas Morgner.
+ */
 public class StreamContentRepoHtmlOutput extends StreamHtmlOutput
 {
   public StreamContentRepoHtmlOutput(final String contentHandlerPattern)

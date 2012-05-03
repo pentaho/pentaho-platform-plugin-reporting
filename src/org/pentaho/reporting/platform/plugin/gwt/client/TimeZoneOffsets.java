@@ -2,7 +2,15 @@ package org.pentaho.reporting.platform.plugin.gwt.client;
 
 import java.util.HashMap;
 
-/** @noinspection HardCodedStringLiteral*/
+/**
+ * Todo: Document me!
+ * <p/>
+ * Date: 27.07.2010
+ * Time: 16:10:24
+ *
+ * @author Thomas Morgner.
+ * @noinspection HardCodedStringLiteral
+ */
 public class TimeZoneOffsets
 {
   private static TimeZoneOffsets instance;
@@ -619,7 +627,7 @@ public class TimeZoneOffsets
 
   /**
    * Returns the timezone offset in minutes.
-   *
+   * 
    * @param timezone
    * @return
    */

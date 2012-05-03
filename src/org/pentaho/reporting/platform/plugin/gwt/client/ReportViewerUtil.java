@@ -22,6 +22,14 @@ import org.pentaho.gwt.widgets.client.utils.i18n.ResourceBundle;
 import org.pentaho.gwt.widgets.client.utils.string.StringTokenizer;
 import org.pentaho.gwt.widgets.client.utils.string.StringUtils;
 
+/**
+ * Todo: Document me!
+ * <p/>
+ * Date: 22.07.2010
+ * Time: 11:11:15
+ *
+ * @author Thomas Morgner.
+ */
 public class ReportViewerUtil
 {
   private ReportViewerUtil()
@@ -458,7 +466,7 @@ public class ReportViewerUtil
   {
     return text == null || "".equals(text);
   }
-  
+
   public static TextFormat createTextFormat(final String pattern, final String dataType)
   {
     if (StringUtils.isEmpty(pattern))
@@ -560,7 +568,6 @@ public class ReportViewerUtil
     }
   }
 
-
   public static Date parseDate(final Parameter parameterElement, final String text)
   {
     final String timezoneMode = parameterElement.getAttribute("timezone");
@@ -624,7 +631,7 @@ public class ReportViewerUtil
     {
       return null;
     }
-    
+
     if (value instanceof Date)
     {
       final Date d = (Date) value;

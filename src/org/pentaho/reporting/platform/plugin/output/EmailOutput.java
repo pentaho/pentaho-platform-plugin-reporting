@@ -33,10 +33,12 @@ public class EmailOutput implements ReportOutputHandler
     return this;
   }
 
-  public int paginate(MasterReport report, int yieldRate) throws ReportProcessingException, IOException, ContentIOException {
+  public int paginate(final MasterReport report,
+                      final int yieldRate) throws ReportProcessingException, IOException, ContentIOException
+  {
     return 0;
   }
-  
+
   public int generate(final MasterReport report,
                           final int acceptedPage,
                           final OutputStream outputStream,

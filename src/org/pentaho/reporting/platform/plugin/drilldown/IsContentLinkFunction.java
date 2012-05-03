@@ -7,6 +7,7 @@ import org.pentaho.reporting.engine.classic.core.ReportEnvironment;
 import org.pentaho.reporting.engine.classic.core.function.ReportFormulaContext;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlTableModule;
 import org.pentaho.reporting.libraries.base.util.CSVTokenizer;
+import org.pentaho.reporting.libraries.base.util.StringUtils;
 import org.pentaho.reporting.libraries.formula.EvaluationException;
 import org.pentaho.reporting.libraries.formula.FormulaContext;
 import org.pentaho.reporting.libraries.formula.LibFormulaErrorValue;
@@ -17,6 +18,14 @@ import org.pentaho.reporting.libraries.formula.typing.ArrayCallback;
 import org.pentaho.reporting.libraries.formula.typing.Type;
 import org.pentaho.reporting.libraries.formula.typing.coretypes.LogicalType;
 
+/**
+ * Todo: Document me!
+ * <p/>
+ * Date: 21.12.10
+ * Time: 15:00
+ *
+ * @author Thomas Morgner.
+ */
 public class IsContentLinkFunction implements Function
 {
   public IsContentLinkFunction()
@@ -85,12 +94,12 @@ public class IsContentLinkFunction implements Function
     }
 
     final ReportEnvironment environment = reportFormulaContext.getRuntime().getProcessingContext().getEnvironment();
-    final Object clText = environment.getEnvironmentProperty("contentLink");
-    if (clText == null)
+    final String clText = environment.getEnvironmentProperty("contentLink");
+    if(StringUtils.isEmpty(clText))
     {
       return Boolean.FALSE;
     }
-    final CSVTokenizer csvTokenizer = new CSVTokenizer(String.valueOf(clText), ",", "\"");
+    final CSVTokenizer csvTokenizer = new CSVTokenizer(clText, ",", "\"");
     while (csvTokenizer.hasMoreTokens())
     {
       final String el = csvTokenizer.nextToken();

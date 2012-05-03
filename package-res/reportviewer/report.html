@@ -1,0 +1,161 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns:pho="http:/www.pentaho.com">
+<head>
+    <title>Report Web Viewer</title>
+    
+    <link rel="shortcut icon" href="images/favicon.ico" />
+
+    <!-- Include CDF styles first to make sure they can be properly overridden -->
+    <link rel="stylesheet" href="../../pentaho-cdf/js/cdf.css" type="text/css" />
+
+    <script type="text/javascript" src="../../../js/require.js"></script>
+    <script type="text/javascript" src="../../../js/require-cfg.js"></script>
+
+    <script language="javascript" type="text/javascript" src="webcontext.js?context=reporting"></script>
+
+    <link rel="stylesheet" href="../../pentaho-cdf/js/jquery.tooltip.css" type="text/css" />
+    <link rel="stylesheet" href="../../pentaho-cdf/js/jquery.jdMenu.css" type="text/css" />
+    <link rel="stylesheet" href="../../pentaho-cdf/js/jquery.jdMenu.slate.css" type="text/css" />
+    <link rel="stylesheet" href="../../pentaho-cdf/js/jquery-impromptu.css" type="text/css" />
+
+    <link rel="stylesheet" type="text/css" href="../../common-ui/resources/web/dojo/dijit/themes/pentaho/pentaho.css"/>
+    <link rel="stylesheet" href="../../common-ui/resources/web/prompting/pentaho-prompting.css" type="text/css" />
+    <link rel="stylesheet" href="reportviewer.css" type="text/css" />
+    
+    <script language="javascript" type="text/javascript">
+	  /**
+	   * This is called when the formatter gwt module has been loaded. We depend on this so we'll load the prompt after 
+	   * the formatter has been loaded.
+	   */
+	  var gwtModuleLoaded = function(moduleName) {
+	    if (moduleName === 'formatter') {
+	      // Once the GWT JSTextFormatter is loaded we can depend on other modules we need and then load the report viewer
+	      pen.require(['common-ui/util/util'], function() {
+	        pen.require(['local'], function(local) {
+	          local.define('formatter');
+	        });
+	      });
+	    }
+	  }
+    </script>
+    <script type="text/javascript" src="../../common-ui/resources/web/formatter/formatter.nocache.js"></script>
+    
+    <script language="javascript" type="text/javascript">
+      // Provide somewhere for cdf/simile/ajax/scripts/json to inject itself into
+      var SimileAjax = {};
+
+      var dependencies = [];
+      pen.require(['common-ui/util/util'], function(util) {
+        // Load the compressed dojo if we're not in debug mode
+        if( util.getUrlParameters().jsset != 'orig' ) {
+          $.extend(djConfig, {
+            // Set up locale for Dojo
+            locale: util.getLocale(),
+            modulePaths: {
+              'pentaho.common': '../../../../common-ui/resources/web/dojo/pentaho/common'
+            },
+            parseOnLoad: false,
+            baseUrl: 'dojo/dojo/'
+          });
+          dependencies.push('dojo/dojo/dojo-reportviewer.js');
+          dependencies.push('reportviewer-app.js'); 
+        } else {
+          $.extend(djConfig, {
+            // Set up locale for Dojo
+            locale: util.getLocale(),
+            modulePaths: {
+                'pentaho.common': '../pentaho/common',
+                'pentaho.reportviewer': '../../../../../reporting/reportviewer/dojo/pentaho/reportviewer'
+            },
+            parseOnLoad: false,
+            baseUrl: '../../common-ui/resources/web/dojo/dojo/'
+          });
+          dependencies.push('../../common-ui/resources/web/dojo/dojo/dojo-all.js');
+          dependencies.push('reportviewer-main-module'); 
+        }
+
+        pen.require(dependencies, function() {
+          // Additional requires are in this block to prevent the loading of individual resources when we're working in compressed mode
+          pen.require(['cdf/jquery.blockUI', 'cdf/Dashboards'], function() {
+            // Override Dashboard's loading/glasspane while loading to omit the animation
+            Dashboards.blockUIwithDrag = function() {
+              $.blockUI.defaults.message = '';
+              $.blockUI.defaults.css.left = '0%';
+              $.blockUI.defaults.css.top = '0%';
+              $.blockUI.defaults.css.marginLeft = '85px';
+              $.blockUI.defaults.css.width = '100%';
+              $.blockUI.defaults.css.height = '100%';
+              $.blockUI.defaults.css.opacity = '1';
+              $.blockUI.defaults.css.backgroundColor = '#ffffcc';
+              $.blockUI.defaults.css['-webkit-border-radius'] = '10px'; 
+              $.blockUI.defaults.css['-moz-border-radius'] = '10px';
+          
+              $.blockUI.defaults.overlayCSS.backgroundColor = '#000000';
+              $.blockUI.defaults.overlayCSS.opacity = '0.6';
+              $.blockUI.defaults.overlayCSS.cursor = 'wait';
+              // Place it below the message box
+              $.blockUI.defaults.overlayCSS['z-index'] = '900';
+                // There's an issue with BlockUI and IE 8. As we don't even use this feature from CDF, it's hidden here.
+                // $.blockUI.defaults.showOverlay = false;
+              $.blockUI();
+            }
+          });
+
+          // Load and launch the report viewer application
+          pen.require(['local!dojo', 'local!formatter', 'cdf/Dashboards', 'reportviewer/reportviewer', 'reportviewer/reportviewer-prompt'], function(dojo, formatter, dashboards, Viewer, Prompt) {
+            window.prompt = new Prompt();
+            window.viewer = new Viewer(prompt);
+            window.prompt.load();
+
+            $(window).resize(function() {
+              viewer.view.resize();
+            });
+          });
+
+          dojo.require('dojo.parser');
+          dojo.require('pentaho.common.Messages');
+          dojo.require('pentaho.common.MessageBox');
+          dojo.require('pentaho.common.Menu');
+          dojo.require('pentaho.common.MenuItem');
+          dojo.require('pentaho.common.PageControl');
+
+          dojo.ready(function() {
+            dojo.parser.parse();
+            // Dojo is now available, modules depending on it may now load.
+            pen.require(['local'], function(local) {
+              local.define('dojo');
+            });
+          });
+        });
+      });
+    </script>
+  </head>
+  <body class="tundra body styled">
+    <div id="toppanel" class="pentaho-transparent hidden">
+      <div id="toppanelinner" >
+        <div id="toolbarlinner2" dojoType="dijit.Toolbar" class="pentaho-rounded-panel2-shadowed pentaho-padding-sm pentaho-shine pentaho-background">
+          <div id="toolbar" dojoType="dijit.Toolbar" >
+            <div id="pageControl" dojoType="pentaho.common.PageControl" class="dijitInline"></div>
+            <span id="toolbar-parameter-separator" dojoType="dijit.ToolbarSeparator"></span>
+            <div id="toolbar-parameterToggle" dojoType="dijit.form.ToggleButton" iconClass="dijitEditorIcon dijitEditorIconParameters" showLabel="false">Parameters</div>
+          </div>
+        </div>
+
+        <div id="reportControlPanel" class="hidden pentaho-rounded-panel-bottom-lr pentaho-shadow">
+          <div id="promptPanel" class="pentaho-rounded-panel-bottom-lr"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="reportArea" class="pentaho-transparent hidden" scrollexception="true">
+      <div id="reportPageOutline" class="pentaho-rounded-panel2-shadowed pentaho-padding-lg pentaho-background">
+        <iframe id="reportContent" frameborder="0"></iframe>
+      </div>
+    </div>
+
+    <div id="messageBox" dojoType="pentaho.common.MessageBox" title="" style="width:400px; display:none;">
+    </div>
+  </body>
+</table>
+  </body>
+</html>

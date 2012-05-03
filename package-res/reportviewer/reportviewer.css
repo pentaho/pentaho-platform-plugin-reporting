@@ -1,0 +1,227 @@
+html { overflow: hidden;}
+
+.body {
+    overflow: hidden;
+}
+
+.table {
+    border: 1px solid #808080;
+}
+
+#reportControlPanel {
+  max-height: 370px;
+  margin: 0px 10px 10px 10px;
+  background-color: #d4d6db;
+  border: 1px solid rgba(0, 0, 0, 0.59375);
+}
+
+.styled >* #reportControlPanel {
+  margin: 0px 10px 0px 10px;
+}
+
+div.prompt-panel {
+  max-height: 300px;
+}
+
+#reportArea {
+  padding: 8px 0 8px 0;
+  overflow: auto;
+  /* Required to be position: relative for IE7 so that the reportPageOutline can be properly scrolled and will not overflow. */
+  position: relative;
+}
+
+.dj_ie7 #reportArea {
+ top: 8px;
+}
+
+#reportPageOutline {
+  position: relative;
+  margin-left: auto;
+  margin-right: auto;
+  width: 700px;
+}
+
+#reportPageSpacer {
+  height: 12px;
+}
+
+#reportContent {
+  background-color: #ffffff;
+}
+
+.styled >* #reportContent {
+  padding: 10px 10px 10px 2px;
+  border: black 1px solid;
+  height: 500px;
+  /* Initial width, will be updated by onresize() */
+  width: 686px; /* 700 - (padding + border) */
+}
+
+.hidden {
+	display: none !important;
+}
+
+.dialog-content {
+  height: auto;
+}
+
+.dijitDialogUnderlay { opacity: 0.0; cursor: wait;}
+
+.tundra .dijitTabInnerDiv {
+    padding-left: 3px;
+    padding-right: 3px;
+}
+
+.tundra .dijitTooltipContainer {
+    border: 0px;
+    padding: 0px;
+    background: none;
+}
+
+.tundra .dijitToolbar {
+  height: 22px;
+}
+
+.plainDijitToolbar {
+    background: none;
+    border: 0px;
+}
+
+.dijitEditorIconParameters {
+  background: url("../../common-ui/resources/themes/images/options.png") 1px 1px no-repeat !important;
+}
+
+.dijitTooltipBelow {
+	/* leave room for arrow above content */
+	padding-top: 25px;
+}
+
+.dijitTooltipAbove {
+	/* leave room for arrow below content */
+	padding-bottom: 14px;
+}
+
+.dijitTooltipABRight .dijitTooltipConnector {
+	/* above or below tooltip, but the arrow appears on the right,
+		and the right edges of target and tooltip are aligned rather than the left */
+	left: auto !important;
+	right: 10px;
+}
+
+.dijitTooltipBelow .dijitTooltipConnector {
+	/* the arrow piece for tooltips below an element */
+	top: 0;
+	left: 5px;
+	background:url("images/connector_top.png") no-repeat top left;
+	width:36px;
+	height:17px;
+}
+
+.dj_ie  .dijitTooltipBelow .dijitTooltipConnector {
+	/* use gif for IE7 too, due to png rendering problems on fade-in (see http://trac.dojotoolkit.org/ticket/6555) */
+	background-image: url("images/connector_top.gif");
+}
+
+.dijitTooltipAbove .dijitTooltipConnector {
+	/* the arrow piece for tooltips above an element */
+	bottom: 0;
+	left: 5px;
+	background:url("images/connector_bottom.png") no-repeat top left;
+	width:36px;
+	height:17px;
+}
+
+.dj_ie  .dijitTooltipAbove .dijitTooltipConnector {
+	background-image: url("images/connector_bottom.gif");
+}
+.dj_ie6  .dijitTooltipAbove .dijitTooltipConnector {
+	bottom: -3px;
+}
+
+.dijitTooltipLeft {
+	padding-right: 14px;
+}
+
+.dijitTooltipLeft .dijitTooltipConnector {
+	/* the arrow piece for tooltips to the left of an element, bottom borders aligned */
+	right: 0;
+	background:url("images/connector_right.png") no-repeat top left;
+	width:17px;
+	height:36px;
+}
+
+.dj_ie  .dijitTooltipLeft .dijitTooltipConnector {
+	background-image: url("images/connector_right.gif");
+}
+
+.dijitTooltipRight {
+	padding-left: 14px;
+}
+
+.dijitTooltipRight .dijitTooltipConnector {
+	/* the arrow piece for tooltips to the right of an element, bottom borders aligned */
+	left: 0;
+	background:url("images/connector_left.png") no-repeat top left;
+	width:17px;
+	height:36px;
+}
+
+.tundra .dijitMenu,
+.tundra .dijitMenuBar {
+	border: 1px solid #000000;
+	margin: 0;
+	padding: 0;
+	background-color: #ffffff;
+}
+
+.tundra .pentaho-MenuItemSelected {
+	background-color: #ff0000;
+	color:#fff;
+}
+
+.tundra .dijitMenuPassive .dijitMenuItemHover,
+.tundra .dijitMenuItemSelected {
+	background-color: #87df27;
+	color:#000000;
+}
+
+.tundra .dijitTextBox {
+  background-color: white;
+}
+
+.tundra .dijitCheckedMenuItemIcon {
+	background-image: url('/pentaho-style/style/images/checkbox-empty.png');
+	background-position: 0px;
+}
+
+.dj_ie6 .tundra .dijitCheckedMenuItemIcon {
+	background-image: url('/pentaho-style/style/images/checkbox-empty.png');
+}
+
+.tundra .dijitCheckedMenuItemChecked .dijitCheckedMenuItemIcon {
+	background-image: url('/pentaho-style/style/images/checkbox.png');
+	background-position: 0px;
+}
+
+.selected {
+    background-color: lime;
+    color: #000000;
+}
+
+.closeIcon {
+    width: 16px;
+    height: 16px;
+	background:url("../../../common-ui/resources/themes/images/close_sm_disabled.png") no-repeat;
+    display:inline-block;
+}
+
+.closeIconHover {
+    width: 16px;
+    height: 16px;
+    background:url("../../../common-ui/resources/themes/images/close_sm.png") no-repeat;
+}
+
+.pentaho-shadow-padding {
+    padding-right: 8px; 
+    padding-bottom: 8px;
+}

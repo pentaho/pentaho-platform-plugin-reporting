@@ -1,16 +1,16 @@
 /*
- * Copyright 2007 Pentaho Corporation.  All rights reserved. 
- * This software was developed by Pentaho Corporation and is provided under the terms 
- * of the Mozilla Public License, Version 1.1, or any later version. You may not use 
- * this file except in compliance with the license. If you need a copy of the license, 
- * please go to http://www.mozilla.org/MPL/MPL-1.1.txt. The Original Code is the Pentaho 
+ * Copyright 2007 Pentaho Corporation.  All rights reserved.
+ * This software was developed by Pentaho Corporation and is provided under the terms
+ * of the Mozilla Public License, Version 1.1, or any later version. You may not use
+ * this file except in compliance with the license. If you need a copy of the license,
+ * please go to http://www.mozilla.org/MPL/MPL-1.1.txt. The Original Code is the Pentaho
  * BI Platform.  The Initial Developer is Pentaho Corporation.
  *
- * Software distributed under the Mozilla Public License is distributed on an "AS IS" 
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or  implied. Please refer to 
+ * Software distributed under the Mozilla Public License is distributed on an "AS IS"
+ * basis, WITHOUT WARRANTY OF ANY KIND, either express or  implied. Please refer to
  * the license for the specific language governing your rights and limitations.
  *
- * @created Apr 6, 2009 
+ * @created Apr 6, 2009
  * @author wseyler
  */
 
@@ -25,7 +25,6 @@ import org.pentaho.platform.api.data.IDatasourceService;
 import org.pentaho.platform.api.engine.ObjectFactoryException;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.core.modules.misc.datafactory.sql.ConnectionProvider;
-import org.pentaho.reporting.libraries.base.util.StringUtils;
 
 /**
  * @author wseyler
@@ -63,7 +62,7 @@ public class PentahoJndiDatasourceConnectionProvider implements ConnectionProvid
       {
         final String realUser;
         final String realPassword;
-        if (StringUtils.isEmpty(this.username) == false)
+        if (username != null)
         {
           realUser = username;
         }
@@ -71,7 +70,7 @@ public class PentahoJndiDatasourceConnectionProvider implements ConnectionProvid
         {
           realUser = user;
         }
-        if (StringUtils.isEmpty(this.password) == false)
+        if (this.password != null)
         {
           realPassword = this.password;
         }
@@ -80,13 +79,13 @@ public class PentahoJndiDatasourceConnectionProvider implements ConnectionProvid
           realPassword = password;
         }
 
-        if (StringUtils.isEmpty(realUser))
+        if (realUser == null)
         {
           final Connection connection = dataSource.getConnection();
           if (connection == null)
           {
             datasourceService.clearDataSource(jndiName);
-            throw new SQLException(Messages.getInstance().getErrorString("PentahoDatasourceConnectionProvider.ERROR_0001_INVALID_CONNECTION", jndiName)); //$NON-NLS-1$
+            throw new SQLException(Messages.getErrorString("PentahoDatasourceConnectionProvider.ERROR_0001_INVALID_CONNECTION", jndiName)); //$NON-NLS-1$
           }
           return connection;
         }
@@ -107,7 +106,7 @@ public class PentahoJndiDatasourceConnectionProvider implements ConnectionProvid
           if (connection == null)
           {
             datasourceService.clearDataSource(jndiName);
-            throw new SQLException(Messages.getInstance().getErrorString("PentahoDatasourceConnectionProvider.ERROR_0001_INVALID_CONNECTION", jndiName)); //$NON-NLS-1$
+            throw new SQLException(Messages.getErrorString("PentahoDatasourceConnectionProvider.ERROR_0001_INVALID_CONNECTION", jndiName)); //$NON-NLS-1$
           }
           return connection;
         }
@@ -118,7 +117,7 @@ public class PentahoJndiDatasourceConnectionProvider implements ConnectionProvid
           {
             // clear datasource cache
             datasourceService.clearDataSource(jndiName);
-            throw new SQLException(Messages.getInstance().getErrorString("PentahoDatasourceConnectionProvider.ERROR_0001_INVALID_CONNECTION", jndiName)); //$NON-NLS-1$
+            throw new SQLException(Messages.getErrorString("PentahoDatasourceConnectionProvider.ERROR_0001_INVALID_CONNECTION", jndiName)); //$NON-NLS-1$
           }
           return nativeConnection;
         }
@@ -127,7 +126,7 @@ public class PentahoJndiDatasourceConnectionProvider implements ConnectionProvid
       {
         // clear datasource cache
         datasourceService.clearDataSource(jndiName);
-        throw new SQLException(Messages.getInstance().getErrorString("PentahoDatasourceConnectionProvider.ERROR_0001_INVALID_CONNECTION", jndiName)); //$NON-NLS-1$
+        throw new SQLException(Messages.getErrorString("PentahoDatasourceConnectionProvider.ERROR_0001_INVALID_CONNECTION", jndiName)); //$NON-NLS-1$
       }
     }
     catch (Exception e)
@@ -136,11 +135,11 @@ public class PentahoJndiDatasourceConnectionProvider implements ConnectionProvid
       {
         final IDatasourceService datasourceService = PentahoSystem.getObjectFactory().get(IDatasourceService.class, null);
         datasourceService.clearDataSource(jndiName);
-        throw new SQLException(Messages.getInstance().getErrorString("PentahoDatasourceConnectionProvider.ERROR_0002_UNABLE_TO_FACTORY_OBJECT", jndiName, e.getLocalizedMessage())); //$NON-NLS-1$
+        throw new SQLException(Messages.getErrorString("PentahoDatasourceConnectionProvider.ERROR_0002_UNABLE_TO_FACTORY_OBJECT", jndiName, e.getLocalizedMessage())); //$NON-NLS-1$
       }
       catch (ObjectFactoryException objface)
       {
-        throw new SQLException(Messages.getInstance().getErrorString("PentahoDatasourceConnectionProvider.ERROR_0002_UNABLE_TO_FACTORY_OBJECT", jndiName, e.getLocalizedMessage())); //$NON-NLS-1$
+        throw new SQLException(Messages.getErrorString("PentahoDatasourceConnectionProvider.ERROR_0002_UNABLE_TO_FACTORY_OBJECT", jndiName, e.getLocalizedMessage())); //$NON-NLS-1$
       }
     }
   }

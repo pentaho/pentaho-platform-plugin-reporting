@@ -141,7 +141,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
     {
       return new SimpleParameterProvider();
     }
-
+    
     IParameterProvider requestParams = parameterProviders.get(IParameterProvider.SCOPE_REQUEST);
 
     final String subscriptionId = requestParams.getStringParameter("subscription-id", null); //$NON-NLS-1$
@@ -201,7 +201,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
     {
       return inputs;
     }
-
+    
     final Iterator paramIter = requestParams.getParameterNames();
     while (paramIter.hasNext())
     {
@@ -250,6 +250,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
     final SimpleReportingComponent reportComponent = new SimpleReportingComponent();
     final Map<String, Object> inputs = createInputs(requestParams);
     reportComponent.setDefaultOutputTarget(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE);
+    reportComponent.setSession(userSession);
     reportComponent.setReportDefinitionPath(reportDefinitionPath);
     reportComponent.setInputs(inputs);
     return reportComponent.getMimeType();

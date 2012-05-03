@@ -3,6 +3,14 @@ package org.pentaho.reporting.platform.plugin.output;
 import java.io.IOException;
 import java.io.OutputStream;
 
+/**
+ * Todo: Document me!
+ * <p/>
+ * Date: 02.02.11
+ * Time: 17:12
+ *
+ * @author Thomas Morgner.
+ */
 public class ProxyOutputStream extends OutputStream
 {
   private OutputStream parent;

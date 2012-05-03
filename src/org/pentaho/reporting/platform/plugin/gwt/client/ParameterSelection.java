@@ -1,5 +1,13 @@
 package org.pentaho.reporting.platform.plugin.gwt.client;
 
+/**
+ * Todo: Document me!
+ * <p/>
+ * Date: 22.07.2010
+ * Time: 18:01:47
+ *
+ * @author Thomas Morgner.
+ */
 public class ParameterSelection
 {
   private String label;

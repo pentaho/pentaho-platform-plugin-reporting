@@ -7,7 +7,7 @@
    <static-paths>
      <!-- this translates to /pentaho/content/reporting/resources/* -->
      <static-path url="/reporting/reportviewer" localFolder="reportviewer"/>
-     <static-path url="/reporting/resources" localFolder="resources"/>
+     <static-path url="/reporting/gwt" localFolder="gwt"/>
    </static-paths>
 
     <menu-items/>
@@ -18,7 +18,7 @@
       <content-type type="prpt" mime-type="application/zip">
         <title>Pentaho Report</title>
         <description>Pentaho Report Bundle</description>
-        <icon-url>content/reporting/reportviewer/prptFileType.png</icon-url>
+        <icon-url>content/reporting/reportviewer/images/prptFileType.png</icon-url>
         <operations>
           <!-- for any of these urls, you can add layout=flow to the url -->
           <operation>
@@ -27,7 +27,7 @@
           </operation>
           <operation>
             <id>NEWWINDOW</id>
-            <command>content/reporting/resources/web/reportviewer.html?solution={solution}&amp;path={path}&amp;name={name}&amp;locale={locale}</command>
+            <command>content/reporting/reportviewer/report.html?solution={solution}&amp;path={path}&amp;name={name}&amp;locale={locale}</command>
           </operation>
           <operation>
             <id>SCHEDULE_NEW</id>
@@ -43,7 +43,7 @@
           </operation>
           <operation>
             <id>PARAMETER</id>
-            <command>content/reporting/?renderMode=XML&amp;solution={solution}&amp;path={path}&amp;name={name}</command>
+            <command>content/reporting/?renderMode=PARAMETER&amp;solution={solution}&amp;path={path}&amp;name={name}</command>
           </operation>
         </operations>
       </content-type>
@@ -57,5 +57,9 @@
 
     <bean id="SimpleReportingComponent" class="org.pentaho.reporting.platform.plugin.SimpleReportingComponent"/>
 
+    <external-resources>
+      <!-- Example Prompting component that replaces the default prompt labels. Uncomment to use. -->
+      <!-- <file context="reporting">content/reporting/reportviewer/reportviewer-sample-component.js</file> -->
+    </external-resources>
 </plugin>
 

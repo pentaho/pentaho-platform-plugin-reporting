@@ -23,6 +23,14 @@ import org.pentaho.reporting.platform.plugin.repository.PentahoNameGenerator;
 import org.pentaho.reporting.platform.plugin.repository.PentahoURLRewriter;
 import org.pentaho.reporting.platform.plugin.repository.ReportContentRepository;
 
+/**
+ * Todo: Document me!
+ * <p/>
+ * Date: 02.02.11
+ * Time: 17:46
+ *
+ * @author Thomas Morgner.
+ */
 public class PageableContentRepoHtmlOutput extends PageableHTMLOutput
 {
   private String reportName;

@@ -12,6 +12,14 @@ import org.pentaho.platform.api.engine.ObjectFactoryException;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.extensions.datasources.olap4j.connections.OlapConnectionProvider;
 
+/**
+ * Todo: Document me!
+ * <p/>
+ * Date: 25.08.2010
+ * Time: 16:25:27
+ *
+ * @author Thomas Morgner.
+ */
 public class PentahoOlap4JJndiConnectionProvider implements OlapConnectionProvider
 {
   private String jndiName;
@@ -68,7 +76,7 @@ public class PentahoOlap4JJndiConnectionProvider implements OlapConnectionProvid
           if (connection == null)
           {
             datasourceService.clearDataSource(jndiName);
-            throw new SQLException(Messages.getInstance().getErrorString("PentahoDatasourceConnectionProvider.ERROR_0001_INVALID_CONNECTION", jndiName)); //$NON-NLS-1$
+            throw new SQLException(Messages.getErrorString("PentahoDatasourceConnectionProvider.ERROR_0001_INVALID_CONNECTION", jndiName)); //$NON-NLS-1$
           }
           if (connection instanceof OlapConnection)
           {
@@ -96,7 +104,7 @@ public class PentahoOlap4JJndiConnectionProvider implements OlapConnectionProvid
           if (connection == null)
           {
             datasourceService.clearDataSource(jndiName);
-            throw new SQLException(Messages.getInstance().getErrorString("PentahoDatasourceConnectionProvider.ERROR_0001_INVALID_CONNECTION", jndiName)); //$NON-NLS-1$
+            throw new SQLException(Messages.getErrorString("PentahoDatasourceConnectionProvider.ERROR_0001_INVALID_CONNECTION", jndiName)); //$NON-NLS-1$
           }
           if (connection instanceof OlapConnection)
           {
@@ -115,7 +123,7 @@ public class PentahoOlap4JJndiConnectionProvider implements OlapConnectionProvid
         {
           // clear datasource cache
           datasourceService.clearDataSource(jndiName);
-          throw new SQLException(Messages.getInstance().getErrorString("PentahoDatasourceConnectionProvider.ERROR_0001_INVALID_CONNECTION", jndiName)); //$NON-NLS-1$
+          throw new SQLException(Messages.getErrorString("PentahoDatasourceConnectionProvider.ERROR_0001_INVALID_CONNECTION", jndiName)); //$NON-NLS-1$
         }
         if (nativeConnection instanceof OlapConnection)
         {
@@ -132,7 +140,7 @@ public class PentahoOlap4JJndiConnectionProvider implements OlapConnectionProvid
       {
         // clear datasource cache
         datasourceService.clearDataSource(jndiName);
-        throw new SQLException(Messages.getInstance().getErrorString("PentahoDatasourceConnectionProvider.ERROR_0001_INVALID_CONNECTION", jndiName)); //$NON-NLS-1$
+        throw new SQLException(Messages.getErrorString("PentahoDatasourceConnectionProvider.ERROR_0001_INVALID_CONNECTION", jndiName)); //$NON-NLS-1$
       }
     }
     catch (Exception e)
@@ -141,11 +149,11 @@ public class PentahoOlap4JJndiConnectionProvider implements OlapConnectionProvid
       {
         final IDatasourceService datasourceService = PentahoSystem.getObjectFactory().get(IDatasourceService.class, null);
         datasourceService.clearDataSource(jndiName);
-        throw new SQLException(Messages.getInstance().getErrorString("PentahoDatasourceConnectionProvider.ERROR_0002_UNABLE_TO_FACTORY_OBJECT", jndiName, e.getLocalizedMessage())); //$NON-NLS-1$
+        throw new SQLException(Messages.getErrorString("PentahoDatasourceConnectionProvider.ERROR_0002_UNABLE_TO_FACTORY_OBJECT", jndiName, e.getLocalizedMessage())); //$NON-NLS-1$
       }
       catch (ObjectFactoryException objface)
       {
-        throw new SQLException(Messages.getInstance().getErrorString("PentahoDatasourceConnectionProvider.ERROR_0002_UNABLE_TO_FACTORY_OBJECT", jndiName, e.getLocalizedMessage())); //$NON-NLS-1$
+        throw new SQLException(Messages.getErrorString("PentahoDatasourceConnectionProvider.ERROR_0002_UNABLE_TO_FACTORY_OBJECT", jndiName, e.getLocalizedMessage())); //$NON-NLS-1$
       }
     }
   }
@@ -188,5 +196,6 @@ public class PentahoOlap4JJndiConnectionProvider implements OlapConnectionProvid
     list.add(username);
     return list;
   }
+  
 }
 

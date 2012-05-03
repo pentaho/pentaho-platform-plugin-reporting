@@ -2,6 +2,14 @@ package org.pentaho.reporting.platform.plugin.gwt.client;
 
 import java.util.LinkedHashMap;
 
+/**
+ * Todo: Document me!
+ * <p/>
+ * Date: 22.07.2010
+ * Time: 13:51:53
+ *
+ * @author Thomas Morgner.
+ */
 public class ParameterGroup
 {
   private String name;

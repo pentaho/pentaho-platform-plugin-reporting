@@ -5,8 +5,6 @@ import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.List;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.pentaho.platform.api.engine.IParameterProvider;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.api.repository.ISchedule;
@@ -21,9 +19,16 @@ import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterDefinitionEntry;
 import org.pentaho.reporting.libraries.resourceloader.ResourceException;
 
+/**
+ * Todo: Document me!
+ * <p/>
+ * Date: 22.07.2010
+ * Time: 16:15:52
+ *
+ * @author Thomas Morgner.
+ */
 public class SubscribeContentHandler
 {
-  private static final Log logger = LogFactory.getLog(SubscribeContentHandler.class);
   private ReportContentGenerator contentGenerator;
   private IPentahoSession userSession;
 
@@ -37,7 +42,7 @@ public class SubscribeContentHandler
                                      final String reportDefinitionPath)
       throws ResourceException, IOException
   {
-    final MasterReport report = ReportCreator.createReport(reportDefinitionPath);
+    final MasterReport report = ReportCreator.createReport(reportDefinitionPath, userSession);
     final ParameterDefinitionEntry parameterDefinitions[] = report.getParameterDefinition().getParameterDefinitions();
     final String result = saveSubscription(parameterDefinitions, reportDefinitionPath);
     outputStream.write(result.getBytes());
@@ -51,7 +56,7 @@ public class SubscribeContentHandler
 
     if ((userSession == null) || (userSession.getName() == null))
     {
-      return Messages.getInstance().getString("SubscriptionHelper.USER_LOGIN_NEEDED"); //$NON-NLS-1$
+      return Messages.getString("SubscriptionHelper.USER_LOGIN_NEEDED"); //$NON-NLS-1$
     }
 
     final IParameterProvider parameterProvider = contentGenerator.getRequestParameters();
@@ -65,14 +70,14 @@ public class SubscribeContentHandler
       final boolean isUniqueName = subscriptionRepository.checkUniqueSubscriptionName(subscriptionName, userSession.getName(), actionReference);
       if (!isUniqueName)
       {
-        return Messages.getInstance().getString("SubscriptionHelper.USER_SUBSCRIPTION_NAME_ALREADY_EXISTS", subscriptionName); //$NON-NLS-1$
+        return Messages.getString("SubscriptionHelper.USER_SUBSCRIPTION_NAME_ALREADY_EXISTS", subscriptionName); //$NON-NLS-1$
       }
     }
 
     final ISubscribeContent content = subscriptionRepository.getContentByActionReference(actionReference);
     if (content == null)
     {
-      return (Messages.getInstance().getString("SubscriptionHelper.ACTION_SEQUENCE_NOT_ALLOWED", parameterProvider.getStringParameter("name", ""))); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+      return (Messages.getString("SubscriptionHelper.ACTION_SEQUENCE_NOT_ALLOWED", parameterProvider.getStringParameter("name", ""))); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     }
 
     final HashMap<String, Object> parameters = new HashMap<String, Object>();
@@ -119,12 +124,12 @@ public class SubscribeContentHandler
 
     if (subscriptionRepository.addSubscription(subscription))
     {
-      return Messages.getInstance().getString("SubscriptionHelper.USER_SUBSCRIPTION_CREATED"); //$NON-NLS-1$
+      return Messages.getString("SubscriptionHelper.USER_SUBSCRIPTION_CREATED"); //$NON-NLS-1$
     }
     else
     {
-      logger.warn(Messages.getInstance().getString("SubscriptionHelper.USER_SUBSCRIPTION_NOT_CREATE"));
-      return Messages.getInstance().getString("SubscriptionHelper.USER_SUBSCRIPTION_NOT_CREATE"); //$NON-NLS-1$
+      // TODO log an error
+      return Messages.getString("SubscriptionHelper.USER_SUBSCRIPTION_NOT_CREATE"); //$NON-NLS-1$
     }
   }
 

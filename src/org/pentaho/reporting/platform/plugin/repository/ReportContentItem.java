@@ -13,25 +13,16 @@ import org.pentaho.reporting.libraries.repository.Repository;
 
 /**
  * Creation-Date: 05.07.2007, 14:54:08
- *
+ * 
  * @author Thomas Morgner
  */
-public class ReportContentItem implements ContentItem
-{
+public class ReportContentItem implements ContentItem {
   private IContentItem backend;
 
   private ReportContentLocation parent;
 
   public ReportContentItem(final IContentItem backend, final ReportContentLocation parent)
   {
-    if (parent == null)
-    {
-      throw new NullPointerException();
-    }
-    if (backend == null)
-    {
-      throw new NullPointerException();
-    }
     this.backend = backend;
     this.parent = parent;
   }

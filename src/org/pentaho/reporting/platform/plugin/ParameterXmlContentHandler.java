@@ -74,6 +74,14 @@ import org.pentaho.reporting.platform.plugin.messages.Messages;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+/**
+ * Todo: Document me!
+ * <p/>
+ * Date: 22.07.2010
+ * Time: 16:24:30
+ *
+ * @author Thomas Morgner.
+ */
 public class ParameterXmlContentHandler
 {
   private static class OutputParameterCollector
@@ -248,6 +256,10 @@ public class ParameterXmlContentHandler
   private static final String GROUP_PARAMETERS = "parameters";
   private static final String SYS_PARAM_TAB_NAME = "::TabName";
   private static final String SYS_PARAM_TAB_ACTIVE = "::TabActive";
+  
+  private static final String SYS_PARAM_HTML_PROPORTIONAL_WIDTH = "htmlProportionalWidth";
+  private static final String CONFIG_PARAM_HTML_PROPORTIONAL_WIDTH = 
+      "org.pentaho.reporting.engine.classic.core.modules.output.table.html.ProportionalColumnWidths";
 
   public ParameterXmlContentHandler(final ReportContentGenerator contentGenerator,
                                     final boolean paginate)
@@ -279,13 +291,13 @@ public class ParameterXmlContentHandler
           createGenericSystemParameter(SYS_PARAM_TAB_NAME, false, true)); // NON-NLS
       parameter.put(SYS_PARAM_TAB_ACTIVE,
           createGenericBooleanSystemParameter(SYS_PARAM_TAB_ACTIVE, false, true)); // NON-NLS
-      //parameter.put("solution", createGenericSystemParameter("solution", false, false)); // NON-NLS
+  //    parameter.put("solution", createGenericSystemParameter("solution", false, false)); // NON-NLS
       parameter.put("yield-rate", createGenericIntSystemParameter("yield-rate", false, false)); // NON-NLS
       parameter.put(SYS_PARAM_ACCEPTED_PAGE, createGenericIntSystemParameter(SYS_PARAM_ACCEPTED_PAGE, false, false)); // NON-NLS
       parameter.put(SYS_PARAM_SESSION_ID, createGenericSystemParameter(SYS_PARAM_SESSION_ID, false, false)); // NON-NLS
-      //parameter.put("path", createGenericSystemParameter("path", false, false)); // NON-NLS
-      //parameter.put("name", createGenericSystemParameter("name", false, false)); // NON-NLS
-      //parameter.put("action", createGenericSystemParameter("action", true, false)); // NON-NLS
+  //    parameter.put("path", createGenericSystemParameter("path", false, false)); // NON-NLS
+  //    parameter.put("name", createGenericSystemParameter("name", false, false)); // NON-NLS
+  //    parameter.put("action", createGenericSystemParameter("action", true, false)); // NON-NLS
       parameter.put("output-type", createGenericSystemParameter("output-type", true, false)); // NON-NLS
       parameter.put("layout", createGenericSystemParameter("layout", true, false)); // NON-NLS
       parameter.put("content-handler-pattern", createGenericSystemParameter("content-handler-pattern", true, false)); // NON-NLS
@@ -298,7 +310,8 @@ public class ParameterXmlContentHandler
       parameter.put("print", createGenericBooleanSystemParameter("print", false, false)); // NON-NLS
       parameter.put("printer-name", createGenericSystemParameter("printer-name", false, false)); // NON-NLS
       parameter.put(SYS_PARAM_RENDER_MODE, createRenderModeSystemParameter()); // NON-NLS
-
+      parameter.put(SYS_PARAM_HTML_PROPORTIONAL_WIDTH, createGenericBooleanSystemParameter(SYS_PARAM_HTML_PROPORTIONAL_WIDTH, false, true));
+      
       systemParameter = Collections.unmodifiableMap(parameter);
     }
 
@@ -328,6 +341,13 @@ public class ParameterXmlContentHandler
   public void createParameterContent(final OutputStream outputStream,
                                      final String reportDefinitionPath) throws Exception
   {
+    createParameterContent(outputStream, reportDefinitionPath, null);
+  }
+
+  public void createParameterContent(final OutputStream outputStream,
+                                     final String reportDefinitionPath,
+                                     MasterReport report) throws Exception
+  {
     final Object rawSessionId = inputs.get(ParameterXmlContentHandler.SYS_PARAM_SESSION_ID);
     if ((rawSessionId instanceof String) == false || "".equals(rawSessionId))
     {
@@ -344,17 +364,22 @@ public class ParameterXmlContentHandler
 
     final SimpleReportingComponent reportComponent = new SimpleReportingComponent();
     reportComponent.setReportDefinitionPath(reportDefinitionPath);
+    if (report != null) {
+      reportComponent.setReport(report);
+    }
     reportComponent.setPaginateOutput(true);
     reportComponent.setDefaultOutputTarget(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE);
     reportComponent.setInputs(inputs);
 
-    final MasterReport report = reportComponent.getReport();
+    report = reportComponent.getReport();
 
     final DefaultParameterContext parameterContext = new DefaultParameterContext(report);
     final ValidationResult vr;
     final Element parameters;
     try
     {
+      // open parameter context
+      parameterContext.open();
       // apply inputs to parameters
       final ValidationResult validationResult =
           reportComponent.applyInputsToReportParameters(parameterContext, new ValidationResult());
@@ -435,10 +460,15 @@ public class ParameterXmlContentHandler
         inputs.put("showParameters", Boolean.TRUE); // NON-NLS
       }
 
-      final ParameterContextWrapper wrapper = new ParameterContextWrapper(parameterContext, vr.getParameterValues());
+      // Adding proportional width config parameter
+      String proportionalWidth = report.getReportConfiguration().getConfigProperty(CONFIG_PARAM_HTML_PROPORTIONAL_WIDTH);
+      inputs.put(SYS_PARAM_HTML_PROPORTIONAL_WIDTH,  Boolean.valueOf(proportionalWidth));
+      
       for (final ParameterDefinitionEntry parameter : reportParameters.values())
       {
         final Object selections = inputs.get(parameter.getName());
+        final ParameterContextWrapper wrapper = new ParameterContextWrapper
+            (parameterContext, vr.getParameterValues());
         parameters.appendChild(createParameterElement(parameter, wrapper, selections));
       }
 
@@ -819,7 +849,7 @@ public class ParameterXmlContentHandler
     }
   }
 
-  private static String convertParameterValueToString(final ParameterDefinitionEntry parameter,
+  public static String convertParameterValueToString(final ParameterDefinitionEntry parameter,
                                                       final ParameterContext context,
                                                       final Object value,
                                                       final Class type) throws BeanException
@@ -827,6 +857,14 @@ public class ParameterXmlContentHandler
     if (value == null)
     {
       return null;
+    }
+
+    // PIR-652
+    if(value instanceof Object[]){
+      Object[] o = (Object[])value;
+      if(o.length == 1){
+        return String.valueOf(o[0]);
+      }
     }
 
     final ValueConverter valueConverter = ConverterRegistry.getInstance().getValueConverter(type);
@@ -902,8 +940,9 @@ public class ParameterXmlContentHandler
     return errors;
   }
 
+
   private static void appendPageCount(final SimpleReportingComponent reportComponent, final Element parameters)
-    throws Exception
+      throws Exception
   {
     reportComponent.setOutputStream(new NullOutputStream());
 

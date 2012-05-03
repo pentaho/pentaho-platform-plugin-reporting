@@ -7,6 +7,14 @@ import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
 import org.pentaho.reporting.libraries.repository.ContentIOException;
 
+/**
+ * Todo: Document me!
+ * <p/>
+ * Date: 02.02.11
+ * Time: 17:06
+ *
+ * @author Thomas Morgner.
+ */
 public interface ReportOutputHandler
 {
   /**
@@ -27,8 +35,8 @@ public interface ReportOutputHandler
 
   public int paginate(final MasterReport report,
       final int yieldRate)
-      throws ReportProcessingException, IOException, ContentIOException;  
-  
+      throws ReportProcessingException, IOException, ContentIOException;
+
   public void close();
 
   /**

@@ -13,28 +13,48 @@ import org.pentaho.reporting.libraries.resourceloader.ResourceManager;
 import org.pentaho.reporting.libraries.base.util.IOUtils;
 import org.pentaho.reporting.platform.plugin.messages.Messages;
 
+/**
+ * Todo: Document me!
+ * <p/>
+ * Date: 25.08.2009
+ * Time: 10:24:38
+ *
+ * @author Thomas Morgner.
+ */
 public class PentahoCubeFileProvider extends DefaultCubeFileProvider
 {
+  private String definedFile;
+
   public PentahoCubeFileProvider(final String definedFile)
   {
-    setMondrianCubeFile(definedFile);
+    this.definedFile = definedFile;
+  }
+
+  public String getDefinedFile()
+  {
+    return definedFile;
   }
 
   public String getCubeFile(final ResourceManager resourceManager,
                             final ResourceKey contextKey) throws ReportDataFactoryException
   {
-    final String superDef = getMondrianCubeFile();
+    final String superDef = getDefinedFile();
     if (superDef == null)
     {
       throw new ReportDataFactoryException(Messages.getInstance().getString("ReportPlugin.noSchemaDefined")); //$NON-NLS-1$
     }
 
     final File cubeFile = new File(superDef);
+    if (cubeFile.exists())
+    {
+      return superDef;
+    }
+
     final String name = cubeFile.getName();
     final List<MondrianCatalog> catalogs =
         MondrianCatalogHelper.getInstance().listCatalogs(PentahoSessionHolder.getSession(), false);
 
-    for (final MondrianCatalog cat : catalogs)
+    for (MondrianCatalog cat : catalogs)
     {
       final String definition = cat.getDefinition();
       final String definitionFileName = IOUtils.getInstance().getFileName(definition);

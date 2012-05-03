@@ -16,13 +16,11 @@
  */
 package org.pentaho.reporting.platform.plugin;
 
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 
-import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
-import org.pentaho.platform.api.repository2.unified.RepositoryFile;
-import org.pentaho.platform.api.repository2.unified.UnifiedRepositoryException;
-import org.pentaho.platform.api.repository2.unified.data.simple.SimpleRepositoryFileData;
-import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
+import org.pentaho.platform.api.engine.ISolutionFile;
+import org.pentaho.platform.api.repository.ISolutionRepository;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.libraries.resourceloader.ResourceData;
 import org.pentaho.reporting.libraries.resourceloader.ResourceKey;
@@ -36,6 +34,8 @@ import org.pentaho.reporting.libraries.resourceloader.loader.AbstractResourceDat
  * @author Will Gorman/Michael D'Amour
  */
 public class RepositoryResourceData extends AbstractResourceData {
+
+  public static final String PENTAHO_REPOSITORY_KEY = "pentahoRepositoryKey"; //$NON-NLS-1$
 
   private String filename;
   private ResourceKey key;
@@ -64,24 +64,22 @@ public class RepositoryResourceData extends AbstractResourceData {
    */
   public InputStream getResourceAsStream(ResourceManager caller) throws ResourceLoadingException {
     try {
-      IUnifiedRepository unifiedRepository = PentahoSystem.get(IUnifiedRepository.class);
-      RepositoryFile repositoryFile = unifiedRepository.getFile(key.getIdentifierAsString());
-      SimpleRepositoryFileData fileData = unifiedRepository.getDataForRead(repositoryFile.getId(), SimpleRepositoryFileData.class);
-      return fileData.getStream();
-    } catch (UnifiedRepositoryException ex) {
+      ISolutionRepository solutionRepository = PentahoSystem.get(ISolutionRepository.class);
+      return solutionRepository.getResourceInputStream(key.getIdentifierAsString(), false, ISolutionRepository.ACTION_EXECUTE);
+    } catch (FileNotFoundException e) {
       // might be due to access denial
-      throw new ResourceLoadingException(ex.getLocalizedMessage(), ex);
+      throw new ResourceLoadingException(e.getLocalizedMessage(), e);
     }
   }
 
   /**
    * returns a requested attribute, currently only supporting filename.
    * 
-   * @param lookupKey
+   * @param key
    *          attribute requested
    * @return attribute value
    */
-  public Object getAttribute(final String lookupKey) {
+  public Object getAttribute(String lookupKey) {
     if (lookupKey.equals(ResourceData.FILENAME)) {
       return filename;
     }
@@ -97,16 +95,12 @@ public class RepositoryResourceData extends AbstractResourceData {
    * @return version
    */
   public long getVersion(ResourceManager caller) throws ResourceLoadingException {
-    IUnifiedRepository unifiedRepository = PentahoSystem.get(IUnifiedRepository.class, PentahoSessionHolder.getSession());
-    try {
-      RepositoryFile repositoryFile = unifiedRepository.getFile(key.getIdentifier().toString());
-      // if we got a FileNotFoundException on getResourceInputStream then we will get a null file; avoid NPE
-      if (repositoryFile != null) {
-        return repositoryFile.getLastModifiedDate().getTime();
-      } else {
-        return -1;
-      }
-    } catch(UnifiedRepositoryException ex) {
+    ISolutionRepository solutionRepository = PentahoSystem.get(ISolutionRepository.class);
+    ISolutionFile file = solutionRepository.getSolutionFile(key.getIdentifier().toString(), ISolutionRepository.ACTION_EXECUTE);
+    // if we got a FileNotFoundException on getResourceInputStream then we will get a null file; avoid NPE
+    if (file != null) {
+      return file.getLastModified();
+    } else {
       return -1;
     }
   }

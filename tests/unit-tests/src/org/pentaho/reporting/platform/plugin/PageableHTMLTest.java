@@ -28,7 +28,6 @@ public class PageableHTMLTest extends TestCase
   
   @Override
   protected void setUp() throws Exception {
-    super.setUp();
     microPlatform = new MicroPlatform("tests/integration-tests/resource/");
     microPlatform.define(ISolutionEngine.class, SolutionEngine.class);
     microPlatform.define(ISolutionRepository.class, FileBasedSolutionRepository.class);
@@ -131,6 +130,7 @@ public class PageableHTMLTest extends TestCase
     assertTrue(rc.execute());
 
     // make sure this report has 8 pages (we know this report will produce 8 pages with sample data)
+    // We need to figure out what to do with getPageCount and the paginate() method in the component
     assertEquals(8, rc.getPageCount());
   }
   
@@ -172,6 +172,7 @@ public class PageableHTMLTest extends TestCase
     assertTrue(rc.execute());
 
     // make sure this report has 8 pages (we know this report will produce 8 pages with sample data)
+    // We need to figure out what to do with getPageCount and the paginate() method in the component
     assertEquals(8, rc.getPageCount());
 
   }

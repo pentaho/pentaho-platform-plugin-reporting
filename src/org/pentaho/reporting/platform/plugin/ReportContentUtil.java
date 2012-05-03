@@ -1,5 +1,6 @@
 package org.pentaho.reporting.platform.plugin;
 
+import java.io.IOException;
 import java.lang.reflect.Array;
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -10,25 +11,93 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Map;
 import java.util.TimeZone;
+
 import javax.swing.table.TableModel;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.pentaho.commons.connection.IPentahoResultSet;
 import org.pentaho.platform.plugin.action.jfreereport.helper.PentahoTableModel;
 import org.pentaho.platform.util.messages.LocaleHelper;
+import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
 import org.pentaho.reporting.engine.classic.core.parameters.ListParameter;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterAttributeNames;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterContext;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterDefinitionEntry;
+import org.pentaho.reporting.engine.classic.core.parameters.ValidationMessage;
+import org.pentaho.reporting.engine.classic.core.parameters.ValidationResult;
+import org.pentaho.reporting.engine.classic.core.util.ReportParameterValues;
 import org.pentaho.reporting.engine.classic.core.util.beans.BeanException;
 import org.pentaho.reporting.engine.classic.core.util.beans.ConverterRegistry;
 import org.pentaho.reporting.engine.classic.core.util.beans.ValueConverter;
 import org.pentaho.reporting.libraries.base.util.StringUtils;
+import org.pentaho.reporting.libraries.resourceloader.ResourceException;
 import org.pentaho.reporting.platform.plugin.messages.Messages;
 
+/**
+ * Todo: Document me!
+ * <p/>
+ * Date: 28.07.2010
+ * Time: 14:02:11
+ *
+ * @author Thomas Morgner.
+ */
 public class ReportContentUtil
 {
+
+  /**
+   * Apply inputs (if any) to corresponding report parameters, care is taken when
+   * checking parameter types to perform any necessary casting and conversion.
+   *
+   * @param report The report to retrieve parameter definitions and values from.         
+   * @param context a ParameterContext for which the parameters will be under
+   * @param validationResult the validation result that will hold the warnings. If null, a new one will be created.
+   * @return the validation result containing any parameter validation errors.
+   * @throws java.io.IOException if the report of this component could not be parsed.
+   * @throws ResourceException   if the report of this component could not be parsed.
+   */
+  public static ValidationResult applyInputsToReportParameters(final MasterReport report, final ParameterContext context,
+      final Map<String, Object> inputs, ValidationResult validationResult)
+      throws IOException, ResourceException
+  {
+    if (validationResult == null)
+    {
+      validationResult = new ValidationResult();
+    }
+    // apply inputs to report
+    if (inputs != null)
+    {
+      final Log log = LogFactory.getLog(SimpleReportingComponent.class);
+      final ParameterDefinitionEntry[] params = report.getParameterDefinition().getParameterDefinitions();
+      final ReportParameterValues parameterValues = report.getParameterValues();
+      for (final ParameterDefinitionEntry param : params)
+      {
+        final String paramName = param.getName();
+        try
+        {
+          final Object computedParameter = ReportContentUtil.computeParameterValue(context, param, inputs.get(paramName));
+          parameterValues.put(param.getName(), computedParameter);
+          if (log.isInfoEnabled())
+          {
+            log.info(Messages.getInstance().getString("ReportPlugin.infoParameterValues", //$NON-NLS-1$
+                paramName, String.valueOf(inputs.get(paramName)), String.valueOf(computedParameter)));
+          }
+        }
+        catch (Exception e)
+        {
+          if (log.isWarnEnabled())
+          {
+            log.warn(Messages.getInstance().getString("ReportPlugin.logErrorParametrization"), e); //$NON-NLS-1$
+          }
+          validationResult.addError(paramName, new ValidationMessage(e.getMessage()));
+        }
+      }
+    }
+    return validationResult;
+  }
 
   public static Object computeParameterValue(final ParameterContext parameterContext,
                                              final ParameterDefinitionEntry parameterDefinition,
@@ -312,5 +381,5 @@ public class ReportContentUtil
       return simpleDateFormat.parse(value);
     }
   }
-
+  
 }

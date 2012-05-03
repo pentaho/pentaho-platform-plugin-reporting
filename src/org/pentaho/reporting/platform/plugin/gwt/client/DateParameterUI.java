@@ -82,7 +82,6 @@ public class DateParameterUI extends SimplePanel implements ParameterUI
   {
     // selectionsList should only have 1 date
 
-
     final List<ParameterSelection> list = parameterElement.getSelections();
     final Date date;
     if (list.isEmpty())

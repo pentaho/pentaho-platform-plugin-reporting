@@ -11,6 +11,14 @@ import org.pentaho.reporting.libraries.repository.DefaultNameGenerator;
 import org.pentaho.reporting.libraries.repository.MimeRegistry;
 import org.pentaho.reporting.libraries.repository.file.FileContentLocation;
 
+/**
+ * Todo: Document me!
+ * <p/>
+ * Date: 22.03.2010
+ * Time: 16:00:38
+ *
+ * @author Thomas Morgner.
+ */
 public class TempDirectoryNameGenerator implements PentahoNameGenerator
 {
   private File targetDirectory;

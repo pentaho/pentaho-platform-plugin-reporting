@@ -1,0 +1,30 @@
+/**
+ * We must enumerate all dependencies because our modules use pen.define and their dependencies will not be detected
+ * by RequireJS.
+ */
+require([
+  'cdf/jquery',
+  'cdf/jquery-impromptu.3.1',
+  'cdf/jquery.ui',
+  'cdf/jquery.bgiframe',
+  'cdf/jquery.jdMenu',
+  'cdf/jquery.positionBy',
+  'cdf/jquery.tooltip',
+  'cdf/jquery.blockUI',
+  'cdf/jquery.eventstack',
+  'cdf/Base',
+  'cdf/Dashboards',
+  'cdf/CoreComponents',
+  'cdf/simile/ajax/simile-ajax-api',
+  'cdf/simile/ajax/scripts/json',
+  'common-ui/repo/pentaho-ajax',
+  'common-ui/prompting/pentaho-prompting',
+  'common-ui/prompting/pentaho-prompting-builders',
+  'common-ui/prompting/pentaho-prompting-components',
+  'common-ui/prompting/pentaho-prompting-bind',
+  'reportviewer/reportviewer',
+  'reportviewer/reportviewer-formatting',
+  'reportviewer/reportviewer-prompt',
+  'reportviewer/reportviewer-timeutil',
+  'local'
+]);
