@@ -9,18 +9,6 @@
     </content>
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="inheritedJdk" />
-    <orderEntry type="module" module-name="core" />
-    <orderEntry type="module" module-name="extensions-mondrian" />
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="file://$MODULE_DIR$/war/WEB-INF/lib" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-        <jarDirectory url="file://$MODULE_DIR$/war/WEB-INF/lib" recursive="false" />
-      </library>
-    </orderEntry>
   </component>
 </module>
 

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE log4j:configuration SYSTEM
+        "C:\code\reporting\0.8.11\engines\classic\platform-plugin\test\integrationtests\log4j.dtd">
+
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/" debug="false">
+    <!--
+    RULES for logging DEBUG < INFO < WARN < ERROR < FATAL.
+    -->
+
+    <appender name="CONSOLE" class="org.apache.log4j.ConsoleAppender">
+        <param name="Target" value="System.out"/>
+        <param name="Threshold" value="DEBUG"/>
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="%d{ABSOLUTE} %-5p [%c{1}] %m%n"/>
+        </layout>
+    </appender>
+
+    <category name="org.pentaho.platform.plugin.action.reporting" additivity="false">
+        <priority value="DEBUG"/>
+        <appender-ref ref="CONSOLE"/>
+    </category>
+
+    <root>
+        <appender-ref ref="CONSOLE"/>
+    </root>
+</log4j:configuration>
