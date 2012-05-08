@@ -2,15 +2,10 @@ package org.pentaho.reporting.platform.plugin;
 
 import java.net.URL;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.Locale;
-import java.util.Map;
-import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.pentaho.platform.api.engine.IParameterProvider;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoRequestContextHolder;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
@@ -18,8 +13,8 @@ import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.engine.security.SecurityHelper;
 import org.pentaho.platform.util.messages.LocaleHelper;
 import org.pentaho.reporting.engine.classic.core.DefaultReportEnvironment;
-import org.pentaho.reporting.engine.classic.core.modules.output.csv.CSVQuoter;
 import org.pentaho.reporting.libraries.base.config.Configuration;
+import org.pentaho.reporting.libraries.base.util.CSVQuoter;
 import org.pentaho.reporting.platform.plugin.messages.Messages;
 import org.springframework.security.Authentication;
 import org.springframework.security.GrantedAuthority;
@@ -28,8 +23,8 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
 {
   private static final Log logger = LogFactory.getLog(PentahoReportEnvironment.class);
   private HashMap<String, String> cache;
-  private IParameterProvider pathProvider;
   private String clText;
+  private String clId;
 
   public PentahoReportEnvironment(final Configuration configuration)
   {
@@ -120,33 +115,36 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
     {
       if ("username".equals(key)) //$NON-NLS-1$
       {
-        final Authentication authentication = SecurityHelper.getAuthentication(session, true);
+        final Authentication authentication = SecurityHelper.getInstance().getAuthentication();
+        if (authentication == null) {
+          return null;
+        }
         final String userName = authentication.getName();
         cache.put(key, userName);
         return userName;
       }
       else if ("roles".equals(key)) //$NON-NLS-1$
       {
-        final Authentication authentication = SecurityHelper.getAuthentication(session, true);
-        final StringBuffer property = new StringBuffer();
-        //noinspection unchecked
-        final GrantedAuthority[] roles =
-            authentication.getAuthorities();
+        final Authentication authentication = SecurityHelper.getInstance().getAuthentication();
+        if (authentication == null) {
+          return null;
+        }
+        final StringBuilder property = new StringBuilder();
+        final GrantedAuthority[] roles = authentication.getAuthorities();
         if (roles == null)
         {
           return null;
         }
 
         final int rolesSize = roles.length;
-        if (rolesSize > 0)
+        final CSVQuoter quoter = new CSVQuoter(',', '"');//$NON-NLS-1$
+        for (int i = 0; i < rolesSize; i++)
         {
-          final CSVQuoter quoter = new CSVQuoter(",");//$NON-NLS-1$
-          property.append(roles[0]);
-          for (int i = 1; i < rolesSize; i++)
+          if (i != 0)
           {
             property.append(",");//$NON-NLS-1$
-            property.append(quoter.doQuoting(roles[i].getAuthority()));
           }
+          property.append(quoter.doQuoting(roles[i].getAuthority()));
         }
         return property.toString();
       }
@@ -166,6 +164,7 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
     {
       if (key.startsWith("session:") ||//$NON-NLS-1$
           key.equals("username") ||//$NON-NLS-1$
+          key.startsWith("global:") ||//$NON-NLS-1$
           key.equals("roles"))//$NON-NLS-1$
       {
         logger.warn(Messages.getInstance().getString("ReportPlugin.warnNoSession"));
@@ -173,7 +172,12 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
       }
     }
 
-    return super.getEnvironmentProperty(key);
+    final Object environmentProperty = super.getEnvironmentProperty(key);
+    if (environmentProperty == null)
+    {
+      return null;
+    }
+    return String.valueOf(environmentProperty);
   }
 
   private String getBaseServerURL(final String fullyQualifiedServerUrl)
@@ -186,8 +190,9 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
     catch (Exception e)
     {
       // ignore
+      logger.warn(Messages.getInstance().getString("ReportPlugin.warnNoBaseServerURL"), e);
     }
-    return fullyQualifiedServerUrl;
+    return null;
   }
 
   private String getHostColonPort(final String fullyQualifiedServerUrl)
@@ -200,39 +205,13 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
     catch (Exception e)
     {
       // ignore
+      logger.warn(Messages.getInstance().getString("ReportPlugin.warnNoHostColonPort"), e);
     }
-    return fullyQualifiedServerUrl;
+    return null;
   }
 
   public Locale getLocale()
   {
     return LocaleHelper.getLocale();
-  }
-
-  public Map<String, String[]> getUrlExtraParameter()
-  {
-    if (pathProvider == null)
-    {
-      return super.getUrlExtraParameter();
-    }
-
-    final Object maybeRequest = pathProvider.getParameter("httprequest"); // NON-NLS
-    if (maybeRequest instanceof HttpServletRequest == false)
-    {
-      return super.getUrlExtraParameter();
-    }
-
-    final HttpServletRequest request = (HttpServletRequest) maybeRequest;
-    final Map map = request.getParameterMap();
-    final LinkedHashMap<String, String[]> retval = new LinkedHashMap<String, String[]>();
-    final Iterator it = map.entrySet().iterator();
-    while (it.hasNext())
-    {
-      final Map.Entry o = (Map.Entry) it.next();
-      final String key = (String) o.getKey();
-      final String[] values = (String[]) o.getValue();
-      retval.put(key, values.clone());
-    }
-    return retval;
   }
 }

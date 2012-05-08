@@ -1,23 +1,11 @@
 package org.pentaho.reporting.platform.plugin.connection;
 
-import org.apache.commons.vfs.FileObject;
-import org.apache.commons.vfs.FileSystemException;
-import org.apache.commons.vfs.FileSystemManager;
-import org.apache.commons.vfs.VFS;
+import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.core.ParameterMapping;
 import org.pentaho.reporting.engine.classic.extensions.datasources.kettle.KettleTransFromFileProducer;
 import org.pentaho.reporting.libraries.resourceloader.ResourceKey;
 import org.pentaho.reporting.platform.plugin.RepositoryResourceLoader;
-import org.pentaho.platform.engine.core.system.PentahoSystem;
 
-/**
- * Todo: Document me!
- * <p/>
- * Date: 05.01.2010
- * Time: 17:42:40
- *
- * @author Thomas Morgner.
- */
 public class PentahoKettleTransFromFileProducer extends KettleTransFromFileProducer
 {
   public PentahoKettleTransFromFileProducer(final String repositoryName,

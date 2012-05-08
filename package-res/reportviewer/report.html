@@ -6,21 +6,21 @@
     <link rel="shortcut icon" href="images/favicon.ico" />
 
     <!-- Include CDF styles first to make sure they can be properly overridden -->
-    <link rel="stylesheet" href="../../pentaho-cdf/js/cdf.css" type="text/css" />
+    <link rel="stylesheet" href="../../../content/pentaho-cdf/js/cdf.css" type="text/css" />
 
     <script type="text/javascript" src="../../../js/require.js"></script>
     <script type="text/javascript" src="../../../js/require-cfg.js"></script>
 
     <script language="javascript" type="text/javascript" src="webcontext.js?context=reporting"></script>
 
-    <link rel="stylesheet" href="../../pentaho-cdf/js/jquery.tooltip.css" type="text/css" />
-    <link rel="stylesheet" href="../../pentaho-cdf/js/jquery.jdMenu.css" type="text/css" />
-    <link rel="stylesheet" href="../../pentaho-cdf/js/jquery.jdMenu.slate.css" type="text/css" />
-    <link rel="stylesheet" href="../../pentaho-cdf/js/jquery-impromptu.css" type="text/css" />
+    <link rel="stylesheet" href="../../../content/pentaho-cdf/js/jquery.tooltip.css" type="text/css" />
+    <link rel="stylesheet" href="../../../content/pentaho-cdf/js/jquery.jdMenu.css" type="text/css" />
+    <link rel="stylesheet" href="../../../content/pentaho-cdf/js/jquery.jdMenu.slate.css" type="text/css" />
+    <link rel="stylesheet" href="../../../content/pentaho-cdf/js/jquery-impromptu.css" type="text/css" />
 
-    <link rel="stylesheet" type="text/css" href="../../common-ui/resources/web/dojo/dijit/themes/pentaho/pentaho.css"/>
-    <link rel="stylesheet" href="../../common-ui/resources/web/prompting/pentaho-prompting.css" type="text/css" />
-    <link rel="stylesheet" href="reportviewer.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../content/common-ui/resources/web/dojo/dijit/themes/pentaho/pentaho.css"/>
+    <link rel="stylesheet" href="../../../content/common-ui/resources/web/prompting/pentaho-prompting.css" type="text/css" />
+    <link rel="stylesheet" href="../../../content/reporting/reportviewer/reportviewer.css" type="text/css" />
     
     <script language="javascript" type="text/javascript">
 	  /**
@@ -38,7 +38,7 @@
 	    }
 	  }
     </script>
-    <script type="text/javascript" src="../../common-ui/resources/web/formatter/formatter.nocache.js"></script>
+    <script type="text/javascript" src="../../../content/common-ui/resources/web/formatter/formatter.nocache.js"></script>
     
     <script language="javascript" type="text/javascript">
       // Provide somewhere for cdf/simile/ajax/scripts/json to inject itself into
@@ -55,10 +55,10 @@
               'pentaho.common': '../../../../common-ui/resources/web/dojo/pentaho/common'
             },
             parseOnLoad: false,
-            baseUrl: 'dojo/dojo/'
+            baseUrl: '../../../content/reporting/reportviewer/dojo/dojo/'
           });
-          dependencies.push('dojo/dojo/dojo-reportviewer.js');
-          dependencies.push('reportviewer-app.js'); 
+          dependencies.push('../../../content/reporting/reportviewer/dojo/dojo/dojo-reportviewer.js');
+          dependencies.push('../../../content/reporting/reportviewer/reportviewer-app.js');
         } else {
           $.extend(djConfig, {
             // Set up locale for Dojo
@@ -68,10 +68,10 @@
                 'pentaho.reportviewer': '../../../../../reporting/reportviewer/dojo/pentaho/reportviewer'
             },
             parseOnLoad: false,
-            baseUrl: '../../common-ui/resources/web/dojo/dojo/'
+            baseUrl: '../../../content/common-ui/resources/web/dojo/dojo/'
           });
-          dependencies.push('../../common-ui/resources/web/dojo/dojo/dojo-all.js');
-          dependencies.push('reportviewer-main-module'); 
+          dependencies.push('../../../content/common-ui/resources/web/dojo/dojo/dojo-all.js');
+          dependencies.push('../../../content/reporting/reportviewer/reportviewer-main-module');
         }
 
         pen.require(dependencies, function() {

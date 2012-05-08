@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:context="http://www.springframework.org/schema/context"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ws="http://jax-ws.dev.java.net/spring/core" xmlns:wss="http://jax-ws.dev.java.net/spring/servlet"
+  xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+                           http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-2.5.xsd
+                           http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.5.xsd
+                           http://jax-ws.dev.java.net/spring/core http://jax-ws.dev.java.net/spring/core.xsd
+                           http://jax-ws.dev.java.net/spring/servlet http://jax-ws.dev.java.net/spring/servlet.xsd">
+
+  <context:annotation-config />
+
+  <bean id="prpt" class="org.pentaho.reporting.platform.plugin.ReportContentGenerator" scope="prototype"/>
+  <bean id="prpt.viewer" class="org.pentaho.platform.plugin.services.webservices.content.PluginFileContentGenerator" scope="prototype">
+    <property name="mimeType" value="text/html" />
+    <property name="relativeFilePath" value="reportviewer/report.html" />
+    <property name="pluginId" value="reporting" />
+  </bean>  
+  <bean id="prpt.parameter" class="org.pentaho.reporting.platform.plugin.ParameterContentGenerator" scope="prototype"/>
+  <bean id="prpt.backgroundExecution" class="org.pentaho.reporting.platform.plugin.SimpleReportingAction" scope="prototype"/>
+  <bean id="prpt.parameterUi" class="org.pentaho.platform.plugin.services.webservices.content.PluginFileContentGenerator" scope="prototype">
+	<property name="mimeType" value="text/html" />
+	<property name="relativeFilePath" value="reportviewer/report-params.html" />
+	<property name="pluginId" value="reporting" />
+  </bean>
+
+  <bean id="prpt.viewer-gwt" class="org.pentaho.platform.plugin.services.webservices.content.PluginFileContentGenerator" scope="prototype">
+    <property name="mimeType" value="text/html" />
+    <property name="relativeFilePath" value="reportviewer/gwt/report-test.html" />
+    <property name="pluginId" value="reporting" />
+  </bean>  
+  
+  <bean id="SimpleReportingComponent" class="org.pentaho.reporting.platform.plugin.SimpleReportingComponent" scope="prototype"/>
+</beans>

@@ -6,7 +6,7 @@ pen.define(['common-ui/util/util', 'reportviewer/reportviewer-formatting'], func
 
       load: function() {
         dojo.require('pentaho.common.Messages');
-        pentaho.common.Messages.addUrlBundle('reportviewer', CONTEXT_PATH+'i18n?plugin=Pentaho Reporting Plugin&name=reportviewer/messages/messages');
+        pentaho.common.Messages.addUrlBundle('reportviewer', CONTEXT_PATH+'i18n?plugin=reporting&name=reportviewer/messages/messages');
       },
 
       /**

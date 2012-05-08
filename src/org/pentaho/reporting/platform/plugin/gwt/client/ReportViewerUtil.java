@@ -22,14 +22,6 @@ import org.pentaho.gwt.widgets.client.utils.i18n.ResourceBundle;
 import org.pentaho.gwt.widgets.client.utils.string.StringTokenizer;
 import org.pentaho.gwt.widgets.client.utils.string.StringUtils;
 
-/**
- * Todo: Document me!
- * <p/>
- * Date: 22.07.2010
- * Time: 11:11:15
- *
- * @author Thomas Morgner.
- */
 public class ReportViewerUtil
 {
   private ReportViewerUtil()
@@ -237,19 +229,190 @@ public class ReportViewerUtil
                                       final ParameterDefinition parameterDefinition)
   {
 
+    final String FILES = "files/";
     if (reportParameterMap == null)
     {
       throw new NullPointerException();
     }
     String reportPath = Window.Location.getPath();
-    if (reportPath.indexOf("reportviewer") != -1) //$NON-NLS-1$
-    {
-      reportPath = reportPath.substring(0, reportPath.indexOf("reportviewer") - 1); //$NON-NLS-1$
-      // add query part of url
-      reportPath += "?"; //$NON-NLS-1$
+    reportPath = reportPath.replace("viewer-gwt", "generatedContent");
+    reportPath += "?renderMode=" + renderType; // NON-NLS
+//    if(reportPath.indexOf("&path") < 0) {
+//        int start = reportPath.indexOf(FILES);
+//        int end = reportPath.lastIndexOf("/");
+//        String path = reportPath.substring(start+FILES.length(), end);
+//        reportPath +="&path=" + path;
+//    }
+    if(reportPath.indexOf("&locale") < 0) {
+        String localeName = StringUtils.defaultIfEmpty(Window.Location.getParameter("locale"), getLanguagePreference()); //$NON-NLS-1$
+        reportPath += "&locale=" + localeName;
     }
-    reportPath += "renderMode=" + renderType; // NON-NLS
+    final ParameterValues parameters = new ParameterValues();
 
+    // User submitted values always make it into the final URL ..
+    for (final String key : reportParameterMap.getParameterNames())
+    {
+      if ("renderMode".equals(key))
+      {
+        continue;
+    }
+
+      final String[] valueList = reportParameterMap.getParameterValues(key);
+      final String[] encodedList = new String[valueList.length];
+      for (int i = 0; i < valueList.length; i++)
+      {
+        final String value = valueList[i];
+        if (value == null)
+        {
+          encodedList[i] = null; //$NON-NLS-1$
+        }
+        else
+        {
+          encodedList[i] = value;
+        }
+      }
+      parameters.setSelectedValues(key, encodedList);
+    }
+
+    // history token parameters will override default parameters (already on URL)
+    // but they will not override user submitted parameters
+    final ParameterValues historyParams = getHistoryTokenParameters();
+    if (historyParams != null)
+    {
+      for (final String key : historyParams.getParameterNames())
+      {
+        if (parameters.containsParameter(key))
+        {
+          continue;
+        }
+        if ("renderMode".equals(key))
+        {
+          continue;
+        }
+
+        final String[] valueList = historyParams.getParameterValues(key);
+        final String[] encodedList = new String[valueList.length];
+        for (int i = 0; i < valueList.length; i++)
+        {
+          final String value = valueList[i];
+          if (value == null)
+          {
+            encodedList[i] = null; //$NON-NLS-1$
+          }
+          else
+          {
+            encodedList[i] = (value);
+          }
+        }
+        // Window.alert("History-Value: " + key);
+        parameters.setSelectedValues(key, encodedList);
+      }
+    }
+
+    // Last but not least - add the paramters that were given in the URL ...
+    // The value is decoded, the parameter name is not decoded (according to the source code for GWT-2.0).
+    final Map<String, List<String>> requestParams = Window.Location.getParameterMap();
+    if (requestParams != null)
+    {
+      for (final String rawkey : requestParams.keySet())
+      {
+        final String key = URL.decodeComponent(rawkey);
+        if ("renderMode".equals(key))
+        {
+          continue;
+        }
+        if ("::session".equals(key))
+        {
+          // session IDs are generated on the server, not via URL. We discard all such parameters on the URL.
+          continue;
+        }
+
+        if (parameters.containsParameter(key))
+        {
+          continue;
+        }
+
+        final List<String> valueList = requestParams.get(rawkey);
+        final String[] encodedList = new String[valueList.size()];
+        for (int i = 0; i < valueList.size(); i++)
+        {
+          final String value = valueList.get(i);
+          if (value == null)
+          {
+            encodedList[i] = null; //$NON-NLS-1$
+          }
+          else
+          {
+            encodedList[i] = (value);
+          }
+        }
+        //  Window.alert("Location-Value: " + key);
+        parameters.setSelectedValues(key, encodedList);
+      }
+    }
+
+    final String parametersAsString = parameters.toURL();
+    if (History.getToken().equals(parametersAsString) == false)
+    {
+      // don't add duplicates, only new ones
+      // assuming that History.getToken() returns the last newItem string unchanged,
+      // then we must not URL-encode the paramter string. 
+      History.newItem(parametersAsString, false);
+    }
+
+    reportPath += "&" + parametersAsString;
+    if (GWT.isScript() == false)
+    {
+      // Build a dev/test url
+      System.out.println("Computed path was: " + reportPath);
+      reportPath = reportPath.substring(1);
+
+      if (!reportPath.contains("solution"))
+      {
+        reportPath = reportPath + "&solution=steel-wheels&path=reports&name=Inventory.prpt"; //$NON-NLS-1$
+      }
+      if (!reportPath.contains("path"))
+      {
+        reportPath = reportPath + "&path=reports"; //$NON-NLS-1$
+      }
+      if (!reportPath.contains("name"))
+      {
+        reportPath = reportPath + "&name=Inventory.prpt"; //$NON-NLS-1$
+      }
+
+      final String url = "http://localhost:8080/pentaho/content/reporting?" + reportPath + "&userid=joe&password=password"; //$NON-NLS-1$ //$NON-NLS-2$
+      System.out.println("Using development url: " + url);
+      return url;
+    }
+/*    else
+    {
+      Window.alert("Computed-URL: " + reportPath);
+    }
+    */
+    return reportPath;
+  }
+
+  /**
+   * Builds the URL that is needed to communicate with the backend.
+   *
+   * @param renderType         the render type, never null.
+   * @param reportParameterMap the parameter map, never null.
+   * @return the generated URL
+   */
+  public static String buildParameterUrl(final boolean paginate, final ParameterValues reportParameterMap,  final ParameterDefinition parameterDefinition)
+  {
+    if (reportParameterMap == null)
+    {
+      throw new NullPointerException();
+    }
+    String reportPath = Window.Location.getPath();
+    reportPath = reportPath.replace("viewer-gwt", "parameter");
+    reportPath += "?"; // NON-NLS
+    if(reportPath.indexOf("&locale") < 0) {
+        String localeName = StringUtils.defaultIfEmpty(Window.Location.getParameter("locale"), getLanguagePreference()); //$NON-NLS-1$
+        reportPath += "&locale=" + localeName;
+    }
+    reportParameterMap.setSelectedValue("paginate", Boolean.toString(paginate));
     final ParameterValues parameters = new ParameterValues();
 
     // User submitted values always make it into the final URL ..
@@ -467,6 +630,16 @@ public class ReportViewerUtil
     return text == null || "".equals(text);
   }
 
+private static native String getLanguagePreference()
+    /*-{
+      var m = $doc.getElementsByTagName('meta');
+      for(var i in m) {
+        if(m[i].name == 'gwt:property' && m[i].content.indexOf('locale=') != -1) {
+          return m[i].content.substring(m[i].content.indexOf('=')+1);
+        }
+      }
+      return "default";
+  }-*/;
   public static TextFormat createTextFormat(final String pattern, final String dataType)
   {
     if (StringUtils.isEmpty(pattern))

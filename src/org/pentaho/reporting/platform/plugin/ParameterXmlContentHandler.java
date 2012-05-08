@@ -1,6 +1,7 @@
 package org.pentaho.reporting.platform.plugin;
 
 import java.io.OutputStream;
+import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.text.DateFormat;
@@ -23,10 +24,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.pentaho.platform.api.engine.IParameterProvider;
 import org.pentaho.platform.api.engine.IPentahoSession;
-import org.pentaho.platform.api.repository.ISchedule;
-import org.pentaho.platform.api.repository.ISubscribeContent;
-import org.pentaho.platform.api.repository.ISubscription;
-import org.pentaho.platform.api.repository.ISubscriptionRepository;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.util.UUIDUtil;
 import org.pentaho.reporting.engine.classic.core.AttributeNames;
@@ -74,14 +71,6 @@ import org.pentaho.reporting.platform.plugin.messages.Messages;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-/**
- * Todo: Document me!
- * <p/>
- * Date: 22.07.2010
- * Time: 16:24:30
- *
- * @author Thomas Morgner.
- */
 public class ParameterXmlContentHandler
 {
   private static class OutputParameterCollector
@@ -236,19 +225,17 @@ public class ParameterXmlContentHandler
 
   private Map<String, ParameterDefinitionEntry> systemParameter;
 
-  private ReportContentGenerator contentGenerator;
+  private ParameterContentGenerator contentGenerator;
   private boolean paginate;
   private Document document;
   private IParameterProvider requestParameters;
   private IPentahoSession userSession;
   private Map<String, Object> inputs;
-  private String reportDefinitionPath;
+  private Serializable fileId;
 
   public static final String SYS_PARAM_RENDER_MODE = "renderMode";
   private static final String SYS_PARAM_OUTPUT_TARGET = SimpleReportingComponent.OUTPUT_TARGET;
-  private static final String SYS_PARAM_SUBSCRIPTION_NAME = "subscription-name";
   private static final String SYS_PARAM_DESTINATION = "destination";
-  private static final String SYS_PARAM_SCHEDULE_ID = "schedule-id";
   public static final String SYS_PARAM_CONTENT_LINK = "::cl";
   public static final String SYS_PARAM_SESSION_ID = "::session";
   private static final String GROUP_SUBSCRIPTION = "subscription";
@@ -261,13 +248,11 @@ public class ParameterXmlContentHandler
   private static final String CONFIG_PARAM_HTML_PROPORTIONAL_WIDTH = 
       "org.pentaho.reporting.engine.classic.core.modules.output.table.html.ProportionalColumnWidths";
 
-  public ParameterXmlContentHandler(final ReportContentGenerator contentGenerator,
-                                    final boolean paginate)
-  {
+public ParameterXmlContentHandler(final ParameterContentGenerator contentGenerator)  {
     this.contentGenerator = contentGenerator;
-    this.paginate = paginate;
     this.inputs = contentGenerator.createInputs();
     this.requestParameters = contentGenerator.getRequestParameters();
+    this.paginate = Boolean.parseBoolean(requestParameters.getStringParameter("paginate", "false"));
     this.userSession = contentGenerator.getUserSession();
   }
 
@@ -281,9 +266,7 @@ public class ParameterXmlContentHandler
     if (systemParameter == null)
     {
       final Map<String, ParameterDefinitionEntry> parameter = new LinkedHashMap<String, ParameterDefinitionEntry>();
-      parameter.put(SYS_PARAM_SUBSCRIPTION_NAME, createSubscriptionNameParameter());
       parameter.put(SYS_PARAM_DESTINATION, createDestinationParameter());
-      parameter.put(SYS_PARAM_SCHEDULE_ID, createScheduleIdParameter());
       parameter.put(SYS_PARAM_OUTPUT_TARGET, createOutputParameter());
       parameter.put("subscribe", createGenericBooleanSystemParameter("subscribe", false, false)); // NON-NLS
       parameter.put(SYS_PARAM_CONTENT_LINK, createContentLinkingParameter()); // NON-NLS
@@ -295,9 +278,10 @@ public class ParameterXmlContentHandler
       parameter.put("yield-rate", createGenericIntSystemParameter("yield-rate", false, false)); // NON-NLS
       parameter.put(SYS_PARAM_ACCEPTED_PAGE, createGenericIntSystemParameter(SYS_PARAM_ACCEPTED_PAGE, false, false)); // NON-NLS
       parameter.put(SYS_PARAM_SESSION_ID, createGenericSystemParameter(SYS_PARAM_SESSION_ID, false, false)); // NON-NLS
-  //    parameter.put("path", createGenericSystemParameter("path", false, false)); // NON-NLS
+      parameter.put("path", createGenericSystemParameter("path", false, false)); // NON-NLS
   //    parameter.put("name", createGenericSystemParameter("name", false, false)); // NON-NLS
   //    parameter.put("action", createGenericSystemParameter("action", true, false)); // NON-NLS
+      parameter.put("id", createGenericSystemParameter("id", false, false)); // NON-NLS
       parameter.put("output-type", createGenericSystemParameter("output-type", true, false)); // NON-NLS
       parameter.put("layout", createGenericSystemParameter("layout", true, false)); // NON-NLS
       parameter.put("content-handler-pattern", createGenericSystemParameter("content-handler-pattern", true, false)); // NON-NLS
@@ -339,13 +323,13 @@ public class ParameterXmlContentHandler
   }
 
   public void createParameterContent(final OutputStream outputStream,
-                                     final String reportDefinitionPath) throws Exception
+                                     final Serializable fileId) throws Exception
   {
-    createParameterContent(outputStream, reportDefinitionPath, null);
+    createParameterContent(outputStream, fileId, null);
   }
 
   public void createParameterContent(final OutputStream outputStream,
-                                     final String reportDefinitionPath,
+                                     final Serializable fileId,
                                      MasterReport report) throws Exception
   {
     final Object rawSessionId = inputs.get(ParameterXmlContentHandler.SYS_PARAM_SESSION_ID);
@@ -354,7 +338,7 @@ public class ParameterXmlContentHandler
       inputs.put(ParameterXmlContentHandler.SYS_PARAM_SESSION_ID, UUIDUtil.getUUIDAsString());
     }
 
-    this.reportDefinitionPath = reportDefinitionPath;
+    this.fileId = fileId;
     this.document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
 
     final IParameterProvider requestParams = getRequestParameters();
@@ -363,7 +347,7 @@ public class ParameterXmlContentHandler
     // handle parameter feedback (XML) services
 
     final SimpleReportingComponent reportComponent = new SimpleReportingComponent();
-    reportComponent.setReportDefinitionPath(reportDefinitionPath);
+    reportComponent.setReportFileId(fileId);
     if (report != null) {
       reportComponent.setReport(report);
     }
@@ -513,8 +497,6 @@ public class ParameterXmlContentHandler
   {
     final Map<String, Object> realInputs = new HashMap<String, Object>();
     realInputs.put(SYS_PARAM_DESTINATION, lookupDestination());
-    realInputs.put(SYS_PARAM_SCHEDULE_ID, lookupSchedules());
-    realInputs.put(SYS_PARAM_SUBSCRIPTION_NAME, lookupSubscriptionName());
 
     final ReportParameterValues parameterValues = result.getParameterValues();
 
@@ -980,49 +962,8 @@ public class ParameterXmlContentHandler
       }
     }
 
-    final ParameterDefinitionEntry scheduleId = parameters.get(SYS_PARAM_SCHEDULE_ID);
-    if (scheduleId instanceof AbstractParameter)
-    {
-      final AbstractParameter parameter = (AbstractParameter) scheduleId;
-      parameter.setHidden(hidden || parameter.isHidden());
-      if (subscribe == false)
-      {
-        parameter.setMandatory(false);
-      }
     }
 
-    final ParameterDefinitionEntry scheduleName = parameters.get(SYS_PARAM_SUBSCRIPTION_NAME);
-    if (scheduleName instanceof AbstractParameter)
-    {
-      final AbstractParameter parameter = (AbstractParameter) scheduleName;
-      parameter.setHidden(hidden || parameter.isHidden());
-      if (subscribe == false)
-      {
-        parameter.setMandatory(false);
-      }
-    }
-  }
-
-  private PlainParameter createSubscriptionNameParameter()
-  {
-    final PlainParameter subscriptionName = new PlainParameter(SYS_PARAM_SUBSCRIPTION_NAME, String.class);
-    subscriptionName.setMandatory(true);
-    subscriptionName.setParameterAttribute
-        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PREFERRED, String.valueOf(false));
-    subscriptionName.setParameterAttribute
-        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP, GROUP_SUBSCRIPTION);
-    subscriptionName.setParameterAttribute
-        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP_LABEL,
-            Messages.getInstance().getString("ReportPlugin.ReportSchedulingOptions"));
-    subscriptionName.setParameterAttribute
-        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.LABEL,
-            Messages.getInstance().getString("ReportPlugin.ReportName"));
-    subscriptionName.setParameterAttribute
-        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TYPE,
-            ParameterAttributeNames.Core.TYPE_TEXTBOX);
-    subscriptionName.setRole(ParameterAttributeNames.Core.ROLE_SCHEDULE_PARAMETER);
-    return subscriptionName;
-  }
 
   private PlainParameter createDestinationParameter()
   {
@@ -1116,65 +1057,6 @@ public class ParameterXmlContentHandler
     return parameter;
   }
 
-  private StaticListParameter createScheduleIdParameter()
-  {
-
-    final StaticListParameter scheduleIdParameter = new StaticListParameter(SYS_PARAM_SCHEDULE_ID, false, true, String.class);
-    scheduleIdParameter.setMandatory(true);
-    scheduleIdParameter.setParameterAttribute
-        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PREFERRED, "false");
-    scheduleIdParameter.setParameterAttribute
-        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP, GROUP_SUBSCRIPTION);
-    scheduleIdParameter.setParameterAttribute
-        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP_LABEL,
-            Messages.getInstance().getString("ReportPlugin.ReportSchedulingOptions"));
-    scheduleIdParameter.setParameterAttribute
-        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.LABEL,
-            Messages.getInstance().getString("ReportPlugin.Subscription"));
-    scheduleIdParameter.setParameterAttribute
-        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TYPE,
-            ParameterAttributeNames.Core.TYPE_DROPDOWN);
-    scheduleIdParameter.setRole(ParameterAttributeNames.Core.ROLE_SCHEDULE_PARAMETER);
-
-    appendAvailableSchedules(scheduleIdParameter);
-    return scheduleIdParameter;
-  }
-
-  private void appendAvailableSchedules(final StaticListParameter scheduleIdParameter)
-  {
-    final ISubscriptionRepository subscriptionRepository = PentahoSystem.get(ISubscriptionRepository.class, userSession);
-    if (subscriptionRepository == null)
-    {
-      return;
-    }
-
-    final ISubscribeContent subscribeContent = subscriptionRepository.getContentByActionReference(reportDefinitionPath);
-    if (subscribeContent == null)
-    {
-      return;
-    }
-
-    final List<ISchedule> list = subscribeContent.getSchedules();
-    if (list == null)
-    {
-      return;
-    }
-
-    for (final ISchedule schedule : list)
-    {
-      scheduleIdParameter.addValues(schedule.getId(), schedule.getTitle());
-    }
-  }
-
-  private String lookupSchedules()
-  {
-    final Object scheduleIdSelection = inputs.get(SYS_PARAM_SCHEDULE_ID); //$NON-NLS-1$
-    if (scheduleIdSelection != null)
-    {
-      return String.valueOf(scheduleIdSelection);
-    }
-    return null;
-  }
 
   private boolean isEmailConfigured()
   {
@@ -1182,27 +1064,9 @@ public class ParameterXmlContentHandler
     return StringUtils.isEmpty(emailRaw) == false;
   }
 
-  private Object lookupSubscriptionName()
-  {
-    final ISubscription subscription = contentGenerator.getSubscription();
-    Object reportNameSelection = inputs.get(SYS_PARAM_SUBSCRIPTION_NAME); //$NON-NLS-1$
-    if (reportNameSelection == null && subscription != null)
-    {
-      // subscription helper will populate with this value, grr.
-      reportNameSelection = subscription.getTitle();
-    }
-    return reportNameSelection;
-  }
-
   private Object lookupDestination()
   {
-    final ISubscription subscription = contentGenerator.getSubscription();
-    Object destinationSelection = inputs.get(SYS_PARAM_DESTINATION);//$NON-NLS-1$
-    if (destinationSelection == null && subscription != null)
-    {
-      destinationSelection = subscription.getTitle();
-    }
-    return destinationSelection;
+    return inputs.get(SYS_PARAM_DESTINATION);
   }
 
   private StaticListParameter createOutputParameter()

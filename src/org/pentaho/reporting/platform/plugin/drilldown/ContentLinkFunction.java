@@ -8,7 +8,6 @@ import org.pentaho.reporting.engine.classic.core.ReportEnvironment;
 import org.pentaho.reporting.engine.classic.core.function.ReportFormulaContext;
 import org.pentaho.reporting.engine.classic.core.function.formula.QuoteTextFunction;
 import org.pentaho.reporting.libraries.base.util.CSVTokenizer;
-import org.pentaho.reporting.libraries.base.util.StringUtils;
 import org.pentaho.reporting.libraries.formula.EvaluationException;
 import org.pentaho.reporting.libraries.formula.FormulaContext;
 import org.pentaho.reporting.libraries.formula.LibFormulaErrorValue;
@@ -21,14 +20,6 @@ import org.pentaho.reporting.libraries.formula.typing.Type;
 import org.pentaho.reporting.libraries.formula.typing.coretypes.TextType;
 import org.pentaho.reporting.libraries.formula.typing.sequence.RecursiveSequence;
 
-/**
- * Todo: Document me!
- * <p/>
- * Date: 14.01.11
- * Time: 16:46
- *
- * @author Thomas Morgner.
- */
 public class ContentLinkFunction implements Function
 {
   public ContentLinkFunction()
@@ -107,8 +98,12 @@ public class ContentLinkFunction implements Function
 
     final ReportFormulaContext reportFormulaContext = (ReportFormulaContext) context;
     final ReportEnvironment environment = reportFormulaContext.getRuntime().getProcessingContext().getEnvironment();
-    final String clText = environment.getEnvironmentProperty("contentLink");
-    final CSVTokenizer csvTokenizer = new CSVTokenizer(clText, ",", "\"");
+    final Object clText = environment.getEnvironmentProperty("contentLink");
+    if (clText == null)
+    {
+      return new String[0];
+    }
+    final CSVTokenizer csvTokenizer = new CSVTokenizer(String.valueOf(clText), ",", "\"");
     final LinkedHashSet<String> result = new LinkedHashSet<String>();
     while (csvTokenizer.hasMoreTokens())
     {

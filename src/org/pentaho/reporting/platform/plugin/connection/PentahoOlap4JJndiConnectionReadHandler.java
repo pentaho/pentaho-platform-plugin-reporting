@@ -9,14 +9,6 @@ import org.pentaho.reporting.libraries.xmlns.parser.XmlReadHandler;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
-/**
- * Todo: Document me!
- * <p/>
- * Date: 25.08.2010
- * Time: 16:24:32
- *
- * @author Thomas Morgner.
- */
 public class PentahoOlap4JJndiConnectionReadHandler  extends AbstractXmlReadHandler
     implements OlapConnectionReadHandler
 {

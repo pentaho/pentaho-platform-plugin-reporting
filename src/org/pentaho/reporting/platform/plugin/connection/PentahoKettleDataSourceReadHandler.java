@@ -1,20 +1,11 @@
 package org.pentaho.reporting.platform.plugin.connection;
 
-import org.pentaho.reporting.engine.classic.extensions.datasources.kettle.parser.KettleDataSourceReadHandler;
 import org.pentaho.reporting.engine.classic.extensions.datasources.kettle.parser.AbstractKettleTransformationReadHandler;
-import org.pentaho.reporting.engine.classic.extensions.datasources.kettle.parser.KettleTransFromFileReadHandler;
+import org.pentaho.reporting.engine.classic.extensions.datasources.kettle.parser.KettleDataSourceReadHandler;
 import org.pentaho.reporting.libraries.xmlns.parser.XmlReadHandler;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
-/**
- * Todo: Document me!
- * <p/>
- * Date: 05.01.2010
- * Time: 19:49:12
- *
- * @author Thomas Morgner.
- */
 public class PentahoKettleDataSourceReadHandler extends KettleDataSourceReadHandler
 {
   public PentahoKettleDataSourceReadHandler()
@@ -33,7 +24,7 @@ public class PentahoKettleDataSourceReadHandler extends KettleDataSourceReadHand
                                               final String tagName,
                                               final Attributes atts) throws SAXException
   {
-    if (tagName.equals("query-file"))
+    if (tagName.equals("query-file")) //$NON-NLS-1$
     {
       final AbstractKettleTransformationReadHandler queryReadHandler = new PentahoKettleTransFromFileReadHandler();
       addQueryHandler(queryReadHandler);

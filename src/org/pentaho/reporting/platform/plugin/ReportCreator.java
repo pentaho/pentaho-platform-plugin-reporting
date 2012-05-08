@@ -18,10 +18,10 @@ package org.pentaho.reporting.platform.plugin;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.net.URL;
 import java.util.HashMap;
 
-import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.modules.parser.base.ReportGenerator;
 import org.pentaho.reporting.libraries.resourceloader.Resource;
@@ -40,21 +40,7 @@ public class ReportCreator
     return generator.parseReport(repDefInputSource, url);
   }
 
-  /**
-   * @deprecated Use the one without the session instead.
-   * @param reportDefinitionPath
-   * @param session
-   * @return
-   * @throws ResourceException
-   * @throws IOException
-   */
-  public static MasterReport createReport(final String reportDefinitionPath,
-                                          IPentahoSession session) throws ResourceException, IOException
-  {
-    return createReport(reportDefinitionPath);
-  }
-
-  public static MasterReport createReport(final String reportDefinitionPath) throws ResourceException, IOException
+  public static MasterReport createReport(final Serializable fileId) throws ResourceException, IOException
   {
     final ResourceManager resourceManager = new ResourceManager();
     resourceManager.registerDefaults();
@@ -62,7 +48,7 @@ public class ReportCreator
     // add the runtime context so that PentahoResourceData class can get access
     // to the solution repo
     final ResourceKey key = resourceManager.createKey(RepositoryResourceLoader.SOLUTION_SCHEMA_NAME + RepositoryResourceLoader.SCHEMA_SEPARATOR
-        + reportDefinitionPath, helperObjects);
+        + fileId, helperObjects);
     final Resource resource = resourceManager.create(key, null, MasterReport.class);
     return (MasterReport) resource.getResource();
   }

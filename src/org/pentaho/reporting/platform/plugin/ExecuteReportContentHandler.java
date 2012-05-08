@@ -2,8 +2,8 @@ package org.pentaho.reporting.platform.plugin;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.Serializable;
 import java.util.Map;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.logging.Log;
@@ -12,6 +12,8 @@ import org.pentaho.platform.api.engine.IParameterProvider;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.api.engine.ISolutionFile;
 import org.pentaho.platform.api.repository.ISolutionRepository;
+import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
+import org.pentaho.platform.api.repository2.unified.RepositoryFile;
 import org.pentaho.platform.engine.core.audit.AuditHelper;
 import org.pentaho.platform.engine.core.audit.MessageTypes;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
@@ -21,123 +23,44 @@ import org.pentaho.reporting.engine.classic.core.AttributeNames;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlTableModule;
 import org.pentaho.reporting.engine.classic.core.util.StagingMode;
-import org.pentaho.reporting.libraries.base.util.IOUtils;
 import org.pentaho.reporting.platform.plugin.messages.Messages;
 
 public class ExecuteReportContentHandler
 {
-  private static final String FORCED_BUFFERED_WRITING =
-      "org.pentaho.reporting.engine.classic.core.modules.output.table.html.ForceBufferedWriting";
+  private static final String FORCED_BUFFERED_WRITING = "org.pentaho.reporting.engine.classic.core.modules.output.table.html.ForceBufferedWriting";
   private static final Log logger = LogFactory.getLog(ExecuteReportContentHandler.class);
   private static final StagingMode DEFAULT = StagingMode.THRU;
 
   private IPentahoSession userSession;
   private ReportContentGenerator contentGenerator;
-  private IParameterProvider pathProvider;
 
-  public ExecuteReportContentHandler(final ReportContentGenerator contentGenerator,
-                                     final IParameterProvider pathProvider)
+  public ExecuteReportContentHandler(final ReportContentGenerator contentGenerator)
   {
     this.contentGenerator = contentGenerator;
-    this.pathProvider = pathProvider;
     this.userSession = contentGenerator.getUserSession();
   }
 
-  public void createReportContent(final OutputStream outputStream, final String reportDefinitionPath) throws Exception
-  {
-    // Check whether we should forward ..
-    final HttpServletResponse response;
-    final HttpServletRequest request;
-    if (pathProvider != null) {
-      response = (HttpServletResponse) pathProvider.getParameter("httpresponse"); //$NON-NLS-1$ //$NON-NLS-2$
-      request = (HttpServletRequest) pathProvider.getParameter("httprequest"); //$NON-NLS-1$
-    } else {
-      response = null;
-      request = null;
-    }
-    if (request == null || response == null || isRedirectEnabled() == false)
-    {
-      doExport(outputStream, reportDefinitionPath);
-      return;
-    }
-
-    final String fileContent = pathProvider.getStringParameter("path", null);
-    if ("post".equalsIgnoreCase(request.getMethod()) ||
-        fileContent != null && fileContent.startsWith("/execute/"))
-    {
-      doExport(outputStream, reportDefinitionPath);
-    }
-    else
-    {
-      // get the mime type for the report ..
-      final SimpleReportingComponent reportComponent = new SimpleReportingComponent();
-      reportComponent.setReportDefinitionPath(reportDefinitionPath);
-      reportComponent.setPaginateOutput(true);
-      reportComponent.setDefaultOutputTarget(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE);
-      final Map<String, Object> inputs = contentGenerator.createInputs();
-      reportComponent.setInputs(inputs);
-      // add all inputs (request parameters) to report component so that we can compute the mime type properly
-      final String mimeType = reportComponent.getMimeType();
-      final String extension = MimeHelper.getExtension(mimeType);
-
-      final String fileName = IOUtils.getInstance().stripFileExtension(reportDefinitionPath);
-      final String requestURI = getUrl(request, fileName + extension);
-      response.sendRedirect(requestURI);
-    }
-  }
-
-  private boolean isRedirectEnabled()
-  {
-    final String redirect = PentahoSystem.getSystemSetting("report-execute-redirect-to-virtual-file", "true"); //$NON-NLS-1$
-    if ("false".equals(redirect))
-    {
-      return false;
-    }
-    return true;
-  }
-
-  public static String getUrl(final HttpServletRequest req,
-                              String reportDefinitionPath)
-  {
-    final StringBuffer reqUrl = req.getRequestURL();
-    reqUrl.append("/execute/");
-    reportDefinitionPath = reportDefinitionPath.replace("?", "");
-    reportDefinitionPath = reportDefinitionPath.replace("&", "");
-    reportDefinitionPath = reportDefinitionPath.replace("*", "");
-    reportDefinitionPath = reportDefinitionPath.replace("=", "");
-    reportDefinitionPath = reportDefinitionPath.replace("../", "");
-    reqUrl.append(reportDefinitionPath);
-    final String queryString = req.getQueryString();   // d=789
-    if (queryString != null)
-    {
-      reqUrl.append("?");
-      reqUrl.append(queryString);
-    }
-    return reqUrl.toString();
-  }
-
-  private void doExport(final OutputStream outputStream, final String reportDefinitionPath) throws Exception
+  public void createReportContent(final OutputStream outputStream, final Serializable fileId) throws Exception
   {
     final long start = System.currentTimeMillis();
     final Map<String, Object> inputs = contentGenerator.createInputs();
-    AuditHelper.audit(userSession.getId(), userSession.getName(), reportDefinitionPath,
+    AuditHelper.audit(userSession.getId(), userSession.getName(), fileId.toString(),
         contentGenerator.getObjectName(), getClass().getName(), MessageTypes.INSTANCE_START,
         contentGenerator.getInstanceId(), "", 0, contentGenerator); //$NON-NLS-1$
-
-    final Object rawSessionId = inputs.get(ParameterXmlContentHandler.SYS_PARAM_SESSION_ID);
-    if ((rawSessionId instanceof String) == false || "".equals(rawSessionId))
-    {
-      inputs.put(ParameterXmlContentHandler.SYS_PARAM_SESSION_ID, UUIDUtil.getUUIDAsString());
-    }
 
     String result = MessageTypes.INSTANCE_END;
     StagingHandler reportStagingHandler = null;
     try
     {
+		  final Object rawSessionId = inputs.get(ParameterXmlContentHandler.SYS_PARAM_SESSION_ID);
+		  if ((rawSessionId instanceof String) == false || "".equals(rawSessionId))
+		  {
+		    inputs.put(ParameterXmlContentHandler.SYS_PARAM_SESSION_ID, UUIDUtil.getUUIDAsString());
+		  }
+
       // produce rendered report
       final SimpleReportingComponent reportComponent = new SimpleReportingComponent();
-      reportComponent.setSession(userSession);
-      reportComponent.setReportDefinitionPath(reportDefinitionPath);
+      reportComponent.setReportFileId(fileId);
       reportComponent.setPaginateOutput(true);
       reportComponent.setDefaultOutputTarget(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE);
       reportComponent.setInputs(inputs);
@@ -159,8 +82,8 @@ public class ExecuteReportContentHandler
       // type from the output-target.
       // Hoever, the report-component will inspect the inputs independently from the mimetype here.
 
-      final ISolutionRepository repository = PentahoSystem.get(ISolutionRepository.class, userSession);
-      final ISolutionFile file = repository.getSolutionFile(reportDefinitionPath, ISolutionRepository.ACTION_EXECUTE);
+      final IUnifiedRepository repository = PentahoSystem.get(IUnifiedRepository.class, userSession);
+      final RepositoryFile file = repository.getFileById(fileId);
 
       // add all inputs (request parameters) to report component
       final String mimeType = reportComponent.getMimeType();
@@ -207,7 +130,7 @@ public class ExecuteReportContentHandler
       }
 
       final String extension = MimeHelper.getExtension(mimeType);
-      String filename = file.getFileName();
+      String filename = file.getName();
       if (filename.lastIndexOf(".") != -1)
       { //$NON-NLS-1$
         filename = filename.substring(0, filename.lastIndexOf(".")); //$NON-NLS-1$
@@ -224,7 +147,7 @@ public class ExecuteReportContentHandler
         {
           // Send headers before we begin execution
           response.setHeader("Content-Disposition", "inline; filename=\"" + filename + extension + "\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-          response.setHeader("Content-Description", file.getFileName()); //$NON-NLS-1$
+          response.setHeader("Content-Description", file.getName()); //$NON-NLS-1$
           response.setHeader("Cache-Control", "private, max-age=0, must-revalidate");
         }
         if (reportComponent.execute())
@@ -234,7 +157,7 @@ public class ExecuteReportContentHandler
             if (reportStagingHandler.canSendHeaders())
             {
               response.setHeader("Content-Disposition", "inline; filename=\"" + filename + extension + "\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-              response.setHeader("Content-Description", file.getFileName()); //$NON-NLS-1$
+              response.setHeader("Content-Description", file.getName()); //$NON-NLS-1$
               response.setHeader("Cache-Control", "private, max-age=0, must-revalidate");
               response.setContentLength(reportStagingHandler.getWrittenByteCount());
             }
@@ -264,7 +187,7 @@ public class ExecuteReportContentHandler
         reportStagingHandler.close();
       }
       final long end = System.currentTimeMillis();
-      AuditHelper.audit(userSession.getId(), userSession.getName(), reportDefinitionPath,
+      AuditHelper.audit(userSession.getId(), userSession.getName(), fileId.toString(),
           contentGenerator.getObjectName(), getClass().getName(), result, contentGenerator.getInstanceId(),
           "", ((float) (end - start) / 1000), contentGenerator); //$NON-NLS-1$
     }

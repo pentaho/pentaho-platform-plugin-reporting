@@ -190,11 +190,9 @@ public class ParameterControllerPanel extends VerticalPanel
 
   private class SubmitParameterListener implements ClickHandler
   {
-    private boolean onSubscribe;
 
-    private SubmitParameterListener(final boolean onSubscribe)
+    private SubmitParameterListener()
     {
-      this.onSubscribe = onSubscribe;
     }
 
     public void onClick(final ClickEvent event)
@@ -206,7 +204,6 @@ public class ParameterControllerPanel extends VerticalPanel
 
       if (promptNeeded() == false)
       {
-        subscriptionPressed = onSubscribe;
         // async call
         fetchParameters(ParameterSubmitMode.MANUAL);
       }
@@ -232,7 +229,6 @@ public class ParameterControllerPanel extends VerticalPanel
       if (finalAcceptedPage > 0)
       {
         parameterMap.setSelectedValue("accepted-page", "0"); //$NON-NLS-1$
-        subscriptionPressed = false;
         fetchParameters(ParameterSubmitMode.MANUAL);
       }
     }
@@ -259,7 +255,6 @@ public class ParameterControllerPanel extends VerticalPanel
       if (finalAcceptedPage + 1 < finalPageCount)
       {
         parameterMap.setSelectedValue("accepted-page", String.valueOf(finalPageCount - 1)); //$NON-NLS-1$
-        subscriptionPressed = false;
         fetchParameters(ParameterSubmitMode.MANUAL);
       }
     }
@@ -284,7 +279,6 @@ public class ParameterControllerPanel extends VerticalPanel
       if (finalAcceptedPage > 0)
       {
         parameterMap.setSelectedValue("accepted-page", String.valueOf(finalAcceptedPage - 1)); //$NON-NLS-1$
-        subscriptionPressed = false;
         fetchParameters(ParameterSubmitMode.MANUAL);
       }
     }
@@ -311,7 +305,6 @@ public class ParameterControllerPanel extends VerticalPanel
       if (finalAcceptedPage + 1 < finalPageCount)
       {
         parameterMap.setSelectedValue("accepted-page", String.valueOf(finalAcceptedPage + 1)); //$NON-NLS-1$
-        subscriptionPressed = false;
         fetchParameters(ParameterSubmitMode.MANUAL);
       }
     }
@@ -353,7 +346,6 @@ public class ParameterControllerPanel extends VerticalPanel
           throw new Exception(messages.getString("pageOutOfRange", "<BR>Page out of range, max page is : {0} <BR><BR>", "" + finalPageCount)); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         }
         parameterMap.setSelectedValue("accepted-page", String.valueOf(page - 1)); //$NON-NLS-1$
-        subscriptionPressed = false;
         fetchParameters(ParameterSubmitMode.MANUAL);
       }
       catch (NumberFormatException t)
@@ -404,7 +396,6 @@ public class ParameterControllerPanel extends VerticalPanel
   private DisclosurePanel parameterDisclosurePanel;
   private VerticalPanel parameterContainer;
   private CheckBox submitParametersOnChangeCheckBox;
-  private boolean subscriptionPressed;
   private final ResourceBundle messages;
 
   private Button submitSubscriptionButton;
@@ -433,11 +424,10 @@ public class ParameterControllerPanel extends VerticalPanel
 
     submitParametersButton = new Button(messages.getString("viewReport", "View Report")); //$NON-NLS-1$ //$NON-NLS-2$
     submitParametersButton.setStyleName("pentaho-button");
-    submitParametersButton.addClickHandler(new SubmitParameterListener(false));
+    submitParametersButton.addClickHandler(new SubmitParameterListener());
 
     submitSubscriptionButton = new Button(messages.getString("schedule", "Schedule")); //$NON-NLS-1$ //$NON-NLS-2$
     submitSubscriptionButton.setStyleName("pentaho-button");
-    submitSubscriptionButton.addClickHandler(new SubmitParameterListener(true));
 
     submitParametersOnChangeCheckBox = new CheckBox(messages.getString("autoSubmit", "Auto-Submit")); //$NON-NLS-1$ //$NON-NLS-2$
     submitParametersOnChangeCheckBox.setTitle(messages.getString("submitTooltip")); //$NON-NLS-1$
@@ -525,7 +515,6 @@ public class ParameterControllerPanel extends VerticalPanel
         final int length = attributes.getLength();
         for (int aidx = 0; aidx < length; aidx++)
         {
-          // todo support additional namespaces ..
           final Element item = (Element) attributes.item(aidx);
           final String namespace = item.getAttribute("namespace");
           final String attrName = item.getAttribute("name");
@@ -815,7 +804,7 @@ public class ParameterControllerPanel extends VerticalPanel
     }
     catch (Exception e)
     {
-      Window.alert("Failed in Build parameter panel: " + e);
+      Window.alert("Failed in Build parameter panel");
     }
   }
 
@@ -1079,33 +1068,33 @@ public class ParameterControllerPanel extends VerticalPanel
 
   public void fetchParameters(final ParameterSubmitMode submitMode)
   {
+    boolean paginate = false;
     container.showBlank();
 
-    final RENDER_TYPE renderType;
     if (submitMode == ParameterSubmitMode.INITIAL)
     {
-      renderType = RENDER_TYPE.PARAMETER;
+      paginate = false;
     }
     else if (submitMode == ParameterSubmitMode.USERINPUT)
     {
       if (parameterDefinition == null || parameterDefinition.isAllowAutosubmit() == false)
       {
         // only parameter without pagination of content ..
-        renderType = RENDER_TYPE.PARAMETER;
+        paginate = false;
       }
       else
       {
         // user enabled auto-submit, so lets give him the full package..
-        renderType = RENDER_TYPE.XML;
+        paginate = true;
       }
     }
     else
     {
       // manual requests always get the full treatment ..
-      renderType = RENDER_TYPE.XML;
+      paginate = true;
     }
-    final RequestBuilder requestBuilder = new RequestBuilder(RequestBuilder.POST,
-        ReportViewerUtil.buildReportUrl(renderType, parameterMap, parameterDefinition));
+    final RequestBuilder requestBuilder = new RequestBuilder(RequestBuilder.GET,
+        ReportViewerUtil.buildParameterUrl(paginate, parameterMap, parameterDefinition));
     parameterRequestCallback.setSubmitMode(submitMode);
     requestBuilder.setCallback(parameterRequestCallback);
     try
@@ -1144,15 +1133,15 @@ public class ParameterControllerPanel extends VerticalPanel
 
     if (promptNeeded)
     {
-      ReportViewerUtil.showMessageDialog(messages, messages.getString("missingParameter", "Missing Parameter"), message); //$NON-NLS-1$ //$NON-NLS-2$
+      ReportViewerUtil.showMessageDialog
+          (messages, messages.getString("missingParameter", "Missing Parameter"), message); //$NON-NLS-1$ //$NON-NLS-2$
     }
     return promptNeeded;
   }
 
   private void showReport()
   {
-    final RENDER_TYPE renderType = subscriptionPressed ? RENDER_TYPE.SUBSCRIBE : RENDER_TYPE.REPORT;
-    container.setUrl(ReportViewerUtil.buildReportUrl(renderType, parameterMap, parameterDefinition));
+    container.setUrl(ReportViewerUtil.buildReportUrl(RENDER_TYPE.REPORT, parameterMap, parameterDefinition));
   }
 
   private void showBlankPage()
@@ -1190,7 +1179,6 @@ public class ParameterControllerPanel extends VerticalPanel
     }
     catch (Exception e)
     {
-      // ignore
     }
   }
 

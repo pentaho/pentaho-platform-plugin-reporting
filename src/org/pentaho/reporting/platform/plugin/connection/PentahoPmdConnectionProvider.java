@@ -22,12 +22,7 @@ public class PentahoPmdConnectionProvider extends PmdConnectionProvider
                                                                final ResourceKey contextKey,
                                                                final String xmiFile) throws ReportDataFactoryException
   {
-    final IMetadataDomainRepository repository = PentahoSystem.get(IMetadataDomainRepository.class, null);
-    if (repository == null)
-    {
-      throw new ReportDataFactoryException("Unable to get IMetadataDomainRepository from PentahoSystem");
-    }
-    return repository;
+    return PentahoSystem.get(IMetadataDomainRepository.class, null);
   }
 
 

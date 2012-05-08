@@ -1,0 +1,143 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns:pho="http:/www.pentaho.com">
+<head>
+    <title>Report Parameter UI</title>
+    
+    <link rel="shortcut icon" href="images/favicon.ico" />
+
+    <!-- Include CDF styles first to make sure they can be properly overridden -->
+    <link rel="stylesheet" href="../../../content/pentaho-cdf/js/cdf.css" type="text/css" />
+
+    <script language="javascript" type="text/javascript" src="webcontext.js?context=reporting"></script>
+
+    <!-- CDF Scripts -->
+    <!--
+      Do not load another jquery. We'll rely on the one provided via webcontext.js.
+    <script language="javascript" type="text/javascript" src="../../../content/pentaho-cdf/js/jquery.js"></script>
+    -->
+    <script language="javascript" type="text/javascript" src="../../../content/pentaho-cdf/js/jquery-impromptu.3.1.js"></script>
+    <script language="javascript" type="text/javascript" src="../../../content/pentaho-cdf/js/jquery.ui.js"></script>
+    <script language="javascript" type="text/javascript" src="../../../content/pentaho-cdf/js/jquery.bgiframe.js"></script>
+    
+    <!-- Including jquery.dimensions.js breaks the JQuery UI Autocomplete Menu position -->
+    <!--<script language="javascript" type="text/javascript" src="../../../content/pentaho-cdf/js/jquery.dimensions.js"></script>-->
+    <script language="javascript" type="text/javascript" src="../../../content/pentaho-cdf/js/jquery.jdMenu.js"></script>
+    <script language="javascript" type="text/javascript" src="../../../content/pentaho-cdf/js/jquery.positionBy.js"></script>
+    <script language="javascript" type="text/javascript" src="../../../content/pentaho-cdf/js/jquery.tooltip.js"></script>
+    <script language="javascript" type="text/javascript" src="../../../content/pentaho-cdf/js/jquery.blockUI.js"></script>
+    <script language="javascript" type="text/javascript" src="../../../content/pentaho-cdf/js/jquery.eventstack.js"></script>
+
+    <script language="javascript" type="text/javascript" src="../../../content/pentaho-cdf/js/Base.js"></script>
+    <script language="javascript" type="text/javascript" src="../../../content/pentaho-cdf/js/Dashboards.js"></script>
+    <script language="javascript" type="text/javascript" src="../../../content/pentaho-cdf/js/CoreComponents.js"></script>
+    <!-- 
+    <script language="javascript" type="text/javascript" src="../../../content/pentaho-cdf/js/NavigationComponents.js"></script>
+    <script language="javascript" type="text/javascript" src="../../../content/pentaho-cdf/js/MapComponents.js"></script>
+    <script language="javascript" type="text/javascript" src="../../../content/pentaho-cdf/js/OlapUtils.js"></script>
+    -->
+    <link rel="stylesheet" href="../../../content/pentaho-cdf/js/jquery.tooltip.css" type="text/css" />
+    <link rel="stylesheet" href="../../../content/pentaho-cdf/js/jquery.jdMenu.css" type="text/css" />
+    <link rel="stylesheet" href="../../../content/pentaho-cdf/js/jquery.jdMenu.slate.css" type="text/css" />
+    <link rel="stylesheet" href="../../../content/pentaho-cdf/js/jquery-impromptu.css" type="text/css" />
+
+    <link rel="stylesheet" type="text/css" href="../../../content/common-ui/resources/web/dojo/dijit/themes/pentaho/pentaho.css"/>
+    <link rel="stylesheet" href="../../../content/common-ui/resources/web/prompting/pentaho-prompting.css" type="text/css" />
+<!--
+    <link rel="stylesheet" href="../../../content/reporting/reportviewer/reportviewer.css" type="text/css" />
+    -->
+    <script type="text/javascript" src="../../../content/common-ui/resources/web/formatter/formatter.nocache.js"></script>
+    <script type="text/javascript" src="../../../content/common-ui/resources/web/repo/pentaho-ajax.js"></script>
+    <script type="text/javascript" src="../../../content/common-ui/resources/web/prompting/pentaho-prompting.js"></script>
+    <script type="text/javascript" src="../../../content/common-ui/resources/web/prompting/pentaho-prompting-builders.js"></script>
+    <script type="text/javascript" src="../../../content/common-ui/resources/web/prompting/pentaho-prompting-components.js"></script>
+
+    <script type="text/javascript" src="../../../content/reporting/reportviewer/reportviewer.js"></script>
+    <script type="text/javascript" src="../../../content/reporting/reportviewer/reportviewer-prompt.js"></script>
+    <script type="text/javascript" src="../../../content/reporting/reportviewer/reportviewer-timeutil.js"></script>
+    <script type="text/javascript" src="../../../content/reporting/reportviewer/reportviewer-formatting.js"></script>
+
+    <script type="text/javascript" src="../../../content/reporting/reportviewer/report-params.js"></script>
+
+    <script language='javascript' type='text/javascript' src='../../../content/common-ui/resources/web/locale/Messages.js'></script>
+
+    <script language="javascript">
+      $.extend(djConfig, {
+        modulePaths: {
+            'pentaho.common': '../pentaho/common',
+            'pentaho.reportviewer': '../../../../../reporting/reportviewer/dojo/pentaho/reportviewer'
+        },
+        parseOnLoad: false,
+        baseUrl: '../../../content/common-ui/resources/web/dojo/dojo/'
+      });
+
+      var prompt = new pentaho.reporting.Prompt();
+      var schedulePrompt = new pentaho.reporting.SchedulePrompt(prompt);
+      schedulePrompt.createHooks();
+
+      // Set up locale for Dojo
+      djConfig.locale = prompt.getLocale();
+
+      var jsset = Dashboards.getQueryParameter("jsset");
+      if( jsset == '' ) {
+        document.write("<scr"+"ipt language='javascript' type='text/javascript' src='../../../content/common-ui/resources/web/dojo/dojo/dojo-all.js'></scr"+"ipt>");
+      }
+      else {
+        document.write("<scr"+"ipt language='javascript' type='text/javascript' src='../../../content/common-ui/resources/web/dojo/dojo/dojo-all.js.uncompressed.js'></scr"+"ipt>");
+      }
+
+      /**
+       * This is called when the formatter gwt module has been loaded. We depend on this so we'll load the prompt after 
+       * the formatter has been loaded.
+       */
+      gwtModuleLoaded = function(moduleName) {
+        if (moduleName === 'formatter') {
+          prompt.moduleLoaded('formatter');
+        }
+      }
+
+      var SimileAjax = {};
+      Dashboards.blockUIwithDrag = function() {
+        $.blockUI.defaults.message = '';
+        $.blockUI.defaults.css.left = '0%';
+        $.blockUI.defaults.css.top = '0%';
+        $.blockUI.defaults.css.marginLeft = '85px';
+        $.blockUI.defaults.css.width = '100%';
+        $.blockUI.defaults.css.height = '100%';
+        $.blockUI.defaults.css.opacity = '1';
+        $.blockUI.defaults.css.backgroundColor = '#ffffcc';
+        $.blockUI.defaults.css['-webkit-border-radius'] = '10px'; 
+        $.blockUI.defaults.css['-moz-border-radius'] = '10px';
+    
+        $.blockUI.defaults.overlayCSS.backgroundColor = '#000000';
+        $.blockUI.defaults.overlayCSS.opacity = '0.6';
+        $.blockUI.defaults.overlayCSS.cursor = 'wait';
+        // Place it below the message box
+        $.blockUI.defaults.overlayCSS['z-index'] = '900';
+          // There's an issue with BlockUI and IE 8. As we don't even use this feature from CDF, it's hidden here.
+          // $.blockUI.defaults.showOverlay = false;
+        $.blockUI();
+      }
+    </script>
+    <script language="javascript" type="text/javascript" src="../../../content/pentaho-cdf/js/simile/ajax/scripts/json.js"></script>
+    <script language="javascript" type="text/javascript" src="../../../content/reporting/reportviewer/report-params.js"></script>
+
+    <script language="javascript" type="text/javascript">
+      var initTest = function() {
+        initSchedulingParams('/public/pentaho-solutions/steel-wheels/reports/Product Sales.prpt');
+      }
+
+      var showParams = function() {
+        var params = getParams();
+        $('#parameterValues').html(dojo.toJson(params));
+      }
+    </script>
+
+    <script language="javascript" type="text/javascript">
+    </script>
+  </head>
+  <body class="tundra body">
+    <div id="promptPanel"></div>
+    <div id="messageBox" dojoType="pentaho.common.MessageBox" title="" style="width:400px; display:none;">
+    </div>
+  </body>
+</html>

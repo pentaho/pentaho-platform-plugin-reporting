@@ -38,7 +38,7 @@ public class ReportViewer implements EntryPoint, IResourceBundleLoadCallback
 
   public enum RENDER_TYPE
   {
-    REPORT, XML, PARAMETER, SUBSCRIBE, DOWNLOAD
+    REPORT, XML, PARAMETER, DOWNLOAD
   }
 
   public void onModuleLoad()
