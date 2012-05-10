@@ -22,9 +22,9 @@ import org.pentaho.platform.util.UUIDUtil;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlTableModule;
 import org.pentaho.reporting.platform.plugin.gwt.client.ReportViewer.RENDER_TYPE;
 
-public class ReportContentGenerator extends SimpleContentGenerator {
+public class ReportContentGenerator extends ParameterContentGenerator {
   /**
-   * 
+   *
    */
   private static final long serialVersionUID = 1L;
 
@@ -42,23 +42,23 @@ public class ReportContentGenerator extends SimpleContentGenerator {
     final IParameterProvider requestParams = getRequestParameters();
     final IParameterProvider pathParams = getPathParameters();
 
-    if(requestParams != null && requestParams.getStringParameter("path", null) != null) {
-          path = URLDecoder.decode(requestParams.getStringParameter("path", ""), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-    } else if(pathParams != null && pathParams.getStringParameter("path", null) != null) {
-          path = URLDecoder.decode(pathParams.getStringParameter("path", ""), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+    if (requestParams != null && requestParams.getStringParameter("path", null) != null) {
+      path = URLDecoder.decode(requestParams.getStringParameter("path", ""), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+    } else if (pathParams != null && pathParams.getStringParameter("path", null) != null) {
+      path = URLDecoder.decode(pathParams.getStringParameter("path", ""), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     }
 
-    if(requestParams != null && requestParams.getStringParameter("renderMode", null) != null) {
-        renderMode = RENDER_TYPE.valueOf
-        (requestParams.getStringParameter("renderMode", RENDER_TYPE.REPORT.toString()).toUpperCase()); //$NON-NLS-1$
-    } else if(pathParams != null && pathParams.getStringParameter("renderMode", null) != null) {
-        renderMode = RENDER_TYPE.valueOf
-            (pathParams.getStringParameter("renderMode", RENDER_TYPE.REPORT.toString()).toUpperCase()); //$NON-NLS-1$
+    if (requestParams != null && requestParams.getStringParameter("renderMode", null) != null) {
+      renderMode = RENDER_TYPE.valueOf
+          (requestParams.getStringParameter("renderMode", RENDER_TYPE.REPORT.toString()).toUpperCase()); //$NON-NLS-1$
+    } else if (pathParams != null && pathParams.getStringParameter("renderMode", null) != null) {
+      renderMode = RENDER_TYPE.valueOf
+          (pathParams.getStringParameter("renderMode", RENDER_TYPE.REPORT.toString()).toUpperCase()); //$NON-NLS-1$
     }
 
     // If render mode is not passed in the request or path parameter, then we will assume that the render type is REPORT
-    if(renderMode == null) {
-        renderMode = RENDER_TYPE.REPORT;
+    if (renderMode == null) {
+      renderMode = RENDER_TYPE.REPORT;
     }
 
     RepositoryFile prptFile = unifiedRepository.getFile(idTopath(path));
@@ -81,19 +81,14 @@ public class ReportContentGenerator extends SimpleContentGenerator {
         default:
           throw new IllegalArgumentException();
       }
-    }
-    catch (Exception ex)
-    {
+    } catch (Exception ex) {
       final String exceptionMessage = ex.getMessage() != null ? ex.getMessage() : ex.getClass().getName();
       log.error(exceptionMessage, ex);
 
-      if (outputStream != null)
-      {
+      if (outputStream != null) {
         outputStream.write(exceptionMessage.getBytes("UTF-8")); //$NON-NLS-1$
         outputStream.flush();
-      }
-      else
-      {
+      } else {
         throw new IllegalArgumentException();
       }
     }
@@ -103,95 +98,30 @@ public class ReportContentGenerator extends SimpleContentGenerator {
     return instanceId;
   }
 
-  public IPentahoSession getUserSession() {
-    return userSession;
-  }
-
-  private IParameterProvider requestParameters;
-
-
   public Map<String, IParameterProvider> getParameterProviders() {
     return parameterProviders;
   }
 
-  /**
-   * Safely get our request parameters, while respecting any parameters hooked up to a subscription
-   *
-   * @return IParameterProvider the provider of parameters
-   */
-  public IParameterProvider getRequestParameters() {
-    if (requestParameters != null) {
-      return requestParameters;
-    }
-
-    if (parameterProviders == null)
-    {
-      return new SimpleParameterProvider();
-    }
-    
-    requestParameters = parameterProviders.get(IParameterProvider.SCOPE_REQUEST);
-    return requestParameters;
-  }
-
-  private IParameterProvider pathParameters;
-
-  public IParameterProvider getPathParameters() {
-    if (pathParameters != null) {
-      return pathParameters;
-    }
-
-    pathParameters = parameterProviders.get("path");
-    return pathParameters;
-  }
-
-  public Map<String, Object> createInputs() {
-    return createInputs(getRequestParameters());
-  }
-
-  protected static Map<String, Object> createInputs(final IParameterProvider requestParams)
-  {
-    final Map<String, Object> inputs = new HashMap<String, Object>();
-    if (requestParams == null)
-    {
-      return inputs;
-    }
-    
-    final Iterator paramIter = requestParams.getParameterNames();
-    while (paramIter.hasNext()) {
-      final String paramName = (String) paramIter.next();
-      final Object paramValue = requestParams.getParameter(paramName);
-      if (paramValue == null)
-      {
-        continue;
-      }
-      // only actually add inputs who don't have NULL values
-      inputs.put(paramName, paramValue);
-    }
-    return inputs;
-  }
-
-  public Log getLogger()
-  {
+  public Log getLogger() {
     return log;
   }
 
-  public String getMimeType()
-  {
+  public String getMimeType() {
     final IParameterProvider requestParams = getRequestParameters();
     final IParameterProvider pathParams = getPathParameters();
     RENDER_TYPE renderMode = null;
     String path = null;
     IUnifiedRepository unifiedRepository = PentahoSystem.get(IUnifiedRepository.class, null);
-    if(requestParams != null && requestParams.getStringParameter("renderMode", null) != null) {
-        renderMode = RENDER_TYPE.valueOf
-        (requestParams.getStringParameter("renderMode", RENDER_TYPE.REPORT.toString()).toUpperCase()); //$NON-NLS-1$
-    } else if(pathParams != null && pathParams.getStringParameter("renderMode", null) != null) {
-        renderMode = RENDER_TYPE.valueOf
-            (pathParams.getStringParameter("renderMode", RENDER_TYPE.REPORT.toString()).toUpperCase()); //$NON-NLS-1$
+    if (requestParams != null && requestParams.getStringParameter("renderMode", null) != null) {
+      renderMode = RENDER_TYPE.valueOf
+          (requestParams.getStringParameter("renderMode", RENDER_TYPE.REPORT.toString()).toUpperCase()); //$NON-NLS-1$
+    } else if (pathParams != null && pathParams.getStringParameter("renderMode", null) != null) {
+      renderMode = RENDER_TYPE.valueOf
+          (pathParams.getStringParameter("renderMode", RENDER_TYPE.REPORT.toString()).toUpperCase()); //$NON-NLS-1$
     }
     // If render mode is not passed in the request or path parameter, then we will assume that the render type is REPORT
-    if(renderMode == null) {
-        renderMode = RENDER_TYPE.REPORT;
+    if (renderMode == null) {
+      renderMode = RENDER_TYPE.REPORT;
     }
     if (renderMode.equals(RENDER_TYPE.XML) ||
         renderMode.equals(RENDER_TYPE.PARAMETER)) {
@@ -200,10 +130,10 @@ public class ReportContentGenerator extends SimpleContentGenerator {
       // perhaps we can invent our own mime-type or use application/zip?
       return "application/octet-stream"; //$NON-NLS-1$
     }
-    if(requestParams != null && requestParams.getStringParameter("path", null) != null) {
-        path = requestParams.getStringParameter("path", ""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-    } else if(pathParams != null && pathParams.getStringParameter("path", null) != null) {
-        path = pathParams.getStringParameter("path", ""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+    if (requestParams != null && requestParams.getStringParameter("path", null) != null) {
+      path = requestParams.getStringParameter("path", ""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+    } else if (pathParams != null && pathParams.getStringParameter("path", null) != null) {
+      path = pathParams.getStringParameter("path", ""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     }
 
     RepositoryFile prptFile = unifiedRepository.getFile(idTopath(path));
@@ -215,32 +145,26 @@ public class ReportContentGenerator extends SimpleContentGenerator {
     reportComponent.setInputs(inputs);
     return reportComponent.getMimeType();
   }
+
   public String getSystemRelativePluginPath(ClassLoader classLoader) {
-        File dir = getPluginDir(classLoader);
-        if (dir == null) {
-            return null;
-}
-        // get the full path with \ converted to /
-        String path = dir.getAbsolutePath().replace('\\', ISolutionRepository.SEPARATOR);
-        int pos = path.lastIndexOf(ISolutionRepository.SEPARATOR + "system" + ISolutionRepository.SEPARATOR); //$NON-NLS-1$
-        if (pos != -1) {
-            path = path.substring(pos + 8);
-        }
-        return path;
-  }
-
-  protected File getPluginDir(ClassLoader classLoader) {
-       if (classLoader instanceof PluginClassLoader) {
-        return ((PluginClassLoader) classLoader).getPluginDir();
-       }
-        return null;
-  }
-
-  private String idTopath(String id) {
-    String path = id.replace(":", "/");
-    if(path != null && path.length() > 0 && path.charAt(0) != '/') {
-        path = "/" + path;
+    File dir = getPluginDir(classLoader);
+    if (dir == null) {
+      return null;
+    }
+    // get the full path with \ converted to /
+    String path = dir.getAbsolutePath().replace('\\', ISolutionRepository.SEPARATOR);
+    int pos = path.lastIndexOf(ISolutionRepository.SEPARATOR + "system" + ISolutionRepository.SEPARATOR); //$NON-NLS-1$
+    if (pos != -1) {
+      path = path.substring(pos + 8);
     }
     return path;
   }
+
+  protected File getPluginDir(ClassLoader classLoader) {
+    if (classLoader instanceof PluginClassLoader) {
+      return ((PluginClassLoader) classLoader).getPluginDir();
+    }
+    return null;
+  }
+
 }
