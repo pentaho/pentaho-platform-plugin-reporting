@@ -37,6 +37,7 @@ import org.pentaho.reporting.libraries.resourceloader.loader.AbstractResourceDat
  */
 public class RepositoryResourceData extends AbstractResourceData {
 
+  public static final String PENTAHO_REPOSITORY_KEY = "pentahoRepositoryKey"; //$NON-NLS-1$
 
   private String filename;
   private ResourceKey key;
