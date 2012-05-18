@@ -192,7 +192,7 @@ pen.define(['common-ui/util/util', 'reportviewer/reportviewer-formatting'], func
       },
 
       getParameterUrl: function() {
-        return CONTEXT_PATH + 'content/reporting';
+        return 'parameter';
       },
 
       showMessageBox: function( message, dialogTitle, button1Text, button1Callback, button2Text, button2Callback, blocker ) {

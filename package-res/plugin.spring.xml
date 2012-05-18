@@ -10,6 +10,7 @@
   <context:annotation-config />
 
   <bean id="prpt" class="org.pentaho.reporting.platform.plugin.ReportContentGenerator" scope="prototype"/>
+  <bean id="prpt.report" class="org.pentaho.reporting.platform.plugin.ReportContentGenerator" scope="prototype"/>
   <bean id="prpt.viewer" class="org.pentaho.platform.plugin.services.webservices.content.PluginFileContentGenerator" scope="prototype">
     <property name="mimeType" value="text/html" />
     <property name="relativeFilePath" value="reportviewer/report.html" />
@@ -18,9 +19,9 @@
   <bean id="prpt.parameter" class="org.pentaho.reporting.platform.plugin.ParameterContentGenerator" scope="prototype"/>
   <bean id="prpt.backgroundExecution" class="org.pentaho.reporting.platform.plugin.SimpleReportingAction" scope="prototype"/>
   <bean id="prpt.parameterUi" class="org.pentaho.platform.plugin.services.webservices.content.PluginFileContentGenerator" scope="prototype">
-	<property name="mimeType" value="text/html" />
-	<property name="relativeFilePath" value="reportviewer/report-params.html" />
-	<property name="pluginId" value="reporting" />
+    <property name="mimeType" value="text/html" />
+    <property name="relativeFilePath" value="reportviewer/report-params.html" />
+    <property name="pluginId" value="reporting" />
   </bean>
 
   <bean id="prpt.viewer-gwt" class="org.pentaho.platform.plugin.services.webservices.content.PluginFileContentGenerator" scope="prototype">

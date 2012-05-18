@@ -235,8 +235,11 @@ public class ReportViewerUtil
       throw new NullPointerException();
     }
     String reportPath = Window.Location.getPath();
+    if(renderType == ReportViewer.RENDER_TYPE.PARAMETER){
+      reportPath = reportPath.substring(0, reportPath.lastIndexOf("/")) + "/" + renderType + "?";
+    }
     reportPath = reportPath.replace("viewer-gwt", "generatedContent");
-    reportPath += "?renderMode=" + renderType; // NON-NLS
+//    reportPath += "?renderMode=" + renderType; // NON-NLS
 //    if(reportPath.indexOf("&path") < 0) {
 //        int start = reportPath.indexOf(FILES);
 //        int end = reportPath.lastIndexOf("/");
