@@ -31,10 +31,10 @@
 
 
 		<!-- internal pentaho platform dependencies -->
-		<dependency org="${pentaho-platform.group}" name="pentaho-platform-api" rev="${dependency.pentaho-platform.revision}"  changing="true" />
-		<dependency org="${pentaho-platform.group}" name="pentaho-platform-core" rev="${dependency.pentaho-platform.revision}"  changing="true" />
-		<dependency org="${pentaho-platform.group}" name="pentaho-platform-repository" rev="${dependency.pentaho-platform.revision}"  changing="true" />
-		<dependency org="${pentaho-platform.group}" name="pentaho-platform-extensions" rev="${dependency.pentaho-platform.revision}"  changing="true" />
+		<dependency org="${pentaho-platform.group}" name="pentaho-platform-api" rev="${dependency.bi-platform.revision}"  changing="true" />
+		<dependency org="${pentaho-platform.group}" name="pentaho-platform-core" rev="${dependency.bi-platform.revision}"  changing="true" />
+		<dependency org="${pentaho-platform.group}" name="pentaho-platform-repository" rev="${dependency.bi-platform.revision}"  changing="true" />
+		<dependency org="${pentaho-platform.group}" name="pentaho-platform-extensions" rev="${dependency.bi-platform.revision}"  changing="true" />
 
         <!--  Codegen dependencies -->
         <dependency org="com.google.gwt" name="gwt-user" rev="2.4.0" conf="codegen->default"/>
@@ -50,7 +50,7 @@
         <dependency org="GWT-FX" name="GWT-FX" rev="0.5.0" conf="codegen->default" transitive="false"/>
 
         <!--  test dependencies -->
-        <dependency org="${pentaho-platform.group}" name="pentaho-platform-core-test" rev="${dependency.pentaho-platform.revision}"  changing="true" conf="test->default"/>
+        <dependency org="${pentaho-platform.group}" name="pentaho-platform-core-test" rev="${dependency.bi-platform.revision}"  changing="true" conf="test->default"/>
         <dependency org="junit" name="junit" rev="4.4" conf="test->default" />
         <dependency org="hsqldb" name="hsqldb" rev="1.8.0" conf="test->default" transitive="false"/>
 
