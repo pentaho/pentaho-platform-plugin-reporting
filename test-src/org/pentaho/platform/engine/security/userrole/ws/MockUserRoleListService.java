@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.pentaho.platform.api.engine.IUserRoleListService;
+import org.pentaho.platform.api.mt.ITenant;
 
 public class MockUserRoleListService implements IUserRoleListService {
 
@@ -41,6 +42,13 @@ public class MockUserRoleListService implements IUserRoleListService {
     return allAuths;
   }
 
+  @Override
+  public List<String> getAllRoles(final ITenant iTenant)
+  {
+    // TODO - should we handle iTenent in Mock service?
+    return getAllRoles();
+  }
+
   public List<String> getAllUsers() {
     List<String> allUsers = new ArrayList<String>(4);
     allUsers.add("pat"); //$NON-NLS-1$
@@ -49,6 +57,21 @@ public class MockUserRoleListService implements IUserRoleListService {
     allUsers.add("suzy"); //$NON-NLS-1$
     return allUsers;
   }
+
+  @Override
+  public List<String> getAllUsers(final ITenant iTenant)
+  {
+    // TODO - should we handle iTenent in Mock service?
+    return getAllUsers();
+  }
+
+  @Override
+  public List<String> getUsersInRole(final ITenant iTenant, final String role)
+  {
+    // TODO - should we handle iTenent in Mock service?
+    return getUsersInRole(role);
+  }
+
 
   public List<String> getUsersInRole(String role) {
     if (role.equals("dev")) { //$NON-NLS-1$
@@ -65,6 +88,13 @@ public class MockUserRoleListService implements IUserRoleListService {
       return Arrays.asList(new String[] { "suzy" });//$NON-NLS-1$
     }
     return Collections.emptyList();
+  }
+
+  @Override
+  public List<String> getRolesForUser(final ITenant iTenant, final String username)
+  {
+    // TODO - should we handle iTenent in Mock service?
+    return getRolesForUser(username);
   }
 
   public List<String> getRolesForUser(String username) {
