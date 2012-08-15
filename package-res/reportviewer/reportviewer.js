@@ -180,7 +180,19 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'reportvie
           return $('#reportArea').length === 1;
         },
 
+		isPentahoMobileEnv: function() {
+		  return (typeof window.top.PentahoMobile !== 'undefined');
+		},
+
         updatePageStyling: function(styled) {
+          if (this.isPentahoMobileEnv()) {
+            var iframe = $('#reportContent');
+            iframe.wrap('<div id="reportContentWrapper" class="webkitScroller"/>');            
+            //iframe.css('width', '100%');
+            // TODO what if we call update framecss here?
+            this.resize();
+            return;
+          }
           var currentlyStyled = this.isPageStyled();
           if (styled) {
             // Style the report iframe if it's not already styled
@@ -202,14 +214,60 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'reportvie
         },
 
         resize: function() {
-          var ra = dojo.byId(this.isPageStyled() ? 'reportArea' : 'reportContent');
-          var c = dojo.coords(ra);
-          var windowHeight = dojo.dnd.getViewport().h;
-
-          dojo.marginBox(ra, {h: windowHeight - c.y});
+          if (this.isPentahoMobileEnv()) {
+            var rcw = dojo.byId('reportContentWrapper');
+            if (rcw != null) {
+              var c = dojo.coords(rcw);
+              var windowHeight = dojo.dnd.getViewport().h;
+              dojo.marginBox(rcw, {h: windowHeight - c.y});
+            }
+          } else {
+            var ra = dojo.byId(this.isPageStyled() ? 'reportArea' : 'reportContent');
+            var c = dojo.coords(ra);
+            var windowHeight = dojo.dnd.getViewport().h;
+            dojo.marginBox(ra, {h: windowHeight - c.y});
+          }
         },
 
+		frameUpdateCount: 0,
+        updateFrameWebkitScrollCss : function(iframe) {
+          var _this = this;
+          _this.frameUpdateCount++;
+          if (_this.frameUpdateCount < 2) {
+            return;
+          }
+		  setTimeout(function() {
+            try {
+		      var element = document.getElementById('reportContent').contentDocument.body;
+		      _this.updateElementWebkitScrollCss(element);
+            } catch (e) {alert(e);}			
+		  },1);
+        },
+	  
+	    updateElementWebkitScrollCss : function(element) {
+          if (typeof element.getAttribute !== 'function') {
+            return;
+          } 
+          var style = element.getAttribute('style');
+          if (typeof style == 'undefined' || style == null) {
+            style = '-webkit-transform:translate3d(0,0,0)';
+          } else {
+            style+= ';-webkit-transform:translate3d(0,0,0);';
+          }
+          element.setAttribute('style', style);		
+          if (element.children != null && element.children.length > 0) {
+		    for (var i=0;i<element.children.length;i++) {
+			  var child = element.children[i];
+			  //updateElementCss(child);
+			}
+		  }
+	    },
+
         resizeIframe: function(iframe) {
+          if (this.isPentahoMobileEnv()) {
+            this.updateFrameWebkitScrollCss(iframe);
+            return;
+          }
           if (!this.isPageStyled()) {
             return;
           }

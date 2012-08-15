@@ -128,8 +128,9 @@
           });
         });
       });
-    </script>
+    </script>	    
   </head>
+  
   <body class="tundra body styled">
     <div id="toppanel" class="pentaho-transparent hidden">
       <div id="toppanelinner" >
@@ -142,17 +143,13 @@
         </div>
 
         <div id="reportControlPanel" class="hidden pentaho-rounded-panel-bottom-lr pentaho-shadow">
-          <div id="promptPanel" class="pentaho-rounded-panel-bottom-lr"></div>
+          <div id="promptPanel" width="200px" class="pentaho-rounded-panel-bottom-lr"></div>
         </div>
       </div>
     </div>
 
-    <div id="reportArea" class="pentaho-transparent hidden" scrollexception="true">
-      <div id="reportPageOutline" class="pentaho-rounded-panel2-shadowed pentaho-padding-lg pentaho-background">
-        <iframe id="reportContent" frameborder="0"></iframe>
-      </div>
-    </div>
-
+	<iframe id="reportContent" frameborder="0"></iframe>
+	
     <div id="messageBox" dojoType="pentaho.common.MessageBox" title="" style="width:400px; display:none;">
     </div>
   </body>

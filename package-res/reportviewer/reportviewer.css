@@ -49,6 +49,12 @@ div.prompt-panel {
   background-color: #ffffff;
 }
 
+.webkitScroller {
+  width: 100%;
+  overflow: auto;
+  -webkit-overflow-scrolling:touch;
+}		
+
 .styled >* #reportContent {
   padding: 10px 10px 10px 2px;
   border: black 1px solid;

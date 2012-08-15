@@ -38,7 +38,8 @@ pen.define(['common-ui/util/util', 'reportviewer/reportviewer-formatting'], func
           // Provide our own i18n function
           this.panel.getString = pentaho.common.Messages.getString;
 
-          this.initPromptPanel();
+          this.initPromptPanel();          
+          viewer.view.showPromptPanel(paramDefn.promptNeeded);          
         }.bind(this), 'INITIAL');
       },
 
