@@ -185,29 +185,34 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'reportvie
 		},
 
         updatePageStyling: function(styled) {
-          if (this.isPentahoMobileEnv()) {
-            var iframe = $('#reportContent');
-            iframe.wrap('<div id="reportContentWrapper" class="webkitScroller"/>');            
-            //iframe.css('width', '100%');
-            // TODO what if we call update framecss here?
-            this.resize();
-            return;
-          }
           var currentlyStyled = this.isPageStyled();
-          if (styled) {
-            // Style the report iframe if it's not already styled
-            if (!currentlyStyled) {
-              var iframe = $('#reportContent');
+          if (styled) {          
+            if (this.isPentahoMobileEnv()) {
               $('body').addClass('styled');
-              iframe.wrap('<div id="reportArea" class="pentaho-transparent" scrollexception="true"/>');
-              iframe.wrap('<div id="reportPageOutline" class="pentaho-rounded-panel2-shadowed pentaho-padding-lg pentaho-background"/>');
+              var iframe = $('#reportContent');
+              iframe.wrap('<div id="reportContentWrapper" class="webkitScroller"/>');            
+              $('reportContentWrapper').css('width', window.innerWidth);
+            } else {
+              // Style the report iframe if it's not already styled
+              if (!currentlyStyled) {
+                var iframe = $('#reportContent');
+                $('body').addClass('styled');
+                iframe.wrap('<div id="reportArea" class="pentaho-transparent" scrollexception="true"/>');
+                iframe.wrap('<div id="reportPageOutline" class="pentaho-rounded-panel2-shadowed pentaho-padding-lg pentaho-background"/>');
+              }
             }
           } else {
-            // Unwrap the report iframe if not already styled
             if (currentlyStyled) {
               $('body').removeClass('styled');
-              var iframe = $('#reportContent').unwrap().unwrap();
-              iframe.css('width', '100%');
+              var iframe = $('#reportContent');
+              if (this.isPentahoMobileEnv()) {
+                iframe.css('width', window.innerWidth);
+                $('reportContentWrapper').css('width', window.innerWidth);
+                iframe.unwrap();
+              } else {
+                iframe.css('width', window.innerWidth);
+                iframe.unwrap().unwrap();
+              }
             }
           }
           this.resize();
@@ -219,7 +224,8 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'reportvie
             if (rcw != null) {
               var c = dojo.coords(rcw);
               var windowHeight = dojo.dnd.getViewport().h;
-              dojo.marginBox(rcw, {h: windowHeight - c.y});
+              var height = windowHeight - c.y - 2;
+              dojo.marginBox(rcw, {h: height});
             }
           } else {
             var ra = dojo.byId(this.isPageStyled() ? 'reportArea' : 'reportContent');
@@ -250,10 +256,11 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'reportvie
           } 
           var style = element.getAttribute('style');
           if (typeof style == 'undefined' || style == null) {
-            style = '-webkit-transform:translate3d(0,0,0)';
+            style = '-webkit-transform:translate3d(0,0,0);';
           } else {
             style+= ';-webkit-transform:translate3d(0,0,0);';
           }
+          style+='margin:20px;padding:0px';
           element.setAttribute('style', style);		
           if (element.children != null && element.children.length > 0) {
 		    for (var i=0;i<element.children.length;i++) {
@@ -264,14 +271,15 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'reportvie
 	    },
 
         resizeIframe: function(iframe) {
+          var t = $(iframe);
+          
           if (this.isPentahoMobileEnv()) {
             this.updateFrameWebkitScrollCss(iframe);
-            return;
           }
+          
           if (!this.isPageStyled()) {
             return;
           }
-          var t = $(iframe);
 
           if (t.attr('src') === 'about:blank') {
             // use the last known report width (or the default) so we don't drastically change the width between refreshes
@@ -291,7 +299,11 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'reportvie
             this.lastWidth = d.width();
             t.width(this.lastWidth);
 
-          $('#reportPageOutline').width(t.outerWidth());
+            if (this.isPentahoMobileEnv()) {
+              $('#reportContent').width(window.innerWidth);
+            } else {
+              $('#reportPageOutline').width(t.outerWidth());
+            }
           this.resize();
         }
         }
