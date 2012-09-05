@@ -1,0 +1,55 @@
+#toolbarlinner2{
+	background: #251A17 !important;
+	border: solid #392E2A !important;
+	border-radius: 0 !important;
+	border-width: 0 0 1px 0 !important;
+	margin: 0;
+	padding: 2px;
+	box-shadow: rgba(0, 0, 0, 0.6) 1px 0px 5px 1px !important;
+	height: auto;
+}
+#reportControlPanel{
+	background: url('../../../../pentaho-mobile/resources/images/bg-lists.png') top left !important;
+	background-color: transparent !important;
+}
+
+
+.pc_pagePrevDisabled {
+	background: transparent url('../../../../pentaho-mobile/resources/images/ico-page-left.png') no-repeat !important;
+	cursor: default !important;
+}
+.pc_pagePrev {
+	float: left;
+	background: transparent url('../../../../pentaho-mobile/resources/images/ico-page-left.png') no-repeat !important;
+	height: 32px;
+	width: 32px;
+	white-space: nowrap;
+	cursor: pointer;
+}
+.pc_pageNextDisabled {
+	background: transparent url('../../../../pentaho-mobile/resources/images/ico-page-right.png') no-repeat !important;
+	cursor: default !important;
+}
+.pc_pageNext {
+	float: left;
+	background: transparent url('../../../../pentaho-mobile/resources/images/ico-page-right.png') no-repeat !important;
+	height: 32px;
+	width: 32px;
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+.pc_pageControlContainer {
+	height: auto;
+}
+
+.pc_pageControlContainer .dijitTextBox {
+	margin-top: 6px;
+}
+.pc_pageTotal {
+	margin-top: 6px;
+}
+
+#mobile-toolbar{
+	height: 39px;
+}
