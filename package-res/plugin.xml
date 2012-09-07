@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<plugin title="Pentaho Reporting Plugin">
+<plugin title="reporting">
 
    <lifecycle-listener class="org.pentaho.reporting.platform.plugin.LifecycleListener"/>
 
