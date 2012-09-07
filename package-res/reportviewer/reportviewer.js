@@ -20,9 +20,6 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'reportvie
           this.view.togglePromptPanel();
         }.bind(this));
 
-        dojo.connect(dijit.byId('toolbar-parameterToggle-mobile'), "onClick", this, function() {
-          this.view.togglePromptPanel();
-        }.bind(this));
 
         this.view.resize();
         var viewResizeIframe = this.view.resizeIframe.bind(this.view);
@@ -60,7 +57,6 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'reportvie
          */
         localize: function() {
           $('#toolbar-parameterToggle').attr('title', pentaho.common.Messages.getString('parameterToolbarItem_title'));
-          $('#toolbar-parameterToggle-mobile').html(pentaho.common.Messages.getString('Prompts'));
           dijit.byId('pageControl').registerLocalizationLookup(pentaho.common.Messages.getString);
         },
 
@@ -179,10 +175,9 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'reportvie
         showPromptPanel: function(visible) {
           if (visible) {
             dijit.byId('toolbar-parameterToggle').set('checked', true);
-            dijit.byId('toolbar-parameterToggle-mobile').set('checked', true);
             dojo.removeClass('reportControlPanel', 'hidden');
           } else {
-            dijit.byId('toolbar-parameterToggle-mobile').set('checked', false);
+            dijit.byId('toolbar-parameterToggle').set('checked', false);
             dojo.addClass('reportControlPanel', 'hidden');
           }
         },
