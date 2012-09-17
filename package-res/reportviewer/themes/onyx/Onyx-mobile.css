@@ -1,19 +1,26 @@
+/* top toolbar for report viewer in iPad */
 #toolbarlinner2{
-	background: #251A17 !important;
+	background: #2e2320 !important;
 	border: solid #392E2A !important;
 	border-radius: 0 !important;
 	border-width: 0 0 1px 0 !important;
-	margin: 0;
 	padding: 2px;
 	box-shadow: rgba(0, 0, 0, 0.6) 1px 0px 5px 1px !important;
 	height: auto;
 }
 #reportControlPanel{
-	background: url('../../../../pentaho-mobile/resources/images/bg-lists.png') top left !important;
-	background-color: transparent !important;
+	background: url('../../images/bg-lists.jpg') top left !important;
+	background-repeat:repeat;
+	border-radius: 0 !important;
+	margin: 0 !important;
+	border: 0 !important;
+	border-bottom: 1px solid rgba(0, 0, 0, 0.4) !important;
+	
 }
-
-
+.pentaho-shadow {
+	box-shadow: rgba(0, 0, 0, 0.3) 1px 0px 5px 1px !important;
+}
+/* paging controls for iPad */
 .pc_pagePrevDisabled {
 	background: transparent url('../../../../pentaho-mobile/resources/images/ico-page-left.png') no-repeat !important;
 	cursor: default !important;
@@ -52,4 +59,9 @@
 
 #mobile-toolbar{
 	height: 39px;
+}
+/* hide them background to show mobile bg */
+.pentaho-page-background{
+	background: transparent;
+	background-color: rgba(00,00,00,00.2) !important;
 }
