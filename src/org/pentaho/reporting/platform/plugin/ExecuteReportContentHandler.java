@@ -3,6 +3,7 @@ package org.pentaho.reporting.platform.plugin;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.util.Iterator;
 import java.util.Map;
 import javax.servlet.http.HttpServletResponse;
 
@@ -25,6 +26,7 @@ import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlT
 import org.pentaho.reporting.engine.classic.core.util.StagingMode;
 import org.pentaho.reporting.platform.plugin.messages.Messages;
 
+
 public class ExecuteReportContentHandler
 {
   private static final String FORCED_BUFFERED_WRITING = "org.pentaho.reporting.engine.classic.core.modules.output.table.html.ForceBufferedWriting";
@@ -44,7 +46,10 @@ public class ExecuteReportContentHandler
   {
     final long start = System.currentTimeMillis();
     final Map<String, Object> inputs = contentGenerator.createInputs();
-    AuditHelper.audit(userSession.getId(), userSession.getName(), fileId.toString(),
+    String name;
+    String objID = getObjectIdFromContent(fileId);
+    
+    AuditHelper.audit(userSession.getId(), userSession.getName(), objID,
         contentGenerator.getObjectName(), getClass().getName(), MessageTypes.INSTANCE_START,
         contentGenerator.getInstanceId(), "", 0, contentGenerator); //$NON-NLS-1$
 
@@ -186,11 +191,30 @@ public class ExecuteReportContentHandler
       {
         reportStagingHandler.close();
       }
-      final long end = System.currentTimeMillis();
-      AuditHelper.audit(userSession.getId(), userSession.getName(), fileId.toString(),
+      final long end = System.currentTimeMillis();     
+      AuditHelper.audit(userSession.getId(), userSession.getName(), objID,
           contentGenerator.getObjectName(), getClass().getName(), result, contentGenerator.getInstanceId(),
           "", ((float) (end - start) / 1000), contentGenerator); //$NON-NLS-1$
     }
+  }
+
+  /**
+   * helper method to lookup the path and use this for the Object ID in the Audit instead of the fileID
+   * @param fileId
+   * @return
+   */
+  private String getObjectIdFromContent(final Serializable fileId) {
+    String name;
+    String objID = fileId.toString();
+    Iterator it =  (Iterator) contentGenerator.getPathParameters().getParameterNames();
+    while(it.hasNext()){
+      name = (String) it.next();     
+      if(name.equals("path")){
+        objID = (String) contentGenerator.getPathParameters().getParameter(name);
+        break;
+      }
+    }
+    return objID;
   }
 
   private StagingMode getStagingMode(final Map<String, Object> inputs,
