@@ -25,6 +25,5 @@ require([
   'reportviewer/reportviewer',
   'reportviewer/reportviewer-formatting',
   'reportviewer/reportviewer-prompt',
-  'reportviewer/reportviewer-timeutil',
-  'local'
+  'reportviewer/reportviewer-timeutil'
 ]);
