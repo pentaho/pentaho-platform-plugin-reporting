@@ -867,6 +867,12 @@ public class ParameterXmlContentHandler
       }
     }
 
+    // PIR-724 - Convert String arrays to a single string with values separated by '|'
+    if(value instanceof String[]){
+      String[] o = (String[])value;
+      return org.apache.commons.lang.StringUtils.join(o, '|');
+    }
+
     final ValueConverter valueConverter = ConverterRegistry.getInstance().getValueConverter(type);
     if (valueConverter == null)
     {
