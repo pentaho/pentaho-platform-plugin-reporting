@@ -226,6 +226,7 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'reportvie
 
         resize: function() {
           if (this.isPentahoMobileEnv()) {
+            $('#reportControlPanel').css('width', window.innerWidth);          
             var rcw = dojo.byId('reportContentWrapper');
             if (rcw != null) {
               var c = dojo.coords(rcw);
