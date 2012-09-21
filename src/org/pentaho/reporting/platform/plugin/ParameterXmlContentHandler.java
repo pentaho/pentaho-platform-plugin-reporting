@@ -339,13 +339,15 @@ public class ParameterXmlContentHandler
   }
 
   public void createParameterContent(final OutputStream outputStream,
-                                     final String reportDefinitionPath) throws Exception
+                                     final String reportDefinitionPath,
+                                     final boolean overrideOutputType) throws Exception
   {
-    createParameterContent(outputStream, reportDefinitionPath, null);
+    createParameterContent(outputStream, reportDefinitionPath, overrideOutputType, null);
   }
 
   public void createParameterContent(final OutputStream outputStream,
                                      final String reportDefinitionPath,
+                                     final boolean overrideOutputType,
                                      MasterReport report) throws Exception
   {
     final Object rawSessionId = inputs.get(ParameterXmlContentHandler.SYS_PARAM_SESSION_ID);
@@ -368,6 +370,7 @@ public class ParameterXmlContentHandler
       reportComponent.setReport(report);
     }
     reportComponent.setPaginateOutput(true);
+    reportComponent.setForceDefaultOutputTarget(overrideOutputType);
     reportComponent.setDefaultOutputTarget(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE);
     reportComponent.setInputs(inputs);
 
@@ -444,7 +447,18 @@ public class ParameterXmlContentHandler
         }
       }
 
-      hideOutputParameterIfLocked(report, reportParameters);
+      if (overrideOutputType) {
+        final ParameterDefinitionEntry definitionEntry = reportParameters.get(SimpleReportingComponent.OUTPUT_TARGET);
+        if (definitionEntry instanceof AbstractParameter)
+        {
+          final AbstractParameter parameter = (AbstractParameter) definitionEntry;
+          parameter.setHidden(true);
+          parameter.setMandatory(false);
+        }
+      } else {
+        hideOutputParameterIfLocked(report, reportParameters);
+      }
+      
       hideSubscriptionParameter(subscribe, reportParameters);
       final Map<String, Object> inputs = computeRealInput
           (parameterContext, reportParameters, reportComponent.getComputedOutputTarget(), vr);
