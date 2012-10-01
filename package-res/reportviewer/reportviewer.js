@@ -226,8 +226,13 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'reportvie
 
         resize: function() {
           if (this.isPentahoMobileEnv()) {
-            $('#reportControlPanel').css('width', window.innerWidth);          
-            $('reportContentWrapper').css('width', window.innerWidth);
+		    setTimeout(function() {
+              try {
+                console.log('resize width: ' + window.innerWidth);
+		        $('#reportControlPanel').css('width', window.innerWidth);          
+                $('reportContentWrapper').css('width', window.innerWidth);
+              } catch (e) {console.log(e);}			
+		    },250);
             var rcw = dojo.byId('reportContentWrapper');
             if (rcw != null) {
               var c = dojo.coords(rcw);
