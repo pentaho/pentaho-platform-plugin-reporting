@@ -415,6 +415,10 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'reportvie
 
         var iframe = $('#reportContent');
         iframe.attr("src", url);
+
+        if(!this.view.isPentahoMobileEnv()){
+          this.view.showPromptPanel(true); // PRD-4001
+        }
       },
 
       submitReport: function(promptPanel) {
