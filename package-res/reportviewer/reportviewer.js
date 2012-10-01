@@ -232,7 +232,7 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'reportvie
 		        $('#reportControlPanel').css('width', window.innerWidth);          
                 $('reportContentWrapper').css('width', window.innerWidth);
               } catch (e) {console.log(e);}			
-		    },250);
+		    },500);
             var rcw = dojo.byId('reportContentWrapper');
             if (rcw != null) {
               var c = dojo.coords(rcw);
