@@ -413,7 +413,6 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'reportvie
         this.view.updateReportContentVisibility(promptPanel, renderMode)
         this.view.updatePageStyling(!isSubscribe && isHtml && !proportionalWidth);
 
-
         var iframe = $('#reportContent');
         iframe.attr("src", url);
 
@@ -423,6 +422,37 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'reportvie
       },
 
       submitReport: function(promptPanel) {
+
+        // PRD-3962 - show glass pane on submit, hide when iframe is loaded
+        var gp = dijit.byId('glassPane');
+        gp.show();
+
+        var handle;
+        if(dojo.isIE){
+          handle = dojo.connect(dojo.byId('reportContent'), "onreadystatechange", function(){
+            gp.hide();
+            dojo.disconnect(handle);
+          });
+        }
+        else{
+          handle = dojo.connect(dojo.byId('reportContent'), "onload", function(){
+            gp.hide();
+            dojo.disconnect(handle);
+          });
+        }
+
+        var options = promptPanel.getParameterValues();
+        if(options['output-target']){
+          var isHtml = options['output-target'].indexOf('html') != -1;
+          if(!isHtml){
+            // PRD-3962 - remove glass pane after 5 seconds in case iframe onload/onreadystatechange was not detected
+            setTimeout(function(){
+              dojo.disconnect(handle);
+              dijit.byId('glassPane').hide();
+            }, 5000);
+          }
+        }
+
         if (!promptPanel.getAutoSubmitSetting()) {
           // FETCH page info before rendering report
           prompt.fetchParameterDefinition(promptPanel, function(newParamDefn) {
