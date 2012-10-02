@@ -298,6 +298,8 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'reportvie
             this.resize();
           } else {
           // Reset the iframe height before polling its contents so the size is correct.
+
+          t.hide(); // PRD-4000 Hide iframe before resize
           t.width(0);
           t.height(0);
 
@@ -313,6 +315,7 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'reportvie
               $('#reportPageOutline').width(t.outerWidth());
             }
           this.resize();
+          t.show(); // PRD-4000 Show iframe after resize
         }
         }
       },
