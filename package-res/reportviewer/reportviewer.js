@@ -371,6 +371,7 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'reportvie
       _updateReport: function(promptPanel, renderMode) {
         if (promptPanel.paramDefn.promptNeeded) {
           $('#' + this.htmlObject).attr('src', 'about:blank');
+          dijit.byId('glassPane').hide(); // PRD-3962
           return; // Don't do anything if we need to prompt
         }
         var options = util.getUrlParameters();
@@ -451,7 +452,7 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'reportvie
             // PRD-3962 - remove glass pane after 5 seconds in case iframe onload/onreadystatechange was not detected
             setTimeout(function(){
               dojo.disconnect(handle);
-              dijit.byId('glassPane').hide();
+              gp.hide();
             }, 5000);
           }
         }
