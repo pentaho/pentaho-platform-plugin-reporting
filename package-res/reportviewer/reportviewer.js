@@ -299,7 +299,9 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'reportvie
           } else {
           // Reset the iframe height before polling its contents so the size is correct.
 
-          t.hide(); // PRD-4000 Hide iframe before resize
+          if(!dojo.isFF){ // PRD-4018 FF does not resize properly when iframe is hidden
+            t.hide(); // PRD-4000 Hide iframe before resize
+          }
           t.width(0);
           t.height(0);
 
