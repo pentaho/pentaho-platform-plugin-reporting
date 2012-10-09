@@ -70,10 +70,13 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'reportvie
            */
            var mobile = false;
            try{
-            mobile = window.parent && window.parent.PentahoMobile;
+            mobile = window.top.PentahoMobile;
            } catch(e){}
 
-          if(!top.mantle_initialized || (top !== self && !mobile)) {
+          var puc = window.top.mantle_initialized;
+          var iframe = top !== self;
+          // if we are not in PUC
+          if(!mobile && (!puc || iframe)) {
             dojo.addClass(document.body, 'pentaho-page-background');
           }
         },
@@ -195,9 +198,6 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'reportvie
           if (styled) {          
             if (this.isPentahoMobileEnv()) {
               $('body').addClass('styled');
-              var iframe = $('#reportContent');
-              iframe.wrap('<div id="reportContentWrapper" class="webkitScroller"/>');            
-              $('reportContentWrapper').css('width', window.innerWidth);
             } else {
               // Style the report iframe if it's not already styled
               if (!currentlyStyled) {
@@ -213,8 +213,6 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'reportvie
               var iframe = $('#reportContent');
               if (this.isPentahoMobileEnv()) {
                 iframe.css('width', window.innerWidth);
-                $('reportContentWrapper').css('width', window.innerWidth);
-                iframe.unwrap();
               } else {
                 iframe.css('width', window.innerWidth);
                 iframe.unwrap().unwrap();
@@ -226,15 +224,27 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'reportvie
 
         resize: function() {
           if (this.isPentahoMobileEnv()) {
-	        $('#reportControlPanel').css('width', window.top.innerWidth);          
-            $('reportContentWrapper').css('width', window.top.innerWidth);
-            var rcw = dojo.byId('reportContentWrapper');
-            if (rcw != null) {
-              var c = dojo.coords(rcw);
-              var windowHeight = dojo.dnd.getViewport().h;
-              var height = windowHeight - c.y - 2;
-              dojo.marginBox(rcw, {h: height});
-            }
+	        $('#reportControlPanel').css('width', window.top.innerWidth);   
+                var iframe = $('#reportContent')[0];
+				var t = $(iframe);
+	          	var frameDoc = iframe.contentWindow.document;
+	           	var reportTable = frameDoc.body.childNodes[1];
+	           	if (reportTable != null) {
+	           		dojo.byId('reportContent').setAttribute('scrolling', 'no')
+	           		var c = dojo.coords(dojo.byId('reportContent'));					
+					var divHeight = window.innerHeight - c.y - 3;
+	           		t.height(divHeight);
+					t.width(window.top.innerWidth);
+	           		
+	           		var reportTableDiv = frameDoc.getElementById('reportTableDiv');
+	           		// check if already wrapped
+	               	if (reportTableDiv != null) {
+	               		dojo.style(reportTableDiv, 'height', divHeight + 'px');
+	               		dojo.style(reportTableDiv, 'overflow', 'auto');
+	               	} else {
+	                   	$(reportTable).wrap('<div id="reportTableDiv" style="height:' + divHeight + 'px; overflow:auto"/>');          		                     		
+	               	}
+	           	} 			
           } else {
             var ra = dojo.byId(this.isPageStyled() ? 'reportArea' : 'reportContent');
             var c = dojo.coords(ra);
@@ -243,77 +253,38 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'reportvie
           }
         },
 
-		frameUpdateCount: 0,
-        updateFrameWebkitScrollCss : function(iframe) {
-          var _this = this;
-          _this.frameUpdateCount++;
-          if (_this.frameUpdateCount < 2) {
-            return;
-          }
-		  setTimeout(function() {
-            try {
-		      var element = document.getElementById('reportContent').contentDocument.body;
-		      _this.updateElementWebkitScrollCss(element);
-            } catch (e) {alert(e);}			
-		  },1);
-        },
-	  
-	    updateElementWebkitScrollCss : function(element) {
-          if (typeof element.getAttribute !== 'function') {
-            return;
-          } 
-          var style = element.getAttribute('style');
-          if (typeof style == 'undefined' || style == null) {
-            style = '-webkit-transform:translate3d(0,0,0);';
-          } else {
-            style+= ';-webkit-transform:translate3d(0,0,0);';
-          }
-          style+='margin:20px;padding:0px';
-          element.setAttribute('style', style);		
-          if (element.children != null && element.children.length > 0) {
-		    for (var i=0;i<element.children.length;i++) {
-			  var child = element.children[i];
-			  //updateElementCss(child);
-			}
-		  }
-	    },
-
         resizeIframe: function(iframe) {
           var t = $(iframe);
           
-          if (this.isPentahoMobileEnv()) {
-            this.updateFrameWebkitScrollCss(iframe);
-          }
-          
-          if (!this.isPageStyled()) {
+		  
+          if (!this.isPageStyled() && !this.isPentahoMobileEnv()) {
             return;
           }
 
           if (t.attr('src') === 'about:blank') {
             // use the last known report width (or the default) so we don't drastically change the width between refreshes
             t.width(this.lastWidth); // matches report.css: .styled >* #reportContent
-            t.height(200);
-
-            $('#reportPageOutline').width(t.outerWidth() + 14);
-            this.resize();
+			if (!this.isPentahoMobileEnv()) {
+				t.height(200);
+				$('#reportPageOutline').width(t.outerWidth() + 14);
+				this.resize();
+			}
           } else {
           // Reset the iframe height before polling its contents so the size is correct.
 
           if(!dojo.isFF){ // PRD-4018 FF does not resize properly when iframe is hidden
             t.hide(); // PRD-4000 Hide iframe before resize
           }
-          t.width(0);
-          t.height(0);
+			
+            if (!this.isPentahoMobileEnv()) {
+			  t.width(0);
+			  t.height(0);
 
-          var d = $(iframe.contentWindow.document);
-          t.height(d.height());
+			  var d = $(iframe.contentWindow.document);
+			  t.height(d.height());
 
-            this.lastWidth = d.width();
-            t.width(this.lastWidth);
-
-            if (this.isPentahoMobileEnv()) {
-              $('#reportContent').width(window.innerWidth);
-            } else {
+				this.lastWidth = d.width();
+				t.width(this.lastWidth);
               $('#reportPageOutline').width(t.outerWidth());
             }
           this.resize();
