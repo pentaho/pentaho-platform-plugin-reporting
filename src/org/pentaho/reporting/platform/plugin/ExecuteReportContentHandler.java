@@ -43,7 +43,7 @@ public class ExecuteReportContentHandler
     this.userSession = contentGenerator.getUserSession();
   }
 
-  public void createReportContent(final OutputStream outputStream, final String reportDefinitionPath) throws Exception
+  public void createReportContent(final OutputStream outputStream, final String reportDefinitionPath, final boolean forceDefaultOutputTarget) throws Exception
   {
     // Check whether we should forward ..
     final HttpServletResponse response;
@@ -57,7 +57,7 @@ public class ExecuteReportContentHandler
     }
     if (request == null || response == null || isRedirectEnabled() == false)
     {
-      doExport(outputStream, reportDefinitionPath);
+      doExport(outputStream, reportDefinitionPath, forceDefaultOutputTarget);
       return;
     }
 
@@ -65,7 +65,7 @@ public class ExecuteReportContentHandler
     if ("post".equalsIgnoreCase(request.getMethod()) ||
         fileContent != null && fileContent.startsWith("/execute/"))
     {
-      doExport(outputStream, reportDefinitionPath);
+      doExport(outputStream, reportDefinitionPath, forceDefaultOutputTarget);
     }
     else
     {
@@ -73,6 +73,7 @@ public class ExecuteReportContentHandler
       final SimpleReportingComponent reportComponent = new SimpleReportingComponent();
       reportComponent.setReportDefinitionPath(reportDefinitionPath);
       reportComponent.setPaginateOutput(true);
+      reportComponent.setForceDefaultOutputTarget(forceDefaultOutputTarget);
       reportComponent.setDefaultOutputTarget(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE);
       final Map<String, Object> inputs = contentGenerator.createInputs();
       reportComponent.setInputs(inputs);
@@ -116,7 +117,7 @@ public class ExecuteReportContentHandler
     return reqUrl.toString();
   }
 
-  private void doExport(final OutputStream outputStream, final String reportDefinitionPath) throws Exception
+  private void doExport(final OutputStream outputStream, final String reportDefinitionPath, final boolean forceDefaultOutputTarget) throws Exception
   {
     final long start = System.currentTimeMillis();
     final Map<String, Object> inputs = contentGenerator.createInputs();
@@ -139,6 +140,7 @@ public class ExecuteReportContentHandler
       reportComponent.setSession(userSession);
       reportComponent.setReportDefinitionPath(reportDefinitionPath);
       reportComponent.setPaginateOutput(true);
+      reportComponent.setForceDefaultOutputTarget(forceDefaultOutputTarget);
       reportComponent.setDefaultOutputTarget(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE);
       reportComponent.setInputs(inputs);
 

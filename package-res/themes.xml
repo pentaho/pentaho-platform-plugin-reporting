@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<themes root-folder="reportviewer/themes">
+  <onyx>
+    <file>Onyx.css</file>
+  </onyx>
+  <slate>
+    <file>Slate.css</file>
+  </slate>
+</themes>

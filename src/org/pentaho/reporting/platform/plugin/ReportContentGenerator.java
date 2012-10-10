@@ -41,7 +41,8 @@ public class ReportContentGenerator extends SimpleContentGenerator
     final String solution = URLDecoder.decode(requestParams.getStringParameter("solution", ""), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     final String path = URLDecoder.decode(requestParams.getStringParameter("path", ""), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     final String name = URLDecoder.decode(requestParams.getStringParameter("name", requestParams.getStringParameter("action", "")), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-
+    final boolean isMobile = "true".equals(URLDecoder.decode(requestParams.getStringParameter("mobile", "false"), "UTF-8")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+    
     final RENDER_TYPE renderMode = RENDER_TYPE.valueOf
         (requestParams.getStringParameter("renderMode", RENDER_TYPE.REPORT.toString()).toUpperCase()); //$NON-NLS-1$
 
@@ -63,7 +64,7 @@ public class ReportContentGenerator extends SimpleContentGenerator
           // create inputs from request parameters
           final ExecuteReportContentHandler executeReportContentHandler =
               new ExecuteReportContentHandler(this, parameterProviders.get("path"));
-          executeReportContentHandler.createReportContent(outputStream, reportDefinitionPath);
+          executeReportContentHandler.createReportContent(outputStream, reportDefinitionPath, isMobile);
           break;
         }
         case SUBSCRIBE:
@@ -76,14 +77,14 @@ public class ReportContentGenerator extends SimpleContentGenerator
         {
           // create inputs from request parameters
           final ParameterXmlContentHandler parameterXmlContentHandler = new ParameterXmlContentHandler(this, true);
-          parameterXmlContentHandler.createParameterContent(outputStream, reportDefinitionPath);
+          parameterXmlContentHandler.createParameterContent(outputStream, reportDefinitionPath, isMobile);
           break;
         }
         case PARAMETER:
         {
           // create inputs from request parameters
           final ParameterXmlContentHandler parameterXmlContentHandler = new ParameterXmlContentHandler(this, false);
-          parameterXmlContentHandler.createParameterContent(outputStream, reportDefinitionPath);
+          parameterXmlContentHandler.createParameterContent(outputStream, reportDefinitionPath, isMobile);
           break;
         }
         default:
@@ -246,9 +247,11 @@ public class ReportContentGenerator extends SimpleContentGenerator
     final String path = requestParams.getStringParameter("path", null); //$NON-NLS-1$
     final String name = requestParams.getStringParameter("name", requestParams.getStringParameter("action", null)); //$NON-NLS-1$ //$NON-NLS-2$
     final String reportDefinitionPath = ActionInfo.buildSolutionPath(solution, path, name);
-
+    final boolean isMobile = "true".equals(requestParams.getStringParameter("mobile", "false")); //$NON-NLS-1$ //$NON-NLS-2$
+    
     final SimpleReportingComponent reportComponent = new SimpleReportingComponent();
     final Map<String, Object> inputs = createInputs(requestParams);
+    reportComponent.setForceDefaultOutputTarget(isMobile);
     reportComponent.setDefaultOutputTarget(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE);
     reportComponent.setSession(userSession);
     reportComponent.setReportDefinitionPath(reportDefinitionPath);
