@@ -264,32 +264,34 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'reportvie
           if (t.attr('src') === 'about:blank') {
             // use the last known report width (or the default) so we don't drastically change the width between refreshes
             t.width(this.lastWidth); // matches report.css: .styled >* #reportContent
-			if (!this.isPentahoMobileEnv()) {
-				t.height(200);
-				$('#reportPageOutline').width(t.outerWidth() + 14);
-				this.resize();
-			}
-          } else {
+            if (!this.isPentahoMobileEnv()) {
+              t.height(200);
+              $('#reportPageOutline').width(t.outerWidth() + 14);
+              this.resize();
+            }
+          }
+          else {
           // Reset the iframe height before polling its contents so the size is correct.
 
-          if(!dojo.isFF){ // PRD-4018 FF does not resize properly when iframe is hidden
-            t.hide(); // PRD-4000 Hide iframe before resize
-          }
-			
+            if(!dojo.isFF && (dojo.isIE != 8)){ // PRD-4018, PRD-4034 FF & IE8 does not resize properly when iframe is hidden
+              t.hide(); // PRD-4000 Hide iframe before resize
+            }
+
             if (!this.isPentahoMobileEnv()) {
-			  t.width(0);
-			  t.height(0);
+              t.width(0);
+              t.height(0);
 
-			  var d = $(iframe.contentWindow.document);
-			  t.height(d.height());
+              var d = $(iframe.contentWindow.document);
+              t.height(d.height());
 
-				this.lastWidth = d.width();
-				t.width(this.lastWidth);
+              this.lastWidth = d.width();
+              t.width(this.lastWidth);
               $('#reportPageOutline').width(t.outerWidth());
             }
-          this.resize();
-          t.show(); // PRD-4000 Show iframe after resize
-        }
+
+            this.resize();
+            t.show(); // PRD-4000 Show iframe after resize
+          }
         }
       },
 
