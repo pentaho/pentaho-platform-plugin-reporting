@@ -18,6 +18,7 @@ dependencies = {
         "pentaho.common.Menu",
         "pentaho.common.MenuItem",
         "pentaho.common.PageControl",
+        "pentaho.common.GlassPane",
         "pentaho.reportviewer.ReportDialog"
       ]
     }

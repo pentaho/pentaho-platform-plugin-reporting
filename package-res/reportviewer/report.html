@@ -8,8 +8,7 @@
     <!-- Include CDF styles first to make sure they can be properly overridden -->
     <link rel="stylesheet" href="../../../content/pentaho-cdf/js/cdf.css" type="text/css" />
 
-    <script type="text/javascript" src="../../../js/require.js"></script>
-    <script type="text/javascript" src="../../../js/require-cfg.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../common-ui/resources/web/dojo/dijit/themes/pentaho/pentaho.css"/>
 
     <script language="javascript" type="text/javascript" src="webcontext.js?context=reporting"></script>
 
@@ -128,32 +127,41 @@
           });
         });
       });
-    </script>
+    </script>	    
   </head>
+  
   <body class="tundra body styled">
     <div id="toppanel" class="pentaho-transparent hidden">
       <div id="toppanelinner" >
-        <div id="toolbarlinner2" dojoType="dijit.Toolbar" class="pentaho-rounded-panel2-shadowed pentaho-padding-sm pentaho-shine pentaho-background">
+        <div id="toolbarlinner2" class="pentaho-rounded-panel2-shadowed pentaho-padding-sm pentaho-shine pentaho-background">
           <div id="toolbar" dojoType="dijit.Toolbar" >
             <div id="pageControl" dojoType="pentaho.common.PageControl" class="dijitInline"></div>
             <span id="toolbar-parameter-separator" dojoType="dijit.ToolbarSeparator"></span>
             <div id="toolbar-parameterToggle" dojoType="dijit.form.ToggleButton" iconClass="dijitEditorIcon dijitEditorIconParameters" showLabel="false">Parameters</div>
           </div>
         </div>
+        <script type="text/javascript">
+          var inMobile = false;
+          try{
+            inMobile = window.parent && window.parent.PentahoMobile;
+          }catch(e){/*XSS catch*/}
+          if(inMobile){
+            document.getElementById('toolbarlinner2').innerHTML = '<div id="toolbar" style="display: -webkit-box"><div id="toolbar-parameterToggle"  dojoType="dijit.form.ToggleButton">Prompts</div><div style="display: -webkit-box; -webkit-box-flex: 1; box-sizing: border-box; -webkit-box-align: center; -webkit-box-pack: center;"><div id="pageControl" dojoType="pentaho.common.PageControl" class="dijitInline"></div></div><div style="visibility: hidden"  dojoType="dijit.form.ToggleButton">Prompts</div></div>';
+
+          }
+        </script>
 
         <div id="reportControlPanel" class="hidden pentaho-rounded-panel-bottom-lr pentaho-shadow">
-          <div id="promptPanel" class="pentaho-rounded-panel-bottom-lr"></div>
+          <div id="promptPanel" width="200px" class="pentaho-rounded-panel-bottom-lr"></div>
         </div>
       </div>
     </div>
 
-    <div id="reportArea" class="pentaho-transparent hidden" scrollexception="true">
-      <div id="reportPageOutline" class="pentaho-rounded-panel2-shadowed pentaho-padding-lg pentaho-background">
-        <iframe id="reportContent" frameborder="0"></iframe>
-      </div>
-    </div>
-
+	<iframe id="reportContent" frameborder="0" style="width:100%"></iframe>
+	
     <div id="messageBox" dojoType="pentaho.common.MessageBox" title="" style="width:400px; display:none;">
+    </div>
+    <div id="glassPane" dojoType="pentaho.common.GlassPane"/>
     </div>
   </body>
 </table>

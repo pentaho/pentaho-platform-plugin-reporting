@@ -47,7 +47,7 @@ public class ReportContentGenerator extends ParameterContentGenerator {
     } else if (pathParams != null && pathParams.getStringParameter("path", null) != null) {
       path = URLDecoder.decode(pathParams.getStringParameter("path", ""), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     }
-
+    
     if (requestParams != null && requestParams.getStringParameter("renderMode", null) != null) {
       renderMode = RENDER_TYPE.valueOf
           (requestParams.getStringParameter("renderMode", RENDER_TYPE.REPORT.toString()).toUpperCase()); //$NON-NLS-1$
@@ -137,9 +137,12 @@ public class ReportContentGenerator extends ParameterContentGenerator {
     }
 
     RepositoryFile prptFile = unifiedRepository.getFile(idTopath(path));
-
+    final boolean isMobile = "true".equals(requestParams.getStringParameter("mobile", "false")); //$NON-NLS-1$ //$NON-NLS-2$
+    final boolean isMobile = "true".equals(requestParams.getStringParameter("mobile", "false")); //$NON-NLS-1$ //$NON-NLS-2$
+    
     final SimpleReportingComponent reportComponent = new SimpleReportingComponent();
     final Map<String, Object> inputs = createInputs(requestParams);
+    reportComponent.setForceDefaultOutputTarget(isMobile);
     reportComponent.setDefaultOutputTarget(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE);
     reportComponent.setReportFileId(prptFile.getId());
     reportComponent.setInputs(inputs);

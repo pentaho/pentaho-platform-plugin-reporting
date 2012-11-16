@@ -323,13 +323,15 @@ public ParameterXmlContentHandler(final ParameterContentGenerator contentGenerat
   }
 
   public void createParameterContent(final OutputStream outputStream,
-                                     final Serializable fileId) throws Exception
+                                     final Serializable fileId,
+                                     final boolean overrideOutputType) throws Exception
   {
-    createParameterContent(outputStream, fileId, null);
+    createParameterContent(outputStream, fileId, overrideOutputType);
   }
 
   public void createParameterContent(final OutputStream outputStream,
                                      final Serializable fileId,
+                                     final boolean overrideOutputType,
                                      MasterReport report) throws Exception
   {
     final Object rawSessionId = inputs.get(ParameterXmlContentHandler.SYS_PARAM_SESSION_ID);
@@ -352,6 +354,7 @@ public ParameterXmlContentHandler(final ParameterContentGenerator contentGenerat
       reportComponent.setReport(report);
     }
     reportComponent.setPaginateOutput(true);
+    reportComponent.setForceDefaultOutputTarget(overrideOutputType);
     reportComponent.setDefaultOutputTarget(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE);
     reportComponent.setInputs(inputs);
 
@@ -428,7 +431,18 @@ public ParameterXmlContentHandler(final ParameterContentGenerator contentGenerat
         }
       }
 
-      hideOutputParameterIfLocked(report, reportParameters);
+      if (overrideOutputType) {
+        final ParameterDefinitionEntry definitionEntry = reportParameters.get(SimpleReportingComponent.OUTPUT_TARGET);
+        if (definitionEntry instanceof AbstractParameter)
+        {
+          final AbstractParameter parameter = (AbstractParameter) definitionEntry;
+          parameter.setHidden(true);
+          parameter.setMandatory(false);
+        }
+      } else {
+        hideOutputParameterIfLocked(report, reportParameters);
+      }
+      
       hideSubscriptionParameter(subscribe, reportParameters);
       final Map<String, Object> inputs = computeRealInput
           (parameterContext, reportParameters, reportComponent.getComputedOutputTarget(), vr);
@@ -847,6 +861,18 @@ public ParameterXmlContentHandler(final ParameterContentGenerator contentGenerat
       if(o.length == 1){
         return String.valueOf(o[0]);
       }
+    }
+
+    // PIR-724 - Convert String arrays to a single string with values separated by '|'
+    if(value instanceof String[]){
+      String[] o = (String[])value;
+      return org.apache.commons.lang.StringUtils.join(o, '|');
+    }
+
+    // PIR-724 - Convert String arrays to a single string with values separated by '|'
+    if(value instanceof String[]){
+      String[] o = (String[])value;
+      return org.apache.commons.lang.StringUtils.join(o, '|');
     }
 
     final ValueConverter valueConverter = ConverterRegistry.getInstance().getValueConverter(type);

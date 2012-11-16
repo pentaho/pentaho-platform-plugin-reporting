@@ -118,6 +118,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   private String outputType;
   private String outputTarget;
   private String defaultOutputTarget;
+  private boolean forceDefaultOutputTarget;
   private MasterReport report;
   private Map<String, Object> inputs;
   private OutputStream outputStream;
@@ -165,6 +166,16 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     this.defaultOutputTarget = defaultOutputTarget;
   }
 
+  public void setForceDefaultOutputTarget(final boolean forceDefaultOutputTarget) 
+  {
+    this.forceDefaultOutputTarget = forceDefaultOutputTarget;
+  }
+  
+  public boolean isForceDefaultOutputTarget() 
+  {
+    return this.forceDefaultOutputTarget;
+  }
+  
   public String getOutputTarget()
   {
     return outputTarget;
@@ -652,6 +663,13 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   private String computeEffectiveOutputTarget() throws IOException, ResourceException
   {
     final MasterReport report = getReport();
+    
+    if (isForceDefaultOutputTarget()) 
+    {
+      return getDefaultOutputTarget();
+    }
+    
+    
     if (Boolean.TRUE.equals(report.getAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.LOCK_PREFERRED_OUTPUT_TYPE)))
     {
       // preferred output type is one of the engine's output-target identifiers. It is not a mime-type string.

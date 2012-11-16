@@ -49,6 +49,7 @@
     </content-types>
 
     <external-resources>
+      <file context="requirejs">content/reporting/reportviewer/reporting-require-js-cfg.js</file>
       <!-- Example Prompting component that replaces the default prompt labels. Uncomment to use. -->
       <!-- <file context="reporting">content/reporting/reportviewer/reportviewer-sample-component.js</file> -->
     </external-resources>

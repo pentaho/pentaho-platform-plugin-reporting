@@ -44,6 +44,8 @@ public class ExecuteReportContentHandler
 
   public void createReportContent(final OutputStream outputStream, final Serializable fileId) throws Exception
   {
+      reportComponent.setForceDefaultOutputTarget(forceDefaultOutputTarget);
+      reportComponent.setForceDefaultOutputTarget(forceDefaultOutputTarget);
     final long start = System.currentTimeMillis();
     final Map<String, Object> inputs = contentGenerator.createInputs();
     String name;
@@ -67,6 +69,7 @@ public class ExecuteReportContentHandler
       final SimpleReportingComponent reportComponent = new SimpleReportingComponent();
       reportComponent.setReportFileId(fileId);
       reportComponent.setPaginateOutput(true);
+      reportComponent.setForceDefaultOutputTarget(forceDefaultOutputTarget);
       reportComponent.setDefaultOutputTarget(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE);
       reportComponent.setInputs(inputs);
 
