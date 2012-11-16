@@ -1,0 +1,1 @@
+requireCfg['paths']['reportviewer'] = CONTEXT_PATH+'content/reporting/reportviewer';
