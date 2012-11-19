@@ -209,8 +209,8 @@ public class ReportViewerUtil
         continue;
       }
 
-      final String name = URL.decodeComponent(st2.tokenAt(0));
-      final String value = URL.decodeComponent(st2.tokenAt(1));
+      final String name = URL.decodeQueryString(st2.tokenAt(0));
+      final String value = URL.decodeQueryString(st2.tokenAt(1));
       map.addSelectedValue(name, value);
     }
     // tokenize this guy & and =
@@ -319,7 +319,7 @@ public class ReportViewerUtil
     {
       for (final String rawkey : requestParams.keySet())
       {
-        final String key = URL.decodeComponent(rawkey);
+        final String key = URL.decodeQueryString(rawkey);
         if ("renderMode".equals(key))
         {
           continue;
@@ -485,7 +485,7 @@ public class ReportViewerUtil
     {
       for (final String rawkey : requestParams.keySet())
       {
-        final String key = URL.decodeComponent(rawkey);
+        final String key = URL.decodeQueryString(rawkey);
         if ("renderMode".equals(key))
         {
           continue;

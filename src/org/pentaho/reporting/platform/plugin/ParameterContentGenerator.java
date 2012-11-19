@@ -39,7 +39,7 @@ public class ParameterContentGenerator extends SimpleContentGenerator {
 
     RepositoryFile prptFile = unifiedRepository.getFile(idTopath(path));
     final ParameterXmlContentHandler parameterXmlContentHandler = new ParameterXmlContentHandler(this);
-    parameterXmlContentHandler.createParameterContent(outputStream, prptFile.getId());
+    parameterXmlContentHandler.createParameterContent(outputStream, prptFile.getId(), false);
   }
 
   @Override

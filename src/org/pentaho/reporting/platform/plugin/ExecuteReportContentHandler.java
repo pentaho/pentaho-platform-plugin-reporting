@@ -42,10 +42,8 @@ public class ExecuteReportContentHandler
     this.userSession = contentGenerator.getUserSession();
   }
 
-  public void createReportContent(final OutputStream outputStream, final Serializable fileId) throws Exception
+  public void createReportContent(final OutputStream outputStream, final Serializable fileId, final boolean forceDefaultOutputTarget) throws Exception
   {
-      reportComponent.setForceDefaultOutputTarget(forceDefaultOutputTarget);
-      reportComponent.setForceDefaultOutputTarget(forceDefaultOutputTarget);
     final long start = System.currentTimeMillis();
     final Map<String, Object> inputs = contentGenerator.createInputs();
     String name;

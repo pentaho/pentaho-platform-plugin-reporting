@@ -75,7 +75,7 @@ public class ReportContentGenerator extends ParameterContentGenerator {
         case REPORT: {
           // create inputs from request parameters
           final ExecuteReportContentHandler executeReportContentHandler = new ExecuteReportContentHandler(this);//$NON-NLS-1$
-          executeReportContentHandler.createReportContent(outputStream, prptFile.getId());
+          executeReportContentHandler.createReportContent(outputStream, prptFile.getId(), false);
           break;
         }
         default:
@@ -138,8 +138,7 @@ public class ReportContentGenerator extends ParameterContentGenerator {
 
     RepositoryFile prptFile = unifiedRepository.getFile(idTopath(path));
     final boolean isMobile = "true".equals(requestParams.getStringParameter("mobile", "false")); //$NON-NLS-1$ //$NON-NLS-2$
-    final boolean isMobile = "true".equals(requestParams.getStringParameter("mobile", "false")); //$NON-NLS-1$ //$NON-NLS-2$
-    
+
     final SimpleReportingComponent reportComponent = new SimpleReportingComponent();
     final Map<String, Object> inputs = createInputs(requestParams);
     reportComponent.setForceDefaultOutputTarget(isMobile);
