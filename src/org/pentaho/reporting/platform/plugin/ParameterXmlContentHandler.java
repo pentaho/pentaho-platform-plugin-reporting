@@ -326,7 +326,7 @@ public ParameterXmlContentHandler(final ParameterContentGenerator contentGenerat
                                      final Serializable fileId,
                                      final boolean overrideOutputType) throws Exception
   {
-    createParameterContent(outputStream, fileId, overrideOutputType);
+    createParameterContent(outputStream, fileId, overrideOutputType, null);
   }
 
   public void createParameterContent(final OutputStream outputStream,
@@ -861,12 +861,6 @@ public ParameterXmlContentHandler(final ParameterContentGenerator contentGenerat
       if(o.length == 1){
         return String.valueOf(o[0]);
       }
-    }
-
-    // PIR-724 - Convert String arrays to a single string with values separated by '|'
-    if(value instanceof String[]){
-      String[] o = (String[])value;
-      return org.apache.commons.lang.StringUtils.join(o, '|');
     }
 
     // PIR-724 - Convert String arrays to a single string with values separated by '|'
