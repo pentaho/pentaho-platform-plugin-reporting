@@ -30,7 +30,7 @@ public class CSVOutput implements ReportOutputHandler
                           final OutputStream outputStream,
                           final int yieldRate) throws ReportProcessingException, IOException, ContentIOException
   {
-    final StreamCSVOutputProcessor target = new StreamCSVOutputProcessor(report.getConfiguration(), outputStream);
+    final StreamCSVOutputProcessor target = new StreamCSVOutputProcessor(outputStream);
     final StreamReportProcessor proc = new StreamReportProcessor(report, target);
 
     if (yieldRate > 0)

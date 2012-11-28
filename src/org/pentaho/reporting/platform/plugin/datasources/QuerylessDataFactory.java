@@ -45,10 +45,6 @@ public class QuerylessDataFactory extends PmdDataFactory {
   }
 
   @Override
-  public void open() throws ReportDataFactoryException {
-  }
-
-  @Override
   public TableModel queryData(String queryName, DataRow parameters) throws ReportDataFactoryException {
 
     final String query = getQuery(queryName);

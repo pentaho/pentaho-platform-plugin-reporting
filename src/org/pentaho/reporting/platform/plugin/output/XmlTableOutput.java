@@ -29,8 +29,7 @@ public class XmlTableOutput implements ReportOutputHandler
       throws ReportProcessingException
   {
     proxyOutputStream = new ProxyOutputStream();
-    final XmlTableOutputProcessor target = new XmlTableOutputProcessor
-        (report.getConfiguration(), proxyOutputStream);
+    final XmlTableOutputProcessor target = new XmlTableOutputProcessor(proxyOutputStream);
     final StreamReportProcessor proc = new StreamReportProcessor(report, target);
 
     if (yieldRate > 0)
