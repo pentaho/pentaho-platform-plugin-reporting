@@ -22,6 +22,10 @@ import java.io.Serializable;
 import java.net.URL;
 import java.util.HashMap;
 
+import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
+import org.pentaho.platform.api.repository2.unified.RepositoryFile;
+import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
+import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.modules.parser.base.ReportGenerator;
 import org.pentaho.reporting.libraries.resourceloader.Resource;
@@ -47,8 +51,19 @@ public class ReportCreator
     final HashMap helperObjects = new HashMap();
     // add the runtime context so that PentahoResourceData class can get access
     // to the solution repo
-    final ResourceKey key = resourceManager.createKey(RepositoryResourceLoader.SOLUTION_SCHEMA_NAME + RepositoryResourceLoader.SCHEMA_SEPARATOR
-        + fileId, helperObjects);
+
+    ResourceKey key = null;
+
+    IUnifiedRepository unifiedRepository = PentahoSystem.get(IUnifiedRepository.class, PentahoSessionHolder.getSession());
+    RepositoryFile repositoryFile = unifiedRepository.getFileById(fileId);
+    if (repositoryFile != null) {
+      key = resourceManager.createKey(RepositoryResourceLoader.SOLUTION_SCHEMA_NAME + RepositoryResourceLoader.SCHEMA_SEPARATOR
+          + repositoryFile.getPath(), helperObjects);
+    } else {
+      key = resourceManager.createKey(RepositoryResourceLoader.SOLUTION_SCHEMA_NAME + RepositoryResourceLoader.SCHEMA_SEPARATOR
+          + fileId, helperObjects);
+    }
+    
     final Resource resource = resourceManager.create(key, null, MasterReport.class);
     return (MasterReport) resource.getResource();
   }

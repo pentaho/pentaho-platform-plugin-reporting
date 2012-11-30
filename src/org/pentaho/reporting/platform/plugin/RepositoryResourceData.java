@@ -68,13 +68,13 @@ public class RepositoryResourceData extends AbstractResourceData {
     IUnifiedRepository unifiedRepository = null;
     try {
       unifiedRepository = PentahoSystem.get(IUnifiedRepository.class);
-      SimpleRepositoryFileData fileData = unifiedRepository.getDataForRead(key.getIdentifierAsString(), SimpleRepositoryFileData.class);
-      return fileData.getStream();
-    } catch (UnifiedRepositoryException ex) {
-      try  {
       RepositoryFile repositoryFile = unifiedRepository.getFile(key.getIdentifierAsString());
       SimpleRepositoryFileData fileData = unifiedRepository.getDataForRead(repositoryFile.getId(), SimpleRepositoryFileData.class);
       return fileData.getStream();
+    } catch (UnifiedRepositoryException ex) {
+      try  {
+        SimpleRepositoryFileData fileData = unifiedRepository.getDataForRead(key.getIdentifierAsString(), SimpleRepositoryFileData.class);
+        return fileData.getStream();
       } catch(UnifiedRepositoryException exception) {
       // might be due to access denial
         throw new ResourceLoadingException(exception.getLocalizedMessage(), exception);
@@ -108,8 +108,8 @@ public class RepositoryResourceData extends AbstractResourceData {
     IUnifiedRepository unifiedRepository = PentahoSystem.get(IUnifiedRepository.class, PentahoSessionHolder.getSession());
     RepositoryFile repositoryFile = null;
     try {
-      repositoryFile = unifiedRepository.getFileById(key.getIdentifier().toString());
     // if we got a FileNotFoundException on getResourceInputStream then we will get a null file; avoid NPE
+      repositoryFile = unifiedRepository.getFile(key.getIdentifier().toString());
       if (repositoryFile != null) {
         return repositoryFile.getLastModifiedDate().getTime();
       } else {
@@ -117,7 +117,7 @@ public class RepositoryResourceData extends AbstractResourceData {
       }
     } catch(UnifiedRepositoryException ex) {
       try {
-        repositoryFile = unifiedRepository.getFile(key.getIdentifier().toString());
+        repositoryFile = unifiedRepository.getFileById(key.getIdentifier().toString());
       } catch(UnifiedRepositoryException exception) {
         return -1;  
       }
