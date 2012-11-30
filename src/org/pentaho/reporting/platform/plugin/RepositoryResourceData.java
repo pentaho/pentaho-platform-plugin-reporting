@@ -69,16 +69,17 @@ public class RepositoryResourceData extends AbstractResourceData {
     try {
       unifiedRepository = PentahoSystem.get(IUnifiedRepository.class);
       RepositoryFile repositoryFile = unifiedRepository.getFile(key.getIdentifierAsString());
+      if (repositoryFile == null) {
+        repositoryFile = unifiedRepository.getFileById(key.getIdentifierAsString());
+      }
+      if (repositoryFile == null) {
+        throw new ResourceLoadingException();
+      }
       SimpleRepositoryFileData fileData = unifiedRepository.getDataForRead(repositoryFile.getId(), SimpleRepositoryFileData.class);
       return fileData.getStream();
     } catch (UnifiedRepositoryException ex) {
-      try  {
-        SimpleRepositoryFileData fileData = unifiedRepository.getDataForRead(key.getIdentifierAsString(), SimpleRepositoryFileData.class);
-        return fileData.getStream();
-      } catch(UnifiedRepositoryException exception) {
       // might be due to access denial
-        throw new ResourceLoadingException(exception.getLocalizedMessage(), exception);
-      }
+        throw new ResourceLoadingException(ex.getLocalizedMessage(), ex);
     }
   }
 
