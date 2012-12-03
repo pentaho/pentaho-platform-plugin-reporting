@@ -18,7 +18,6 @@ public class PentahoMondrianConnectionProvider extends DefaultMondrianConnection
 {
   public static final String MDX_CONNECTION_MAPPER_KEY = "Mondrian-UserRoleMapper"; //$NON-NLS-1$
 
-
   public PentahoMondrianConnectionProvider()
   {
   }

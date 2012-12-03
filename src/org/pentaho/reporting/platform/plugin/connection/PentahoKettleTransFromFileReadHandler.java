@@ -1,7 +1,7 @@
 package org.pentaho.reporting.platform.plugin.connection;
 
+import org.pentaho.reporting.engine.classic.extensions.datasources.kettle.KettleTransformationProducer;
 import org.pentaho.reporting.engine.classic.extensions.datasources.kettle.parser.KettleTransFromFileReadHandler;
-import org.xml.sax.SAXException;
 
 public class PentahoKettleTransFromFileReadHandler extends KettleTransFromFileReadHandler
 {
@@ -14,9 +14,8 @@ public class PentahoKettleTransFromFileReadHandler extends KettleTransFromFileRe
    * not create an object.
    *
    * @return the object.
-   * @throws org.xml.sax.SAXException if an parser error occured.
    */
-  public Object getObject() throws SAXException
+  public KettleTransformationProducer getObject()
   {
     return new PentahoKettleTransFromFileProducer
         (getRepositoryName(), getFileName(), getStepName(), getUsername(), getPassword(),

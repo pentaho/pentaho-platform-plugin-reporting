@@ -31,5 +31,6 @@ public class PentahoPlatformModule extends AbstractModule
   public void initialize(final SubSystem subSystem) throws ModuleInitializeException
   {
 
+    System.out.println ("Booted");
   }
 }
