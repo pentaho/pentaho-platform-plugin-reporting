@@ -101,54 +101,71 @@ public class DataSourceConfigurationTest extends TestCase
 
   public void testCdaQueryBackend()
   {
-    assertTrue(objectFactory.get(CdaQueryBackend.class) instanceof CdaPluginLocalQueryBackend);
+    assertInstanceOf(objectFactory.get(CdaQueryBackend.class), CdaPluginLocalQueryBackend.class);
+  }
+
+  private void assertInstanceOf(final Object returnedType,
+                                final Class expectedType)
+  {
+    if (expectedType.isInstance(returnedType))
+    {
+      return;
+    }
+    if (returnedType == null)
+    {
+      fail("Expected object of type " + expectedType + " but got <null>");
+    }
+    else
+    {
+      fail("Expected object of type " + expectedType + " but got " + returnedType.getClass());
+    }
   }
 
   public void testMondrianConnectionProvider()
   {
-    assertTrue(objectFactory.get(MondrianConnectionProvider.class) instanceof PentahoMondrianConnectionProvider);
+    assertInstanceOf(objectFactory.get(MondrianConnectionProvider.class), PentahoMondrianConnectionProvider.class);
   }
 
   public void testPentahoCubeFileProviderReadHandler()
   {
     final CubeFileProviderReadHandler handler =
-        CubeFileProviderReadHandlerFactory.getInstance().getHandler(MondrianDataFactoryModule.NAMESPACE, "cube-file");
-    assertTrue(handler instanceof PentahoCubeFileProviderReadHandler);
+            CubeFileProviderReadHandlerFactory.getInstance().getHandler(MondrianDataFactoryModule.NAMESPACE, "cube-file");
+    assertInstanceOf(handler, PentahoCubeFileProviderReadHandler.class);
   }
 
   public void testPentahoJndiConnectionReadHandler()
   {
     final ConnectionReadHandler handler =
-        ConnectionReadHandlerFactory.getInstance().getHandler(SQLDataFactoryModule.NAMESPACE, "jndi");
-    assertTrue(handler instanceof PentahoJndiConnectionReadHandler);
+            ConnectionReadHandlerFactory.getInstance().getHandler(SQLDataFactoryModule.NAMESPACE, "jndi");
+    assertInstanceOf(handler, PentahoJndiConnectionReadHandler.class);
   }
 
   public void testKettleTransFromFileReadHandler()
   {
     final KettleTransformationProducerReadHandler handler =
-        KettleTransformationProducerReadHandlerFactory.getInstance().getHandler(KettleDataFactoryModule.NAMESPACE, "query-file");
-    assertTrue(handler instanceof PentahoKettleTransFromFileReadHandler);
+            KettleTransformationProducerReadHandlerFactory.getInstance().getHandler(KettleDataFactoryModule.NAMESPACE, "query-file");
+    assertInstanceOf(handler, PentahoKettleTransFromFileReadHandler.class);
   }
 
   public void testMondrianDataSourceProvider()
   {
     final DataSourceProviderReadHandler handler =
-        DataSourceProviderReadHandlerFactory.getInstance().getHandler(MondrianDataFactoryModule.NAMESPACE, "jndi");
-    assertTrue(handler instanceof PentahoKettleTransFromFileReadHandler);
+            DataSourceProviderReadHandlerFactory.getInstance().getHandler(MondrianDataFactoryModule.NAMESPACE, "jndi");
+    assertInstanceOf(handler, PentahoKettleTransFromFileReadHandler.class);
   }
 
   public void testOlap4JDataSourceProvider()
   {
     final OlapConnectionReadHandler handler =
-        OlapConnectionReadHandlerFactory.getInstance().getHandler(Olap4JDataFactoryModule.NAMESPACE, "jndi");
-    assertTrue(handler instanceof PentahoKettleTransFromFileReadHandler);
+            OlapConnectionReadHandlerFactory.getInstance().getHandler(Olap4JDataFactoryModule.NAMESPACE, "jndi");
+    assertInstanceOf(handler, PentahoKettleTransFromFileReadHandler.class);
   }
 
   public void testPmdConnectionReadHandler()
   {
     final IPmdConfigReadHandler handler =
-        PmdConfigReadHandlerFactory.getInstance().getHandler(PmdDataFactoryModule.NAMESPACE, "config");
-    assertTrue(handler instanceof PentahoKettleTransFromFileReadHandler);
+            PmdConfigReadHandlerFactory.getInstance().getHandler(PmdDataFactoryModule.NAMESPACE, "config");
+    assertInstanceOf(handler, PentahoKettleTransFromFileReadHandler.class);
   }
 
 }
