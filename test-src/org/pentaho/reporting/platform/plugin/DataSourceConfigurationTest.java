@@ -58,6 +58,9 @@ import org.pentaho.reporting.platform.plugin.connection.PentahoCubeFileProviderR
 import org.pentaho.reporting.platform.plugin.connection.PentahoJndiConnectionReadHandler;
 import org.pentaho.reporting.platform.plugin.connection.PentahoKettleTransFromFileReadHandler;
 import org.pentaho.reporting.platform.plugin.connection.PentahoMondrianConnectionProvider;
+import org.pentaho.reporting.platform.plugin.connection.PentahoMondrianDataSourceProviderReadHandler;
+import org.pentaho.reporting.platform.plugin.connection.PentahoOlap4JJndiConnectionReadHandler;
+import org.pentaho.reporting.platform.plugin.connection.PentahoPmdConfigReadHandler;
 import org.pentaho.reporting.platform.plugin.repository.PentahoNameGenerator;
 import org.pentaho.reporting.platform.plugin.repository.TempDirectoryNameGenerator;
 import org.pentaho.test.platform.engine.core.MicroPlatform;
@@ -151,21 +154,21 @@ public class DataSourceConfigurationTest extends TestCase
   {
     final DataSourceProviderReadHandler handler =
             DataSourceProviderReadHandlerFactory.getInstance().getHandler(MondrianDataFactoryModule.NAMESPACE, "jndi");
-    assertInstanceOf(handler, PentahoKettleTransFromFileReadHandler.class);
+    assertInstanceOf(handler, PentahoMondrianDataSourceProviderReadHandler.class);
   }
 
   public void testOlap4JDataSourceProvider()
   {
     final OlapConnectionReadHandler handler =
             OlapConnectionReadHandlerFactory.getInstance().getHandler(Olap4JDataFactoryModule.NAMESPACE, "jndi");
-    assertInstanceOf(handler, PentahoKettleTransFromFileReadHandler.class);
+    assertInstanceOf(handler, PentahoOlap4JJndiConnectionReadHandler.class);
   }
 
   public void testPmdConnectionReadHandler()
   {
     final IPmdConfigReadHandler handler =
             PmdConfigReadHandlerFactory.getInstance().getHandler(PmdDataFactoryModule.NAMESPACE, "config");
-    assertInstanceOf(handler, PentahoKettleTransFromFileReadHandler.class);
+    assertInstanceOf(handler, PentahoPmdConfigReadHandler.class);
   }
 
 }
