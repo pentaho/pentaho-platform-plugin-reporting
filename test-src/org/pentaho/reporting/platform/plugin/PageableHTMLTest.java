@@ -1,5 +1,6 @@
 package org.pentaho.reporting.platform.plugin;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.HashMap;
@@ -28,8 +29,8 @@ public class PageableHTMLTest extends TestCase
   
   @Override
   protected void setUp() throws Exception {
-    // TODO Auto-generated method stub
-    super.setUp();
+    new File("./resource/solution/system/tmp").mkdirs();
+
     microPlatform = new MicroPlatform("./resource/solution");
     microPlatform.define(ISolutionEngine.class, SolutionEngine.class);
     microPlatform.define(ISolutionRepository.class, FileBasedSolutionRepository.class);

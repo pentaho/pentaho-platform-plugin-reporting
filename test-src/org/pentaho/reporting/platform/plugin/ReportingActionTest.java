@@ -38,8 +38,8 @@ public class ReportingActionTest extends TestCase {
   
   @Override
   protected void setUp() throws Exception {
-    // TODO Auto-generated method stub
-    super.setUp();
+    new File ("./resource/solution/system/tmp").mkdirs();
+
     microPlatform = new MicroPlatform("./resource/solution"); //$NON-NLS-1$
     microPlatform.define(ISolutionEngine.class, SolutionEngine.class);
     microPlatform.define(IUnifiedRepository.class, FileSystemBackedUnifiedRepository.class);
