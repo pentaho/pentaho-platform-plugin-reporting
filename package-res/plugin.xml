@@ -18,7 +18,7 @@
       <content-type type="prpt" mime-type="application/zip">
         <title>Pentaho Report</title>
         <description>Pentaho Report Bundle</description>
-        <icon-url>content/reporting/reportviewer/images/prptFileType.png</icon-url>
+        <icon-url>api/repos/reporting/reportviewer/images/prptFileType.png</icon-url>
         <meta-provider>org.pentaho.reporting.platform.plugin.ReportFileMetaDataProvider</meta-provider>
         <operations>
           <!-- for any of these urls, you can add layout=flow to the url -->
