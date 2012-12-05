@@ -367,7 +367,7 @@ public ParameterXmlContentHandler(final ParameterContentGenerator contentGenerat
     {
       // apply inputs to parameters
       final ValidationResult validationResult =
-          ReportContentUtil.applyInputsToReportParameters(report, parameterContext, null, new ValidationResult());
+          ReportContentUtil.applyInputsToReportParameters(report, parameterContext, inputs, new ValidationResult());
 
       final ReportParameterDefinition reportParameterDefinition = report.getParameterDefinition();
       vr = reportParameterDefinition.getValidator().validate
