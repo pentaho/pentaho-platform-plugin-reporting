@@ -11,6 +11,7 @@ import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
 import org.pentaho.reporting.engine.classic.core.MetaTableModel;
 import org.pentaho.reporting.engine.classic.core.ParameterDataRow;
 import org.pentaho.reporting.engine.classic.core.ReportDataFactoryException;
+import org.pentaho.reporting.engine.classic.core.designtime.datafactory.DesignTimeDataFactoryContext;
 import org.pentaho.reporting.engine.classic.core.util.CloseableTableModel;
 import org.pentaho.reporting.engine.classic.extensions.datasources.pmd.PmdConnectionProvider;
 import org.pentaho.reporting.libraries.base.boot.ModuleInitializeException;
@@ -36,7 +37,7 @@ public class QuerylessDataFactoryTest extends TestCase implements TableModelList
     qdf.setDomainId("steel-wheels");
     qdf.setQuery(queryName, queryString);
     qdf.setXmiFile("resource/solution/test/metadata.xmi");
-    qdf.initialize(ClassicEngineBoot.getInstance().getGlobalConfig(), null, null, null);
+    qdf.initialize(new DesignTimeDataFactoryContext());
     qdf.setConnectionProvider(new PmdConnectionProvider());
 
     final CloseableTableModel tableModel = (CloseableTableModel) qdf.queryData(queryName, new ParameterDataRow());
