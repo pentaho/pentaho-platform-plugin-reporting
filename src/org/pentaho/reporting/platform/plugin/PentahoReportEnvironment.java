@@ -7,6 +7,7 @@ import java.util.Locale;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.pentaho.platform.api.engine.IPentahoSession;
+import org.pentaho.platform.api.mt.ITenantedPrincipleNameResolver;
 import org.pentaho.platform.engine.core.system.PentahoRequestContextHolder;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
@@ -119,7 +120,14 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
         if (authentication == null) {
           return null;
         }
-        final String userName = authentication.getName();
+        ITenantedPrincipleNameResolver tenantedUserNameUtils = PentahoSystem.get(ITenantedPrincipleNameResolver.class, "tenantedUserNameUtils", session);
+        String userName = null;
+        if(tenantedUserNameUtils != null) {
+          userName = tenantedUserNameUtils.getPrincipleName(authentication.getName());
+        } else {
+          userName = authentication.getName();
+        }
+
         cache.put(key, userName);
         return userName;
       }
@@ -131,6 +139,7 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
         }
         final StringBuilder property = new StringBuilder();
         final GrantedAuthority[] roles = authentication.getAuthorities();
+        ITenantedPrincipleNameResolver tenantedRoleNameUtils = PentahoSystem.get(ITenantedPrincipleNameResolver.class, "tenantedRoleNameUtils", session);
         if (roles == null)
         {
           return null;
@@ -144,7 +153,14 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment
           {
             property.append(",");//$NON-NLS-1$
           }
-          property.append(quoter.doQuoting(roles[i].getAuthority()));
+          String authority = null;
+          if(tenantedRoleNameUtils != null) {
+            authority = tenantedRoleNameUtils.getPrincipleName(roles[i].getAuthority());  
+          } else {
+            authority = roles[i].getAuthority();
+          }
+          
+          property.append(quoter.doQuoting(authority));
         }
         return property.toString();
       }
