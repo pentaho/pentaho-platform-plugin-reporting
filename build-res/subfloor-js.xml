@@ -334,7 +334,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
     <unzip src="${js.dojo.root}/${js.dojo-artifact}.zip" dest="${js.dojo.root}"/>
 
-    <copy verbose="true" todir="${js.dojo.src}/util/buildscripts" overwrite="true">
+    <copy verbose="true" todir="${js.dojo.src}/util/buildscripts" overwrite="true" failonerror="false">
       <fileset dir="build-res/licenses">
         <include name="*.txt"/>
       </fileset>
