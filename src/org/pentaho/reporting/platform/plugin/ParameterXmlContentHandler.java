@@ -11,9 +11,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
+
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
@@ -226,7 +226,6 @@ public class ParameterXmlContentHandler
   private Map<String, ParameterDefinitionEntry> systemParameter;
 
   private ParameterContentGenerator contentGenerator;
-  private boolean paginate;
   private Document document;
   private IParameterProvider requestParameters;
   private IPentahoSession userSession;
@@ -252,7 +251,6 @@ public ParameterXmlContentHandler(final ParameterContentGenerator contentGenerat
     this.contentGenerator = contentGenerator;
     this.inputs = contentGenerator.createInputs();
     this.requestParameters = contentGenerator.getRequestParameters();
-    this.paginate = Boolean.parseBoolean(requestParameters.getStringParameter("paginate", "false"));
     this.userSession = contentGenerator.getUserSession();
   }
 
@@ -484,7 +482,7 @@ public ParameterXmlContentHandler(final ParameterContentGenerator contentGenerat
         parameters.appendChild(element);
       }
 
-      if (vr.isEmpty() && paginate) //$NON-NLS-1$ //$NON-NLS-2$
+      if (vr.isEmpty() && reportComponent.getComputedOutputTarget().equals(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE)) //$NON-NLS-1$ //$NON-NLS-2$
       {
         appendPageCount(reportComponent, parameters);
       }
