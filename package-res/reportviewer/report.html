@@ -149,6 +149,19 @@
             document.getElementById('toolbarlinner2').innerHTML = '<div id="toolbar" style="display: -webkit-box"><div id="toolbar-parameterToggle"  dojoType="dijit.form.ToggleButton">Prompts</div><div style="display: -webkit-box; -webkit-box-flex: 1; box-sizing: border-box; -webkit-box-align: center; -webkit-box-pack: center;"><div id="pageControl" dojoType="pentaho.common.PageControl" class="dijitInline"></div></div><div style="visibility: hidden"  dojoType="dijit.form.ToggleButton">Prompts</div></div>';
 
           }
+          var inSchedulerDialog = window.location.pathname.indexOf('parameterUi') >= 0;
+          var getParams = function() { return prompt.panel.getParameterValues(); };
+          
+          var initSchedulingParams = function(filePath, validParamsCallback) {
+            this.file = filePath;
+            this.parameterValidityCallback = validParamsCallback;
+
+            // We're not valid until the prompt is refreshed and tells us we are
+      		if (this.parameterValidityCallback) {
+            	this.parameterValidityCallback(false);
+      		}
+          };
+          
         </script>
 
         <div id="reportControlPanel" class="hidden pentaho-rounded-panel-bottom-lr pentaho-shadow">
@@ -163,7 +176,5 @@
     </div>
     <div id="glassPane" dojoType="pentaho.common.GlassPane"/>
     </div>
-  </body>
-</table>
   </body>
 </html>

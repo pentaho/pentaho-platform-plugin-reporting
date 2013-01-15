@@ -20,7 +20,7 @@
   <bean id="prpt.backgroundExecution" class="org.pentaho.reporting.platform.plugin.SimpleReportingAction" scope="prototype"/>
   <bean id="prpt.parameterUi" class="org.pentaho.platform.plugin.services.webservices.content.PluginFileContentGenerator" scope="prototype">
     <property name="mimeType" value="text/html" />
-    <property name="relativeFilePath" value="reportviewer/report-params.html" />
+    <property name="relativeFilePath" value="reportviewer/report.html" />
     <property name="pluginId" value="reporting" />
   </bean>
 

@@ -30,7 +30,7 @@
   </target>
 
   <!-- override the subfloor assemble target to do special assembly from the war directory -->
-  <target name="assemble" depends="gwt-compile,assemble.init,build-js,package-js-output">
+  <target name="assemble" depends="compile,assemble.init,build-js,package-js-output">
     <!--copy todir="${approot.stage.dir}/lib">
       <fileset dir="${lib.dir}" excludes="pentaho-bi-platform-*.jar" />
       <fileset file="${dist.dir}/${ivy.artifact.id}-${project.revision}.jar" />

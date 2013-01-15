@@ -76,7 +76,7 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'reportvie
           var puc = window.top.mantle_initialized;
           var iframe = top !== self;
           // if we are not in PUC
-          if(!mobile && (!puc || iframe)) {
+          if(!inSchedulerDialog && !mobile && (!puc || iframe)) {
             dojo.addClass(document.body, 'pentaho-page-background');
           }
         },
@@ -126,7 +126,7 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'reportvie
             // Make sure the toolbar is visible
             dojo.removeClass('toppanel', 'hidden');
           }
-
+          
           this.resize();
         },
 
@@ -344,11 +344,33 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'reportvie
       },
 
       _updateReport: function(promptPanel, renderMode) {
+    	  
+    	// if we are rendering parameters for scheduler UI, never show report
+    	if (inSchedulerDialog) {
+			this.view.showPromptPanel(true);
+			dijit.byId('glassPane').hide();
+	
+			  dojo.addClass('reportContent', 'hidden');
+			  dojo.addClass(dojo.query('.submit-panel')[0], 'hidden');	
+        	  //dojo.addClass('submit-panel', 'hidden');
+        	  dojo.removeClass('promptPanel', 'pentaho-rounded-panel-bottom-lr');
+        	  dojo.removeClass('reportControlPanel', 'pentaho-shadow');
+        	  dojo.removeClass('reportControlPanel', 'pentaho-rounded-panel-bottom-lr');
+			  dojo.addClass('toolbarlinner2', 'hidden');
+
+			if (typeof window.parameterValidityCallback !== 'undefined') {
+				window.parameterValidityCallback(!promptPanel.paramDefn.promptNeeded);
+			}
+			  
+    		return;
+    	}
+    	  
+		
         if (promptPanel.paramDefn.promptNeeded) {
           $('#' + this.htmlObject).attr('src', 'about:blank');
           dijit.byId('glassPane').hide(); // PRD-3962
           return; // Don't do anything if we need to prompt
-        }
+		}
         var options = util.getUrlParameters();
         $.extend(options, promptPanel.getParameterValues());
         options['renderMode'] = renderMode;
