@@ -138,6 +138,14 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'reportvie
             $('#reportContent').attr("src", 'about:blank');
           }
         },
+        
+        show: function(){
+        	$('#reportContent').show()
+        },
+        
+        hide: function(){
+        	$('#reportContent').hide()
+        },
 
         refreshPageControl: function(promptPanel) {
           var pc = dijit.byId('pageControl');
@@ -324,6 +332,18 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'reportvie
         }
         window.reportViewer_openUrlInDialog = top.reportViewer_openUrlInDialog;
         window.reportViewer_hide = this.hide.bind(this);
+        
+        var localThis = this;
+        
+        window.parent.addGlassPaneListener({
+        	glassPaneShown: function(){
+        		localThis.view.hide();
+        	},
+        	
+	        glassPaneHidden: function(){
+	        	localThis.view.show();
+	        }
+	    })    
       },
 
       openUrlInDialog: function(title, url, width, height) {
