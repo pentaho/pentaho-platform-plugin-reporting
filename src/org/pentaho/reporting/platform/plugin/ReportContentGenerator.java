@@ -20,7 +20,6 @@ import org.pentaho.platform.engine.services.solution.SimpleContentGenerator;
 import org.pentaho.platform.plugin.services.pluginmgr.PluginClassLoader;
 import org.pentaho.platform.util.UUIDUtil;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlTableModule;
-import org.pentaho.reporting.platform.plugin.gwt.client.ReportViewer.RENDER_TYPE;
 
 public class ReportContentGenerator extends ParameterContentGenerator {
   /**
@@ -28,6 +27,11 @@ public class ReportContentGenerator extends ParameterContentGenerator {
    */
   private static final long serialVersionUID = 1L;
 
+  public enum RENDER_TYPE
+  {
+    REPORT, XML, PARAMETER, DOWNLOAD
+  }
+  
   private static final Log log = LogFactory.getLog(ReportContentGenerator.class);
 
   public ReportContentGenerator() {
