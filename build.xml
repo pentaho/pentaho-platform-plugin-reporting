@@ -10,8 +10,8 @@
 <project name="Pentaho Reporting Platform Plugin" basedir="." default="default" xmlns:ivy="antlib:org.apache.ivy.ant">
 
   <!-- Import the common_build.xml file which contains all the default tasks -->
-  <import file="./build-res/subfloor-gwt.xml" />
-  <import file="build-res/subfloor-js.xml" />
+  <import file="./build-res/subfloor-pkg.xml" />
+  <import file="./build-res/subfloor-js.xml" />
 
 
   <property name="install.lib-dir" value="${install.target-dir}/tomcat/webapps/pentaho/WEB-INF/lib/"/>
@@ -22,7 +22,7 @@
       FOUND IN common_build.xml.
     -->
 
-  <target name="resolve" depends="subfloor-gwt.resolve,subfloor-js.resolve-js"/>
+  <target name="resolve" depends="resolve-runtime,subfloor.resolve,subfloor-js.resolve-js"/>
 
   <target name="stage-js-build">
     <!-- Remove the scripts/ directory that subfloor-js staged -->
@@ -38,14 +38,6 @@
     </copy-->
     <copy todir="${approot.stage.dir}">
       <fileset dir="${package.resdir}" />
-    </copy>
-    <copy todir="${approot.stage.dir}/reportviewer/gwt">
-	  <fileset dir="${gwt.output.dir}">
-		<exclude name=".gwt-tmp/" />
-		<exclude name="*-aux/" />
-	  </fileset>
-      <!-- Remove top-level directory when copying -->
-      <mapper type="regexp" from="^([^/]*)/(.*)$$" to="\2"/>
     </copy>
     <!-- Copy the js build output -->
     <copy todir="${approot.stage.dir}/reportviewer" overwrite="true">
@@ -68,7 +60,6 @@
     <deltree dir="${install.target-dir}/pentaho-solutions/system/reporting/reportviewer"/>
     <delete failonerror="false" file="${install.target-dir}/pentaho-solutions/system/reporting/plugin.xml"/>
     <delete failonerror="false" file="${install.target-dir}/pentaho-solutions/system/reporting/settings.xml"/>
-    <copydir src="bin/gwt/output" dest="${install.target-dir}/pentaho-solutions/system/reporting"/>
     <copydir src="package-res" dest="${install.target-dir}/pentaho-solutions/system/reporting"/>
     <copy failonerror="true" todir="${install.lib-dir}" file="${dist.dir}/${ivy.artifact.id}-${project.revision}.jar"/>
   </target>
