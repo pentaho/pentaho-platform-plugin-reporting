@@ -335,15 +335,18 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'reportvie
         
         var localThis = this;
         
-        window.parent.addGlassPaneListener({
-        	glassPaneShown: function(){
-        		localThis.view.hide();
-        	},
-        	
-	        glassPaneHidden: function(){
-	        	localThis.view.show();
-	        }
-	    })    
+        if (typeof window.top.addGlassPaneListener !== 'undefined') {
+            window.top.addGlassPaneListener({
+            	glassPaneShown: function(){
+            		localThis.view.hide();
+            	},
+            	
+    	        glassPaneHidden: function(){
+    	        	localThis.view.show();
+    	        }
+    	    });
+        }
+        
       },
 
       openUrlInDialog: function(title, url, width, height) {
