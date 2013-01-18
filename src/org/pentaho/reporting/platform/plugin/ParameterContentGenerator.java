@@ -61,7 +61,7 @@ public class ParameterContentGenerator extends SimpleContentGenerator {
   }
 
   /**
-   * Safely get our request parameters, while respecting any parameters hooked up to a subscription
+   * Safely get our request parameters
    *
    * @return IParameterProvider the provider of parameters
    */

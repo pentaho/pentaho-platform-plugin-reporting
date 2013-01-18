@@ -237,7 +237,6 @@ public class ParameterXmlContentHandler
   private static final String SYS_PARAM_DESTINATION = "destination";
   public static final String SYS_PARAM_CONTENT_LINK = "::cl";
   public static final String SYS_PARAM_SESSION_ID = "::session";
-  private static final String GROUP_SUBSCRIPTION = "subscription";
   private static final String GROUP_SYSTEM = "system";
   private static final String GROUP_PARAMETERS = "parameters";
   private static final String SYS_PARAM_TAB_NAME = "::TabName";
@@ -264,9 +263,7 @@ public ParameterXmlContentHandler(final ParameterContentGenerator contentGenerat
     if (systemParameter == null)
     {
       final Map<String, ParameterDefinitionEntry> parameter = new LinkedHashMap<String, ParameterDefinitionEntry>();
-      parameter.put(SYS_PARAM_DESTINATION, createDestinationParameter());
       parameter.put(SYS_PARAM_OUTPUT_TARGET, createOutputParameter());
-      parameter.put("subscribe", createGenericBooleanSystemParameter("subscribe", false, false)); // NON-NLS
       parameter.put(SYS_PARAM_CONTENT_LINK, createContentLinkingParameter()); // NON-NLS
       parameter.put(SYS_PARAM_TAB_NAME,
           createGenericSystemParameter(SYS_PARAM_TAB_NAME, false, true)); // NON-NLS
@@ -343,9 +340,6 @@ public ParameterXmlContentHandler(final ParameterContentGenerator contentGenerat
 
     final IParameterProvider requestParams = getRequestParameters();
 
-    final boolean subscribe = "true".equals(requestParams.getStringParameter("subscribe", "false")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-    // handle parameter feedback (XML) services
-
     final SimpleReportingComponent reportComponent = new SimpleReportingComponent();
     reportComponent.setReportFileId(fileId);
     if (report != null) {
@@ -373,7 +367,6 @@ public ParameterXmlContentHandler(final ParameterContentGenerator contentGenerat
 
       parameters = document.createElement(GROUP_PARAMETERS); //$NON-NLS-1$
       parameters.setAttribute("is-prompt-needed", String.valueOf(vr.isEmpty() == false)); //$NON-NLS-1$ //$NON-NLS-2$
-      parameters.setAttribute("subscribe", String.valueOf(subscribe)); //$NON-NLS-1$ //$NON-NLS-2$
       parameters.setAttribute("ignore-biserver-5538", "true");
 
       // check if pagination is allowed and turned on
@@ -439,7 +432,6 @@ public ParameterXmlContentHandler(final ParameterContentGenerator contentGenerat
         hideOutputParameterIfLocked(report, reportParameters);
       }
       
-      hideSubscriptionParameter(subscribe, reportParameters);
       final Map<String, Object> inputs = computeRealInput
           (parameterContext, reportParameters, reportComponent.getComputedOutputTarget(), vr);
 
@@ -963,46 +955,6 @@ public ParameterXmlContentHandler(final ParameterContentGenerator contentGenerat
     }
   }
 
-  private void hideSubscriptionParameter(final boolean subscribe,
-                                         final Map<String, ParameterDefinitionEntry> parameters)
-  {
-    final boolean hidden = (subscribe == false);
-    final ParameterDefinitionEntry destination = parameters.get(SYS_PARAM_DESTINATION);
-    if (destination instanceof AbstractParameter)
-    {
-      final AbstractParameter parameter = (AbstractParameter) destination;
-      parameter.setHidden(hidden || parameter.isHidden());
-      if (subscribe == false)
-      {
-        parameter.setMandatory(false);
-      }
-    }
-
-    }
-
-
-  private PlainParameter createDestinationParameter()
-  {
-    final PlainParameter destinationParameter = new PlainParameter(SYS_PARAM_DESTINATION, String.class);
-    destinationParameter.setMandatory(false);
-    destinationParameter.setParameterAttribute
-        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PREFERRED, String.valueOf(false));
-    destinationParameter.setParameterAttribute
-        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP, GROUP_SUBSCRIPTION);
-    destinationParameter.setParameterAttribute
-        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.PARAMETER_GROUP_LABEL,
-            Messages.getInstance().getString("ReportPlugin.ReportSchedulingOptions"));
-    destinationParameter.setParameterAttribute
-        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.LABEL,
-            Messages.getInstance().getString("ReportPlugin.Destination"));
-    destinationParameter.setParameterAttribute
-        (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TYPE,
-            ParameterAttributeNames.Core.TYPE_TEXTBOX);
-    destinationParameter.setHidden(isEmailConfigured() == false);
-    destinationParameter.setRole(ParameterAttributeNames.Core.ROLE_SCHEDULE_PARAMETER);
-    return destinationParameter;
-  }
-
   private PlainParameter createGenericSystemParameter(final String parameterName,
                                                       final boolean deprecated,
                                                       final boolean preferredParameter)
@@ -1135,7 +1087,6 @@ public ParameterXmlContentHandler(final ParameterContentGenerator contentGenerat
     listParameter.setRole(ParameterAttributeNames.Core.ROLE_SYSTEM_PARAMETER);
     listParameter.addValues("XML", "XML"); // NON-NLS
     listParameter.addValues("REPORT", "REPORT"); // NON-NLS
-    listParameter.addValues("SUBSCRIBE", "SUBSCRIBE"); // NON-NLS
     listParameter.addValues("DOWNLOAD", "DOWNLOAD"); // NON-NLS
     listParameter.addValues("PARAMETER", "PARAMETER"); // NON-NLS
     return listParameter;
