@@ -3,7 +3,7 @@
  * of the software license agreement entered into between the entity licensing
  * such code and Pentaho Corporation. 
  */
-pen.define(['reportviewer/reportviewer-formatting'], function(ReportFormatUtil) {
+pen.define(['common-ui/util/formatting'], function(ReportFormatUtil) {
   // Determine the size of an object (# of properties)
   var sizeOf = function(obj) {
     var size = 0, key;
