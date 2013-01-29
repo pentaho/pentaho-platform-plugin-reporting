@@ -1,4 +1,4 @@
-pen.define(['common-ui/util/util', 'reportviewer/reportviewer-formatting'], function(util, ReportFormatUtil) {
+pen.define(['common-ui/util/util', 'common-ui/util/formatting'], function(util, ReportFormatUtil) {
   return function() {
     return {
       // The current render mode

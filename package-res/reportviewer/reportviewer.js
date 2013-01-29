@@ -1,4 +1,4 @@
-pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'reportviewer/reportviewer-timeutil', 'reportviewer/reportviewer-formatting'], function(util) {
+pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui/util/timeutil', 'common-ui/util/formatting'], function(util) {
   return function(reportPrompt) {
     if (!reportPrompt) {
     	alert("report prompt is required");
