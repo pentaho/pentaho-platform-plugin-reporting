@@ -112,4 +112,4 @@ public class ReportingConfiguration extends PropertyLookupParser implements Conf
     }
     return null;
   }
-}
+}
