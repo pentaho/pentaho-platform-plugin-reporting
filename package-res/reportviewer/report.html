@@ -78,25 +78,8 @@
           pen.require(['cdf/jquery.blockUI', 'cdf/Dashboards'], function() {
             // Override Dashboard's loading/glasspane while loading to omit the animation
             Dashboards.blockUIwithDrag = function() {
-              $.blockUI.defaults.message = '';
-              $.blockUI.defaults.css.left = '0%';
-              $.blockUI.defaults.css.top = '0%';
-              $.blockUI.defaults.css.marginLeft = '85px';
-              $.blockUI.defaults.css.width = '100%';
-              $.blockUI.defaults.css.height = '100%';
-              $.blockUI.defaults.css.opacity = '1';
-              $.blockUI.defaults.css.backgroundColor = '#ffffcc';
-              $.blockUI.defaults.css['-webkit-border-radius'] = '10px'; 
-              $.blockUI.defaults.css['-moz-border-radius'] = '10px';
-          
-              $.blockUI.defaults.overlayCSS.backgroundColor = '#000000';
-              $.blockUI.defaults.overlayCSS.opacity = '0.6';
-              $.blockUI.defaults.overlayCSS.cursor = 'wait';
-              // Place it below the message box
-              $.blockUI.defaults.overlayCSS['z-index'] = '900';
-                // There's an issue with BlockUI and IE 8. As we don't even use this feature from CDF, it's hidden here.
-                // $.blockUI.defaults.showOverlay = false;
-              $.blockUI();
+			  // blockUI has concurrency issues (see BISERVER-8124)
+			  // forcing no-op with override
             }
           });
 
