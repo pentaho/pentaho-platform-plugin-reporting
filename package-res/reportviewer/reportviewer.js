@@ -93,7 +93,23 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
          * @param renderMode Current render mode: 'REPORT' or 'SUBSCRIBE'
          */
         updateReportContentVisibility: function (promptPanel, renderMode) {
-          this.showReportContent(renderMode === 'SUBSCRIBE' || (!promptPanel.paramDefn.promptNeeded && (promptPanel.paramDefn.allowAutoSubmit() || prompt.mode === 'MANUAL')));
+            // PRD-4271:
+            // If 'Auto Submit' checkbox is set, we will always re-render the report.  However, don't re-render report
+            // if there is no initial report content displayed.
+            // The server is hit when parameters change in parameter panel so that we can check for parameter
+            // updates in case of parameter cascading (even if auto-submit is not set).
+            // If auto-submit is enabled, then we update the report after each parameter has been entered only if we have
+            // an initial report displayed.
+            var reportContentElement = dojo.byId('reportContent');
+            var visibility = true;
+            if ((!promptPanel.paramDefn.allowAutoSubmit()) && (renderMode === 'REPORT') &&
+                    ((((reportContentElement.src === '') || (reportContentElement.src === 'about:blank')) && (prompt.mode !== 'MANUAL')) ||
+                            (!promptPanel.paramDefn.promptNeeded && (prompt.mode === 'INITIAL'))))
+            {
+                visibility = false;
+            }
+
+            this.showReportContent(visibility);
         },
 
         init: function(init, promptPanel) {
