@@ -94,7 +94,7 @@
               // Place it below the message box
               $.blockUI.defaults.overlayCSS['z-index'] = '900';
                 // There's an issue with BlockUI and IE 8. As we don't even use this feature from CDF, it's hidden here.
-                // $.blockUI.defaults.showOverlay = false;
+              $.blockUI.defaults.showOverlay = false;
               $.blockUI();
             }
           });
