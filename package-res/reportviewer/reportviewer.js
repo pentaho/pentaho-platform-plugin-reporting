@@ -156,13 +156,10 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
         },
         
         show: function(){
-        	$('#reportContent').show()
+        //Cleans up an issue where somtimes on show the iframe is offset
+        resizeIframe($('#reportContent'))
         },
         
-        hide: function(){
-        	$('#reportContent').hide()
-        },
-
         refreshPageControl: function(promptPanel) {
           var pc = dijit.byId('pageControl');
           pc.registerPageNumberChangeCallback(undefined);
@@ -353,10 +350,7 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
         
         if (typeof window.top.addGlassPaneListener !== 'undefined') {
             window.top.addGlassPaneListener({
-            	glassPaneShown: function(){
-            		localThis.view.hide();
-            	},
-            	
+
     	        glassPaneHidden: function(){
     	        	localThis.view.show();
     	        }
