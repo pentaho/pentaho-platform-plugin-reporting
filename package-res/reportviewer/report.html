@@ -36,6 +36,11 @@
 	      });
 	    }
 	  }
+	  if (window.top.showLoadingIndicator) {
+	    window.top.showLoadingIndicator();
+	  } else if (window.parent.showLoadingIndicator) {
+	    window.parent.showLoadingIndicator();
+	  }	  
     </script>
     <script type="text/javascript" src="../../../content/common-ui/resources/web/formatter/formatter.nocache.js"></script>
     

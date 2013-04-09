@@ -40,6 +40,13 @@ pen.define(['common-ui/util/util', 'common-ui/util/formatting'], function(util, 
 
           this.initPromptPanel();          
           viewer.view.showPromptPanel(paramDefn.promptNeeded);          
+
+          if (window.top.hideLoadingIndicator) {
+            window.top.hideLoadingIndicator();
+          } else if (window.parent.hideLoadingIndicator) {
+            window.parent.hideLoadingIndicator();
+          }
+		  
         }.bind(this), 'INITIAL');
       },
 
