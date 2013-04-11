@@ -38,8 +38,8 @@ pen.define(['common-ui/util/util', 'common-ui/util/formatting'], function(util, 
           // Provide our own i18n function
           this.panel.getString = pentaho.common.Messages.getString;
 
-          this.initPromptPanel();          
-          viewer.view.showPromptPanel(paramDefn.promptNeeded);          
+          this.initPromptPanel();
+          viewer.view.showPromptPanel(paramDefn.showParameterUI()); // PRD-4102
 
           if (window.top.hideLoadingIndicator) {
             window.top.hideLoadingIndicator();
