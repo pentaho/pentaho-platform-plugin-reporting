@@ -39,7 +39,7 @@ pen.define(['common-ui/util/util', 'reportviewer/reportviewer-formatting'], func
           this.panel.getString = pentaho.common.Messages.getString;
 
           this.initPromptPanel();          
-          viewer.view.showPromptPanel(paramDefn.promptNeeded);          
+          viewer.view.showPromptPanel(paramDefn.showParameterUI()); // PRD-4102         
         }.bind(this), 'INITIAL');
       },
 
