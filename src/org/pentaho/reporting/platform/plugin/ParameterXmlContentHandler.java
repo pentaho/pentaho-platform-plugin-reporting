@@ -23,8 +23,6 @@ import javax.xml.transform.stream.StreamResult;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.pentaho.platform.api.engine.IParameterProvider;
-import org.pentaho.platform.api.engine.IPentahoSession;
-import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.util.UUIDUtil;
 import org.pentaho.reporting.engine.classic.core.AttributeNames;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
@@ -225,12 +223,9 @@ public class ParameterXmlContentHandler
 
   private Map<String, ParameterDefinitionEntry> systemParameter;
 
-  private ParameterContentGenerator contentGenerator;
   private Document document;
   private IParameterProvider requestParameters;
-  private IPentahoSession userSession;
   private Map<String, Object> inputs;
-  private Serializable fileId;
 
   public static final String SYS_PARAM_RENDER_MODE = "renderMode";
   private static final String SYS_PARAM_OUTPUT_TARGET = SimpleReportingComponent.OUTPUT_TARGET;
@@ -247,10 +242,8 @@ public class ParameterXmlContentHandler
       "org.pentaho.reporting.engine.classic.core.modules.output.table.html.ProportionalColumnWidths";
 
 public ParameterXmlContentHandler(final ParameterContentGenerator contentGenerator)  {
-    this.contentGenerator = contentGenerator;
     this.inputs = contentGenerator.createInputs();
     this.requestParameters = contentGenerator.getRequestParameters();
-    this.userSession = contentGenerator.getUserSession();
   }
 
   private IParameterProvider getRequestParameters()
@@ -335,7 +328,6 @@ public ParameterXmlContentHandler(final ParameterContentGenerator contentGenerat
       inputs.put(ParameterXmlContentHandler.SYS_PARAM_SESSION_ID, UUIDUtil.getUUIDAsString());
     }
 
-    this.fileId = fileId;
     this.document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
 
     final IParameterProvider requestParams = getRequestParameters();
@@ -346,8 +338,16 @@ public ParameterXmlContentHandler(final ParameterContentGenerator contentGenerat
       reportComponent.setReport(report);
     }
     reportComponent.setPaginateOutput(true);
-    reportComponent.setForceDefaultOutputTarget(overrideOutputType);
+    
+    final boolean isMobile = "true".equals(requestParams.getStringParameter("mobile", "false")); //$NON-NLS-1$ //$NON-NLS-2$
+
+    if (isMobile) {
+      reportComponent.setForceDefaultOutputTarget(true);
+    } else {
+      reportComponent.setForceDefaultOutputTarget(overrideOutputType);
+    }
     reportComponent.setDefaultOutputTarget(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE);
+    
     reportComponent.setInputs(inputs);
 
     report = reportComponent.getReport();
@@ -576,7 +576,7 @@ public ParameterXmlContentHandler(final ParameterContentGenerator contentGenerat
     {
       final Element parameterElement = document.createElement("parameter"); //$NON-NLS-1$
       parameterElement.setAttribute("name", parameter.getName()); //$NON-NLS-1$
-      final Class valueType = parameter.getValueType();
+      final Class<?> valueType = parameter.getValueType();
       parameterElement.setAttribute("type", valueType.getName()); //$NON-NLS-1$
       parameterElement.setAttribute("is-mandatory", String.valueOf(parameter.isMandatory())); //$NON-NLS-1$ //$NON-NLS-2$
 
@@ -600,7 +600,7 @@ public ParameterXmlContentHandler(final ParameterContentGenerator contentGenerat
         }
       }
 
-      final Class elementValueType;
+      final Class<?> elementValueType;
       if (valueType.isArray())
       {
         elementValueType = valueType.getComponentType();
@@ -646,6 +646,7 @@ public ParameterXmlContentHandler(final ParameterContentGenerator contentGenerat
         }
       }
 
+      @SuppressWarnings("rawtypes")
       final LinkedHashSet handledValues = (LinkedHashSet) selectionSet.clone();
 
       if (parameter instanceof ListParameter)
@@ -836,7 +837,7 @@ public ParameterXmlContentHandler(final ParameterContentGenerator contentGenerat
   public static String convertParameterValueToString(final ParameterDefinitionEntry parameter,
                                                       final ParameterContext context,
                                                       final Object value,
-                                                      final Class type) throws BeanException
+                                                      final Class<?> type) throws BeanException
   {
     if (value == null)
     {
@@ -965,7 +966,7 @@ public ParameterXmlContentHandler(final ParameterContentGenerator contentGenerat
   private PlainParameter createGenericSystemParameter(final String parameterName,
                                                       final boolean deprecated,
                                                       final boolean preferredParameter,
-                                                      final Class type)
+                                                      final Class<?> type)
   {
     final PlainParameter destinationParameter = new PlainParameter(parameterName, type);
     destinationParameter.setMandatory(false);
@@ -1023,13 +1024,6 @@ public ParameterXmlContentHandler(final ParameterContentGenerator contentGenerat
         (ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TYPE,
             ParameterAttributeNames.Core.TYPE_LIST);
     return parameter;
-  }
-
-
-  private boolean isEmailConfigured()
-  {
-    final String emailRaw = PentahoSystem.getSystemSetting("smtp-email/email_config.xml", "mail.smtp.host", "");//$NON-NLS-1$
-    return StringUtils.isEmpty(emailRaw) == false;
   }
 
   private Object lookupDestination()
