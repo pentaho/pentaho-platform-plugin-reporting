@@ -319,7 +319,7 @@ public ParameterXmlContentHandler(final ParameterContentGenerator contentGenerat
 
   public void createParameterContent(final OutputStream outputStream,
                                      final Serializable fileId,
-                                     final boolean overrideOutputType,
+                                     boolean overrideOutputType,
                                      MasterReport report) throws Exception
   {
     final Object rawSessionId = inputs.get(ParameterXmlContentHandler.SYS_PARAM_SESSION_ID);
@@ -342,6 +342,7 @@ public ParameterXmlContentHandler(final ParameterContentGenerator contentGenerat
     final boolean isMobile = "true".equals(requestParams.getStringParameter("mobile", "false")); //$NON-NLS-1$ //$NON-NLS-2$
 
     if (isMobile) {
+      overrideOutputType = true;
       reportComponent.setForceDefaultOutputTarget(true);
     } else {
       reportComponent.setForceDefaultOutputTarget(overrideOutputType);

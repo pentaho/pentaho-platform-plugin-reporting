@@ -185,7 +185,7 @@ pen.define(['common-ui/util/util', 'common-ui/util/formatting'], function(util, 
               if (currentAutoSubmit != undefined) {
                 newParamDefn.autoSubmitUI = currentAutoSubmit;
               }
-              callback(newParamDefn);
+              callback.call(this, newParamDefn);
             } catch (e) {
               this.onFatalError(e);
             }
