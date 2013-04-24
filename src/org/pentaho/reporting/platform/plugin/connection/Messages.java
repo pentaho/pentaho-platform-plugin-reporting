@@ -12,9 +12,9 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright 2005 - 2009 Pentaho Corporation.  All rights reserved.
- *
+ * Copyright 2010-2013 Pentaho Corporation.  All rights reserved.
  */
+
 package org.pentaho.reporting.platform.plugin.connection;
 
 import org.pentaho.platform.util.messages.MessagesBase;
