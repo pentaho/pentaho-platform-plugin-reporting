@@ -72,9 +72,25 @@ pen.define(['common-ui/util/util', 'common-ui/util/formatting'], function(util, 
       parseParameterDefinition: function(xmlString) {
         // Provide a custom parameter normalization method unique to report viewer
         this.parameterParser.normalizeParameterValue = ReportFormatUtil.normalizeParameterValue.bind(ReportFormatUtil);
+		xmlString = this.removeControlCharacters(xmlString);
         return this.parameterParser.parseParameterXml(xmlString);
       },
 
+	  /**
+	   * This method will remove illegal control characters from the text in the range of &#00; through &#31;
+	   * SEE:  PRD-3882 and ESR-1953
+	   */
+	  removeControlCharacters : function(inStr) {	    
+	    for (var i=0;i<=31;i++) {
+		  var safe = i;
+		  if (i<10) {
+		    safe = '0' + i;
+		  }
+		  eval('inStr = inStr.replace(/\&#' + safe + ';/g, "")');		  
+		}
+		return inStr;
+	  },
+	  
       checkSessionTimeout: function(content, args) {
         if (content.status == 401 || this.isSessionTimeoutResponse(content)) {
           this.handleSessionTimeout(args);
