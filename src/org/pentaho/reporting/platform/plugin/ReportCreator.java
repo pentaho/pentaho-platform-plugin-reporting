@@ -44,6 +44,17 @@ public class ReportCreator
     final InputSource repDefInputSource = new InputSource(inputStream);
     return generator.parseReport(repDefInputSource, url);
   }
+  
+  public static MasterReport createReportByName(final String fullFilePathAndName) throws ResourceException, IOException
+  {
+    IUnifiedRepository unifiedRepository = PentahoSystem.get(IUnifiedRepository.class, PentahoSessionHolder.getSession());
+    RepositoryFile repositoryFile = unifiedRepository.getFile(fullFilePathAndName);
+    if (repositoryFile == null) {
+      throw new IOException("File " + fullFilePathAndName + " not found in repository");
+    } else {
+      return createReport(repositoryFile.getId());
+    }
+  }
 
   public static MasterReport createReport(final Serializable fileId) throws ResourceException, IOException
   {

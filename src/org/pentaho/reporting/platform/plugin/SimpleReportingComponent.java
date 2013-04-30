@@ -575,7 +575,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       else if (reportDefinition != null)
       {
         // load the report definition as an action-sequence resource
-        report = ReportCreator.createReport(reportDefinition.getAddress());
+        report = ReportCreator.createReportByName(reportDefinition.getAddress());
       }
       else if (fileId != null)
       {
