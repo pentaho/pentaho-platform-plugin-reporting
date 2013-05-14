@@ -3,6 +3,9 @@
   <onyx>
     <file>Onyx.css</file>
   </onyx>
+  <crystal>
+    <file>Crystal.css</file>
+  </crystal>
   <slate>
     <file>Slate.css</file>
   </slate>
