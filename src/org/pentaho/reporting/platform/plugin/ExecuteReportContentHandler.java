@@ -74,6 +74,9 @@ public class ExecuteReportContentHandler
       reportComponent.setReportDefinitionPath(reportDefinitionPath);
       reportComponent.setPaginateOutput(true);
       reportComponent.setForceDefaultOutputTarget(forceDefaultOutputTarget);
+      if (reportDefinitionPath.endsWith(".prpti")) {
+        reportComponent.setForceUnlockPreferredOutput(true);
+      }
       reportComponent.setDefaultOutputTarget(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE);
       final Map<String, Object> inputs = contentGenerator.createInputs();
       reportComponent.setInputs(inputs);
@@ -139,6 +142,9 @@ public class ExecuteReportContentHandler
       final SimpleReportingComponent reportComponent = new SimpleReportingComponent();
       reportComponent.setSession(userSession);
       reportComponent.setReportDefinitionPath(reportDefinitionPath);
+      if (reportDefinitionPath.endsWith(".prpti")) {
+        reportComponent.setForceUnlockPreferredOutput(true);
+      }
       reportComponent.setPaginateOutput(true);
       reportComponent.setForceDefaultOutputTarget(forceDefaultOutputTarget);
       reportComponent.setDefaultOutputTarget(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE);

@@ -366,6 +366,9 @@ public class ParameterXmlContentHandler
 
     final SimpleReportingComponent reportComponent = new SimpleReportingComponent();
     reportComponent.setReportDefinitionPath(reportDefinitionPath);
+    if (reportDefinitionPath.endsWith(".prpti")) {
+      reportComponent.setForceUnlockPreferredOutput(true);
+    }
     if (report != null) {
       reportComponent.setReport(report);
     }

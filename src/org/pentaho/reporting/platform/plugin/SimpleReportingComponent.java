@@ -8,6 +8,7 @@ import java.net.URL;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+
 import javax.print.DocFlavor;
 import javax.print.PrintService;
 import javax.print.PrintServiceLookup;
@@ -17,6 +18,7 @@ import org.apache.commons.logging.LogFactory;
 import org.pentaho.platform.api.engine.IAcceptsRuntimeInputs;
 import org.pentaho.platform.api.engine.IActionSequenceResource;
 import org.pentaho.platform.api.engine.IPentahoSession;
+import org.pentaho.platform.api.engine.IPluginManager;
 import org.pentaho.platform.api.engine.IStreamingPojo;
 import org.pentaho.platform.engine.core.system.PentahoRequestContextHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
@@ -34,10 +36,7 @@ import org.pentaho.reporting.engine.classic.core.modules.output.table.xls.ExcelT
 import org.pentaho.reporting.engine.classic.core.modules.output.table.xml.XmlTableModule;
 import org.pentaho.reporting.engine.classic.core.parameters.DefaultParameterContext;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterContext;
-import org.pentaho.reporting.engine.classic.core.parameters.ParameterDefinitionEntry;
-import org.pentaho.reporting.engine.classic.core.parameters.ValidationMessage;
 import org.pentaho.reporting.engine.classic.core.parameters.ValidationResult;
-import org.pentaho.reporting.engine.classic.core.util.ReportParameterValues;
 import org.pentaho.reporting.engine.classic.extensions.modules.java14print.Java14PrintUtil;
 import org.pentaho.reporting.libraries.base.config.Configuration;
 import org.pentaho.reporting.libraries.base.util.CSVQuoter;
@@ -121,6 +120,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   private String outputTarget;
   private String defaultOutputTarget;
   private boolean forceDefaultOutputTarget;
+  private boolean forceUnlockPreferredOutput = false;
   private MasterReport report;
   private Map<String, Object> inputs;
   private OutputStream outputStream;
@@ -178,6 +178,16 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   public boolean isForceDefaultOutputTarget() 
   {
     return this.forceDefaultOutputTarget;
+  }
+  
+  public void setForceUnlockPreferredOutput(boolean forceUnlockPreferredOutput) 
+  {
+    this.forceUnlockPreferredOutput = forceUnlockPreferredOutput;
+  }
+  
+  public boolean isForceUnlockPreferredOutput() 
+  {
+    return forceUnlockPreferredOutput;
   }
   
   public String getOutputTarget()
@@ -594,6 +604,14 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
 
       final String clText = extractContentLinkSpec();
       report.setReportEnvironment(new PentahoReportEnvironment(report.getConfiguration(), clText));
+    }
+
+    // lock preferred output?
+    
+    IPluginManager pm = PentahoSystem.get(IPluginManager.class);
+    if (forceUnlockPreferredOutput && Boolean.parseBoolean(pm.getPluginSetting("reporting", "settings/force-prpti-output-unlock", "false").toString())) 
+    {
+      report.setAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.LOCK_PREFERRED_OUTPUT_TYPE, false);
     }
 
     return report;

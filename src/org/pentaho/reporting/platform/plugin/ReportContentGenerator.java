@@ -253,6 +253,9 @@ public class ReportContentGenerator extends SimpleContentGenerator
     final Map<String, Object> inputs = createInputs(requestParams);
     reportComponent.setForceDefaultOutputTarget(isMobile);
     reportComponent.setDefaultOutputTarget(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE);
+    if (reportDefinitionPath.endsWith(".prpti")) {
+      reportComponent.setForceUnlockPreferredOutput(true);
+    }
     reportComponent.setSession(userSession);
     reportComponent.setReportDefinitionPath(reportDefinitionPath);
     reportComponent.setInputs(inputs);
