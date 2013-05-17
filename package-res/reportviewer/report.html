@@ -118,7 +118,7 @@
     </script>	    
   </head>
   
-  <body class="tundra body styled">
+  <body class="tundra body">
     <div id="toppanel" class="pentaho-transparent hidden">
       <div id="toppanelinner" >
         <div id="toolbarlinner2" class="pentaho-rounded-panel2-shadowed pentaho-padding-sm pentaho-shine pentaho-background">
@@ -149,7 +149,6 @@
             	this.parameterValidityCallback(false);
       		}
           };
-          
         </script>
 
         <div id="reportControlPanel" class="hidden pentaho-rounded-panel-bottom-lr pentaho-shadow">
@@ -157,8 +156,13 @@
         </div>
       </div>
     </div>
-
-	<iframe id="reportContent" frameborder="0" style="width:100%"></iframe>
+    <!-- It's hard to get a 0-height empty div in IE... -->
+    <div id="reportAreaTop" style="visibility:hidden;height:0px;width:0px;margins:0px;paddings:0px;font-size:0px;line-height:0px;position:static;display:block;"></div>
+    <div id="reportArea" class="pentaho-transparent" style="visibility:hidden;" scrollexception="true">
+	  <div id="reportPageOutline">
+	    <iframe id="reportContent" frameborder="0" style="width:100%;"></iframe>
+	  </div>
+	</div>
 	
     <div id="messageBox" dojoType="pentaho.common.MessageBox" title="" style="width:400px; display:none;">
     </div>
