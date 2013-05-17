@@ -22,14 +22,13 @@ import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.Iterator;
 import java.util.Map;
+
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.pentaho.platform.api.engine.IParameterProvider;
 import org.pentaho.platform.api.engine.IPentahoSession;
-import org.pentaho.platform.api.engine.ISolutionFile;
-import org.pentaho.platform.api.repository.ISolutionRepository;
 import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
 import org.pentaho.platform.api.repository2.unified.RepositoryFile;
 import org.pentaho.platform.engine.core.audit.AuditHelper;
@@ -59,11 +58,10 @@ public class ExecuteReportContentHandler
     this.userSession = contentGenerator.getUserSession();
   }
 
-  public void createReportContent(final OutputStream outputStream, final Serializable fileId, final boolean forceDefaultOutputTarget) throws Exception
+  public void createReportContent(final OutputStream outputStream, final Serializable fileId, final String path, final boolean forceDefaultOutputTarget) throws Exception
   {
     final long start = System.currentTimeMillis();
     final Map<String, Object> inputs = contentGenerator.createInputs();
-    String name;
     String objID = getObjectIdFromContent(fileId);
     
     AuditHelper.audit(userSession.getId(), userSession.getName(), objID,
@@ -86,6 +84,9 @@ public class ExecuteReportContentHandler
       reportComponent.setPaginateOutput(true);
       reportComponent.setForceDefaultOutputTarget(forceDefaultOutputTarget);
       reportComponent.setDefaultOutputTarget(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE);
+      if (path.endsWith(".prpti")) {
+        reportComponent.setForceUnlockPreferredOutput(true);
+      }
       reportComponent.setInputs(inputs);
 
       final MasterReport report = reportComponent.getReport();

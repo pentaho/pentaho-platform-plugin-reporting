@@ -91,7 +91,7 @@ public class ReportContentGenerator extends ParameterContentGenerator {
         case REPORT: {
           // create inputs from request parameters
           final ExecuteReportContentHandler executeReportContentHandler = new ExecuteReportContentHandler(this);//$NON-NLS-1$
-          executeReportContentHandler.createReportContent(outputStream, prptFile.getId(), false);
+          executeReportContentHandler.createReportContent(outputStream, prptFile.getId(), prptFile.getPath(), false);
           break;
         }
         default:
@@ -158,6 +158,9 @@ public class ReportContentGenerator extends ParameterContentGenerator {
     final SimpleReportingComponent reportComponent = new SimpleReportingComponent();
     final Map<String, Object> inputs = createInputs(requestParams);
     reportComponent.setForceDefaultOutputTarget(isMobile);
+    if (prptFile.getPath().endsWith(".prpti")) {
+      reportComponent.setForceUnlockPreferredOutput(true);
+    }
     reportComponent.setDefaultOutputTarget(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE);
     reportComponent.setReportFileId(prptFile.getId());
     reportComponent.setInputs(inputs);

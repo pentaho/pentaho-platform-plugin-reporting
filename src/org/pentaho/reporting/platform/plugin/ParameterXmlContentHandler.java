@@ -329,13 +329,7 @@ public ParameterXmlContentHandler(final ParameterContentGenerator contentGenerat
 
   public void createParameterContent(final OutputStream outputStream,
                                      final Serializable fileId,
-                                     final boolean overrideOutputType) throws Exception
-  {
-    createParameterContent(outputStream, fileId, overrideOutputType, null);
-  }
-
-  public void createParameterContent(final OutputStream outputStream,
-                                     final Serializable fileId,
+                                     final String path,
                                      boolean overrideOutputType,
                                      MasterReport report) throws Exception
   {
@@ -365,6 +359,11 @@ public ParameterXmlContentHandler(final ParameterContentGenerator contentGenerat
       reportComponent.setForceDefaultOutputTarget(overrideOutputType);
     }
     reportComponent.setDefaultOutputTarget(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE);
+    
+    if (path.endsWith(".prpti")) {
+      reportComponent.setForceUnlockPreferredOutput(true);
+    }
+    
     
     reportComponent.setInputs(inputs);
 

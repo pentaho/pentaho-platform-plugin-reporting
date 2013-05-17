@@ -2,5 +2,6 @@
 <settings>
   <!-- set this to true for production, and false for development/localization -->
   <cache-messages>false</cache-messages>
+  <force-prpti-output-unlock>false</force-prpti-output-unlock>
 
 </settings>

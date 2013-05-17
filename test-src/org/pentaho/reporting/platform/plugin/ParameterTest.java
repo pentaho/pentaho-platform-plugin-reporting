@@ -72,7 +72,7 @@ public class ParameterTest extends TestCase
   {
     final ParameterContentGenerator contentGenerator = new ParameterContentGenerator();
     final ParameterXmlContentHandler handler = new ParameterXmlContentHandler(contentGenerator);
-    handler.createParameterContent(System.out, "resource/solution/test/reporting/Product Sales.prpt", false);
+    handler.createParameterContent(System.out, "resource/solution/test/reporting/Product Sales.prpt", "resource/solution/test/reporting/Product Sales.prpt", false, null);
   }
 
 }
