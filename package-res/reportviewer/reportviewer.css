@@ -24,10 +24,15 @@ div.prompt-panel {
 }
 
 #reportArea {
-  padding: 8px 0 8px 0;
-  overflow: auto;
+  padding: 0;
+  overflow: hidden;
   /* Required to be position: relative for IE7 so that the reportPageOutline can be properly scrolled and will not overflow. */
   position: relative;
+}
+
+.styled #reportArea {
+  padding: 8px 0 8px 0;
+  overflow: auto;
 }
 
 .dj_ie7 #reportArea {
@@ -225,3 +230,17 @@ div.prompt-panel {
     padding-right: 8px; 
     padding-bottom: 8px;
 }
+
+/* Debugging styles for report area
+#reportArea {
+	border: solid 3px green;
+}
+
+#reportPageOutline {
+	border: solid 3px red;
+}
+
+#reportContent {
+	border: solid 3px yellow;
+}
+ */
