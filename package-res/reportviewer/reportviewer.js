@@ -305,9 +305,12 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
               var d = $(iframe.contentWindow.document);
               t.height(d.height());
 
-              this.lastWidth = d.width();
+              //PRD-4381 Fix resize display when switching between output types
               t.width(this.lastWidth);
               $('#reportPageOutline').width(t.outerWidth());
+              var w = (t.outerWidth() > this.lastWidth + 15) ? this.lastWidth:t.outerWidth();
+              $('#reportPageOutline').width(w);
+              this.lastWidth = d.width();
             }
 
             this.resize();
