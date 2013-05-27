@@ -1,11 +1,33 @@
-html { overflow: hidden;}
+* {
+	overflow: hidden;
+}
+
+html, body {
+	padding: 0px;
+	margin:  0px;
+	border:  0px;
+}
 
 .body {
-    overflow: hidden;
+	position: relative;
 }
 
 .table {
     border: 1px solid #808080;
+}
+
+/* PROMPT PANEL */
+#toppanel {
+	/* ATTENTION: do NOT remove this pixel.
+	   It prevents collapsing of bottom margin of #reportControlPanel
+	   with the margin of #toppanel,
+	   in non-styled mode.
+	   When this happens, 
+	   because $ fails to detect the collapsing, 
+	   the height measure of #toppanel does not account
+	   for the margin of #reportControlPanel.
+	*/
+	padding: 0 0 1px 0;
 }
 
 #reportControlPanel {
@@ -15,56 +37,127 @@ html { overflow: hidden;}
   border: 1px solid rgba(0, 0, 0, 0.59375);
 }
 
-.styled >* #reportControlPanel {
+.nonMobile.styled #reportControlPanel {
   margin: 0px 10px 0px 10px;
+}
+
+.mobile #reportControlPanel {
+  margin: 0 0 10px 0;
 }
 
 div.prompt-panel {
   max-height: 300px;
 }
 
+/* CONTENT AREA */
+
+/* The role of the report area is to show a scroll-bar, 
+   at the right-most position of the report viewer. 
+   Scroll-bar is only shown when .styled.
+   
+   Report area height is always set in code, 
+   so as to fill all the space between the top-panel
+   and the bottom of the document.
+*/
 #reportArea {
-  padding: 0;
-  overflow: hidden;
-  /* Required to be position: relative for IE7 so that the reportPageOutline can be properly scrolled and will not overflow. */
   position: relative;
+  
+  /* size to 100% of parent's width */
+  display:  block;
+  
+  /* Ensure that child reportPageOutline is shown centered */
+  text-align: center;
+  
+  padding: 0;
+}
+
+/* Report content is hidden by 
+   absolutely positioning it off-page 
+   to avoid flicker when size-polling.
+   
+   Also, cannot hide (visibility/display) a parent of 
+   the iframe where a pdf is to be shown, or the pdf does not render (IE?).
+   
+   PRD-4271 Don't show white box rectangle...
+   PRD-4018, PRD-4034 FF & IE8 does not resize properly when iframe is hidden.
+*/
+.contentHidden #reportArea {
+	position: absolute;
+	left: -100000;
+    top:  -100000;
 }
 
 .styled #reportArea {
-  padding: 8px 0 8px 0;
+  padding: 8px 0;
+}
+
+.topViewer.styled #reportArea {
   overflow: auto;
 }
 
-.dj_ie7 #reportArea {
- top: 8px;
-}
-
 #reportPageOutline {
-  position: relative;
-  margin-left: auto;
-  margin-right: auto;
-  width: 700px;
+  /* When unstyled, both width and height should be that of the parent */
+  display: block;
+  height:  100%;
 }
 
-#reportPageSpacer {
-  height: 12px;
+.styled #reportPageOutline {
+  /* Make the div horizontally fit to its content (inline-block).
+  
+     Being an inline element and having parent reportArea, 
+     reportArea's "text-align:center" will center it.
+   */
+  display: inline-block;
+  height:  auto;
 }
 
 #reportContent {
+  display: block;
   background-color: #ffffff;
-}	
+  width:  100%;
+  height: 100%;
+}
 
-.styled >* #reportContent {
+.leafViewer.nonStyled #reportContent {
+  /* Enables scrolling for the Text format (output-target: pageable/text).
+  	 In PDFs, scrolling is always provided by the pdf viewer, 
+  	 according to the iframe size,
+  	 irrespective of our scrolling settings.
+  */
+  overflow: auto;
+}
+
+.styled #reportContent {
+  /* In this case,
+     both width and height are set by code, 
+     so that the iframe fits the content's size
+  */
   padding: 10px 10px 10px 2px;
   border: black 1px solid;
-  height: 500px;
-  /* Initial width, will be updated by onresize() */
-  width: 686px; /* 700 - (padding + border) */
+  overflow: inherit;
+}
+
+.styled.parentViewer #reportContent {
+	padding: 0;
 }
 
 .hidden {
-	display: none !important;
+  display: none !important;
 }
+
+/* Debugging styles for report */
+.debug #reportArea {
+	border: solid 3px green;
+}
+
+.debug #reportPageOutline {
+	border: solid 1px red;
+}
+
+.debug #reportContent {
+	border: solid 3px yellow;
+}
+
 
 .dialog-content {
   height: auto;
@@ -230,17 +323,3 @@ div.prompt-panel {
     padding-right: 8px; 
     padding-bottom: 8px;
 }
-
-/* Debugging styles for report area
-#reportArea {
-	border: solid 3px green;
-}
-
-#reportPageOutline {
-	border: solid 3px red;
-}
-
-#reportContent {
-	border: solid 3px yellow;
-}
- */
