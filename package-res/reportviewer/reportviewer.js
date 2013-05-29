@@ -6,28 +6,47 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
       return;
     }
 
-    var v = {
+    var v = logged({
       prompt: reportPrompt,
-
+      
       load: function() {
         dojo.require('pentaho.common.Messages');
         pentaho.common.Messages.addUrlBundle('reportviewer', CONTEXT_PATH+'i18n?plugin=reporting&name=reportviewer/messages/messages');
         this.view.localize();
-
+        
         this.createRequiredHooks();
-
+        
         this.view.updatePageBackground();
-
+        
+        // Prevent blinking text cursors
+        // This only needs to be done once.
+        // Moreover, setting these properties causes browser re-layout (because of setting the style?),
+        // so the sooner the better.
+        function noUserSelect(g) {
+          g.setAttribute("style", "-webkit-touch-callout: none; -webkit-user-select: none; -khtml-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;");
+          // IE 9 / 8
+          if (typeof g.onselectstart !== 'undefined') {
+            g.setAttribute('unselectable', 'on');
+            g.onselectstart = function() { return false; };
+          }
+        }
+        
+        noUserSelect(dojo.byId('reportArea'));
+        noUserSelect(dojo.byId('reportPageOutline'));
+        noUserSelect(dojo.byId('reportContent'));
+        
+        // ------------
+        
         dojo.connect(dijit.byId('toolbar-parameterToggle'), "onClick", this, function() {
           this.view.togglePromptPanel();
         }.bind(this));
 
-        this.view.resize();
-        
         var boundOnReportContentLoaded = this._onReportContentLoaded.bind(this);
         
         // Schedule the resize after the document has been rendered and CSS applied
-        var onFrameLoaded = function() { setTimeout(boundOnReportContentLoaded); };
+        var onFrameLoaded = logged('onFrameLoaded', function() {
+          setTimeout(boundOnReportContentLoaded);
+        });
         
         if(dojo.isIE){
           // When a file is downloaded, the "complete" readyState does not occur: "loading", "interactive", and stops. 
@@ -38,33 +57,38 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
           dojo.connect(dojo.byId('reportContent'), "load", onFrameLoaded);
         }
         
-        this.prompt.ready       = this.promptReady.bind(this);
+        this.prompt.ready       = this.view.promptReady.bind(this.view);
         this.prompt.submit      = this.submitReport.bind(this);
         this.prompt.submitStart = this.submitReportStart.bind(this);
-
         
-        // The following is *not* consusing :-/
+        $('body')
+          .addClass(_isTopReportViewer ? 'topViewer leafViewer' : 'leafViewer')
+          .addClass(inMobile ? 'mobile' : 'nonMobile');
+        
+        logger && $('body').addClass('debug');
+        
+        // The following is *not* confusing at all :-/
         
         // Default implementation of this.prompt.initPromptPanel
         // calls this.prompt.panel.init();
         var decorated = this.prompt.initPromptPanel.bind(this.prompt);
 
-        this.prompt.initPromptPanel = function() {
+        this.prompt.initPromptPanel = logged('prompt.initPromptPanel', function() {
           // Decorate the original init to first initialize our view then the panel
           var panel = this.prompt.panel;
           var init  = panel.init;
 
           panel.init = function() {
-            this.view.init(init, this.prompt.panel);
+            this.view.initPrompt(init, this.prompt.panel);
           }.bind(this);
 
           decorated();
-        }.bind(this);
+        }.bind(this));
 
         this.prompt.createPromptPanel();
       },
 
-      view: {
+      view: logged({
         /**
          * Localize the Report Viewer.
          */
@@ -78,15 +102,12 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
          * iframe to make sure the translucent styling has some contrast.
          */
         updatePageBackground: function() {
-          /**
-           * If we're not in PUC or we're in an iframe
-           */
-          var mobile = this.isPentahoMobileEnv();
+          // If we're not in PUC or we're in an iframe
           var inPuc  = window.top.mantle_initialized;
           var inIFrame = top !== self;
           
           // if we are not in PUC
-          if(!inSchedulerDialog && !mobile && (!inPuc || inIFrame)) {
+          if(!inSchedulerDialog && !inMobile && (!inPuc || inIFrame)) {
             dojo.addClass(document.body, 'pentaho-page-background');
           }
         },
@@ -96,28 +117,21 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
         },
         
         _showReportContent: function(visible, preserveSource) {
-          var area = $('#reportArea');
+          // Force not to show a blank iframe
+          var hasContent = this._hasReportContent();
+          if(!hasContent) { visible = false; }
           
-          var content = $('#reportContent');
-          if (!visible) {
-            if(!preserveSource && this._hasReportContent()) { // Don't touch "src" of a already blank iframe, or onloads occur... 
-              content.attr("src", 'about:blank');
+          if(this._isReportContentVisible() !== !!visible) {
+            
+            // Don't touch "src" of an already blank iframe, or onload occurs needlessly...
+            if (!visible && !preserveSource && hasContent) {
+              logger && logger.log("Will clear content iframe.src");
+              
+              $('#reportContent').attr("src", 'about:blank');
+              this._updatedIFrameSrc = true;
             }
             
-            // PRD-4271 Don't show white box rectangle...
-            // PRD-4018, PRD-4034 FF & IE8 does not resize properly when iframe is hidden
-            // So we hide it placing the iframe off-page
-            // Also, cannot hide (vibility/display) a parent of the iframe where a pdf is to be shown
-            // otherwise loading fails in IE.
-            area.css({
-                 position: 'absolute',
-                 left:   -100000,
-                 top:    -100000
-              });
-          } else {
-            // Remove the "visibility:hidden" placed in the HTML
-            // to avoid flicker in first time.
-            area.css({position: 'static'}).css({visibility: 'inherit'});
+            $('body')[visible ? 'removeClass' : 'addClass']('contentHidden');
           }
         },
         
@@ -144,63 +158,131 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
           var src = iframe.src;
           return src !== '' && src !== 'about:blank';
         },
-
-        init: function(init, promptPanel) {
+        
+        _isReportContentVisible: function() {
+          return !$('body').hasClass('contentHidden');
+        },
+        
+        // Called on page load and every time the prompt panel is refreshed
+        //  PromptingComponent.postChange -> 
+        //  PromptPanel.parameterChanged ->
+        //             .refreshPrompt -> 
+        //             .getParameterDefinition ->
+        //             .refresh ->
+        //             .init ->
+        initPrompt: function(basePanelInit, promptPanel) {
           if (!promptPanel.paramDefn.showParameterUI()) {
-            // Hide the toolbar elements
-            dojo.addClass('toolbar-parameter-separator', 'hidden');
-            dojo.addClass('toolbar-parameterToggle', 'hidden');
+            this._hideToolbarPromptControls();
           }
-
-          this._layoutInited = false;
           
-          // May call submit, in which case submitReport is called without _initLayout...
-          init.call(promptPanel);
+          // The following call is important for clearing
+          // the report content when autoSubmit=false and
+          // the user has changed a value (prompt.mode === 'USERINPUT').
+          if(!this._calcReportContentVisibility(promptPanel)) {
+            this._showReportContent(false);
+          }
+          
+          // NOTE: `basePanelInit` may call submit, in which case submitReport 
+          // is called without _initLayout having been called...
+          // (depends on whether there's a submit button or not).
+          // Because of that, `submitReport` calls _initLayout also, 
+          // to make sure it has ran at least once.
+          // Reset layout inited flag.
+          // Note also that initLayout cannot be executed before init.
+          this._layoutInited = false;
+          basePanelInit.call(promptPanel);
           this._initLayout(promptPanel);
         },
 
+        _hideToolbarPromptControls: function() {
+          // Hide the toolbar elements
+          // When inMobile, toolbarlinner2 has another structure. See report.html.
+          if(!inMobile) { dojo.addClass('toolbar-parameter-separator', 'hidden'); }
+          
+          // dijit modifies the HTML structure.
+          // At least in mobile, the button gets wrapped by a frame, 
+          // that needs to be hidden.
+          var PARAM_TOGGLE = 'toolbar-parameterToggle';
+          var elem = dojo.byId(PARAM_TOGGLE);
+          while(elem) {
+            if(elem.getAttribute('widgetid') === PARAM_TOGGLE) {
+              dojo.addClass(elem, 'hidden');
+              break;
+            }
+            elem = elem.parentNode;
+          }
+        },
+                
+        // Called by PromptPanel#postExecution (soon after initPrompt)
+        promptReady: function(promptPanel) {
+          if (inSchedulerDialog) {
+            // If we are rendering parameters for the "New Schedule" dialog,
+            // don't show the report or the submit panel, or the pages toolbar
+            this.showPromptPanel(true);
+
+            dijit.byId('glassPane').hide();
+            dojo.addClass('reportContent', 'hidden');
+            dojo.addClass(dojo.query('.submit-panel')[0], 'hidden');
+            dojo.addClass('toolbarlinner2', 'hidden');
+
+            dojo.removeClass('promptPanel', 'pentaho-rounded-panel-bottom-lr');
+            dojo.removeClass('reportControlPanel', 'pentaho-shadow');
+            dojo.removeClass('reportControlPanel', 'pentaho-rounded-panel-bottom-lr');
+
+            if (typeof window.parameterValidityCallback !== 'undefined') {
+              var isValid = !promptPanel.paramDefn.promptNeeded;
+              window.parameterValidityCallback(isValid);
+            }
+          }
+        },
+                
         /**
          * Initializes the report viewer's layout based on the loaded parameter definition.
          *
          * @param promptPanel A prompt panel whose settings should be used to configure the report viewer
          */
         _initLayout: function(promptPanel) {
-          if(this._layoutInited) { return; }
+          if(this._layoutInited) { return; } // reset on every navigation (see #init)
           
-          // Don't mess with the parameters if we're "navigating".
-          // If the user has explicitly hidden the UI, 
-          // and is going through several pages, 
-          // we should not keep popping the UI again on each page init...
-          // PRD-4001, PRD-4102
-          var navigating  = !!this._initedOnce; //this._hasReportContent();
+          // Is it the first time, or is the parameter UI
+          // being refreshed due to user interaction (which causes "navigation")?
+          var navigating  = !!this._initedOnce;
           this._initedOnce = true;
           
           var showParamUI = promptPanel.paramDefn.showParameterUI();
-          if(showParamUI && !navigating && this.isPentahoMobileEnv() && 
-             !promptPanel.paramDefn.promptNeeded && promptPanel.paramDefn.allowAutoSubmit()) {
-            // Don't show parameter panel by default unless prompt needed?
-            showParamUI = false;
-          }
           
-          if(!navigating || !showParamUI) {
-            this.showPromptPanel(showParamUI);
-          }
-          
-          this.updateReportContentVisibility(promptPanel);
           this.updatePageControl(promptPanel);
-
+          
           // Hide the toolbar, 'toppanel',  when it would be empty and 
           // un-style the report so it's the only visible element 
           // when both the pagination controls and the parameter UI are hidden.
           var isToolbarEmpty = !promptPanel.paramDefn.paginate && !showParamUI;
           dojo[isToolbarEmpty ? 'addClass' : 'removeClass']('toppanel', 'hidden');
           
+          // Don't mess with the parameters if we're "navigating".
+          // If the user has explicitly hidden the UI, 
+          // and is going through several pages, 
+          // we should not keep popping the UI again on each page init...
+          // PRD-4001, PRD-4102
+          var showOrHide;
+          // If not available, always respect the definition and hide
+          if(!showParamUI) {
+            showOrHide = false;
+          } else if(!navigating) {
+            // Shown or hidden by default?
+            // Don't show parameter panel by default unless prompt needed
+            showOrHide = (!inMobile && _isTopReportViewer)  ||
+                         promptPanel.paramDefn.promptNeeded ||
+                         !promptPanel.paramDefn.allowAutoSubmit();
+          }
+          if(showOrHide != null) { this.showPromptPanel(showOrHide); }
+          
           this._layoutInited = true;
         },
 
         show: function() {
           // Cleans up an issue where sometimes on show the iframe is offset
-          this.resizeIFrame();
+          this.resize();
         },
 
         updatePageControl: function(promptPanel) {
@@ -252,11 +334,7 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
           return $('body').hasClass('styled');
         },
 
-        isPentahoMobileEnv: function() {
-          return (typeof window.top.PentahoMobile !== 'undefined');
-        },
-
-        updatePageStyling: function(styled) {
+        setPageStyled: function(styled) {
           // normalize to boolean
           styled = !!styled;
           
@@ -266,82 +344,63 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
             this._pageStyledOnce = true;
             
             var setClass = styled ? 'addClass' : 'removeClass';
-            
-            $('body')[setClass]('styled');
+            $('body')
+            [setClass]('styled')
+            [styled ? 'removeClass' : 'addClass']('nonStyled');
             
             if(!styled) {
-              $('#reportArea').css({width: 'auto', height: 'auto'});
-              $('#reportPageOutline').css({width: 'auto', height: 'auto'});
-              $('#reportContent').css({width: window.innerWidth});
+              // Clear style values set in JS to let class-imposed styles take effect
+              $('#reportArea'   ).css({height: ""});
+              $('#reportContent').css({height: "", width:  ""});
             }
             
             $('#reportPageOutline')[setClass]('pentaho-rounded-panel2-shadowed pentaho-padding-lg pentaho-background');
-            
-            this.resize();
           }
         },
-
-        resize: function() {
-          // NOTE: reportContent/reportArea are not always correctly positioned: 
-          // they are placed off-page, when "hidden", 
-          // to avoid flicker and still allow layout and measure poling.
-          //
-          // That's why the dummy "reportAreaTop" is used to find the desired target's height (mb.h).
-          // TODO: possibly, using the box-model & visibility we could determine the y position
-          // from the "toppanel" element; couldn't get it to work; 
-          // probably wasn't taking all the needed margins/paddings into account.
-          // 
-          // Target extends to all available width.
-          var c  = dojo.coords(dojo.byId('reportAreaTop'));
+        
+        onViewportResize: function() {
+          this.resizeContentArea();
+        },
+        
+        // called by #resize and by window.resize -> onViewportResize
+        resizeContentArea: function(callBefore) {
           var vp = dojo.dnd.getViewport();
-          var mb = {h: vp.h - c.y, w: vp.w};
+          var tp = dojo.marginBox('toppanel');
           
-          var target;
-          if(this.isPageStyled()) { // Mobile is *never* styled
-            target = 'reportArea';
-          } else {
-            // When page is !styled, "reportArea" has height auto.
-            // The iframe is sized with the viewport height, 
-            // causing the scroll-bar to be provided by iframe's content itself.
-            target = 'reportContent';
-                        
-            // NOTE: care had to be taken to remove the reportArea's paddings/margins in CSS/stylesheet
-            // otherwise, the height of reportContent would need to take these into account.
-            // Also, as the height would exceed the window height, then had problems
-            // in iPad/iOS6/Safari due to show scroll/hide scroll instability, causing repeated
-            // resize events to occur.
-            
-            // NOTE2: There's still a problem (at least) in iPad/iOS6/Safari, and (at least) with HTML, 
-            // where showing the prompts (when initially hidden), and even though the "resize" gets called,
-            // the height is not correctly changed, and 
-            // a part of the report gets cut-off at the bottom.
+          var mb = {h: vp.h - tp.h - 2};
+          
+          logger && logger.log("viewport=(" + vp.w + ","  + vp.h + ") " + " toppanel=(" + tp.w + ","  + tp.h + ") ");
+          
+          // Fill all available space
+          dojo.marginBox('reportArea', mb);
+          
+          if(inMobile && this._isHtmlReport) {
+            this._resizeMobileHtmlReportHandlesScrolling(mb);
           }
-          
-          dojo.marginBox(target, mb);
-          
-          if(this.isPentahoMobileEnv()) {
-            $('#reportControlPanel').css('width', vp.w);
+        },
+        
+        // In mobile, every report is shown unstyled.
+        // Mobile HTML reports handle scrolling itself.
+        // iOS Safari does not respect the iframe's style.overflow or the scrollable attribute
+        // and desperate measures had to be taken.
+        _resizeMobileHtmlReportHandlesScrolling: function(mb) {
+          // TODO: HACK: into the report content's HTML so that it handles scrolling correctly in Safari/iOS
+          var iframe = $('#reportContent');
+          var iframeDoc = iframe.contents();
+          var generator = iframeDoc.find('head>meta[name="generator"]').attr('content') || "";
+          var isReport = generator.indexOf("Reporting") >= 0;
+          if(isReport) {
+            iframe.attr('scrolling', 'no');
             
-            // HACK into the report content's HTML so that it handles scrolling directly
-            if(this._isHtmlReport) {
-              var iframe   = dojo.byId('reportContent');
-              var frameDoc = iframe.contentWindow.document;
-              var reportTable = frameDoc.body.childNodes[1];
-              if (reportTable) {
-                iframe.setAttribute('scrolling', 'no');
-                
-                // TODO: HACK: Avoid a slightly clipped footer (heuristic value)
-                var wh = mb.h - 15;
-                
-                // Find wrapper element
-                var reportTableDiv = frameDoc.getElementById('reportTableDiv');
-                if (reportTableDiv != null) {
-                  dojo.style(reportTableDiv, 'height', wh + 'px');
-                  dojo.style(reportTableDiv, 'overflow', 'auto');
-                } else {
-                  $(reportTable).wrap('<div id="reportTableDiv" style="height:' + wh + 'px; overflow:auto;"/>');
-                }
-              }
+            // TODO: HACK: Avoid a slightly clipped footer
+            var wh = mb.h - 15;
+            var scrollWrapper = iframeDoc.find('#reportTableDiv');
+            if(scrollWrapper.length) {
+              scrollWrapper.css({height: wh, overflow: 'auto'});
+            } else {
+              iframeDoc
+              .find("body>table")
+              .wrap('<div id="reportTableDiv" style="height:' + wh + 'px; overflow:auto;"/>');
             }
           }
         },
@@ -356,42 +415,58 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
          *   <li>the viewport size.</li>
          * </ul>
          *  
-         * Finally, the {@link #resize} method is called,
+         * Finally, the {@link #resizeContentArea} method is called,
          * that adjusts the report area div, 
          * responsible by showing up a scrollbar, when necessary.  
-         */ 
-        resizeIFrame: function() {
-          if (this._hasReportContent()) {
-            // PRD-4000 Hide iframe before resize
-            this._showReportContent(false, /*preserveSource*/true);
-            
-            if (this.isPageStyled()) {
-              var t = $('#reportContent');
-              
-              // Reset the iframe size before polling its contents so the size is correct.
-              // NOTE: Setting to 0 prevented IE9-Quirks from detecting the correct sizes.
-              t.width(10).height(10);
-              
-              // It's HTML content, so the following is valid
-              var d = $(t[0].contentWindow.document);
-              var w = d.width();
-              var h = d.height();
-              
-              // TODO: HACK: IE8 requires some additional space to not show scrollbars inside
-              t.width(w+20).height(h+20);
-              $('#reportPageOutline').width(t.outerWidth());
-              
-              //else if(!isPageStyled()) -> IFrame Height and Width are controlled in #resize, below
-            }
-            
-            this.resize();
-            
-            // PRD-4000 Show iframe after resize
-            this._showReportContent(true);
-          }
-        }
-      }, // end view
+         */
+        resize: function() {
+          if (!this._hasReportContent()) { return; }
+          
+          // PRD-4000 Hide iframe before resize
+          // If not visible, let be so.
+          // If visible, hide it during the operation and show it again at the end.
+          var isVisible = this._isReportContentVisible();
+          if(isVisible) { this._showReportContent(false, /*preserveSource*/true); }
+          
+          if(this.isPageStyled()) { this._pollReportContentSize(); }
+          
+          this.resizeContentArea();
 
+          // PRD-4000 Show iframe after resize
+          if(isVisible) { this._showReportContent(true); }
+        },
+        
+        _pollReportContentSize: function() {
+          var POLL_SIZE = 10;
+          var t = $('#reportContent');
+          
+          // Set the iframe size to minimum before POLLING its contents, to not affect the polled values. 
+          // NOTE: Setting to 0 prevented IE9-Quirks from detecting the correct sizes.
+          // Setting here, and polling next, causes ONE resize on the iframe.
+          t.css({width: POLL_SIZE, height: POLL_SIZE});
+          
+          // It's surely HTML content, so the following is valid
+          var d = t.contents();
+          var w = d.width();
+          var h = d.height();
+          
+          logger && logger.log("Styled page - polled dimensions = (" + w + ", " + h + ")");
+          
+          // In case the styled report content is too small, assume 2/3 of the width.
+          // This may happen when there are no results.
+          if(w <= POLL_SIZE) {
+            // Most certainly this indicates that the loaded report content
+            // does not have a fixed width, and, instead, adapts to the imposed size (like width: 100%).
+          
+            var vp = dojo.dnd.getViewport();
+            w = Math.round(2 * vp.w / 3);
+            logger && logger.log("Width is too small - assuming a default width of " + w);
+          }
+           
+          t.css({width: w, height: h});
+        }
+      }), // end view
+      
       createRequiredHooks: function(promptPanel) {
         // [PIR-543] - Allow new/refreshed reports to re-attach or override instance functions in the top window object
         // Top window functions may become orphaned due to content linking refresh or when a report tab in PUC is closed
@@ -444,32 +519,12 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
 
       /**
        * Hide the Report Viewer toolbar.
+       * TODO: In what world is this a "hide"? empty()?
+       * Can't find where this is called from!
        */
       hide: function() {
         $('#toppanel').empty();
         this.view.resize();
-      },
-
-      promptReady: function(promptPanel) {
-        if (inSchedulerDialog) {
-          // If we are rendering parameters for the "New Schedule" dialog,
-          // don't show the report or the submit panel, or the pages toolbar
-          this.view.showPromptPanel(true);
-
-          dijit.byId('glassPane').hide();
-          dojo.addClass('reportContent', 'hidden');
-          dojo.addClass(dojo.query('.submit-panel')[0], 'hidden');
-          dojo.addClass('toolbarlinner2', 'hidden');
-
-          dojo.removeClass('promptPanel', 'pentaho-rounded-panel-bottom-lr');
-          dojo.removeClass('reportControlPanel', 'pentaho-shadow');
-          dojo.removeClass('reportControlPanel', 'pentaho-rounded-panel-bottom-lr');
-
-          if (typeof window.parameterValidityCallback !== 'undefined') {
-            var isValid = !promptPanel.paramDefn.promptNeeded;
-            window.parameterValidityCallback(isValid);
-          }
-        }
       },
 
       submitReportStart: function() {
@@ -487,20 +542,19 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
         // and fetchParameterDefinition has not been called yet.
         this.prompt.clicking = true;
       },
-
+      
+      // Called by SubmitPromptComponent#expression (the submit button's click)
       submitReport: function(promptPanel, keyArgs) {
         var isInit = keyArgs && keyArgs.isInit;
         if(!isInit) {
           if(this.prompt.ignoreNextClickSubmit) {
             delete this.prompt.ignoreNextClickSubmit;
+            logger && logger.log("Ignored submit click");
             return;
           }
 
           this.prompt.mode = 'MANUAL';
         }
-        
-        // Make sure that layout is initialized
-        this.view._initLayout(promptPanel);
         
         try {
           // If we are rendering parameters for the "New Schedule" dialog,
@@ -509,11 +563,17 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
             this._submitReportEnded(promptPanel);
             return;
           }
-            
+          
+          // Make sure that layout is initialized
+          this.view._initLayout(promptPanel);
+          
           // Don't do anything if we need to prompt
           var isValid = !promptPanel.paramDefn.promptNeeded;
           if (!isValid) {
+            logger && logger.log("Prompt is needed. Will clear htmlObject.src");
+            
             $('#' + this.htmlObject).attr('src', 'about:blank'); // TODO: why htmlObject? Why not this._showReportContent(false)?
+            
             this._submitReportEnded(promptPanel);
             return;
           }
@@ -522,9 +582,11 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
         
         } catch(ex) {
           this._submitReportEnded(promptPanel);
+          throw ex;
         }
       },
       
+      _updatedIFrameSrc: false,
       _updateReportTimeout: -1,
       
       _updateReportContent: function(promptPanel, keyArgs) {
@@ -535,43 +597,54 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
         dijit.byId('glassPane').show();
         
         // PRD-3962 - remove glass pane after 5 seconds in case iframe onload/onreadystatechange was not detected
-        me._updateReportTimeout = setTimeout(function() {
+        me._updateReportTimeout = setTimeout(logged('updateReportTimeout', function() {
           me._submitReportEnded(promptPanel, /*isTimeout*/true);
-        }, 5000);
+        }), 5000);
+        
+        // -----------
         
         var options = me._buildReportContentOptions(promptPanel);
         var url = me._buildReportContentUrl(options);
-        
-        // If the iframe isn't hidden here,
-        // when it loads,
-        // the user may see a bit of the new document
-        // but in a different page format..
-        // So, it's just better to hide when "styled" will change.
-        var isHtml = options['output-target'].indexOf('html') != -1;
+        var outputFormat = options['output-target'];
+        var isHtml = outputFormat.indexOf('html') != -1;
         var isProportionalWidth = isHtml && options['htmlProportionalWidth'] == "true";
         var isReportAlone = dojo.hasClass('toppanel', 'hidden');
-        var styled = !isReportAlone && isHtml && !isProportionalWidth && !this.view.isPentahoMobileEnv();
         
+        var styled = _isTopReportViewer && !isReportAlone && isHtml && !isProportionalWidth && !inMobile;
+        
+        // If the new output format causes a pageStyle change, 
+        // and we don't hide the iframe "now",
+        // Then, when the iframe loads, 
+        // the user may temporarily see the new document
+        // with the previous page style.
         if(me.view.isPageStyled() !== styled) {
+          logger && 
+          logger.log("Page style will change to " + (styled ? "" : "non-") + 
+                     "styled. Will hide report before iframe update.");
           me.view._showReportContent(false, /*preserveSource*/true);
         }
         
+        logger && logger.log("Will set iframe url to " + url.substr(0, 50) + "... ");
+        
         $('#reportContent').attr("src", url);
+        this._updatedIFrameSrc = true;
         
         // Continue when iframe is loaded (called by #_onReportContentLoaded)
-        me._submitLoadCallback = function() {
+        me._submitLoadCallback = logged('_submitLoadCallback', function() {
           me._isHtmlReport = me.view._isHtmlReport = isHtml;
+          me._outputFormat = outputFormat;
           
           var visible = me.view._calcReportContentVisibility(promptPanel);
           if(visible) {
-            me.view.updatePageStyling(styled);
-            me.view.resizeIFrame();
+            // A child viewer forces changing to non-styled 
+            me.view.setPageStyled(styled && !this._isParentViewer);
+            me.view.resize();
           }
           
           me.view._showReportContent(visible);
           
           me._submitReportEnded(promptPanel);
-        };
+        });
       },
       
       _submitReportEnded: function(promptPanel, isTimeout) {
@@ -587,7 +660,7 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
           
           if(isTimeout) {
             // This happens, specifically, when the user selects a downloadable output format.
-            // #_onReportContentLoaded callback might not been called.
+            // #_onReportContentLoaded callback might not have been called.
             this.view._showReportContent(false, /*preserveSource*/true);
           }
           
@@ -598,13 +671,65 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
       },
       
       _onReportContentLoaded: function() {
-        var callback = this._submitLoadCallback;
-        if(callback && this.view._hasReportContent()) {
-          delete this._submitLoadCallback;
-          callback.call(this);
+        var hadChildViewer = this._isParentViewer;
+        
+        this._detectLoadedContent();
+        
+        var view = this.view;
+        if(!this._updatedIFrameSrc) {
+          if(!view._hasReportContent()) {
+            logger && logger.log("Empty IFrame loaded.");
+          } else {
+            // A link from within the loaded report
+            // caused loading something else.
+            // It may be a child report viewer.
+            if(this._isParentViewer && !hadChildViewer) {
+              // A child viewer forces changing to non-styled 
+              view.setPageStyled(false);
+              view.resize();
+            } else {
+              logger && logger.log("Unrequested IFrame load.");
+            }
+          }
         } else {
-          this.view.resizeIFrame();
+          this._updatedIFrameSrc = false;
+          var loadCallback = this._submitLoadCallback;
+          if(loadCallback && view._hasReportContent()) {
+            delete this._submitLoadCallback;
+            loadCallback.call(this);
+          } else {
+            view.resize();
+          }
         }
+      },
+      
+      _detectLoadedContent: function() {
+        // TODO: Should include HTML test here as well?
+        var isParentViewer = false;
+        try {
+          var contentWin = dojo.byId('reportContent').contentWindow;
+          if(contentWin) {
+            if(contentWin._isReportViewer) {
+              isParentViewer = true;
+            }
+            else {
+              // For testing in IPads or other clients, 
+              // remove hardcoded localhost link urls.
+              $(contentWin.document)
+              .find('body area').each(function() {
+                this.href = this.href.replace("http://localhost:8080", "");
+              });
+            }
+          }
+        } catch(e) {
+          // Permission denied
+          logger && logger.log("ERROR" + String(e));
+        }
+        
+        this._isParentViewer = isParentViewer;
+        $('body')
+          [ isParentViewer ? 'addClass' : 'removeClass']('parentViewer')
+          [!isParentViewer ? 'addClass' : 'removeClass']('leafViewer'  );
       },
       
       _buildReportContentOptions: function(promptPanel) {
@@ -649,7 +774,7 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
 
         return url + params.join("&");
       }
-    }
+    }); // end of: var v = { 
 
     reportPrompt.load = v.load.bind(v);
     return v;
