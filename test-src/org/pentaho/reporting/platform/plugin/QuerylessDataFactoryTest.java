@@ -52,7 +52,7 @@ public class QuerylessDataFactoryTest extends TestCase implements TableModelList
     final String queryString = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><mql><domain_id>steel-wheels</domain_id><model_id>BV_ORDERS</model_id><options><disable_distinct>false</disable_distinct></options><selections><selection><view>CAT_PRODUCTS</view><column>BC_PRODUCTS_PRODUCTLINE</column><aggregation>NONE</aggregation></selection><selection><view>CAT_PRODUCTS</view><column>BC_PRODUCTS_PRODUCTNAME</column><aggregation>NONE</aggregation></selection><selection><view>CAT_PORDERS</view><column>BC_ORDERS_ORDERDATE</column><aggregation>NONE</aggregation></selection><selection><view>CAT_ORDERS</view><column>BC_ORDERDETAILS_QUANTITYORDERED</column><aggregation>SUM</aggregation></selection><selection><view>CAT_ORDERS</view><column>BC_ORDERDETAILS_TOTAL</column><aggregation>SUM</aggregation></selection></selections><constraints/><orders/></mql>";
     final QuerylessDataFactory qdf = new QuerylessDataFactory();
     qdf.setDomainId("steel-wheels");
-    qdf.setQuery(queryName, queryString);
+    qdf.setQuery(queryName, queryString, null, null);
     qdf.setXmiFile("resource/solution/test/metadata.xmi");
     qdf.initialize(new DesignTimeDataFactoryContext());
     qdf.setConnectionProvider(new PmdConnectionProvider());
