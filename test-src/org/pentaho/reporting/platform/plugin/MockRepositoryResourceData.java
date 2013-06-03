@@ -42,46 +42,51 @@ import org.pentaho.platform.api.repository2.unified.UnifiedRepositoryException;
 import org.pentaho.platform.api.repository2.unified.data.simple.SimpleRepositoryFileData;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
-import org.pentaho.reporting.libraries.resourceloader.ResourceData;
 import org.pentaho.reporting.libraries.resourceloader.ResourceKey;
 import org.pentaho.reporting.libraries.resourceloader.ResourceLoadingException;
 import org.pentaho.reporting.libraries.resourceloader.ResourceManager;
 
 /**
  * This class is implemented to support loading solution files from the pentaho repository into JFreeReport
- * 
+ *
  * @author Will Gorman/Michael D'Amour
  */
-public class MockRepositoryResourceData extends RepositoryResourceData {
+public class MockRepositoryResourceData extends RepositoryResourceData
+{
 
   /**
    * constructor which takes a resource key for data loading specifics
-   * 
-   * @param key
-   *          resource key
+   *
+   * @param key resource key
    */
-  public MockRepositoryResourceData(final ResourceKey key) {
+  public MockRepositoryResourceData(final ResourceKey key)
+  {
     super(key);
   }
 
   /**
    * gets a resource stream from the runtime context.
-   * 
-   * @param caller
-   *          resource manager
+   *
+   * @param caller resource manager
    * @return input stream
    */
-  public InputStream getResourceAsStream(ResourceManager caller) throws ResourceLoadingException {
-    try {
-      IUnifiedRepository unifiedRepository = PentahoSystem.get(IUnifiedRepository.class);
+  public InputStream getResourceAsStream(ResourceManager caller) throws ResourceLoadingException
+  {
+    IUnifiedRepository unifiedRepository = PentahoSystem.get(IUnifiedRepository.class, PentahoSessionHolder.getSession());
+    try
+    {
       SimpleRepositoryFileData fileData = unifiedRepository.getDataForRead(getKey().getIdentifierAsString(), SimpleRepositoryFileData.class);
       return fileData.getStream();
-    } catch (UnifiedRepositoryException ex) {
-      try {
-        IUnifiedRepository unifiedRepository = PentahoSystem.get(IUnifiedRepository.class);
+    }
+    catch (UnifiedRepositoryException ex)
+    {
+      try
+      {
         SimpleRepositoryFileData fileData = unifiedRepository.getDataForRead("." + getKey().getIdentifierAsString(), SimpleRepositoryFileData.class);
         return fileData.getStream();
-      } catch (UnifiedRepositoryException ex2) {
+      }
+      catch (UnifiedRepositoryException ex2)
+      {
         // might be due to access denial
         throw new ResourceLoadingException(ex.getLocalizedMessage(), ex);
       }
@@ -90,23 +95,28 @@ public class MockRepositoryResourceData extends RepositoryResourceData {
 
   /**
    * return the version number
-   * 
-   * @param caller
-   *          resource manager
-   * 
+   *
+   * @param caller resource manager
    * @return version
    */
-  public long getVersion(ResourceManager caller) throws ResourceLoadingException {
+  public long getVersion(ResourceManager caller) throws ResourceLoadingException
+  {
     IUnifiedRepository unifiedRepository = PentahoSystem.get(IUnifiedRepository.class, PentahoSessionHolder.getSession());
-    try {
+    try
+    {
       RepositoryFile repositoryFile = unifiedRepository.getFileById(getKey().getIdentifier().toString());
       // if we got a FileNotFoundException on getResourceInputStream then we will get a null file; avoid NPE
-      if (repositoryFile != null) {
+      if (repositoryFile != null)
+      {
         return repositoryFile.getLastModifiedDate().getTime();
-      } else {
+      }
+      else
+      {
         return -1;
       }
-    } catch (UnifiedRepositoryException ex) {
+    }
+    catch (UnifiedRepositoryException ex)
+    {
       return -1;
     }
   }
