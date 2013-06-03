@@ -23,6 +23,8 @@ import org.pentaho.reporting.engine.classic.core.metadata.DefaultAttributeCore;
 import org.pentaho.reporting.engine.classic.core.metadata.DefaultAttributeMetaData;
 import org.pentaho.reporting.engine.classic.core.modules.parser.data.sql.ConnectionReadHandlerFactory;
 import org.pentaho.reporting.engine.classic.core.modules.parser.data.sql.SQLDataFactoryModule;
+import org.pentaho.reporting.engine.classic.extensions.datasources.kettle.KettleDataFactoryModule;
+import org.pentaho.reporting.engine.classic.extensions.datasources.kettle.parser.KettleTransformationProducerReadHandlerFactory;
 import org.pentaho.reporting.engine.classic.extensions.datasources.mondrian.MondrianDataFactoryModule;
 import org.pentaho.reporting.engine.classic.extensions.datasources.mondrian.parser.CubeFileProviderReadHandlerFactory;
 import org.pentaho.reporting.engine.classic.extensions.datasources.mondrian.parser.DataSourceProviderReadHandlerFactory;
@@ -35,6 +37,8 @@ import org.pentaho.reporting.libraries.base.boot.ModuleInitializeException;
 import org.pentaho.reporting.libraries.base.boot.SubSystem;
 import org.pentaho.reporting.platform.plugin.connection.PentahoCubeFileProviderReadHandler;
 import org.pentaho.reporting.platform.plugin.connection.PentahoJndiConnectionReadHandler;
+import org.pentaho.reporting.platform.plugin.connection.PentahoKettleTransFromFileProducer;
+import org.pentaho.reporting.platform.plugin.connection.PentahoKettleTransFromFileReadHandler;
 import org.pentaho.reporting.platform.plugin.connection.PentahoMondrianDataSourceProviderReadHandler;
 import org.pentaho.reporting.platform.plugin.connection.PentahoOlap4JJndiConnectionReadHandler;
 import org.pentaho.reporting.platform.plugin.connection.PentahoPmdConfigReadHandler;
@@ -61,7 +65,8 @@ public class PentahoPlatformModule extends AbstractModule
         (MondrianDataFactoryModule.NAMESPACE, "jndi", PentahoMondrianDataSourceProviderReadHandler.class);
     OlapConnectionReadHandlerFactory.getInstance().setElementHandler
         (Olap4JDataFactoryModule.NAMESPACE, "jndi", PentahoOlap4JJndiConnectionReadHandler.class);
-
+    KettleTransformationProducerReadHandlerFactory.getInstance().setElementHandler
+        (KettleDataFactoryModule.NAMESPACE, "query-file", PentahoKettleTransFromFileReadHandler.class);
 
     final String bundleLocation = "";
     final String keyPrefix = "";
