@@ -39,6 +39,7 @@ import org.pentaho.reporting.platform.plugin.repository.TempDirectoryNameGenerat
 import org.pentaho.test.platform.engine.core.MicroPlatform;
 
 import junit.framework.TestCase;
+import org.springframework.security.userdetails.UserDetailsService;
 
 public class PageableHTMLTest extends TestCase
 {
@@ -54,6 +55,7 @@ public class PageableHTMLTest extends TestCase
     microPlatform.define(IPluginProvider.class, SystemPathXmlPluginProvider.class);
     microPlatform.define(IServiceManager.class, DefaultServiceManager.class, Scope.GLOBAL);
     microPlatform.define(PentahoNameGenerator.class, TempDirectoryNameGenerator.class, Scope.GLOBAL);
+    microPlatform.define(UserDetailsService.class, MockUserDetailsService.class);
     microPlatform.start();
     
     IPentahoSession session = new StandaloneSession();

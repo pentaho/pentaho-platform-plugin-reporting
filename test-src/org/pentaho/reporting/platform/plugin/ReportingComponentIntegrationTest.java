@@ -54,6 +54,7 @@ import org.pentaho.platform.util.web.SimpleUrlFactory;
 import org.pentaho.reporting.platform.plugin.repository.PentahoNameGenerator;
 import org.pentaho.reporting.platform.plugin.repository.TempDirectoryNameGenerator;
 import org.pentaho.test.platform.engine.core.MicroPlatform;
+import org.springframework.security.userdetails.UserDetailsService;
 
 /**
  * Integration tests for the ReportingComponent.
@@ -76,6 +77,7 @@ public class ReportingComponentIntegrationTest extends TestCase {
     microPlatform.define(IPluginProvider.class, SystemPathXmlPluginProvider.class);
     microPlatform.define(IServiceManager.class, DefaultServiceManager.class, IPentahoDefinableObjectFactory.Scope.GLOBAL);
     microPlatform.define(PentahoNameGenerator.class, TempDirectoryNameGenerator.class, IPentahoDefinableObjectFactory.Scope.GLOBAL);
+    microPlatform.define(UserDetailsService.class, MockUserDetailsService.class);
     microPlatform.start();
     
     IPentahoSession session = new StandaloneSession();

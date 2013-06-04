@@ -43,6 +43,7 @@ import org.pentaho.platform.repository2.unified.fs.FileSystemBackedUnifiedReposi
 import org.pentaho.reporting.platform.plugin.repository.PentahoNameGenerator;
 import org.pentaho.reporting.platform.plugin.repository.TempDirectoryNameGenerator;
 import org.pentaho.test.platform.engine.core.MicroPlatform;
+import org.springframework.security.userdetails.UserDetailsService;
 
 /**
  * Unit tests for the ReportingComponent.
@@ -64,6 +65,7 @@ public class ReportingActionTest extends TestCase {
     microPlatform.define(IServiceManager.class, DefaultServiceManager.class, Scope.GLOBAL);
     microPlatform.define(PentahoNameGenerator.class, TempDirectoryNameGenerator.class, Scope.GLOBAL);
     microPlatform.define(IUserRoleListService.class, MockUserRoleListService.class);
+    microPlatform.define(UserDetailsService.class, MockUserDetailsService.class);
     microPlatform.start();
     
     IPentahoSession session = new StandaloneSession();

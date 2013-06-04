@@ -64,6 +64,7 @@ import org.pentaho.reporting.platform.plugin.connection.PentahoPmdConfigReadHand
 import org.pentaho.reporting.platform.plugin.repository.PentahoNameGenerator;
 import org.pentaho.reporting.platform.plugin.repository.TempDirectoryNameGenerator;
 import org.pentaho.test.platform.engine.core.MicroPlatform;
+import org.springframework.security.userdetails.UserDetailsService;
 
 public class DataSourceConfigurationTest extends TestCase
 {
@@ -85,6 +86,7 @@ public class DataSourceConfigurationTest extends TestCase
     microPlatform.define(IServiceManager.class, DefaultServiceManager.class, IPentahoDefinableObjectFactory.Scope.GLOBAL);
     microPlatform.define(PentahoNameGenerator.class, TempDirectoryNameGenerator.class, IPentahoDefinableObjectFactory.Scope.GLOBAL);
     microPlatform.define(IUserRoleListService.class, MockUserRoleListService.class);
+    microPlatform.define(UserDetailsService.class, MockUserDetailsService.class);
     microPlatform.start();
 
     // micro-platform does not boot the engine ..
