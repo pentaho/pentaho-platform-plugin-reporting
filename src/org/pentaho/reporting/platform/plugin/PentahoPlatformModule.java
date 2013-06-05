@@ -77,6 +77,6 @@ public class PentahoPlatformModule extends AbstractModule
         ClassicEngineBoot.computeVersionId(3, 8, 0));
 
     final AttributeRegistry registry = ElementTypeRegistry.getInstance().getAttributeRegistry("master-report");
-    registry.setAttributeDescription(metaData);
+    registry.putAttributeDescription(metaData);
   }
 }
