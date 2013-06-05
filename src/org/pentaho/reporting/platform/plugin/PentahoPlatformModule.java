@@ -19,8 +19,10 @@ package org.pentaho.reporting.platform.plugin;
 
 import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
 import org.pentaho.reporting.engine.classic.core.metadata.AttributeMetaData;
+import org.pentaho.reporting.engine.classic.core.metadata.AttributeRegistry;
 import org.pentaho.reporting.engine.classic.core.metadata.DefaultAttributeCore;
 import org.pentaho.reporting.engine.classic.core.metadata.DefaultAttributeMetaData;
+import org.pentaho.reporting.engine.classic.core.metadata.ElementTypeRegistry;
 import org.pentaho.reporting.engine.classic.core.modules.parser.data.sql.ConnectionReadHandlerFactory;
 import org.pentaho.reporting.engine.classic.core.modules.parser.data.sql.SQLDataFactoryModule;
 import org.pentaho.reporting.engine.classic.extensions.datasources.kettle.KettleDataFactoryModule;
@@ -37,7 +39,6 @@ import org.pentaho.reporting.libraries.base.boot.ModuleInitializeException;
 import org.pentaho.reporting.libraries.base.boot.SubSystem;
 import org.pentaho.reporting.platform.plugin.connection.PentahoCubeFileProviderReadHandler;
 import org.pentaho.reporting.platform.plugin.connection.PentahoJndiConnectionReadHandler;
-import org.pentaho.reporting.platform.plugin.connection.PentahoKettleTransFromFileProducer;
 import org.pentaho.reporting.platform.plugin.connection.PentahoKettleTransFromFileReadHandler;
 import org.pentaho.reporting.platform.plugin.connection.PentahoMondrianDataSourceProviderReadHandler;
 import org.pentaho.reporting.platform.plugin.connection.PentahoOlap4JJndiConnectionReadHandler;
@@ -68,13 +69,14 @@ public class PentahoPlatformModule extends AbstractModule
     KettleTransformationProducerReadHandlerFactory.getInstance().setElementHandler
         (KettleDataFactoryModule.NAMESPACE, "query-file", PentahoKettleTransFromFileReadHandler.class);
 
-    final String bundleLocation = "";
-    final String keyPrefix = "";
-    DefaultAttributeMetaData metaData = new DefaultAttributeMetaData(PIR_NAMESPACE, "VERSION", bundleLocation,
+    final String bundleLocation = "org.pentaho.reporting.platform.plugin.metadata";
+    final String keyPrefix = "attribute.pir.";
+    final DefaultAttributeMetaData metaData = new DefaultAttributeMetaData(PIR_NAMESPACE, "VERSION", bundleLocation,
         keyPrefix, null, String.class, true, false, true, false, false, false, false,
         AttributeMetaData.VALUEROLE_VALUE, false, true, new DefaultAttributeCore(), false,
         ClassicEngineBoot.computeVersionId(3, 8, 0));
 
-    System.out.println("Booted");
+    final AttributeRegistry registry = ElementTypeRegistry.getInstance().getAttributeRegistry("master-report");
+    registry.setAttributeDescription(metaData);
   }
 }
