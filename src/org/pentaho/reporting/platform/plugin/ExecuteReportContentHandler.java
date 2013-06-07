@@ -110,6 +110,13 @@ public class ExecuteReportContentHandler
     reportDefinitionPath = reportDefinitionPath.replace("*", "");
     reportDefinitionPath = reportDefinitionPath.replace("=", "");
     reportDefinitionPath = reportDefinitionPath.replace("../", "");
+    reportDefinitionPath = reportDefinitionPath.replace("#", "%23");
+    reportDefinitionPath = reportDefinitionPath.replace("{", "%7B");
+    reportDefinitionPath = reportDefinitionPath.replace("}", "%7D");
+    reportDefinitionPath = reportDefinitionPath.replace("<", "%3C");
+    reportDefinitionPath = reportDefinitionPath.replace(">", "%3E");
+    reportDefinitionPath = reportDefinitionPath.replace("+", "%2B");
+    
     reqUrl.append(reportDefinitionPath);
     final String queryString = req.getQueryString();   // d=789
     if (queryString != null)
