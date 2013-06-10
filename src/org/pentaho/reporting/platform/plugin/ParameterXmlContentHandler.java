@@ -360,10 +360,9 @@ public ParameterXmlContentHandler(final ParameterContentGenerator contentGenerat
     }
     reportComponent.setDefaultOutputTarget(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE);
     
-    if (path.endsWith(".prpti")) {
+    if (path.endsWith(".prpti") && requestParams.getParameter("json") == null) {
       reportComponent.setForceUnlockPreferredOutput(true);
     }
-    
     
     reportComponent.setInputs(inputs);
 
