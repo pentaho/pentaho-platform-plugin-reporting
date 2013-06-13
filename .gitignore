@@ -19,3 +19,4 @@ build-res/module-scripts/
 *.war
 *.ear
 *.iml
+/war
