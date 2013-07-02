@@ -22,24 +22,24 @@
 }
 /* paging controls for iPad */
 .pc_pagePrevDisabled {
-	background: transparent url('../../../../pentaho-mobile/resources/images/ico-page-left.png') no-repeat !important;
+	background: transparent url('../../../../pentaho-mobile/resources/css/crystal/images/ico-page-left.png') no-repeat !important;
 	cursor: default !important;
 }
 .pc_pagePrev {
 	float: left;
-	background: transparent url('../../../../pentaho-mobile/resources/images/ico-page-left.png') no-repeat !important;
+	background: transparent url('../../../../pentaho-mobile/resources/css/crystal/images/ico-page-left.png') no-repeat !important;
 	height: 32px;
 	width: 32px;
 	white-space: nowrap;
 	cursor: pointer;
 }
 .pc_pageNextDisabled {
-	background: transparent url('../../../../pentaho-mobile/resources/images/ico-page-right.png') no-repeat !important;
+	background: transparent url('../../../../pentaho-mobile/resources/css/crystal/images/ico-page-right.png') no-repeat !important;
 	cursor: default !important;
 }
 .pc_pageNext {
 	float: left;
-	background: transparent url('../../../../pentaho-mobile/resources/images/ico-page-right.png') no-repeat !important;
+	background: transparent url('../../../../pentaho-mobile/resources/css/crystal/images/ico-page-right.png') no-repeat !important;
 	height: 32px;
 	width: 32px;
 	white-space: nowrap;
