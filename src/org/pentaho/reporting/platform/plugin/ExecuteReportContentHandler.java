@@ -3,9 +3,11 @@ package org.pentaho.reporting.platform.plugin;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.pentaho.platform.api.engine.IParameterProvider;
@@ -34,13 +36,16 @@ public class ExecuteReportContentHandler
   private IPentahoSession userSession;
   private ReportContentGenerator contentGenerator;
   private IParameterProvider pathProvider;
+  private Map<String, Object> inputs;
 
+  
   public ExecuteReportContentHandler(final ReportContentGenerator contentGenerator,
                                      final IParameterProvider pathProvider)
   {
     this.contentGenerator = contentGenerator;
     this.pathProvider = pathProvider;
     this.userSession = contentGenerator.getUserSession();
+    this.inputs = contentGenerator.createInputs();
   }
 
   public void createReportContent(final OutputStream outputStream, final String reportDefinitionPath, final boolean forceDefaultOutputTarget) throws Exception
@@ -57,7 +62,14 @@ public class ExecuteReportContentHandler
     }
     if (request == null || response == null || isRedirectEnabled() == false)
     {
-      doExport(outputStream, reportDefinitionPath, forceDefaultOutputTarget);
+      // if there is no request/response then we need to override the default pagination and set to stream
+      if (inputs != null) {
+        String outputTarget = (String)inputs.get("output-target");
+        if (StringUtils.isEmpty(outputTarget) == false && outputTarget.equals("table/html;page-mode=page")) {
+          inputs.put("output-target", "table/html;page-mode=stream");
+        }
+      }
+      doExport(outputStream, reportDefinitionPath, forceDefaultOutputTarget, false);
       return;
     }
 
@@ -65,7 +77,7 @@ public class ExecuteReportContentHandler
     if ("post".equalsIgnoreCase(request.getMethod()) ||
         fileContent != null && fileContent.startsWith("/execute/"))
     {
-      doExport(outputStream, reportDefinitionPath, forceDefaultOutputTarget);
+      doExport(outputStream, reportDefinitionPath, forceDefaultOutputTarget, true);
     }
     else
     {
@@ -127,10 +139,9 @@ public class ExecuteReportContentHandler
     return reqUrl.toString();
   }
 
-  private void doExport(final OutputStream outputStream, final String reportDefinitionPath, final boolean forceDefaultOutputTarget) throws Exception
+  private void doExport(final OutputStream outputStream, final String reportDefinitionPath, final boolean forceDefaultOutputTarget, final boolean paginate) throws Exception
   {
     final long start = System.currentTimeMillis();
-    final Map<String, Object> inputs = contentGenerator.createInputs();
     AuditHelper.audit(userSession.getId(), userSession.getName(), reportDefinitionPath,
         contentGenerator.getObjectName(), getClass().getName(), MessageTypes.INSTANCE_START,
         contentGenerator.getInstanceId(), "", 0, contentGenerator); //$NON-NLS-1$
@@ -152,9 +163,9 @@ public class ExecuteReportContentHandler
       if (reportDefinitionPath.endsWith(".prpti")) {
         reportComponent.setForceUnlockPreferredOutput(true);
       }
-      reportComponent.setPaginateOutput(true);
+      reportComponent.setPaginateOutput(paginate);
       reportComponent.setForceDefaultOutputTarget(forceDefaultOutputTarget);
-      reportComponent.setDefaultOutputTarget(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE);
+      reportComponent.setDefaultOutputTarget(HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE);
       reportComponent.setInputs(inputs);
 
       final MasterReport report = reportComponent.getReport();
