@@ -970,6 +970,19 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
    */
   public boolean _execute() throws Exception
   {
+    // SP-307, BISERVER-9688 - When running a report in background (or via a schedule), automatically convert the output format to Streaming HTML if the default is Paginated HTML
+    // SimpleReportingAction is not used by the ReportViewer, so this is a catch-all change.  If we're trying to do paginated HTML, change it to streaming HTML because
+    // it is not possible for the user to actually do paging when they view the report (only 1 page exists).  We may have to tweak this to check specifically if we are running
+    // within the context of the scheduler, but for now, this seems to hit all the cases.
+    if (inputs != null) {
+      if (StringUtils.isEmpty(outputTarget) == false && outputTarget.equals("table/html;page-mode=page")) {
+        setOutputTarget("table/html;page-mode=stream");
+        setPaginateOutput(false);
+        inputs.put("output-target", getOutputTarget());
+      }
+    }
+    // SP-307, BISERVER-9688
+    
     final MasterReport report = getReport();
 
     try
