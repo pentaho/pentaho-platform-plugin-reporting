@@ -25,7 +25,6 @@ import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.pentaho.platform.api.engine.IParameterProvider;
-import org.pentaho.platform.api.repository.ISolutionRepository;
 import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
 import org.pentaho.platform.api.repository2.unified.RepositoryFile;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
@@ -173,8 +172,8 @@ public class ReportContentGenerator extends ParameterContentGenerator {
       return null;
     }
     // get the full path with \ converted to /
-    String path = dir.getAbsolutePath().replace('\\', ISolutionRepository.SEPARATOR);
-    int pos = path.lastIndexOf(ISolutionRepository.SEPARATOR + "system" + ISolutionRepository.SEPARATOR); //$NON-NLS-1$
+    String path = dir.getAbsolutePath().replace("\\", RepositoryFile.SEPARATOR);
+    int pos = path.lastIndexOf(RepositoryFile.SEPARATOR + "system" + RepositoryFile.SEPARATOR); //$NON-NLS-1$
     if (pos != -1) {
       path = path.substring(pos + 8);
     }
