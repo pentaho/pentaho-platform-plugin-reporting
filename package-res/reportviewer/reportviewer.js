@@ -57,7 +57,8 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
           dojo.connect(dojo.byId('reportContent'), "load", onFrameLoaded);
         }
         
-        this.prompt.ready       = this.view.promptReady.bind(this.view);
+        var basePromptReady = this.prompt.ready.bind(this.prompt);
+        this.prompt.ready       = this.view.promptReady.bind(this.view, basePromptReady);
         this.prompt.submit      = this.submitReport.bind(this);
         this.prompt.submitStart = this.submitReportStart.bind(this);
         
@@ -112,10 +113,6 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
           }
         },
 
-        updateReportContentVisibility: function(promptPanel) {
-          this._showReportContent(this._calcReportContentVisibility(promptPanel));
-        },
-        
         _showReportContent: function(visible, preserveSource) {
           // Force not to show a blank iframe
           var hasContent = this._hasReportContent();
@@ -214,7 +211,10 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
         },
                 
         // Called by PromptPanel#postExecution (soon after initPrompt)
-        promptReady: function(promptPanel) {
+        promptReady: function(basePromptReady, promptPanel) {
+
+          basePromptReady();
+
           if (inSchedulerDialog) {
             // If we are rendering parameters for the "New Schedule" dialog,
             // don't show the report or the submit panel, or the pages toolbar
@@ -610,7 +610,9 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
         var isProportionalWidth = isHtml && options['htmlProportionalWidth'] == "true";
         var isReportAlone = dojo.hasClass('toppanel', 'hidden');
         
-        var styled = _isTopReportViewer && !isReportAlone && isHtml && !isProportionalWidth && !inMobile;
+        var styled = _isTopReportViewer && !isReportAlone && 
+                     isHtml && !isProportionalWidth && 
+                     !inMobile;
         
         // If the new output format causes a pageStyle change, 
         // and we don't hide the iframe "now",

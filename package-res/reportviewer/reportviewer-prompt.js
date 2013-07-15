@@ -29,6 +29,9 @@ pen.define(['common-ui/util/util', 'common-ui/util/formatting'], function(util, 
         panel.ready = this.ready.bind(this);
 
         panel.getParameterDefinition = function(promptPanel, callback) {
+          // Show glass pane when updating the prompt.
+          dijit.byId('glassPane').show();
+
           // promptPanel === panel
           this.fetchParameterDefinition(promptPanel, callback, 'USERINPUT');
         }.bind(this);
@@ -57,7 +60,9 @@ pen.define(['common-ui/util/util', 'common-ui/util/formatting'], function(util, 
         this.panel.init();
       },
 
-      ready: function(promptPanel) {},
+      ready: function(promptPanel) {
+        dijit.byId('glassPane').hide();
+      },
 
       /**
        * Called by the prompt-panel component when the CDE components have been updated.
@@ -109,7 +114,7 @@ pen.define(['common-ui/util/util', 'common-ui/util/formatting'], function(util, 
        * @return true if the content is the login page.
        */
       isSessionTimeoutResponse: function(content) {
-        if(content.indexOf('j_spring_security_check') != -1) {
+        if(String(content).indexOf('j_spring_security_check') != -1) {
           // looks like we have the login page returned to us
           return true;
         }
