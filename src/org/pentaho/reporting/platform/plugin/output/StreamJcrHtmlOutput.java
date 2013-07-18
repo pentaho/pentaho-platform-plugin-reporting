@@ -20,9 +20,28 @@ package org.pentaho.reporting.platform.plugin.output;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
+import org.pentaho.platform.api.repository2.unified.RepositoryFile;
+import org.pentaho.platform.engine.core.system.PentahoSystem;
+import org.pentaho.platform.util.UUIDUtil;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
+import org.pentaho.reporting.engine.classic.core.layout.output.YieldReportListener;
+import org.pentaho.reporting.engine.classic.core.modules.output.table.base.StreamReportProcessor;
+import org.pentaho.reporting.engine.classic.core.modules.output.table.html.AllItemsHtmlPrinter;
+import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlOutputProcessor;
+import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlPrinter;
+import org.pentaho.reporting.engine.classic.core.modules.output.table.html.StreamHtmlOutputProcessor;
+import org.pentaho.reporting.engine.classic.core.modules.output.table.html.URLRewriter;
+import org.pentaho.reporting.libraries.base.util.StringUtils;
 import org.pentaho.reporting.libraries.repository.ContentIOException;
+import org.pentaho.reporting.libraries.repository.ContentLocation;
+import org.pentaho.reporting.libraries.repository.DefaultNameGenerator;
+import org.pentaho.reporting.libraries.repository.stream.StreamRepository;
+import org.pentaho.reporting.platform.plugin.messages.Messages;
+import org.pentaho.reporting.platform.plugin.repository.PentahoNameGenerator;
+import org.pentaho.reporting.platform.plugin.repository.PentahoURLRewriter;
+import org.pentaho.reporting.platform.plugin.repository.ReportContentRepository;
 
 public class StreamJcrHtmlOutput extends StreamHtmlOutput
 {
@@ -54,7 +73,46 @@ public class StreamJcrHtmlOutput extends StreamHtmlOutput
                           final int yieldRate)
       throws ReportProcessingException, IOException, ContentIOException
   {
-    return 0;
+        IUnifiedRepository repo = PentahoSystem.get(IUnifiedRepository.class);
+        final RepositoryFile outputFolder = repo.getFile(jcrOutputPath);
+        
+        final ReportContentRepository repository = new ReportContentRepository(outputFolder);
+        final ContentLocation dataLocation = repository.getRoot();
+        final PentahoNameGenerator dataNameGenerator = PentahoSystem.get(PentahoNameGenerator.class);
+        if (dataNameGenerator == null)
+        {
+          throw new IllegalStateException
+              (Messages.getInstance().getString("ReportPlugin.errorNameGeneratorMissingConfiguration"));
+        }
+        dataNameGenerator.initialize(dataLocation, isSafeToDelete());
+        final URLRewriter rewriter = new PentahoURLRewriter(getContentHandlerPattern(), true);
+
+        final StreamRepository targetRepository = new StreamRepository(null, outputStream, "report"); //$NON-NLS-1$
+        final ContentLocation targetRoot = targetRepository.getRoot();
+
+        final HtmlOutputProcessor outputProcessor = new StreamHtmlOutputProcessor(report.getConfiguration());
+        final HtmlPrinter printer = new AllItemsHtmlPrinter(report.getResourceManager());
+        printer.setContentWriter(targetRoot, new DefaultNameGenerator(targetRoot, "index", "html"));//$NON-NLS-1$//$NON-NLS-2$
+        printer.setDataWriter(dataLocation, dataNameGenerator);
+        printer.setUrlRewriter(rewriter);
+        outputProcessor.setPrinter(printer);
+
+        final StreamReportProcessor sp = new StreamReportProcessor(report, outputProcessor);
+        if (yieldRate > 0)
+        {
+          sp.addReportProgressListener(new YieldReportListener(yieldRate));
+        }
+        try
+        {
+          sp.processReport();
+        }
+        finally
+        {
+          sp.close();
+        }
+
+        outputStream.flush();
+        return 0;
   }
 
 }
