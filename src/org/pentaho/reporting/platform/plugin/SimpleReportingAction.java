@@ -75,6 +75,7 @@ import org.pentaho.reporting.platform.plugin.output.PlainTextOutput;
 import org.pentaho.reporting.platform.plugin.output.RTFOutput;
 import org.pentaho.reporting.platform.plugin.output.ReportOutputHandler;
 import org.pentaho.reporting.platform.plugin.output.StreamHtmlOutput;
+import org.pentaho.reporting.platform.plugin.output.StreamJcrHtmlOutput;
 import org.pentaho.reporting.platform.plugin.output.XLSOutput;
 import org.pentaho.reporting.platform.plugin.output.XLSXOutput;
 import org.pentaho.reporting.platform.plugin.output.XmlPageableOutput;
@@ -106,7 +107,7 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
 
   public static final String REPORTLOAD_RESURL = "res-url"; //$NON-NLS-1$
   public static final String REPORT_DEFINITION_INPUT = "report-definition"; //$NON-NLS-1$
-  public static final String USE_CONTENT_REPOSITORY = "useContentRepository"; //$NON-NLS-1$
+  public static final String USE_JCR = "useJcr"; //$NON-NLS-1$
   public static final String REPORTHTML_CONTENTHANDLER_PATTERN = "content-handler-pattern"; //$NON-NLS-1$
   public static final String REPORTGENERATE_YIELDRATE = "yield-rate"; //$NON-NLS-1$
   public static final String ACCEPTED_PAGE = "accepted-page"; //$NON-NLS-1$
@@ -145,6 +146,9 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
   private int acceptedPage;
   private int pageCount;
   private boolean dashboardMode;
+  private Boolean useJcr;
+  private String jcrOutputPath;
+  
   /*
    * These fields are for enabling printing
    */
@@ -160,6 +164,7 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
     acceptedPage = -1;
     pageCount = -1;
     defaultOutputTarget = HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE;
+    useJcr = Boolean.FALSE;
   }
 
   // ----------------------------------------------------------------------------
@@ -303,6 +308,31 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
     this.dashboardMode = dashboardMode;
   }
 
+  /**
+   * Gets the useContentRepository flag, needed by subclasses, such as with interactive adhoc
+   *
+   * @return useContentRepository
+   */
+  public boolean getUseJCR() 
+  {
+    return useJcr;
+  }
+  
+  public void setUseJcr(final Boolean useJcr)
+  {
+    this.useJcr = useJcr;
+  }
+  
+  public String getJcrOutputPath() 
+  {
+    return jcrOutputPath;
+  }
+
+  public void setJcrOutputPath(String jcrOutputPath) 
+  {
+    this.jcrOutputPath = jcrOutputPath;
+  }
+  
   public String getMimeType(String ignored) {
     return getMimeType();
   }
@@ -1096,13 +1126,23 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
       {
         report.getReportConfiguration().setConfigProperty(HtmlTableModule.BODY_FRAGMENT, "true");
       }
-      // use the content repository
-      final Configuration globalConfig = ClassicEngineBoot.getInstance().getGlobalConfig();
-      String contentHandlerPattern = PentahoRequestContextHolder.getRequestContext().getContextPath();
-      contentHandlerPattern += (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN,
-          globalConfig.getConfigProperty("org.pentaho.web.ContentHandler")); //$NON-NLS-1$
+      if (useJcr)
+      {
+        // use the content repository
+        final Configuration globalConfig = ClassicEngineBoot.getInstance().getGlobalConfig();
+        final String contentHandlerPattern = (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN,
+            globalConfig.getConfigProperty("org.pentaho.web.JcrContentHandler")); //$NON-NLS-1$
+        reportOutputHandler = new StreamJcrHtmlOutput(jcrOutputPath, contentHandlerPattern);
+      }
+      else
+      {
+        final Configuration globalConfig = ClassicEngineBoot.getInstance().getGlobalConfig();
+        String contentHandlerPattern = PentahoRequestContextHolder.getRequestContext().getContextPath();
+        contentHandlerPattern += (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN,
+            globalConfig.getConfigProperty("org.pentaho.web.ContentHandler")); //$NON-NLS-1$
         // don't use the content repository
-      reportOutputHandler = new StreamHtmlOutput(contentHandlerPattern);
+        reportOutputHandler = new StreamHtmlOutput(contentHandlerPattern);
+      }
     }
     else if (PNG_EXPORT_TYPE.equals(outputType))
     {
