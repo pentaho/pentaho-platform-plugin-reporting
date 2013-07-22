@@ -43,6 +43,7 @@ public class ReportContentLocation implements ContentLocation {
   private RepositoryFile location;
 
   private ReportContentRepository repository;
+  private String[] hiddenExtensions = {".jpe",".jpeg",".jpg",".png",".css"};
 
   public ReportContentLocation(final RepositoryFile location,
                                final ReportContentRepository repository)
@@ -92,9 +93,15 @@ public class ReportContentLocation implements ContentLocation {
     IUnifiedRepository repo = PentahoSystem.get(IUnifiedRepository.class);
     final String extension = IOUtils.getInstance().getFileExtension(name);
     final String mimeType = MimeHelper.getMimeTypeFromExtension(extension);
+    RepositoryFileOutputStream rfos = null;
     String path = this.location.getPath() + "/" + name;
     if (repo.getFile(path) == null) {
-      RepositoryFileOutputStream rfos = new RepositoryFileOutputStream(path);
+    	if(isHiddenExtension(extension)) {
+    		rfos = new RepositoryFileOutputStream(path, true);
+    	} else {
+    		rfos = new RepositoryFileOutputStream(path, false);	
+    	}
+      
       try {
         rfos.close();
       } catch (IOException e) {
@@ -158,5 +165,14 @@ public class ReportContentLocation implements ContentLocation {
   {
     // cannot be deleted ..
     return false;
+  }
+  
+  public boolean isHiddenExtension(String extension) {
+	  for(String ext:hiddenExtensions) {
+		  if(ext.equals(extension)) {
+			  return true;
+		  }
+	  }
+	  return false;
   }
 }
