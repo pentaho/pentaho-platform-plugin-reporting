@@ -106,6 +106,9 @@ public class StreamJcrHtmlOutput extends StreamHtmlOutput
         {
           sp.processReport();
         }
+        catch(Throwable th) {
+        	th.printStackTrace();
+        }
         finally
         {
           sp.close();
