@@ -124,6 +124,6 @@ public class ReportContentItem implements ContentItem {
   }
 
   public Object getContentId() {
-    return file.getId();
+    return file.getPath().replace('/', ':');
   }
 }
