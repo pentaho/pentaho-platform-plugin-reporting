@@ -28,6 +28,6 @@ public class PentahoCubeFileProviderReadHandler extends DefaultCubeFileProviderR
 
   public CubeFileProvider getProvider()
   {
-    return new PentahoCubeFileProvider(getPath());
+    return new PentahoCubeFileProvider(getPath(), getCubeConnectionName());
   }
 }
