@@ -37,11 +37,20 @@ public class PentahoCubeFileProvider extends DefaultCubeFileProvider
   {
     setMondrianCubeFile(definedFile);
   }
+  
+  public PentahoCubeFileProvider(final String definedFile, final String definedConnectionName)
+  {
+    setMondrianCubeFile(definedFile);
+    setCubeConnectionName(definedConnectionName);
+  }
 
   public String getCubeFile(final ResourceManager resourceManager,
                             final ResourceKey contextKey) throws ReportDataFactoryException
   {
-    final String superDef = getMondrianCubeFile();
+    // new cube file read method: 
+    // 1st - get new property mondrian cubeConnectionName
+    // 2nd - if cubeConnectionName is null, get default cubeFile property
+    final String superDef = getCubeConnectionName() != null ? getCubeConnectionName() : getMondrianCubeFile();
     if (superDef == null)
     {
       throw new ReportDataFactoryException(Messages.getInstance().getString("ReportPlugin.noSchemaDefined")); //$NON-NLS-1$
