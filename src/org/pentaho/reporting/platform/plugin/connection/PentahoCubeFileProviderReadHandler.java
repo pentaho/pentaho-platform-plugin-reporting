@@ -20,6 +20,12 @@ package org.pentaho.reporting.platform.plugin.connection;
 import org.pentaho.reporting.engine.classic.extensions.datasources.mondrian.parser.DefaultCubeFileProviderReadHandler;
 import org.pentaho.reporting.engine.classic.extensions.datasources.mondrian.CubeFileProvider;
 
+/**
+ * @deprecated the DefaultCubeFileProviderReadHandler uses the object factory to get an instance of
+ * the actual DefaultCubeFileProviderReadHandler implementation. There is no need for this crutch
+ * here anymore.
+ */
+@Deprecated
 public class PentahoCubeFileProviderReadHandler extends DefaultCubeFileProviderReadHandler
 {
   public PentahoCubeFileProviderReadHandler()
