@@ -17,62 +17,71 @@
 
 package org.pentaho.reporting.platform.plugin.connection;
 
-import java.io.File;
-import java.util.List;
-
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
+import org.pentaho.platform.engine.core.system.PentahoSystem;
+import org.pentaho.platform.plugin.action.mondrian.catalog.IMondrianCatalogService;
 import org.pentaho.platform.plugin.action.mondrian.catalog.MondrianCatalog;
-import org.pentaho.platform.plugin.action.mondrian.catalog.MondrianCatalogHelper;
 import org.pentaho.reporting.engine.classic.core.ReportDataFactoryException;
 import org.pentaho.reporting.engine.classic.extensions.datasources.mondrian.DefaultCubeFileProvider;
+import org.pentaho.reporting.libraries.base.util.StringUtils;
 import org.pentaho.reporting.libraries.resourceloader.ResourceKey;
 import org.pentaho.reporting.libraries.resourceloader.ResourceManager;
-import org.pentaho.reporting.libraries.base.util.IOUtils;
 import org.pentaho.reporting.platform.plugin.messages.Messages;
 
 public class PentahoCubeFileProvider extends DefaultCubeFileProvider
 {
+  public PentahoCubeFileProvider()
+  {
+  }
 
   public PentahoCubeFileProvider(final String definedFile)
   {
-    setMondrianCubeFile(definedFile);
+    super(definedFile);
   }
-  
-  public PentahoCubeFileProvider(final String definedFile, final String definedConnectionName)
+
+  public PentahoCubeFileProvider(final String mondrianCubeFile, final String cubeConnectionName)
   {
-    setMondrianCubeFile(definedFile);
-    setCubeConnectionName(definedConnectionName);
+    super(mondrianCubeFile, cubeConnectionName);
   }
 
   public String getCubeFile(final ResourceManager resourceManager,
                             final ResourceKey contextKey) throws ReportDataFactoryException
   {
-    // new cube file read method: 
-    // 1st - get new property mondrian cubeConnectionName
-    // 2nd - if cubeConnectionName is null, get default cubeFile property
-    final String superDef = getCubeConnectionName() != null ? getCubeConnectionName() : getMondrianCubeFile();
+    // We need to handle legacy reports gracefully. If a report has the 'cubeConnectionName' property
+    // set, we assume it is a new or migrated report. In that case, we only lookup the mondrian schema by
+    // its name, and we will NOT search the file system or do any other magic.
+    //
+    // If the name is given, but not found, we report an error, in the same way a non-existing JNDI definition
+    // would raise an error.
+    if (StringUtils.isEmpty(getCubeConnectionName()) == false)
+    {
+      final IMondrianCatalogService catalogService =
+          PentahoSystem.get(IMondrianCatalogService.class, PentahoSessionHolder.getSession());
+      final MondrianCatalog catalog =
+          catalogService.getCatalog(getCubeConnectionName(), PentahoSessionHolder.getSession());
+      if (catalog == null)
+      {
+        throw new ReportDataFactoryException
+            ("Unable to locate mondrian schema with name '" + getCubeConnectionName() + "'");
+      }
+      return catalog.getDefinition();
+    }
+
+
+    return getLegacyCubeFile(resourceManager, contextKey);
+  }
+
+  private String getLegacyCubeFile(final ResourceManager resourceManager,
+                                   final ResourceKey contextKey) throws ReportDataFactoryException
+  {
+    final String superDef = getMondrianCubeFile();
     if (superDef == null)
     {
       throw new ReportDataFactoryException(Messages.getInstance().getString("ReportPlugin.noSchemaDefined")); //$NON-NLS-1$
     }
 
-    final File cubeFile = new File(superDef);
-
-    final String name = cubeFile.getName();
-    final List<MondrianCatalog> catalogs =
-        MondrianCatalogHelper.getInstance().listCatalogs(PentahoSessionHolder.getSession(), false);
-
-    for (final MondrianCatalog cat : catalogs)
-    {
-      final String definition = cat.getDefinition();
-      final String definitionFileName = IOUtils.getInstance().getFileName(definition);
-      if (definitionFileName.equals(name))
-      {
-        return cat.getDefinition();
-      }
-    }
-
-    // resolve relative to the report ..
+    // resolve the file relative to the report for legacy reports ..
+    // This will match against the filename specified in the "mondrianCubeFile" property.
     return super.getCubeFile(resourceManager, contextKey);
   }
 }
