@@ -40,6 +40,7 @@ import org.pentaho.reporting.engine.classic.extensions.datasources.cda.CdaQueryB
 import org.pentaho.reporting.engine.classic.extensions.datasources.kettle.KettleDataFactoryModule;
 import org.pentaho.reporting.engine.classic.extensions.datasources.kettle.parser.KettleTransformationProducerReadHandler;
 import org.pentaho.reporting.engine.classic.extensions.datasources.kettle.parser.KettleTransformationProducerReadHandlerFactory;
+import org.pentaho.reporting.engine.classic.extensions.datasources.mondrian.CubeFileProvider;
 import org.pentaho.reporting.engine.classic.extensions.datasources.mondrian.MondrianConnectionProvider;
 import org.pentaho.reporting.engine.classic.extensions.datasources.mondrian.MondrianDataFactoryModule;
 import org.pentaho.reporting.engine.classic.extensions.datasources.mondrian.parser.CubeFileProviderReadHandler;
@@ -54,6 +55,7 @@ import org.pentaho.reporting.engine.classic.extensions.datasources.pmd.parser.IP
 import org.pentaho.reporting.engine.classic.extensions.datasources.pmd.parser.PmdConfigReadHandlerFactory;
 import org.pentaho.reporting.libraries.base.boot.ObjectFactory;
 import org.pentaho.reporting.platform.plugin.connection.CdaPluginLocalQueryBackend;
+import org.pentaho.reporting.platform.plugin.connection.PentahoCubeFileProvider;
 import org.pentaho.reporting.platform.plugin.connection.PentahoCubeFileProviderReadHandler;
 import org.pentaho.reporting.platform.plugin.connection.PentahoJndiConnectionReadHandler;
 import org.pentaho.reporting.platform.plugin.connection.PentahoKettleTransFromFileReadHandler;
@@ -129,6 +131,7 @@ public class DataSourceConfigurationTest extends TestCase
   public void testMondrianConnectionProvider()
   {
     assertInstanceOf(objectFactory.get(MondrianConnectionProvider.class), PentahoMondrianConnectionProvider.class);
+    assertInstanceOf(objectFactory.get(CubeFileProvider.class), PentahoCubeFileProvider.class);
   }
 
   public void testPentahoCubeFileProviderReadHandler()
