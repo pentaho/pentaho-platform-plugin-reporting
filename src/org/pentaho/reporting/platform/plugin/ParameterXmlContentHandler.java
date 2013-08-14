@@ -37,6 +37,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.pentaho.platform.api.engine.IParameterProvider;
@@ -678,11 +679,20 @@ public ParameterXmlContentHandler(final ParameterContentGenerator contentGenerat
         final ParameterValues possibleValues = asListParam.getValues(parameterContext);
         for (int i = 0; i < possibleValues.getRowCount(); i++)
         {
-          final Object key = possibleValues.getKeyValue(i);
-          final Object value = possibleValues.getTextValue(i);
+          Object key = possibleValues.getKeyValue(i);
+          Object value = possibleValues.getTextValue(i);
 
           final Element valueElement = document.createElement("value"); //$NON-NLS-1$
           valuesElement.appendChild(valueElement);
+
+          if (hasISOControlChars(key, elementValueType) ||
+                  hasISOControlChars(value, elementValueType)) {
+            // if either key or value have illegal chars, base64 encode them
+            // and set the encoded="true" flag.
+            key = Base64.encodeBase64String(key.toString().getBytes());
+            value = Base64.encodeBase64String(value.toString().getBytes());
+            valueElement.setAttribute("encoded", "true");
+          }
 
           valueElement.setAttribute("label", String.valueOf(value)); //$NON-NLS-1$ //$NON-NLS-2$
           valueElement.setAttribute("type", elementValueType.getName()); //$NON-NLS-1$
@@ -703,7 +713,9 @@ public ParameterXmlContentHandler(final ParameterContentGenerator contentGenerat
           }
           else
           {
-            valueElement.setAttribute("selected", String.valueOf(selectionSet.contains(key)));//$NON-NLS-1$
+            //key may have been encoded, we want the original raw value.
+            Object origKey = possibleValues.getKeyValue(i);
+            valueElement.setAttribute("selected", String.valueOf(selectionSet.contains(origKey)));//$NON-NLS-1$
             handledValues.remove(key);
           }
           if (key == null)
@@ -782,7 +794,28 @@ public ParameterXmlContentHandler(final ParameterContentGenerator contentGenerat
     }
   }
 
-  private Object resolveSelectionValue(Object value) {
+
+  /**
+   * Determine whether value contains any ISO control characters, which
+   * are not allowed in XML.
+   * http://www.w3.org/TR/2006/REC-xml11-20060816/#charsets
+   */
+  private boolean hasISOControlChars(Object value, Class<?> type) {
+    if (type == String.class) {
+      String string = (String) value;
+      for (int i = 0; i < string.length(); i++) {
+        if (Character.isISOControl(string.charAt(i))) {
+          return true;
+        }
+      }
+      return false;
+    } else if (type == Character.class) {
+      return Character.isISOControl(((Character) value));
+    }
+    return false;
+  }
+
+    private Object resolveSelectionValue(Object value) {
     // convert all numerics to BigDecimals for cross-numeric-class matching
     if (value instanceof Number)
     {
