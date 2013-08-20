@@ -801,6 +801,10 @@ public ParameterXmlContentHandler(final ParameterContentGenerator contentGenerat
    * http://www.w3.org/TR/2006/REC-xml11-20060816/#charsets
    */
   private boolean hasISOControlChars(Object value, Class<?> type) {
+    if(value == null){
+      return false;
+    }
+
     if (type == String.class) {
       String string = (String) value;
       for (int i = 0; i < string.length(); i++) {
