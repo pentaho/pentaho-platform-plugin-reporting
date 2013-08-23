@@ -20,6 +20,7 @@ package org.pentaho.reporting.platform.plugin;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.net.URLEncoder;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -160,6 +161,8 @@ public class ExecuteReportContentHandler
         filename = filename.substring(0, filename.lastIndexOf(".")); //$NON-NLS-1$
       }
 
+      String disposition = "inline; filename*=UTF-8''" + URLEncoder.encode(filename, "UTF-8") + extension;
+
       final boolean validates = reportComponent.validate();
       if (!validates)
       {
@@ -167,10 +170,10 @@ public class ExecuteReportContentHandler
       }
       else
       {
-        if (streamToBrowser)
+        if (response != null)
         {
           // Send headers before we begin execution
-          response.setHeader("Content-Disposition", "inline; filename=\"" + filename + extension + "\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+          response.setHeader("Content-Disposition", disposition);
           response.setHeader("Content-Description", file.getName()); //$NON-NLS-1$
           response.setHeader("Cache-Control", "private, max-age=0, must-revalidate");
         }
@@ -180,7 +183,7 @@ public class ExecuteReportContentHandler
           {
             if (reportStagingHandler.canSendHeaders())
             {
-              response.setHeader("Content-Disposition", "inline; filename=\"" + filename + extension + "\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+              response.setHeader("Content-Disposition", disposition);
               response.setHeader("Content-Description", file.getName()); //$NON-NLS-1$
               response.setHeader("Cache-Control", "private, max-age=0, must-revalidate");
               response.setContentLength(reportStagingHandler.getWrittenByteCount());
