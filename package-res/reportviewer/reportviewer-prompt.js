@@ -238,6 +238,7 @@ pen.define(['common-ui/util/util', 'common-ui/util/formatting'], function(util, 
         
         $.ajax({
           async:   true,
+          traditional: true, // Controls internal use of $.param() to serialize data to the url/body.
           cache:   false,
           type:    'POST',
           url:     me.getParameterUrl(),
