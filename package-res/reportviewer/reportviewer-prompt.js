@@ -16,9 +16,9 @@ pen.define(['common-ui/util/util', 'common-ui/util/formatting'], function(util, 
         // Obtain initial parameter definition and
         // only then create the PromptPanel
         this.fetchParameterDefinition(
-          undefined,
+          /*promptPanel*/null,
           this._createPromptPanelFetchCallback.bind(this),
-          'INITIAL');
+          /*promptMode*/'INITIAL');
       },
 
       _createPromptPanelFetchCallback: function(paramDefn) {
@@ -33,7 +33,7 @@ pen.define(['common-ui/util/util', 'common-ui/util/formatting'], function(util, 
           dijit.byId('glassPane').show();
 
           // promptPanel === panel
-          this.fetchParameterDefinition(promptPanel, callback, 'USERINPUT');
+          this.fetchParameterDefinition(promptPanel, callback, /*promptMode*/'USERINPUT');
         }.bind(this);
 
         // Provide our own text formatter
@@ -197,7 +197,7 @@ pen.define(['common-ui/util/util', 'common-ui/util/formatting'], function(util, 
         var options = util.getUrlParameters();
         
         // If we aren't passed a prompt panel this is the first request
-        if (promptPanel) {
+        if(promptPanel) {
           $.extend(options, promptPanel.getParameterValues());
         }
         options['renderMode'] = this._getParameterDefinitionRenderMode(promptPanel, promptMode);
@@ -209,7 +209,7 @@ pen.define(['common-ui/util/util', 'common-ui/util/formatting'], function(util, 
         var args = arguments;
         
         var onSuccess = function(xmlString) {
-          if (me.checkSessionTimeout(xmlString, args)) { return; }
+          if(me.checkSessionTimeout(xmlString, args)) { return; }
 
           // Another request was made after this one, so this one is ignored.
           if(fetchParamDefId !== me._fetchParamDefId) { return; }
@@ -217,10 +217,30 @@ pen.define(['common-ui/util/util', 'common-ui/util/formatting'], function(util, 
           try {
             var newParamDefn = me.parseParameterDefinition(xmlString);
 
-            // Make sure we retain the current auto-submit setting
-            // pp.getAutoSubmitSetting -> pp.autoSubmit, which is updated by the check-box
+            // A first request is made,
+            // With promptMode='INITIAL' and renderMode='PARAMETER'.
+            //
+            // The response will not have page count information (pagination was not performed),
+            // but simply information about the prompt parameters (newParamDef).
+            // 
+            // When newParamDefn.allowAutoSubmit() is true, 
+            // And no validation errors/required parameters exist to be specified, TODO: Don't think that this is being checked here!
+            // Then a second request is made, 
+            // With promptMode='MANUAL' and renderMode='XML' is performed.
+            // 
+            // When the response to the second request arrives,
+            // Then the prompt panel is rendered, including with page count information,
+            // And  the report content is loaded and shown.
+            if(promptMode === 'INITIAL' && newParamDefn.allowAutoSubmit()) {
+              // assert promptPanel == null
+              me.fetchParameterDefinition(/*promptPanel*/null, callback, /*promptMode*/'MANUAL');
+              return;
+            }
+
+            // Make sure we retain the current auto-submit setting.
+            //  pp.getAutoSubmitSetting -> pp.autoSubmit, which is updated by the check-box
             var autoSubmit = promptPanel && promptPanel.getAutoSubmitSetting();
-            if (autoSubmit != null) {
+            if(autoSubmit != null) {
               newParamDefn.autoSubmitUI = autoSubmit;
             }
 
