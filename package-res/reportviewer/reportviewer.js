@@ -213,7 +213,7 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'reportvie
         // Called by PromptPanel#postExecution (soon after initPrompt)
         promptReady: function(basePromptReady, promptPanel) {
 
-          basePromptReady();
+          basePromptReady(promptPanel); // hides the glass pane...
 
           if (inSchedulerDialog) {
             // If we are rendering parameters for the "New Schedule" dialog,
@@ -548,6 +548,7 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'reportvie
       },
 
       // Called by SubmitPromptComponent#expression (the submit button's click)
+      // Also may be called by PromptPanel#init, when there is no submit button (independently of autoSubmit?).
       submitReport: function(promptPanel, keyArgs) {
         var isInit = keyArgs && keyArgs.isInit;
         if(!isInit) {
@@ -595,20 +596,37 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'reportvie
 
       _updateReportContent: function(promptPanel, keyArgs) {
         var me = this;
-        var renderMode = (keyArgs && keyArgs.renderMode) || 'REPORT';
-
-        me._updateReportRenderMode = renderMode;
 
         // PRD-3962 - show glass pane on submit, hide when iframe is loaded
         // Show glass-pane
         dijit.byId('glassPane').show();
 
+        if(!promptPanel.getAutoSubmitSetting()) {
+          // FETCH page-count info before rendering report
+          var callback = logged("_updateReportContent_fetchParameterCallback", function(newParamDefn) {
+            // Recreates the prompt panel's CDF components
+            promptPanel.refresh(newParamDefn);
+            
+            me._updateReportContentCore(promptPanel, keyArgs);
+          });
+
+          me.prompt.fetchParameterDefinition(promptPanel, callback, /*promptMode*/'MANUAL');
+        } else {
+          me._updateReportContentCore(promptPanel, keyArgs);
+        }
+      },
+
+      _updateReportContentCore: function(promptPanel, keyArgs) {
+        var me = this;
+        
         // PRD-3962 - remove glass pane after 5 seconds in case iframe onload/onreadystatechange was not detected
         me._updateReportTimeout = setTimeout(logged('updateReportTimeout', function() {
           me._submitReportEnded(promptPanel, /*isTimeout*/true);
         }), 5000);
 
-        // -----------
+        var renderMode = (keyArgs && keyArgs.renderMode) || 'REPORT';
+
+        me._updateReportRenderMode = renderMode;
 
         var options = me._buildReportContentOptions(promptPanel);
         var url = me._buildReportContentUrl(options);

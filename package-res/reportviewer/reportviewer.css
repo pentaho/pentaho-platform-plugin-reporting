@@ -84,8 +84,8 @@ div.prompt-panel {
 */
 .contentHidden #reportArea {
 	position: absolute;
-	left: -100000;
-    top:  -100000;
+  left: -100000px;
+  top:  -100000px;
 }
 
 .styled #reportArea {
