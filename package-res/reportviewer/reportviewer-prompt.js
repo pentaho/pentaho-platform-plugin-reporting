@@ -16,9 +16,9 @@ pen.define(['common-ui/util/util', 'reportviewer/reportviewer-formatting'], func
         // Obtain initial parameter definition and
         // only then create the PromptPanel
         this.fetchParameterDefinition(
-          undefined,
+          /*promptPanel*/null,
           this._createPromptPanelFetchCallback.bind(this),
-          'INITIAL');
+          /*promptMode*/'INITIAL');
       },
 
       _createPromptPanelFetchCallback: function(paramDefn) {
@@ -54,7 +54,7 @@ pen.define(['common-ui/util/util', 'reportviewer/reportviewer-formatting'], func
           dijit.byId('glassPane').show();
 
           // promptPanel === panel
-          this.fetchParameterDefinition(promptPanel, callback, 'USERINPUT');
+          this.fetchParameterDefinition(promptPanel, callback, /*promptMode*/'USERINPUT');
         }.bind(this);
 
           // Provide our own text formatter
