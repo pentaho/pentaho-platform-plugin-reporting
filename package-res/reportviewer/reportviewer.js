@@ -143,11 +143,19 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'reportvie
                       !inSchedulerDialog &&
 
                       (promptPanel.forceAutoSubmit ||
-                       promptPanel.paramDefn.allowAutoSubmit() || // (BISERVER-6915)
+                       this._isAutoSubmitAllowed() ||
                        prompt.mode === 'MANUAL');
           }
 
           return visible;
+        },
+        
+        _isAutoSubmitAllowed : function() {
+        	if(document.getElementsByTagName("IFRAME").length > 0) {
+        		if(document.getElementsByTagName("IFRAME")[0].src != null) {
+        			return document.getElementsByTagName("IFRAME")[0].src.indexOf('dashboard-mode') !== -1
+        		}   
+        	}
         },
 
         _hasReportContent: function() {
