@@ -1,3 +1,20 @@
+/*!
+* This program is free software; you can redistribute it and/or modify it under the
+* terms of the GNU Lesser General Public License, version 2.1 as published by the Free Software
+* Foundation.
+*
+* You should have received a copy of the GNU Lesser General Public License along with this
+* program; if not, you can obtain a copy at http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
+* or from the Free Software Foundation, Inc.,
+* 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+*
+* This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+* without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+* See the GNU Lesser General Public License for more details.
+*
+* Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
+*/
+
 function reportviewer(){var M='',nb='" for "gwt:onLoadErrorFn"',lb='" for "gwt:onPropertyErrorFn"',Y='"><\/script>',$='#',Lb='.cache.html',ab='/',Fb='2D1A056383EB486EB93952DF4C9E042D',Gb='4C9BC227189756DBEB81E06831D8D29D',Tb='<script defer="defer">reportviewer.onInjectionDone(\'reportviewer\')<\/script>',X='<script id="',ib='=',_='?',Hb='BF81EDF3275E194BF01D1D627B02F1DE',kb='Bad handler "',Ib='D620FC06BF126BA599EB47DF23863119',Jb='DB65AB2E2B29D8B0DE394D1E6DDEE08D',Sb='DOMContentLoaded',Kb='F08C95DF61AC85BC70C0F95428DED7A8',Z='SCRIPT',W='__gwt_marker_reportviewer',bb='base',Q='begin',P='bootstrap',db='clear.cache.gif',hb='content',V='end',zb='gecko',Ab='gecko1_8',R='gwt.codesvr=',S='gwt.hosted=',T='gwt.hybrid',mb='gwt:onLoadErrorFn',jb='gwt:onPropertyErrorFn',gb='gwt:property',Rb='head',Db='hosted.html?reportviewer',Qb='href',yb='ie6',xb='ie8',ob='iframe',cb='img',pb="javascript:''",Nb='link',Cb='loadExternalRefs',eb='meta',rb='moduleRequested',U='moduleStartup',wb='msie',fb='name',tb='opera',qb='position:absolute;width:0;height:0;border:none',Ob='rel',Mb='report.css',N='reportviewer',vb='safari',Eb='selectingPermutation',O='startup',Pb='stylesheet',Bb='unknown',sb='user.agent',ub='webkit';var k=window,l=document,m=k.__gwtStatsEvent?function(a){return k.__gwtStatsEvent(a)}:null,n=k.__gwtStatsSessionId?k.__gwtStatsSessionId:null,o,p,q,r=M,s={},t=[],u=[],v=[],w,x;m&&m({moduleName:N,sessionId:n,subSystem:O,evtGroup:P,millis:(new Date).getTime(),type:Q});if(!k.__gwt_stylesLoaded){k.__gwt_stylesLoaded={}}if(!k.__gwt_scriptsLoaded){k.__gwt_scriptsLoaded={}}function y(){var b=false;try{var c=k.location.search;return (c.indexOf(R)!=-1||(c.indexOf(S)!=-1||k.external&&k.external.gwtOnLoad))&&c.indexOf(T)==-1}catch(a){}y=function(){return b};return b}
 function z(){if(o&&p){var b=l.getElementById(N);var c=b.contentWindow;if(y()){c.__gwt_getProperty=function(a){return F(a)}}reportviewer=null;c.gwtOnLoad(w,N,r);m&&m({moduleName:N,sessionId:n,subSystem:O,evtGroup:U,millis:(new Date).getTime(),type:V})}}
 function A(){var e,f=W,g;l.write(X+f+Y);g=l.getElementById(f);e=g&&g.previousSibling;while(e&&e.tagName!=Z){e=e.previousSibling}function h(a){var b=a.lastIndexOf($);if(b==-1){b=a.length}var c=a.indexOf(_);if(c==-1){c=a.length}var d=a.lastIndexOf(ab,Math.min(c,b));return d>=0?a.substring(0,d+1):M}
