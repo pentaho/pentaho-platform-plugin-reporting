@@ -435,7 +435,7 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
     if (inputs != null) {
       return Collections.unmodifiableMap(inputs);
     }
-    return Collections.EMPTY_MAP;
+    return Collections.emptyMap();
   }
 
   /**
@@ -494,7 +494,7 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
         // load the report definition as an action-sequence resource
         report = ReportCreator.createReport(reportDefinition.getAddress());
       } else if (reportDefinitionPath != null) {
-        report = ReportCreator.createReport(reportDefinitionPath);
+        report = ReportCreator.createReportByName(reportDefinitionPath);
       } else {
         throw new ResourceException();
       }
@@ -517,7 +517,7 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
     }
 
     if (clRaw instanceof Collection) {
-      final Collection c = (Collection) clRaw;
+      final Collection<?> c = (Collection<?>) clRaw;
       final CSVQuoter quoter = new CSVQuoter(',', '"');
       final StringBuilder b = new StringBuilder();
       for (final Object o : c) {
