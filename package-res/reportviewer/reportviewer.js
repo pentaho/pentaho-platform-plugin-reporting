@@ -79,8 +79,8 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
           var panel = this.prompt.panel;
           var init  = panel.init;
 
-          panel.init = function() {
-            this.view.initPrompt(init, this.prompt.panel);
+          panel.init = function(noAutoAutoSubmit) {
+            this.view.initPrompt(init, this.prompt.panel, noAutoAutoSubmit);
           }.bind(this);
 
           decorated();
@@ -167,7 +167,7 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
         //             .getParameterDefinition ->
         //             .refresh ->
         //             .init ->
-        initPrompt: function(basePanelInit, promptPanel) {
+        initPrompt: function(basePanelInit, promptPanel, noAutoAutoSubmit) {
           if (!promptPanel.paramDefn.showParameterUI()) {
             this._hideToolbarPromptControls();
           }
@@ -187,7 +187,7 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
           // Reset layout inited flag.
           // Note also that initLayout cannot be executed before init.
           this._layoutInited = false;
-          basePanelInit.call(promptPanel);
+          basePanelInit.call(promptPanel, noAutoAutoSubmit);
           this._initLayout(promptPanel);
         },
 
@@ -597,11 +597,13 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
         // Show glass-pane
         dijit.byId('glassPane').show();
         
+        // When !AutoSubmit, a renderMode=XML call has not been done yet,
+        //  and must be done now so that the page controls have enough info.
         if(!promptPanel.getAutoSubmitSetting()) {
           // FETCH page-count info before rendering report
           var callback = logged("_updateReportContent_fetchParameterCallback", function(newParamDefn) {
             // Recreates the prompt panel's CDF components
-            promptPanel.refresh(newParamDefn);
+            promptPanel.refresh(newParamDefn, /*noAutoAutoSubmit*/true);
             
             me._updateReportContentCore(promptPanel, keyArgs);
           });
@@ -794,6 +796,7 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
       }
     }); // end of: var v = { 
 
+    // Replace default prompt load
     reportPrompt.load = v.load.bind(v);
     return v;
   };
