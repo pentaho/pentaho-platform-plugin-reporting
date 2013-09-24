@@ -1,19 +1,19 @@
-/*
- * This program is free software; you can redistribute it and/or modify it under the 
- * terms of the GNU Lesser General Public License, version 2.1 as published by the Free Software 
- * Foundation.
- *
- * You should have received a copy of the GNU Lesser General Public License along with this 
- * program; if not, you can obtain a copy at http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html 
- * or from the Free Software Foundation, Inc., 
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; 
- * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU Lesser General Public License for more details.
- *
- * Copyright 2010-2013 Pentaho Corporation.  All rights reserved.
- */
+/*!
+* This program is free software; you can redistribute it and/or modify it under the
+* terms of the GNU Lesser General Public License, version 2.1 as published by the Free Software
+* Foundation.
+*
+* You should have received a copy of the GNU Lesser General Public License along with this
+* program; if not, you can obtain a copy at http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
+* or from the Free Software Foundation, Inc.,
+* 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+*
+* This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+* without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+* See the GNU Lesser General Public License for more details.
+*
+* Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
+*/
 
 package org.pentaho.reporting.platform.plugin;
 
@@ -142,6 +142,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   private InputStream reportDefinitionInputStream;
   private IActionSequenceResource reportDefinition;
   private Serializable fileId;
+  private String reportDefinitionPath;
   private boolean paginateOutput;
   private int acceptedPage;
   private int pageCount;
@@ -286,6 +287,25 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     this.fileId = fileId;
   }
 
+  /**
+   * Returns the path to the report definition (for platform use this is a path in the solution repository)
+   * 
+   * @return reportdefinitionPath
+   */
+  public String getReportDefinitionPath() {
+    return reportDefinitionPath;
+  }
+
+  /**
+   * Sets the path to the report definition (platform path)
+   * 
+   * @param reportDefinitionPath
+   *          the path to the report definition.
+   */
+  public void setReportDefinitionPath(String reportDefinitionPath) {
+    this.reportDefinitionPath = reportDefinitionPath;
+  }  
+  
   /**
    * Returns true if the report engine will be asked to use a paginated (HTML) output processor
    *
@@ -487,7 +507,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     {
       return Collections.unmodifiableMap(inputs);
     }
-    return Collections.EMPTY_MAP;
+    return Collections.emptyMap();
   }
 
   /**
@@ -587,6 +607,11 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
         // load the report definition as an action-sequence resource
         report = ReportCreator.createReportByName(reportDefinition.getAddress());
       }
+      else if (reportDefinitionPath != null)
+      {
+        // load the report definition as an action-sequence resource
+        report = ReportCreator.createReportByName(reportDefinitionPath);
+      }
       else if (fileId != null)
       {
         report = ReportCreator.createReport(fileId);
@@ -626,7 +651,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
 
     if (clRaw instanceof Collection)
     {
-      final Collection c = (Collection) clRaw;
+      final Collection<?> c = (Collection<?>) clRaw;
       final CSVQuoter quoter = new CSVQuoter(',', '"');
       final StringBuilder b = new StringBuilder();
       for (final Object o : c)
@@ -1004,7 +1029,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    */
   public boolean validate() throws Exception
   {
-    if (reportDefinition == null && reportDefinitionInputStream == null && fileId == null)
+    if (reportDefinition == null && reportDefinitionInputStream == null && fileId == null && reportDefinitionPath == null)
     {
       log.error(Messages.getInstance().getString("ReportPlugin.reportDefinitionNotProvided")); //$NON-NLS-1$
       return false;
