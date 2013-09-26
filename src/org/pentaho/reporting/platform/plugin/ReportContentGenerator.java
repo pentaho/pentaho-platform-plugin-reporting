@@ -58,9 +58,9 @@ public class ReportContentGenerator extends ParameterContentGenerator {
     final IParameterProvider pathParams = getPathParameters();
 
     if (requestParams != null && requestParams.getStringParameter("path", null) != null) {
-      path = URLDecoder.decode(requestParams.getStringParameter("path", ""), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+      path = requestParams.getStringParameter("path", ""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     } else if (pathParams != null && pathParams.getStringParameter("path", null) != null) {
-      path = URLDecoder.decode(pathParams.getStringParameter("path", ""), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+      path = pathParams.getStringParameter("path", ""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     }
     
     if (requestParams != null && requestParams.getStringParameter("renderMode", null) != null) {
