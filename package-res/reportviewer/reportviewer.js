@@ -1,3 +1,20 @@
+/*!
+* This program is free software; you can redistribute it and/or modify it under the
+* terms of the GNU Lesser General Public License, version 2.1 as published by the Free Software
+* Foundation.
+*
+* You should have received a copy of the GNU Lesser General Public License along with this
+* program; if not, you can obtain a copy at http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
+* or from the Free Software Foundation, Inc.,
+* 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+*
+* This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+* without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+* See the GNU Lesser General Public License for more details.
+*
+* Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
+*/
+
 pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui/util/timeutil', 'common-ui/util/formatting'], function(util) {
   
   return function(reportPrompt) {
@@ -144,12 +161,20 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
             !inSchedulerDialog &&
 
             (promptPanel.forceAutoSubmit || 
-             promptPanel.paramDefn.allowAutoSubmit() || // (BISERVER-6915)
+             this._isAutoSubmitAllowed() ||
              prompt.mode === 'MANUAL');
           
           return visible;
         },
 
+        _isAutoSubmitAllowed : function() {
+        	if(document.getElementsByTagName("IFRAME").length > 0) {
+        		if(document.getElementsByTagName("IFRAME")[0].src != null) {
+        			return document.getElementsByTagName("IFRAME")[0].src.indexOf('dashboard-mode') !== -1
+        		}   
+        	}
+        },
+        
         _hasReportContent: function() {
           var iframe = dojo.byId('reportContent');
           var src = iframe.src;
