@@ -505,17 +505,20 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
     }
     // force autoSubmit flag (based on settings.xml)?
     IPluginManager pm = PentahoSystem.get(IPluginManager.class);
-    Object autoSubmitSetting = pm.getPluginSetting("reporting", "settings/auto-submit", null);
-    if (autoSubmitSetting != null)
+    if (pm != null) 
     {
-      boolean autoSubmit = Boolean.parseBoolean(autoSubmitSetting.toString());
-      report.setAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.AUTO_SUBMIT_PARAMETER, autoSubmit);
-    }
-    Object autoSubmitDefaultSetting = pm.getPluginSetting("reporting", "settings/auto-submit-default", null);
-    if (autoSubmitDefaultSetting != null)
-    {
-      boolean autoSubmitDefault = Boolean.parseBoolean(autoSubmitDefaultSetting.toString());
-      report.setAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.AUTO_SUBMIT_DEFAULT, autoSubmitDefault);
+      Object autoSubmitSetting = pm.getPluginSetting("reporting", "settings/auto-submit", null);
+      if (autoSubmitSetting != null)
+      {
+        boolean autoSubmit = Boolean.parseBoolean(autoSubmitSetting.toString());
+        report.setAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.AUTO_SUBMIT_PARAMETER, autoSubmit);
+      }
+      Object autoSubmitDefaultSetting = pm.getPluginSetting("reporting", "settings/auto-submit-default", null);
+      if (autoSubmitDefaultSetting != null)
+      {
+        boolean autoSubmitDefault = Boolean.parseBoolean(autoSubmitDefaultSetting.toString());
+        report.setAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.AUTO_SUBMIT_DEFAULT, autoSubmitDefault);
+      }
     }
     return report;
   }

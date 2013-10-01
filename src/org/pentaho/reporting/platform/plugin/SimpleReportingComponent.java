@@ -627,23 +627,26 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
 
     // force autoSubmit flag (based on settings.xml)?
     IPluginManager pm = PentahoSystem.get(IPluginManager.class);
-    Object autoSubmitSetting = pm.getPluginSetting("reporting", "settings/auto-submit", null);
-    if (autoSubmitSetting != null)
+    if (pm != null) 
     {
-      boolean autoSubmit = Boolean.parseBoolean(autoSubmitSetting.toString());
-      report.setAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.AUTO_SUBMIT_PARAMETER, autoSubmit);
-    }
-    Object autoSubmitDefaultSetting = pm.getPluginSetting("reporting", "settings/auto-submit-default", null);
-    if (autoSubmitDefaultSetting != null)
-    {
-      boolean autoSubmitDefault = Boolean.parseBoolean(autoSubmitDefaultSetting.toString());
-      report.setAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.AUTO_SUBMIT_DEFAULT, autoSubmitDefault);
-    }
+      Object autoSubmitSetting = pm.getPluginSetting("reporting", "settings/auto-submit", null);
+      if (autoSubmitSetting != null)
+      {
+        boolean autoSubmit = Boolean.parseBoolean(autoSubmitSetting.toString());
+        report.setAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.AUTO_SUBMIT_PARAMETER, autoSubmit);
+      }
+      Object autoSubmitDefaultSetting = pm.getPluginSetting("reporting", "settings/auto-submit-default", null);
+      if (autoSubmitDefaultSetting != null)
+      {
+        boolean autoSubmitDefault = Boolean.parseBoolean(autoSubmitDefaultSetting.toString());
+        report.setAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.AUTO_SUBMIT_DEFAULT, autoSubmitDefault);
+      }
     
-    // lock preferred output?
-    if (forceUnlockPreferredOutput && Boolean.parseBoolean(pm.getPluginSetting("reporting", "settings/force-prpti-output-unlock", "false").toString())) 
-    {
-      report.setAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.LOCK_PREFERRED_OUTPUT_TYPE, false);
+      // lock preferred output?
+      if (forceUnlockPreferredOutput && Boolean.parseBoolean(pm.getPluginSetting("reporting", "settings/force-prpti-output-unlock", "false").toString())) 
+      {
+        report.setAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.LOCK_PREFERRED_OUTPUT_TYPE, false);
+      }
     }
 
     return report;
