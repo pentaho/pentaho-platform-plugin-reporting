@@ -4,5 +4,13 @@
     <cache-messages>true</cache-messages>
     <!-- how far ahead to set the browser's cache -->
     <max-age>2628001</max-age>
-    <cache>true</cache>  <force-prpti-output-unlock>false</force-prpti-output-unlock>
+    <cache>true</cache>  
+	
+	<force-prpti-output-unlock>false</force-prpti-output-unlock>
+    
+	<!--
+    <auto-submit>false</auto-submit>
+    <auto-submit-default>false</auto-submit-default>
+	-->
+    
 </settings>
