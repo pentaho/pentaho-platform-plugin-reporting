@@ -625,9 +625,22 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       report.setReportEnvironment(new PentahoReportEnvironment(report.getConfiguration(), clText));
     }
 
-    // lock preferred output?
-    
+    // force autoSubmit flag (based on settings.xml)?
     IPluginManager pm = PentahoSystem.get(IPluginManager.class);
+    Object autoSubmitSetting = pm.getPluginSetting("reporting", "settings/auto-submit", null);
+    if (autoSubmitSetting != null)
+    {
+      boolean autoSubmit = Boolean.parseBoolean(autoSubmitSetting.toString());
+      report.setAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.AUTO_SUBMIT_PARAMETER, autoSubmit);
+    }
+    Object autoSubmitDefaultSetting = pm.getPluginSetting("reporting", "settings/auto-submit-default", null);
+    if (autoSubmitDefaultSetting != null)
+    {
+      boolean autoSubmitDefault = Boolean.parseBoolean(autoSubmitDefaultSetting.toString());
+      report.setAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.AUTO_SUBMIT_DEFAULT, autoSubmitDefault);
+    }
+    
+    // lock preferred output?
     if (forceUnlockPreferredOutput && Boolean.parseBoolean(pm.getPluginSetting("reporting", "settings/force-prpti-output-unlock", "false").toString())) 
     {
       report.setAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.LOCK_PREFERRED_OUTPUT_TYPE, false);
@@ -1155,12 +1168,12 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       {
         report.getReportConfiguration().setConfigProperty(HtmlTableModule.BODY_FRAGMENT, "true");
       }
-		  // don't use the content repository
-		  final Configuration globalConfig = ClassicEngineBoot.getInstance().getGlobalConfig();
-		  String contentHandlerPattern = PentahoRequestContextHolder.getRequestContext().getContextPath();
-		  contentHandlerPattern += (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN,
-		      globalConfig.getConfigProperty("org.pentaho.web.ContentHandler")); //$NON-NLS-1$
-		  reportOutputHandler = new PageableHTMLOutput(contentHandlerPattern);
+      // don't use the content repository
+      final Configuration globalConfig = ClassicEngineBoot.getInstance().getGlobalConfig();
+      String contentHandlerPattern = PentahoRequestContextHolder.getRequestContext().getContextPath();
+      contentHandlerPattern += (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN,
+          globalConfig.getConfigProperty("org.pentaho.web.ContentHandler")); //$NON-NLS-1$
+      reportOutputHandler = new PageableHTMLOutput(contentHandlerPattern);
     }
     else if (HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE.equals(outputType))
     {
