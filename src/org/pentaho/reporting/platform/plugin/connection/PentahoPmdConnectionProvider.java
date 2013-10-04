@@ -18,15 +18,24 @@
 package org.pentaho.reporting.platform.plugin.connection;
 
 import java.sql.Connection;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.swing.table.TableModel;
 
 import org.pentaho.di.core.database.DatabaseMeta;
+import org.pentaho.metadata.query.model.Query;
 import org.pentaho.metadata.repository.IMetadataDomainRepository;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
+import org.pentaho.platform.plugin.action.jfreereport.helper.PentahoTableModel;
+import org.pentaho.platform.plugin.action.pentahometadata.MetadataQueryComponent;
+import org.pentaho.reporting.engine.classic.core.DataRow;
 import org.pentaho.reporting.engine.classic.core.ReportDataFactoryException;
 import org.pentaho.reporting.engine.classic.extensions.datasources.pmd.PmdConnectionProvider;
 import org.pentaho.reporting.libraries.resourceloader.ResourceKey;
 import org.pentaho.reporting.libraries.resourceloader.ResourceManager;
 import org.pentaho.reporting.platform.plugin.messages.Messages;
+
 
 public class PentahoPmdConnectionProvider extends PmdConnectionProvider
 {
@@ -77,4 +86,19 @@ public class PentahoPmdConnectionProvider extends PmdConnectionProvider
 
     return super.createConnection(databaseMeta, username, password);
   }
+
+  @Override
+  public TableModel executeQuery( final Query query, final DataRow parameters )
+    throws ReportDataFactoryException {
+    MetadataQueryComponent component = new MetadataQueryComponent();
+    Map<String, Object> inputs = new HashMap<String, Object>();
+    for ( String col : parameters.getColumnNames() ) {
+      inputs.put( col, parameters.get( col ) );
+    }
+    component.setQueryObject( query );
+    component.setInputs( inputs );
+    component.execute();
+    return new PentahoTableModel( component.getResultSet() );
+  }
+
 }
