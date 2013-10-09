@@ -1,19 +1,19 @@
 /*!
-* This program is free software; you can redistribute it and/or modify it under the
-* terms of the GNU Lesser General Public License, version 2.1 as published by the Free Software
-* Foundation.
-*
-* You should have received a copy of the GNU Lesser General Public License along with this
-* program; if not, you can obtain a copy at http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
-* or from the Free Software Foundation, Inc.,
-* 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-*
-* This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-* without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-* See the GNU Lesser General Public License for more details.
-*
-* Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
-*/
+ * This program is free software; you can redistribute it and/or modify it under the
+ * terms of the GNU Lesser General Public License, version 2.1 as published by the Free Software
+ * Foundation.
+ *
+ * You should have received a copy of the GNU Lesser General Public License along with this
+ * program; if not, you can obtain a copy at http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
+ * or from the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU Lesser General Public License for more details.
+ *
+ * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
+ */
 
 package org.pentaho.reporting.platform.plugin;
 
@@ -49,8 +49,8 @@ public class RepositoryResourceData extends AbstractResourceData {
    * @param key
    *          resource key
    */
-  public RepositoryResourceData(final ResourceKey key) {
-    if (key == null) {
+  public RepositoryResourceData( final ResourceKey key ) {
+    if ( key == null ) {
       throw new NullPointerException();
     }
 
@@ -65,22 +65,23 @@ public class RepositoryResourceData extends AbstractResourceData {
    *          resource manager
    * @return input stream
    */
-  public InputStream getResourceAsStream(ResourceManager caller) throws ResourceLoadingException {
+  public InputStream getResourceAsStream( ResourceManager caller ) throws ResourceLoadingException {
     IUnifiedRepository unifiedRepository = null;
     try {
-      unifiedRepository = PentahoSystem.get(IUnifiedRepository.class);
-      RepositoryFile repositoryFile = unifiedRepository.getFile(key.getIdentifierAsString());
-      if (repositoryFile == null) {
-        repositoryFile = unifiedRepository.getFileById(key.getIdentifierAsString());
+      unifiedRepository = PentahoSystem.get( IUnifiedRepository.class );
+      RepositoryFile repositoryFile = unifiedRepository.getFile( key.getIdentifierAsString() );
+      if ( repositoryFile == null ) {
+        repositoryFile = unifiedRepository.getFileById( key.getIdentifierAsString() );
       }
-      if (repositoryFile == null) {
+      if ( repositoryFile == null ) {
         throw new ResourceLoadingException();
       }
-      SimpleRepositoryFileData fileData = unifiedRepository.getDataForRead(repositoryFile.getId(), SimpleRepositoryFileData.class);
+      SimpleRepositoryFileData fileData =
+          unifiedRepository.getDataForRead( repositoryFile.getId(), SimpleRepositoryFileData.class );
       return fileData.getStream();
-    } catch (UnifiedRepositoryException ex) {
+    } catch ( UnifiedRepositoryException ex ) {
       // might be due to access denial
-        throw new ResourceLoadingException(ex.getLocalizedMessage(), ex);
+      throw new ResourceLoadingException( ex.getLocalizedMessage(), ex );
     }
   }
 
@@ -91,8 +92,8 @@ public class RepositoryResourceData extends AbstractResourceData {
    *          attribute requested
    * @return attribute value
    */
-  public Object getAttribute(final String lookupKey) {
-    if (lookupKey.equals(ResourceData.FILENAME)) {
+  public Object getAttribute( final String lookupKey ) {
+    if ( lookupKey.equals( ResourceData.FILENAME ) ) {
       return filename;
     }
     return null;
@@ -106,26 +107,27 @@ public class RepositoryResourceData extends AbstractResourceData {
    * 
    * @return version
    */
-  public long getVersion(ResourceManager caller) throws ResourceLoadingException {
-    IUnifiedRepository unifiedRepository = PentahoSystem.get(IUnifiedRepository.class, PentahoSessionHolder.getSession());
+  public long getVersion( ResourceManager caller ) throws ResourceLoadingException {
+    IUnifiedRepository unifiedRepository =
+        PentahoSystem.get( IUnifiedRepository.class, PentahoSessionHolder.getSession() );
     RepositoryFile repositoryFile = null;
     try {
-    // if we got a FileNotFoundException on getResourceInputStream then we will get a null file; avoid NPE
-      repositoryFile = unifiedRepository.getFile(key.getIdentifier().toString());
-      if (repositoryFile != null) {
+      // if we got a FileNotFoundException on getResourceInputStream then we will get a null file; avoid NPE
+      repositoryFile = unifiedRepository.getFile( key.getIdentifier().toString() );
+      if ( repositoryFile != null ) {
         return repositoryFile.getLastModifiedDate().getTime();
       } else {
         return -1;
       }
-    } catch(UnifiedRepositoryException ex) {
+    } catch ( UnifiedRepositoryException ex ) {
       try {
-        repositoryFile = unifiedRepository.getFileById(key.getIdentifier().toString());
-      } catch(UnifiedRepositoryException exception) {
-        return -1;  
+        repositoryFile = unifiedRepository.getFileById( key.getIdentifier().toString() );
+      } catch ( UnifiedRepositoryException exception ) {
+        return -1;
       }
     }
     // if we got a FileNotFoundException on getResourceInputStream then we will get a null file; avoid NPE
-    if (repositoryFile != null) {
+    if ( repositoryFile != null ) {
       return repositoryFile.getLastModifiedDate().getTime();
     } else {
       return -1;

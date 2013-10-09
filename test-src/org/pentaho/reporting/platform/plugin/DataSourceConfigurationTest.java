@@ -1,19 +1,19 @@
 /*!
-* This program is free software; you can redistribute it and/or modify it under the
-* terms of the GNU Lesser General Public License, version 2.1 as published by the Free Software
-* Foundation.
-*
-* You should have received a copy of the GNU Lesser General Public License along with this
-* program; if not, you can obtain a copy at http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
-* or from the Free Software Foundation, Inc.,
-* 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-*
-* This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-* without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-* See the GNU Lesser General Public License for more details.
-*
-* Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
-*/
+ * This program is free software; you can redistribute it and/or modify it under the
+ * terms of the GNU Lesser General Public License, version 2.1 as published by the Free Software
+ * Foundation.
+ *
+ * You should have received a copy of the GNU Lesser General Public License along with this
+ * program; if not, you can obtain a copy at http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
+ * or from the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU Lesser General Public License for more details.
+ *
+ * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
+ */
 
 package org.pentaho.reporting.platform.plugin;
 
@@ -38,8 +38,10 @@ import org.pentaho.reporting.engine.classic.core.modules.parser.data.sql.Connect
 import org.pentaho.reporting.engine.classic.core.modules.parser.data.sql.SQLDataFactoryModule;
 import org.pentaho.reporting.engine.classic.extensions.datasources.cda.CdaQueryBackend;
 import org.pentaho.reporting.engine.classic.extensions.datasources.kettle.KettleDataFactoryModule;
-import org.pentaho.reporting.engine.classic.extensions.datasources.kettle.parser.KettleTransformationProducerReadHandler;
-import org.pentaho.reporting.engine.classic.extensions.datasources.kettle.parser.KettleTransformationProducerReadHandlerFactory;
+import org.pentaho.reporting.engine.classic.extensions.datasources
+   .kettle.parser.KettleTransformationProducerReadHandler;
+import org.pentaho.reporting.engine.classic.extensions.datasources
+   .kettle.parser.KettleTransformationProducerReadHandlerFactory;
 import org.pentaho.reporting.engine.classic.extensions.datasources.mondrian.CubeFileProvider;
 import org.pentaho.reporting.engine.classic.extensions.datasources.mondrian.MondrianConnectionProvider;
 import org.pentaho.reporting.engine.classic.extensions.datasources.mondrian.MondrianDataFactoryModule;
@@ -68,112 +70,97 @@ import org.pentaho.reporting.platform.plugin.repository.TempDirectoryNameGenerat
 import org.pentaho.test.platform.engine.core.MicroPlatform;
 import org.springframework.security.userdetails.UserDetailsService;
 
-public class DataSourceConfigurationTest extends TestCase
-{
+public class DataSourceConfigurationTest extends TestCase {
 
   private MicroPlatform microPlatform;
   private ObjectFactory objectFactory;
 
-  public DataSourceConfigurationTest()
-  {
+  public DataSourceConfigurationTest() {
   }
 
   @Override
-  protected void setUp() throws Exception
-  {
-    microPlatform = new MicroPlatform("./resource/solution"); //$NON-NLS-1$
-    microPlatform.define(ISolutionEngine.class, SolutionEngine.class);
-    microPlatform.define(IUnifiedRepository.class, FileSystemBackedUnifiedRepository.class);
-    microPlatform.define(IPluginProvider.class, SystemPathXmlPluginProvider.class);
-    microPlatform.define(IServiceManager.class, DefaultServiceManager.class, IPentahoDefinableObjectFactory.Scope.GLOBAL);
-    microPlatform.define(PentahoNameGenerator.class, TempDirectoryNameGenerator.class, IPentahoDefinableObjectFactory.Scope.GLOBAL);
-    microPlatform.define(IUserRoleListService.class, MockUserRoleListService.class);
-    microPlatform.define(UserDetailsService.class, MockUserDetailsService.class);
+  protected void setUp() throws Exception {
+    microPlatform = new MicroPlatform( "./resource/solution" ); //$NON-NLS-1$
+    microPlatform.define( ISolutionEngine.class, SolutionEngine.class );
+    microPlatform.define( IUnifiedRepository.class, FileSystemBackedUnifiedRepository.class );
+    microPlatform.define( IPluginProvider.class, SystemPathXmlPluginProvider.class );
+    microPlatform.define( IServiceManager.class, DefaultServiceManager.class,
+        IPentahoDefinableObjectFactory.Scope.GLOBAL );
+    microPlatform.define( PentahoNameGenerator.class, TempDirectoryNameGenerator.class,
+        IPentahoDefinableObjectFactory.Scope.GLOBAL );
+    microPlatform.define( IUserRoleListService.class, MockUserRoleListService.class );
+    microPlatform.define( UserDetailsService.class, MockUserDetailsService.class );
     microPlatform.start();
 
     // micro-platform does not boot the engine ..
     ClassicEngineBoot.getInstance().start();
 
     IPentahoSession session = new StandaloneSession();
-    PentahoSessionHolder.setSession(session);
+    PentahoSessionHolder.setSession( session );
 
     objectFactory = ClassicEngineBoot.getInstance().getObjectFactory();
   }
 
   @Override
-  protected void tearDown() throws Exception
-  {
+  protected void tearDown() throws Exception {
     microPlatform.stop();
   }
 
-  public void testCdaQueryBackend()
-  {
-    assertInstanceOf(objectFactory.get(CdaQueryBackend.class), CdaPluginLocalQueryBackend.class);
+  public void testCdaQueryBackend() {
+    assertInstanceOf( objectFactory.get( CdaQueryBackend.class ), CdaPluginLocalQueryBackend.class );
   }
 
-  private void assertInstanceOf(final Object returnedType,
-                                final Class expectedType)
-  {
-    if (expectedType.isInstance(returnedType))
-    {
+  private void assertInstanceOf( final Object returnedType, final Class expectedType ) {
+    if ( expectedType.isInstance( returnedType ) ) {
       return;
     }
-    if (returnedType == null)
-    {
-      fail("Expected object of type " + expectedType + " but got <null>");
-    }
-    else
-    {
-      fail("Expected object of type " + expectedType + " but got " + returnedType.getClass());
+    if ( returnedType == null ) {
+      fail( "Expected object of type " + expectedType + " but got <null>" );
+    } else {
+      fail( "Expected object of type " + expectedType + " but got " + returnedType.getClass() );
     }
   }
 
-  public void testMondrianConnectionProvider()
-  {
-    assertInstanceOf(objectFactory.get(MondrianConnectionProvider.class), PentahoMondrianConnectionProvider.class);
-    assertInstanceOf(objectFactory.get(CubeFileProvider.class), PentahoCubeFileProvider.class);
+  public void testMondrianConnectionProvider() {
+    assertInstanceOf( objectFactory.get( MondrianConnectionProvider.class ), PentahoMondrianConnectionProvider.class );
+    assertInstanceOf( objectFactory.get( CubeFileProvider.class ), PentahoCubeFileProvider.class );
   }
 
-  public void testPentahoCubeFileProviderReadHandler()
-  {
+  public void testPentahoCubeFileProviderReadHandler() {
     final CubeFileProviderReadHandler handler =
-            CubeFileProviderReadHandlerFactory.getInstance().getHandler(MondrianDataFactoryModule.NAMESPACE, "cube-file");
-    assertInstanceOf(handler, PentahoCubeFileProviderReadHandler.class);
+        CubeFileProviderReadHandlerFactory.getInstance().getHandler( MondrianDataFactoryModule.NAMESPACE, "cube-file" );
+    assertInstanceOf( handler, PentahoCubeFileProviderReadHandler.class );
   }
 
-  public void testPentahoJndiConnectionReadHandler()
-  {
+  public void testPentahoJndiConnectionReadHandler() {
     final ConnectionReadHandler handler =
-            ConnectionReadHandlerFactory.getInstance().getHandler(SQLDataFactoryModule.NAMESPACE, "jndi");
-    assertInstanceOf(handler, PentahoJndiConnectionReadHandler.class);
+        ConnectionReadHandlerFactory.getInstance().getHandler( SQLDataFactoryModule.NAMESPACE, "jndi" );
+    assertInstanceOf( handler, PentahoJndiConnectionReadHandler.class );
   }
 
-  public void testKettleTransFromFileReadHandler()
-  {
+  public void testKettleTransFromFileReadHandler() {
     final KettleTransformationProducerReadHandler handler =
-            KettleTransformationProducerReadHandlerFactory.getInstance().getHandler(KettleDataFactoryModule.NAMESPACE, "query-file");
-    assertInstanceOf(handler, PentahoKettleTransFromFileReadHandler.class);
+        KettleTransformationProducerReadHandlerFactory.getInstance().getHandler( KettleDataFactoryModule.NAMESPACE,
+            "query-file" );
+    assertInstanceOf( handler, PentahoKettleTransFromFileReadHandler.class );
   }
 
-  public void testMondrianDataSourceProvider()
-  {
+  public void testMondrianDataSourceProvider() {
     final DataSourceProviderReadHandler handler =
-            DataSourceProviderReadHandlerFactory.getInstance().getHandler(MondrianDataFactoryModule.NAMESPACE, "jndi");
-    assertInstanceOf(handler, PentahoMondrianDataSourceProviderReadHandler.class);
+        DataSourceProviderReadHandlerFactory.getInstance().getHandler( MondrianDataFactoryModule.NAMESPACE, "jndi" );
+    assertInstanceOf( handler, PentahoMondrianDataSourceProviderReadHandler.class );
   }
 
-  public void testOlap4JDataSourceProvider()
-  {
+  public void testOlap4JDataSourceProvider() {
     final OlapConnectionReadHandler handler =
-            OlapConnectionReadHandlerFactory.getInstance().getHandler(Olap4JDataFactoryModule.NAMESPACE, "jndi");
-    assertInstanceOf(handler, PentahoOlap4JJndiConnectionReadHandler.class);
+        OlapConnectionReadHandlerFactory.getInstance().getHandler( Olap4JDataFactoryModule.NAMESPACE, "jndi" );
+    assertInstanceOf( handler, PentahoOlap4JJndiConnectionReadHandler.class );
   }
 
-  public void testPmdConnectionReadHandler()
-  {
+  public void testPmdConnectionReadHandler() {
     final IPmdConfigReadHandler handler =
-            PmdConfigReadHandlerFactory.getInstance().getHandler(PmdDataFactoryModule.NAMESPACE, "config");
-    assertInstanceOf(handler, PentahoPmdConfigReadHandler.class);
+        PmdConfigReadHandlerFactory.getInstance().getHandler( PmdDataFactoryModule.NAMESPACE, "config" );
+    assertInstanceOf( handler, PentahoPmdConfigReadHandler.class );
   }
 
 }
