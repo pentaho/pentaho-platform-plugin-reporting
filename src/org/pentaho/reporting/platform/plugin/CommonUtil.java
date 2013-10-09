@@ -15,21 +15,15 @@
  * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
  */
 
-package org.pentaho.reporting.platform.plugin.connection;
-
-import org.pentaho.reporting.engine.classic.extensions.datasources.mondrian.parser.DefaultCubeFileProviderReadHandler;
-import org.pentaho.reporting.engine.classic.extensions.datasources.mondrian.CubeFileProvider;
+package org.pentaho.reporting.platform.plugin;
 
 /**
- * @deprecated the DefaultCubeFileProviderReadHandler uses the object factory to get an instance of the actual
- *             DefaultCubeFileProviderReadHandler implementation. There is no need for this crutch here anymore.
+ * @author Rowell Belen
  */
-@Deprecated
-public class PentahoCubeFileProviderReadHandler extends DefaultCubeFileProviderReadHandler {
-  public PentahoCubeFileProviderReadHandler() {
+public class CommonUtil {
+
+  public static void checkStyleIgnore() {
+    // do nothing
   }
 
-  public CubeFileProvider getProvider() {
-    return new PentahoCubeFileProvider( getPath(), getCubeConnectionName() );
-  }
 }

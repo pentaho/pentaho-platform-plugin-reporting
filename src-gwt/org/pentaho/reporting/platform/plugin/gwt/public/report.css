@@ -13,8 +13,8 @@ body {
   background-color: white;
   border: hidden;
   frameborder: 0;
-  overflow:visible; 
-  width:100%; 
+  overflow: visible;
+  width: 100%;
 }
 
 .parameter-disclosure {
@@ -36,25 +36,25 @@ body {
 }
 
 .parameter-application {
-	background-color: #efefef;
-	border: 1px solid #777777;
+  background-color: #efefef;
+  border: 1px solid #777777;
 }
 
 .IE .parameter-application .pentaho-disclosure-panel-open {
-	padding-top: 0px;
-	padding-left: 0px;
-	padding-right: 0px;
+  padding-top: 0px;
+  padding-left: 0px;
+  padding-right: 0px;
 }
 
 .IE .parameter-application .pentaho-disclosure-panel-closed {
-	padding-top: 0px;
-	padding-left: 0px;
-	padding-right: 0px;
+  padding-top: 0px;
+  padding-left: 0px;
+  padding-right: 0px;
 }
 
 .parameter-submit-panel {
-	padding: 3px 0px 3px 10px;
-	margin-top: 10px;
+  padding: 3px 0px 3px 10px;
+  margin-top: 10px;
 }
 
 .parameter-container {
@@ -62,24 +62,24 @@ body {
 }
 
 .parameter {
-	margin: 5px 0px 0px 10px;
+  margin: 5px 0px 0px 10px;
 }
 
 .parameter-error {
-	margin: 5px 0px 0px 10px;
-	border: 1px solid red;
-	padding: 2px;
+  margin: 5px 0px 0px 10px;
+  border: 1px solid red;
+  padding: 2px;
 }
 
 .parameter-label {
-	font-size: 10pt;
-	font-weight: bold;
+  font-size: 10pt;
+  font-weight: bold;
   white-space: nowrap;
 }
 
 .parameter-error-label {
-	font-size: 10pt;
-	font-weight: bold;
+  font-size: 10pt;
+  font-weight: bold;
 }
 
 .parameter-flow {
@@ -117,7 +117,6 @@ body {
   font-size: 10pt;
 }
 
-
 .dialogButtonPanel {
   border-top: 1px solid #848484;
   background-color: #ececec;
@@ -147,7 +146,6 @@ body {
   height: 100%;
 }
 
-
 .pageControllerPanel {
   border-top: 1px solid #777777;
   padding-top: 5px;
@@ -165,13 +163,14 @@ body {
   background-color: #CCCCCC;
 }
 
-
 .gwt-DateBox input {
   width: 8em;
 }
+
 .dateBoxFormatError {
   background: #ffcccc;
 }
+
 .dateBoxPopup {
   z-index: 3;
 }
@@ -180,14 +179,17 @@ body {
   border: 1px solid #777777;
   cursor: default;
 }
+
 .gwt-DatePicker td,
 .datePickerMonthSelector td:focus {
   outline: none
 }
+
 .datePickerDays {
   width: 100%;
   background: white;
 }
+
 .datePickerDay,
 .datePickerWeekdayLabel,
 .datePickerWeekendLabel {
@@ -196,45 +198,56 @@ body {
   padding: 4px;
   outline: none;
 }
+
 .datePickerWeekdayLabel,
 .datePickerWeekendLabel {
   background: #CCCCCC;
   padding: 0px 4px 2px;
   cursor: default;
 }
+
 .datePickerDay {
   padding: 4px;
   cursor: pointer;
   cursor: hand;
 }
+
 .datePickerDayIsToday {
   border: 1px solid black;
   padding: 3px;
 }
+
 .datePickerDayIsWeekend {
   background: #EEEEEE;
 }
+
 .datePickerDayIsFiller {
   color: #888888;
 }
+
 .datePickerDayIsValue {
   background: #777777;
   color: white;
 }
+
 .datePickerDayIsDisabled {
   color: #AAAAAA;
   font-style: italic;
 }
+
 .datePickerDayIsHighlighted {
   background: #F0E68C;
 }
+
 .datePickerDayIsValueAndHighlighted {
   background: #bbddd9;
 }
+
 .datePickerMonthSelector {
   background: #CCCCCC;
   width: 100%;
 }
+
 td.datePickerMonth {
   text-align: center;
   vertical-align: middle;
@@ -242,6 +255,7 @@ td.datePickerMonth {
   font-size: 70%;
   font-weight: bold;
 }
+
 .datePickerPreviousButton,
 .datePickerNextButton {
   font-size: 120%;
@@ -251,7 +265,7 @@ td.datePickerMonth {
   padding: 0px 4px;
 }
 
-.waitPopup{
+.waitPopup {
   position: absolute;
   left: 44%;
   top: 44%;
@@ -261,7 +275,8 @@ td.datePickerMonth {
   border: 1px solid #ccc;
   background: white;
 }
-.waitPopup_table{
+
+.waitPopup_table {
   color: #444;
   background-image: url(large-loading.gif);
   background-position: left center;
@@ -269,7 +284,7 @@ td.datePickerMonth {
   font: bold 13px tahoma, arial, helvetica;
 }
 
-.waitPopup_title{
+.waitPopup_title {
 
   color: #444;
   font: bold 16px tahoma, arial, helvetica;
@@ -277,26 +292,26 @@ td.datePickerMonth {
   padding-bottom: 3px;
 }
 
-.waitPopup_msg{
+.waitPopup_msg {
   font: normal 13px arial, tahoma, sans-serif;
   margin-left: 40px;
 }
 
 .modalDialogPageBackground {
-  z-index:250;
+  z-index: 250;
   cursor: progress;
 }
 
 .parameter-content-panel {
-	background-color: #9f9f9f;
-	border: 1px solid black;
-	margin: 0px 10px 10px 10px;
-	padding: 10px;
+  background-color: #9f9f9f;
+  border: 1px solid black;
+  margin: 0px 10px 10px 10px;
+  padding: 10px;
 }
 
 .IE .parameter-content-panel {
-	margin: 0px;
-	padding: 0px;
+  margin: 0px;
+  padding: 0px;
 }
 
 .parameter-wrapper {
@@ -304,6 +319,7 @@ td.datePickerMonth {
   width: 100%;
   max-width: 100%;
 }
+
 .IE .parameter-wrapper {
   /* account for the scrollbar taking up vertical space when present */
   padding-bottom: 16px

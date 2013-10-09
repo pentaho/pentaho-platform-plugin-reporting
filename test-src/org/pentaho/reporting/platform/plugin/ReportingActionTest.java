@@ -1,19 +1,19 @@
 /*!
-* This program is free software; you can redistribute it and/or modify it under the
-* terms of the GNU Lesser General Public License, version 2.1 as published by the Free Software
-* Foundation.
-*
-* You should have received a copy of the GNU Lesser General Public License along with this
-* program; if not, you can obtain a copy at http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
-* or from the Free Software Foundation, Inc.,
-* 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-*
-* This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-* without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-* See the GNU Lesser General Public License for more details.
-*
-* Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
-*/
+ * This program is free software; you can redistribute it and/or modify it under the
+ * terms of the GNU Lesser General Public License, version 2.1 as published by the Free Software
+ * Foundation.
+ *
+ * You should have received a copy of the GNU Lesser General Public License along with this
+ * program; if not, you can obtain a copy at http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
+ * or from the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU Lesser General Public License for more details.
+ *
+ * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
+ */
 
 package org.pentaho.reporting.platform.plugin;
 
@@ -51,25 +51,25 @@ import org.springframework.security.userdetails.UserDetailsService;
  * @author Michael D'Amour
  */
 public class ReportingActionTest extends TestCase {
-  
+
   private MicroPlatform microPlatform;
-  
+
   @Override
   protected void setUp() throws Exception {
-    new File ("./resource/solution/system/tmp").mkdirs();
+    new File( "./resource/solution/system/tmp" ).mkdirs();
 
-    microPlatform = new MicroPlatform("./resource/solution"); //$NON-NLS-1$
-    microPlatform.define(ISolutionEngine.class, SolutionEngine.class);
-    microPlatform.define(IUnifiedRepository.class, FileSystemBackedUnifiedRepository.class);
-    microPlatform.define(IPluginProvider.class, SystemPathXmlPluginProvider.class);
-    microPlatform.define(IServiceManager.class, DefaultServiceManager.class, Scope.GLOBAL);
-    microPlatform.define(PentahoNameGenerator.class, TempDirectoryNameGenerator.class, Scope.GLOBAL);
-    microPlatform.define(IUserRoleListService.class, MockUserRoleListService.class);
-    microPlatform.define(UserDetailsService.class, MockUserDetailsService.class);
+    microPlatform = new MicroPlatform( "./resource/solution" ); //$NON-NLS-1$
+    microPlatform.define( ISolutionEngine.class, SolutionEngine.class );
+    microPlatform.define( IUnifiedRepository.class, FileSystemBackedUnifiedRepository.class );
+    microPlatform.define( IPluginProvider.class, SystemPathXmlPluginProvider.class );
+    microPlatform.define( IServiceManager.class, DefaultServiceManager.class, Scope.GLOBAL );
+    microPlatform.define( PentahoNameGenerator.class, TempDirectoryNameGenerator.class, Scope.GLOBAL );
+    microPlatform.define( IUserRoleListService.class, MockUserRoleListService.class );
+    microPlatform.define( UserDetailsService.class, MockUserDetailsService.class );
     microPlatform.start();
-    
+
     IPentahoSession session = new StandaloneSession();
-    PentahoSessionHolder.setSession(session);    
+    PentahoSessionHolder.setSession( session );
   }
 
   @Override
@@ -77,54 +77,51 @@ public class ReportingActionTest extends TestCase {
     microPlatform.stop();
   }
 
-
-  public void testPdf() throws Exception
-  {
+  public void testPdf() throws Exception {
     final SimpleReportingAction reportingAction = new SimpleReportingAction();
-    FileInputStream reportDefinition = new FileInputStream("resource/solution/test/reporting/report.prpt"); //$NON-NLS-1$
-    reportingAction.setInputStream(reportDefinition);
-    reportingAction.setOutputType("application/pdf"); //$NON-NLS-1$
+    FileInputStream reportDefinition = new FileInputStream( "resource/solution/test/reporting/report.prpt" ); //$NON-NLS-1$
+    reportingAction.setInputStream( reportDefinition );
+    reportingAction.setOutputType( "application/pdf" ); //$NON-NLS-1$
 
-    File outputFile = File.createTempFile("reportingActionTestResult", ".pdf"); //$NON-NLS-1$ //$NON-NLS-2$
-    System.out.println("Test output locatated at: " + outputFile.getAbsolutePath()); //$NON-NLS-1$
-    FileOutputStream outputStream = new FileOutputStream(outputFile); 
-    reportingAction.setOutputStream(outputStream);
+    File outputFile = File.createTempFile( "reportingActionTestResult", ".pdf" ); //$NON-NLS-1$ //$NON-NLS-2$
+    System.out.println( "Test output locatated at: " + outputFile.getAbsolutePath() ); //$NON-NLS-1$
+    FileOutputStream outputStream = new FileOutputStream( outputFile );
+    reportingAction.setOutputStream( outputStream );
 
     // validate the component
-    assertTrue(reportingAction.validate());
-    SecurityHelper.getInstance().runAsUser("joe", new Callable<Object>() { //$NON-NLS-1$
+    assertTrue( reportingAction.validate() );
+    SecurityHelper.getInstance().runAsUser( "joe", new Callable<Object>() { //$NON-NLS-1$
       public Object call() throws Exception {
         try {
           reportingAction.execute();
-        } catch (Exception e) {
+        } catch ( Exception e ) {
           e.printStackTrace();
           Assert.fail();
         }
         return null;
       }
-     
-    });
 
-    assertTrue(outputFile.exists());
+    } );
+
+    assertTrue( outputFile.exists() );
   }
-  
-  
-//  public void testHTML() throws Exception
-//  {
-//    // create an instance of the component
-//    SimpleReportingComponent rc = new SimpleReportingComponent();
-//    // create/set the InputStream
-//    FileInputStream reportDefinition = new FileInputStream("resource/solution/test/reporting/report.prpt"); //$NON-NLS-1$
-//    rc.setReportDefinitionInputStream(reportDefinition);
-//    rc.setOutputType("text/html"); //$NON-NLS-1$
-//
-//    FileOutputStream outputStream = new FileOutputStream("/tmp/" + System.currentTimeMillis() + ".html"); //$NON-NLS-1$ //$NON-NLS-2$
-//    rc.setOutputStream(outputStream);
-//
-//    // validate the component
-//    assertTrue(rc.validate());
-//    // execute the component
-//    assertTrue(rc.execute());
-//  }
+
+  // public void testHTML() throws Exception
+  // {
+  // // create an instance of the component
+  // SimpleReportingComponent rc = new SimpleReportingComponent();
+  // // create/set the InputStream
+  //    FileInputStream reportDefinition = new FileInputStream("resource/solution/test/reporting/report.prpt"); //$NON-NLS-1$
+  // rc.setReportDefinitionInputStream(reportDefinition);
+  //    rc.setOutputType("text/html"); //$NON-NLS-1$
+  //
+  //    FileOutputStream outputStream = new FileOutputStream("/tmp/" + System.currentTimeMillis() + ".html"); //$NON-NLS-1$ //$NON-NLS-2$
+  // rc.setOutputStream(outputStream);
+  //
+  // // validate the component
+  // assertTrue(rc.validate());
+  // // execute the component
+  // assertTrue(rc.execute());
+  // }
 
 }
