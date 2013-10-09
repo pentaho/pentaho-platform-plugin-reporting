@@ -234,7 +234,7 @@ public class ParameterXmlContentHandler {
   private static final String CONFIG_PARAM_HTML_PROPORTIONAL_WIDTH =
       "org.pentaho.reporting.engine.classic.core.modules.output.table.html.ProportionalColumnWidths";
 
-public ParameterXmlContentHandler(final ParameterContentGenerator contentGenerator, final boolean paginate)  {
+  public ParameterXmlContentHandler( final ParameterContentGenerator contentGenerator, final boolean paginate )  {
     this.paginate = paginate;
     this.inputs = contentGenerator.createInputs();
     this.requestParameters = contentGenerator.getRequestParameters();
@@ -449,8 +449,9 @@ public ParameterXmlContentHandler(final ParameterContentGenerator contentGenerat
         parameters.appendChild( element );
       }
 
-      if (vr.isEmpty() && paginate && reportComponent.getComputedOutputTarget().equals(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE)) //$NON-NLS-1$ //$NON-NLS-2$
-          && reportComponent.getComputedOutputTarget().equals( HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE ) ) //$NON-NLS-1$ //$NON-NLS-2$
+      if ( vr.isEmpty() && paginate
+          && reportComponent.getComputedOutputTarget()
+                                    .equals( HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE ) ) //$NON-NLS-1$ //$NON-NLS-2$
       {
         appendPageCount( reportComponent, parameters );
       }

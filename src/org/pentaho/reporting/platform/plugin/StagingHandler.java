@@ -150,6 +150,7 @@ public class StagingHandler {
           tmpFile.delete();
         } catch ( Exception ignored ) {
           // I can't delete it, perhaps the deleter can delete it.
+          CommonUtil.checkStyleIgnore();
         }
       }
       tmpFile = null;

@@ -80,7 +80,7 @@ public class ParameterTest extends TestCase {
 
   public void testParameterProcessing() throws Exception {
     final ParameterContentGenerator contentGenerator = new ParameterContentGenerator();
-    final ParameterXmlContentHandler handler = new ParameterXmlContentHandler(contentGenerator, false);
+    final ParameterXmlContentHandler handler = new ParameterXmlContentHandler( contentGenerator, false );
     handler.createParameterContent( System.out, "resource/solution/test/reporting/Product Sales.prpt",
         "resource/solution/test/reporting/Product Sales.prpt", false, null );
   }
@@ -95,7 +95,7 @@ public class ParameterTest extends TestCase {
   public void testEncodedParameterValues() throws Exception {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     final ParameterContentGenerator contentGenerator = new ParameterContentGenerator();
-      final ParameterXmlContentHandler handler = new ParameterXmlContentHandler(contentGenerator, false);
+    final ParameterXmlContentHandler handler = new ParameterXmlContentHandler( contentGenerator, false );
     // this test report has 3 param values, one "good" and two "bad": { 1234, x001a, x001a }
     handler.createParameterContent( baos, "resource/solution/test/reporting/prd3882.prpt",
         "resource/solution/test/reporting/prd3882.prpt", false, null );

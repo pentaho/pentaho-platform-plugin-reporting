@@ -40,11 +40,10 @@ public class ParameterContentGenerator extends SimpleContentGenerator {
   private String path = null;
   private IParameterProvider requestParameters;
 
-  public enum RENDER_TYPE
-  {
+  public enum RENDER_TYPE {
     REPORT, XML, PARAMETER, SUBSCRIBE, DOWNLOAD
-  }  
-  
+  }
+
   @Override
   public void createContent( OutputStream outputStream ) throws Exception {
     IUnifiedRepository unifiedRepository = PentahoSystem.get( IUnifiedRepository.class, null );
@@ -58,28 +57,28 @@ public class ParameterContentGenerator extends SimpleContentGenerator {
     }
 
     RepositoryFile prptFile = unifiedRepository.getFile( idTopath( path ) );
-    
-    final RENDER_TYPE renderMode = RENDER_TYPE.valueOf
-            (requestParams.getStringParameter("renderMode", RENDER_TYPE.REPORT.toString()).toUpperCase()); //$NON-NLS-1$
-    
-    switch (renderMode)
-    {
-      case XML:
-      {
-   	    final ParameterXmlContentHandler parameterXmlContentHandler = new ParameterXmlContentHandler(this, true);
-   	    parameterXmlContentHandler.createParameterContent(outputStream, prptFile.getId(), prptFile.getPath(), false, null);
+
+    final RENDER_TYPE renderMode =
+        RENDER_TYPE.valueOf( requestParams
+            .getStringParameter( "renderMode", RENDER_TYPE.REPORT.toString() ).toUpperCase() ); //$NON-NLS-1$
+
+    switch ( renderMode ) {
+      case XML: {
+        final ParameterXmlContentHandler parameterXmlContentHandler = new ParameterXmlContentHandler( this, true );
+        parameterXmlContentHandler.createParameterContent( outputStream, prptFile.getId(), prptFile.getPath(), false,
+            null );
         break;
       }
-      case PARAMETER:
-      {
-        final ParameterXmlContentHandler parameterXmlContentHandler = new ParameterXmlContentHandler(this, false);
-        parameterXmlContentHandler.createParameterContent(outputStream, prptFile.getId(), prptFile.getPath(), false, null);
+      case PARAMETER: {
+        final ParameterXmlContentHandler parameterXmlContentHandler = new ParameterXmlContentHandler( this, false );
+        parameterXmlContentHandler.createParameterContent( outputStream, prptFile.getId(), prptFile.getPath(), false,
+            null );
         break;
       }
       default:
         throw new IllegalArgumentException();
-    }    
-    
+    }
+
   }
 
   @Override
