@@ -83,9 +83,9 @@ div.prompt-panel {
    PRD-4018, PRD-4034 FF & IE8 does not resize properly when iframe is hidden.
 */
 .contentHidden #reportArea {
-	position: absolute;
-	left: -100000;
-    top:  -100000;
+  position: absolute;
+  left: -100000px;
+  top:  -100000px;
 }
 
 .styled #reportArea {
