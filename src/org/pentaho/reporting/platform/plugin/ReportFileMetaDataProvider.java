@@ -1,19 +1,19 @@
 /*!
-* This program is free software; you can redistribute it and/or modify it under the
-* terms of the GNU Lesser General Public License, version 2.1 as published by the Free Software
-* Foundation.
-*
-* You should have received a copy of the GNU Lesser General Public License along with this
-* program; if not, you can obtain a copy at http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
-* or from the Free Software Foundation, Inc.,
-* 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-*
-* This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-* without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-* See the GNU Lesser General Public License for more details.
-*
-* Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
-*/
+ * This program is free software; you can redistribute it and/or modify it under the
+ * terms of the GNU Lesser General Public License, version 2.1 as published by the Free Software
+ * Foundation.
+ *
+ * You should have received a copy of the GNU Lesser General Public License along with this
+ * program; if not, you can obtain a copy at http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
+ * or from the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU Lesser General Public License for more details.
+ *
+ * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
+ */
 
 package org.pentaho.reporting.platform.plugin;
 
@@ -38,70 +38,60 @@ import org.pentaho.reporting.libraries.resourceloader.ResourceKey;
 import org.pentaho.reporting.libraries.resourceloader.ResourceManager;
 import org.pentaho.reporting.platform.plugin.messages.Messages;
 
-public class ReportFileMetaDataProvider extends SolutionFileMetaAdapter
-{
-  private static final Log logger = LogFactory.getLog(ReportFileMetaDataProvider.class);
+public class ReportFileMetaDataProvider extends SolutionFileMetaAdapter {
+  private static final Log logger = LogFactory.getLog( ReportFileMetaDataProvider.class );
 
-  public ReportFileMetaDataProvider()
-  {
+  public ReportFileMetaDataProvider() {
   }
 
-  public void setLogger(final ILogger logger)
-  {
+  public void setLogger( final ILogger logger ) {
   }
 
-  private DocumentMetaData loadMetaData(final String reportDefinitionPath) throws ResourceException
-  {
+  private DocumentMetaData loadMetaData( final String reportDefinitionPath ) throws ResourceException {
     final ResourceManager resourceManager = new ResourceManager();
     resourceManager.registerDefaults();
     final HashMap helperObjects = new HashMap();
     // add the runtime context so that PentahoResourceData class can get access
     // to the solution repo
-    final ResourceKey key = resourceManager.createKey
-        (RepositoryResourceLoader.SOLUTION_SCHEMA_NAME + RepositoryResourceLoader.SCHEMA_SEPARATOR
-            + reportDefinitionPath, helperObjects);
-    final Resource resource = resourceManager.create(key, null, DocumentBundle.class);
+    final ResourceKey key =
+        resourceManager.createKey( RepositoryResourceLoader.SOLUTION_SCHEMA_NAME
+            + RepositoryResourceLoader.SCHEMA_SEPARATOR + reportDefinitionPath, helperObjects );
+    final Resource resource = resourceManager.create( key, null, DocumentBundle.class );
     final DocumentBundle bundle = (DocumentBundle) resource.getResource();
     return bundle.getMetaData();
   }
 
-  public IFileInfo getFileInfo(final ISolutionFile solutionFile, final InputStream in)
-  {
-    try
-    {
-      final DocumentMetaData metaData = loadMetaData(solutionFile.getSolutionPath() + "/" + solutionFile.getFileName()); //$NON-NLS-1$
-      final String title = (String) metaData.getBundleAttribute
-          (ODFMetaAttributeNames.DublinCore.NAMESPACE, ODFMetaAttributeNames.DublinCore.TITLE);
-      final String author = (String) metaData.getBundleAttribute
-          (ODFMetaAttributeNames.DublinCore.NAMESPACE, ODFMetaAttributeNames.DublinCore.CREATOR);
-      final String description = (String) metaData.getBundleAttribute
-          (ODFMetaAttributeNames.DublinCore.NAMESPACE, ODFMetaAttributeNames.DublinCore.DESCRIPTION);
+  public IFileInfo getFileInfo( final ISolutionFile solutionFile, final InputStream in ) {
+    try {
+      final DocumentMetaData metaData =
+          loadMetaData( solutionFile.getSolutionPath() + "/" + solutionFile.getFileName() ); //$NON-NLS-1$
+      final String title =
+          (String) metaData.getBundleAttribute( ODFMetaAttributeNames.DublinCore.NAMESPACE,
+              ODFMetaAttributeNames.DublinCore.TITLE );
+      final String author =
+          (String) metaData.getBundleAttribute( ODFMetaAttributeNames.DublinCore.NAMESPACE,
+              ODFMetaAttributeNames.DublinCore.CREATOR );
+      final String description =
+          (String) metaData.getBundleAttribute( ODFMetaAttributeNames.DublinCore.NAMESPACE,
+              ODFMetaAttributeNames.DublinCore.DESCRIPTION );
       final IFileInfo fileInfo = new FileInfo();
-      if (StringUtils.isEmpty(title))
-      {
-        fileInfo.setTitle(solutionFile.getFileName());
+      if ( StringUtils.isEmpty( title ) ) {
+        fileInfo.setTitle( solutionFile.getFileName() );
+      } else {
+        fileInfo.setTitle( title );
       }
-      else
-      {
-        fileInfo.setTitle(title);
-      }
-      fileInfo.setAuthor(author); //$NON-NLS-1$
-      fileInfo.setDescription(description);
+      fileInfo.setAuthor( author ); //$NON-NLS-1$
+      fileInfo.setDescription( description );
 
       // displaytype is a magical constant defined in a internal class of the platform.
-      if ("false".equals(metaData.getBundleAttribute(ClassicEngineBoot.METADATA_NAMESPACE, "visible")))
-      {
-        fileInfo.setDisplayType("none"); // NON-NLS
-      }
-      else
-      {
-        fileInfo.setDisplayType("report"); // NON-NLS
+      if ( "false".equals( metaData.getBundleAttribute( ClassicEngineBoot.METADATA_NAMESPACE, "visible" ) ) ) {
+        fileInfo.setDisplayType( "none" ); // NON-NLS
+      } else {
+        fileInfo.setDisplayType( "report" ); // NON-NLS
       }
       return fileInfo;
-    }
-    catch (Exception e)
-    {
-      logger.warn(Messages.getInstance().getString("ReportPlugin.errorMetadataNotReadable"), e);
+    } catch ( Exception e ) {
+      logger.warn( Messages.getInstance().getString( "ReportPlugin.errorMetadataNotReadable" ), e );
       return null;
     }
   }

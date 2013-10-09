@@ -1,20 +1,20 @@
 <module rename-to="reportviewer">
-	<!-- Inherit the core Web Toolkit stuff. -->
-	<inherits name='com.google.gwt.user.User'/>
-	<inherits name='com.google.gwt.xml.XML'/>
+  <!-- Inherit the core Web Toolkit stuff. -->
+  <inherits name='com.google.gwt.user.User'/>
+  <inherits name='com.google.gwt.xml.XML'/>
 
-	<inherits name='org.pentaho.gwt.widgets.Widgets' />
-	<inherits name='org.pentaho.gwt.widgets.client.datepicker.DatePicker' />
-	<inherits name='org.pentaho.gwt.widgets.client.utils.i18n.I18N'/>
-	<inherits name='org.pentaho.gwt.widgets.client.utils.string.StringUtils' />
-	
-    <set-property name="gwt.suppressNonStaticFinalFieldWarnings" value="true" /> 
+  <inherits name='org.pentaho.gwt.widgets.Widgets'/>
+  <inherits name='org.pentaho.gwt.widgets.client.datepicker.DatePicker'/>
+  <inherits name='org.pentaho.gwt.widgets.client.utils.i18n.I18N'/>
+  <inherits name='org.pentaho.gwt.widgets.client.utils.string.StringUtils'/>
+
+  <set-property name="gwt.suppressNonStaticFinalFieldWarnings" value="true"/>
 
   <!-- This set of locales is here to support various number, date and currency formats -->
-  <extend-property name="locale" values="en_US"/>    
-	<!-- Specify the app entry point class.                   -->
-	<entry-point class='org.pentaho.reporting.platform.plugin.gwt.client.ReportViewer'/>
-	
-	<stylesheet src="report.css" />
-	
+  <extend-property name="locale" values="en_US"/>
+  <!-- Specify the app entry point class.                   -->
+  <entry-point class='org.pentaho.reporting.platform.plugin.gwt.client.ReportViewer'/>
+
+  <stylesheet src="report.css"/>
+
 </module>

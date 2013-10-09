@@ -1,19 +1,19 @@
 /*!
-* This program is free software; you can redistribute it and/or modify it under the
-* terms of the GNU Lesser General Public License, version 2.1 as published by the Free Software
-* Foundation.
-*
-* You should have received a copy of the GNU Lesser General Public License along with this
-* program; if not, you can obtain a copy at http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
-* or from the Free Software Foundation, Inc.,
-* 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-*
-* This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-* without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-* See the GNU Lesser General Public License for more details.
-*
-* Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
-*/
+ * This program is free software; you can redistribute it and/or modify it under the
+ * terms of the GNU Lesser General Public License, version 2.1 as published by the Free Software
+ * Foundation.
+ *
+ * You should have received a copy of the GNU Lesser General Public License along with this
+ * program; if not, you can obtain a copy at http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
+ * or from the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU Lesser General Public License for more details.
+ *
+ * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
+ */
 
 package org.pentaho.reporting.platform.plugin.output;
 
@@ -39,68 +39,56 @@ import org.pentaho.reporting.libraries.repository.ContentLocation;
 import org.pentaho.reporting.libraries.repository.DefaultNameGenerator;
 import org.pentaho.reporting.libraries.repository.email.EmailRepository;
 
-public class EmailOutput implements ReportOutputHandler
-{
-  public EmailOutput()
-  {
+public class EmailOutput implements ReportOutputHandler {
+  public EmailOutput() {
   }
 
-  public Object getReportLock()
-  {
+  public Object getReportLock() {
     return this;
   }
 
-  public int paginate(MasterReport report, int yieldRate) throws ReportProcessingException, IOException, ContentIOException {
+  public int paginate( MasterReport report, int yieldRate ) throws ReportProcessingException, IOException,
+    ContentIOException {
     return 0;
   }
 
-  public int generate(final MasterReport report,
-                          final int acceptedPage,
-                          final OutputStream outputStream,
-                          final int yieldRate) throws ReportProcessingException, IOException, ContentIOException
-  {
+  public int generate( final MasterReport report, final int acceptedPage, final OutputStream outputStream,
+      final int yieldRate ) throws ReportProcessingException, IOException, ContentIOException {
     final IApplicationContext ctx = PentahoSystem.getApplicationContext();
-    if (ctx == null)
-    {
+    if ( ctx == null ) {
       return -1;
     }
 
-    try
-    {
+    try {
       final Properties props = new Properties();
-      final Session session = Session.getInstance(props);
-      final EmailRepository dataRepository = new EmailRepository(session);
+      final Session session = Session.getInstance( props );
+      final EmailRepository dataRepository = new EmailRepository( session );
       final ContentLocation dataLocation = dataRepository.getRoot();
 
-      final HtmlOutputProcessor outputProcessor = new StreamHtmlOutputProcessor(report.getConfiguration());
-      final HtmlPrinter printer = new AllItemsHtmlPrinter(report.getResourceManager());
-      printer.setContentWriter(dataLocation, new DefaultNameGenerator(dataLocation, "index", "html"));//$NON-NLS-1$//$NON-NLS-2$
-      printer.setDataWriter(dataLocation, new DefaultNameGenerator(dataLocation));
-      printer.setUrlRewriter(new MailURLRewriter());
-      outputProcessor.setPrinter(printer);
+      final HtmlOutputProcessor outputProcessor = new StreamHtmlOutputProcessor( report.getConfiguration() );
+      final HtmlPrinter printer = new AllItemsHtmlPrinter( report.getResourceManager() );
+      printer.setContentWriter( dataLocation,
+         new DefaultNameGenerator( dataLocation, "index", "html" ) ); //$NON-NLS-1$ //$NON-NLS-2$
+      printer.setDataWriter( dataLocation, new DefaultNameGenerator( dataLocation ) );
+      printer.setUrlRewriter( new MailURLRewriter() );
+      outputProcessor.setPrinter( printer );
 
-      final StreamReportProcessor sp = new StreamReportProcessor(report, outputProcessor);
-      if (yieldRate > 0)
-      {
-        sp.addReportProgressListener(new YieldReportListener(yieldRate));
+      final StreamReportProcessor sp = new StreamReportProcessor( report, outputProcessor );
+      if ( yieldRate > 0 ) {
+        sp.addReportProgressListener( new YieldReportListener( yieldRate ) );
       }
 
-      try
-      {
+      try {
         sp.processReport();
-        dataRepository.writeEmail(outputStream);
+        dataRepository.writeEmail( outputStream );
 
         outputStream.flush();
         return 0;
-      }
-      finally
-      {
+      } finally {
         sp.close();
       }
-    }
-    catch (MessagingException e)
-    {
-      throw new ReportProcessingException("Error", e);
+    } catch ( MessagingException e ) {
+      throw new ReportProcessingException( "Error", e );
     }
 
   }
@@ -109,8 +97,7 @@ public class EmailOutput implements ReportOutputHandler
     return false;
   }
 
-  public void close()
-  {
+  public void close() {
 
   }
 }

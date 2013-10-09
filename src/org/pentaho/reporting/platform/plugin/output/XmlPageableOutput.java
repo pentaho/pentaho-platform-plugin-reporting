@@ -1,19 +1,19 @@
 /*!
-* This program is free software; you can redistribute it and/or modify it under the
-* terms of the GNU Lesser General Public License, version 2.1 as published by the Free Software
-* Foundation.
-*
-* You should have received a copy of the GNU Lesser General Public License along with this
-* program; if not, you can obtain a copy at http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
-* or from the Free Software Foundation, Inc.,
-* 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-*
-* This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-* without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-* See the GNU Lesser General Public License for more details.
-*
-* Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
-*/
+ * This program is free software; you can redistribute it and/or modify it under the
+ * terms of the GNU Lesser General Public License, version 2.1 as published by the Free Software
+ * Foundation.
+ *
+ * You should have received a copy of the GNU Lesser General Public License along with this
+ * program; if not, you can obtain a copy at http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
+ * or from the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU Lesser General Public License for more details.
+ *
+ * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
+ */
 
 package org.pentaho.reporting.platform.plugin.output;
 
@@ -28,76 +28,59 @@ import org.pentaho.reporting.engine.classic.core.modules.output.pageable.base.Pa
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.base.SinglePageFlowSelector;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.xml.XmlPageOutputProcessor;
 
-public class XmlPageableOutput implements ReportOutputHandler
-{
+public class XmlPageableOutput implements ReportOutputHandler {
   private PageableReportProcessor proc;
   private ProxyOutputStream proxyOutputStream;
 
-  public XmlPageableOutput()
-  {
+  public XmlPageableOutput() {
   }
 
-  public Object getReportLock()
-  {
+  public Object getReportLock() {
     return this;
   }
 
-  private PageableReportProcessor createProcessor(final MasterReport report, final int yieldRate)
-      throws ReportProcessingException
-  {
+  private PageableReportProcessor createProcessor( final MasterReport report, final int yieldRate )
+    throws ReportProcessingException {
     proxyOutputStream = new ProxyOutputStream();
-    final XmlPageOutputProcessor outputProcessor = new XmlPageOutputProcessor(report.getConfiguration(), proxyOutputStream);
+    final XmlPageOutputProcessor outputProcessor =
+        new XmlPageOutputProcessor( report.getConfiguration(), proxyOutputStream );
 
-    final PageableReportProcessor proc = new PageableReportProcessor(report, outputProcessor);
-    if (yieldRate > 0)
-    {
-      proc.addReportProgressListener(new YieldReportListener(yieldRate));
+    final PageableReportProcessor proc = new PageableReportProcessor( report, outputProcessor );
+    if ( yieldRate > 0 ) {
+      proc.addReportProgressListener( new YieldReportListener( yieldRate ) );
     }
     return proc;
   }
-  
-  public int paginate(final MasterReport report,
-      final int yieldRate) throws ReportProcessingException, IOException
-  {
-    if (proc == null)
-    {
-      proc = createProcessor(report, yieldRate);
+
+  public int paginate( final MasterReport report, final int yieldRate ) throws ReportProcessingException, IOException {
+    if ( proc == null ) {
+      proc = createProcessor( report, yieldRate );
     }
     proc.paginate();
     return proc.getPhysicalPageCount();
   }
-  
-  public int generate(final MasterReport report,
-                          final int acceptedPage,
-                          final OutputStream outputStream,
-                          final int yieldRate) throws ReportProcessingException, IOException
-  {
-    if (proc == null)
-    {
-      proc = createProcessor(report, yieldRate);
+
+  public int generate( final MasterReport report, final int acceptedPage, final OutputStream outputStream,
+      final int yieldRate ) throws ReportProcessingException, IOException {
+    if ( proc == null ) {
+      proc = createProcessor( report, yieldRate );
     }
 
-    try
-    {
-      if (acceptedPage >= 0)
-      {
+    try {
+      if ( acceptedPage >= 0 ) {
         final XmlPageOutputProcessor outputProcessor = (XmlPageOutputProcessor) proc.getOutputProcessor();
-        outputProcessor.setFlowSelector(new SinglePageFlowSelector(acceptedPage, false));
+        outputProcessor.setFlowSelector( new SinglePageFlowSelector( acceptedPage, false ) );
       }
-      proxyOutputStream.setParent(outputStream);
+      proxyOutputStream.setParent( outputStream );
       proc.processReport();
       return proc.getPhysicalPageCount();
-    }
-    finally
-    {
-      if (acceptedPage >= 0)
-      {
+    } finally {
+      if ( acceptedPage >= 0 ) {
         final XmlPageOutputProcessor outputProcessor = (XmlPageOutputProcessor) proc.getOutputProcessor();
-        outputProcessor.setFlowSelector(new AllPageFlowSelector());
+        outputProcessor.setFlowSelector( new AllPageFlowSelector() );
       }
-      if (proxyOutputStream != null)
-      {
-        proxyOutputStream.setParent(null);
+      if ( proxyOutputStream != null ) {
+        proxyOutputStream.setParent( null );
       }
     }
   }
@@ -106,10 +89,8 @@ public class XmlPageableOutput implements ReportOutputHandler
     return true;
   }
 
-  public void close()
-  {
-    if (proc != null)
-    {
+  public void close() {
+    if ( proc != null ) {
       proc.close();
       proc = null;
       proxyOutputStream = null;
