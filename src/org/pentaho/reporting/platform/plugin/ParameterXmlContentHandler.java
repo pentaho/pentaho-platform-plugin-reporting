@@ -69,13 +69,13 @@ import org.pentaho.reporting.engine.classic.core.parameters.StaticListParameter;
 import org.pentaho.reporting.engine.classic.core.parameters.ValidationMessage;
 import org.pentaho.reporting.engine.classic.core.parameters.ValidationResult;
 import org.pentaho.reporting.engine.classic.core.style.ElementStyleKeys;
-import org.pentaho.reporting.libraries.base.util.NullOutputStream;
 import org.pentaho.reporting.engine.classic.core.util.ReportParameterValues;
 import org.pentaho.reporting.engine.classic.core.util.beans.BeanException;
 import org.pentaho.reporting.engine.classic.core.util.beans.ConverterRegistry;
 import org.pentaho.reporting.engine.classic.core.util.beans.ValueConverter;
 import org.pentaho.reporting.engine.classic.extensions.drilldown.DrillDownProfile;
 import org.pentaho.reporting.engine.classic.extensions.drilldown.DrillDownProfileMetaData;
+import org.pentaho.reporting.libraries.base.util.NullOutputStream;
 import org.pentaho.reporting.libraries.base.util.StringUtils;
 import org.pentaho.reporting.libraries.formula.DefaultFormulaContext;
 import org.pentaho.reporting.libraries.formula.lvalues.DataTable;
@@ -241,6 +241,7 @@ public class ParameterXmlContentHandler
 
   private Map<String, ParameterDefinitionEntry> systemParameter;
 
+  private boolean paginate;
   private Document document;
   private IParameterProvider requestParameters;
   private Map<String, Object> inputs;
@@ -259,7 +260,8 @@ public class ParameterXmlContentHandler
   private static final String CONFIG_PARAM_HTML_PROPORTIONAL_WIDTH = 
       "org.pentaho.reporting.engine.classic.core.modules.output.table.html.ProportionalColumnWidths";
 
-public ParameterXmlContentHandler(final ParameterContentGenerator contentGenerator)  {
+public ParameterXmlContentHandler(final ParameterContentGenerator contentGenerator, final boolean paginate)  {
+    this.paginate = paginate;
     this.inputs = contentGenerator.createInputs();
     this.requestParameters = contentGenerator.getRequestParameters();
   }
@@ -491,7 +493,7 @@ public ParameterXmlContentHandler(final ParameterContentGenerator contentGenerat
         parameters.appendChild(element);
       }
 
-      if (vr.isEmpty() && reportComponent.getComputedOutputTarget().equals(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE)) //$NON-NLS-1$ //$NON-NLS-2$
+      if (vr.isEmpty() && paginate && reportComponent.getComputedOutputTarget().equals(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE)) //$NON-NLS-1$ //$NON-NLS-2$
       {
         appendPageCount(reportComponent, parameters);
       }
