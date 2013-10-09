@@ -158,7 +158,7 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
           var iframes = document.getElementsByTagName("IFRAME");
           if(iframes.length > 0) {
             var src = iframes[0].src;
-        	return src != null && src.indexOf('dashboard-mode') !== -1;
+        	  return src != null && src.indexOf('dashboard-mode') !== -1;
           }
 
           return false;
