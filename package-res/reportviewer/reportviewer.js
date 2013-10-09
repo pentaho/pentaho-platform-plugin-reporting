@@ -160,19 +160,25 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
             // Hide the report area when in the "New Schedule" dialog
             !inSchedulerDialog &&
 
-            (promptPanel.forceAutoSubmit || 
-             this._isAutoSubmitAllowed() ||
-             prompt.mode === 'MANUAL');
+            (this._isAutoSubmitAllowed(promptPanel) ||
+            prompt.mode === 'MANUAL');
           
           return visible;
         },
 
-        _isAutoSubmitAllowed : function() {
-        	if(document.getElementsByTagName("IFRAME").length > 0) {
-        		if(document.getElementsByTagName("IFRAME")[0].src != null) {
-        			return document.getElementsByTagName("IFRAME")[0].src.indexOf('dashboard-mode') !== -1
-        		}   
-        	}
+        _isAutoSubmitAllowed : function(promptPanel) {
+          if(promptPanel.forceAutoSubmit ||
+             promptPanel.paramDefn.allowAutoSubmit()) { // (BISERVER-6915)
+            return true;
+          }   
+
+          var iframes = document.getElementsByTagName("IFRAME");
+          if(iframes.length > 0) {
+            var src = iframes[0].src;
+        	return src != null && src.indexOf('dashboard-mode') !== -1;
+          }
+
+          return false;
         },
         
         _hasReportContent: function() {
