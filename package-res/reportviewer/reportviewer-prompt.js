@@ -1,6 +1,6 @@
 pen.define(['common-ui/util/util', 'common-ui/util/formatting'], function(util, ReportFormatUtil) {
   return function() {
-    return {
+    return logged({
       // The current prompt mode
       mode: 'INITIAL',
 
@@ -16,9 +16,9 @@ pen.define(['common-ui/util/util', 'common-ui/util/formatting'], function(util, 
         // Obtain initial parameter definition and
         // only then create the PromptPanel
         this.fetchParameterDefinition(
-          undefined,
+          /*promptPanel*/null,
           this._createPromptPanelFetchCallback.bind(this),
-          'INITIAL');
+          /*promptMode*/'INITIAL');
       },
 
       _createPromptPanelFetchCallback: function(paramDefn) {
@@ -28,12 +28,32 @@ pen.define(['common-ui/util/util', 'common-ui/util/formatting'], function(util, 
         panel.submitStart = this.submitStart.bind(this);
         panel.ready = this.ready.bind(this);
 
+        // User changes the value of a parameter:
+        //
+        // PromptingComponent:postChange -> 
+        //    PromptPanel.parameterChanged -> .refreshPrompt -> .getParameterDefinition -> 
+        //      (x) We Are Here
+        //      Prompt.fetchParameterDefinition ->
+        //        (callback)
+        //        PromptPanel.refresh -> .init ->
+        //           Dashboards.init ->
+        // 
+        //  (...a few setTimeouts later...)
+        //  
+        //  SubmitPromptComponent.update -> 
+        //    PromptPanel._submit -> (When auto Submit)
+        //               .submit  ->
+        //       ReportViewer.submitReport
+        // 
+        //  ScrollingPromptPanelLayoutComponent.postExecute ->
+        //    PromptPanel._ready ->
+        //    
         panel.getParameterDefinition = function(promptPanel, callback) {
           // Show glass pane when updating the prompt.
           dijit.byId('glassPane').show();
 
           // promptPanel === panel
-          this.fetchParameterDefinition(promptPanel, callback, 'USERINPUT');
+          this.fetchParameterDefinition(promptPanel, callback, /*promptMode*/'USERINPUT');
         }.bind(this);
 
         // Provide our own text formatter
@@ -61,7 +81,11 @@ pen.define(['common-ui/util/util', 'common-ui/util/formatting'], function(util, 
       },
 
       ready: function(promptPanel) {
+        if(this.mode === 'USERINPUT' && 
+           !promptPanel.forceAutoSubmit && 
+           !promptPanel.autoSubmit) {
         dijit.byId('glassPane').hide();
+        }
       },
 
       /**
@@ -167,7 +191,8 @@ pen.define(['common-ui/util/util', 'common-ui/util/formatting'], function(util, 
        * The callback signature is:
        * <pre>void function(newParamDef)</pre>
        *  and is called in the context of the report viewer prompt instance.
-       * @param {string} [promptMode='MANUAL'] the prompt mode to request from server: {INITIAL, MANUAL, USERINPUT}.
+       * @param {string} [promptMode='MANUAL'] the prompt mode to request from server: 
+       *  {INITIAL, MANUAL, USERINPUT}.
        * If not provided, 'MANUAL' will be used.
        */
       fetchParameterDefinition: function(promptPanel, callback, promptMode) {
@@ -197,7 +222,7 @@ pen.define(['common-ui/util/util', 'common-ui/util/formatting'], function(util, 
         var options = util.getUrlParameters();
         
         // If we aren't passed a prompt panel this is the first request
-        if (promptPanel) {
+        if(promptPanel) {
           $.extend(options, promptPanel.getParameterValues());
         }
         options['renderMode'] = this._getParameterDefinitionRenderMode(promptPanel, promptMode);
@@ -208,8 +233,8 @@ pen.define(['common-ui/util/util', 'common-ui/util/formatting'], function(util, 
         
         var args = arguments;
         
-        var onSuccess = function(xmlString) {
-          if (me.checkSessionTimeout(xmlString, args)) { return; }
+        var onSuccess = logged('fetchParameterDefinition_success', function(xmlString) {
+          if(me.checkSessionTimeout(xmlString, args)) { return; }
 
           // Another request was made after this one, so this one is ignored.
           if(fetchParamDefId !== me._fetchParamDefId) { return; }
@@ -217,10 +242,30 @@ pen.define(['common-ui/util/util', 'common-ui/util/formatting'], function(util, 
           try {
             var newParamDefn = me.parseParameterDefinition(xmlString);
 
+            // A first request is made,
+            // With promptMode='INITIAL' and renderMode='PARAMETER'.
+            //
+            // The response will not have page count information (pagination was not performed),
+            // but simply information about the prompt parameters (newParamDef).
+            // 
+            // When newParamDefn.allowAutoSubmit() is true, 
+            // And no validation errors/required parameters exist to be specified, TODO: Don't think that this is being checked here!
+            // Then a second request is made, 
+            // With promptMode='MANUAL' and renderMode='XML' is performed.
+            // 
+            // When the response to the second request arrives,
+            // Then the prompt panel is rendered, including with page count information,
+            // And  the report content is loaded and shown.
+            if(promptMode === 'INITIAL' && newParamDefn.allowAutoSubmit()) {
+              // assert promptPanel == null
+              me.fetchParameterDefinition(/*promptPanel*/null, callback, /*promptMode*/'MANUAL');
+              return;
+            }
+
             // Make sure we retain the current auto-submit setting
-            // pp.getAutoSubmitSetting -> pp.autoSubmit, which is updated by the check-box
+            //  pp.getAutoSubmitSetting -> pp.autoSubmit, which is updated by the check-box
             var autoSubmit = promptPanel && promptPanel.getAutoSubmitSetting();
-            if (autoSubmit != null) {
+            if(autoSubmit != null) {
               newParamDefn.autoSubmitUI = autoSubmit;
             }
 
@@ -228,7 +273,7 @@ pen.define(['common-ui/util/util', 'common-ui/util/formatting'], function(util, 
           } catch (e) {
             me.onFatalError(e);
           }
-        };
+        });
         
         var onError = function(e) {
           if (!me.checkSessionTimeout(e, args)) {
@@ -238,6 +283,7 @@ pen.define(['common-ui/util/util', 'common-ui/util/formatting'], function(util, 
         
         $.ajax({
           async:   true,
+          traditional: true, // Controls internal use of $.param() to serialize data to the url/body.
           cache:   false,
           type:    'POST',
           url:     me.getParameterUrl(),
@@ -321,6 +367,6 @@ pen.define(['common-ui/util/util', 'common-ui/util/formatting'], function(util, 
           errorMsg,
           pentaho.common.Messages.getString('FatalErrorTitle'));
       }
-    }
-  }
+    }); // return logged
+  }; // return function
 });

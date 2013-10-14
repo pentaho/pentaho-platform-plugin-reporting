@@ -79,8 +79,8 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
           var panel = this.prompt.panel;
           var init  = panel.init;
 
-          panel.init = function() {
-            this.view.initPrompt(init, this.prompt.panel);
+          panel.init = function(noAutoAutoSubmit) {
+            this.view.initPrompt(init, this.prompt.panel, noAutoAutoSubmit);
           }.bind(this);
 
           decorated();
@@ -143,19 +143,25 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
             // Hide the report area when in the "New Schedule" dialog
             !inSchedulerDialog &&
 
-            (promptPanel.forceAutoSubmit || 
-             this._isAutoSubmitAllowed() ||
-             prompt.mode === 'MANUAL');
+            (this._isAutoSubmitAllowed(promptPanel) ||
+            prompt.mode === 'MANUAL');
           
           return visible;
         },
         
-        _isAutoSubmitAllowed : function() {
-        	if(document.getElementsByTagName("IFRAME").length > 0) {
-        		if(document.getElementsByTagName("IFRAME")[0].src != null) {
-        			return document.getElementsByTagName("IFRAME")[0].src.indexOf('dashboard-mode') !== -1
-        		}   
-        	}
+        _isAutoSubmitAllowed : function(promptPanel) {
+          if(promptPanel.forceAutoSubmit ||
+             promptPanel.paramDefn.allowAutoSubmit()) { // (BISERVER-6915)
+            return true;
+          }   
+
+          var iframes = document.getElementsByTagName("IFRAME");
+          if(iframes.length > 0) {
+            var src = iframes[0].src;
+        	  return src != null && src.indexOf('dashboard-mode') !== -1;
+          }
+
+          return false;
         },
 
         _hasReportContent: function() {
@@ -175,7 +181,7 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
         //             .getParameterDefinition ->
         //             .refresh ->
         //             .init ->
-        initPrompt: function(basePanelInit, promptPanel) {
+        initPrompt: function(basePanelInit, promptPanel, noAutoAutoSubmit) {
           if (!promptPanel.paramDefn.showParameterUI()) {
             this._hideToolbarPromptControls();
           }
@@ -195,7 +201,7 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
           // Reset layout inited flag.
           // Note also that initLayout cannot be executed before init.
           this._layoutInited = false;
-          basePanelInit.call(promptPanel);
+          basePanelInit.call(promptPanel, noAutoAutoSubmit);
           this._initLayout(promptPanel);
         },
 
@@ -221,7 +227,7 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
         // Called by PromptPanel#postExecution (soon after initPrompt)
         promptReady: function(basePromptReady, promptPanel) {
 
-          basePromptReady();
+          basePromptReady(promptPanel); // hides the glass pane...
 
           if (inSchedulerDialog) {
             // If we are rendering parameters for the "New Schedule" dialog,
@@ -552,6 +558,7 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
       },
       
       // Called by SubmitPromptComponent#expression (the submit button's click)
+      // Also may be called by PromptPanel#init, when there is no submit button (independently of autoSubmit?).
       submitReport: function(promptPanel, keyArgs) {
         var isInit = keyArgs && keyArgs.isInit;
         if(!isInit) {
@@ -585,7 +592,7 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
             this._submitReportEnded(promptPanel);
             return;
           }
-        
+          
           this._updateReportContent(promptPanel, keyArgs);
         
         } catch(ex) {
@@ -599,18 +606,35 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
       
       _updateReportContent: function(promptPanel, keyArgs) {
         var me = this;
-        
+
         // PRD-3962 - show glass pane on submit, hide when iframe is loaded
         // Show glass-pane
         dijit.byId('glassPane').show();
+        
+        // When !AutoSubmit, a renderMode=XML call has not been done yet,
+        //  and must be done now so that the page controls have enough info.
+        if(!promptPanel.getAutoSubmitSetting()) {
+          // FETCH page-count info before rendering report
+          var callback = logged("_updateReportContent_fetchParameterCallback", function(newParamDefn) {
+            // Recreates the prompt panel's CDF components
+            promptPanel.refresh(newParamDefn, /*noAutoAutoSubmit*/true);
+            
+            me._updateReportContentCore(promptPanel, keyArgs);
+          });
+
+          me.prompt.fetchParameterDefinition(promptPanel, callback, /*promptMode*/'MANUAL');
+        } else {
+          me._updateReportContentCore(promptPanel, keyArgs);
+        }
+      },
+
+      _updateReportContentCore: function(promptPanel, keyArgs) {
+        var me = this;
         
         // PRD-3962 - remove glass pane after 5 seconds in case iframe onload/onreadystatechange was not detected
         me._updateReportTimeout = setTimeout(logged('updateReportTimeout', function() {
           me._submitReportEnded(promptPanel, /*isTimeout*/true);
         }), 5000);
-        
-        // -----------
-        
         var options = me._buildReportContentOptions(promptPanel);
         var url = me._buildReportContentUrl(options);
         var outputFormat = options['output-target'];
@@ -786,6 +810,7 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
       }
     }); // end of: var v = { 
 
+    // Replace default prompt load
     reportPrompt.load = v.load.bind(v);
     return v;
   };
