@@ -18,7 +18,6 @@
 package org.pentaho.reporting.platform.plugin;
 
 import java.io.OutputStream;
-import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -62,7 +61,7 @@ public class ParameterContentGenerator extends SimpleContentGenerator {
     RepositoryFile prptFile = unifiedRepository.getFile(idTopath(path));
     
     final RENDER_TYPE renderMode = RENDER_TYPE.valueOf
-            (requestParams.getStringParameter("renderMode", RENDER_TYPE.REPORT.toString()).toUpperCase()); //$NON-NLS-1$
+            (requestParams.getStringParameter("renderMode", RENDER_TYPE.XML.toString()).toUpperCase()); //$NON-NLS-1$
     
     switch (renderMode)
     {
