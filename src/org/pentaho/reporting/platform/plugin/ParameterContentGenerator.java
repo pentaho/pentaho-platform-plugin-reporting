@@ -60,7 +60,7 @@ public class ParameterContentGenerator extends SimpleContentGenerator {
 
     final RENDER_TYPE renderMode =
         RENDER_TYPE.valueOf( requestParams
-            .getStringParameter( "renderMode", RENDER_TYPE.REPORT.toString() ).toUpperCase() ); //$NON-NLS-1$
+            .getStringParameter( "renderMode", RENDER_TYPE.XML.toString() ).toUpperCase() ); //$NON-NLS-1$
 
     switch ( renderMode ) {
       case XML: {
