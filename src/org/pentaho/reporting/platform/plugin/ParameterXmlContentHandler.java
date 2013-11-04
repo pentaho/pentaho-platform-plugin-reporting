@@ -13,6 +13,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
+
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
@@ -643,11 +644,6 @@ public class ParameterXmlContentHandler
         elementValueType = valueType;
       }
 
-      if (Date.class.isAssignableFrom(elementValueType))
-      {
-        parameterElement.setAttribute("timzone-hint", computeTimeZoneHint(parameter, parameterContext));//$NON-NLS-1$
-      }
-
       final LinkedHashSet<Object> selectionSet = new LinkedHashSet<Object>();
       if (selections != null)
       {
@@ -679,6 +675,11 @@ public class ParameterXmlContentHandler
         }
       }
 
+      if (Date.class.isAssignableFrom(elementValueType))
+      {
+        parameterElement.setAttribute("timezone-hint", computeTimeZoneHint(parameter, parameterContext, selectionSet));//$NON-NLS-1$
+      }
+      
       final LinkedHashSet handledValues = (LinkedHashSet) selectionSet.clone();
 
       if (parameter instanceof ListParameter)
@@ -812,7 +813,8 @@ public class ParameterXmlContentHandler
   }
 
   private String computeTimeZoneHint(final ParameterDefinitionEntry parameter,
-                                     final ParameterContext parameterContext)
+                                     final ParameterContext parameterContext,
+                                     final LinkedHashSet<Object> selectionSet)
   {
     // add a timezone hint ..
     final String timezoneSpec = parameter.getParameterAttribute
@@ -838,28 +840,38 @@ public class ParameterXmlContentHandler
         timeZone = TimeZone.getTimeZone(timezoneSpec);
       }
 
-      final int rawOffset = timeZone.getRawOffset();
-      if (rawOffset < 0)
+      final int offset;
+      if (selectionSet != null && selectionSet.size() > 0)
       {
-        value.append("-");
+        Date date = (Date) selectionSet.iterator().next();
+        offset = timeZone.getOffset(date.getTime());    	  
+      }
+      else 
+      {
+        offset = timeZone.getRawOffset();
+      }
+      
+      if (offset < 0)
+      {
+        value.append("-"); //$NON-NLS-1$
       }
       else
       {
-        value.append("+");
+        value.append("\\+"); //$NON-NLS-1$
       }
 
-      final int seconds = Math.abs(rawOffset / 1000);
+      final int seconds = Math.abs(offset / 1000);
       final int minutesRaw = seconds / 60;
       final int hours = minutesRaw / 60;
       final int minutes = minutesRaw % 60;
       if (hours < 10)
       {
-        value.append("0");
+        value.append("0"); //$NON-NLS-1$
       }
       value.append(hours);
       if (minutes < 10)
       {
-        value.append("0");
+        value.append("0"); //$NON-NLS-1$
       }
       value.append(minutes);
       return value.toString();
