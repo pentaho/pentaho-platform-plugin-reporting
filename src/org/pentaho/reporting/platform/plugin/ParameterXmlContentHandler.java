@@ -563,11 +563,6 @@ public class ParameterXmlContentHandler {
         elementValueType = valueType;
       }
 
-      if ( Date.class.isAssignableFrom( elementValueType ) ) {
-        parameterElement
-           .setAttribute( "timzone-hint", computeTimeZoneHint( parameter, parameterContext ) ); //$NON-NLS-1$
-      }
-
       final LinkedHashSet<Object> selectionSet = new LinkedHashSet<Object>();
       if ( selections != null ) {
         if ( selections.getClass().isArray() ) {
@@ -589,7 +584,11 @@ public class ParameterXmlContentHandler {
           }
         }
       }
-
+      if ( Date.class.isAssignableFrom( elementValueType ) ) {
+          parameterElement
+             .setAttribute( "timezone-hint", computeTimeZoneHint( parameter, parameterContext, selectionSet ) ); //$NON-NLS-1$
+      }
+      
       @SuppressWarnings( "rawtypes" )
       final LinkedHashSet handledValues = (LinkedHashSet) selectionSet.clone();
 
@@ -735,7 +734,8 @@ public class ParameterXmlContentHandler {
   }
 
   private String computeTimeZoneHint( final ParameterDefinitionEntry parameter,
-                                      final ParameterContext parameterContext ) {
+                                      final ParameterContext parameterContext,
+                                      final LinkedHashSet<Object> selectionSet ) {
     // add a timezone hint ..
     final String timezoneSpec =
         parameter.getParameterAttribute( ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TIMEZONE,
@@ -754,14 +754,21 @@ public class ParameterXmlContentHandler {
         timeZone = TimeZone.getTimeZone( timezoneSpec );
       }
 
-      final int rawOffset = timeZone.getRawOffset();
-      if ( rawOffset < 0 ) {
+      final int offset;
+      if ( selectionSet != null && selectionSet.size() > 0 ) {
+        Date date = (Date) selectionSet.iterator().next();
+        offset = timeZone.getOffset( date.getTime() );
+      } else {
+        offset = timeZone.getRawOffset();
+      }
+      
+      if ( offset < 0 ) {
         value.append( "-" );
       } else {
-        value.append( "+" );
+        value.append( "\\+" );
       }
 
-      final int seconds = Math.abs( rawOffset / 1000 );
+      final int seconds = Math.abs( offset / 1000 );
       final int minutesRaw = seconds / 60;
       final int hours = minutesRaw / 60;
       final int minutes = minutesRaw % 60;
