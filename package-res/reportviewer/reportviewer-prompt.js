@@ -81,11 +81,7 @@ pen.define(['common-ui/util/util', 'common-ui/util/formatting'], function(util, 
       },
 
       ready: function(promptPanel) {
-        if(this.mode === 'USERINPUT' && 
-           !promptPanel.forceAutoSubmit && 
-           !promptPanel.autoSubmit) {
         dijit.byId('glassPane').hide();
-        }
       },
 
       /**
