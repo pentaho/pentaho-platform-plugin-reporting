@@ -82,7 +82,11 @@ pen.define(['common-ui/util/util', 'reportviewer/reportviewer-formatting'], func
       },
 
       ready: function(promptPanel) {
-        dijit.byId('glassPane').hide();
+        if(this.mode === 'USERINPUT' && 
+           !promptPanel.forceAutoSubmit && 
+           !promptPanel.autoSubmit) {
+          dijit.byId('glassPane').hide();
+        }
       },
 
       /**
