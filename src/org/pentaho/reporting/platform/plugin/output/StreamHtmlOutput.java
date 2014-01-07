@@ -45,12 +45,16 @@ import org.pentaho.reporting.platform.plugin.repository.PentahoURLRewriter;
 public class StreamHtmlOutput implements ReportOutputHandler {
   private String contentHandlerPattern;
 
-  public StreamHtmlOutput( final String contentHandlerPattern ) {
-    this.contentHandlerPattern = contentHandlerPattern;
+  public StreamHtmlOutput() {
   }
 
   public Object getReportLock() {
     return this;
+  }
+
+  public void setContentHandlerPattern(final String contentHandlerPattern)
+  {
+    this.contentHandlerPattern = contentHandlerPattern;
   }
 
   public String getContentHandlerPattern() {
@@ -65,7 +69,7 @@ public class StreamHtmlOutput implements ReportOutputHandler {
 
   }
 
-  protected boolean isSafeToDelete() {
+  public boolean isSafeToDelete() {
     return "true".equals( ClassicEngineBoot.getInstance().getGlobalConfig().getConfigProperty(
         "org.pentaho.reporting.platform.plugin.AlwaysDeleteHtmlDataFiles" ) );
   }

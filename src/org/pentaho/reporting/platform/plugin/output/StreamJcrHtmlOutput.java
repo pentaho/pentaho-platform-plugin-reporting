@@ -23,6 +23,7 @@ import java.io.OutputStream;
 import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
 import org.pentaho.platform.api.repository2.unified.RepositoryFile;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
+import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
 import org.pentaho.reporting.engine.classic.core.layout.output.YieldReportListener;
@@ -41,13 +42,23 @@ import org.pentaho.reporting.platform.plugin.repository.PentahoNameGenerator;
 import org.pentaho.reporting.platform.plugin.repository.PentahoURLRewriter;
 import org.pentaho.reporting.platform.plugin.repository.ReportContentRepository;
 
-public class StreamJcrHtmlOutput extends StreamHtmlOutput {
+public class StreamJcrHtmlOutput implements ReportOutputHandler {
 
   private String jcrOutputPath;
+  private String contentHandlerPattern;
 
-  public StreamJcrHtmlOutput( final String jcrOutputPath, final String contentHandlerPattern ) {
-    super( contentHandlerPattern );
-    this.jcrOutputPath = jcrOutputPath;
+  public StreamJcrHtmlOutput()
+  {
+  }
+
+  public void setContentHandlerPattern(final String pattern)
+  {
+    this.contentHandlerPattern = pattern;
+  }
+
+  public String getContentHandlerPattern()
+  {
+    return contentHandlerPattern;
   }
 
   public String getJcrOutputPath() {
@@ -60,6 +71,12 @@ public class StreamJcrHtmlOutput extends StreamHtmlOutput {
 
   public Object getReportLock() {
     return this;
+  }
+
+  public boolean isSafeToDelete()
+  {
+    return "true".equals( ClassicEngineBoot.getInstance().getGlobalConfig().getConfigProperty(
+        "org.pentaho.reporting.platform.plugin.AlwaysDeleteHtmlDataFiles" ) );
   }
 
   public int generate( final MasterReport report, final int acceptedPage, final OutputStream outputStream,
@@ -94,8 +111,6 @@ public class StreamJcrHtmlOutput extends StreamHtmlOutput {
     }
     try {
       sp.processReport();
-    } catch ( Throwable th ) {
-      th.printStackTrace();
     } finally {
       sp.close();
     }
@@ -104,4 +119,19 @@ public class StreamJcrHtmlOutput extends StreamHtmlOutput {
     return 0;
   }
 
+  public int paginate(final MasterReport report,
+                      final int yieldRate) throws ReportProcessingException, IOException, ContentIOException
+  {
+    return 0;
+  }
+
+  public void close()
+  {
+
+  }
+
+  public boolean supportsPagination()
+  {
+    return false;
+  }
 }

@@ -47,12 +47,16 @@ public class PageableHTMLOutput implements ReportOutputHandler {
   private PageableReportProcessor proc;
   private AllItemsHtmlPrinter printer;
 
-  public PageableHTMLOutput( final String contentHandlerPattern ) {
-    this.contentHandlerPattern = contentHandlerPattern;
+  public PageableHTMLOutput() {
   }
 
   public Object getReportLock() {
     return this;
+  }
+
+  public void setContentHandlerPattern(final String contentHandlerPattern)
+  {
+    this.contentHandlerPattern = contentHandlerPattern;
   }
 
   public String getContentHandlerPattern() {

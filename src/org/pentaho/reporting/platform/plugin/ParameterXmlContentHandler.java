@@ -30,7 +30,6 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.TimeZone;
-
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
@@ -41,6 +40,7 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.pentaho.platform.api.engine.IParameterProvider;
+import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.util.UUIDUtil;
 import org.pentaho.reporting.engine.classic.core.AttributeNames;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
@@ -49,12 +49,7 @@ import org.pentaho.reporting.engine.classic.core.ReportElement;
 import org.pentaho.reporting.engine.classic.core.Section;
 import org.pentaho.reporting.engine.classic.core.function.Expression;
 import org.pentaho.reporting.engine.classic.core.function.FormulaExpression;
-import org.pentaho.reporting.engine.classic.core.modules.output.pageable.pdf.PdfPageableModule;
-import org.pentaho.reporting.engine.classic.core.modules.output.pageable.plaintext.PlainTextPageableModule;
-import org.pentaho.reporting.engine.classic.core.modules.output.table.csv.CSVTableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlTableModule;
-import org.pentaho.reporting.engine.classic.core.modules.output.table.rtf.RTFTableModule;
-import org.pentaho.reporting.engine.classic.core.modules.output.table.xls.ExcelTableModule;
 import org.pentaho.reporting.engine.classic.core.parameters.AbstractParameter;
 import org.pentaho.reporting.engine.classic.core.parameters.DefaultParameterContext;
 import org.pentaho.reporting.engine.classic.core.parameters.ListParameter;
@@ -84,6 +79,8 @@ import org.pentaho.reporting.libraries.formula.lvalues.LValue;
 import org.pentaho.reporting.libraries.formula.lvalues.StaticValue;
 import org.pentaho.reporting.libraries.formula.parser.FormulaParser;
 import org.pentaho.reporting.platform.plugin.messages.Messages;
+import org.pentaho.reporting.platform.plugin.output.DefaultReportOutputHandlerFactory;
+import org.pentaho.reporting.platform.plugin.output.ReportOutputHandlerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -949,34 +946,28 @@ public class ParameterXmlContentHandler {
 
     final StaticListParameter listParameter =
         new StaticListParameter( SYS_PARAM_OUTPUT_TARGET, false, true, String.class );
-    listParameter.setParameterAttribute( ParameterAttributeNames.Core.NAMESPACE,
-        ParameterAttributeNames.Core.PREFERRED, String.valueOf( true ) );
-    listParameter.setParameterAttribute( ParameterAttributeNames.Core.NAMESPACE,
-        ParameterAttributeNames.Core.PARAMETER_GROUP, GROUP_PARAMETERS );
-    listParameter.setParameterAttribute( ParameterAttributeNames.Core.NAMESPACE,
+    listParameter.setParameterAttribute(ParameterAttributeNames.Core.NAMESPACE,
+        ParameterAttributeNames.Core.PREFERRED, String.valueOf(true));
+    listParameter.setParameterAttribute(ParameterAttributeNames.Core.NAMESPACE,
+        ParameterAttributeNames.Core.PARAMETER_GROUP, GROUP_PARAMETERS);
+    listParameter.setParameterAttribute(ParameterAttributeNames.Core.NAMESPACE,
         ParameterAttributeNames.Core.PARAMETER_GROUP_LABEL, Messages.getInstance().getString(
-            "ReportPlugin.ReportParameters" ) );
-    listParameter.setParameterAttribute( ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.LABEL,
-        Messages.getInstance().getString( "ReportPlugin.OutputType" ) );
-    listParameter.setParameterAttribute( ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TYPE,
-        ParameterAttributeNames.Core.TYPE_DROPDOWN );
-    listParameter.setRole( ParameterAttributeNames.Core.ROLE_SYSTEM_PARAMETER );
-    listParameter.addValues( HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE, Messages.getInstance().getString(
-        "ReportPlugin.outputHTMLPaginated" ) );
-    listParameter.addValues( HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE, Messages.getInstance().getString(
-        "ReportPlugin.outputHTMLStream" ) );
-    listParameter.addValues( PdfPageableModule.PDF_EXPORT_TYPE, Messages.getInstance().getString(
-        "ReportPlugin.outputPDF" ) );
-    listParameter.addValues( ExcelTableModule.EXCEL_FLOW_EXPORT_TYPE, Messages.getInstance().getString(
-        "ReportPlugin.outputXLS" ) );
-    listParameter.addValues( ExcelTableModule.XLSX_FLOW_EXPORT_TYPE, Messages.getInstance().getString(
-        "ReportPlugin.outputXLSX" ) );
-    listParameter.addValues( CSVTableModule.TABLE_CSV_STREAM_EXPORT_TYPE, Messages.getInstance().getString(
-        "ReportPlugin.outputCSV" ) );
-    listParameter.addValues( RTFTableModule.TABLE_RTF_FLOW_EXPORT_TYPE, Messages.getInstance().getString(
-        "ReportPlugin.outputRTF" ) );
-    listParameter.addValues( PlainTextPageableModule.PLAINTEXT_EXPORT_TYPE, Messages.getInstance().getString(
-        "ReportPlugin.outputTXT" ) );
+        "ReportPlugin.ReportParameters"));
+    listParameter.setParameterAttribute(ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.LABEL,
+        Messages.getInstance().getString("ReportPlugin.OutputType"));
+    listParameter.setParameterAttribute(ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TYPE,
+        ParameterAttributeNames.Core.TYPE_DROPDOWN);
+    listParameter.setRole(ParameterAttributeNames.Core.ROLE_SYSTEM_PARAMETER);
+
+    ReportOutputHandlerFactory handlerFactory = PentahoSystem.get(ReportOutputHandlerFactory.class);
+    if (handlerFactory == null) {
+      handlerFactory = new DefaultReportOutputHandlerFactory();
+    }
+
+    for (Map.Entry<String, String> entry : handlerFactory.getSupportedOutputTypes()) {
+      listParameter.addValues(entry.getKey(), entry.getValue());
+    }
+
     return listParameter;
   }
 
