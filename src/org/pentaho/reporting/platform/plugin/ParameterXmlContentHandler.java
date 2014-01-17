@@ -79,7 +79,7 @@ import org.pentaho.reporting.libraries.formula.lvalues.LValue;
 import org.pentaho.reporting.libraries.formula.lvalues.StaticValue;
 import org.pentaho.reporting.libraries.formula.parser.FormulaParser;
 import org.pentaho.reporting.platform.plugin.messages.Messages;
-import org.pentaho.reporting.platform.plugin.output.DefaultReportOutputHandlerFactory;
+import org.pentaho.reporting.platform.plugin.output.FastExportReportOutputHandlerFactory;
 import org.pentaho.reporting.platform.plugin.output.ReportOutputHandlerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -961,7 +961,7 @@ public class ParameterXmlContentHandler {
 
     ReportOutputHandlerFactory handlerFactory = PentahoSystem.get(ReportOutputHandlerFactory.class);
     if (handlerFactory == null) {
-      handlerFactory = new DefaultReportOutputHandlerFactory();
+      handlerFactory = new FastExportReportOutputHandlerFactory();
     }
 
     for (Map.Entry<String, String> entry : handlerFactory.getSupportedOutputTypes()) {

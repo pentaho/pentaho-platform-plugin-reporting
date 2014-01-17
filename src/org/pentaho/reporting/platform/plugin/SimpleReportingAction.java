@@ -63,7 +63,7 @@ import org.pentaho.reporting.platform.plugin.cache.NullReportCache;
 import org.pentaho.reporting.platform.plugin.cache.ReportCache;
 import org.pentaho.reporting.platform.plugin.cache.ReportCacheKey;
 import org.pentaho.reporting.platform.plugin.messages.Messages;
-import org.pentaho.reporting.platform.plugin.output.DefaultReportOutputHandlerFactory;
+import org.pentaho.reporting.platform.plugin.output.FastExportReportOutputHandlerFactory;
 import org.pentaho.reporting.platform.plugin.output.ReportOutputHandler;
 import org.pentaho.reporting.platform.plugin.output.ReportOutputHandlerFactory;
 import org.pentaho.reporting.platform.plugin.output.ReportOutputHandlerSelector;
@@ -319,7 +319,7 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
 
       ReportOutputHandlerFactory handlerFactory = PentahoSystem.get(ReportOutputHandlerFactory.class);
       if (handlerFactory == null) {
-        handlerFactory = new DefaultReportOutputHandlerFactory();
+        handlerFactory = new FastExportReportOutputHandlerFactory();
       }
 
       return handlerFactory.getMimeType(new InternalOutputHandlerSelector(outputTarget));
@@ -868,6 +868,11 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
     // SP-307, BISERVER-9688
 
     final MasterReport report = getReport();
+    int yieldRate = getYieldRate();
+    if (yieldRate > 0) {
+      report.getReportConfiguration().setConfigProperty
+          ("org.pentaho.reporting.engine.classic.core.YieldRate", String.valueOf(yieldRate));
+    }
 
     try {
       final DefaultParameterContext parameterContext = new DefaultParameterContext( report );
@@ -948,7 +953,7 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
 
     ReportOutputHandlerFactory handlerFactory = PentahoSystem.get(ReportOutputHandlerFactory.class);
     if (handlerFactory == null) {
-      handlerFactory = new DefaultReportOutputHandlerFactory();
+      handlerFactory = new FastExportReportOutputHandlerFactory();
     }
 
     ReportOutputHandler reportOutputHandler =

@@ -1,3 +1,19 @@
+/*!
+ * This program is free software; you can redistribute it and/or modify it under the
+ * terms of the GNU Lesser General Public License, version 2.1 as published by the Free Software
+ * Foundation.
+ *
+ * You should have received a copy of the GNU Lesser General Public License along with this
+ * program; if not, you can obtain a copy at http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
+ * or from the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU Lesser General Public License for more details.
+ *
+ * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
+ */
 package org.pentaho.reporting.platform.plugin.output;
 
 import java.io.IOException;
@@ -351,7 +367,7 @@ public class DefaultReportOutputHandlerFactory implements ReportOutputHandlerFac
   public Set<Map.Entry<String, String>> getSupportedOutputTypes()
   {
     Messages m = Messages.getInstance();
-    LinkedHashMap<String, String> outputTypes = new LinkedHashMap<>();
+    LinkedHashMap<String, String> outputTypes = new LinkedHashMap<String, String>();
     if (isHtmlPageVisible() && isHtmlPageAvailable())
     {
       outputTypes.put(HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE, m.getString("ReportPlugin.outputHTMLPaginated"));
@@ -391,34 +407,58 @@ public class DefaultReportOutputHandlerFactory implements ReportOutputHandlerFac
 
   public ReportOutputHandler createOutputHandlerForOutputType(final ReportOutputHandlerSelector selector) throws IOException
   {
-    switch (selector.getOutputType())
+    String t = selector.getOutputType();
+    if (HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE.equals(t))
     {
-      case HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE:
-        return createHtmlPageOutput(selector);
-      case HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE:
-        return createHtmlStreamOutput(selector);
-      case SimpleReportingAction.PNG_EXPORT_TYPE:
-        return createPngOutput();
-      case XmlPageableModule.PAGEABLE_XML_EXPORT_TYPE:
-        return createXmlPageableOutput();
-      case XmlTableModule.TABLE_XML_EXPORT_TYPE:
-        return createXmlTableOutput();
-      case PdfPageableModule.PDF_EXPORT_TYPE:
-        return createPdfOutput();
-      case ExcelTableModule.EXCEL_FLOW_EXPORT_TYPE:
-        return createXlsOutput(selector);
-      case ExcelTableModule.XLSX_FLOW_EXPORT_TYPE:
-        return createXlsxOutput(selector);
-      case CSVTableModule.TABLE_CSV_STREAM_EXPORT_TYPE:
-        return createCsvOutput();
-      case RTFTableModule.TABLE_RTF_FLOW_EXPORT_TYPE:
-        return createRtfOutput();
-      case SimpleReportingAction.MIME_TYPE_EMAIL:
-        return createMailOutput();
-      case PlainTextPageableModule.PLAINTEXT_EXPORT_TYPE:
-        return createTextOutput();
-      default:
-        return null;
+      return createHtmlPageOutput(selector);
+    }
+    if (HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE.equals(t))
+    {
+      return createHtmlStreamOutput(selector);
+    }
+    if (SimpleReportingAction.PNG_EXPORT_TYPE.equals(t))
+    {
+      return createPngOutput();
+    }
+    if (XmlPageableModule.PAGEABLE_XML_EXPORT_TYPE.equals(t))
+    {
+      return createXmlPageableOutput();
+    }
+    if (XmlTableModule.TABLE_XML_EXPORT_TYPE.equals(t))
+    {
+      return createXmlTableOutput();
+    }
+    if (PdfPageableModule.PDF_EXPORT_TYPE.equals(t))
+    {
+      return createPdfOutput();
+    }
+    if (ExcelTableModule.EXCEL_FLOW_EXPORT_TYPE.equals(t))
+    {
+      return createXlsOutput(selector);
+    }
+    if (ExcelTableModule.XLSX_FLOW_EXPORT_TYPE.equals(t))
+    {
+      return createXlsxOutput(selector);
+    }
+    if (CSVTableModule.TABLE_CSV_STREAM_EXPORT_TYPE.equals(t))
+    {
+      return createCsvOutput();
+    }
+    if (RTFTableModule.TABLE_RTF_FLOW_EXPORT_TYPE.equals(t))
+    {
+      return createRtfOutput();
+    }
+    if (SimpleReportingAction.MIME_TYPE_EMAIL.equals(t))
+    {
+      return createMailOutput();
+    }
+    if (PlainTextPageableModule.PLAINTEXT_EXPORT_TYPE.equals(t))
+    {
+      return createTextOutput();
+    }
+    else
+    {
+      return null;
     }
   }
 
@@ -527,11 +567,7 @@ public class DefaultReportOutputHandlerFactory implements ReportOutputHandlerFac
     if (selector.isUseJcrOutput())
     {
       // use the content repository
-      final Configuration globalConfig = ClassicEngineBoot.getInstance().getGlobalConfig();
-      String contentHandlerPattern = PentahoRequestContextHolder.getRequestContext().getContextPath();
-      contentHandlerPattern +=
-          selector.getInput(SimpleReportingAction.REPORTHTML_CONTENTHANDLER_PATTERN,
-              globalConfig.getConfigProperty("org.pentaho.web.JcrContentHandler"), String.class); //$NON-NLS-1$
+      String contentHandlerPattern = computeContentHandlerPattern(selector);
       StreamJcrHtmlOutput streamJcrHtmlOutput = new StreamJcrHtmlOutput();
       streamJcrHtmlOutput.setContentHandlerPattern(contentHandlerPattern);
       streamJcrHtmlOutput.setJcrOutputPath(selector.getJcrOutputPath());
@@ -539,16 +575,31 @@ public class DefaultReportOutputHandlerFactory implements ReportOutputHandlerFac
     }
     else
     {
-      final Configuration globalConfig = ClassicEngineBoot.getInstance().getGlobalConfig();
-      String contentHandlerPattern = PentahoRequestContextHolder.getRequestContext().getContextPath();
-      contentHandlerPattern +=
-          selector.getInput(SimpleReportingAction.REPORTHTML_CONTENTHANDLER_PATTERN,
-              globalConfig.getConfigProperty("org.pentaho.web.ContentHandler"), String.class); //$NON-NLS-1$
+      String contentHandlerPattern = computeContentHandlerPattern(selector);
       // don't use the content repository
       StreamHtmlOutput streamHtmlOutput = new StreamHtmlOutput();
       streamHtmlOutput.setContentHandlerPattern(contentHandlerPattern);
       return streamHtmlOutput;
     }
+  }
+
+  protected String computeContentHandlerPattern(final ReportOutputHandlerSelector selector)
+  {
+    String configKey;
+    if (selector.isUseJcrOutput())
+    {
+      configKey = "org.pentaho.web.JcrContentHandler";
+    }
+    else
+    {
+      configKey = "org.pentaho.web.ContentHandler";
+    }
+    final Configuration globalConfig = ClassicEngineBoot.getInstance().getGlobalConfig();
+    String contentHandlerPattern = PentahoRequestContextHolder.getRequestContext().getContextPath();
+    contentHandlerPattern +=
+        selector.getInput(SimpleReportingAction.REPORTHTML_CONTENTHANDLER_PATTERN,
+            globalConfig.getConfigProperty(configKey), String.class); //$NON-NLS-1$
+    return contentHandlerPattern;
   }
 
   protected ReportOutputHandler createHtmlPageOutput(final ReportOutputHandlerSelector selector)
@@ -558,11 +609,7 @@ public class DefaultReportOutputHandlerFactory implements ReportOutputHandlerFac
       return null;
     }
     // use the content repository
-    final Configuration globalConfig = ClassicEngineBoot.getInstance().getGlobalConfig();
-    String contentHandlerPattern = PentahoRequestContextHolder.getRequestContext().getContextPath();
-    contentHandlerPattern +=
-        selector.getInput(SimpleReportingAction.REPORTHTML_CONTENTHANDLER_PATTERN,
-            globalConfig.getConfigProperty("org.pentaho.web.ContentHandler"), String.class); //$NON-NLS-1$
+    String contentHandlerPattern = computeContentHandlerPattern(selector);
 
     PageableHTMLOutput pageableHTMLOutput = new PageableHTMLOutput();
     pageableHTMLOutput.setContentHandlerPattern(contentHandlerPattern);

@@ -14,7 +14,6 @@
  *
  * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
  */
-
 package org.pentaho.reporting.platform.plugin.output;
 
 import java.io.IOException;
@@ -23,20 +22,13 @@ import java.io.OutputStream;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
 import org.pentaho.reporting.engine.classic.core.modules.output.fast.html.FastHtmlContentItems;
-import org.pentaho.reporting.engine.classic.core.modules.output.table.base.StreamReportProcessor;
-import org.pentaho.reporting.engine.classic.core.modules.output.table.html.AllItemsHtmlPrinter;
-import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlOutputProcessor;
-import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlPrinter;
-import org.pentaho.reporting.engine.classic.core.modules.output.table.html.StreamHtmlOutputProcessor;
+import org.pentaho.reporting.engine.classic.core.modules.output.fast.html.FastHtmlExportProcessor;
+import org.pentaho.reporting.engine.classic.core.modules.output.fast.validator.ReportStructureValidator;
 import org.pentaho.reporting.libraries.repository.ContentIOException;
 
-public class StreamHtmlOutput extends AbstractHtmlOutput
+public class FastStreamHtmlOutput extends StreamHtmlOutput
 {
-  public StreamHtmlOutput()
-  {
-  }
-
-  public StreamHtmlOutput(final String contentHandlerPattern)
+  public FastStreamHtmlOutput(final String contentHandlerPattern)
   {
     super(contentHandlerPattern);
   }
@@ -44,30 +36,48 @@ public class StreamHtmlOutput extends AbstractHtmlOutput
   public int generate(final MasterReport report,
                       final int acceptedPage,
                       final OutputStream outputStream,
-                      final int yieldRate)
-      throws ReportProcessingException, IOException, ContentIOException
+                      final int yieldRate) throws ReportProcessingException, IOException, ContentIOException
   {
+
+    ReportStructureValidator validator = new ReportStructureValidator();
+    if (validator.isValidForFastProcessing(report) == false)
+    {
+      return super.generate(report, acceptedPage, outputStream, yieldRate);
+    }
+
     FastHtmlContentItems contentItems = computeContentItems(outputStream);
-    final HtmlPrinter printer = new AllItemsHtmlPrinter(report.getResourceManager());
-    printer.setContentWriter(contentItems.getContentLocation(), contentItems.getContentNameGenerator());
-    printer.setDataWriter(contentItems.getDataLocation(), contentItems.getDataNameGenerator());
-    printer.setUrlRewriter(contentItems.getUrlRewriter());
-
-    final HtmlOutputProcessor outputProcessor = new StreamHtmlOutputProcessor(report.getConfiguration());
-    outputProcessor.setPrinter(printer);
-    final StreamReportProcessor sp = new StreamReportProcessor(report, outputProcessor);
-
+    final FastHtmlExportProcessor reportProcessor = new FastHtmlExportProcessor(report, contentItems);
     try
     {
-      sp.processReport();
+      reportProcessor.processReport();
     }
     finally
     {
-      sp.close();
+      reportProcessor.close();
     }
 
     outputStream.flush();
     return 1;
   }
 
+  public int paginate(final MasterReport report,
+                      final int yieldRate) throws ReportProcessingException, IOException, ContentIOException
+  {
+    return 0;
+  }
+
+  public void close()
+  {
+
+  }
+
+  public boolean supportsPagination()
+  {
+    return false;
+  }
+
+  public Object getReportLock()
+  {
+    return this;
+  }
 }
