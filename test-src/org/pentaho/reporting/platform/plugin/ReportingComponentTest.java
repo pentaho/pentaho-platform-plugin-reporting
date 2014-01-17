@@ -36,6 +36,8 @@ import org.pentaho.platform.engine.services.solution.SolutionEngine;
 import org.pentaho.platform.plugin.services.pluginmgr.SystemPathXmlPluginProvider;
 import org.pentaho.platform.plugin.services.pluginmgr.servicemgr.DefaultServiceManager;
 import org.pentaho.platform.repository2.unified.fs.FileSystemBackedUnifiedRepository;
+import org.pentaho.reporting.platform.plugin.output.DefaultReportOutputHandlerFactory;
+import org.pentaho.reporting.platform.plugin.output.ReportOutputHandlerFactory;
 import org.pentaho.reporting.platform.plugin.repository.PentahoNameGenerator;
 import org.pentaho.reporting.platform.plugin.repository.TempDirectoryNameGenerator;
 import org.pentaho.test.platform.engine.core.MicroPlatform;
@@ -61,6 +63,7 @@ public class ReportingComponentTest extends TestCase {
     microPlatform.define( IServiceManager.class, DefaultServiceManager.class, Scope.GLOBAL );
     microPlatform.define( PentahoNameGenerator.class, TempDirectoryNameGenerator.class, Scope.GLOBAL );
     microPlatform.define( UserDetailsService.class, MockUserDetailsService.class );
+    microPlatform.define( ReportOutputHandlerFactory.class, DefaultReportOutputHandlerFactory.class );
 
     microPlatform.start();
     IPentahoSession session = new StandaloneSession();

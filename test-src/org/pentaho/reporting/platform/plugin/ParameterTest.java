@@ -20,6 +20,7 @@ package org.pentaho.reporting.platform.plugin;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import javax.xml.parsers.DocumentBuilderFactory;
 
 import junit.framework.TestCase;
 import org.pentaho.platform.api.engine.IPentahoDefinableObjectFactory;
@@ -36,6 +37,8 @@ import org.pentaho.platform.engine.services.solution.SolutionEngine;
 import org.pentaho.platform.plugin.services.pluginmgr.SystemPathXmlPluginProvider;
 import org.pentaho.platform.plugin.services.pluginmgr.servicemgr.DefaultServiceManager;
 import org.pentaho.platform.repository2.unified.fs.FileSystemBackedUnifiedRepository;
+import org.pentaho.reporting.platform.plugin.output.DefaultReportOutputHandlerFactory;
+import org.pentaho.reporting.platform.plugin.output.ReportOutputHandlerFactory;
 import org.pentaho.reporting.platform.plugin.repository.PentahoNameGenerator;
 import org.pentaho.reporting.platform.plugin.repository.TempDirectoryNameGenerator;
 import org.pentaho.test.platform.engine.core.MicroPlatform;
@@ -44,8 +47,6 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-
-import javax.xml.parsers.DocumentBuilderFactory;
 
 public class ParameterTest extends TestCase {
   private MicroPlatform microPlatform;
@@ -68,6 +69,7 @@ public class ParameterTest extends TestCase {
         IPentahoDefinableObjectFactory.Scope.GLOBAL );
     microPlatform.define( IUserRoleListService.class, MockUserRoleListService.class );
     microPlatform.define( UserDetailsService.class, MockUserDetailsService.class );
+    microPlatform.define( ReportOutputHandlerFactory.class, DefaultReportOutputHandlerFactory.class );
     microPlatform.start();
     IPentahoSession session = new StandaloneSession( "test user" );
     PentahoSessionHolder.setSession( session );

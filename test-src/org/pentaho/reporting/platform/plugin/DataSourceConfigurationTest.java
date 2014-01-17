@@ -65,6 +65,8 @@ import org.pentaho.reporting.platform.plugin.connection.PentahoMondrianConnectio
 import org.pentaho.reporting.platform.plugin.connection.PentahoMondrianDataSourceProviderReadHandler;
 import org.pentaho.reporting.platform.plugin.connection.PentahoOlap4JJndiConnectionReadHandler;
 import org.pentaho.reporting.platform.plugin.connection.PentahoPmdConfigReadHandler;
+import org.pentaho.reporting.platform.plugin.output.DefaultReportOutputHandlerFactory;
+import org.pentaho.reporting.platform.plugin.output.ReportOutputHandlerFactory;
 import org.pentaho.reporting.platform.plugin.repository.PentahoNameGenerator;
 import org.pentaho.reporting.platform.plugin.repository.TempDirectoryNameGenerator;
 import org.pentaho.test.platform.engine.core.MicroPlatform;
@@ -90,6 +92,7 @@ public class DataSourceConfigurationTest extends TestCase {
         IPentahoDefinableObjectFactory.Scope.GLOBAL );
     microPlatform.define( IUserRoleListService.class, MockUserRoleListService.class );
     microPlatform.define( UserDetailsService.class, MockUserDetailsService.class );
+    microPlatform.define( ReportOutputHandlerFactory.class, DefaultReportOutputHandlerFactory.class );
     microPlatform.start();
 
     // micro-platform does not boot the engine ..
