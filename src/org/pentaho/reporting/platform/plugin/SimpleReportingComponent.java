@@ -57,7 +57,6 @@ import org.pentaho.reporting.libraries.base.util.CSVQuoter;
 import org.pentaho.reporting.libraries.base.util.StringUtils;
 import org.pentaho.reporting.libraries.resourceloader.ResourceException;
 import org.pentaho.reporting.libraries.xmlns.common.ParserUtil;
-import org.pentaho.reporting.platform.plugin.cache.DefaultReportCache;
 import org.pentaho.reporting.platform.plugin.cache.NullReportCache;
 import org.pentaho.reporting.platform.plugin.cache.ReportCache;
 import org.pentaho.reporting.platform.plugin.cache.ReportCacheKey;
@@ -971,9 +970,6 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       cache = new NullReportCache();
     } else {
       cache = PentahoSystem.get( ReportCache.class );
-      if ( cache == null ) {
-        cache = new DefaultReportCache();
-      }
       final ReportOutputHandler outputHandler = cache.get( reportCacheKey );
       if ( outputHandler != null ) {
         return outputHandler;
