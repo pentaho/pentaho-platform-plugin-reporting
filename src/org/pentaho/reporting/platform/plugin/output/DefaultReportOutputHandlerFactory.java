@@ -68,6 +68,31 @@ public class DefaultReportOutputHandlerFactory implements ReportOutputHandlerFac
 
   public DefaultReportOutputHandlerFactory()
   {
+    htmlStreamVisible = true;
+    htmlPageVisible = true;
+    xlsVisible = true;
+    xlsxVisible = true;
+    csvVisible = true;
+    rtfVisible = true;
+    pdfVisible = true;
+    textVisible = true;
+    mailVisible = true;
+    xmlTableVisible = true;
+    xmlPageVisible = true;
+    pngVisible = true;
+
+    htmlStreamAvailable = true;
+    htmlPageAvailable = true;
+    xlsAvailable = true;
+    xlsxAvailable = true;
+    csvAvailable = true;
+    rtfAvailable = true;
+    pdfAvailable = true;
+    textAvailable = true;
+    mailAvailable = true;
+    xmlTableAvailable = true;
+    xmlPageAvailable = true;
+    pngAvailable = true;
   }
 
   public boolean isHtmlStreamVisible()
