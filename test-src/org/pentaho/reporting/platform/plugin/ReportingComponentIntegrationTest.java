@@ -26,39 +26,23 @@ import java.util.HashMap;
 import java.util.List;
 
 import junit.framework.TestCase;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.junit.Test;
 import org.pentaho.platform.api.engine.IOutputHandler;
 import org.pentaho.platform.api.engine.IParameterProvider;
-import org.pentaho.platform.api.engine.IPentahoDefinableObjectFactory;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.api.engine.IPentahoUrlFactory;
-import org.pentaho.platform.api.engine.IPluginManager;
-import org.pentaho.platform.api.engine.IPluginProvider;
 import org.pentaho.platform.api.engine.IRuntimeContext;
-import org.pentaho.platform.api.engine.IServiceManager;
 import org.pentaho.platform.api.engine.ISolutionEngine;
-import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
 import org.pentaho.platform.engine.core.output.SimpleOutputHandler;
 import org.pentaho.platform.engine.core.solution.SimpleParameterProvider;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.engine.core.system.StandaloneSession;
-import org.pentaho.platform.engine.services.solution.SolutionEngine;
 import org.pentaho.platform.plugin.services.messages.Messages;
-import org.pentaho.platform.plugin.services.pluginmgr.DefaultPluginManager;
-import org.pentaho.platform.plugin.services.pluginmgr.SystemPathXmlPluginProvider;
-import org.pentaho.platform.plugin.services.pluginmgr.servicemgr.DefaultServiceManager;
-import org.pentaho.platform.repository2.unified.fs.FileSystemBackedUnifiedRepository;
 import org.pentaho.platform.util.web.SimpleUrlFactory;
-import org.pentaho.reporting.platform.plugin.output.DefaultReportOutputHandlerFactory;
-import org.pentaho.reporting.platform.plugin.output.ReportOutputHandlerFactory;
-import org.pentaho.reporting.platform.plugin.repository.PentahoNameGenerator;
-import org.pentaho.reporting.platform.plugin.repository.TempDirectoryNameGenerator;
 import org.pentaho.test.platform.engine.core.MicroPlatform;
-import org.springframework.security.userdetails.UserDetailsService;
 
 /**
  * Integration tests for the ReportingComponent.
@@ -75,17 +59,7 @@ public class ReportingComponentIntegrationTest extends TestCase {
   protected void setUp() throws Exception {
     new File( "./resource/solution/system/tmp" ).mkdirs();
 
-    microPlatform = new MicroPlatform( "./resource/solution" ); //$NON-NLS-1$
-    microPlatform.define( ISolutionEngine.class, SolutionEngine.class );
-    microPlatform.define( IUnifiedRepository.class, FileSystemBackedUnifiedRepository.class );
-    microPlatform.define( IPluginProvider.class, SystemPathXmlPluginProvider.class );
-    microPlatform.define( IServiceManager.class, DefaultServiceManager.class,
-        IPentahoDefinableObjectFactory.Scope.GLOBAL );
-    microPlatform.define( PentahoNameGenerator.class, TempDirectoryNameGenerator.class,
-        IPentahoDefinableObjectFactory.Scope.GLOBAL );
-    microPlatform.define( UserDetailsService.class, MockUserDetailsService.class );
-    microPlatform.define( IPluginManager.class, DefaultPluginManager.class );
-    microPlatform.define( ReportOutputHandlerFactory.class, DefaultReportOutputHandlerFactory.class );
+    microPlatform = MicroPlatformFactory.create();
     microPlatform.start();
 
     IPentahoSession session = new StandaloneSession();

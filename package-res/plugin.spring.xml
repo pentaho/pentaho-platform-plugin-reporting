@@ -51,4 +51,6 @@
 	</bean>
   <bean id="org.pentaho.reporting.platform.plugin.output.ReportOutputHandlerFactory"
         class="org.pentaho.reporting.platform.plugin.output.FastExportReportOutputHandlerFactory" scope="prototype"/>
+  <bean id="org.pentaho.reporting.platform.plugin.cache.ReportCache"
+        class="org.pentaho.reporting.platform.plugin.cache.NullReportCache" scope="prototype"/>
 </beans>

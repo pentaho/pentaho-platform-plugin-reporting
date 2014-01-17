@@ -22,24 +22,11 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.HashMap;
 
+import junit.framework.TestCase;
 import org.pentaho.platform.api.engine.IPentahoSession;
-import org.pentaho.platform.api.engine.IPluginProvider;
-import org.pentaho.platform.api.engine.IServiceManager;
-import org.pentaho.platform.api.engine.ISolutionEngine;
-import org.pentaho.platform.api.engine.IPentahoDefinableObjectFactory.Scope;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.StandaloneSession;
-import org.pentaho.platform.engine.services.solution.SolutionEngine;
-import org.pentaho.platform.plugin.services.pluginmgr.SystemPathXmlPluginProvider;
-import org.pentaho.platform.plugin.services.pluginmgr.servicemgr.DefaultServiceManager;
-import org.pentaho.reporting.platform.plugin.output.DefaultReportOutputHandlerFactory;
-import org.pentaho.reporting.platform.plugin.output.ReportOutputHandlerFactory;
-import org.pentaho.reporting.platform.plugin.repository.PentahoNameGenerator;
-import org.pentaho.reporting.platform.plugin.repository.TempDirectoryNameGenerator;
 import org.pentaho.test.platform.engine.core.MicroPlatform;
-
-import junit.framework.TestCase;
-import org.springframework.security.userdetails.UserDetailsService;
 
 public class PageableHTMLTest extends TestCase {
   private MicroPlatform microPlatform;
@@ -48,13 +35,7 @@ public class PageableHTMLTest extends TestCase {
   protected void setUp() throws Exception {
     new File( "./resource/solution/system/tmp" ).mkdirs();
 
-    microPlatform = new MicroPlatform( "./resource/solution" );
-    microPlatform.define( ISolutionEngine.class, SolutionEngine.class );
-    microPlatform.define( IPluginProvider.class, SystemPathXmlPluginProvider.class );
-    microPlatform.define( IServiceManager.class, DefaultServiceManager.class, Scope.GLOBAL );
-    microPlatform.define( PentahoNameGenerator.class, TempDirectoryNameGenerator.class, Scope.GLOBAL );
-    microPlatform.define( UserDetailsService.class, MockUserDetailsService.class );
-    microPlatform.define( ReportOutputHandlerFactory.class, DefaultReportOutputHandlerFactory.class );
+    microPlatform = MicroPlatformFactory.create();
     microPlatform.start();
 
     IPentahoSession session = new StandaloneSession();
