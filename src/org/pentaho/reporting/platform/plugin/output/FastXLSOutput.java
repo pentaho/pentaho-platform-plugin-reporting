@@ -14,7 +14,6 @@
  *
  * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
  */
-
 package org.pentaho.reporting.platform.plugin.output;
 
 import java.io.IOException;
@@ -22,34 +21,37 @@ import java.io.OutputStream;
 
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
-import org.pentaho.reporting.engine.classic.core.modules.output.table.csv.CSVReportUtil;
+import org.pentaho.reporting.engine.classic.core.modules.output.fast.xls.FastExcelReportUtil;
 import org.pentaho.reporting.libraries.repository.ContentIOException;
 
-public class CSVOutput implements ReportOutputHandler
+public class FastXLSOutput implements ReportOutputHandler
 {
-  public CSVOutput()
-  {
-  }
+  private ProxyOutputStream proxyOutputStream;
 
-  public Object getReportLock()
+  public FastXLSOutput()
   {
-    return this;
-  }
-
-  public int paginate(MasterReport report, int yieldRate) throws ReportProcessingException, IOException,
-      ContentIOException
-  {
-    return 0;
+    proxyOutputStream = new ProxyOutputStream();
   }
 
   public int generate(final MasterReport report,
                       final int acceptedPage,
                       final OutputStream outputStream,
-                      final int yieldRate)
-      throws ReportProcessingException, IOException, ContentIOException
+                      final int yieldRate) throws ReportProcessingException, IOException, ContentIOException
   {
-    CSVReportUtil.createCSV(report, outputStream, null);
+    proxyOutputStream.setParent(outputStream);
+    FastExcelReportUtil.processXls(report, outputStream);
     return 0;
+  }
+
+  public int paginate(final MasterReport report,
+                      final int yieldRate) throws ReportProcessingException, IOException, ContentIOException
+  {
+    return 0;
+  }
+
+  public void close()
+  {
+
   }
 
   public boolean supportsPagination()
@@ -57,8 +59,8 @@ public class CSVOutput implements ReportOutputHandler
     return false;
   }
 
-  public void close()
+  public Object getReportLock()
   {
-
+    return this;
   }
 }

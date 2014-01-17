@@ -22,12 +22,12 @@ import java.io.OutputStream;
 
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
-import org.pentaho.reporting.engine.classic.core.modules.output.table.csv.CSVReportUtil;
+import org.pentaho.reporting.engine.classic.core.modules.output.fast.csv.FastCsvReportUtil;
 import org.pentaho.reporting.libraries.repository.ContentIOException;
 
-public class CSVOutput implements ReportOutputHandler
+public class FastCSVOutput implements ReportOutputHandler
 {
-  public CSVOutput()
+  public FastCSVOutput()
   {
   }
 
@@ -48,7 +48,7 @@ public class CSVOutput implements ReportOutputHandler
                       final int yieldRate)
       throws ReportProcessingException, IOException, ContentIOException
   {
-    CSVReportUtil.createCSV(report, outputStream, null);
+    FastCsvReportUtil.process(report, outputStream);
     return 0;
   }
 

@@ -35,7 +35,11 @@ public class XLSXOutput implements ReportOutputHandler {
   private byte[] templateData;
   private ProxyOutputStream proxyOutputStream;
 
-  public XLSXOutput( final InputStream templateInputStream ) throws IOException {
+  public XLSXOutput()
+  {
+  }
+
+  public void setTemplateDataFromStream( final InputStream templateInputStream ) throws IOException {
     if ( templateInputStream != null ) {
       final ByteArrayOutputStream bout = new ByteArrayOutputStream();
       try {
@@ -45,6 +49,16 @@ public class XLSXOutput implements ReportOutputHandler {
       }
       templateData = bout.toByteArray();
     }
+  }
+
+  public byte[] getTemplateData()
+  {
+    return templateData;
+  }
+
+  public void setTemplateData(final byte[] templateData)
+  {
+    this.templateData = templateData;
   }
 
   public Object getReportLock() {
