@@ -1,19 +1,19 @@
-/*!
-* This program is free software; you can redistribute it and/or modify it under the
-* terms of the GNU Lesser General Public License, version 2.1 as published by the Free Software
-* Foundation.
-*
-* You should have received a copy of the GNU Lesser General Public License along with this
-* program; if not, you can obtain a copy at http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
-* or from the Free Software Foundation, Inc.,
-* 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-*
-* This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-* without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-* See the GNU Lesser General Public License for more details.
-*
-* Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
-*/
+/*
+ * This program is free software; you can redistribute it and/or modify it under the
+ * terms of the GNU Lesser General Public License, version 2.1 as published by the Free Software
+ * Foundation.
+ *
+ * You should have received a copy of the GNU Lesser General Public License along with this
+ * program; if not, you can obtain a copy at http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
+ * or from the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU Lesser General Public License for more details.
+ *
+ * Copyright 2010-2013 Pentaho Corporation.  All rights reserved.
+ */
 
 package org.pentaho.reporting.platform.plugin;
 
@@ -25,7 +25,6 @@ import java.net.URL;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
-
 import javax.print.DocFlavor;
 import javax.print.PrintService;
 import javax.print.PrintServiceLookup;
@@ -36,11 +35,8 @@ import org.pentaho.platform.api.action.IStreamProcessingAction;
 import org.pentaho.platform.api.action.IStreamingAction;
 import org.pentaho.platform.api.action.IVarArgsAction;
 import org.pentaho.platform.api.engine.IActionSequenceResource;
-import org.pentaho.platform.api.engine.IPluginManager;
-import org.pentaho.platform.engine.core.system.PentahoRequestContextHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.core.AttributeNames;
-import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.metadata.ReportProcessTaskRegistry;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.pdf.PdfPageableModule;
@@ -58,7 +54,6 @@ import org.pentaho.reporting.engine.classic.core.parameters.ValidationMessage;
 import org.pentaho.reporting.engine.classic.core.parameters.ValidationResult;
 import org.pentaho.reporting.engine.classic.core.util.ReportParameterValues;
 import org.pentaho.reporting.engine.classic.extensions.modules.java14print.Java14PrintUtil;
-import org.pentaho.reporting.libraries.base.config.Configuration;
 import org.pentaho.reporting.libraries.base.util.CSVQuoter;
 import org.pentaho.reporting.libraries.base.util.StringUtils;
 import org.pentaho.reporting.libraries.resourceloader.ResourceException;
@@ -67,20 +62,10 @@ import org.pentaho.reporting.platform.plugin.cache.NullReportCache;
 import org.pentaho.reporting.platform.plugin.cache.ReportCache;
 import org.pentaho.reporting.platform.plugin.cache.ReportCacheKey;
 import org.pentaho.reporting.platform.plugin.messages.Messages;
-import org.pentaho.reporting.platform.plugin.output.CSVOutput;
-import org.pentaho.reporting.platform.plugin.output.EmailOutput;
-import org.pentaho.reporting.platform.plugin.output.PDFOutput;
-import org.pentaho.reporting.platform.plugin.output.PNGOutput;
-import org.pentaho.reporting.platform.plugin.output.PageableHTMLOutput;
-import org.pentaho.reporting.platform.plugin.output.PlainTextOutput;
-import org.pentaho.reporting.platform.plugin.output.RTFOutput;
+import org.pentaho.reporting.platform.plugin.output.FastExportReportOutputHandlerFactory;
 import org.pentaho.reporting.platform.plugin.output.ReportOutputHandler;
-import org.pentaho.reporting.platform.plugin.output.StreamHtmlOutput;
-import org.pentaho.reporting.platform.plugin.output.StreamJcrHtmlOutput;
-import org.pentaho.reporting.platform.plugin.output.XLSOutput;
-import org.pentaho.reporting.platform.plugin.output.XLSXOutput;
-import org.pentaho.reporting.platform.plugin.output.XmlPageableOutput;
-import org.pentaho.reporting.platform.plugin.output.XmlTableOutput;
+import org.pentaho.reporting.platform.plugin.output.ReportOutputHandlerFactory;
+import org.pentaho.reporting.platform.plugin.output.ReportOutputHandlerSelector;
 
 public class SimpleReportingAction implements IStreamProcessingAction, IStreamingAction, IVarArgsAction {
 
@@ -189,7 +174,7 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
 
   /**
    * Sets the mime-type for determining which report output type to generate. This should be a mime-type for consistency with streaming output mime-types.
-   * 
+   *
    * @param outputType
    *          the desired output type (mime-type) for the report engine to generate
    */
@@ -199,7 +184,7 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
 
   /**
    * Gets the output type, this should be a mime-type for consistency with streaming output mime-types.
-   * 
+   *
    * @return the current output type for the report
    */
   public String getOutputType() {
@@ -208,7 +193,7 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
 
   /**
    * This method returns the resource for the report-definition, if available.
-   * 
+   *
    * @return the report-definition resource
    */
   public IActionSequenceResource getReportDefinition() {
@@ -217,7 +202,7 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
 
   /**
    * Sets the report-definition if it is provided to us by way of an action-sequence resource. The name must be reportDefinition or report-definition.
-   * 
+   *
    * @param reportDefinition
    *          a report-definition as seen (wrapped) by an action-sequence
    */
@@ -228,7 +213,7 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
   /**
    * This method will be called if an input is called reportDefinitionInputStream, or any variant of that with dashes report-definition-inputstream for example.
    * The primary purpose of this method is to facilitate unit testing.
-   * 
+   *
    * @param reportDefinitionInputStream
    *          any kind of InputStream which contains a valid report-definition
    */
@@ -238,7 +223,7 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
 
   /**
    * Returns the path to the report definition (for platform use this is a path in the solution repository)
-   * 
+   *
    * @return reportdefinitionPath
    */
   public String getReportDefinitionPath() {
@@ -247,7 +232,7 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
 
   /**
    * Sets the path to the report definition (platform path)
-   * 
+   *
    * @param reportDefinitionPath
    *          the path to the report definition.
    */
@@ -257,7 +242,7 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
 
   /**
    * Returns true if the report engine will be asked to use a paginated (HTML) output processor
-   * 
+   *
    * @return paginated
    */
   public boolean isPaginateOutput() {
@@ -266,7 +251,7 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
 
   /**
    * Set the paging mode used by the reporting engine. This will also be set if an input
-   * 
+   *
    * @param paginateOutput
    *          page mode
    */
@@ -292,7 +277,7 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
 
   /**
    * Gets the useContentRepository flag, needed by subclasses, such as with interactive adhoc
-   * 
+   *
    * @return useContentRepository
    */
   public boolean getUseJCR() {
@@ -317,71 +302,44 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
 
   /**
    * This method returns the mime-type for the streaming output based on the effective output target.
-   * 
+   *
    * @return the mime-type for the streaming output
    * @see SimpleReportingComponent#computeEffectiveOutputTarget()
    */
   public String getMimeType() {
     try {
       final String outputTarget = computeEffectiveOutputTarget();
-      if (log.isDebugEnabled()) {
-        log.debug(Messages.getInstance().getString("ReportPlugin.logComputedOutputTarget", outputTarget));
+      if ( log.isDebugEnabled() ) {
+        log.debug( Messages.getInstance().getString( "ReportPlugin.logComputedOutputTarget", outputTarget ) );
       }
-      if (HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE.equals(outputTarget)) {
-        return SimpleReportingComponent.MIME_TYPE_HTML;
+
+      ReportOutputHandlerFactory handlerFactory = PentahoSystem.get(ReportOutputHandlerFactory.class);
+      if (handlerFactory == null) {
+        handlerFactory = new FastExportReportOutputHandlerFactory();
       }
-      if (HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE.equals(outputTarget)) {
-        return SimpleReportingComponent.MIME_TYPE_HTML;
+
+      return handlerFactory.getMimeType(new InternalOutputHandlerSelector(outputTarget));
+
+    } catch ( IOException e ) {
+      if ( log.isDebugEnabled() ) {
+        log.warn( Messages.getInstance().getString( "ReportPlugin.logErrorMimeTypeFull" ), e );
+      } else if ( log.isWarnEnabled() ) {
+        log.warn( Messages.getInstance().getString( "ReportPlugin.logErrorMimeTypeShort", e.getMessage() ) );
       }
-      if (ExcelTableModule.EXCEL_FLOW_EXPORT_TYPE.equals(outputTarget)) {
-        return SimpleReportingComponent.MIME_TYPE_XLS;
+      return MIME_GENERIC_FALLBACK;
+    } catch ( ResourceException e ) {
+      if ( log.isDebugEnabled() ) {
+        log.warn( Messages.getInstance().getString( "ReportPlugin.logErrorMimeTypeFull" ), e );
+      } else if ( log.isWarnEnabled() ) {
+        log.warn( Messages.getInstance().getString( "ReportPlugin.logErrorMimeTypeShort", e.getMessage() ) );
       }
-      if (ExcelTableModule.XLSX_FLOW_EXPORT_TYPE.equals(outputTarget)) {
-        return SimpleReportingComponent.MIME_TYPE_XLSX;
-      }
-      if (CSVTableModule.TABLE_CSV_STREAM_EXPORT_TYPE.equals(outputTarget)) {
-        return SimpleReportingComponent.MIME_TYPE_CSV;
-      }
-      if (RTFTableModule.TABLE_RTF_FLOW_EXPORT_TYPE.equals(outputTarget)) {
-        return SimpleReportingComponent.MIME_TYPE_RTF;
-      }
-      if (PdfPageableModule.PDF_EXPORT_TYPE.equals(outputTarget)) {
-        return SimpleReportingComponent.MIME_TYPE_PDF;
-      }
-      if (PlainTextPageableModule.PLAINTEXT_EXPORT_TYPE.equals(outputTarget)) {
-        return SimpleReportingComponent.MIME_TYPE_TXT;
-      }
-      if (SimpleReportingComponent.MIME_TYPE_EMAIL.equals(outputTarget)) {
-        return SimpleReportingComponent.MIME_TYPE_EMAIL;
-      }
-      if (XmlTableModule.TABLE_XML_EXPORT_TYPE.equals(outputTarget)) {
-        return SimpleReportingComponent.MIME_TYPE_XML;
-      }
-      if (XmlPageableModule.PAGEABLE_XML_EXPORT_TYPE.equals(outputTarget)) {
-        return SimpleReportingComponent.MIME_TYPE_XML;
-      }
-      if (PNG_EXPORT_TYPE.equals(outputTarget)) {
-        return SimpleReportingComponent.MIME_TYPE_PNG;
-      }
-    } catch (IOException e) {
-      if (log.isDebugEnabled()) {
-        log.warn(Messages.getInstance().getString("ReportPlugin.logErrorMimeTypeFull"), e);
-      } else if (log.isWarnEnabled()) {
-        log.warn(Messages.getInstance().getString("ReportPlugin.logErrorMimeTypeShort", e.getMessage()));
-      }
-    } catch (ResourceException e) {
-      if (log.isDebugEnabled()) {
-        log.warn(Messages.getInstance().getString("ReportPlugin.logErrorMimeTypeFull"), e);
-      } else if (log.isWarnEnabled()) {
-        log.warn(Messages.getInstance().getString("ReportPlugin.logErrorMimeTypeShort", e.getMessage()));
-      }
+      return MIME_GENERIC_FALLBACK;
     }
-    return MIME_GENERIC_FALLBACK;
   }
 
   /**
    * This method sets the OutputStream to write streaming content on.
-   * 
+   *
    * @param outputStream
    *          an OutputStream to write to
    */
@@ -391,7 +349,7 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
 
   /**
    * This method checks if the output is targeting a printer
-   * 
+   *
    * @return true if the output is supposed to go to a printer
    */
   public boolean isPrint() {
@@ -400,7 +358,7 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
 
   /**
    * Set whether or not to send the report to a printer
-   * 
+   *
    * @param print
    *          a flag indicating whether the report should be printed.
    */
@@ -410,7 +368,7 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
 
   /**
    * This method gets the name of the printer the report will be sent to
-   * 
+   *
    * @return the name of the printer that the report will be sent to
    */
   public String getPrinter() {
@@ -419,7 +377,7 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
 
   /**
    * Set the name of the printer to send the report to
-   * 
+   *
    * @param printer
    *          the name of the printer that the report will be sent to, a null value will be interpreted as the default printer
    */
@@ -429,20 +387,20 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
 
   /**
    * Get the inputs, needed by subclasses, such as with interactive adhoc
-   * 
+   *
    * @return immutable input map
    */
   public Map<String, Object> getInputs() {
     if (inputs != null) {
       return Collections.unmodifiableMap(inputs);
     }
-    return Collections.emptyMap();
+    return Collections.EMPTY_MAP;
   }
 
   /**
    * This method sets the map of *all* the inputs which are available to this component. This allows us to use action-sequence inputs as parameters for our
    * reports.
-   * 
+   *
    * @param inputs
    *          a Map containing inputs
    */
@@ -471,7 +429,7 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
 
   /**
    * Sets the MasterReport for the report-definition, needed by subclasses, such as with interactive adhoc
-   * 
+   *
    * @return nothing
    */
   public void setReport(MasterReport report) {
@@ -482,7 +440,7 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
 
   /**
    * Get the MasterReport for the report-definition, the MasterReport object will be cached as needed, using the PentahoResourceLoader.
-   * 
+   *
    * @return a parsed MasterReport object
    * @throws ResourceException
    * @throws IOException
@@ -495,7 +453,7 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
         // load the report definition as an action-sequence resource
         report = ReportCreator.createReport(reportDefinition.getAddress());
       } else if (reportDefinitionPath != null) {
-        report = ReportCreator.createReportByName(reportDefinitionPath);
+        report = ReportCreator.createReport(reportDefinitionPath);
       } else {
         throw new ResourceException();
       }
@@ -503,30 +461,7 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
       final String clText = extractContentLinkSpec();
       report.setReportEnvironment(new PentahoReportEnvironment(report.getConfiguration(), clText));
     }
-    try
-    {
-      // force autoSubmit flag (based on settings.xml)?
-      IPluginManager pm = PentahoSystem.get(IPluginManager.class);
-      if (pm != null) 
-      {
-        Object autoSubmitSetting = pm.getPluginSetting("reporting", "settings/auto-submit", null);
-        if (autoSubmitSetting != null)
-        {
-          boolean autoSubmit = Boolean.parseBoolean(autoSubmitSetting.toString());
-          report.setAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.AUTO_SUBMIT_PARAMETER, autoSubmit);
-        }
-        Object autoSubmitDefaultSetting = pm.getPluginSetting("reporting", "settings/auto-submit-default", null);
-        if (autoSubmitDefaultSetting != null)
-        {
-          boolean autoSubmitDefault = Boolean.parseBoolean(autoSubmitDefaultSetting.toString());
-          report.setAttribute(AttributeNames.Core.NAMESPACE, AttributeNames.Core.AUTO_SUBMIT_DEFAULT, autoSubmitDefault);
-        }
-      }
-    }
-    catch (Throwable t)
-    {
-      log.warn(t.getMessage(), t);
-    }
+
     return report;
   }
 
@@ -541,7 +476,7 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
     }
 
     if (clRaw instanceof Collection) {
-      final Collection<?> c = (Collection<?>) clRaw;
+      final Collection c = (Collection) clRaw;
       final CSVQuoter quoter = new CSVQuoter(',', '"');
       final StringBuilder b = new StringBuilder();
       for (final Object o : c) {
@@ -595,7 +530,7 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
    * <p/>
    * If the output type given is invalid, the report will not be executed and calls to <code>SimpleReportingComponent#getMimeType()</code> will yield the
    * generic "application/octet-stream" response.
-   * 
+   *
    * @return
    * @throws IOException
    * @throws ResourceException
@@ -739,7 +674,7 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
 
   /**
    * Apply inputs (if any) to corresponding report parameters, care is taken when checking parameter types to perform any necessary casting and conversion.
-   * 
+   *
    * @param report
    *          a MasterReport object to apply parameters to
    * @param context
@@ -765,7 +700,7 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
 
   /**
    * Apply inputs (if any) to corresponding report parameters, care is taken when checking parameter types to perform any necessary casting and conversion.
-   * 
+   *
    * @param context
    *          a ParameterContext for which the parameters will be under
    * @param validationResult
@@ -834,7 +769,7 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
   /**
    * This method returns the number of logical pages which make up the report. This results of this method are available only after validate/execute have been
    * successfully called. This field has no setter, as it should never be set by users.
-   * 
+   *
    * @return the number of logical pages in the report
    */
   public int getPageCount() {
@@ -847,7 +782,7 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
    * <p/>
    * Since we should have a list of all action-sequence inputs, we can determine if we have sufficient inputs to meet the parameter requirements of the
    * report-definition. This would include validation of values and ranges of values.
-   * 
+   *
    * @return true if valid
    * @throws Exception
    */
@@ -875,7 +810,7 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
 
   /**
    * Perform the primary function of this component, this is, to execute. This method will be invoked immediately following a successful validate().
-   * 
+   *
    * @return true if successful execution
    * @throws Exception
    */
@@ -897,6 +832,11 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
     // SP-307, BISERVER-9688
 
     final MasterReport report = getReport();
+    int yieldRate = getYieldRate();
+    if (yieldRate > 0) {
+      report.getReportConfiguration().setConfigProperty
+          ("org.pentaho.reporting.engine.classic.core.YieldRate", String.valueOf(yieldRate));
+    }
 
     try {
       final DefaultParameterContext parameterContext = new DefaultParameterContext(report);
@@ -967,67 +907,26 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
         return outputHandler;
       }
     }
-
-    ReportOutputHandler reportOutputHandler = null;
-    if (HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE.equals(outputType)) {
-      if (dashboardMode) {
-        report.getReportConfiguration().setConfigProperty(HtmlTableModule.BODY_FRAGMENT, "true");
-      }
-      // use the content repository
-      final Configuration globalConfig = ClassicEngineBoot.getInstance().getGlobalConfig();
-      String contentHandlerPattern = PentahoRequestContextHolder.getRequestContext().getContextPath();
-      contentHandlerPattern += (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN, globalConfig.getConfigProperty("org.pentaho.web.ContentHandler")); //$NON-NLS-1$
-      reportOutputHandler = new PageableHTMLOutput(contentHandlerPattern);
-    } else if (HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE.equals(outputType)) {
-      if (dashboardMode) {
-        report.getReportConfiguration().setConfigProperty(HtmlTableModule.BODY_FRAGMENT, "true");
-      }
-      if (useJcr) {
-        // use the content repository
-        final Configuration globalConfig = ClassicEngineBoot.getInstance().getGlobalConfig();
-        String contentHandlerPattern = PentahoRequestContextHolder.getRequestContext().getContextPath();
-        contentHandlerPattern += (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN,
-            globalConfig.getConfigProperty("org.pentaho.web.JcrContentHandler")); //$NON-NLS-1$
-        reportOutputHandler = new StreamJcrHtmlOutput(jcrOutputPath, contentHandlerPattern);
-      } else {
-        final Configuration globalConfig = ClassicEngineBoot.getInstance().getGlobalConfig();
-        String contentHandlerPattern = PentahoRequestContextHolder.getRequestContext().getContextPath();
-        contentHandlerPattern += (String) getInput(REPORTHTML_CONTENTHANDLER_PATTERN, globalConfig.getConfigProperty("org.pentaho.web.ContentHandler")); //$NON-NLS-1$
-        // don't use the content repository
-        reportOutputHandler = new StreamHtmlOutput(contentHandlerPattern);
-      }
-    } else if (PNG_EXPORT_TYPE.equals(outputType)) {
-      reportOutputHandler = new PNGOutput();
-    } else if (XmlPageableModule.PAGEABLE_XML_EXPORT_TYPE.equals(outputType)) {
-      reportOutputHandler = new XmlPageableOutput();
-    } else if (XmlTableModule.TABLE_XML_EXPORT_TYPE.equals(outputType)) {
-      reportOutputHandler = new XmlTableOutput();
-    } else if (PdfPageableModule.PDF_EXPORT_TYPE.equals(outputType)) {
-      reportOutputHandler = new PDFOutput();
-    } else if (ExcelTableModule.EXCEL_FLOW_EXPORT_TYPE.equals(outputType)) {
-      final InputStream templateInputStream = (InputStream) getInput(XLS_WORKBOOK_PARAM, null);
-      reportOutputHandler = new XLSOutput(templateInputStream);
-    } else if (ExcelTableModule.XLSX_FLOW_EXPORT_TYPE.equals(outputType)) {
-      final InputStream templateInputStream = (InputStream) getInput(XLS_WORKBOOK_PARAM, null);
-      reportOutputHandler = new XLSXOutput(templateInputStream);
-    } else if (CSVTableModule.TABLE_CSV_STREAM_EXPORT_TYPE.equals(outputType)) {
-      reportOutputHandler = new CSVOutput();
-    } else if (RTFTableModule.TABLE_RTF_FLOW_EXPORT_TYPE.equals(outputType)) {
-      reportOutputHandler = new RTFOutput();
-    } else if (MIME_TYPE_EMAIL.equals(outputType)) {
-      reportOutputHandler = new EmailOutput();
-    } else if (PlainTextPageableModule.PLAINTEXT_EXPORT_TYPE.equals(outputType)) {
-      reportOutputHandler = new PlainTextOutput();
-    } else {
-      return null;
+    if ( dashboardMode ) {
+      report.getReportConfiguration().setConfigProperty( HtmlTableModule.BODY_FRAGMENT, "true" );
     }
 
-    return cache.put(reportCacheKey, reportOutputHandler);
+    ReportOutputHandlerFactory handlerFactory = PentahoSystem.get(ReportOutputHandlerFactory.class);
+    if (handlerFactory == null) {
+      handlerFactory = new FastExportReportOutputHandlerFactory();
+    }
+
+    ReportOutputHandler reportOutputHandler =
+        handlerFactory.createOutputHandlerForOutputType(new InternalOutputHandlerSelector(outputType));
+    if (reportOutputHandler == null) {
+      return null;
+    }
+    return cache.put( reportCacheKey, reportOutputHandler );
   }
 
   /**
    * Perform a pagination run.
-   * 
+   *
    * @return the number of pages or streams generated.
    * @throws IOException
    *           if an IO error occurred while loading the report.
@@ -1082,4 +981,43 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
     return null;
   }
 
+
+  private class InternalOutputHandlerSelector implements ReportOutputHandlerSelector
+  {
+    private String outputType;
+
+    private InternalOutputHandlerSelector(final String outputType)
+    {
+      this.outputType = outputType;
+    }
+
+    public String getOutputType()
+    {
+      return outputType;
+    }
+
+    public MasterReport getReport()
+    {
+      return report;
+    }
+
+    public boolean isUseJcrOutput()
+    {
+      return Boolean.TRUE.equals(SimpleReportingAction.this.getUseJCR());
+    }
+
+    public String getJcrOutputPath()
+    {
+      return SimpleReportingAction.this.getJcrOutputPath();
+    }
+
+    public <T> T getInput(final String parameterName, final T defaultValue, final Class<T> idx)
+    {
+      Object input = SimpleReportingAction.this.getInput(parameterName, defaultValue);
+      if (input == null) {
+        input = defaultValue;
+      }
+      return idx.cast(input);
+    }
+  }
 }
