@@ -35,6 +35,7 @@
         <jarDirectory url="file://$MODULE_DIR$/test-lib" recursive="false" type="SOURCES" />
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="core" />
   </component>
 </module>
 
