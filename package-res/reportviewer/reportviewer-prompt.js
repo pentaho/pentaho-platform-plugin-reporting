@@ -15,14 +15,13 @@
 * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
 */
 
-pen.define(['common-ui/util/util', 'common-ui/util/formatting'], function(util, ReportFormatUtil) {
+define(['common-ui/util/util', 'common-ui/util/formatting', 'pentaho/common/Messages', "dijit/registry"], function(util, ReportFormatUtil, Messages, registry) {
   return function() {
     return logged({
       // The current prompt mode
       mode: 'INITIAL',
 
       load: function() {
-        dojo.require('pentaho.common.Messages');
         pentaho.common.Messages.addUrlBundle('reportviewer', CONTEXT_PATH+'i18n?plugin=reporting&name=reportviewer/messages/messages');
       },
 
@@ -67,7 +66,7 @@ pen.define(['common-ui/util/util', 'common-ui/util/formatting'], function(util, 
         //    
         panel.getParameterDefinition = function(promptPanel, callback) {
           // Show glass pane when updating the prompt.
-          dijit.byId('glassPane').show();
+          registry.byId('glassPane').show();
 
           // promptPanel === panel
           this.fetchParameterDefinition(promptPanel, callback, /*promptMode*/'USERINPUT');
@@ -98,7 +97,7 @@ pen.define(['common-ui/util/util', 'common-ui/util/formatting'], function(util, 
       },
 
       ready: function(promptPanel) {
-        dijit.byId('glassPane').hide();
+        registry.byId('glassPane').hide();
       },
 
       /**
@@ -327,7 +326,7 @@ pen.define(['common-ui/util/util', 'common-ui/util/formatting'], function(util, 
       },
       
       showMessageBox: function( message, dialogTitle, button1Text, button1Callback, button2Text, button2Callback, blocker ) {
-        var messageBox = dijit.byId('messageBox');
+        var messageBox = registry.byId('messageBox');
 
         messageBox.setTitle(dialogTitle);
         messageBox.setMessage(message);
