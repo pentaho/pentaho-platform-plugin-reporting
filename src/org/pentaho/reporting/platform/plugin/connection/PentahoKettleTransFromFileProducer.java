@@ -18,17 +18,22 @@
 package org.pentaho.reporting.platform.plugin.connection;
 
 import org.pentaho.platform.engine.core.system.PentahoSystem;
-import org.pentaho.reporting.engine.classic.core.ParameterMapping;
+import org.pentaho.reporting.engine.classic.extensions.datasources.kettle.FormulaArgument;
+import org.pentaho.reporting.engine.classic.extensions.datasources.kettle.FormulaParameter;
 import org.pentaho.reporting.engine.classic.extensions.datasources.kettle.KettleTransFromFileProducer;
 import org.pentaho.reporting.libraries.resourceloader.ResourceKey;
 import org.pentaho.reporting.platform.plugin.RepositoryResourceLoader;
 
 public class PentahoKettleTransFromFileProducer extends KettleTransFromFileProducer {
-  public PentahoKettleTransFromFileProducer( final String repositoryName, final String transformationFile,
-      final String stepName, final String username, final String password, final String[] definedArgumentNames,
-      final ParameterMapping[] definedVariableNames ) {
-    super( repositoryName, transformationFile, stepName, username, password,
-           definedArgumentNames, definedVariableNames );
+  public PentahoKettleTransFromFileProducer(final String repositoryName,
+                                            final String transformationFile,
+                                            final String stepName,
+                                            final String username,
+                                            final String password,
+                                            final FormulaArgument[] definedArgumentNames,
+                                            final FormulaParameter[] definedVariableNames) {
+    super(repositoryName, transformationFile, stepName, username, password,
+        definedArgumentNames, definedVariableNames);
   }
 
   protected String computeFullFilename( ResourceKey key ) {
@@ -53,6 +58,6 @@ public class PentahoKettleTransFromFileProducer extends KettleTransFromFileProdu
       key = key.getParent();
     }
 
-    return super.computeFullFilename( key );
+    return super.computeFullFilename(key);
   }
 }
