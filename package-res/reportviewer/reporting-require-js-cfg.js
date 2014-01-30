@@ -14,5 +14,6 @@
 *
 * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
 */
-
-requireCfg['paths']['reportviewer'] = CONTEXT_PATH+'content/reporting/reportviewer';
+var prefix = (typeof CONTEXT_PATH != "undefined") ? CONTEXT_PATH+'content/reporting/reportviewer' : 'reportviewer'; 
+requireCfg['paths']['reportviewer'] = prefix;
+requireCfg['paths']['pentaho/reportviewer'] = prefix+'/dojo/pentaho/reportviewer';

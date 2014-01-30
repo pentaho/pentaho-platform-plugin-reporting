@@ -22,7 +22,7 @@
  * See common-ui/prompting/pentaho-prompting-sample-component.js for the custom component implementation.
  */
 
-pen.require([
+require([
   'reportviewer/reportviewer-app',
   'common-ui/prompting/pentaho-prompting-sample-component'
 ]);

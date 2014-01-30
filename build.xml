@@ -29,6 +29,8 @@
     <!--<delete dir="${approot.stage.dir}/scripts"/>-->
   </target>
 
+  <target name="publish-local-nojar" depends="subfloor-js.js.publish-local-nojar"/>
+
   <!-- override the subfloor assemble target to do special assembly from the war directory -->
   <target name="assemble" depends="compile,assemble.init,build-js,package-js-output">
     <!--copy todir="${approot.stage.dir}/lib">
@@ -40,19 +42,14 @@
       <fileset dir="${package.resdir}" />
     </copy>
     <!-- Copy the js build output -->
-    <copy todir="${approot.stage.dir}/reportviewer" overwrite="true">
+    <copy todir="${approot.stage.dir}/reportviewer/compressed" overwrite="true">
       <!-- Remove top-level directory when copying -->
       <flattenmapper/>
       <fileset dir="${js.build.output.dir}">
         <!-- Entire application -->
-        <include name="reportviewer-app.js"/>
-        <!-- Processed main module -->
         <include name="reportviewer/reportviewer-main-module.js"/>
+        <include name="reportviewer/formatter.js"/>
       </fileset>
-    </copy>
-    <!-- Copy dojo output into staging area -->
-    <copy todir="${approot.stage.dir}/reportviewer/dojo">
-      <fileset dir="${js.script.package.dest}/dojo"/>
     </copy>
   </target>
 

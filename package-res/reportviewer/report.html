@@ -22,33 +22,34 @@
     <link rel="stylesheet" href="../../../content/reporting/reportviewer/reportviewer.css" type="text/css" />
     
     <script type="text/javascript">
-      // This is required to be able to detect a child-report viewer.
-      // The viewer variable is not available so soon 
-      // because it is created inside a pen.require.
-      var _isReportViewer = true;
-      var _isTopReportViewer = true;
-      try { _isTopReportViewer = ((window.parent === window) || !window.parent._isReportViewer); } catch(ex){ /*XSS*/ }
-      
-      var inMobile = false;
-      try { inMobile = !!window.top.PentahoMobile; } catch(ex) { /*XSS*/ }
-      //	inMobile = true; // For testing mobile case in PC
-      
-	  /**
-	   * This is called when the formatter gwt module has been loaded. We depend on this so we'll load the prompt after 
-	   * the formatter has been loaded.
-	   */
-	  var gwtModuleLoaded = function(moduleName) {
-	    if (moduleName === 'formatter') {
-	      // Once the GWT JSTextFormatter is loaded we can depend on other modules we need and then load the report viewer
-	      pen.require(['common-ui/util/util'], function() {
-	        pen.require(['local'], function(local) {
-	          local.define('formatter');
-	        });
-	      });
-	    }
-	  };
-	  
-	  try {
+
+
+      var dojoConfig = {
+          parseOnLoad: false,
+          isDebug: true,
+          disableFlashStorage: true
+      };
+
+
+
+      /**
+       * This is called when a gwt module has been loaded. We depend on these so we'll defer loading of functionality until
+       * modules have been loaded.
+       */
+
+      var gwtModuleLoaded = function(moduleName) {
+          if (moduleName === 'formatter') {
+              // Once the GWT JSTextFormatter is loaded we can depend on other modules we need and then load the report viewer
+    
+              require(['local'], function(local) {
+                  local.define('formatter');
+              });
+
+          }
+      };
+
+
+      try {
 		  if(window.top.showLoadingIndicator) {
 		    window.top.showLoadingIndicator();
 		  } else if(window.parent.showLoadingIndicator) {
@@ -63,96 +64,15 @@
       var SimileAjax = {};
       
       var logger, logged;
-      
-      // TODO: Couldn't this be a local variable of the below function??
-      var dependencies = [];
-      pen.require(['common-ui/util/util'], function(util) {
-        // Load the compressed dojo if we're not in debug mode
-        if( util.getUrlParameters().jsset != 'orig' ) {
-          $.extend(djConfig, {
-            // Set up locale for Dojo
-            locale: util.getLocale(),
-            modulePaths: {
-              'pentaho.common': '../../../../common-ui/resources/web/dojo/pentaho/common'
-            },
-            parseOnLoad: false,
-            baseUrl: '../../../content/reporting/reportviewer/dojo/dojo/'
-          });
-          dependencies.push('../../../content/reporting/reportviewer/dojo/dojo/dojo-reportviewer.js');
-          dependencies.push('../../../content/reporting/reportviewer/reportviewer-app.js');
-        } else {
-          $.extend(djConfig, {
-            // Set up locale for Dojo
-            locale: util.getLocale(),
-            modulePaths: {
-                'pentaho.common': '../pentaho/common',
-                'pentaho.reportviewer': '../../../../../reporting/reportviewer/dojo/pentaho/reportviewer'
-            },
-            parseOnLoad: false,
-            baseUrl: '../../../content/common-ui/resources/web/dojo/dojo/'
-          });
-          dependencies.push('../../../content/common-ui/resources/web/dojo/dojo/dojo-all.js');
-          dependencies.push('../../../content/reporting/reportviewer/reportviewer-main-module');
-        }
 
-        pen.require(dependencies, function() {
-          // Additional requires are in this block to prevent the loading of individual resources when we're working in compressed mode
-          pen.require(['cdf/jquery.blockUI', 'cdf/Dashboards'], function() {
-            // Override Dashboard's loading/glasspane while loading to omit the animation
-            Dashboards.blockUIwithDrag = function() {
-			  // blockUI has concurrency issues (see BISERVER-8124)
-			  // forcing no-op with override
-            }
-          });
-          
-          // Logging must be defined before loading reportviewer
-      	  pen.require(['local', 'reportviewer/reportviewer-logging'], function(local, logging) {
-      	    var options;
-      	    if(_isTopReportViewer) {
-              var qs;
-              try       { qs = window.top.location.search; } 
-              catch(ex) { qs = window.location.search;     } /*XSS*/
-                
-              options = {enabled: !!qs && ("&" + qs.substr(1)).indexOf("&debug=true") >= 0};
-            } else {
-              options = {parent: window.parent.logger};
-            }
-      	    
-      	    logged = logging.create(/*logger id*/window.name, options);
-            logger = logged.logger; // may be null
-            
-            local.define('logger');
-      	  });
-      	  
-          // Load and launch the report viewer application
-          pen.require([
-            'local!dojo', 'local!formatter', 'local!logger', 
-            'cdf/Dashboards', 'reportviewer/reportviewer', 'reportviewer/reportviewer-prompt'
-          ], function(dojo, formatter, local_logger, dashboards, Viewer, Prompt) {
-            window.prompt = new Prompt();
-            window.viewer = new Viewer(prompt);
-            window.prompt.load();
-			
-            $(window).resize(logged('window.resize', function() {
-              viewer.view.onViewportResize();
-            }));
-          });
 
-          dojo.require('dojo.parser');
-          dojo.require('pentaho.common.Messages');
-          dojo.require('pentaho.common.MessageBox');
-          dojo.require('pentaho.common.Menu');
-          dojo.require('pentaho.common.MenuItem');
-          dojo.require('pentaho.common.PageControl');
 
-          dojo.ready(function() {
-            dojo.parser.parse();
-            // Dojo is now available, modules depending on it may now load.
-            pen.require(['local'], function(local) {
-              local.define('dojo');
-            });
-          });
-        });
+        require(['reportviewer/reportviewer-main-module'], function() {
+
+
+
+
+
       });
     </script>	    
   </head>

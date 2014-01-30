@@ -20,20 +20,44 @@
   optimize: "uglify",
   baseUrl: ".",
   dir: "../bin/scriptOutput",
+  optimizeCss: "none",
+
+  skipDirOptimize: true,
   //Put in a mapping so that 'requireLib' in the
   //modules section below will refer to the require.js
   //contents.
   paths: {
     requireLib: 'require',
-    'local': 'common-ui/util/local'
+    'dojo/selector/_loader' : "empty:",
+    'dojo/query': 'empty:',
+    'dojo/request': 'empty:',
+    'dijit/layout/ContentPane': 'empty:',
+    'dijit/Dialog' : 'empty:',
+    'dojo/text' : 'common-ui/util/text',
+    'dijit/layout/StackController': 'empty:',
+    'dijit/layout/StackContainer': 'empty:',
+    'dijit/layout/TabController': 'empty:',
+    'dijit/form/ValidationTextBox':'empty:',
+    'dijit/form/_ComboBoxMenuMixin':'empty:',
+    'dijit/_TemplatedMixin':'empty:',
+    'dijit/form/Select':'empty:',
+    'dijit/ColorPalette':'empty:',
+    'dojo/date/locale':'empty:',
+    'pir/i18n' : 'empty:',
+    'dojox/widget/ColorPicker':'empty:',
+    'dojo/number':'empty:',
+    'reportviewer/formatter' : 'empty:'
   },
+
+
+  mainConfigFile: 'requireCfg.js',
 
   //Indicates the namespace to use for require/requirejs/define.
   namespace: "pen",
 
   modules: [
     {
-      name: "reportviewer-app",
+      name: "reportviewer/reportviewer-main-module",
       include: ["reportviewer/reportviewer-main-module"],
       create: true
     }

@@ -14,13 +14,12 @@
 *
 * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
 */
-
-dojo.provide('pentaho.reportviewer.ReportDialog');
-dojo.require('dijit._Widget');
-dojo.require('dijit._Templated');
-dojo.require('pentaho.common.button');
-dojo.require('pentaho.common.Dialog');
-dojo.declare(
+define(["dojo/_base/declare", "dojo/on", "dojo/query", "dojo/_base/lang", 'dijit/_WidgetBase',
+  'dijit/_TemplatedMixin',
+  'pentaho/common/button',
+  'pentaho/common/Dialog', "dojo/dom-style", "dojo/dom-attr"],
+    function(declare, on, query, lang, _WidgetBase, _TemplatedMixin, button, Dialog, style, attr){
+      return declare(
   'pentaho.reportviewer.ReportDialog',
   [pentaho.common.Dialog],
   {
@@ -31,7 +30,7 @@ dojo.declare(
 
     buttons: ['OK'],
 
-    templateString: '<div style="padding: 5px 10px 10px 10px;" class="dialog-content"><iframe dojoAttachPoint="iframe" width="100%" height="100%"></iframe></div>',
+    templateString: '<div style="padding: 5px 10px 10px 10px;" class="dialog-content"><iframe data-dojo-attach-point="iframe" width="100%" height="100%"></iframe></div>',
 
     cleanseSizeAttr: function(attr, defaultValue) {
       if (attr === undefined) {
@@ -46,16 +45,17 @@ dojo.declare(
     open: function(title, url, width, height) {
       this.setTitle(title);
 
-      dojo.style(this.domNode, 'width', this.cleanseSizeAttr(width, this.width));
-      dojo.style(this.domNode, 'height', this.cleanseSizeAttr(height, this.height));
+      style.set(this.domNode, 'width', this.cleanseSizeAttr(width, this.width));
+      style.set(this.domNode, 'height', this.cleanseSizeAttr(height, this.height));
 
-      dojo.attr(this.iframe, 'src', url);
+      attr.set(this.iframe, 'src', url);
       this.show();
     },
 
     postCreate: function() {
       this.inherited(arguments);
-      this.callbacks = [dojo.hitch(this, this.onCancel)];
+      this.callbacks = [lang.hitch(this, this.onCancel)];
     }
   }
 );
+});

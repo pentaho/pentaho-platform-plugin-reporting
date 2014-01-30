@@ -15,7 +15,9 @@
 * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
 */
 
-pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui/util/timeutil', 'common-ui/util/formatting'], function(util) {
+define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui/util/timeutil', 'common-ui/util/formatting', 'pentaho/common/Messages', "dojo/dom", "dojo/on", "dojo/_base/lang",
+"dijit/registry", "dojo/has", "dojo/sniff", "dojo/dom-class", 'pentaho/reportviewer/ReportDialog', "dojo/dom-class", "dojo/query", "dojo/dnd/common", "dojo/dom-geometry", "dojo/parser", "dojo/window"],
+    function(util, _prompt, _timeutil, _formatting, _Messages, dom, on, lang, registry, has, sniff, domClass, ReportDialog, domClass, query, dnd, geometry, parser, win) {
   
   return function(reportPrompt) {
     if (!reportPrompt) {
@@ -27,7 +29,7 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
       prompt: reportPrompt,
       
       load: function() {
-        dojo.require('pentaho.common.Messages');
+        parser.parse();
         pentaho.common.Messages.addUrlBundle('reportviewer', CONTEXT_PATH+'i18n?plugin=reporting&name=reportviewer/messages/messages');
         this.view.localize();
         
@@ -48,15 +50,15 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
           }
         }
         
-        noUserSelect(dojo.byId('reportArea'));
-        noUserSelect(dojo.byId('reportPageOutline'));
-        noUserSelect(dojo.byId('reportContent'));
+        noUserSelect(dom.byId('reportArea'));
+        noUserSelect(dom.byId('reportPageOutline'));
+        noUserSelect(dom.byId('reportContent'));
         
         // ------------
         
-        dojo.connect(dijit.byId('toolbar-parameterToggle'), "onClick", this, function() {
+        on(registry.byId('toolbar-parameterToggle'),  "click", lang.hitch( this,  function() {
           this.view.togglePromptPanel();
-        }.bind(this));
+        }));
 
         var boundOnReportContentLoaded = this._onReportContentLoaded.bind(this);
         
@@ -65,17 +67,17 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
           setTimeout(boundOnReportContentLoaded);
         });
         
-        if(dojo.isIE){
+        if(has("ie")){
           // When a file is downloaded, the "complete" readyState does not occur: "loading", "interactive", and stops. 
-          dojo.connect(dojo.byId('reportContent'), "onreadystatechange", function() {
+          on(dom.byId('reportContent'),  "readystatechange",  function() {
             if(this.readyState === 'complete') { onFrameLoaded(); }
           });
         } else {
-          dojo.connect(dojo.byId('reportContent'), "load", onFrameLoaded);
+          on(dom.byId('reportContent'),  "load", lang.hitch( onFrameLoaded));
         }
-        
+
         var basePromptReady = this.prompt.ready.bind(this.prompt);
-        this.prompt.ready       = this.view.promptReady.bind(this.view, basePromptReady);
+        this.prompt.ready       = this.view.promptReady.bind(this.view,  basePromptReady);
         this.prompt.submit      = this.submitReport.bind(this);
         this.prompt.submitStart = this.submitReportStart.bind(this);
         
@@ -112,7 +114,7 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
          */
         localize: function() {
           $('#toolbar-parameterToggle').attr('title', pentaho.common.Messages.getString('parameterToolbarItem_title'));
-          dijit.byId('pageControl').registerLocalizationLookup(pentaho.common.Messages.getString);
+          registry.byId('pageControl').registerLocalizationLookup(pentaho.common.Messages.getString);
         },
 
         /**
@@ -126,7 +128,7 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
           
           // if we are not in PUC
           if(!inSchedulerDialog && !inMobile && (!inPuc || inIFrame)) {
-            dojo.addClass(document.body, 'pentaho-page-background');
+            domClass.add(document.body, 'pentaho-page-background');
           }
         },
 
@@ -182,7 +184,7 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
         },
         
         _hasReportContent: function() {
-          var iframe = dojo.byId('reportContent');
+          var iframe = dom.byId('reportContent');
           var src = iframe.src;
           return src !== '' && src !== 'about:blank';
         },
@@ -225,16 +227,16 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
         _hideToolbarPromptControls: function() {
           // Hide the toolbar elements
           // When inMobile, toolbarlinner2 has another structure. See report.html.
-          if(!inMobile) { dojo.addClass('toolbar-parameter-separator', 'hidden'); }
+          if(!inMobile) { domClass.add('toolbar-parameter-separator', 'hidden'); }
           
           // dijit modifies the HTML structure.
           // At least in mobile, the button gets wrapped by a frame, 
           // that needs to be hidden.
           var PARAM_TOGGLE = 'toolbar-parameterToggle';
-          var elem = dojo.byId(PARAM_TOGGLE);
+          var elem = dom.byId(PARAM_TOGGLE);
           while(elem) {
             if(elem.getAttribute('widgetid') === PARAM_TOGGLE) {
-              dojo.addClass(elem, 'hidden');
+              domClass.add(elem, 'hidden');
               break;
             }
             elem = elem.parentNode;
@@ -251,14 +253,14 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
             // don't show the report or the submit panel, or the pages toolbar
             this.showPromptPanel(true);
 
-            dijit.byId('glassPane').hide();
-            dojo.addClass('reportContent', 'hidden');
-            dojo.addClass(dojo.query('.submit-panel')[0], 'hidden');
-            dojo.addClass('toolbarlinner2', 'hidden');
+            registry.byId('glassPane').hide();
+            domClass.add('reportContent', 'hidden');
+            domClass.add(query('.submit-panel')[0], 'hidden');
+            domClass.add('toolbarlinner2', 'hidden');
 
-            dojo.removeClass('promptPanel', 'pentaho-rounded-panel-bottom-lr');
-            dojo.removeClass('reportControlPanel', 'pentaho-shadow');
-            dojo.removeClass('reportControlPanel', 'pentaho-rounded-panel-bottom-lr');
+            domClass.remove('promptPanel', 'pentaho-rounded-panel-bottom-lr');
+            domClass.remove('reportControlPanel', 'pentaho-shadow');
+            domClass.remove('reportControlPanel', 'pentaho-rounded-panel-bottom-lr');
 
             if (typeof window.parameterValidityCallback !== 'undefined') {
               var isValid = !promptPanel.paramDefn.promptNeeded;
@@ -288,7 +290,7 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
           // un-style the report so it's the only visible element 
           // when both the pagination controls and the parameter UI are hidden.
           var isToolbarEmpty = !promptPanel.paramDefn.paginate && !showParamUI;
-          dojo[isToolbarEmpty ? 'addClass' : 'removeClass']('toppanel', 'hidden');
+          domClass[isToolbarEmpty ? 'add' : 'remove']('toppanel', 'hidden');
           
           // Don't mess with the parameters if we're "navigating".
           // If the user has explicitly hidden the UI, 
@@ -317,7 +319,7 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
         },
 
         updatePageControl: function(promptPanel) {
-          var pc = dijit.byId('pageControl');
+          var pc = registry.byId('pageControl');
           
           pc.registerPageNumberChangeCallback(undefined);
           
@@ -351,14 +353,14 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
         },
 
         togglePromptPanel: function() {
-          this.showPromptPanel(dijit.byId('toolbar-parameterToggle').checked);
+          this.showPromptPanel(registry.byId('toolbar-parameterToggle').checked);
           this.resize();
         },
 
         showPromptPanel: function(visible) {
-          dijit.byId('toolbar-parameterToggle').set('checked', !!visible);
+          registry.byId('toolbar-parameterToggle').set('checked', !!visible);
           
-          dojo[visible ? 'removeClass' : 'addClass']('reportControlPanel', 'hidden');
+          domClass[visible ? 'remove' : 'add']('reportControlPanel', 'hidden');
         },
 
         isPageStyled: function() {
@@ -395,15 +397,15 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
         
         // called by #resize and by window.resize -> onViewportResize
         resizeContentArea: function(callBefore) {
-          var vp = dojo.dnd.getViewport();
-          var tp = dojo.marginBox('toppanel');
+          var vp = win.getBox();
+          var tp = geometry.getMarginBox('toppanel');
           
           var mb = {h: vp.h - tp.h - 2};
           
           logger && logger.log("viewport=(" + vp.w + ","  + vp.h + ") " + " toppanel=(" + tp.w + ","  + tp.h + ") ");
           
           // Fill all available space
-          dojo.marginBox('reportArea', mb);
+          geometry.getMarginBox('reportArea', mb);
           
           if(inMobile && this._isHtmlReport) {
             this._resizeMobileHtmlReportHandlesScrolling(mb);
@@ -489,7 +491,7 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
             // Most certainly this indicates that the loaded report content
             // does not have a fixed width, and, instead, adapts to the imposed size (like width: 100%).
           
-            var vp = dojo.dnd.getViewport();
+            var vp = dnd.getViewport();
             w = Math.round(2 * vp.w / 3);
             logger && logger.log("Width is too small - assuming a default width of " + w);
           }
@@ -541,7 +543,6 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
 
       openUrlInDialog: function(title, url, width, height) {
         if (this.dialog === undefined) {
-          dojo.require('pentaho.reportviewer.ReportDialog');
           this.dialog = new pentaho.reportviewer.ReportDialog();
           this.dialog.setLocalizationLookupFunction(pentaho.common.Messages.getString);
         }
@@ -626,7 +627,7 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
 
         // PRD-3962 - show glass pane on submit, hide when iframe is loaded
         // Show glass-pane
-        dijit.byId('glassPane').show();
+        registry.byId('glassPane').show();
         
         // When !AutoSubmit, a renderMode=XML call has not been done yet,
         //  and must be done now so that the page controls have enough info.
@@ -657,7 +658,7 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
         var outputFormat = options['output-target'];
         var isHtml = outputFormat.indexOf('html') != -1;
         var isProportionalWidth = isHtml && options['htmlProportionalWidth'] == "true";
-        var isReportAlone = dojo.hasClass('toppanel', 'hidden');
+        var isReportAlone = domClass.contains('toppanel', 'hidden');
         
         var styled = _isTopReportViewer && !isReportAlone && 
                      isHtml && !isProportionalWidth && 
@@ -717,7 +718,7 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
           
           // PRD-3962 - show glass pane on submit, hide when iframe is loaded
           // Hide glass-pane, if it is visible
-          dijit.byId('glassPane').hide();
+          registry.byId('glassPane').hide();
         }
       },
       
@@ -758,7 +759,7 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
         // TODO: Should include HTML test here as well?
         var isParentViewer = false;
         try {
-          var contentWin = dojo.byId('reportContent').contentWindow;
+          var contentWin = dom.byId('reportContent').contentWindow;
           if(contentWin) {
             if(contentWin._isReportViewer) {
               isParentViewer = true;

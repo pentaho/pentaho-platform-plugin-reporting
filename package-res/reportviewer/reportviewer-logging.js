@@ -15,7 +15,7 @@
 * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
 */
 
-pen.define(function() {
+define(function() {
   var levelIndentText = "&nbsp;&nbsp;&nbsp;&nbsp;";
   
   var S = function(s) { return s == null ? "" : String(s); };
