@@ -173,7 +173,12 @@ pen.define(['common-ui/util/util', 'common-ui/util/formatting'], function(util, 
       },
 
       reauthenticate: function(f) {
-        if(top.mantle_initialized) {
+				var mntl = false;
+				try{
+					mntl = top.mantle_initialized;
+				}
+				catch(ex){}
+        if(mntl) {
           var callback = {
             loginCallback : f
           }
