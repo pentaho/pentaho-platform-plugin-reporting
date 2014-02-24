@@ -62,4 +62,6 @@
   </target>
 
   <target name="dist-source" depends="dist-js, subfloor.dist-source"/>
+
+  <target name="publish-nojar" depends="subfloor-js.js.publish-nojar, subfloor-pkg.publish-nojar"/>
 </project>
