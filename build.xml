@@ -29,7 +29,7 @@
     <!--<delete dir="${approot.stage.dir}/scripts"/>-->
   </target>
 
-  <target name="publish-local-nojar" depends="subfloor-js.js.publish-local-nojar"/>
+  <!--<target name="publish-local-nojar" depends="subfloor-js.js.publish-local-nojar"/>-->
 
   <!-- override the subfloor assemble target to do special assembly from the war directory -->
   <target name="assemble" depends="compile,assemble.init,build-js,package-js-output">
@@ -61,4 +61,5 @@
     <copy failonerror="true" todir="${install.lib-dir}" file="${dist.dir}/${ivy.artifact.id}-${project.revision}.jar"/>
   </target>
 
+  <target name="dist-source" depends="dist-js, subfloor.dist-source"/>
 </project>
