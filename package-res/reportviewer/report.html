@@ -1,132 +1,128 @@
 <!DOCTYPE html>
 <html xmlns:pho="http:/www.pentaho.com">
 <head>
-    <title>Report Web Viewer</title>
-    
-    <link rel="shortcut icon" href="images/favicon.ico" />
+  <title>Report Web Viewer</title>
 
-    <!-- Include CDF styles first to make sure they can be properly overridden -->
-    <link rel="stylesheet" href="../../../content/pentaho-cdf/js/cdf.css" type="text/css" />
+  <link rel="shortcut icon" href="images/favicon.ico" />
 
-    <link rel="stylesheet" type="text/css" href="../../common-ui/resources/web/dojo/dijit/themes/pentaho/pentaho.css"/>
+  <!-- Include CDF styles first to make sure they can be properly overridden -->
+  <link rel="stylesheet" href="../../../content/pentaho-cdf/js/cdf.css" type="text/css" />
 
-    <script type="text/javascript" src="webcontext.js?context=reporting"></script>
+  <link rel="stylesheet" type="text/css" href="../../common-ui/resources/web/dojo/dijit/themes/pentaho/pentaho.css"/>
 
-    <link rel="stylesheet" href="../../../content/pentaho-cdf/js/jquery.tooltip.css" type="text/css" />
-    <link rel="stylesheet" href="../../../content/pentaho-cdf/js/jquery.jdMenu.css" type="text/css" />
-    <link rel="stylesheet" href="../../../content/pentaho-cdf/js/jquery.jdMenu.slate.css" type="text/css" />
-    <link rel="stylesheet" href="../../../content/pentaho-cdf/js/jquery-impromptu.css" type="text/css" />
+  <script type="text/javascript" src="webcontext.js?context=reporting"></script>
 
-    <link rel="stylesheet" type="text/css" href="../../../content/common-ui/resources/web/dojo/dijit/themes/pentaho/pentaho.css"/>
-    <link rel="stylesheet" href="../../../content/common-ui/resources/web/prompting/pentaho-prompting.css" type="text/css" />
-    <link rel="stylesheet" href="../../../content/reporting/reportviewer/reportviewer.css" type="text/css" />
-    
-    <script type="text/javascript">
+  <link rel="stylesheet" href="../../../content/pentaho-cdf/js/jquery.tooltip.css" type="text/css" />
+  <link rel="stylesheet" href="../../../content/pentaho-cdf/js/jquery.jdMenu.css" type="text/css" />
+  <link rel="stylesheet" href="../../../content/pentaho-cdf/js/jquery.jdMenu.slate.css" type="text/css" />
+  <link rel="stylesheet" href="../../../content/pentaho-cdf/js/jquery-impromptu.css" type="text/css" />
 
+  <link rel="stylesheet" type="text/css" href="../../../content/common-ui/resources/web/dojo/dijit/themes/pentaho/pentaho.css"/>
+  <link rel="stylesheet" href="../../../content/common-ui/resources/web/prompting/pentaho-prompting.css" type="text/css" />
+  <link rel="stylesheet" href="../../../content/reporting/reportviewer/reportviewer.css" type="text/css" />
 
-      var dojoConfig = {
-          parseOnLoad: false,
-          isDebug: true,
-          disableFlashStorage: true
-      };
+  <script type="text/javascript">
 
 
-
-      /**
-       * This is called when a gwt module has been loaded. We depend on these so we'll defer loading of functionality until
-       * modules have been loaded.
-       */
-
-      var gwtModuleLoaded = function(moduleName) {
-          if (moduleName === 'formatter') {
-              // Once the GWT JSTextFormatter is loaded we can depend on other modules we need and then load the report viewer
-    
-              require(['local'], function(local) {
-                  local.define('formatter');
-              });
-
-          }
-      };
-
-
-      try {
-		  if(window.top.showLoadingIndicator) {
-		    window.top.showLoadingIndicator();
-		  } else if(window.parent.showLoadingIndicator) {
-		    window.parent.showLoadingIndicator();
-		  }
-	  } catch(ex) { /*XSS*/ }
-    </script>
-    <script type="text/javascript" src="../../../content/common-ui/resources/web/formatter/formatter.nocache.js"></script>
-    
-    <script type="text/javascript">
-      // Provide somewhere for cdf/simile/ajax/scripts/json to inject itself into
-      var SimileAjax = {};
-      
-      var logger, logged;
+    var dojoConfig = {
+      parseOnLoad: false,
+      isDebug: true,
+      disableFlashStorage: true
+    };
 
 
 
-        require(['reportviewer/reportviewer-main-module'], function() {
+    /**
+     * This is called when a gwt module has been loaded. We depend on these so we'll defer loading of functionality until
+     * modules have been loaded.
+     */
+
+    var gwtModuleLoaded = function(moduleName) {
+      if (moduleName === 'formatter') {
+        // Once the GWT JSTextFormatter is loaded we can depend on other modules we need and then load the report viewer
+
+        require(['local'], function(local) {
+          local.define('formatter');
+        });
+
+      }
+    };
 
 
+    try {
+      if(window.top.showLoadingIndicator) {
+        window.top.showLoadingIndicator();
+      } else if(window.parent.showLoadingIndicator) {
+        window.parent.showLoadingIndicator();
+      }
+    } catch(ex) { /*XSS*/ }
+  </script>
+  <script type="text/javascript" src="../../../content/common-ui/resources/web/formatter/formatter.nocache.js"></script>
+
+  <script type="text/javascript">
+    // Provide somewhere for cdf/simile/ajax/scripts/json to inject itself into
+    var SimileAjax = {};
+
+    var logger, logged;
 
 
+    require(['reportviewer/reportviewer-main-module', 'dojo/parser'], function(_module, parser) {
 
-      });
-    </script>	    
-  </head>
-  
-  <body class="tundra body contentHidden">
-	<div id="toppanel" class="pentaho-transparent hidden">
-	  <div id="toppanelinner" >
-	    <div id="toolbarlinner2" class="pentaho-rounded-panel2-shadowed pentaho-padding-sm pentaho-shine pentaho-background">
-	      <div id="toolbar" dojoType="dijit.Toolbar">
-	        <div id="pageControl" dojoType="pentaho.common.PageControl" class="dijitInline"></div>
-	        <span id="toolbar-parameter-separator" dojoType="dijit.ToolbarSeparator"></span>
-	        <div id="toolbar-parameterToggle" dojoType="dijit.form.ToggleButton" iconClass="dijitEditorIcon dijitEditorIconParameters" showLabel="false">Parameters</div>
-	      </div>
-	    </div>
-	    <script type="text/javascript">
-          if(inMobile) {
-            document.getElementById('toolbarlinner2').innerHTML = 
-              '<div id="toolbar" style="display: -webkit-box">' + 
-                '<div id="toolbar-parameterToggle" dojoType="dijit.form.ToggleButton">Prompts</div>' + 
-                '<div style="display: -webkit-box; -webkit-box-flex: 1; box-sizing: border-box; -webkit-box-align: center; -webkit-box-pack: center;">' +
-                  '<div id="pageControl" dojoType="pentaho.common.PageControl" class="dijitInline"></div>' + 
-                '</div>' + 
-                '<div style="visibility: hidden" dojoType="dijit.form.ToggleButton">Prompts</div>' + // TODO: What is this? A second button? 
-              '</div>';
-          }
-          
-          var inSchedulerDialog = window.location.pathname.toLowerCase().indexOf('parameterui') >= 0;
-          var getParams = function() { return prompt.panel.getParameterValues(); };
-          
-          var initSchedulingParams = function(filePath, validParamsCallback) {
-            this.file = filePath;
-            this.parameterValidityCallback = validParamsCallback;
+      parser.parse();
+    });
+  </script>
+</head>
 
-            // We're not valid until the prompt is refreshed and tells us we are
-      		if (this.parameterValidityCallback) {
-            	this.parameterValidityCallback(false);
-      		}
-          };
-	    </script>
-	    <div id="reportControlPanel" class="hidden pentaho-rounded-panel-bottom-lr pentaho-shadow">
-	      <div id="promptPanel" class="pentaho-rounded-panel-bottom-lr"></div>
-	    </div>
-	  </div>
-	</div>
-
-	<div id="reportArea" class="pentaho-transparent">
-	  <div id="reportPageOutline">
-        <iframe id="reportContent" frameborder="0"></iframe>
+<body class="tundra body contentHidden">
+<div id="toppanel" class="pentaho-transparent hidden">
+  <div id="toppanelinner" >
+    <div id="toolbarlinner2" class="pentaho-rounded-panel2-shadowed pentaho-padding-sm pentaho-shine pentaho-background">
+      <div id="toolbar" data-dojo-type="dijit.Toolbar">
+        <div id="pageControl" data-dojo-type="pentaho.common.PageControl" class="dijitInline"></div>
+        <span id="toolbar-parameter-separator" data-dojo-type="dijit.ToolbarSeparator"></span>
+        <div id="toolbar-parameterToggle" data-dojo-type="dijit.form.ToggleButton" iconClass="dijitEditorIcon dijitEditorIconParameters" showLabel="false">Parameters</div>
       </div>
     </div>
+    <script type="text/javascript">
+      if(inMobile) {
+        document.getElementById('toolbarlinner2').innerHTML =
+            '<div id="toolbar" style="display: -webkit-box">' +
+                '<div id="toolbar-parameterToggle" data-dojo-type="dijit.form.ToggleButton">Prompts</div>' +
+                '<div style="display: -webkit-box; -webkit-box-flex: 1; box-sizing: border-box; -webkit-box-align: center; -webkit-box-pack: center;">' +
+                '<div id="pageControl" data-dojo-type="pentaho.common.PageControl" class="dijitInline"></div>' +
+                '</div>' +
+                '<div style="visibility: hidden" data-dojo-type="dijit.form.ToggleButton">Prompts</div>' + // TODO: What is this? A second button? 
+                '</div>';
+      }
 
-    <div id="messageBox" dojoType="pentaho.common.MessageBox" title="" style="width:400px; display:none;">
+      var inSchedulerDialog = window.location.pathname.toLowerCase().indexOf('parameterui') >= 0;
+      var getParams = function() { return prompt.panel.getParameterValues(); };
+
+      var initSchedulingParams = function(filePath, validParamsCallback) {
+        this.file = filePath;
+        this.parameterValidityCallback = validParamsCallback;
+
+        // We're not valid until the prompt is refreshed and tells us we are
+        if (this.parameterValidityCallback) {
+          this.parameterValidityCallback(false);
+        }
+      };
+    </script>
+    <div id="reportControlPanel" class="hidden pentaho-rounded-panel-bottom-lr pentaho-shadow">
+      <div id="promptPanel" class="pentaho-rounded-panel-bottom-lr"></div>
     </div>
-    <div id="glassPane" dojoType="pentaho.common.GlassPane">
-    </div>
-  </body>
+  </div>
+</div>
+
+<div id="reportArea" class="pentaho-transparent">
+  <div id="reportPageOutline">
+    <iframe id="reportContent" frameborder="0"></iframe>
+  </div>
+</div>
+
+<div id="messageBox" data-dojo-type="pentaho.common.MessageBox" title="" style="width:400px; display:none;">
+</div>
+<div id="glassPane" data-dojo-type="pentaho.common.GlassPane">
+</div>
+</body>
 </html>

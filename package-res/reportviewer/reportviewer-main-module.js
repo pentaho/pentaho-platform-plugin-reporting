@@ -14,7 +14,7 @@
 *
 * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
 */
-require(["cdf/jquery",
+define(["cdf/jquery",
   "cdf/jquery-impromptu.3.1",
   "cdf/jquery.ui",
   "cdf/jquery.bgiframe",
