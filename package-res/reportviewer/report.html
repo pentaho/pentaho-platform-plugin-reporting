@@ -66,9 +66,45 @@
     var logger, logged;
 
 
-    require(['reportviewer/reportviewer-main-module', 'dojo/parser'], function(_module, parser) {
+    require(['reportviewer/reportviewer-main-module', 'dojo/parser',"reportviewer/reportviewer-prompt",'reportviewer/reportviewer','reportviewer/reportviewer-logging',], function(_module, parser, Prompt, Viewer, logging) {
 
       parser.parse();
+
+      _isReportViewer = true;
+      _isTopReportViewer = true;
+      try { _isTopReportViewer = ((window.parent === window) || !window.parent._isReportViewer); } catch(ex){ /*XSS*/ }
+
+      var inMobile = false;
+      try { inMobile = !!window.top.PentahoMobile; } catch(ex) { /*XSS*/ }
+
+      Dashboards.blockUIwithDrag = function() {
+        // blockUI has concurrency issues (see BISERVER-8124)
+        // forcing no-op with override
+      }
+      var options;
+      if(_isTopReportViewer) {
+        var qs;
+        try       { qs = window.top.location.search; }
+        catch(ex) { qs = window.location.search;     } /*XSS*/
+
+        options = {enabled: !!qs && ("&" + qs.substr(1)).indexOf("&debug=true") >= 0};
+      } else {
+        options = {parent: window.parent.logger};
+      }
+
+      logged = logging.create(/*logger id*/window.name, options);
+      logger = logged.logger; // may be null
+
+
+
+      window.prompt = new Prompt();
+      window.viewer = new Viewer(prompt);
+      window.prompt.load();
+
+      $(window).resize(logged('window.resize', function() {
+        viewer.view.onViewportResize();
+      }));
+
     });
   </script>
 </head>
