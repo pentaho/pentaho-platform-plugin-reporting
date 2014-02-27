@@ -60,6 +60,11 @@
       name: "reportviewer/reportviewer-main-module",
       include: ["reportviewer/reportviewer-main-module"],
       create: true
+    },
+    {
+      name: "reportviewer/reportviewer-app",
+      include: ["reportviewer/reportviewer-app"],
+      create: true
     }
   ]
 })

@@ -47,6 +47,8 @@
       <flattenmapper/>
       <fileset dir="${js.build.output.dir}">
         <!-- Entire application -->
+        <include name="reportviewer/reportviewer-app.js"/>
+        <!-- Core for use by other apps-->
         <include name="reportviewer/reportviewer-main-module.js"/>
         <include name="reportviewer/formatter.js"/>
       </fileset>
