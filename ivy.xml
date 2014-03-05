@@ -31,6 +31,8 @@
 		<dependency org="${ivy.artifact.group}" name="pentaho-reporting-engine-classic-extensions-drill-down" rev="${dependency.pentaho-reporting-extension-drilldown.revision}" transitive="true" changing="true" />
 
 
+		<dependency org="pentaho-library" name="libformula" rev="${dependency.pentaho-reporting.revision}" transitive="false" changing="true"/>
+
 		<!-- internal pentaho platform dependencies -->
 		<dependency org="${pentaho-platform.group}" name="pentaho-platform-api" rev="${dependency.bi-platform.revision}"  changing="true" />
 		<dependency org="${pentaho-platform.group}" name="pentaho-platform-core" rev="${dependency.bi-platform.revision}"  changing="true" />
