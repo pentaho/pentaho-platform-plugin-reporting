@@ -86,6 +86,7 @@ import org.pentaho.reporting.libraries.formula.parser.FormulaParser;
 import org.pentaho.reporting.platform.plugin.messages.Messages;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.owasp.esapi.Encoder;
 
 public class ParameterXmlContentHandler
 {
@@ -665,6 +666,7 @@ public ParameterXmlContentHandler(final ParameterContentGenerator contentGenerat
         parameterElement.setAttribute("timezone-hint", computeTimeZoneHint(parameter, parameterContext, selectionSet));//$NON-NLS-1$
       }
       
+      Encoder enc = org.owasp.esapi.ESAPI.encoder();
       @SuppressWarnings("rawtypes")
       final LinkedHashSet handledValues = (LinkedHashSet) selectionSet.clone();
 
@@ -696,7 +698,7 @@ public ParameterXmlContentHandler(final ParameterContentGenerator contentGenerat
             valueElement.setAttribute("encoded", "true");
           }
 
-          valueElement.setAttribute("label", String.valueOf(value)); //$NON-NLS-1$ //$NON-NLS-2$
+          valueElement.setAttribute("label", enc.encodeForHTMLAttribute( String.valueOf(value) ) ); //$NON-NLS-1$ //$NON-NLS-2$
           valueElement.setAttribute("type", elementValueType.getName()); //$NON-NLS-1$
 
           if (key instanceof Number)
@@ -783,7 +785,7 @@ public ParameterXmlContentHandler(final ParameterContentGenerator contentGenerat
           valueElement.setAttribute("null", "false"); //$NON-NLS-1$ //$NON-NLS-2$
           final String value = convertParameterValueToString(parameter, parameterContext, selections, valueType);
           valueElement.setAttribute("value", value); //$NON-NLS-1$ //$NON-NLS-2$
-          valueElement.setAttribute("label", value); //$NON-NLS-1$ //$NON-NLS-2$
+          valueElement.setAttribute("label", enc.encodeForHTMLAttribute( value ) ); //$NON-NLS-1$ //$NON-NLS-2$
         }
       }
       return parameterElement;
