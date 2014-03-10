@@ -86,11 +86,13 @@ pen.define(['common-ui/util/util', 'common-ui/util/formatting'], function(util, 
       },
 
       _hideLoadingIndicator: function() {
-        if (window.top.hideLoadingIndicator) {
-          window.top.hideLoadingIndicator();
-        } else if (window.parent.hideLoadingIndicator) {
-          window.parent.hideLoadingIndicator();
-        }
+        try{
+          if (window.top.hideLoadingIndicator) {
+            window.top.hideLoadingIndicator();
+          } else if (window.parent.hideLoadingIndicator) {
+            window.parent.hideLoadingIndicator();
+          }
+        } catch(ignored) {} //XSS
       },
 
       initPromptPanel: function() {
@@ -173,22 +175,33 @@ pen.define(['common-ui/util/util', 'common-ui/util/formatting'], function(util, 
       },
 
       reauthenticate: function(f) {
-        if(top.mantle_initialized) {
-          var callback = {
-            loginCallback : f
+        try{ 
+          if(top.mantle_initialized) {
+            var callback = {
+              loginCallback : f
+            }
+            window.parent.authenticate(callback);
+          } else {
+            this.showMessageBox(
+              pentaho.common.Messages.getString('SessionExpiredComment'),
+              pentaho.common.Messages.getString('SessionExpired'),
+              pentaho.common.Messages.getString('OK'),
+              undefined,
+              undefined,
+              undefined,
+              true
+            );
           }
-          window.parent.authenticate(callback);
-        } else {
-          this.showMessageBox(
-            pentaho.common.Messages.getString('SessionExpiredComment'),
-            pentaho.common.Messages.getString('SessionExpired'),
-            pentaho.common.Messages.getString('OK'),
-            undefined,
-            undefined,
-            undefined,
-            true
-          );
+        } catch(e) {
+          pentaho.common.Messages.getString('SessionExpiredComment'),
+              pentaho.common.Messages.getString('SessionExpired'),
+              pentaho.common.Messages.getString('OK'),
+              undefined,
+              undefined,
+              undefined,
+              true
         }
+        
       },
 
       /**

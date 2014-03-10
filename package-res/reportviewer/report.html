@@ -115,7 +115,8 @@
                 
               options = {enabled: !!qs && ("&" + qs.substr(1)).indexOf("&debug=true") >= 0};
             } else {
-              options = {parent: window.parent.logger};
+              try{ options = { parent: window.parent.logger}; }
+              catch (ignored) {} //XSS
             }
       	    
       	    logged = logging.create(/*logger id*/window.name, options);

@@ -121,7 +121,13 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
          */
         updatePageBackground: function() {
           // If we're not in PUC or we're in an iframe
-          var inPuc  = window.top.mantle_initialized;
+          var inPuc;
+          try {
+            inPuc = window.top.mantle_initialized;
+          } catch (e) { //XSS
+            inPuc = false;
+          }
+         
           var inIFrame = top !== self;
           
           // if we are not in PUC
@@ -511,32 +517,37 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
         }
         */
 
-        if (!top.mantle_initialized) {
-          top.mantle_openTab = function(name, title, url) {
-            window.open(url, '_blank');
+        try{
+          if (!window.top.mantle_initialized) {
+            window.top.mantle_openTab = function(name, title, url) {
+              window.open(url, '_blank');
+            }
           }
-        }
-        
-        if (top.mantle_initialized) {
-          top.reportViewer_openUrlInDialog = function(title, url, width, height) {
-            top.urlCommand(url, title, true, width, height);
-          };
-        } else {
-          top.reportViewer_openUrlInDialog = this.openUrlInDialog.bind(this);
-        }
-        
-        window.reportViewer_openUrlInDialog = top.reportViewer_openUrlInDialog;
+          
+          if (window.top.mantle_initialized) {
+            window.top.reportViewer_openUrlInDialog = function(title, url, width, height) {
+              window.top.urlCommand(url, title, true, width, height);
+            };
+          } else {
+            window.top.reportViewer_openUrlInDialog = this.openUrlInDialog.bind(this);
+          }
+          
+          window.reportViewer_openUrlInDialog = window.top.reportViewer_openUrlInDialog;
+        } catch(ignored) {} //XSS
+
         window.reportViewer_hide = this.hide.bind(this);
 
         var localThis = this;
 
-        if (typeof window.top.addGlassPaneListener !== 'undefined') {
-          window.top.addGlassPaneListener({
-            glassPaneHidden: function(){
-              localThis.view.show();
-            }
-          });
-        }
+        try{
+          if (typeof window.top.addGlassPaneListener !== 'undefined') {
+            window.top.addGlassPaneListener({
+              glassPaneHidden: function(){
+                localThis.view.show();
+              }
+            });
+          }
+        } catch(ignored) {} //XSS
       },
 
       openUrlInDialog: function(title, url, width, height) {
