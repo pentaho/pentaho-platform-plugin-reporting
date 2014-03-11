@@ -261,13 +261,10 @@ div.prompt-panel {
 .dijitTooltipRight .dijitTooltipConnector {
 	/* the arrow piece for tooltips to the right of an element, bottom borders aligned */
 	left: 0;
-  height: 8px;
-  width: 8px;
-  background: #FEFDE7;
-  border-bottom: 1px solid #CACACB;
-  border-left: 1px solid #CACACB;
-  margin-left: -5px;
-  transform: rotate(45deg);
+  height: 13px;
+  width: 11px;
+  background: url("images/connector_left_new.png") no-repeat;
+  margin-left: -11px;
 }
 
 .tundra .dijitMenu,
