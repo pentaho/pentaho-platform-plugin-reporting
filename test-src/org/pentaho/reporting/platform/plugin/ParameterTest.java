@@ -84,6 +84,7 @@ public class ParameterTest extends TestCase {
     doc.getElementsByTagName( "value" ).item( 0 ).getAttributes().item( 4 );
 
     String[] expectedVal = new String[] { "1234", "Gg==", "Gg==" };
+    String[] expectedLab = new String[] { "1234", "Gg&#x3d;&#x3d;", "Gg&#x3d;&#x3d;" }; // Label is no longer necessarily the same as the value
     String[] expectedEncoded = new String[] { "", "true", "true" };
     for ( int i = 0; i < 3; i++ ) {
       String value = ( (Element) doc.getElementsByTagName( "value" ).item( i ) ).getAttribute( "value" );
@@ -91,7 +92,7 @@ public class ParameterTest extends TestCase {
       String label = ( (Element) doc.getElementsByTagName( "value" ).item( i ) ).getAttribute( "label" );
 
       assertEquals( expectedVal[i], value );
-      assertEquals( expectedVal[i], label );
+      assertEquals( expectedLab[i], label );
       if ( i == 0 ) {
         // first value does not need to be encoded
         assertEquals( null, encoded );
