@@ -405,7 +405,7 @@ define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui/uti
           logger && logger.log("viewport=(" + vp.w + ","  + vp.h + ") " + " toppanel=(" + tp.w + ","  + tp.h + ") ");
           
           // Fill all available space
-          geometry.getMarginBox('reportArea', mb);
+          geometry.setMarginBox('reportArea', mb);
           
           if(inMobile && this._isHtmlReport) {
             this._resizeMobileHtmlReportHandlesScrolling(mb);
