@@ -698,7 +698,7 @@ public ParameterXmlContentHandler(final ParameterContentGenerator contentGenerat
             valueElement.setAttribute("encoded", "true");
           }
 
-          valueElement.setAttribute("label", enc.encodeForHTMLAttribute( String.valueOf(value) ) ); //$NON-NLS-1$ //$NON-NLS-2$
+          valueElement.setAttribute("label", String.valueOf(value) ); //$NON-NLS-1$ //$NON-NLS-2$
           valueElement.setAttribute("type", elementValueType.getName()); //$NON-NLS-1$
 
           if (key instanceof Number)
