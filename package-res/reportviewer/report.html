@@ -27,10 +27,10 @@
       // because it is created inside a pen.require.
       var _isReportViewer = true;
       var _isTopReportViewer = true;
-      try { _isTopReportViewer = ((window.parent === window) || !window.parent._isReportViewer); } catch(ex){ /*XSS*/ }
+      try { _isTopReportViewer = ((window.parent === window) || !window.parent._isReportViewer); } catch(ex){ } // Ignore "Same-origin policy" violation in embedded IFrame
       
       var inMobile = false;
-      try { inMobile = !!window.top.PentahoMobile; } catch(ex) { /*XSS*/ }
+      try { inMobile = !!window.top.PentahoMobile; } catch(ex) { } // Ignore "Same-origin policy" violation in embedded IFrame
       //	inMobile = true; // For testing mobile case in PC
       
 	  /**
@@ -54,7 +54,7 @@
 		  } else if(window.parent.showLoadingIndicator) {
 		    window.parent.showLoadingIndicator();
 		  }
-	  } catch(ex) { /*XSS*/ }
+	  } catch(ex) { } // Ignore "Same-origin policy" violation in embedded IFrame
     </script>
     <script type="text/javascript" src="../../../content/common-ui/resources/web/formatter/formatter.nocache.js"></script>
     
@@ -115,7 +115,8 @@
                 
               options = {enabled: !!qs && ("&" + qs.substr(1)).indexOf("&debug=true") >= 0};
             } else {
-              options = {parent: window.parent.logger};
+              try{ options = { parent: window.parent.logger}; }
+              catch (ignored) {} // Ignore "Same-origin policy" violation in embedded IFrame
             }
       	    
       	    logged = logging.create(/*logger id*/window.name, options);
