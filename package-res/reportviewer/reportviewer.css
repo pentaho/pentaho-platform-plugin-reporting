@@ -175,6 +175,7 @@ div.prompt-panel {
     border: 0px;
     padding: 0px;
     background: none;
+    box-shadow: none;
 }
 
 .tundra .dijitToolbar {
@@ -260,9 +261,10 @@ div.prompt-panel {
 .dijitTooltipRight .dijitTooltipConnector {
 	/* the arrow piece for tooltips to the right of an element, bottom borders aligned */
 	left: 0;
-	background:url("images/connector_left.png") no-repeat top left;
-	width:17px;
-	height:36px;
+  height: 13px;
+  width: 11px;
+  background: url("images/connector_left_new.png") no-repeat;
+  margin-left: -11px;
 }
 
 .tundra .dijitMenu,
@@ -323,4 +325,8 @@ div.prompt-panel {
 .pentaho-shadow-padding {
     padding-right: 8px; 
     padding-bottom: 8px;
+}
+
+#toolbar.dijitToolbar, #toolbar.dijitToolbar #pageControl.pc_pageControlContainer{
+	overflow:visible;
 }
