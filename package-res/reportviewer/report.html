@@ -23,6 +23,12 @@
 
   <script type="text/javascript">
 
+    var _isReportViewer = true;
+    var _isTopReportViewer = true;
+    try { _isTopReportViewer = ((window.parent === window) || !window.parent._isReportViewer); } catch(ex){ /*XSS*/ }
+
+    var inMobile = false;
+    try { inMobile = !!window.top.PentahoMobile; } catch(ex) { /*XSS*/ }
 
     var dojoConfig = {
       parseOnLoad: false,
