@@ -330,3 +330,22 @@ div.prompt-panel {
 #toolbar.dijitToolbar, #toolbar.dijitToolbar #pageControl.pc_pageControlContainer{
 	overflow:visible;
 }
+
+.dijitTooltip {
+	background: none repeat scroll 0 0 #FEFDE7 !important;
+  border: 1px solid #CACACB;
+  color: #26363D;
+  padding: 10px;
+  font-size: 13px;
+  margin-left:8px;
+  box-shadow: 1px 1px 2px #323232;
+}
+
+.dijitTextBoxError .dijitValidationContainer {
+	display: none !important;
+}
+
+.dijitTextBoxError{
+	border: 1px solid #df9999 !important;
+	box-shadow: 0px 0px 6px #b94a48;
+}
