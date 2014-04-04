@@ -172,7 +172,12 @@ define(['common-ui/util/util', 'common-ui/util/formatting', 'pentaho/common/Mess
       },
 
       reauthenticate: function(f) {
-        if(top.mantle_initialized) {
+				var mntl = false;
+				try{
+					mntl = top.mantle_initialized;
+				}
+				catch(ex){}
+        if(mntl) {
           var callback = {
             loginCallback : f
           }
