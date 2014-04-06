@@ -265,6 +265,8 @@ div.prompt-panel {
   width: 11px;
   background: url("images/connector_left_new.png") no-repeat;
   margin-left: -11px;
+  border: 0 none !important;
+  box-shadow: none !important;
 }
 
 .tundra .dijitMenu,
