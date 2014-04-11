@@ -123,7 +123,13 @@ define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui/uti
          */
         updatePageBackground: function() {
           // If we're not in PUC or we're in an iframe
-          var inPuc  = window.top.mantle_initialized;
+          var inPuc;
+          try {
+            inPuc = window.top.mantle_initialized;
+          } catch (e) { // Ignore "Same-origin policy" violation in embedded IFrame
+            inPuc = false;
+          }
+
           var inIFrame = top !== self;
           
           // if we are not in PUC
@@ -513,26 +519,38 @@ define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui/uti
         }
         */
 
-        if (!top.mantle_initialized) {
-          top.mantle_openTab = function(name, title, url) {
-            window.open(url, '_blank');
+        var isRunningIFrameInSameOrigin = null;
+        try {
+          var ignoredCheckCanReachOutToTop = window.top.mantle_initialized;
+          isRunningIFrameInSameOrigin = true;
+        } catch (ignoredSameOriginPolicyViolation) {
+          // IFrame is running embedded in a web page in another domain
+          isRunningIFrameInSameOrigin = false;
+        }
+
+        if(isRunningIFrameInSameOrigin) {
+          if (!top.mantle_initialized) {
+            top.mantle_openTab = function(name, title, url) {
+              window.open(url, '_blank');
+            }
           }
+          
+          if (top.mantle_initialized) {
+            top.reportViewer_openUrlInDialog = function(title, url, width, height) {
+              top.urlCommand(url, title, true, width, height);
+            };
+          } else {
+            top.reportViewer_openUrlInDialog = this.openUrlInDialog.bind(this);
+          }
+          
+          window.reportViewer_openUrlInDialog = top.reportViewer_openUrlInDialog;
         }
-        
-        if (top.mantle_initialized) {
-          top.reportViewer_openUrlInDialog = function(title, url, width, height) {
-            top.urlCommand(url, title, true, width, height);
-          };
-        } else {
-          top.reportViewer_openUrlInDialog = this.openUrlInDialog.bind(this);
-        }
-        
-        window.reportViewer_openUrlInDialog = top.reportViewer_openUrlInDialog;
+
         window.reportViewer_hide = this.hide.bind(this);
 
         var localThis = this;
 
-        if (typeof window.top.addGlassPaneListener !== 'undefined') {
+        if (isRunningIFrameInSameOrigin && typeof window.top.addGlassPaneListener !== 'undefined') {
           window.top.addGlassPaneListener({
             glassPaneHidden: function(){
               localThis.view.show();

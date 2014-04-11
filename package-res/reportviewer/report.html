@@ -25,10 +25,10 @@
 
     var _isReportViewer = true;
     var _isTopReportViewer = true;
-    try { _isTopReportViewer = ((window.parent === window) || !window.parent._isReportViewer); } catch(ex){ /*XSS*/ }
-
+    try { _isTopReportViewer = ((window.parent === window) || !window.parent._isReportViewer); } catch(ex) { } // Ignore "Same-origin policy" violation in embedded IFrame
+    
     var inMobile = false;
-    try { inMobile = !!window.top.PentahoMobile; } catch(ex) { /*XSS*/ }
+    try { inMobile = !!window.top.PentahoMobile; } catch(ex) { } // Ignore "Same-origin policy" violation in embedded IFrame
 
     var dojoConfig = {
       parseOnLoad: false,
@@ -61,7 +61,7 @@
       } else if(window.parent.showLoadingIndicator) {
         window.parent.showLoadingIndicator();
       }
-    } catch(ex) { /*XSS*/ }
+    } catch(ex) { } // Ignore "Same-origin policy" violation in embedded IFrame  
   </script>
   <script type="text/javascript" src="../../../content/common-ui/resources/web/formatter/formatter.nocache.js"></script>
 

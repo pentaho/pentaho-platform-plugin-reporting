@@ -85,11 +85,13 @@ define(['common-ui/util/util', 'common-ui/util/formatting', 'pentaho/common/Mess
       },
 
       _hideLoadingIndicator: function() {
-        if (window.top.hideLoadingIndicator) {
-          window.top.hideLoadingIndicator();
-        } else if (window.parent.hideLoadingIndicator) {
-          window.parent.hideLoadingIndicator();
-        }
+        try{
+          if (window.top.hideLoadingIndicator) {
+            window.top.hideLoadingIndicator();
+          } else if (window.parent.hideLoadingIndicator) {
+            window.parent.hideLoadingIndicator();
+          }
+        } catch (ignored) {} // Ignore "Same-origin policy" violation in embedded IFrame
       },
 
       initPromptPanel: function() {
@@ -172,7 +174,16 @@ define(['common-ui/util/util', 'common-ui/util/formatting', 'pentaho/common/Mess
       },
 
       reauthenticate: function(f) {
-        if(top.mantle_initialized) {
+        var isRunningIFrameInSameOrigin = null;
+        try {
+          var ignoredCheckCanReachOutToParent = window.parent.mantle_initialized;
+          isRunningIFrameInSameOrigin = true;
+        } catch (ignoredSameOriginPolicyViolation) {
+          // IFrame is running embedded in a web page in another domain
+          isRunningIFrameInSameOrigin = false;
+        }
+
+        if(isRunningIFrameInSameOrigin && top.mantle_initialized) {
           var callback = {
             loginCallback : f
           }
