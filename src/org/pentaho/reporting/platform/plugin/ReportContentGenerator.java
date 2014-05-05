@@ -19,6 +19,8 @@ package org.pentaho.reporting.platform.plugin;
 
 import java.io.File;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.Map;
 
 import org.apache.commons.logging.Log;
@@ -54,12 +56,13 @@ public class ReportContentGenerator extends ParameterContentGenerator {
     IUnifiedRepository unifiedRepository = PentahoSystem.get( IUnifiedRepository.class, null );
     final IParameterProvider requestParams = getRequestParameters();
     final IParameterProvider pathParams = getPathParameters();
-
+    
     if ( requestParams != null && requestParams.getStringParameter( "path", null ) != null ) {
-      path = requestParams.getStringParameter( "path", "" ); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+      path = requestParams.getStringParameter( "path", "" ); //$NON-NLS-1$ //$NON-NLS-2$
     } else if ( pathParams != null && pathParams.getStringParameter( "path", null ) != null ) {
-      path = pathParams.getStringParameter( "path", "" ); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+      path = pathParams.getStringParameter( "path", "" ); //$NON-NLS-1$ //$NON-NLS-2$
     }
+    path = URLDecoder.decode( path, "UTF-8");
 
     if ( requestParams != null && requestParams.getStringParameter( "renderMode", null ) != null ) {
       renderMode =
@@ -76,7 +79,7 @@ public class ReportContentGenerator extends ParameterContentGenerator {
       renderMode = RENDER_TYPE.REPORT;
     }
 
-    RepositoryFile prptFile = unifiedRepository.getFile( idTopath( path ) );
+    RepositoryFile prptFile = unifiedRepository.getFile( path );
 
     try {
       switch ( renderMode ) {
@@ -146,13 +149,18 @@ public class ReportContentGenerator extends ParameterContentGenerator {
       // perhaps we can invent our own mime-type or use application/zip?
       return "application/octet-stream"; //$NON-NLS-1$
     }
-    if ( requestParams != null && requestParams.getStringParameter( "path", null ) != null ) {
-      path = requestParams.getStringParameter( "path", "" ); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-    } else if ( pathParams != null && pathParams.getStringParameter( "path", null ) != null ) {
-      path = pathParams.getStringParameter( "path", "" ); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+    try {
+      if ( requestParams != null && requestParams.getStringParameter( "path", null ) != null ) {
+        path = requestParams.getStringParameter( "path", "" ); //$NON-NLS-1$ //$NON-NLS-2$
+      } else if ( pathParams != null && pathParams.getStringParameter( "path", null ) != null ) {
+        path = pathParams.getStringParameter( "path", "" ); //$NON-NLS-1$ //$NON-NLS-2$
+      }
+      path = idTopath( URLDecoder.decode(path, "UTF-8") );
+    } catch (UnsupportedEncodingException e) {
+      e.printStackTrace();
     }
 
-    RepositoryFile prptFile = unifiedRepository.getFile( idTopath( path ) );
+    RepositoryFile prptFile = unifiedRepository.getFile( path );
     final boolean isMobile = "true".equals( requestParams.getStringParameter( "mobile", "false" ) ); //$NON-NLS-1$ //$NON-NLS-2$
 
     final SimpleReportingComponent reportComponent = new SimpleReportingComponent();

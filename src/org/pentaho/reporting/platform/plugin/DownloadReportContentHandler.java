@@ -20,6 +20,7 @@ package org.pentaho.reporting.platform.plugin;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+
 import javax.servlet.http.HttpServletResponse;
 
 import org.pentaho.platform.api.engine.IParameterProvider;
@@ -28,6 +29,7 @@ import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
 import org.pentaho.platform.api.repository2.unified.RepositoryFile;
 import org.pentaho.platform.api.repository2.unified.data.simple.SimpleRepositoryFileData;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
+import org.pentaho.platform.util.RepositoryPathEncoder;
 
 public class DownloadReportContentHandler {
   private IPentahoSession userSession;
@@ -72,7 +74,7 @@ public class DownloadReportContentHandler {
   }
 
   private String idTopath( String id ) {
-    String path = id.replace( ":", "/" );
+    String path = RepositoryPathEncoder.encode( id );
     if ( path != null && path.length() > 0 && path.charAt( 0 ) != '/' ) {
       path = "/" + path;
     }

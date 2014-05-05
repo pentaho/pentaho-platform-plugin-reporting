@@ -26,6 +26,7 @@ import org.pentaho.platform.api.repository2.unified.RepositoryFile;
 import org.pentaho.platform.api.repository2.unified.data.simple.SimpleRepositoryFileData;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.repository2.unified.fileio.RepositoryFileOutputStream;
+import org.pentaho.platform.util.RepositoryPathEncoder;
 import org.pentaho.reporting.libraries.repository.ContentIOException;
 import org.pentaho.reporting.libraries.repository.ContentItem;
 import org.pentaho.reporting.libraries.repository.ContentLocation;
@@ -109,6 +110,6 @@ public class ReportContentItem implements ContentItem {
   }
 
   public Object getContentId() {
-    return file.getPath().replace( '/', ':' );
+    return RepositoryPathEncoder.encode( file.getPath() );
   }
 }
