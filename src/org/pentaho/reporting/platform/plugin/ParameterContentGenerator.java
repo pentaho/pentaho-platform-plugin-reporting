@@ -18,6 +18,7 @@
 package org.pentaho.reporting.platform.plugin;
 
 import java.io.OutputStream;
+import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -49,14 +50,16 @@ public class ParameterContentGenerator extends SimpleContentGenerator {
     IUnifiedRepository unifiedRepository = PentahoSystem.get( IUnifiedRepository.class, null );
     final IParameterProvider requestParams = getRequestParameters();
     final IParameterProvider pathParams = getPathParameters();
-
+    
     if ( requestParams != null && requestParams.getStringParameter( "path", null ) != null ) {
-      path = requestParams.getStringParameter( "path", "" ); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+      path = requestParams.getStringParameter( "path", "" ); //$NON-NLS-1$ //$NON-NLS-2$
     } else if ( pathParams != null && pathParams.getStringParameter( "path", null ) != null ) {
-      path = pathParams.getStringParameter( "path", "" ); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+      path = pathParams.getStringParameter( "path", "" ); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
-    RepositoryFile prptFile = unifiedRepository.getFile( idTopath( path ) );
+    path = idTopath( URLDecoder.decode(path, "UTF-8") );
+
+    RepositoryFile prptFile = unifiedRepository.getFile( path );
 
     final RENDER_TYPE renderMode =
         RENDER_TYPE.valueOf( requestParams
@@ -91,8 +94,7 @@ public class ParameterContentGenerator extends SimpleContentGenerator {
     return LogFactory.getLog( ParameterContentGenerator.class );
   }
 
-  protected String idTopath( String id ) {
-    String path = id.replace( ":", "/" );
+  protected String idTopath( String path ) {
     if ( path != null && path.length() > 0 && path.charAt( 0 ) != '/' ) {
       path = "/" + path;
     }
