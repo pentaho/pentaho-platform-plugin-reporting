@@ -28,7 +28,10 @@
     try { _isTopReportViewer = ((window.parent === window) || !window.parent._isReportViewer); } catch(ex) { } // Ignore "Same-origin policy" violation in embedded IFrame
     
     var inMobile = false;
-    try { inMobile = !!window.top.PentahoMobile; } catch(ex) { } // Ignore "Same-origin policy" violation in embedded IFrame
+    try { 
+      var ua = navigator.userAgent;
+      inMobile = ua.match(/iPhone/i) || ua.match(/iPod/i) || ua.match(/iPad/i) || ua.match(/Android/i); 
+    } catch(ex) { /*XSS*/ }
 
     var dojoConfig = {
       parseOnLoad: false,
