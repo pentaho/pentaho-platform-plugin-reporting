@@ -410,11 +410,12 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
             var wh = mb.h - 15;
             var scrollWrapper = iframeDoc.find('#reportTableDiv');
             if(scrollWrapper.length) {
-              scrollWrapper.css({height: wh, overflow: 'auto'});
+              scrollWrapper.css({height: wh, width: (window.innerWidth-10) + 'px', overflow: 'auto'});
             } else {
+              iframeDoc.find("body").css({margin: '2px'});
               iframeDoc
               .find("body>table")
-              .wrap('<div id="reportTableDiv" style="height:' + wh + 'px; overflow:auto;"/>');
+              .wrap('<div id="reportTableDiv" style="height:' + wh + 'px; width:' + (window.innerWidth-10) + 'px; overflow:auto;"/>');
             }
           }
         },
