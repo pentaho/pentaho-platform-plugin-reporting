@@ -35,6 +35,7 @@ import org.pentaho.platform.api.repository2.unified.RepositoryFile;
 import org.pentaho.platform.engine.core.audit.AuditHelper;
 import org.pentaho.platform.engine.core.audit.MessageTypes;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
+import org.pentaho.platform.util.RepositoryPathEncoder;
 import org.pentaho.platform.util.UUIDUtil;
 import org.pentaho.platform.util.web.MimeHelper;
 import org.pentaho.reporting.engine.classic.core.AttributeNames;
@@ -148,8 +149,7 @@ public class ExecuteReportContentHandler {
       if ( filename.lastIndexOf( "." ) != -1 ) { //$NON-NLS-1$
         filename = filename.substring( 0, filename.lastIndexOf( "." ) ); //$NON-NLS-1$
       }
-
-      String disposition = "inline; filename*=UTF-8''" + URLEncoder.encode( filename, "UTF-8" ) + extension;
+      String disposition = "inline; filename*=UTF-8''" + RepositoryPathEncoder.encode( RepositoryPathEncoder.encodeRepositoryPath( filename + extension));
 
       final boolean validates = reportComponent.validate();
       if ( !validates ) {
