@@ -16,9 +16,9 @@
 */
 
 define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui/util/timeutil', 'common-ui/util/formatting', 'pentaho/common/Messages', "dojo/dom", "dojo/on", "dojo/_base/lang",
-"dijit/registry", "dojo/has", "dojo/sniff", "dojo/dom-class", 'pentaho/reportviewer/ReportDialog', "dojo/dom-class", "dojo/query", "dojo/dnd/common", "dojo/dom-geometry", "dojo/parser", "dojo/window"],
-    function(util, _prompt, _timeutil, _formatting, _Messages, dom, on, lang, registry, has, sniff, domClass, ReportDialog, domClass, query, dnd, geometry, parser, win) {
   
+"dijit/registry", "dojo/has", "dojo/sniff", "dojo/dom-class", 'pentaho/reportviewer/ReportDialog', "dojo/dom-style", "dojo/query", "dojo/dnd/common", "dojo/dom-geometry", "dojo/parser", "dojo/window", "dojo/_base/window"],
+    function(util, _prompt, _timeutil, _formatting, _Messages, dom, on, lang, registry, has, sniff, domClass, ReportDialog, domStyle, query, dnd, geometry, parser, win, win2) {
   return function(reportPrompt) {
     if (!reportPrompt) {
       alert("report prompt is required");
@@ -483,27 +483,34 @@ define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui/uti
           // Set the iframe size to minimum before POLLING its contents, to not affect the polled values. 
           // NOTE: Setting to 0 prevented IE9-Quirks from detecting the correct sizes.
           // Setting here, and polling next, causes ONE resize on the iframe.
-          t.css({width: POLL_SIZE, height: POLL_SIZE});
           
+          geometry.setContentSize(t, {width: POLL_SIZE, height: POLL_SIZE});
           // It's surely HTML content, so the following is valid
-          var d = t.contents();
-          var w = d.width();
-          var h = d.height();
-          
-          logger && logger.log("Styled page - polled dimensions = (" + w + ", " + h + ")");
-          
-          // In case the styled report content is too small, assume 2/3 of the width.
-          // This may happen when there are no results.
-          if(w <= POLL_SIZE) {
-            // Most certainly this indicates that the loaded report content
-            // does not have a fixed width, and, instead, adapts to the imposed size (like width: 100%).
-          
-            var vp = dnd.getViewport();
-            w = Math.round(2 * vp.w / 3);
-            logger && logger.log("Width is too small - assuming a default width of " + w);
-          }
-           
-          t.css({width: w, height: h});
+          win2.withDoc(t.contentWindow.document, function(){
+            // add overflow hidden to prevent scrollbars on ie9 inside the report
+            domStyle.set(win2.doc.getElementsByTagName("html")[0], {'overflow': 'hidden'});
+
+            var dimensions = geometry.getMarginBox(win2.doc.getElementsByTagName("body")[0]);
+
+            // changing width to jquery due to problems with dojo getting the width correcty
+            // although, dojo is used to get the height due to issues on ie8 and 9
+            dimensions.w = $('#reportContent').contents().width();
+
+            logger && logger.log("Styled page - polled dimensions = (" + dimensions.w + ", " + dimensions.h + ")");
+
+            // In case the styled report content is too small, assume 2/3 of the width.
+            // This may happen when there are no results.
+            if(dimensions.w <= POLL_SIZE) {
+              // Most certainly this indicates that the loaded report content
+              // does not have a fixed width, and, instead, adapts to the imposed size (like width: 100%).
+
+              var vp = dnd.getViewport();
+              dimensions.w = Math.round(2 * vp.w / 3);
+              logger && logger.log("Width is too small - assuming a default width of " + dimensions.w);
+            }
+
+            geometry.setContentSize(t, {w: dimensions.w, h: dimensions.h});
+          });
         }
       }), // end view
       
