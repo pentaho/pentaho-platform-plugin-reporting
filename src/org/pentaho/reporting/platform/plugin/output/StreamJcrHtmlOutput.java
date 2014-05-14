@@ -17,9 +17,6 @@
 
 package org.pentaho.reporting.platform.plugin.output;
 
-import java.io.IOException;
-import java.io.OutputStream;
-
 import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
 import org.pentaho.platform.api.repository2.unified.RepositoryFile;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
@@ -38,6 +35,9 @@ import org.pentaho.reporting.libraries.repository.stream.StreamRepository;
 import org.pentaho.reporting.platform.plugin.repository.PentahoNameGenerator;
 import org.pentaho.reporting.platform.plugin.repository.PentahoURLRewriter;
 import org.pentaho.reporting.platform.plugin.repository.ReportContentRepository;
+
+import java.io.IOException;
+import java.io.OutputStream;
 
 public class StreamJcrHtmlOutput extends AbstractHtmlOutput
 {
@@ -81,7 +81,7 @@ public class StreamJcrHtmlOutput extends AbstractHtmlOutput
     contentItems.setContentWriter(targetRoot, new DefaultNameGenerator(targetRoot, "index", "html"));
     contentItems.setDataWriter(dataLocation, dataNameGenerator);
     contentItems.setUrlRewriter(new PentahoURLRewriter(getContentHandlerPattern(), true));
-    return super.computeContentItems(outputStream);
+    return contentItems;
   }
 
   public int generate(final MasterReport report, final int acceptedPage, final OutputStream outputStream,

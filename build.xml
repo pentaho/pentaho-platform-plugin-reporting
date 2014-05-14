@@ -9,6 +9,9 @@
 ============================================================================-->
 <project name="Pentaho Reporting Platform Plugin" basedir="." default="default" xmlns:ivy="antlib:org.apache.ivy.ant">
 
+  <property file="${user.home}/.pentaho-reporting-build-settings.properties"
+            description="Per user override settings-file for all pentaho-reporting projects." />
+
   <!-- Import the common_build.xml file which contains all the default tasks -->
   <import file="./build-res/subfloor-pkg.xml" />
   <import file="./build-res/subfloor-js.xml" />
