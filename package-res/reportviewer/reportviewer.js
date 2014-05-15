@@ -478,13 +478,13 @@ define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui/uti
         
         _pollReportContentSize: function() {
           var POLL_SIZE = 10;
-          var t = $('#reportContent');
+          var t = dom.byId('reportContent');
           
           // Set the iframe size to minimum before POLLING its contents, to not affect the polled values. 
           // NOTE: Setting to 0 prevented IE9-Quirks from detecting the correct sizes.
           // Setting here, and polling next, causes ONE resize on the iframe.
           
-          geometry.setContentSize(t, {width: POLL_SIZE, height: POLL_SIZE});
+          geometry.setContentSize(t, {w: POLL_SIZE, h: POLL_SIZE});
           // It's surely HTML content, so the following is valid
           win2.withDoc(t.contentWindow.document, function(){
             // add overflow hidden to prevent scrollbars on ie9 inside the report
