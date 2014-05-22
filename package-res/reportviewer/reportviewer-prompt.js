@@ -65,6 +65,9 @@ define(['common-ui/util/util', 'common-ui/util/formatting', 'pentaho/common/Mess
         //    PromptPanel._ready ->
         //    
         panel.getParameterDefinition = function(promptPanel, callback) {
+          if (!promptPanel.getAutoSubmitSetting()) {
+            $("#glasspane").css("background","transparent");
+          }
           // Show glass pane when updating the prompt.
           registry.byId('glassPane').show();
 
@@ -100,6 +103,7 @@ define(['common-ui/util/util', 'common-ui/util/formatting', 'pentaho/common/Mess
 
       ready: function(promptPanel) {
         registry.byId('glassPane').hide();
+        $("#glasspane").css("background","");
       },
 
       /**
