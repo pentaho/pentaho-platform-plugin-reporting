@@ -57,11 +57,16 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
           dojo.connect(dojo.byId('reportContent'), "load", onFrameLoaded);
         }
         
-        var basePromptReady = this.prompt.ready.bind(this.prompt);
-        this.prompt.ready       = this.view.promptReady.bind(this.view, basePromptReady);
-        this.prompt.submit      = this.submitReport.bind(this);
-        this.prompt.submitStart = this.submitReportStart.bind(this);
-        
+        var basePromptReady   = this.prompt.ready.bind(this.prompt);
+        var baseShowGlassPane = this.prompt.showGlassPane.bind(this.prompt);
+        var baseHideGlassPane = this.prompt.hideGlassPane.bind(this.prompt);
+
+        this.prompt.ready         = this.view.promptReady.bind(this.view,  basePromptReady);
+        this.prompt.showGlassPane = this.view.showGlassPane.bind(this.view,  baseShowGlassPane);
+        this.prompt.hideGlassPane = this.view.hideGlassPane.bind(this.view,  baseHideGlassPane);
+        this.prompt.submit        = this.submitReport.bind(this);
+        this.prompt.submitStart   = this.submitReportStart.bind(this);
+
         $('body')
           .addClass(_isTopReportViewer ? 'topViewer leafViewer' : 'leafViewer')
           .addClass(inMobile ? 'mobile' : 'nonMobile');
@@ -223,7 +228,23 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
             elem = elem.parentNode;
           }
         },
-                
+        
+        showGlassPane: function(base) {
+          $("#glasspane")
+            .css("background", v.reportContentUpdating() ? "" : "transparent");
+          
+          base();
+        },
+
+        hideGlassPane: function(base) {
+          if(!v.reportContentUpdating()) {
+            base();
+          }
+
+          // Activate bg.
+          $("#glasspane").css("background", "");
+        },
+
         // Called by PromptPanel#postExecution (soon after initPrompt)
         promptReady: function(basePromptReady, promptPanel) {
 
@@ -605,13 +626,13 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
       _updatedIFrameSrc: false,
       _updateReportTimeout: -1,
       
+      reportContentUpdating: function() {
+        return this._updateReportTimeout >= 0;
+      },
+
       _updateReportContent: function(promptPanel, keyArgs) {
         var me = this;
 
-        // PRD-3962 - show glass pane on submit, hide when iframe is loaded
-        // Show glass-pane
-        dijit.byId('glassPane').show();
-        
         // When !AutoSubmit, a renderMode=XML call has not been done yet,
         //  and must be done now so that the page controls have enough info.
         if(!promptPanel.getAutoSubmitSetting()) {
@@ -636,6 +657,12 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
         me._updateReportTimeout = setTimeout(logged('updateReportTimeout', function() {
           me._submitReportEnded(promptPanel, /*isTimeout*/true);
         }), 5000);
+
+        // PRD-3962 - show glass pane on submit, hide when iframe is loaded.
+        // Must be done AFTER _updateReportTimeout has been set, cause it's used to know
+        // that the report content is being updated.
+        me.prompt.showGlassPane();
+
         var options = me._buildReportContentOptions(promptPanel);
         var url = me._buildReportContentUrl(options);
         var outputFormat = options['output-target'];
@@ -701,7 +728,7 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui
           
           // PRD-3962 - show glass pane on submit, hide when iframe is loaded
           // Hide glass-pane, if it is visible
-          dijit.byId('glassPane').hide();
+          this.prompt.hideGlassPane();
         }
       },
       
