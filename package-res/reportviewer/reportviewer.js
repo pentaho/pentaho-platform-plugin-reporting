@@ -17,8 +17,8 @@
 
 define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui/util/timeutil', 'common-ui/util/formatting', 'pentaho/common/Messages', "dojo/dom", "dojo/on", "dojo/_base/lang",
   
-"dijit/registry", "dojo/has", "dojo/sniff", "dojo/dom-class", 'pentaho/reportviewer/ReportDialog', "dojo/dom-style", "dojo/query", "dojo/dnd/common", "dojo/dom-geometry", "dojo/parser", "dojo/window", "dojo/_base/window"],
-    function(util, _prompt, _timeutil, _formatting, _Messages, dom, on, lang, registry, has, sniff, domClass, ReportDialog, domStyle, query, dnd, geometry, parser, win, win2) {
+"dijit/registry", "dojo/has", "dojo/sniff", "dojo/dom-class", 'pentaho/reportviewer/ReportDialog', "dojo/dom-style", "dojo/query", "dojo/dom-geometry", "dojo/parser", "dojo/window", "dojo/_base/window"],
+    function(util, _prompt, _timeutil, _formatting, _Messages, dom, on, lang, registry, has, sniff, domClass, ReportDialog, domStyle, query, geometry, parser, win, win2) {
   return function(reportPrompt) {
     if (!reportPrompt) {
       alert("report prompt is required");
@@ -485,6 +485,9 @@ define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui/uti
           // Setting here, and polling next, causes ONE resize on the iframe.
           
           geometry.setContentSize(t, {w: POLL_SIZE, h: POLL_SIZE});
+
+          var outerDoc = document;
+
           // It's surely HTML content, so the following is valid
           win2.withDoc(t.contentWindow.document, function(){
             // add overflow hidden to prevent scrollbars on ie9 inside the report
@@ -504,7 +507,9 @@ define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui/uti
               // Most certainly this indicates that the loaded report content
               // does not have a fixed width, and, instead, adapts to the imposed size (like width: 100%).
 
-              var vp = dnd.getViewport();
+              var vp;
+              win2.withDoc(outerDoc, function() { vp = win.getBox(); });
+
               dimensions.w = Math.round(2 * vp.w / 3);
               logger && logger.log("Width is too small - assuming a default width of " + dimensions.w);
             }
