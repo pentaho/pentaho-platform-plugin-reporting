@@ -686,6 +686,9 @@ define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui/uti
         if(!promptPanel.getAutoSubmitSetting()) {
           // FETCH page-count info before rendering report
           var callback = logged("_updateReportContent_fetchParameterCallback", function(newParamDefn) {
+            
+            delete promptPanel.forceAutoSubmit;
+
             // Recreates the prompt panel's CDF components
             promptPanel.refresh(newParamDefn, /*noAutoAutoSubmit*/true);
             
