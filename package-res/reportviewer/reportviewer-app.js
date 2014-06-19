@@ -15,7 +15,7 @@
  * Copyright 2014 Pentaho Corporation. All rights reserved.
  */
 
-define(["reportviewer/reportviewer-main-module", 'dojo/parser',"reportviewer/reportviewer-prompt",'reportviewer/reportviewer','reportviewer/reportviewer-logging'], function(_module, parser, Prompt, Viewer, logging){
+define(["reportviewer/reportviewer-main-module", 'dojo/parser',"reportviewer/reportviewer-prompt",'reportviewer/reportviewer','reportviewer/reportviewer-logging', 'dojo/cookie'], function(_module, parser, Prompt, Viewer, logging, cookie){
   "use strict";
   parser.parse();
 
@@ -53,4 +53,24 @@ define(["reportviewer/reportviewer-main-module", 'dojo/parser',"reportviewer/rep
   $(window).resize(logged('window.resize', function() {
     viewer.view.onViewportResize();
   }));
+  
+  $(document).ready(function () 
+	{	
+		cookie('scrollValue', "", { expires: -1 });		
+		$("iframe#reportContent").load(function()
+		{								
+			var scrollVal = 0;					
+			scrollVal = cookie('scrollValue');
+			if(scrollVal)
+			{
+				$("#promptPanel").contents().find("div.parameter-wrapper").animate({scrollLeft: scrollVal},'slow');								
+			}										
+							
+			$("#promptPanel").contents().find("button").click(function()
+			{					
+				cookie('scrollValue', "", { expires: -1 });									
+				cookie('scrollValue', $('#promptPanel').contents().find("div.parameter-wrapper").scrollLeft(), { expires: 5 });
+			});						
+		});	
+	});
 });
