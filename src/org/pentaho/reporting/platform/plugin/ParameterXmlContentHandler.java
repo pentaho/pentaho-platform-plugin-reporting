@@ -709,7 +709,7 @@ public class ParameterXmlContentHandler {
     }
 
     if ( type == String.class ) {
-      String string = (String) value;
+      String string = value.toString();
       for ( int i = 0; i < string.length(); i++ ) {
         if ( Character.isISOControl( string.charAt( i ) ) ) {
           return true;
