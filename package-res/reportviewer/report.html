@@ -5,6 +5,19 @@
     
     <link rel="shortcut icon" href="images/favicon.ico" />
 
+    <!--
+        Fix embedded PDF files in Internet Explorer 11 by having it
+        switch to IE9 compatibility mode.
+
+        This is due to the fact that onreadystatechange is not
+        supported any more [1], and onLoad doesn't work properly for
+        embedded PDFs [2].
+
+        [1]: http://msdn.microsoft.com/en-us/library/ie/ms536957(v=vs.85).aspx
+        [2]: http://connect.microsoft.com/IE/feedback/details/809377/
+      -->
+    <meta http-equiv="X-UA-Compatible" content="IE=9,chrome=1">
+
     <!-- Include CDF styles first to make sure they can be properly overridden -->
     <link rel="stylesheet" href="../../../content/pentaho-cdf/js/cdf.css" type="text/css" />
 
