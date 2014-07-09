@@ -50,9 +50,6 @@ pen.define(['common-ui/util/util', 'reportviewer/reportviewer-formatting'], func
         //    PromptPanel._ready ->
         //    
         panel.getParameterDefinition = function(promptPanel, callback) {
-          // Show glass pane when updating the prompt.
-          dijit.byId('glassPane').show();
-
           // promptPanel === panel
           this.fetchParameterDefinition(promptPanel, callback, /*promptMode*/'USERINPUT');
         }.bind(this);
@@ -81,9 +78,18 @@ pen.define(['common-ui/util/util', 'reportviewer/reportviewer-formatting'], func
         this.panel.init();
       },
 
-      ready: function(promptPanel) {
-        dijit.byId('glassPane').hide();
-      },
+        showGlassPane: function () {
+            // Show glass pane when updating the prompt.
+            dijit.byId('glassPane').show();
+        },
+
+        hideGlassPane: function () {
+            dijit.byId('glassPane').hide();
+        },
+
+        ready: function (promptPanel) {
+            this.hideGlassPane();
+        },
 
       /**
        * Called by the prompt-panel component when the CDE components have been updated.
@@ -194,14 +200,19 @@ pen.define(['common-ui/util/util', 'reportviewer/reportviewer-formatting'], func
        * The callback signature is:
        * <pre>void function(newParamDef)</pre>
        *  and is called in the context of the report viewer prompt instance.
-       * @param {string} [promptMode='MANUAL'] the prompt mode to request from server: 
-       *  {INITIAL, MANUAL, USERINPUT}.
+       * @param {string} [promptMode='MANUAL'] the prompt mode to request from server:
+       *  x INITIAL   - first time
+       *  x MANUAL    - user pressed the submit button (or, when autosubmit, after INITIAL fetch)
+       *  x USERINPUT - due to a change + auto-submit
+       *
        * If not provided, 'MANUAL' will be used.
        */
       fetchParameterDefinition: function(promptPanel, callback, promptMode) {
         var me = this;
 
         var fetchParamDefId = ++me._fetchParamDefId;
+
+        me.showGlassPane();
 
         if(!promptMode) { promptMode = 'MANUAL'; }
 
