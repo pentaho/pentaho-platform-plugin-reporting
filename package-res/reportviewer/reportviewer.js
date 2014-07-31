@@ -715,6 +715,11 @@ pen.define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'reportvie
 
           me.view._showReportContent(visible);
 
+          // Set overflow-y property for IE
+          if ($('body').hasClass('IE')) {
+            $('#reportContent').contents().find('html').css('overflow-y', 'hidden');
+          }
+
           me._submitReportEnded(promptPanel);
         });
       },
