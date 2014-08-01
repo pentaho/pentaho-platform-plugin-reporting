@@ -19,6 +19,9 @@ package org.pentaho.reporting.platform.plugin;
 
 import java.io.InputStream;
 
+import org.apache.commons.io.FilenameUtils;
+import org.pentaho.platform.api.repository2.unified.Converter;
+import org.pentaho.platform.api.repository2.unified.IRepositoryContentConverterHandler;
 import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
 import org.pentaho.platform.api.repository2.unified.RepositoryFile;
 import org.pentaho.platform.api.repository2.unified.UnifiedRepositoryException;
@@ -30,6 +33,7 @@ import org.pentaho.reporting.libraries.resourceloader.ResourceKey;
 import org.pentaho.reporting.libraries.resourceloader.ResourceLoadingException;
 import org.pentaho.reporting.libraries.resourceloader.ResourceManager;
 import org.pentaho.reporting.libraries.resourceloader.loader.AbstractResourceData;
+
 
 /**
  * This class is implemented to support loading solution files from the pentaho repository into JFreeReport
@@ -76,6 +80,13 @@ public class RepositoryResourceData extends AbstractResourceData {
       if ( repositoryFile == null ) {
         throw new ResourceLoadingException();
       }
+
+      // BISERVER-11908 (KTR/KJB as a datasource)
+      InputStream stream = convert( repositoryFile );
+      if ( stream != null ) {
+        return stream;
+      }
+      
       SimpleRepositoryFileData fileData =
           unifiedRepository.getDataForRead( repositoryFile.getId(), SimpleRepositoryFileData.class );
       return fileData.getStream();
@@ -85,6 +96,21 @@ public class RepositoryResourceData extends AbstractResourceData {
     }
   }
 
+  private InputStream convert( RepositoryFile repositoryFile ) {
+    
+    IRepositoryContentConverterHandler converterHandler = PentahoSystem.get( IRepositoryContentConverterHandler.class);
+    if ( converterHandler != null ) {
+      String extension = FilenameUtils.getExtension( repositoryFile.getPath() );
+      Converter converter = converterHandler.getConverter( extension );
+      
+      if ( converter != null ) {
+        InputStream stream = converter.convert( repositoryFile.getId() );
+        return stream;
+      }
+    }
+    return null;
+  }
+  
   /**
    * returns a requested attribute, currently only supporting filename.
    * 
