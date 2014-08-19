@@ -233,6 +233,15 @@ define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui/uti
           this._layoutInited = false;
           basePanelInit.call(promptPanel, noAutoAutoSubmit);
           this._initLayout(promptPanel);
+          
+          $.widget( "ui.autocomplete", $.ui.autocomplete, {
+            _renderItem: function( ul, item) {
+              return $( "<li></li>" )
+                .data( "item.autocomplete", item )
+                .append( $( "<a></a>" ).html( item.label ) )
+                .appendTo( ul );
+            },
+          });
         },
 
         _hideToolbarPromptControls: function() {
