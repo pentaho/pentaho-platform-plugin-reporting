@@ -156,9 +156,9 @@ public class ParameterXmlContentHandler {
           return;
         }
 
-        if ( "pentaho".equals( profile.getAttribute( "group" ) ) == false ) // NON-NLS
+        if ( !profile.getAttribute( "group" ).startsWith("pentaho")) // NON-NLS
         {
-          // Only 'pentaho' drill-down profiles can be used. Filters out all other third party drilldowns
+          // Only 'pentaho' and 'pentaho-sugar' drill-down profiles can be used. Filters out all other third party drilldowns
           return;
         }
 
