@@ -873,7 +873,7 @@ define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui/uti
       },
       
       _buildReportContentUrl: function(options) {
-        var url = window.location.href;
+        var url = window.location.href.split('?')[0];
         url = url.substring(0, url.lastIndexOf("/")) + "/report?";
 
         var params = [];
