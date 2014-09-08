@@ -156,7 +156,7 @@ public class ParameterXmlContentHandler {
           return;
         }
 
-        if ( !profile.getAttribute( "group" ).startsWith("pentaho")) // NON-NLS
+        if (StringUtils.isEmpty(profile.getAttribute( "group" )) || !profile.getAttribute( "group" ).startsWith("pentaho")) // NON-NLS
         {
           // Only 'pentaho' and 'pentaho-sugar' drill-down profiles can be used. Filters out all other third party drilldowns
           return;
