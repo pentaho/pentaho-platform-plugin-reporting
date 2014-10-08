@@ -48,14 +48,19 @@ public class PentahoCubeFileProvider extends DefaultCubeFileProvider {
     //
     // If the name is given, but not found, we report an error, in the same way a non-existing JNDI definition
     // would raise an error.
+    //
+    // Was added fallback - if schema wasn't found on server try to find file by full path.
+
     if ( StringUtils.isEmpty( getCubeConnectionName() ) == false ) {
       final IMondrianCatalogService catalogService =
           PentahoSystem.get( IMondrianCatalogService.class, PentahoSessionHolder.getSession() );
       final MondrianCatalog catalog =
           catalogService.getCatalog( getCubeConnectionName(), PentahoSessionHolder.getSession() );
       if ( catalog == null ) {
-        throw new ReportDataFactoryException( "Unable to locate mondrian schema with name '" + getCubeConnectionName()
-            + "'" );
+        // throw new ReportDataFactoryException( "Unable to locate mondrian schema with name '" +
+        // getCubeConnectionName()
+        // + "'" );
+        return getLegacyCubeFile( resourceManager, contextKey );
       }
       return catalog.getDefinition();
     }
