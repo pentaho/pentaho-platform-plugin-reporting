@@ -30,7 +30,6 @@ import org.pentaho.test.platform.engine.core.MicroPlatform;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 public class ParameterTest extends TestCase {
   private MicroPlatform microPlatform;
@@ -80,11 +79,11 @@ public class ParameterTest extends TestCase {
         DocumentBuilderFactory.newInstance().newDocumentBuilder()
             .parse( new ByteArrayInputStream( baos.toByteArray() ) );
 
-    NodeList list = doc.getElementsByTagName( "values" );
     doc.getElementsByTagName( "value" ).item( 0 ).getAttributes().item( 4 );
 
     String[] expectedVal = new String[] { "1234", "Gg==", "Gg==" };
-    String[] expectedLab = new String[] { "1234", "Gg&#x3d;&#x3d;", "Gg&#x3d;&#x3d;" }; // Label is no longer necessarily the same as the value
+    //this label is shown user! you should be able to read items!
+    String[] expectedLab = new String[] { "1234", "Gg==", "Gg==" }; 
     String[] expectedEncoded = new String[] { "", "true", "true" };
     for ( int i = 0; i < 3; i++ ) {
       String value = ( (Element) doc.getElementsByTagName( "value" ).item( i ) ).getAttribute( "value" );
