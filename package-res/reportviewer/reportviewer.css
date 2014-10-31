@@ -326,5 +326,5 @@ div.prompt-panel {
 }
 
 #reportControlPanel select {
-  overflow-y: scroll;
+  overflow-y: auto;
 }
