@@ -359,3 +359,7 @@ div.prompt-panel {
 	border: 1px solid #df9999 !important;
 	box-shadow: 0px 0px 6px #b94a48;
 }
+
+#reportControlPanel select {
+  overflow-y: auto;
+}
