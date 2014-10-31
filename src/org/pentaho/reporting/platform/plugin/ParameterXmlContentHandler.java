@@ -30,6 +30,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.TimeZone;
+
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
@@ -37,6 +38,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.pentaho.platform.api.engine.IParameterProvider;
@@ -83,7 +85,6 @@ import org.pentaho.reporting.platform.plugin.output.FastExportReportOutputHandle
 import org.pentaho.reporting.platform.plugin.output.ReportOutputHandlerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.owasp.esapi.Encoder;
 
 public class ParameterXmlContentHandler {
   private static class OutputParameterCollector {
@@ -587,7 +588,6 @@ public class ParameterXmlContentHandler {
              .setAttribute( "timezone-hint", computeTimeZoneHint( parameter, parameterContext, selectionSet ) ); //$NON-NLS-1$
       }
       
-      Encoder enc = org.owasp.esapi.ESAPI.encoder();
       @SuppressWarnings( "rawtypes" )
       final LinkedHashSet handledValues = (LinkedHashSet) selectionSet.clone();
 
@@ -616,7 +616,7 @@ public class ParameterXmlContentHandler {
             valueElement.setAttribute( "encoded", "true" );
           }
 
-          valueElement.setAttribute( "label", enc.encodeForHTMLAttribute( String.valueOf( value ) ) ); //$NON-NLS-1$ //$NON-NLS-2$
+          valueElement.setAttribute( "label", StringEscapeUtils.escapeHtml( String.valueOf( value ) ) ); //$NON-NLS-1$ //$NON-NLS-2$
           valueElement.setAttribute( "type", elementValueType.getName() ); //$NON-NLS-1$
 
           if ( key instanceof Number ) {
@@ -688,7 +688,7 @@ public class ParameterXmlContentHandler {
           valueElement.setAttribute( "null", "false" ); //$NON-NLS-1$ //$NON-NLS-2$
           final String value = convertParameterValueToString( parameter, parameterContext, selections, valueType );
           valueElement.setAttribute( "value", value ); //$NON-NLS-1$ //$NON-NLS-2$
-          valueElement.setAttribute( "label", enc.encodeForHTMLAttribute( value ) ); //$NON-NLS-1$ //$NON-NLS-2$
+          valueElement.setAttribute( "label", StringEscapeUtils.escapeHtml( value ) ); //$NON-NLS-1$ //$NON-NLS-2$
         }
       }
       return parameterElement;
