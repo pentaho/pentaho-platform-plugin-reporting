@@ -324,3 +324,7 @@ div.prompt-panel {
     padding-right: 8px; 
     padding-bottom: 8px;
 }
+
+#reportControlPanel select {
+  overflow-y: auto;
+}
