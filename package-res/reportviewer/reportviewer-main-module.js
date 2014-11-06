@@ -15,12 +15,11 @@
  * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
  */
 define(["cdf/jquery",
-  "cdf/jquery-impromptu.3.1",
+  "cdf/jquery-impromptu",
   "cdf/jquery.ui",
   "cdf/jquery.bgiframe",
   "cdf/jquery.jdMenu",
   "cdf/jquery.positionBy",
-  "cdf/jquery.tooltip",
   "cdf/jquery.blockUI",
   "cdf/jquery.eventstack",
   "cdf/Base",
