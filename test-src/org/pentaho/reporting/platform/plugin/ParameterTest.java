@@ -61,17 +61,23 @@ public class ParameterTest extends TestCase {
   }
 
   /**
-   * verifies that values containing illegal control chars are base64 encoded, and that the "encoded=true" attribute is
-   * set as expected.
+   * verifies cases 
    * 
-   * For example, <value encoded="true" label="Gg==" null="false" selected="false" type="java.lang.String" value="Gg=="
-   * /> http://jira.pentaho.com/browse/PRD-3882
+   * http://jira.pentaho.com/browse/PRD-3882
+   * values containing illegal control chars are base64 encoded, and that the "encoded=true" attribute is
+   * set as expected.
+   * For example, <value encoded="true" label="Gg==" null="false" selected="false" type="java.lang.String" value="Gg=="/> 
+   *
+   * http://jira.pentaho.com/browse/PPP-3343
+   * that Japanese values are not encoded
+   * 
+   * http://jira.pentaho.com/browse/BISERVER-11918
+   * that special characters are not encoded 
    */
   public void testEncodedParameterValues() throws Exception {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     final ParameterContentGenerator contentGenerator = new ParameterContentGenerator();
     final ParameterXmlContentHandler handler = new ParameterXmlContentHandler( contentGenerator, false );
-    // this test report has 3 param values, one "good" and two "bad": { 1234, x001a, x001a }
     handler.createParameterContent( baos, "resource/solution/test/reporting/prd3882.prpt",
         "resource/solution/test/reporting/prd3882.prpt", false, null );
 
@@ -79,25 +85,18 @@ public class ParameterTest extends TestCase {
         DocumentBuilderFactory.newInstance().newDocumentBuilder()
             .parse( new ByteArrayInputStream( baos.toByteArray() ) );
 
-    doc.getElementsByTagName( "value" ).item( 0 ).getAttributes().item( 4 );
-
-    String[] expectedVal = new String[] { "1234", "Gg==", "Gg==" };
+    String[] expectedVal = new String[] { "1qA", "+ / : ; = ? [ ] ^ \\", "果物", "Gg==" };
     //this label is shown user! you should be able to read items!
-    String[] expectedLab = new String[] { "1234", "Gg==", "Gg==" }; 
-    String[] expectedEncoded = new String[] { "", "true", "true" };
-    for ( int i = 0; i < 3; i++ ) {
+    String[] expectedLab = new String[] { "1qA", "+ / : ; = ? [ ] ^ \\", "果物", "Gg==" }; 
+    String[] expectedEncoded = new String[] { null, null, null, "true" };
+    for ( int i = 0; i < expectedVal.length; i++ ) {
       String value = ( (Element) doc.getElementsByTagName( "value" ).item( i ) ).getAttribute( "value" );
       Node encoded = ( (Element) doc.getElementsByTagName( "value" ).item( i ) ).getAttributeNode( "encoded" );
       String label = ( (Element) doc.getElementsByTagName( "value" ).item( i ) ).getAttribute( "label" );
 
       assertEquals( expectedVal[i], value );
       assertEquals( expectedLab[i], label );
-      if ( i == 0 ) {
-        // first value does not need to be encoded
-        assertEquals( null, encoded );
-      } else {
-        assertEquals( expectedEncoded[i], encoded.getTextContent() );
-      }
+      assertEquals( expectedEncoded[i], encoded == null ? encoded : encoded.getTextContent() );
     }
   }
 
