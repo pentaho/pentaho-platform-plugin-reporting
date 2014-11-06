@@ -38,7 +38,6 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.pentaho.platform.api.engine.IParameterProvider;
@@ -83,6 +82,7 @@ import org.pentaho.reporting.libraries.formula.parser.FormulaParser;
 import org.pentaho.reporting.platform.plugin.messages.Messages;
 import org.pentaho.reporting.platform.plugin.output.FastExportReportOutputHandlerFactory;
 import org.pentaho.reporting.platform.plugin.output.ReportOutputHandlerFactory;
+import org.springframework.web.util.HtmlUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -615,8 +615,7 @@ public class ParameterXmlContentHandler {
             value = Base64.encodeBase64String( value.toString().getBytes() );
             valueElement.setAttribute( "encoded", "true" );
           }
-
-          valueElement.setAttribute( "label", StringEscapeUtils.escapeHtml( String.valueOf( value ) ) ); //$NON-NLS-1$ //$NON-NLS-2$
+          valueElement.setAttribute( "label", HtmlUtils.htmlEscape( String.valueOf( value ) ) ); //$NON-NLS-1$ //$NON-NLS-2$
           valueElement.setAttribute( "type", elementValueType.getName() ); //$NON-NLS-1$
 
           if ( key instanceof Number ) {
@@ -688,7 +687,7 @@ public class ParameterXmlContentHandler {
           valueElement.setAttribute( "null", "false" ); //$NON-NLS-1$ //$NON-NLS-2$
           final String value = convertParameterValueToString( parameter, parameterContext, selections, valueType );
           valueElement.setAttribute( "value", value ); //$NON-NLS-1$ //$NON-NLS-2$
-          valueElement.setAttribute( "label", StringEscapeUtils.escapeHtml( value ) ); //$NON-NLS-1$ //$NON-NLS-2$
+          valueElement.setAttribute( "label", HtmlUtils.htmlEscape( value ) ); //$NON-NLS-1$ //$NON-NLS-2$
         }
       }
       return parameterElement;
