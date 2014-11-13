@@ -291,7 +291,11 @@ define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui/uti
 
             registry.byId('glassPane').hide();
             domClass.add('reportContent', 'hidden');
-            domClass.add(query('.submit-panel')[0], 'hidden');
+            // SubmitPanel can be absent in DOM
+            var submitPanel = query('.submit-panel');
+            if (typeof submitPanel !== 'undefined' && submitPanel.length > 0) {
+                domClass.add(submitPanel[0], 'hidden');
+            }
             domClass.add('toolbarlinner2', 'hidden');
 
             domClass.remove('promptPanel', 'pentaho-rounded-panel-bottom-lr');
