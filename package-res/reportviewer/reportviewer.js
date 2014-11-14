@@ -882,7 +882,7 @@ define(['common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui/uti
 
         var params = [];
         var addParam = function(encodedKey, value) {
-          if(value) {
+		  if(typeof value !== 'undefined') {
             params.push(encodedKey + '=' + encodeURIComponent(value));
           }
         };
