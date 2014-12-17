@@ -23,6 +23,7 @@ import org.pentaho.reporting.engine.classic.core.metadata.AttributeRegistry;
 import org.pentaho.reporting.engine.classic.core.metadata.DefaultAttributeCore;
 import org.pentaho.reporting.engine.classic.core.metadata.DefaultAttributeMetaData;
 import org.pentaho.reporting.engine.classic.core.metadata.ElementTypeRegistry;
+import org.pentaho.reporting.engine.classic.core.metadata.MaturityLevel;
 import org.pentaho.reporting.engine.classic.core.modules.parser.data.sql.ConnectionReadHandlerFactory;
 import org.pentaho.reporting.engine.classic.core.modules.parser.data.sql.SQLDataFactoryModule;
 import org.pentaho.reporting.engine.classic.extensions.datasources.kettle.KettleDataFactoryModule;
@@ -73,7 +74,7 @@ public class PentahoPlatformModule extends AbstractModule {
     final DefaultAttributeMetaData metaData =
         new DefaultAttributeMetaData( PIR_NAMESPACE, "VERSION", bundleLocation, keyPrefix, null, String.class, true,
             false, true, false, false, false, false, AttributeMetaData.VALUEROLE_VALUE, false, true,
-            new DefaultAttributeCore(), false, ClassicEngineBoot.computeVersionId( 3, 8, 0 ) );
+            new DefaultAttributeCore(), MaturityLevel.Production, ClassicEngineBoot.computeVersionId( 3, 8, 0 ) );
 
     final AttributeRegistry registry = ElementTypeRegistry.getInstance().getAttributeRegistry( "master-report" );
     registry.putAttributeDescription( metaData );
