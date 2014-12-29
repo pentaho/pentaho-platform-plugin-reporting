@@ -40,6 +40,7 @@ import org.pentaho.platform.api.engine.IStreamingPojo;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.core.AttributeNames;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
+import org.pentaho.reporting.engine.classic.core.ReportDataFactoryException;
 import org.pentaho.reporting.engine.classic.core.metadata.ReportProcessTaskRegistry;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.pdf.PdfPageableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.plaintext.PlainTextPageableModule;
@@ -950,8 +951,10 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
           reportOutputHandler.close();
         }
       }
-    } catch ( Throwable t ) {
-      log.error( Messages.getInstance().getString( "ReportPlugin.executionFailed" ), t ); //$NON-NLS-1$
+    } catch ( ReportDataFactoryException e ) {
+      throw e;
+    } catch ( Exception e ) {
+      log.error( Messages.getInstance().getString( "ReportPlugin.executionFailed" ), e ); //$NON-NLS-1$
     }
     // lets not pretend we were successfull, if the export type was not a valid one.
     return false;
