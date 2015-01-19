@@ -864,6 +864,11 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
         setPaginateOutput( false );
         inputs.put( "output-target", getOutputTarget() );
       }
+
+      // Embed styles if report will be emailed
+      if ( inputs.get( "_SCH_EMAIL_TO" ) != null ) {
+        report.getReportConfiguration().setConfigProperty( HtmlTableModule.EXTERNALIZE_STYLE, "false" );
+      }
     }
     // SP-307, BISERVER-9688
 
