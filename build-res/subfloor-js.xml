@@ -330,7 +330,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         <!-- <get src="http://download.dojotoolkit.org/release-${js.dojo.version}/${js.dojo-artifact}.zip"
              dest="${js.dojo.root}/${js.dojo-artifact}.zip"/>
          -->
-        <get src="http://repository.pentaho.org/artifactory/third-party/org/dojotoolkit/dojo/${js.dojo.version}/${js.dojo-artifact}.zip"
+        <get src="http://nexus.pentaho.org/content/groups/omni/org/dojotoolkit/dojo/${js.dojo.version}/${js.dojo-artifact}.zip"
              dest="${js.dojo.root}/${js.dojo-artifact}.zip"/>
         
       </else>
