@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2015 Pentaho Corporation..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin.connection;
@@ -60,17 +60,17 @@ public class CdaPluginLocalQueryBackend extends CdaQueryBackend {
     try {
       final Map<String, Object> parameters = new HashMap<String, Object>();
 
-      final Set<Entry<String, String>> paramterSet = extraParameter.entrySet();
-      for ( final Entry<String, String> entry : paramterSet ) {
-        parameters.put( entry.getKey(), entry.getValue() );
+      final Set<Entry<String, String>> parameterSet = extraParameter.entrySet();
+      for ( final Entry<String, String> entry : parameterSet ) {
+          parameters.put( entry.getKey(), entry.getValue() );
       }
 
       parameters.put( "outputType", "xml" );
-      parameters.put( "solution", encodeParameter( getSolution() ) );
-      parameters.put( "path", encodeParameter( getPath() ) );
-      parameters.put( "file", encodeParameter( getFile() ) );
+      parameters.put( "solution", getSolution() );
+      parameters.put( "path", getPath() );
+      parameters.put( "file", getFile() );
 
-      final String responseBody = callPlugin( "cda", method, new SimpleParameterProvider( parameters ) );
+      final String responseBody = callPlugin( "cda", method, parameters );
 
       // convert String into InputStream
       final InputStream responseBodyIs = new ByteArrayInputStream( responseBody.getBytes( "UTF-8" ) );
@@ -83,15 +83,13 @@ public class CdaPluginLocalQueryBackend extends CdaQueryBackend {
     }
   }
 
-  private static String callPlugin( final String pluginName, final String method, final IParameterProvider params )
+  private static String callPlugin( final String pluginName, final String method, final Map<String, Object> parameters )
     throws ReportDataFactoryException {
 
     final IPentahoSession userSession = PentahoSessionHolder.getSession();
     final IPluginManager pluginManager = PentahoSystem.get( IPluginManager.class, userSession );
 
     try {
-
-
       Object cdaBean = pluginManager.getBean("cda.api");
       Class cdaBeanClass = cdaBean.getClass();
 
@@ -100,55 +98,43 @@ public class CdaPluginLocalQueryBackend extends CdaQueryBackend {
       Method m;
       final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
-      if ("listParameters".equals(method)) {
-        paramTypes = new Class[]{String.class,String.class,String.class,String.class,String.class,
-                HttpServletResponse.class, HttpServletRequest.class};
+      if ( "listParameters".equals( method ) ) {
+        IParameterProvider params = new SimpleParameterProvider( parameters );
+
+        paramTypes = new Class[] { String.class, String.class, String.class, String.class, String.class,
+          HttpServletResponse.class, HttpServletRequest.class };
         m =  cdaBeanClass.getMethod("listParameters", paramTypes);
         paramValues = new Object[7];
-        paramValues[0] = URLDecoder.decode(params.getStringParameter("path", null), "UTF-8");
-        paramValues[1] = params.getStringParameter("solution", "");
-        paramValues[2] = params.getStringParameter("file", "");
-        paramValues[3] = params.getStringParameter("outputType", "json");
-        paramValues[4] = params.getStringParameter("dataAccessId", "<blank>");
-        paramValues[5] = getResponse(outputStream);
-        paramValues[6] = getRequest();
+        paramValues[0] = params.getStringParameter( "path", null );
+        paramValues[1] = params.getStringParameter( "solution", "" );
+        paramValues[2] = params.getStringParameter( "file", "" );
+        paramValues[3] = params.getStringParameter( "outputType", "json" );
+        paramValues[4] = params.getStringParameter( "dataAccessId", "<blank>" );
+        paramValues[5] = getResponse( outputStream );
+        paramValues[6] = getRequest( parameters );
+
+        m.invoke(cdaBean, paramValues);
+
+        return outputStream.toString();
+
       } else {
-        paramTypes = new Class[]{String.class, String.class, int.class,
-                String.class, Boolean.class, Boolean.class, int.class, int.class, Boolean.class,
-                List.class, HttpServletResponse.class, HttpServletRequest.class};
-        m = cdaBeanClass.getMethod("doQueryPost", paramTypes);
+        paramTypes = new Class[] { HttpServletRequest.class };
+        m = cdaBeanClass.getMethod("doQueryInterPlugin", paramTypes);
 
-        //Get parameters
-        paramValues = new Object[12];
-        paramValues[0] = URLDecoder.decode(params.getStringParameter("path", null), "UTF-8");
-        paramValues[1] = params.getStringParameter("outputType", "json");
-        paramValues[2] = (int) params.getLongParameter("outputIndexId", 1);
-        paramValues[3] = params.getStringParameter("dataAccessId", "1");
-        paramValues[4] = Boolean.parseBoolean(params.getStringParameter("bypassCache", "false"));
-        paramValues[5] = Boolean.parseBoolean(params.getStringParameter("paginateQuery", "false"));
-        paramValues[6] = (int) params.getLongParameter("pageSize", 0);
-        paramValues[7] = (int) params.getLongParameter("pageStart", 0);
-        paramValues[8] = Boolean.parseBoolean(params.getStringParameter("wrapItUp", "false"));
+        paramValues = new Object[1];
+        paramValues[0] = getRequest( parameters );
 
-        String[] sortFields = params.getStringArrayParameter("sortBy", new String[0]);
-        List<String> sortList = new ArrayList<String>(sortFields.length);
-        for (String sortField : sortFields) {
-          sortList.add(sortField);
-        }
-        paramValues[9] = sortList;
-        paramValues[10] = getResponse(outputStream);
-        paramValues[11] = getRequest();
+        return (String) m.invoke(cdaBean, paramValues);
+
       }
 
-      m.invoke(cdaBean, paramValues);
-      return outputStream.toString();
     } catch ( Exception e ) {
       throw new ReportDataFactoryException( "Failed to acquire " + pluginName + " plugin: ", e );
     }
   }
 
-
-  private static HttpServletRequest getRequest() {
+  private static HttpServletRequest getRequest( final Map<String, Object> parameters ) {
+    final IParameterProvider requestParameters = new SimpleParameterProvider( parameters );
     return new HttpServletRequest() {
       @Override
       public String getAuthType() {
@@ -310,23 +296,23 @@ public class CdaPluginLocalQueryBackend extends CdaQueryBackend {
       }
 
       @Override
-      public String getParameter(String s) {
-        return null;
+      public String getParameter( String s ) {
+        return requestParameters.getStringParameter( s, null );
       }
 
       @Override
       public Enumeration getParameterNames() {
-        return new Hashtable(0).elements();
+        return Collections.enumeration( parameters.keySet() );
       }
 
       @Override
-      public String[] getParameterValues(String s) {
-        return new String[0];
+      public String[] getParameterValues( String s ) {
+        return requestParameters.getStringArrayParameter( s, new String[0] );
       }
 
       @Override
       public Map getParameterMap() {
-        return null;
+        return parameters;
       }
 
       @Override
@@ -416,9 +402,8 @@ public class CdaPluginLocalQueryBackend extends CdaQueryBackend {
       public int getLocalPort() {
         return 0;
       }
-    }        ;
+    };
   }
-
 
   private static HttpServletResponse getResponse (final OutputStream stream) {
     return new HttpServletResponse() {
@@ -567,8 +552,6 @@ public class CdaPluginLocalQueryBackend extends CdaQueryBackend {
     } ;
   }
 
-
-
   private static class DelegatingServletOutputStream extends ServletOutputStream {
     private final OutputStream targetStream;
     /**
@@ -595,6 +578,5 @@ public class CdaPluginLocalQueryBackend extends CdaQueryBackend {
       this.targetStream.close();
     }
   }
-
 
 }
