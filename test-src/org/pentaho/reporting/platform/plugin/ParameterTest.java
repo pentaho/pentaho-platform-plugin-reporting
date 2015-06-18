@@ -85,10 +85,10 @@ public class ParameterTest extends TestCase {
         DocumentBuilderFactory.newInstance().newDocumentBuilder()
             .parse( new ByteArrayInputStream( baos.toByteArray() ) );
 
-    String[] expectedVal = new String[] { "1qA", "+ / : ; = ? [ ] ^ \\", "果物", "Gg==" };
+    String[] expectedVal = new String[] { "1qA", "+ / : ; = ? [ ] ^ \\", "果物" };
     //this label is shown user! you should be able to read items!
-    String[] expectedLab = new String[] { "1qA", "+ / : ; = ? [ ] ^ \\", "果物", "Gg==" }; 
-    String[] expectedEncoded = new String[] { null, null, null, "true" };
+    String[] expectedLab = new String[] { "1qA", "+ / : ; = ? [ ] ^ \\", "果物" };
+    String[] expectedEncoded = new String[] { null, null, null };
     for ( int i = 0; i < expectedVal.length; i++ ) {
       String value = ( (Element) doc.getElementsByTagName( "value" ).item( i ) ).getAttribute( "value" );
       Node encoded = ( (Element) doc.getElementsByTagName( "value" ).item( i ) ).getAttributeNode( "encoded" );
