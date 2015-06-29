@@ -16,18 +16,16 @@
  */
 define([
   "common-repo/pentaho-ajax",
-  "common-ui/prompting/pentaho-prompting",
   "reportviewer/reportviewer",
   "reportviewer/reportviewer-prompt",
   'reportviewer/reportviewer-logging',
   'reportviewer/formatter',
-  'reportviewer/reportviewer',
   'dojo/parser',
   'pentaho/common/Messages',
   'pentaho/common/MessageBox',
   'pentaho/common/Menu',
   'pentaho/common/MenuItem',
   'pentaho/common/PageControl', 'dijit/Toolbar', 'dijit/ToolbarSeparator', 'dijit/form/ToggleButton', 'pentaho/common/GlassPane'],
-    function (_pentaho_ajax, _prompting, _reportViewer, Prompt, logging, formatter, Viewer, parser, _Messages, _MessageBox, _Menu, _MenuItem, _PageControl) {
+    function (_pentaho_ajax, _reportViewer, Prompt, logging, formatter, parser, _Messages, _MessageBox, _Menu, _MenuItem, _PageControl) {
 
     });

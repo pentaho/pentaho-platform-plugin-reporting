@@ -15,9 +15,9 @@
 * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
 */
 
-define(['common-ui/util/util', 'common-ui/util/formatting', 'pentaho/common/Messages', "dijit/registry", 'common-ui/prompting/pentaho-prompting', 'common-ui/prompting/parameters/ParameterXmlParser', 'common-ui/prompting/PromptPanel'],
+define(['common-ui/util/util', 'common-ui/util/formatting', 'pentaho/common/Messages', "dijit/registry", 'common-ui/prompting/parameters/ParameterXmlParser', 'common-ui/prompting/PromptPanel'],
 
-    function(util, ReportFormatUtil, Messages, registry, prompting, ParameterXmlParser, PromptPanel) {
+    function(util, ReportFormatUtil, Messages, registry, ParameterXmlParser, PromptPanel) {
   return function() {
     return logged({
       // The current prompt mode
