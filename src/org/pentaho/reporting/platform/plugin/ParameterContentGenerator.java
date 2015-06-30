@@ -107,10 +107,6 @@ public class ParameterContentGenerator extends SimpleContentGenerator {
    * @return IParameterProvider the provider of parameters
    */
   public IParameterProvider getRequestParameters() {
-    if ( requestParameters != null ) {
-      return requestParameters;
-    }
-
     if ( parameterProviders == null ) {
       return new SimpleParameterProvider();
     }
