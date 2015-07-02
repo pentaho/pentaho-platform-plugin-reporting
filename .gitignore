@@ -20,3 +20,6 @@ build-res/module-scripts/
 *.ear
 *.iml
 /war
+.idea/uiDesigner.xml
+*.lck
+/pentaho.log
