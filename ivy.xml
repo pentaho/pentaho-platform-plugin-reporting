@@ -29,7 +29,7 @@
 		<dependency org="${ivy.artifact.group}" name="pentaho-reporting-engine-classic-extensions-pmd" rev="${dependency.pentaho-reporting.revision}" transitive="true" changing="true" />
       <dependency org="${ivy.artifact.group}" name="pentaho-reporting-engine-classic-extensions-kettle" rev="${dependency.pentaho-reporting.revision}" transitive="true" changing="true" />
 		<dependency org="${ivy.artifact.group}" name="pentaho-reporting-engine-classic-extensions-drill-down" rev="${dependency.pentaho-reporting-extension-drilldown.revision}" transitive="true" changing="true" />
-		<dependency org="${ivy.artifact.group}" name="pentaho-reporting-engine-classic-legacy-charts" rev="${dependency.pentaho-reporting.revision}" transitive="true" changing="true" />
+		<dependency org="${ivy.artifact.group}" name="pentaho-reporting-engine-legacy-charts" rev="${dependency.pentaho-reporting.revision}" transitive="true" changing="true" />
 
 		<dependency org="pentaho-library" name="libformula" rev="${dependency.pentaho-reporting.revision}" transitive="false" changing="true"/>
 
