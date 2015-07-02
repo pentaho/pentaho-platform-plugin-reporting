@@ -15,7 +15,9 @@
 * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
 */
 
-define(['common-ui/util/util', 'common-ui/util/formatting', 'pentaho/common/Messages', "dijit/registry"], function(util, ReportFormatUtil, Messages, registry) {
+define(['common-ui/util/util', 'common-ui/util/formatting', 'pentaho/common/Messages', "dijit/registry", 'common-ui/prompting/pentaho-prompting', 'common-ui/prompting/parameters/ParameterXmlParser', 'common-ui/prompting/PromptPanel'],
+
+    function(util, ReportFormatUtil, Messages, registry, prompting, ParameterXmlParser, PromptPanel) {
   return function() {
     return logged({
       // The current prompt mode
@@ -38,7 +40,7 @@ define(['common-ui/util/util', 'common-ui/util/formatting', 'pentaho/common/Mess
       },
 
       _createPromptPanelFetchCallback: function(paramDefn) {
-        var panel = this.panel = new pentaho.common.prompting.PromptPanel('promptPanel', paramDefn);
+        var panel = this.panel = new PromptPanel('promptPanel', paramDefn);
 
         panel.submit = this.submit.bind(this);
         panel.submitStart = this.submitStart.bind(this);
@@ -122,7 +124,7 @@ define(['common-ui/util/util', 'common-ui/util/formatting', 'pentaho/common/Mess
         alert('submit start fired for panel: ' + promptPanel);
       },
 
-      parameterParser: new pentaho.common.prompting.ParameterXmlParser(),
+      parameterParser: new ParameterXmlParser(),
 
       parseParameterDefinition: function(xmlString) {
         // Provide a custom parameter normalization method unique to report viewer
@@ -357,7 +359,7 @@ define(['common-ui/util/util', 'common-ui/util/formatting', 'pentaho/common/Mess
           messageBox.setButtons([]);
         } else {
           var closeFunc = function() {
-            Dashboards.hideProgressIndicator();
+            //Dashboards.hideProgressIndicator();
             messageBox.hide.call(messageBox);
           }
 
@@ -383,7 +385,7 @@ define(['common-ui/util/util', 'common-ui/util/formatting', 'pentaho/common/Mess
             messageBox.setButtons([button1Text]);
           }
         }
-        Dashboards.showProgressIndicator();
+        //Dashboards.showProgressIndicator();
         messageBox.show();
       },
 

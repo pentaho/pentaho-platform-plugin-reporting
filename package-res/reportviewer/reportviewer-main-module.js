@@ -14,24 +14,9 @@
  *
  * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
  */
-define(["cdf-legacy/lib/jQuery/jquery",
-  "cdf-legacy/lib/impromptu/jquery-impromptu",
-  "cdf-legacy/lib/jQuery/jquery.ui",
-  "cdf-legacy/lib/bgiframe/jquery.bgiframe",
-  "cdf-legacy/lib/jdMenu/jquery.jdMenu",
-  "cdf-legacy/lib/positionBy/jquery.positionBy",
-  "cdf-legacy/lib/blockUI/jquery.blockUI",
-  "cdf-legacy/lib/eventstack/jquery.eventstack",
-  "cdf-legacy/lib/base/Base",
-  "cdf-legacy/Dashboards",
-  "cdf-legacy/CoreComponents",
-  "cdf-legacy/lib/simile/ajax/simile-ajax-api",
-  "cdf-legacy/lib/simile/ajax/scripts/json",
+define([
   "common-repo/pentaho-ajax",
   "common-ui/prompting/pentaho-prompting",
-  "common-ui/prompting/pentaho-prompting-builders",
-  "common-ui/prompting/pentaho-prompting-components",
-  "common-ui/prompting/pentaho-prompting-bind",
   "reportviewer/reportviewer",
   "reportviewer/reportviewer-prompt",
   'reportviewer/reportviewer-logging',
@@ -43,7 +28,6 @@ define(["cdf-legacy/lib/jQuery/jquery",
   'pentaho/common/Menu',
   'pentaho/common/MenuItem',
   'pentaho/common/PageControl', 'dijit/Toolbar', 'dijit/ToolbarSeparator', 'dijit/form/ToggleButton', 'pentaho/common/GlassPane'],
-    function (_jquery, _jquery_impromptu, _jquery_ui, _jquery_bgiframe, _jquery_jdmenu, _jquery_positionBy, _jquery_tooltip, _jquery_blockui, _jquery_eventstack, _base, _dashboards, _coreComponents, _simple_ajax, _json, _pentaho_ajax, _prompting, _prompting_builders, _prompting_components, _prompting_bind, _reportViewer, Prompt, logging, formatter, Viewer, parser, _Messages, _MessageBox, _Menu, _MenuItem, _PageControl) {
-
+    function (_pentaho_ajax, _prompting, _reportViewer, Prompt, logging, formatter, Viewer, parser, _Messages, _MessageBox, _Menu, _MenuItem, _PageControl) {
 
     });

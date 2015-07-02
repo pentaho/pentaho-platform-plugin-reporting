@@ -15,7 +15,7 @@
 * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
 */
 
-define(['common-ui/prompting/pentaho-prompting','reportviewer/reportviewer-timeutil'], function(p, ReportTimeUtil) {
+define(['reportviewer/reportviewer-timeutil'], function(ReportTimeUtil) {
   return {
     /**
      * Create a text formatter that formats to/from text. This is designed to convert between data formatted as a string
