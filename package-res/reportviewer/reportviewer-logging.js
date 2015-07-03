@@ -36,6 +36,7 @@ define(function() {
       } catch(ex) {
         error = ex;
         logger.raw("$*? " + htmlEscape(ex), null, v0);
+        console.log(ex);
         throw ex;
       } finally {
         if(!error && result !== undefined) {

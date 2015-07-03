@@ -26,10 +26,11 @@ define(["reportviewer/reportviewer-main-module", 'dojo/parser',"reportviewer/rep
   var inMobile = false;
   try { inMobile = !!window.top.PentahoMobile; } catch(ex) { /*XSS*/ }
 
-  Dashboards.blockUIwithDrag = function() {
+ // TODO: REVIEW!!!!!!
+ // Dashboards.blockUIwithDrag = function() {
     // blockUI has concurrency issues (see BISERVER-8124)
     // forcing no-op with override
-  }
+ // }
   var options;
   if(_isTopReportViewer) {
     var qs;
@@ -53,24 +54,24 @@ define(["reportviewer/reportviewer-main-module", 'dojo/parser',"reportviewer/rep
   $(window).resize(logged('window.resize', function() {
     viewer.view.onViewportResize();
   }));
-  
-  $(document).ready(function () 
-	{	
-		cookie('scrollValue', "", { expires: -1 });		
+
+  $(document).ready(function ()
+	{
+		cookie('scrollValue', "", { expires: -1 });
 		$("iframe#reportContent").load(function()
-		{								
-			var scrollVal = 0;					
+		{
+			var scrollVal = 0;
 			scrollVal = cookie('scrollValue');
 			if(scrollVal)
 			{
-				$("#promptPanel").contents().find("div.parameter-wrapper").animate({scrollLeft: scrollVal},'slow');								
-			}										
-							
+				$("#promptPanel").contents().find("div.parameter-wrapper").animate({scrollLeft: scrollVal},'slow');
+			}
+
 			$("#promptPanel").contents().find("button").click(function()
-			{					
-				cookie('scrollValue', "", { expires: -1 });									
+			{
+				cookie('scrollValue', "", { expires: -1 });
 				cookie('scrollValue', $('#promptPanel').contents().find("div.parameter-wrapper").scrollLeft(), { expires: 5 });
-			});						
-		});	
+			});
+		});
 	});
 });
