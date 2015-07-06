@@ -17,10 +17,37 @@
 
 package org.pentaho.reporting.platform.plugin;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.StringWriter;
+import junit.framework.TestCase;
+import org.junit.Assert;
+import org.pentaho.platform.api.data.IDBDatasourceService;
+import org.pentaho.platform.api.engine.*;
+import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
+import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
+import org.pentaho.platform.engine.core.system.StandaloneSession;
+import org.pentaho.platform.engine.security.userrole.ws.MockUserRoleListService;
+import org.pentaho.platform.engine.services.connection.datasource.dbcp.JndiDatasourceService;
+import org.pentaho.platform.engine.services.solution.SolutionEngine;
+import org.pentaho.platform.plugin.action.mondrian.catalog.IMondrianCatalogService;
+import org.pentaho.platform.plugin.action.mondrian.catalog.MondrianCatalogHelper;
+import org.pentaho.platform.plugin.services.connections.sql.SQLConnection;
+import org.pentaho.platform.plugin.services.pluginmgr.SystemPathXmlPluginProvider;
+import org.pentaho.platform.plugin.services.pluginmgr.servicemgr.DefaultServiceManager;
+import org.pentaho.platform.repository2.unified.RepositoryUtils;
+import org.pentaho.platform.repository2.unified.fs.FileSystemBackedUnifiedRepository;
+import org.pentaho.reporting.engine.classic.core.DataFactory;
+import org.pentaho.reporting.engine.classic.core.MasterReport;
+import org.pentaho.reporting.engine.classic.core.StaticDataRow;
+import org.pentaho.reporting.engine.classic.core.designtime.datafactory.DesignTimeDataFactoryContext;
+import org.pentaho.reporting.libraries.base.util.DebugLog;
+import org.pentaho.reporting.libraries.resourceloader.ResourceManager;
+import org.pentaho.reporting.platform.plugin.repository.PentahoNameGenerator;
+import org.pentaho.reporting.platform.plugin.repository.TempDirectoryNameGenerator;
+import org.pentaho.test.platform.engine.core.MicroPlatform;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
 import javax.swing.table.TableModel;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -30,26 +57,13 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-
-import junit.framework.TestCase;
-import org.junit.Assert;
-import org.pentaho.platform.api.engine.IPentahoSession;
-import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
-import org.pentaho.platform.engine.core.system.StandaloneSession;
-import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
-import org.pentaho.reporting.engine.classic.core.DataFactory;
-import org.pentaho.reporting.engine.classic.core.MasterReport;
-import org.pentaho.reporting.engine.classic.core.StaticDataRow;
-import org.pentaho.reporting.engine.classic.core.designtime.datafactory.DesignTimeDataFactoryContext;
-import org.pentaho.reporting.libraries.base.util.DebugLog;
-import org.pentaho.reporting.libraries.resourceloader.ResourceManager;
-import org.pentaho.test.platform.engine.core.MicroPlatform;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.StringWriter;
 
 public class ParameterTest extends TestCase {
+  protected static final String SOLUTION_PATH = "resource/solution";
   private MicroPlatform microPlatform;
   private File tmp;
 
@@ -59,11 +73,28 @@ public class ParameterTest extends TestCase {
 
   @Override
   protected void setUp() throws Exception {
+    System.setProperty( "java.naming.factory.initial", "org.osjava.sj.SimpleContextFactory" ); //$NON-NLS-1$ //$NON-NLS-2$
+    System.setProperty("org.osjava.sj.root", SOLUTION_PATH + "/system/simple-jndi"); //$NON-NLS-1$ //$NON-NLS-2$
+    System.setProperty("org.osjava.sj.delimiter", "/"); //$NON-NLS-1$ //$NON-NLS-2$
+
     tmp = new File("./resource/solution/system/tmp");
     tmp.mkdirs();
-    ClassicEngineBoot.getInstance().start();
 
-    microPlatform = MicroPlatformFactory.create();
+    microPlatform = new MicroPlatform( SOLUTION_PATH );
+    final IUnifiedRepository repository = new FileSystemBackedUnifiedRepository( SOLUTION_PATH );
+    microPlatform.defineInstance(IUnifiedRepository.class, repository);
+    Assert.assertNotNull(new RepositoryUtils(repository).getFolder("/etc/metadata", true, true, null));
+    Assert.assertNotNull(new RepositoryUtils(repository).getFolder("/etc/mondrian", true, true, null));
+    Assert.assertNotNull(new RepositoryUtils(repository).getFolder("/savetest", true, true, null));
+    microPlatform.define(ISolutionEngine.class, SolutionEngine.class);
+    microPlatform.define(PentahoNameGenerator.class, TempDirectoryNameGenerator.class);
+    microPlatform.define(IUserRoleListService.class, MockUserRoleListService.class);
+    microPlatform.defineInstance("connection-SQL", new SQLConnection());
+    microPlatform.defineInstance(IDBDatasourceService.class, new JndiDatasourceService());
+    microPlatform.define(IMondrianCatalogService.class, MondrianCatalogHelper.class, IPentahoDefinableObjectFactory.Scope.GLOBAL);
+    microPlatform.define(IServiceManager.class, DefaultServiceManager.class, IPentahoDefinableObjectFactory.Scope.GLOBAL);
+    microPlatform.define(IPluginProvider.class, SystemPathXmlPluginProvider.class);
+
     microPlatform.start();
     IPentahoSession session = new StandaloneSession( "test user" );
     PentahoSessionHolder.setSession( session );
@@ -77,8 +108,8 @@ public class ParameterTest extends TestCase {
   public void testParameterProcessing() throws Exception {
     final ParameterContentGenerator contentGenerator = new ParameterContentGenerator();
     final ParameterXmlContentHandler handler = new ParameterXmlContentHandler( contentGenerator, false );
-    handler.createParameterContent( System.out, "resource/solution/test/reporting/Product Sales.prpt",
-        "resource/solution/test/reporting/Product Sales.prpt", false, null );
+    handler.createParameterContent(System.out, "resource/solution/test/reporting/Product Sales.prpt",
+            "resource/solution/test/reporting/Product Sales.prpt", false, null);
   }
 
   /**
