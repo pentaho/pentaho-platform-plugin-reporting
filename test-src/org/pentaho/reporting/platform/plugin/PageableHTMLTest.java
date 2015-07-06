@@ -30,10 +30,12 @@ import org.pentaho.test.platform.engine.core.MicroPlatform;
 
 public class PageableHTMLTest extends TestCase {
   private MicroPlatform microPlatform;
+  private File tmp;
 
   @Override
   protected void setUp() throws Exception {
-    new File( "./resource/solution/system/tmp" ).mkdirs();
+    tmp = new File("./resource/solution/system/tmp");
+    tmp.mkdirs();
 
     microPlatform = MicroPlatformFactory.create();
     microPlatform.start();
@@ -121,7 +123,7 @@ public class PageableHTMLTest extends TestCase {
     inputs.put( "accepted-page", "0" ); //$NON-NLS-1$ //$NON-NLS-2$
     rc.setInputs( inputs );
 
-    FileOutputStream outputStream = new FileOutputStream( "/tmp/" + System.currentTimeMillis() + ".html" ); //$NON-NLS-1$ //$NON-NLS-2$
+    FileOutputStream outputStream = new FileOutputStream( new File(tmp, System.currentTimeMillis() + ".html" )); //$NON-NLS-1$ //$NON-NLS-2$
     rc.setOutputStream( outputStream );
 
     // execute the component
@@ -153,7 +155,7 @@ public class PageableHTMLTest extends TestCase {
     inputs.put( "accepted-page", "0" ); //$NON-NLS-1$ //$NON-NLS-2$
     rc.setInputs( inputs );
 
-    FileOutputStream outputStream = new FileOutputStream( "/tmp/" + System.currentTimeMillis() + ".html" ); //$NON-NLS-1$ //$NON-NLS-2$
+    FileOutputStream outputStream = new FileOutputStream( new File(tmp, System.currentTimeMillis() + ".html" )); //$NON-NLS-1$ //$NON-NLS-2$
     rc.setOutputStream( outputStream );
 
     // check the accepted page
