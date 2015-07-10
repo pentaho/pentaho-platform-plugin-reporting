@@ -28,8 +28,7 @@ define([ 'common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui/ut
       prompt: reportPrompt,
 
       load: function() {
-        parser.parse();
-        pentaho.common.Messages.addUrlBundle('reportviewer', CONTEXT_PATH+'i18n?plugin=reporting&name=reportviewer/messages/messages');
+        _Messages.addUrlBundle('reportviewer', CONTEXT_PATH+'i18n?plugin=reporting&name=reportviewer/messages/messages');
         this.view.localize();
 
         this.createRequiredHooks();
@@ -117,8 +116,8 @@ define([ 'common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui/ut
          * Localize the Report Viewer.
          */
         localize: function() {
-          $('#toolbar-parameterToggle').attr('title', pentaho.common.Messages.getString('parameterToolbarItem_title'));
-          registry.byId('pageControl').registerLocalizationLookup(pentaho.common.Messages.getString);
+          $('#toolbar-parameterToggle').attr('title', _Messages.getString('parameterToolbarItem_title'));
+          registry.byId('pageControl').registerLocalizationLookup(_Messages.getString);
         },
 
         /**
@@ -608,7 +607,7 @@ define([ 'common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui/ut
       openUrlInDialog: function(title, url, width, height) {
         if (this.dialog === undefined) {
           this.dialog = new pentaho.reportviewer.ReportDialog();
-          this.dialog.setLocalizationLookupFunction(pentaho.common.Messages.getString);
+          this.dialog.setLocalizationLookupFunction(_Messages.getString);
         }
         this.dialog.open(title, url, width, height);
       },

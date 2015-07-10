@@ -24,7 +24,7 @@ define(['common-ui/util/util', 'common-ui/util/formatting', 'pentaho/common/Mess
       mode: 'INITIAL',
 
       load: function() {
-        pentaho.common.Messages.addUrlBundle('reportviewer', CONTEXT_PATH+'i18n?plugin=reporting&name=reportviewer/messages/messages');
+        Messages.addUrlBundle('reportviewer', CONTEXT_PATH+'i18n?plugin=reporting&name=reportviewer/messages/messages');
       },
 
       /**
@@ -76,7 +76,7 @@ define(['common-ui/util/util', 'common-ui/util/formatting', 'pentaho/common/Mess
         panel.createFormatter = ReportFormatUtil.createFormatter.bind(ReportFormatUtil);
 
         // Provide our own i18n function
-        panel.getString = pentaho.common.Messages.getString;
+        panel.getString = Messages.getString;
 
         this.initPromptPanel();
 
@@ -198,9 +198,9 @@ define(['common-ui/util/util', 'common-ui/util/formatting', 'pentaho/common/Mess
           window.parent.authenticate(callback);
         } else {
           this.showMessageBox(
-            pentaho.common.Messages.getString('SessionExpiredComment'),
-            pentaho.common.Messages.getString('SessionExpired'),
-            pentaho.common.Messages.getString('OK'),
+            Messages.getString('SessionExpiredComment'),
+            Messages.getString('SessionExpired'),
+            Messages.getString('OK'),
             undefined,
             undefined,
             undefined,
@@ -359,12 +359,14 @@ define(['common-ui/util/util', 'common-ui/util/formatting', 'pentaho/common/Mess
           messageBox.setButtons([]);
         } else {
           var closeFunc = function() {
-            //Dashboards.hideProgressIndicator();
+            if (this.panel) {
+              this.panel.dashboard.hideProgressIndicator();
+            }
             messageBox.hide.call(messageBox);
           }
 
           if(!button1Text) {
-            button1Text = pentaho.common.Messages.getString('OK');
+            button1Text = Messages.getString('OK');
           }
           if(!button1Callback) {
             button1Callback = closeFunc;
@@ -385,7 +387,9 @@ define(['common-ui/util/util', 'common-ui/util/formatting', 'pentaho/common/Mess
             messageBox.setButtons([button1Text]);
           }
         }
-        //Dashboards.showProgressIndicator();
+        if (this.panel) {
+          this.panel.dashboard.showProgressIndicator();
+        }
         messageBox.show();
       },
 
@@ -395,13 +399,13 @@ define(['common-ui/util/util', 'common-ui/util/formatting', 'pentaho/common/Mess
        * @param e Error/exception encountered
        */
       onFatalError: function(e) {
-        var errorMsg = pentaho.common.Messages.getString('ErrorParsingParamXmlMessage');
+        var errorMsg = Messages.getString('ErrorParsingParamXmlMessage');
         if (typeof console !== 'undefined' && console.log) {
           console.log(errorMsg + ": " + e);
         }
         this.showMessageBox(
           errorMsg,
-          pentaho.common.Messages.getString('FatalErrorTitle'));
+          Messages.getString('FatalErrorTitle'));
       }
     }); // return logged
   }; // return function
