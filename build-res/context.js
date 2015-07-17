@@ -1,4 +1,4 @@
-/*!
+/*
  * This program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU Lesser General Public License, version 2.1 as published by the Free Software
  * Foundation.
@@ -12,20 +12,19 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
+ * Copyright 2015 Pentaho Corporation. All rights reserved.
  */
-define([
-  "common-repo/pentaho-ajax",
-  "reportviewer/reportviewer",
-  "reportviewer/reportviewer-prompt",
-  'reportviewer/reportviewer-logging',
-  'reportviewer/formatter',
-  'dojo/parser',
-  'pentaho/common/Messages',
-  'pentaho/common/MessageBox',
-  'pentaho/common/Menu',
-  'pentaho/common/MenuItem',
-  'pentaho/common/PageControl', 'dijit/Toolbar', 'dijit/ToolbarSeparator', 'dijit/form/ToggleButton', 'pentaho/common/GlassPane'],
-    function (_pentaho_ajax, _reportViewer, Prompt, logging, formatter, parser, _Messages, _MessageBox, _Menu, _MenuItem, _PageControl) {
 
-    });
+/**
+ * The possible configurations to define the environment where the require-cfg files are running.
+ * This allows the build and test environments, differing between several plugins to fully configure the path where
+ * the files from the external lib are served
+ *
+ * @type {{paths: {common-ui: string, cdf: string}}}
+ */
+var ENVIRONMENT_CONFIG = {
+  paths: {
+    "cdf": "../../bin/scriptOutput/cdf/js",
+    "cdf/lib": "../../bin/scriptOutput/cdf/js/lib"
+  }
+};
