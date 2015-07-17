@@ -69,4 +69,56 @@
   <target name="dist-source" depends="dist-js, subfloor.dist-source"/>
 
   <target name="publish-nojar" depends="subfloor-js.js.publish-nojar, subfloor-pkg.publish-nojar"/>
+
+
+  <!-- override of subfloor.js due to new file added in the build composition. Should be removed once this change gets
+   merged to the subfloor -->
+  <target name="extract-source-and-build-require-js-profile" depends="install-antcontrib, check-pentaho-js-build-downloaded">
+    <if>
+      <not>
+        <available file="${js.module.script.agg.dir}"/>
+      </not>
+      <then>
+        <echo message="Extracting Javascript from Dependencies"/>
+        <delete dir="${js.module.script.agg.dir}"/>
+
+        <unzip dest="${js.module.script.agg.dir}" overwrite="true">
+          <fileset dir=".">
+            <include name="${js.lib.dir}/*.zip"/>
+          </fileset>
+        </unzip>
+
+        <copy todir="${js.module.script.agg.dir}/${js.module.script.namespace}" overwrite="true">
+          <fileset dir="${js.module.script.dir}">
+            <include name="**/*"/>
+          </fileset>
+        </copy>
+
+        <path id="build.classpath">
+          <fileset dir="build-res/pentaho-js-build/libs"> <!-- temporary until core build files in artifactory -->
+            <include name="*.jar"/>
+          </fileset>
+        </path>
+        <echo message="Collecting RequireJS Configurations"/>
+        <echo message="var requireCfg={paths: {}, shim: {}, map: {&quot;*&quot;: {}}, bundles: {}, config: {service: {}}, packages: []};"
+              file="build-res/requireCfg-raw.js" append="false"/>
+        <concat destfile="build-res/requireCfg-raw.js" append="true" force="yes">
+          <file file="build-res/context.js"/>
+        </concat>
+        <concat destfile="build-res/requireCfg-raw.js" append="true" force="yes">
+          <fileset dir="${js.module.script.agg.dir}" casesensitive="yes">
+            <include name="*/*-require-js-cfg.js"/>
+          </fileset>
+        </concat>
+
+        <java classname="org.mozilla.javascript.tools.shell.Main"
+              fork="true"
+              classpathref="build.classpath"
+              args="build-res/pentaho-js-build/profileBuilder.js">
+        </java>
+
+        <echo message="require(requireCfg);" append="true" file="build-res/requireCfg.js"/>
+      </then>
+    </if>
+  </target>
 </project>
