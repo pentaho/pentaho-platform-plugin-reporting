@@ -41,8 +41,8 @@
       <dependency org="commons-collections" name="commons-collections" rev="3.2.1"  changing="true" />
 
 		<dependency org="javax.servlet" name="servlet-api" rev="2.4"/>
-        <dependency org="org.springframework.security" name="spring-security-core" rev="2.0.5.RELEASE" transitive="false"/>
-		<dependency org="org.springframework"          name="spring-web"             rev="2.5.6"         transitive="false"/>		        
+    <dependency org="org.springframework.security" name="spring-security-core" rev="${dependency.spring.security.revision}" transitive="false"/>
+		<dependency org="org.springframework" name="spring-web" rev="${dependency.spring.framework.revision}" transitive="false"/>		        
         <!--  Codegen dependencies -->
         <dependency org="com.google.gwt" name="gwt-user" rev="2.4.0" conf="codegen->default"/>
         <!-- it doesn't matter what platform of gwt-dev we use here. GWT compile only cares about the API part of the jar -->
