@@ -15,9 +15,9 @@
 * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
 */
 
-define(['common-ui/util/util', 'common-ui/util/formatting', 'pentaho/common/Messages', "dijit/registry", 'common-ui/prompting/parameters/ParameterXmlParser', 'common-ui/prompting/PromptPanel'],
+define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'common-ui/prompting/parameters/ParameterXmlParser', 'common-ui/prompting/PromptPanel'],
 
-    function(util, ReportFormatUtil, Messages, registry, ParameterXmlParser, PromptPanel) {
+    function(util, Messages, registry, ParameterXmlParser, PromptPanel) {
   return function() {
     return logged({
       // The current prompt mode
@@ -71,10 +71,6 @@ define(['common-ui/util/util', 'common-ui/util/formatting', 'pentaho/common/Mess
           this.fetchParameterDefinition(promptPanel, callback, /*promptMode*/'USERINPUT');
         }.bind(this);
 
-        // Provide our own text formatter
-        panel.createDataTransportFormatter = ReportFormatUtil.createDataTransportFormatter.bind(ReportFormatUtil);
-        panel.createFormatter = ReportFormatUtil.createFormatter.bind(ReportFormatUtil);
-
         // Provide our own i18n function
         panel.getString = Messages.getString;
 
@@ -127,8 +123,6 @@ define(['common-ui/util/util', 'common-ui/util/formatting', 'pentaho/common/Mess
       parameterParser: new ParameterXmlParser(),
 
       parseParameterDefinition: function(xmlString) {
-        // Provide a custom parameter normalization method unique to report viewer
-        this.parameterParser.normalizeParameterValue = ReportFormatUtil.normalizeParameterValue.bind(ReportFormatUtil);
         xmlString = this.removeControlCharacters(xmlString);
         return this.parameterParser.parseParameterXml(xmlString);
       },
