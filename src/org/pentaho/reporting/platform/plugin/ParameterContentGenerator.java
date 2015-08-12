@@ -39,7 +39,6 @@ public class ParameterContentGenerator extends SimpleContentGenerator {
    */
   private static final long serialVersionUID = 1L;
   private String path = null;
-  private IParameterProvider requestParameters;
 
   public enum RENDER_TYPE {
     REPORT, XML, PARAMETER, SUBSCRIBE, DOWNLOAD
@@ -50,20 +49,20 @@ public class ParameterContentGenerator extends SimpleContentGenerator {
     IUnifiedRepository unifiedRepository = PentahoSystem.get( IUnifiedRepository.class, null );
     final IParameterProvider requestParams = getRequestParameters();
     final IParameterProvider pathParams = getPathParameters();
-    
+
     if ( requestParams != null && requestParams.getStringParameter( "path", null ) != null ) {
       path = requestParams.getStringParameter( "path", "" ); //$NON-NLS-1$ //$NON-NLS-2$
     } else if ( pathParams != null && pathParams.getStringParameter( "path", null ) != null ) {
       path = pathParams.getStringParameter( "path", "" ); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
-    path = idTopath( URLDecoder.decode(path, "UTF-8") );
+    path = idTopath( URLDecoder.decode( path, "UTF-8" ) );
 
     RepositoryFile prptFile = unifiedRepository.getFile( path );
 
     final RENDER_TYPE renderMode =
-        RENDER_TYPE.valueOf( requestParams
-            .getStringParameter( "renderMode", RENDER_TYPE.XML.toString() ).toUpperCase() ); //$NON-NLS-1$
+        RENDER_TYPE
+            .valueOf( requestParams.getStringParameter( "renderMode", RENDER_TYPE.XML.toString() ).toUpperCase() ); //$NON-NLS-1$
 
     switch ( renderMode ) {
       case XML: {
@@ -112,21 +111,11 @@ public class ParameterContentGenerator extends SimpleContentGenerator {
     }
 
     IParameterProvider requestParams = parameterProviders.get( IParameterProvider.SCOPE_REQUEST );
-
-    requestParameters = requestParams;
     return requestParams;
   }
 
-  private IParameterProvider pathParameters;
-
   public IParameterProvider getPathParameters() {
-    if ( pathParameters != null ) {
-      return pathParameters;
-    }
-
     IParameterProvider pathParams = parameterProviders.get( "path" );
-
-    pathParameters = pathParams;
     return pathParams;
   }
 
