@@ -34,6 +34,7 @@ import org.pentaho.platform.plugin.services.pluginmgr.SystemPathXmlPluginProvide
 import org.pentaho.platform.plugin.services.pluginmgr.servicemgr.DefaultServiceManager;
 import org.pentaho.platform.repository2.unified.RepositoryUtils;
 import org.pentaho.platform.repository2.unified.fs.FileSystemBackedUnifiedRepository;
+import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
 import org.pentaho.reporting.engine.classic.core.DataFactory;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.StaticDataRow;
@@ -76,6 +77,10 @@ public class ParameterTest extends TestCase {
     System.setProperty( "java.naming.factory.initial", "org.osjava.sj.SimpleContextFactory" ); //$NON-NLS-1$ //$NON-NLS-2$
     System.setProperty("org.osjava.sj.root", SOLUTION_PATH + "/system/simple-jndi"); //$NON-NLS-1$ //$NON-NLS-2$
     System.setProperty("org.osjava.sj.delimiter", "/"); //$NON-NLS-1$ //$NON-NLS-2$
+
+    // Microplatform does not invoke our startup listeners, so we have to ensure that the reporting engine is
+    // booted correctly.
+    ClassicEngineBoot.getInstance().start();
 
     tmp = new File("./resource/solution/system/tmp");
     tmp.mkdirs();
