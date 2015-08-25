@@ -787,11 +787,10 @@ define([ 'common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui/ut
             // #_onReportContentLoaded callback might not have been called.
             this.view._showReportContent(false, /*preserveSource*/true);
           }
-
-          // PRD-3962 - show glass pane on submit, hide when iframe is loaded
-          // Hide glass-pane, if it is visible
-          this.prompt.hideGlassPane();
         }
+        // PRD-3962 - show glass pane on submit, hide when iframe is loaded
+        // Hide glass-pane, if it is visible
+        this.prompt.hideGlassPane();
       },
 
       _onReportContentLoaded: function() {
