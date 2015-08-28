@@ -116,7 +116,10 @@
 
 <div id="reportArea" class="pentaho-transparent">
   <div id="reportPageOutline">
-    <iframe id="reportContent" frameborder="0"></iframe>
+    <form id="hiddenReportContentForm" method="post" target="reportContentIframe">
+      <input type="hidden" type="submit" value="Submit" />
+    </form>
+    <iframe id="reportContent" frameborder="0" name="reportContentIframe"></iframe>
   </div>
 </div>
 

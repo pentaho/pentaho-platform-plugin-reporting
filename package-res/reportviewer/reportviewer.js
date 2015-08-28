@@ -148,11 +148,16 @@ define([ 'common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui/ut
 
           if(this._isReportContentVisible() !== !!visible) {
 
-            // Don't touch "src" of an already blank iframe, or onload occurs needlessly...
+            // Don't touch "data-src" of an already blank iframe, or onload occurs needlessly...
             if (!visible && !preserveSource && hasContent) {
-              logger && logger.log("Will clear content iframe.src");
+              logger && logger.log("Will clear content iframe.data-src");
 
-              $('#reportContent').attr("src", 'about:blank');
+              //submit hidden form to POST data to iframe
+              $('#hiddenReportContentForm').attr("action", 'about:blank');
+              $('#hiddenReportContentForm').submit();
+              //set data attribute so that we know what url is currently displayed in
+              //the iframe without actually triggering a GET
+              $('#reportContent').attr("data-src", 'about:blank');
               this._updatedIFrameSrc = true;
             }
 
@@ -185,7 +190,7 @@ define([ 'common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui/ut
 
           var iframes = document.getElementsByTagName("IFRAME");
           if(iframes.length > 0) {
-            var src = iframes[0].src;
+            var src = $(iframes[0]).attr('data-src');
         	  return src != null && src.indexOf('dashboard-mode') !== -1;
           }
 
@@ -193,9 +198,8 @@ define([ 'common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui/ut
         },
 
         _hasReportContent: function() {
-          var iframe = dom.byId('reportContent');
-          var src = iframe.src;
-          return src !== '' && src !== 'about:blank';
+          var src = $('#reportContent').attr('data-src');
+          return src !== undefined && src !== 'about:blank';
         },
 
         _isReportContentVisible: function() {
@@ -666,9 +670,9 @@ define([ 'common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui/ut
           // Don't do anything if we need to prompt
           var isValid = !promptPanel.paramDefn.promptNeeded;
           if (!isValid) {
-            logger && logger.log("Prompt is needed. Will clear htmlObject.src");
+            logger && logger.log("Prompt is needed. Will clear htmlObject.data-src");
 
-            $('#' + this.htmlObject).attr('src', 'about:blank'); // TODO: why htmlObject? Why not this._showReportContent(false)?
+            $('#' + this.htmlObject).attr('data-src', 'about:blank'); // TODO: why htmlObject? Why not this._showReportContent(false)?
 
             this._submitReportEnded(promptPanel);
             return;
@@ -750,7 +754,12 @@ define([ 'common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui/ut
 
         logger && logger.log("Will set iframe url to " + url.substr(0, 50) + "... ");
 
-        $('#reportContent').attr("src", url);
+        //submit hidden form to POST data to iframe
+        $('#hiddenReportContentForm').attr("action", url);
+        $('#hiddenReportContentForm').submit();
+        //set data attribute so that we know what url is currently displayed in
+        //the iframe without actually triggering a GET
+        $('#reportContent').attr("data-src", url);
         this._updatedIFrameSrc = true;
 
         // Continue when iframe is loaded (called by #_onReportContentLoaded)
