@@ -230,7 +230,13 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
 
         me.showGlassPane();
 
-        if(!promptMode) { promptMode = 'MANUAL'; }
+        if(!promptMode) { 
+          promptMode = 'MANUAL'; 
+        }
+        else if (promptMode == 'USERINPUT') {
+          // Hide glass pane to prevent user from being blocked from changing his selection
+          me.hideGlassPane();
+        }
 
         if(me.clicking) {
           // If "Upgrading" a Change to a Submit we do not want to process the next Submit Click, if any
