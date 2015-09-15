@@ -21,6 +21,7 @@ import java.io.OutputStream;
 import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
@@ -619,9 +620,13 @@ public class ParameterXmlContentHandler {
           valueElement.setAttribute( "type", elementValueType.getName() ); //$NON-NLS-1$
 
           if ( key instanceof Number ) {
-            final BigDecimal bd = new BigDecimal( String.valueOf( key ) );
-            valueElement.setAttribute( "selected", String.valueOf( selectionSet.contains( bd ) ) ); //$NON-NLS-1$
-            handledValues.remove( bd );
+            final BigDecimal bd = new BigDecimal(String.valueOf(key));
+            valueElement.setAttribute("selected", String.valueOf(selectionSet.contains(bd))); //$NON-NLS-1$
+            handledValues.remove(bd);
+          } else if (key instanceof Timestamp) {
+            Timestamp origKey = (Timestamp) possibleValues.getKeyValue( i );
+            valueElement.setAttribute( "selected", String.valueOf( selectionSet.contains(new Date(origKey.getTime()) ) ) ); //$NON-NLS-1$
+            handledValues.remove( key );
           } else if ( key == null ) {
             if ( selections == null || selectionSet.contains( null ) ) {
               valueElement.setAttribute( "selected", "true" ); //$NON-NLS-1$
