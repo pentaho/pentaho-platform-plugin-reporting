@@ -24,7 +24,7 @@ import java.io.OutputStream;
 
 import static org.junit.Assert.assertTrue;
 
-public class JcrHtmlSetupTest {
+public class JcrHtmlSetupIT {
   private MicroPlatform microPlatform;
 
   @Before

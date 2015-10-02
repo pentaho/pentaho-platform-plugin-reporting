@@ -14,7 +14,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 
-public class PentahoDataCacheTest {
+public class PentahoDataCacheIT {
 
     private PentahoDataCache dataCache;
     private DataCacheKey dataCacheKey;

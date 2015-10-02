@@ -25,8 +25,8 @@ import org.pentaho.reporting.engine.classic.core.metadata.AttributeMetaData;
 import org.pentaho.reporting.engine.classic.core.metadata.ElementMetaData;
 import org.pentaho.reporting.engine.classic.core.metadata.ElementTypeRegistry;
 
-public class ReportingPluginModuleTest extends TestCase {
-  public ReportingPluginModuleTest() {
+public class ReportingPluginModuleIT extends TestCase {
+  public ReportingPluginModuleIT() {
   }
 
   protected void setUp() throws Exception {

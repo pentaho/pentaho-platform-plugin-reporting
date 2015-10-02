@@ -35,7 +35,7 @@ import org.pentaho.test.platform.engine.core.MicroPlatform;
  * 
  * @author Michael D'Amour
  */
-public class ReportingActionTest extends TestCase {
+public class ReportingActionIT extends TestCase {
 
   private MicroPlatform microPlatform;
 

@@ -54,13 +54,13 @@ import org.pentaho.reporting.platform.plugin.connection.PentahoOlap4JJndiConnect
 import org.pentaho.reporting.platform.plugin.connection.PentahoPmdConfigReadHandler;
 import org.pentaho.test.platform.engine.core.MicroPlatform;
 
-public class DataSourceConfigurationTest extends TestCase
+public class DataSourceConfigurationIT extends TestCase
 {
 
   private MicroPlatform microPlatform;
   private ObjectFactory objectFactory;
 
-  public DataSourceConfigurationTest()
+  public DataSourceConfigurationIT()
   {
   }
 
