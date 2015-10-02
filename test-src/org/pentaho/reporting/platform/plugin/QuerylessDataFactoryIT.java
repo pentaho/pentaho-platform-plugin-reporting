@@ -37,7 +37,7 @@ import org.pentaho.reporting.platform.plugin.datasources.QuerylessDataFactory;
 import org.pentaho.reporting.platform.plugin.messages.Messages;
 
 @SuppressWarnings( { "all" } )
-public class QuerylessDataFactoryTest extends TestCase implements TableModelListener {
+public class QuerylessDataFactoryIT extends TestCase implements TableModelListener {
 
   public void setUp() {
     ClassicEngineBoot.getInstance().start();

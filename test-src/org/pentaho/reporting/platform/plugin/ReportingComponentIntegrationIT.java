@@ -49,11 +49,11 @@ import org.pentaho.test.platform.engine.core.MicroPlatform;
  * 
  * @author David Kincade
  */
-public class ReportingComponentIntegrationTest extends TestCase {
+public class ReportingComponentIntegrationIT extends TestCase {
 
   private MicroPlatform microPlatform;
   // Logger
-  private static final Log log = LogFactory.getLog( ReportingComponentIntegrationTest.class );
+  private static final Log log = LogFactory.getLog( ReportingComponentIntegrationIT.class );
 
   @Override
   protected void setUp() throws Exception {

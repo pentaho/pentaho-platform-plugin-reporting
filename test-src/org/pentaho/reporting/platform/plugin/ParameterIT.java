@@ -63,12 +63,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.StringWriter;
 
-public class ParameterTest extends TestCase {
+public class ParameterIT extends TestCase {
   protected static final String SOLUTION_PATH = "resource/solution";
   private MicroPlatform microPlatform;
   private File tmp;
 
-  public ParameterTest() {
+  public ParameterIT() {
 
   }
 
