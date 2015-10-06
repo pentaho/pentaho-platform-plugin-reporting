@@ -53,7 +53,6 @@ define([ 'common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui/ut
         noUserSelect(dom.byId('reportContent'));
 
         // ------------
-
         on(registry.byId('toolbar-parameterToggle'),  "click", lang.hitch( this,  function() {
           this.view.togglePromptPanel();
         }));
@@ -191,7 +190,7 @@ define([ 'common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui/ut
           var iframes = document.getElementsByTagName("IFRAME");
           if(iframes.length > 0) {
             var src = $(iframes[0]).attr('data-src');
-        	  return src != null && src.indexOf('dashboard-mode') !== -1;
+            return src != null && src.indexOf('dashboard-mode') !== -1;
           }
 
           return false;
@@ -350,7 +349,14 @@ define([ 'common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui/ut
                          promptPanel.paramDefn.promptNeeded ||
                          !promptPanel.paramDefn.allowAutoSubmit();
           }
-          if(showOrHide != null) { this.showPromptPanel(showOrHide); }
+          
+          var parameters = util.getUrlParameters();
+          var toggleParamName = 'toolbar-parameterToggle';
+          if (parameters[toggleParamName] !== undefined) {
+            this.showPromptPanel(parameters[toggleParamName] === 'true');
+          } else if (showOrHide != null) {
+            this.showPromptPanel(showOrHide);
+          }
 
           this._layoutInited = true;
         },
