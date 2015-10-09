@@ -21,68 +21,53 @@ import java.io.InputStream;
 
 import org.pentaho.reporting.platform.plugin.SimpleReportingAction;
 
-public class FastExportReportOutputHandlerFactory extends DefaultReportOutputHandlerFactory
-{
-  public FastExportReportOutputHandlerFactory()
-  {
+public class FastExportReportOutputHandlerFactory extends DefaultReportOutputHandlerFactory {
+  public FastExportReportOutputHandlerFactory() {
   }
 
-  protected ReportOutputHandler createXlsxOutput(final ReportOutputHandlerSelector selector) throws IOException
-  {
-    if (isXlsxAvailable() == false)
-    {
+  protected ReportOutputHandler createXlsxOutput( final ReportOutputHandlerSelector selector ) throws IOException {
+    if ( isXlsxAvailable() == false ) {
       return null;
     }
-    InputStream input = selector.getInput(SimpleReportingAction.XLS_WORKBOOK_PARAM, null, InputStream.class);
-    if (input != null)
-    {
+    InputStream input = selector.getInput( SimpleReportingAction.XLS_WORKBOOK_PARAM, null, InputStream.class );
+    if ( input != null ) {
       XLSXOutput xlsxOutput = new XLSXOutput();
-      xlsxOutput.setTemplateDataFromStream(input);
+      xlsxOutput.setTemplateDataFromStream( input );
       return xlsxOutput;
     }
 
     return new FastXLSXOutput();
   }
 
-  protected ReportOutputHandler createXlsOutput(final ReportOutputHandlerSelector selector) throws IOException
-  {
-    if (isXlsxAvailable() == false)
-    {
+  protected ReportOutputHandler createXlsOutput( final ReportOutputHandlerSelector selector ) throws IOException {
+    if ( isXlsxAvailable() == false ) {
       return null;
     }
-    InputStream input = selector.getInput(SimpleReportingAction.XLS_WORKBOOK_PARAM, null, InputStream.class);
-    if (input != null)
-    {
+    InputStream input = selector.getInput( SimpleReportingAction.XLS_WORKBOOK_PARAM, null, InputStream.class );
+    if ( input != null ) {
       XLSOutput xlsOutput = new XLSOutput();
-      xlsOutput.setTemplateDataFromStream(input);
+      xlsOutput.setTemplateDataFromStream( input );
       return xlsOutput;
     }
 
     return new FastXLSOutput();
   }
 
-  protected ReportOutputHandler createCsvOutput()
-  {
-    if (isCsvAvailable() == false)
-    {
+  protected ReportOutputHandler createCsvOutput() {
+    if ( isCsvAvailable() == false ) {
       return null;
     }
     return new FastCSVOutput();
   }
 
-  protected ReportOutputHandler createHtmlStreamOutput(final ReportOutputHandlerSelector selector)
-  {
-    if (isHtmlStreamAvailable() == false)
-    {
+  protected ReportOutputHandler createHtmlStreamOutput( final ReportOutputHandlerSelector selector ) {
+    if ( isHtmlStreamAvailable() == false ) {
       return null;
     }
-    if (selector.isUseJcrOutput())
-    {
-      return new FastStreamJcrHtmlOutput(computeContentHandlerPattern(selector), selector.getJcrOutputPath());
-    }
-    else
-    {
-      return new FastStreamHtmlOutput(computeContentHandlerPattern(selector));
+    if ( selector.isUseJcrOutput() ) {
+      return new FastStreamJcrHtmlOutput( computeContentHandlerPattern( selector ), selector.getJcrOutputPath() );
+    } else {
+      return new FastStreamHtmlOutput( computeContentHandlerPattern( selector ) );
     }
   }
 

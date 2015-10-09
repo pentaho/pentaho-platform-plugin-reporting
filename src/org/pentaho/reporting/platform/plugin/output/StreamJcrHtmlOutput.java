@@ -39,71 +39,62 @@ import org.pentaho.reporting.platform.plugin.repository.ReportContentRepository;
 import java.io.IOException;
 import java.io.OutputStream;
 
-public class StreamJcrHtmlOutput extends AbstractHtmlOutput
-{
+public class StreamJcrHtmlOutput extends AbstractHtmlOutput {
   private String jcrOutputPath;
 
-  public StreamJcrHtmlOutput()
-  {
+  public StreamJcrHtmlOutput() {
   }
 
-  public StreamJcrHtmlOutput(final String contentHandlerPattern, final String jcrOutputPath)
-  {
-    super(contentHandlerPattern);
+  public StreamJcrHtmlOutput( final String contentHandlerPattern, final String jcrOutputPath ) {
+    super( contentHandlerPattern );
     this.jcrOutputPath = jcrOutputPath;
   }
 
-  public String getJcrOutputPath()
-  {
+  public String getJcrOutputPath() {
     return jcrOutputPath;
   }
 
-  public void setJcrOutputPath(String jcrOutputPath)
-  {
+  public void setJcrOutputPath( String jcrOutputPath ) {
     this.jcrOutputPath = jcrOutputPath;
   }
 
-  protected FastHtmlContentItems computeContentItems(final OutputStream outputStream) throws ReportProcessingException, ContentIOException
-  {
-    IUnifiedRepository repo = PentahoSystem.get(IUnifiedRepository.class);
-    final RepositoryFile outputFolder = repo.getFile(jcrOutputPath);
+  protected FastHtmlContentItems computeContentItems( final OutputStream outputStream )
+    throws ReportProcessingException, ContentIOException {
+    IUnifiedRepository repo = PentahoSystem.get( IUnifiedRepository.class );
+    final RepositoryFile outputFolder = repo.getFile( jcrOutputPath );
 
-    final ReportContentRepository repository = new ReportContentRepository(outputFolder);
+    final ReportContentRepository repository = new ReportContentRepository( outputFolder );
     final ContentLocation dataLocation = repository.getRoot();
 
     final PentahoNameGenerator dataNameGenerator = createPentahoNameGenerator();
-    dataNameGenerator.initialize(dataLocation, isSafeToDelete());
+    dataNameGenerator.initialize( dataLocation, isSafeToDelete() );
 
-    final StreamRepository targetRepository = new StreamRepository(null, outputStream, "report"); //$NON-NLS-1$
+    final StreamRepository targetRepository = new StreamRepository( null, outputStream, "report" ); //$NON-NLS-1$
     final ContentLocation targetRoot = targetRepository.getRoot();
 
     FastHtmlContentItems contentItems = new FastHtmlContentItems();
-    contentItems.setContentWriter(targetRoot, new DefaultNameGenerator(targetRoot, "index", "html"));
-    contentItems.setDataWriter(dataLocation, dataNameGenerator);
-    contentItems.setUrlRewriter(new PentahoURLRewriter(getContentHandlerPattern(), true));
+    contentItems.setContentWriter( targetRoot, new DefaultNameGenerator( targetRoot, "index", "html" ) );
+    contentItems.setDataWriter( dataLocation, dataNameGenerator );
+    contentItems.setUrlRewriter( new PentahoURLRewriter( getContentHandlerPattern(), true ) );
     return contentItems;
   }
 
-  public int generate(final MasterReport report, final int acceptedPage, final OutputStream outputStream,
-                      final int yieldRate) throws ReportProcessingException, IOException, ContentIOException
-  {
+  public int generate( final MasterReport report, final int acceptedPage, final OutputStream outputStream,
+                       final int yieldRate ) throws ReportProcessingException, IOException, ContentIOException {
 
-    FastHtmlContentItems contentItems = computeContentItems(outputStream);
-    final HtmlPrinter printer = new AllItemsHtmlPrinter(report.getResourceManager());
-    printer.setContentWriter(contentItems.getContentLocation(), contentItems.getContentNameGenerator());
-    printer.setDataWriter(contentItems.getDataLocation(), contentItems.getDataNameGenerator());
-    printer.setUrlRewriter(contentItems.getUrlRewriter());
+    FastHtmlContentItems contentItems = computeContentItems( outputStream );
+    final HtmlPrinter printer = new AllItemsHtmlPrinter( report.getResourceManager() );
+    printer.setContentWriter( contentItems.getContentLocation(), contentItems.getContentNameGenerator() );
+    printer.setDataWriter( contentItems.getDataLocation(), contentItems.getDataNameGenerator() );
+    printer.setUrlRewriter( contentItems.getUrlRewriter() );
 
-    final HtmlOutputProcessor outputProcessor = new StreamHtmlOutputProcessor(report.getConfiguration());
-    outputProcessor.setPrinter(printer);
+    final HtmlOutputProcessor outputProcessor = new StreamHtmlOutputProcessor( report.getConfiguration() );
+    outputProcessor.setPrinter( printer );
 
-    final StreamReportProcessor sp = new StreamReportProcessor(report, outputProcessor);
-    try
-    {
+    final StreamReportProcessor sp = new StreamReportProcessor( report, outputProcessor );
+    try {
       sp.processReport();
-    }
-    finally
-    {
+    } finally {
       sp.close();
     }
 

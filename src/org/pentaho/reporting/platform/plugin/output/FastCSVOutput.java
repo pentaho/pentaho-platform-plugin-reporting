@@ -25,40 +25,33 @@ import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
 import org.pentaho.reporting.engine.classic.core.modules.output.fast.csv.FastCsvReportUtil;
 import org.pentaho.reporting.libraries.repository.ContentIOException;
 
-public class FastCSVOutput implements ReportOutputHandler
-{
-  public FastCSVOutput()
-  {
+public class FastCSVOutput implements ReportOutputHandler {
+  public FastCSVOutput() {
   }
 
-  public Object getReportLock()
-  {
+  public Object getReportLock() {
     return this;
   }
 
-  public int paginate(MasterReport report, int yieldRate) throws ReportProcessingException, IOException,
-      ContentIOException
-  {
+  public int paginate( MasterReport report, int yieldRate ) throws ReportProcessingException, IOException,
+    ContentIOException {
     return 0;
   }
 
-  public int generate(final MasterReport report,
-                      final int acceptedPage,
-                      final OutputStream outputStream,
-                      final int yieldRate)
-      throws ReportProcessingException, IOException, ContentIOException
-  {
-    FastCsvReportUtil.process(report, outputStream);
+  public int generate( final MasterReport report,
+                       final int acceptedPage,
+                       final OutputStream outputStream,
+                       final int yieldRate )
+    throws ReportProcessingException, IOException, ContentIOException {
+    FastCsvReportUtil.process( report, outputStream );
     return 0;
   }
 
-  public boolean supportsPagination()
-  {
+  public boolean supportsPagination() {
     return false;
   }
 
-  public void close()
-  {
+  public void close() {
 
   }
 }

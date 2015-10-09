@@ -30,39 +30,32 @@ import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlP
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.StreamHtmlOutputProcessor;
 import org.pentaho.reporting.libraries.repository.ContentIOException;
 
-public class StreamHtmlOutput extends AbstractHtmlOutput
-{
-  public StreamHtmlOutput()
-  {
+public class StreamHtmlOutput extends AbstractHtmlOutput {
+  public StreamHtmlOutput() {
   }
 
-  public StreamHtmlOutput(final String contentHandlerPattern)
-  {
-    super(contentHandlerPattern);
+  public StreamHtmlOutput( final String contentHandlerPattern ) {
+    super( contentHandlerPattern );
   }
 
-  public int generate(final MasterReport report,
-                      final int acceptedPage,
-                      final OutputStream outputStream,
-                      final int yieldRate)
-      throws ReportProcessingException, IOException, ContentIOException
-  {
-    FastHtmlContentItems contentItems = computeContentItems(outputStream);
-    final HtmlPrinter printer = new AllItemsHtmlPrinter(report.getResourceManager());
-    printer.setContentWriter(contentItems.getContentLocation(), contentItems.getContentNameGenerator());
-    printer.setDataWriter(contentItems.getDataLocation(), contentItems.getDataNameGenerator());
-    printer.setUrlRewriter(contentItems.getUrlRewriter());
+  public int generate( final MasterReport report,
+                       final int acceptedPage,
+                       final OutputStream outputStream,
+                       final int yieldRate )
+    throws ReportProcessingException, IOException, ContentIOException {
+    FastHtmlContentItems contentItems = computeContentItems( outputStream );
+    final HtmlPrinter printer = new AllItemsHtmlPrinter( report.getResourceManager() );
+    printer.setContentWriter( contentItems.getContentLocation(), contentItems.getContentNameGenerator() );
+    printer.setDataWriter( contentItems.getDataLocation(), contentItems.getDataNameGenerator() );
+    printer.setUrlRewriter( contentItems.getUrlRewriter() );
 
-    final HtmlOutputProcessor outputProcessor = new StreamHtmlOutputProcessor(report.getConfiguration());
-    outputProcessor.setPrinter(printer);
-    final StreamReportProcessor sp = new StreamReportProcessor(report, outputProcessor);
+    final HtmlOutputProcessor outputProcessor = new StreamHtmlOutputProcessor( report.getConfiguration() );
+    outputProcessor.setPrinter( printer );
+    final StreamReportProcessor sp = new StreamReportProcessor( report, outputProcessor );
 
-    try
-    {
+    try {
       sp.processReport();
-    }
-    finally
-    {
+    } finally {
       sp.close();
     }
 

@@ -44,7 +44,7 @@ public class PlainTextOutput implements ReportOutputHandler {
   }
 
   public int generate( final MasterReport report, final int acceptedPage, final OutputStream outputStream,
-      final int yieldRate ) throws ReportProcessingException, IOException, ContentIOException {
+                       final int yieldRate ) throws ReportProcessingException, IOException, ContentIOException {
     final PageableReportProcessor proc = create( report, yieldRate );
     proxyOutputStream.setParent( outputStream );
     try {
@@ -64,7 +64,7 @@ public class PlainTextOutput implements ReportOutputHandler {
     proxyOutputStream = new ProxyOutputStream();
     final TextFilePrinterDriver driver = new TextFilePrinterDriver( proxyOutputStream, 12, 6 );
     final PageableTextOutputProcessor outputProcessor =
-        new PageableTextOutputProcessor( driver, report.getConfiguration() );
+      new PageableTextOutputProcessor( driver, report.getConfiguration() );
     final PageableReportProcessor proc = new PageableReportProcessor( report, outputProcessor );
     if ( yieldRate > 0 ) {
       proc.addReportProgressListener( new YieldReportListener( yieldRate ) );

@@ -37,7 +37,7 @@ import org.pentaho.reporting.libraries.repository.Repository;
 
 /**
  * Creation-Date: 05.07.2007, 14:45:06
- * 
+ *
  * @author Thomas Morgner
  */
 public class ReportContentLocation implements ContentLocation {
@@ -67,7 +67,7 @@ public class ReportContentLocation implements ContentLocation {
       RepositoryFile child = iterator.next();
       itemCollection.add( new ReportContentItem( child, this, MimeHelper.getMimeTypeFromFileName( child.getName() ) ) );
     }
-    return itemCollection.toArray( new ContentEntity[itemCollection.size()] );
+    return itemCollection.toArray( new ContentEntity[ itemCollection.size() ] );
   }
 
   public ContentEntity getEntry( final String name ) throws ContentIOException {

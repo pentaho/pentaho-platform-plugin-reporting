@@ -38,8 +38,7 @@ public class XLSOutput implements ReportOutputHandler {
   public XLSOutput() {
   }
 
-  public void setTemplateDataFromStream(final InputStream templateInputStream ) throws IOException
-  {
+  public void setTemplateDataFromStream( final InputStream templateInputStream ) throws IOException {
     if ( templateInputStream != null ) {
       final ByteArrayOutputStream bout = new ByteArrayOutputStream();
       try {
@@ -48,19 +47,16 @@ public class XLSOutput implements ReportOutputHandler {
         templateInputStream.close();
       }
       templateData = bout.toByteArray();
-    }
-    else {
+    } else {
       templateData = null;
     }
   }
 
-  public byte[] getTemplateData()
-  {
+  public byte[] getTemplateData() {
     return templateData;
   }
 
-  public void setTemplateData(final byte[] templateData)
-  {
+  public void setTemplateData( final byte[] templateData ) {
     this.templateData = templateData;
   }
 
@@ -72,7 +68,7 @@ public class XLSOutput implements ReportOutputHandler {
     throws ReportProcessingException {
     proxyOutputStream = new ProxyOutputStream();
     final FlowExcelOutputProcessor target =
-        new FlowExcelOutputProcessor( report.getConfiguration(), proxyOutputStream, report.getResourceManager() );
+      new FlowExcelOutputProcessor( report.getConfiguration(), proxyOutputStream, report.getResourceManager() );
     target.setUseXlsxFormat( false );
     final FlowReportProcessor reportProcessor = new FlowReportProcessor( report, target );
 
@@ -88,7 +84,7 @@ public class XLSOutput implements ReportOutputHandler {
   }
 
   public int generate( final MasterReport report, final int acceptedPage, final OutputStream outputStream,
-      final int yieldRate ) throws ReportProcessingException, IOException {
+                       final int yieldRate ) throws ReportProcessingException, IOException {
     final FlowReportProcessor reportProcessor = createProcessor( report, yieldRate );
     try {
       proxyOutputStream.setParent( outputStream );

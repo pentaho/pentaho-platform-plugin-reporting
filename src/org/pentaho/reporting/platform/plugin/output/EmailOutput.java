@@ -53,7 +53,7 @@ public class EmailOutput implements ReportOutputHandler {
   }
 
   public int generate( final MasterReport report, final int acceptedPage, final OutputStream outputStream,
-      final int yieldRate ) throws ReportProcessingException, IOException, ContentIOException {
+                       final int yieldRate ) throws ReportProcessingException, IOException, ContentIOException {
     final IApplicationContext ctx = PentahoSystem.getApplicationContext();
     if ( ctx == null ) {
       return -1;
@@ -68,7 +68,7 @@ public class EmailOutput implements ReportOutputHandler {
       final HtmlOutputProcessor outputProcessor = new StreamHtmlOutputProcessor( report.getConfiguration() );
       final HtmlPrinter printer = new AllItemsHtmlPrinter( report.getResourceManager() );
       printer.setContentWriter( dataLocation,
-         new DefaultNameGenerator( dataLocation, "index", "html" ) ); //$NON-NLS-1$ //$NON-NLS-2$
+        new DefaultNameGenerator( dataLocation, "index", "html" ) ); //$NON-NLS-1$ //$NON-NLS-2$
       printer.setDataWriter( dataLocation, new DefaultNameGenerator( dataLocation ) );
       printer.setUrlRewriter( new MailURLRewriter() );
       outputProcessor.setPrinter( printer );

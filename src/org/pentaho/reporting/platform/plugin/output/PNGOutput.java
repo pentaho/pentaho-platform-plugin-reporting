@@ -59,7 +59,7 @@ public class PNGOutput implements ReportOutputHandler {
   }
 
   public int generate( final MasterReport report, final int acceptedPage, final OutputStream outputStream,
-      final int yieldRate ) throws ReportProcessingException, IOException, ContentIOException {
+                       final int yieldRate ) throws ReportProcessingException, IOException, ContentIOException {
     if ( proc == null ) {
       proc = create( report, yieldRate );
     }
@@ -106,7 +106,7 @@ public class PNGOutput implements ReportOutputHandler {
 
   /**
    * Create the empty image for the given page size.
-   * 
+   *
    * @return the generated image.
    */
   private static BufferedImage createImage( final PageFormat pf ) {
