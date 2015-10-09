@@ -54,8 +54,7 @@ public class PageableHTMLOutput implements ReportOutputHandler {
     return this;
   }
 
-  public void setContentHandlerPattern(final String contentHandlerPattern)
-  {
+  public void setContentHandlerPattern( final String contentHandlerPattern ) {
     this.contentHandlerPattern = contentHandlerPattern;
   }
 
@@ -127,7 +126,7 @@ public class PageableHTMLOutput implements ReportOutputHandler {
       dataNameGenerator = PentahoSystem.get( PentahoNameGenerator.class );
       if ( dataNameGenerator == null ) {
         throw new IllegalStateException( Messages.getInstance().getString(
-            "ReportPlugin.errorNameGeneratorMissingConfiguration" ) );
+          "ReportPlugin.errorNameGeneratorMissingConfiguration" ) );
       }
       dataNameGenerator.initialize( dataLocation, true );
     } else {
@@ -139,7 +138,7 @@ public class PageableHTMLOutput implements ReportOutputHandler {
     final ContentLocation targetRoot = targetRepository.getRoot();
 
     printer.setContentWriter( targetRoot,
-       new DefaultNameGenerator( targetRoot, "index", "html" ) ); //$NON-NLS-1$ //$NON-NLS-2$
+      new DefaultNameGenerator( targetRoot, "index", "html" ) ); //$NON-NLS-1$ //$NON-NLS-2$
     printer.setDataWriter( dataLocation, dataNameGenerator );
   }
 
@@ -162,7 +161,7 @@ public class PageableHTMLOutput implements ReportOutputHandler {
   }
 
   public int generate( final MasterReport report, final int acceptedPage, final OutputStream outputStream,
-      final int yieldRate ) throws ReportProcessingException, IOException, ContentIOException {
+                       final int yieldRate ) throws ReportProcessingException, IOException, ContentIOException {
     if ( proc == null ) {
       proc = createReportProcessor( report, yieldRate );
     }

@@ -43,7 +43,7 @@ public class XmlPageableOutput implements ReportOutputHandler {
     throws ReportProcessingException {
     proxyOutputStream = new ProxyOutputStream();
     final XmlPageOutputProcessor outputProcessor =
-        new XmlPageOutputProcessor( report.getConfiguration(), proxyOutputStream );
+      new XmlPageOutputProcessor( report.getConfiguration(), proxyOutputStream );
 
     final PageableReportProcessor proc = new PageableReportProcessor( report, outputProcessor );
     if ( yieldRate > 0 ) {
@@ -61,7 +61,7 @@ public class XmlPageableOutput implements ReportOutputHandler {
   }
 
   public int generate( final MasterReport report, final int acceptedPage, final OutputStream outputStream,
-      final int yieldRate ) throws ReportProcessingException, IOException {
+                       final int yieldRate ) throws ReportProcessingException, IOException {
     if ( proc == null ) {
       proc = createProcessor( report, yieldRate );
     }

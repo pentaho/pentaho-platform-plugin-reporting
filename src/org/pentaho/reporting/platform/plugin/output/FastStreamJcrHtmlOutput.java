@@ -26,32 +26,25 @@ import org.pentaho.reporting.engine.classic.core.modules.output.fast.html.FastHt
 import org.pentaho.reporting.engine.classic.core.modules.output.fast.validator.ReportStructureValidator;
 import org.pentaho.reporting.libraries.repository.ContentIOException;
 
-public class FastStreamJcrHtmlOutput extends StreamJcrHtmlOutput
-{
-  public FastStreamJcrHtmlOutput(final String contentHandlerPattern, final String jcrOutputPath)
-  {
-    super(contentHandlerPattern, jcrOutputPath);
+public class FastStreamJcrHtmlOutput extends StreamJcrHtmlOutput {
+  public FastStreamJcrHtmlOutput( final String contentHandlerPattern, final String jcrOutputPath ) {
+    super( contentHandlerPattern, jcrOutputPath );
   }
 
-  public int generate(final MasterReport report,
-                      final int acceptedPage,
-                      final OutputStream outputStream,
-                      final int yieldRate) throws ReportProcessingException, IOException, ContentIOException
-  {
+  public int generate( final MasterReport report,
+                       final int acceptedPage,
+                       final OutputStream outputStream,
+                       final int yieldRate ) throws ReportProcessingException, IOException, ContentIOException {
     ReportStructureValidator validator = new ReportStructureValidator();
-    if (validator.isValidForFastProcessing(report) == false)
-    {
-      return super.generate(report, acceptedPage, outputStream, yieldRate);
+    if ( validator.isValidForFastProcessing( report ) == false ) {
+      return super.generate( report, acceptedPage, outputStream, yieldRate );
     }
 
-    FastHtmlContentItems contentItems = computeContentItems(outputStream);
-    final FastHtmlExportProcessor reportProcessor = new FastHtmlExportProcessor(report, contentItems);
-    try
-    {
+    FastHtmlContentItems contentItems = computeContentItems( outputStream );
+    final FastHtmlExportProcessor reportProcessor = new FastHtmlExportProcessor( report, contentItems );
+    try {
       reportProcessor.processReport();
-    }
-    finally
-    {
+    } finally {
       reportProcessor.close();
     }
 

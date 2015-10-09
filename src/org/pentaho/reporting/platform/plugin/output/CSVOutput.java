@@ -25,40 +25,33 @@ import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.csv.CSVReportUtil;
 import org.pentaho.reporting.libraries.repository.ContentIOException;
 
-public class CSVOutput implements ReportOutputHandler
-{
-  public CSVOutput()
-  {
+public class CSVOutput implements ReportOutputHandler {
+  public CSVOutput() {
   }
 
-  public Object getReportLock()
-  {
+  public Object getReportLock() {
     return this;
   }
 
-  public int paginate(MasterReport report, int yieldRate) throws ReportProcessingException, IOException,
-      ContentIOException
-  {
+  public int paginate( MasterReport report, int yieldRate ) throws ReportProcessingException, IOException,
+    ContentIOException {
     return 0;
   }
 
-  public int generate(final MasterReport report,
-                      final int acceptedPage,
-                      final OutputStream outputStream,
-                      final int yieldRate)
-      throws ReportProcessingException, IOException, ContentIOException
-  {
-    CSVReportUtil.createCSV(report, outputStream, null);
+  public int generate( final MasterReport report,
+                       final int acceptedPage,
+                       final OutputStream outputStream,
+                       final int yieldRate )
+    throws ReportProcessingException, IOException, ContentIOException {
+    CSVReportUtil.createCSV( report, outputStream, null );
     return 0;
   }
 
-  public boolean supportsPagination()
-  {
+  public boolean supportsPagination() {
     return false;
   }
 
-  public void close()
-  {
+  public void close() {
 
   }
 }
