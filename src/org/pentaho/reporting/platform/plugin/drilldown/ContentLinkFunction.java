@@ -60,10 +60,10 @@ public class ContentLinkFunction implements Function {
     builder.append( "javascript:" );
     // window.parent.Dashboards.fireChange(PARAM, VALUE);"
     for ( int i = 0; i < contentLink.length; i++ ) {
-      final String variable = contentLink[i];
+      final String variable = contentLink[ i ];
       builder
-          .append( "var wnd=window.parent;var slf;while(!(wnd.Dashboards && wnd.Dashboards.fireOutputParam) && "
-             + "wnd.parent && wnd.parent !== wnd){slf=wnd;wnd=wnd.parent};wnd.Dashboards.fireOutputParam(slf," );
+        .append( "var wnd=window.parent;var slf;while(!(wnd.Dashboards && wnd.Dashboards.fireOutputParam) && "
+          + "wnd.parent && wnd.parent !== wnd){slf=wnd;wnd=wnd.parent};wnd.Dashboards.fireOutputParam(slf," );
       builder.append( '\'' );
       builder.append( QuoteTextFunction.saveConvert( variable ) );
       builder.append( '\'' );
@@ -74,7 +74,7 @@ public class ContentLinkFunction implements Function {
         builder.append( "null" );
       } else if ( objects.length == 1 ) {
         builder.append( '\'' );
-        builder.append( QuoteTextFunction.saveConvert( String.valueOf( objects[0] ) ) );
+        builder.append( QuoteTextFunction.saveConvert( String.valueOf( objects[ 0 ] ) ) );
         builder.append( '\'' );
       } else {
         builder.append( "new Array(" );
@@ -83,7 +83,7 @@ public class ContentLinkFunction implements Function {
             builder.append( "," );
           }
           builder.append( '\'' );
-          builder.append( QuoteTextFunction.saveConvert( String.valueOf( objects[j] ) ) );
+          builder.append( QuoteTextFunction.saveConvert( String.valueOf( objects[ j ] ) ) );
           builder.append( '\'' );
         }
         builder.append( ")" );
@@ -97,14 +97,14 @@ public class ContentLinkFunction implements Function {
 
   private String[] getContentLink( final FormulaContext context ) {
     if ( ( context instanceof ReportFormulaContext ) == false ) {
-      return new String[0];
+      return new String[ 0 ];
     }
 
     final ReportFormulaContext reportFormulaContext = (ReportFormulaContext) context;
     final ReportEnvironment environment = reportFormulaContext.getRuntime().getProcessingContext().getEnvironment();
     final Object clText = environment.getEnvironmentProperty( "contentLink" );
     if ( clText == null ) {
-      return new String[0];
+      return new String[ 0 ];
     }
     final CSVTokenizer csvTokenizer = new CSVTokenizer( String.valueOf( clText ), ",", "\"" );
     final LinkedHashSet<String> result = new LinkedHashSet<String>();
@@ -112,24 +112,24 @@ public class ContentLinkFunction implements Function {
       final String el = csvTokenizer.nextToken();
       result.add( el );
     }
-    return result.toArray( new String[result.size()] );
+    return result.toArray( new String[ result.size() ] );
   }
 
   private HashMap<String, Object[]> collectParameterValues( final Object o, final Type type,
-      final FormulaContext context ) throws EvaluationException {
+                                                            final FormulaContext context ) throws EvaluationException {
     final HashMap<String, Object[]> params = new HashMap<String, Object[]>();
     if ( o instanceof Object[][] ) {
       final Object[][] o2 = (Object[][]) o;
       for ( int i = 0; i < o2.length; i++ ) {
-        final Object[] values = o2[i];
+        final Object[] values = o2[ i ];
         if ( values == null || values.length < 2 ) {
           throw EvaluationException.getInstance( LibFormulaErrorValue.ERROR_ILLEGAL_ARRAY_VALUE );
         }
-        final Object value = values[1];
+        final Object value = values[ 1 ];
         if ( value instanceof Object[] ) {
-          params.put( String.valueOf( values[0] ), (Object[]) value );
+          params.put( String.valueOf( values[ 0 ] ), (Object[]) value );
         } else {
-          params.put( String.valueOf( values[0] ), new Object[] { value } );
+          params.put( String.valueOf( values[ 0 ] ), new Object[] { value } );
         }
       }
     } else {
@@ -139,7 +139,7 @@ public class ContentLinkFunction implements Function {
       }
       for ( int i = 0, n = callback.getRowCount(); i < n; i++ ) {
         final Sequence sequenceRaw =
-            context.getTypeRegistry().convertToSequence( callback.getType( i, 1 ), callback.getValue( i, 1 ) );
+          context.getTypeRegistry().convertToSequence( callback.getType( i, 1 ), callback.getValue( i, 1 ) );
         if ( sequenceRaw == null ) {
           throw EvaluationException.getInstance( LibFormulaErrorValue.ERROR_NA_VALUE );
         }
