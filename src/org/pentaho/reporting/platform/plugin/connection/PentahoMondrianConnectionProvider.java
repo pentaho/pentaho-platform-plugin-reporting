@@ -58,15 +58,15 @@ public class PentahoMondrianConnectionProvider extends DefaultMondrianConnection
   private String computeRoleString( final String catalog ) throws PentahoAccessControlException {
     if ( PentahoSystem.getObjectFactory().objectDefined( MDX_CONNECTION_MAPPER_KEY ) ) {
       final IConnectionUserRoleMapper mondrianUserRoleMapper =
-          PentahoSystem.get( IConnectionUserRoleMapper.class, MDX_CONNECTION_MAPPER_KEY, null );
+        PentahoSystem.get( IConnectionUserRoleMapper.class, MDX_CONNECTION_MAPPER_KEY, null );
       if ( mondrianUserRoleMapper != null ) {
         // Do role mapping
         final String[] validMondrianRolesForUser =
-            mondrianUserRoleMapper.mapConnectionRoles( PentahoSessionHolder.getSession(), catalog );
+          mondrianUserRoleMapper.mapConnectionRoles( PentahoSessionHolder.getSession(), catalog );
         if ( ( validMondrianRolesForUser != null ) && ( validMondrianRolesForUser.length > 0 ) ) {
           final StringBuffer buff = new StringBuffer();
           for ( int i = 0; i < validMondrianRolesForUser.length; i++ ) {
-            final String aRole = validMondrianRolesForUser[i];
+            final String aRole = validMondrianRolesForUser[ i ];
             // According to http://mondrian.pentaho.org/documentation/configuration.php
             // double-comma escapes a comma
             if ( i > 0 ) {

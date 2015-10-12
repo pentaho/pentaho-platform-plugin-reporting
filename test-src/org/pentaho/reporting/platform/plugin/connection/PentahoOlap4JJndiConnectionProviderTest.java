@@ -21,11 +21,11 @@ import junit.framework.TestCase;
 
 import java.util.ArrayList;
 
-public class PentahoJndiDatasourceConnectionProviderTest extends TestCase {
-  PentahoJndiDatasourceConnectionProvider provider;
+public class PentahoOlap4JJndiConnectionProviderTest extends TestCase {
+  PentahoOlap4JJndiConnectionProvider provider;
 
   protected void setUp() {
-    provider = new PentahoJndiDatasourceConnectionProvider();
+    provider = new PentahoOlap4JJndiConnectionProvider();
   }
 
   public void testSetJndiName() throws Exception {
@@ -54,7 +54,7 @@ public class PentahoJndiDatasourceConnectionProviderTest extends TestCase {
     provider.setUsername( "username" ); //$NON-NLS-1$
     ArrayList result = (ArrayList) provider.getConnectionHash();
     assertEquals( 3, result.size() );
-    assertEquals( "org.pentaho.reporting.platform.plugin.connection.PentahoJndiDatasourceConnectionProvider", result.get( 0 ) );
+    assertEquals( "org.pentaho.reporting.platform.plugin.connection.PentahoOlap4JJndiConnectionProvider", result.get( 0 ) );
     assertEquals( "jndiname", result.get( 1 ) ); //$NON-NLS-1$
     assertEquals( "username", result.get( 2 ) ); //$NON-NLS-1$
   }

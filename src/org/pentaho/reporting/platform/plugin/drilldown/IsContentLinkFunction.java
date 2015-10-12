@@ -53,11 +53,11 @@ public class IsContentLinkFunction implements Function {
     if ( o instanceof Object[][] ) {
       final Object[][] o2 = (Object[][]) o;
       for ( int i = 0; i < o2.length; i++ ) {
-        final Object[] values = o2[i];
+        final Object[] values = o2[ i ];
         if ( values == null || values.length == 0 ) {
           throw EvaluationException.getInstance( LibFormulaErrorValue.ERROR_ILLEGAL_ARRAY_VALUE );
         }
-        params.add( String.valueOf( values[0] ) );
+        params.add( String.valueOf( values[ 0 ] ) );
       }
     } else {
       final Type type = parameters.getType( 0 );
