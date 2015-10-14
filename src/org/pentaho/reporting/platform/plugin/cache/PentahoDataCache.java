@@ -37,7 +37,7 @@ import org.pentaho.reporting.engine.classic.core.cache.DataCacheManager;
 /**
  * A simple data cache that wraps around the plain in-memory data-cache. That cache is stored on the user's session and
  * shared across all reports run by that user in that session.
- * 
+ *
  * @author Thomas Morgner.
  */
 public class PentahoDataCache implements DataCache, ILogoutListener {
@@ -205,6 +205,7 @@ public class PentahoDataCache implements DataCache, ILogoutListener {
       }
       final TableModel cacheModel = new CachableTableModel( model );
       cacheManager.putInRegionCache( CACHE_NAME, new CompositeKey( session.getId(), key ), cacheModel );
+      return cacheModel;
     }
     return model;
   }
