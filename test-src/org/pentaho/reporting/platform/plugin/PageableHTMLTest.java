@@ -280,12 +280,6 @@ public class PageableHTMLTest extends TestCase {
     assertFalse( rc.execute() );
   }
 
-  public void testExecuteDummyReportWithPrinter() throws Exception {
-    rc.setReport( new MasterReport() );
-    rc.setPrint( true );
-    assertTrue( rc.execute() );
-  }
-
   public void testGetMimeType() throws Exception {
     rc.setReport( new MasterReport() );
     assertEquals( "text/html", rc.getMimeType() ); //$NON-NLS-1$

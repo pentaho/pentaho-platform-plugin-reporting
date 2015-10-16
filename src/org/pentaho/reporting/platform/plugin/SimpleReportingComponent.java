@@ -81,7 +81,8 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   public static final String MIME_TYPE_EMAIL = "mime-message/text/html"; //$NON-NLS-1$
   public static final String MIME_TYPE_PDF = "application/pdf"; //$NON-NLS-1$
   public static final String MIME_TYPE_XLS = "application/vnd.ms-excel"; //$NON-NLS-1$
-  public static final String MIME_TYPE_XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"; //$NON-NLS-1$
+  public static final String MIME_TYPE_XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+  //$NON-NLS-1$
   public static final String MIME_TYPE_RTF = "application/rtf"; //$NON-NLS-1$
   public static final String MIME_TYPE_CSV = "text/csv"; //$NON-NLS-1$
   public static final String MIME_TYPE_TXT = "text/plain"; //$NON-NLS-1$
@@ -192,8 +193,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    * Sets the mime-type for determining which report output type to generate. This should be a mime-type for consistency
    * with streaming output mime-types.
    *
-   * @param outputType
-   *          the desired output type (mime-type) for the report engine to generate
+   * @param outputType the desired output type (mime-type) for the report engine to generate
    */
   public void setOutputType( final String outputType ) {
     this.outputType = outputType;
@@ -221,8 +221,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    * Sets the report-definition if it is provided to us by way of an action-sequence resource. The name must be
    * reportDefinition or report-definition.
    *
-   * @param reportDefinition
-   *          a report-definition as seen (wrapped) by an action-sequence
+   * @param reportDefinition a report-definition as seen (wrapped) by an action-sequence
    */
   public void setReportDefinition( final IActionSequenceResource reportDefinition ) {
     this.reportDefinition = reportDefinition;
@@ -233,8 +232,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    * This method will be called if an input is called reportDefinitionInputStream, or any variant of that with dashes
    * report-definition-inputstream for example. The primary purpose of this method is to facilitate unit testing.
    *
-   * @param reportDefinitionInputStream
-   *          any kind of InputStream which contains a valid report-definition
+   * @param reportDefinitionInputStream any kind of InputStream which contains a valid report-definition
    */
   public void setReportDefinitionInputStream( final InputStream reportDefinitionInputStream ) {
     this.reportDefinitionInputStream = reportDefinitionInputStream;
@@ -253,8 +251,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   /**
    * Sets the path to the report definition (platform path)
    *
-   * @param fileId
-   *          the path to the report definition.
+   * @param fileId the path to the report definition.
    */
   public void setReportFileId( final Serializable fileId ) {
     this.fileId = fileId;
@@ -272,8 +269,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   /**
    * Sets the path to the report definition (platform path)
    *
-   * @param reportDefinitionPath
-   *          the path to the report definition.
+   * @param reportDefinitionPath the path to the report definition.
    */
   public void setReportDefinitionPath( String reportDefinitionPath ) {
     this.reportDefinitionPath = reportDefinitionPath;
@@ -291,8 +287,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   /**
    * Set the paging mode used by the reporting engine. This will also be set if an input
    *
-   * @param paginateOutput
-   *          page mode
+   * @param paginateOutput page mode
    */
   public void setPaginateOutput( final boolean paginateOutput ) {
     this.paginateOutput = paginateOutput;
@@ -310,8 +305,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    * This method sets the IPentahoSession to use in order to access the pentaho platform file repository and content
    * repository.
    *
-   * @param session
-   *          a valid pentaho session
+   * @param session a valid pentaho session
    * @deprecated No longer used.
    */
   public void setSession( final IPentahoSession session ) {
@@ -338,12 +332,12 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
         log.debug( Messages.getInstance().getString( "ReportPlugin.logComputedOutputTarget", outputTarget ) );
       }
 
-      ReportOutputHandlerFactory handlerFactory = PentahoSystem.get(ReportOutputHandlerFactory.class);
-      if (handlerFactory == null) {
+      ReportOutputHandlerFactory handlerFactory = PentahoSystem.get( ReportOutputHandlerFactory.class );
+      if ( handlerFactory == null ) {
         handlerFactory = new FastExportReportOutputHandlerFactory();
       }
 
-      return handlerFactory.getMimeType(new InternalOutputHandlerSelector(outputTarget));
+      return handlerFactory.getMimeType( new InternalOutputHandlerSelector( outputTarget ) );
 
     } catch ( IOException e ) {
       if ( log.isDebugEnabled() ) {
@@ -365,8 +359,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   /**
    * This method sets the OutputStream to write streaming content on.
    *
-   * @param outputStream
-   *          an OutputStream to write to
+   * @param outputStream an OutputStream to write to
    */
   public void setOutputStream( final OutputStream outputStream ) {
     this.outputStream = outputStream;
@@ -384,8 +377,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   /**
    * Set whether or not to send the report to a printer
    *
-   * @param print
-   *          a flag indicating whether the report should be printed.
+   * @param print a flag indicating whether the report should be printed.
    */
   public void setPrint( final boolean print ) {
     this.print = print;
@@ -403,9 +395,8 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   /**
    * Set the name of the printer to send the report to
    *
-   * @param printer
-   *          the name of the printer that the report will be sent to, a null value will be interpreted as the default
-   *          printer
+   * @param printer the name of the printer that the report will be sent to, a null value will be interpreted as the
+   *                default printer
    */
   public void setPrinter( final String printer ) {
     this.printer = printer;
@@ -427,8 +418,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    * This method sets the map of *all* the inputs which are available to this component. This allows us to use
    * action-sequence inputs as parameters for our reports.
    *
-   * @param inputs
-   *          a Map containing inputs
+   * @param inputs a Map containing inputs
    */
   public void setInputs( final Map<String, Object> inputs ) {
     if ( inputs == null ) {
@@ -596,17 +586,13 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    * Computes the effective output target that will be used when running the report. This method does not modify any of
    * the properties of this class.
    * <p/>
-   * The algorithm to determine the output target is as follows:
-   * <ul>
-   * <li>
-   * If the report attribute "lock-preferred-output-type" is set, and the attribute preferred-output-type is set, the
-   * report will always be exported to the specified output type.</li>
-   * <li>If the component has the parameter "output-target" set, this output target will be used.</li>
-   * <li>If the component has the parameter "output-type" set, the mime-type will be translated into a suitable output
-   * target (depends on other parameters like paginate as well.</li>
-   * <li>If neither output-target or output-type are specified, the report's preferred output type will be used.</li>
-   * <li>If no preferred output type is set, we default to HTML export.</li>
-   * </ul>
+   * The algorithm to determine the output target is as follows: <ul> <li> If the report attribute
+   * "lock-preferred-output-type" is set, and the attribute preferred-output-type is set, the report will always be
+   * exported to the specified output type.</li> <li>If the component has the parameter "output-target" set, this output
+   * target will be used.</li> <li>If the component has the parameter "output-type" set, the mime-type will be
+   * translated into a suitable output target (depends on other parameters like paginate as well.</li> <li>If neither
+   * output-target or output-type are specified, the report's preferred output type will be used.</li> <li>If no
+   * preferred output type is set, we default to HTML export.</li> </ul>
    * <p/>
    * If the output type given is invalid, the report will not be executed and calls to
    * <code>SimpleReportingComponent#getMimeType()</code> will yield the generic "application/octet-stream" response.
@@ -639,12 +625,12 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
         final String mappedLegacyType = mapOutputTypeToOutputTarget( preferredOutputTypeString );
         if ( mappedLegacyType != null ) {
           log.warn( Messages.getInstance().getString( "ReportPlugin.warnLegacyLockedOutput",
-                                                      preferredOutputTypeString ) );
+              preferredOutputTypeString ) );
           return mappedLegacyType;
         }
 
         log.warn( Messages.getInstance().getString( "ReportPlugin.warnInvalidLockedOutput",
-                                                    preferredOutputTypeString ) );
+            preferredOutputTypeString ) );
       }
     }
 
@@ -763,12 +749,10 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    * Apply inputs (if any) to corresponding report parameters, care is taken when checking parameter types to perform
    * any necessary casting and conversion.
    *
-   * @param report
-   *          a MasterReport object to apply parameters to
-   * @param context
-   *          a ParameterContext for which the parameters will be under
+   * @param report  a MasterReport object to apply parameters to
+   * @param context a ParameterContext for which the parameters will be under
    * @deprecated use the single parameter version instead. This method will now fail with an error if the report passed
-   *             in is not the same as the report this component has. This method will be removed in version 4.0.
+   * in is not the same as the report this component has. This method will be removed in version 4.0.
    */
   public void applyInputsToReportParameters( final MasterReport report, final ParameterContext context ) {
     try {
@@ -790,21 +774,18 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    * Apply inputs (if any) to corresponding report parameters, care is taken when checking parameter types to perform
    * any necessary casting and conversion.
    *
-   * @param context
-   *          a ParameterContext for which the parameters will be under
-   * @param validationResult
-   *          the validation result that will hold the warnings. If null, a new one will be created.
+   * @param context          a ParameterContext for which the parameters will be under
+   * @param validationResult the validation result that will hold the warnings. If null, a new one will be created.
    * @return the validation result containing any parameter validation errors.
-   * @throws java.io.IOException
-   *           if the report of this component could not be parsed.
-   * @throws ResourceException
-   *           if the report of this component could not be parsed.
-   * @deprecated As of release 4.5, replaced by
-   *     {@link ReportContentUtil#applyInputsToReportParameters(MasterReport, ParameterContext, Map, ValidationResult)}
+   * @throws java.io.IOException if the report of this component could not be parsed.
+   * @throws ResourceException   if the report of this component could not be parsed.
+   * @deprecated As of release 4.5, replaced by {@link ReportContentUtil#applyInputsToReportParameters(MasterReport,
+   * ParameterContext, Map, ValidationResult)}
    */
   @Deprecated
   public ValidationResult applyInputsToReportParameters( final ParameterContext context,
-      ValidationResult validationResult ) throws IOException, ResourceException {
+                                                         ValidationResult validationResult )
+      throws IOException, ResourceException {
     return ReportContentUtil.applyInputsToReportParameters( getReport(), context, inputs, validationResult );
   }
 
@@ -902,9 +883,9 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   public boolean execute() throws Exception {
     final MasterReport report = getReport();
     int yieldRate = getYieldRate();
-    if (yieldRate > 0) {
+    if ( yieldRate > 0 ) {
       report.getReportConfiguration().setConfigProperty
-          ("org.pentaho.reporting.engine.classic.core.YieldRate", String.valueOf(yieldRate));
+          ( "org.pentaho.reporting.engine.classic.core.YieldRate", String.valueOf( yieldRate ) );
     }
 
     try {
@@ -930,7 +911,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
             }
           }
           if ( ( printer == null ) && ( services.length > 0 ) ) {
-            printService = services[0];
+            printService = services[ 0 ];
           }
         }
         Java14PrintUtil.printDirectly( report, printService );
@@ -943,7 +924,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
         log.warn( Messages.getInstance().getString( "ReportPlugin.warnUnprocessableRequest", outputType ) );
         return false;
       }
-      synchronized ( reportOutputHandler.getReportLock() ) {
+      synchronized( reportOutputHandler.getReportLock() ) {
         try {
           pageCount = reportOutputHandler.generate( report, acceptedPage, outputStream, getYieldRate() );
           return pageCount != -1;
@@ -983,14 +964,14 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       report.getReportConfiguration().setConfigProperty( HtmlTableModule.BODY_FRAGMENT, "true" );
     }
 
-    ReportOutputHandlerFactory handlerFactory = PentahoSystem.get(ReportOutputHandlerFactory.class);
-    if (handlerFactory == null) {
+    ReportOutputHandlerFactory handlerFactory = PentahoSystem.get( ReportOutputHandlerFactory.class );
+    if ( handlerFactory == null ) {
       handlerFactory = new FastExportReportOutputHandlerFactory();
     }
 
     ReportOutputHandler reportOutputHandler =
-        handlerFactory.createOutputHandlerForOutputType(new InternalOutputHandlerSelector(outputType));
-    if (reportOutputHandler == null) {
+        handlerFactory.createOutputHandlerForOutputType( new InternalOutputHandlerSelector( outputType ) );
+    if ( reportOutputHandler == null ) {
       return null;
     }
 
@@ -1001,10 +982,8 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    * Perform a pagination run.
    *
    * @return the number of pages or streams generated.
-   * @throws IOException
-   *           if an IO error occurred while loading the report.
-   * @throws ResourceException
-   *           if a resource loading error occurred.
+   * @throws IOException       if an IO error occurred while loading the report.
+   * @throws ResourceException if a resource loading error occurred.
    */
   public int paginate() throws IOException, ResourceException {
     final MasterReport report = getReport();
@@ -1029,7 +1008,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
         log.warn( Messages.getInstance().getString( "ReportPlugin.warnUnprocessableRequest", outputType ) );
         return 0;
       }
-      synchronized ( reportOutputHandler.getReportLock() ) {
+      synchronized( reportOutputHandler.getReportLock() ) {
         try {
           return reportOutputHandler.paginate( report, getYieldRate() );
         } finally {
@@ -1054,42 +1033,35 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     return null;
   }
 
-  private class InternalOutputHandlerSelector implements ReportOutputHandlerSelector
-  {
+  private class InternalOutputHandlerSelector implements ReportOutputHandlerSelector {
     private String outputType;
 
-    private InternalOutputHandlerSelector(final String outputType)
-    {
+    private InternalOutputHandlerSelector( final String outputType ) {
       this.outputType = outputType;
     }
 
-    public String getOutputType()
-    {
+    public String getOutputType() {
       return outputType;
     }
 
-    public MasterReport getReport()
-    {
+    public MasterReport getReport() {
       return report;
     }
 
-    public boolean isUseJcrOutput()
-    {
+    public boolean isUseJcrOutput() {
       return false;
     }
 
-    public String getJcrOutputPath()
-    {
+    public String getJcrOutputPath() {
       return null;
     }
 
-    public <T> T getInput(final String parameterName, final T defaultValue, final Class<T> idx)
-    {
-      Object input = SimpleReportingComponent.this.getInput(parameterName, defaultValue);
-      if (input == null) {
+    public <T> T getInput( final String parameterName, final T defaultValue, final Class<T> idx ) {
+      Object input = SimpleReportingComponent.this.getInput( parameterName, defaultValue );
+      if ( input == null ) {
         input = defaultValue;
       }
-      return idx.cast(input);
+      return idx.cast( input );
     }
   }
 
