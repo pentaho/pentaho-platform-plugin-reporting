@@ -19,6 +19,10 @@ package org.pentaho.reporting.platform.plugin.repository;
 
 import junit.framework.TestCase;
 import org.pentaho.platform.api.repository2.unified.RepositoryFile;
+import org.pentaho.reporting.libraries.repository.Repository;
+
+import java.io.OutputStream;
+import java.util.Date;
 
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -27,10 +31,16 @@ public class ReportContentItemTest extends TestCase {
   ReportContentItem reportContentItem;
   RepositoryFile repositoryFile;
   ReportContentLocation reportContentLocation;
+  Repository repository;
 
   protected void setUp() {
     repositoryFile = mock( RepositoryFile.class );
+    doReturn( "fileName" ).when( repositoryFile ).getName();
+
     reportContentLocation = mock( ReportContentLocation.class );
+    repository = mock( Repository.class );
+    doReturn( repository ).when( reportContentLocation ).getRepository();
+
     reportContentItem = new ReportContentItem( repositoryFile, reportContentLocation, "" );
   }
 
@@ -60,4 +70,28 @@ public class ReportContentItemTest extends TestCase {
     assertEquals( reportContentLocation, reportContentItem.getParent() );
   }
 
+  public void testSetAttribute() throws Exception {
+    assertFalse( reportContentItem.setAttribute( "", "", null ) );
+  }
+
+  public void testGetName() throws Exception {
+    assertEquals( "fileName", reportContentItem.getName() );
+  }
+
+  public void testGetRepository() throws Exception {
+    assertEquals( repository, reportContentItem.getRepository() );
+  }
+
+  public void testGetAttribute() throws Exception {
+    assertNull( reportContentItem.getAttribute( "", "" ) );
+
+    Object result = reportContentItem.getAttribute( "org.jfree.repository", "size" );
+    assertEquals( "0", result.toString() );
+
+    Date date = new Date();
+    doReturn( date ).when( repositoryFile ).getLastModifiedDate();
+
+    result = reportContentItem.getAttribute( "org.jfree.repository", "version" );
+    assertEquals( date, result );
+  }
 }
