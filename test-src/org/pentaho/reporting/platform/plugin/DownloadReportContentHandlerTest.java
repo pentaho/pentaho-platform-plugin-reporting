@@ -54,10 +54,4 @@ public class DownloadReportContentHandlerTest extends TestCase {
       assertTrue( true );
     }
   }
-
-  @Test
-  public void testIdTopath() throws Exception {
-    handler.createDownloadContent( mock( OutputStream.class ), "" );
-    assertTrue( true );
-  }
 }
