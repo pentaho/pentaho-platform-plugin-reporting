@@ -81,21 +81,4 @@ public class TempDirectoryNameGeneratorTest extends TestCase {
 
     assertEquals( "hint.null", name );
   }
-
-  @Test
-  public void testGenerateName() throws Exception {
-    FileContentLocation fileLocation = mock( FileContentLocation.class );
-    Repository repository = mock( Repository.class );
-    MimeRegistry mimeRegistry = mock( MimeRegistry.class );
-    doReturn( mimeRegistry ).when( repository ).getMimeRegistry();
-    doReturn( repository ).when( fileLocation ).getRepository();
-
-    File file = new File( directory );
-    doReturn( file ).when( fileLocation ).getContentId();
-
-    generator.initialize( fileLocation, true );
-    tmpFileName = generator.generateName( "hint", "" );
-    assertTrue( tmpFileName.startsWith( "hint" ) );
-    assertTrue( tmpFileName.endsWith( ".null" ) );
-  }
 }
