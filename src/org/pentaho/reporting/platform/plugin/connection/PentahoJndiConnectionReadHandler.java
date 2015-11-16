@@ -44,17 +44,14 @@ public class PentahoJndiConnectionReadHandler extends AbstractXmlReadHandler imp
 
   /**
    * Returns the handler for a child element.
-   * 
-   * @param tagName
-   *          the tag name.
-   * @param atts
-   *          the attributes.
+   *
+   * @param tagName the tag name.
+   * @param atts    the attributes.
    * @return the handler or null, if the tagname is invalid.
-   * @throws SAXException
-   *           if there is a parsing error.
+   * @throws SAXException if there is a parsing error.
    */
   protected XmlReadHandler getHandlerForChild( final String uri, final String tagName, final Attributes atts )
-    throws SAXException {
+      throws SAXException {
     if ( isSameNamespace( uri ) == false ) {
       return null;
     }
@@ -75,9 +72,8 @@ public class PentahoJndiConnectionReadHandler extends AbstractXmlReadHandler imp
 
   /**
    * Done parsing.
-   * 
-   * @throws SAXException
-   *           if there is a parsing error.
+   *
+   * @throws SAXException if there is a parsing error.
    */
   protected void doneParsing() throws SAXException {
     final PentahoJndiDatasourceConnectionProvider provider = new PentahoJndiDatasourceConnectionProvider();

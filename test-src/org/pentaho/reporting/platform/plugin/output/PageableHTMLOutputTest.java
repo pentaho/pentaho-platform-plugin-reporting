@@ -18,13 +18,14 @@
 package org.pentaho.reporting.platform.plugin.output;
 
 import junit.framework.TestCase;
-import org.mockito.Mockito;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.base.PageableReportProcessor;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.AllItemsHtmlPrinter;
-import org.pentaho.reporting.libraries.resourceloader.ResourceManager;
 
-import java.io.OutputStream;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
 
 public class PageableHTMLOutputTest extends TestCase {
   PageableHTMLOutput pageableHTMLOutput;
@@ -45,26 +46,45 @@ public class PageableHTMLOutputTest extends TestCase {
 
   public void testSetProxyOutputStream() throws Exception {
     assertNull( pageableHTMLOutput.getProxyOutputStream() );
-    ProxyOutputStream mockStream = Mockito.mock( ProxyOutputStream.class );
+    ProxyOutputStream mockStream = mock( ProxyOutputStream.class );
     pageableHTMLOutput.setProxyOutputStream( mockStream );
     assertEquals( mockStream, pageableHTMLOutput.getProxyOutputStream() );
   }
 
   public void testSetPrinter() throws Exception {
     assertNull( pageableHTMLOutput.getPrinter() );
-    AllItemsHtmlPrinter mockPrinter = Mockito.mock( AllItemsHtmlPrinter.class );
+    AllItemsHtmlPrinter mockPrinter = mock( AllItemsHtmlPrinter.class );
     pageableHTMLOutput.setPrinter( mockPrinter );
     assertEquals( mockPrinter, pageableHTMLOutput.getPrinter() );
   }
 
   public void testSetReportProcessor() throws Exception {
     assertNull( pageableHTMLOutput.getReportProcessor() );
-    PageableReportProcessor mockProcessor = Mockito.mock( PageableReportProcessor.class );
+    PageableReportProcessor mockProcessor = mock( PageableReportProcessor.class );
     pageableHTMLOutput.setReportProcessor( mockProcessor );
     assertEquals( mockProcessor, pageableHTMLOutput.getReportProcessor() );
   }
 
   public void testSupportsPagination() throws Exception {
     assertEquals( true, pageableHTMLOutput.supportsPagination() );
+  }
+
+  public void testPaginate() throws Exception {
+    PageableHTMLOutput output = mock( PageableHTMLOutput.class, CALLS_REAL_METHODS );
+    PageableReportProcessor processor = mock( PageableReportProcessor.class );
+    doNothing().when( output ).reinitOutputTarget();
+    doReturn( true ).when( processor ).isPaginated();
+    MasterReport report = mock( MasterReport.class );
+    AllItemsHtmlPrinter printer = mock( AllItemsHtmlPrinter.class );
+    doNothing().when( printer ).setContentWriter( null, null );
+    doNothing().when( printer ).setDataWriter( null, null );
+
+    output.setReportProcessor( processor );
+    output.setPrinter( printer );
+    assertEquals( 0, output.paginate( report, 0 ) );
+
+    doReturn( false ).when( processor ).isPaginated();
+    output.setReportProcessor( processor );
+    assertEquals( 0, output.paginate( report, 0 ) );
   }
 }
