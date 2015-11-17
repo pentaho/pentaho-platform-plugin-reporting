@@ -43,6 +43,7 @@ public class ReportContentLocationIT extends TestCase {
   @Before
   protected void setUp() throws Exception {
     repositoryFile = mock( RepositoryFile.class );
+    doReturn( "test" ).when( repositoryFile ).getId();
     doReturn( "" ).when( repositoryFile ).getId();
     doReturn( "./resource" ).when( repositoryFile ).getPath();
 

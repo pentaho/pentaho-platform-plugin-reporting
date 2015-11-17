@@ -18,7 +18,6 @@
 package org.pentaho.reporting.platform.plugin.drilldown;
 
 import junit.framework.TestCase;
-import org.mockito.ArgumentCaptor;
 import org.pentaho.reporting.engine.classic.core.ReportEnvironment;
 import org.pentaho.reporting.engine.classic.core.function.ExpressionRuntime;
 import org.pentaho.reporting.engine.classic.core.function.ProcessingContext;
@@ -33,7 +32,11 @@ import org.pentaho.reporting.libraries.formula.typing.coretypes.LogicalType;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyObject;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 
 public class IsContentLinkFunctionTest extends TestCase {
   IsContentLinkFunction function, functionSpy;
@@ -105,5 +108,12 @@ public class IsContentLinkFunctionTest extends TestCase {
     result = functionSpy.evaluate( reportFormulaContext, parameters );
     assertEquals( true, result.getValue() );
     assertTrue( result.getType() instanceof LogicalType );
+
+    Object[][] o = new Object[ 1 ][ 2 ];
+    o[ 0 ][ 0 ] = "paramValue";
+
+    doReturn( o ).when( parameters ).getValue( 0 );
+    result = functionSpy.evaluate( reportFormulaContext, parameters );
+    assertEquals( true, result.getValue() );
   }
 }

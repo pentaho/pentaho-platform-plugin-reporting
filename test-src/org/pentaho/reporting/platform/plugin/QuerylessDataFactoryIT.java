@@ -17,14 +17,10 @@
 
 package org.pentaho.reporting.platform.plugin;
 
-import java.io.IOException;
-import java.util.Date;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
-
 import junit.framework.TestCase;
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
+import org.pentaho.reporting.engine.classic.core.DataRow;
 import org.pentaho.reporting.engine.classic.core.MetaTableModel;
 import org.pentaho.reporting.engine.classic.core.ParameterDataRow;
 import org.pentaho.reporting.engine.classic.core.ReportDataFactoryException;
@@ -36,6 +32,13 @@ import org.pentaho.reporting.libraries.resourceloader.ResourceException;
 import org.pentaho.reporting.platform.plugin.datasources.QuerylessDataFactory;
 import org.pentaho.reporting.platform.plugin.messages.Messages;
 
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
+import java.io.IOException;
+import java.util.Date;
+
+import static org.mockito.Mockito.mock;
+
 @SuppressWarnings( { "all" } )
 public class QuerylessDataFactoryIT extends TestCase implements TableModelListener {
 
@@ -44,25 +47,33 @@ public class QuerylessDataFactoryIT extends TestCase implements TableModelListen
   }
 
   public void testQuerylessDataFactory() throws ReportDataFactoryException, KettleException, ModuleInitializeException,
-    ResourceException, IOException {
+      ResourceException, IOException {
     final String queryName = "query";
     final String queryString =
         "<?xml version=\"1.0\" encoding=\"UTF-8\"?><mql><domain_id>steel-wheels</domain_id>"
-           + "<model_id>BV_ORDERS</model_id><options><disable_distinct>false</disable_distinct></options>"
-           + "<selections><selection><view>CAT_PRODUCTS</view><column>BC_PRODUCTS_PRODUCTLINE</column>"
-           + "<aggregation>NONE</aggregation></selection><selection><view>CAT_PRODUCTS</view>"
-           + "<column>BC_PRODUCTS_PRODUCTNAME</column><aggregation>NONE</aggregation></selection>"
-           + "<selection><view>CAT_PORDERS</view><column>BC_ORDERS_ORDERDATE</column>"
-           + "<aggregation>NONE</aggregation></selection><selection><view>CAT_ORDERS</view>"
-           + "<column>BC_ORDERDETAILS_QUANTITYORDERED</column><aggregation>SUM</aggregation></selection>"
-           + "<selection><view>CAT_ORDERS</view><column>BC_ORDERDETAILS_TOTAL</column>"
-           + "<aggregation>SUM</aggregation></selection></selections><constraints/><orders/></mql>";
+          + "<model_id>BV_ORDERS</model_id><options><disable_distinct>false</disable_distinct></options>"
+          + "<selections><selection><view>CAT_PRODUCTS</view><column>BC_PRODUCTS_PRODUCTLINE</column>"
+          + "<aggregation>NONE</aggregation></selection><selection><view>CAT_PRODUCTS</view>"
+          + "<column>BC_PRODUCTS_PRODUCTNAME</column><aggregation>NONE</aggregation></selection>"
+          + "<selection><view>CAT_PORDERS</view><column>BC_ORDERS_ORDERDATE</column>"
+          + "<aggregation>NONE</aggregation></selection><selection><view>CAT_ORDERS</view>"
+          + "<column>BC_ORDERDETAILS_QUANTITYORDERED</column><aggregation>SUM</aggregation></selection>"
+          + "<selection><view>CAT_ORDERS</view><column>BC_ORDERDETAILS_TOTAL</column>"
+          + "<aggregation>SUM</aggregation></selection></selections><constraints/><orders/></mql>";
     final QuerylessDataFactory qdf = new QuerylessDataFactory();
     qdf.setDomainId( "steel-wheels" );
     qdf.setQuery( queryName, queryString, null, null );
     qdf.setXmiFile( "resource/solution/test/metadata.xmi" );
     qdf.initialize( new DesignTimeDataFactoryContext() );
     qdf.setConnectionProvider( new PmdConnectionProvider() );
+
+    try {
+      qdf.queryData( null, new ParameterDataRow() );
+    } catch ( ReportDataFactoryException ex ) {
+      assertTrue( true );
+    }
+
+    assertTrue( qdf.isQueryExecutable( queryName, mock( DataRow.class ) ) );
 
     final CloseableTableModel tableModel = (CloseableTableModel) qdf.queryData( queryName, new ParameterDataRow() );
     assertNotNull( tableModel );
