@@ -122,9 +122,7 @@ public class ReportContentUtil {
     if ( def instanceof String ) {
       String s = (String) def;
       String[] result = s.split( "," );
-      if ( result.length > 1 ) {
-        def = result;
-      }
+      def = result;
     }
 
     if ( allowMultiSelect && Collection.class.isInstance( value ) ) {
