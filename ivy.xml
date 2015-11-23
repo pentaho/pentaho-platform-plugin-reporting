@@ -72,8 +72,8 @@
         <artifact name="common-ui" type="js" ext="zip" m:classifier="js"/>
       </dependency>
 
-      <dependency org="pentaho" name="pentaho-cdf" rev="${dependency.pentaho-cdf-plugin.revision}" conf="js->default" transitive="false" changing="true">
-        <artifact name="pentaho-cdf" type="js" ext="zip" m:classifier="js"/>
+      <dependency org="pentaho" name="pentaho-cdf-js" rev="${dependency.pentaho-cdf-plugin.revision}" conf="js->default" transitive="false" changing="true">
+        <artifact name="pentaho-cdf-js" ext="zip"/>
       </dependency>
 
       <!-- this file is bogus! -->
