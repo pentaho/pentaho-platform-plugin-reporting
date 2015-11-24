@@ -20,37 +20,28 @@ package org.pentaho.reporting.platform.plugin;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.InputStream;
 import java.util.concurrent.Callable;
 
-import org.junit.AfterClass;
+import junit.framework.TestCase;
 import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.StandaloneSession;
 import org.pentaho.platform.engine.security.SecurityHelper;
-import org.pentaho.platform.repository2.unified.fileio.RepositoryFileInputStream;
 import org.pentaho.test.platform.engine.core.MicroPlatform;
-
-import static org.pentaho.di.core.util.Assert.assertTrue;
 
 /**
  * Unit tests for the ReportingComponent.
- *
+ * 
  * @author Michael D'Amour
  */
-public class ReportingActionIT {
+public class ReportingActionIT extends TestCase {
 
-  private static MicroPlatform microPlatform;
-  private static File tempFile;
-  private static String PATH = "resource/solution/test/reporting/report.prpt";
+  private MicroPlatform microPlatform;
 
-  @BeforeClass
-  public static void setUp() throws Exception {
-    tempFile = new File( "./resource/solution/system/tmp" );
-    tempFile.mkdirs();
+  @Override
+  protected void setUp() throws Exception {
+    new File( "./resource/solution/system/tmp" ).mkdirs();
 
     microPlatform = MicroPlatformFactory.create();
     microPlatform.start();
@@ -59,31 +50,19 @@ public class ReportingActionIT {
     PentahoSessionHolder.setSession( session );
   }
 
-  @AfterClass
-  public static void tearDown() throws Exception {
+  @Override
+  protected void tearDown() throws Exception {
     microPlatform.stop();
-    tempFile.delete();
   }
 
-  @Test
-  public void convertToPdf_ViaFileInputStream() throws Exception {
-    FileInputStream fileInputStream = new FileInputStream( PATH ); //$NON-NLS-1$
-    convertToPdf( fileInputStream );
-  }
-
-  @Test
-  public void convertToPdf_ViaRepositoryFileInputStream() throws Exception {
-    RepositoryFileInputStream repositoryFileInputStream = new RepositoryFileInputStream( PATH ); //$NON-NLS-1$
-    convertToPdf( repositoryFileInputStream );
-  }
-
-  public void convertToPdf( InputStream stream ) throws Exception {
+  public void testPdf() throws Exception {
     final SimpleReportingAction reportingAction = new SimpleReportingAction();
-    reportingAction.setInputStream( stream );
+    FileInputStream reportDefinition = new FileInputStream( "resource/solution/test/reporting/report.prpt" ); //$NON-NLS-1$
+    reportingAction.setInputStream( reportDefinition );
     reportingAction.setOutputType( "application/pdf" ); //$NON-NLS-1$
 
     File outputFile = File.createTempFile( "reportingActionTestResult", ".pdf" ); //$NON-NLS-1$ //$NON-NLS-2$
-    System.out.println( "Test output located at: " + outputFile.getAbsolutePath() ); //$NON-NLS-1$
+    System.out.println( "Test output locatated at: " + outputFile.getAbsolutePath() ); //$NON-NLS-1$
     FileOutputStream outputStream = new FileOutputStream( outputFile );
     reportingAction.setOutputStream( outputStream );
 
@@ -110,13 +89,11 @@ public class ReportingActionIT {
   // // create an instance of the component
   // SimpleReportingComponent rc = new SimpleReportingComponent();
   // // create/set the InputStream
-  //    FileInputStream reportDefinition = new FileInputStream("resource/solution/test/reporting/report.prpt");
-  // $NON-NLS-1$
+  //    FileInputStream reportDefinition = new FileInputStream("resource/solution/test/reporting/report.prpt"); //$NON-NLS-1$
   // rc.setReportDefinitionInputStream(reportDefinition);
   //    rc.setOutputType("text/html"); //$NON-NLS-1$
   //
-  //    FileOutputStream outputStream = new FileOutputStream("/tmp/" + System.currentTimeMillis() + ".html");
-  // $NON-NLS-1$ //$NON-NLS-2$
+  //    FileOutputStream outputStream = new FileOutputStream("/tmp/" + System.currentTimeMillis() + ".html"); //$NON-NLS-1$ //$NON-NLS-2$
   // rc.setOutputStream(outputStream);
   //
   // // validate the component
