@@ -38,7 +38,7 @@ import static org.pentaho.di.core.util.Assert.assertTrue;
 
 /**
  * Unit tests for the ReportingComponent.
- *
+ * 
  * @author Michael D'Amour
  */
 public class ReportingActionIT {
@@ -110,13 +110,11 @@ public class ReportingActionIT {
   // // create an instance of the component
   // SimpleReportingComponent rc = new SimpleReportingComponent();
   // // create/set the InputStream
-  //    FileInputStream reportDefinition = new FileInputStream("resource/solution/test/reporting/report.prpt");
-  // $NON-NLS-1$
+  //    FileInputStream reportDefinition = new FileInputStream("resource/solution/test/reporting/report.prpt"); //$NON-NLS-1$
   // rc.setReportDefinitionInputStream(reportDefinition);
   //    rc.setOutputType("text/html"); //$NON-NLS-1$
   //
-  //    FileOutputStream outputStream = new FileOutputStream("/tmp/" + System.currentTimeMillis() + ".html");
-  // $NON-NLS-1$ //$NON-NLS-2$
+  //    FileOutputStream outputStream = new FileOutputStream("/tmp/" + System.currentTimeMillis() + ".html"); //$NON-NLS-1$ //$NON-NLS-2$
   // rc.setOutputStream(outputStream);
   //
   // // validate the component
