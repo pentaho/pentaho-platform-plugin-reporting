@@ -20,6 +20,7 @@ package org.pentaho.reporting.platform.plugin;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.net.URL;
 import java.util.Collection;
@@ -36,6 +37,8 @@ import org.pentaho.platform.api.action.IStreamingAction;
 import org.pentaho.platform.api.action.IVarArgsAction;
 import org.pentaho.platform.api.engine.IActionSequenceResource;
 import org.pentaho.platform.api.engine.IPluginManager;
+import org.pentaho.platform.api.repository2.unified.RepositoryFile;
+import org.pentaho.platform.repository2.unified.fileio.RepositoryFileInputStream;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.core.AttributeNames;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
@@ -317,12 +320,12 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
         log.debug( Messages.getInstance().getString( "ReportPlugin.logComputedOutputTarget", outputTarget ) );
       }
 
-      ReportOutputHandlerFactory handlerFactory = PentahoSystem.get(ReportOutputHandlerFactory.class);
-      if (handlerFactory == null) {
+      ReportOutputHandlerFactory handlerFactory = PentahoSystem.get( ReportOutputHandlerFactory.class );
+      if ( handlerFactory == null ) {
         handlerFactory = new FastExportReportOutputHandlerFactory();
       }
 
-      return handlerFactory.getMimeType(new InternalOutputHandlerSelector(outputTarget));
+      return handlerFactory.getMimeType( new InternalOutputHandlerSelector( outputTarget ) );
 
     } catch ( IOException e ) {
       if ( log.isDebugEnabled() ) {
@@ -454,7 +457,19 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
   public MasterReport getReport() throws ResourceException, IOException {
     if ( report == null ) {
       if ( reportDefinitionInputStream != null ) {
-        report = ReportCreator.createReport( reportDefinitionInputStream, getDefinedResourceURL( null ) );
+        if ( reportDefinitionInputStream instanceof RepositoryFileInputStream ) {
+          RepositoryFileInputStream repositoryFileInputStream = (RepositoryFileInputStream) reportDefinitionInputStream;
+          RepositoryFile repoFile = repositoryFileInputStream.getFile();
+          if ( repoFile != null ) {
+            Serializable fileId = repoFile.getId();
+            if ( fileId != null ) {
+              report = ReportCreator.createReport( fileId );
+            }
+          }
+        }
+        if ( report == null ) {
+          report = ReportCreator.createReport( reportDefinitionInputStream, getDefinedResourceURL( null ) );
+        }
       } else if ( reportDefinition != null ) {
         // load the report definition as an action-sequence resource
         report = ReportCreator.createReport( reportDefinition.getAddress() );
@@ -480,7 +495,7 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
         if ( autoSubmitDefaultSetting != null ) {
           boolean autoSubmitDefault = Boolean.parseBoolean( autoSubmitDefaultSetting.toString() );
           report.setAttribute( AttributeNames.Core.NAMESPACE, AttributeNames.Core.AUTO_SUBMIT_DEFAULT,
-              autoSubmitDefault );
+            autoSubmitDefault );
         }
       }
     } catch ( Throwable t ) {
@@ -563,12 +578,12 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
   private String computeEffectiveOutputTarget() throws IOException, ResourceException {
     final MasterReport report = getReport();
     if ( Boolean.TRUE.equals( report.getAttribute( AttributeNames.Core.NAMESPACE,
-        AttributeNames.Core.LOCK_PREFERRED_OUTPUT_TYPE ) ) ) {
+      AttributeNames.Core.LOCK_PREFERRED_OUTPUT_TYPE ) ) ) {
       // preferred output type is one of the engine's output-target identifiers. It is not a mime-type string.
       // The engine supports multiple subformats per mime-type (example HTML: zipped/streaming/flow/pageable)
       // The mime-mapping would be inaccurate.
       final Object preferredOutputType =
-          report.getAttribute( AttributeNames.Core.NAMESPACE, AttributeNames.Core.PREFERRED_OUTPUT_TYPE );
+        report.getAttribute( AttributeNames.Core.NAMESPACE, AttributeNames.Core.PREFERRED_OUTPUT_TYPE );
       if ( preferredOutputType != null ) {
         final String preferredOutputTypeString = String.valueOf( preferredOutputType );
         if ( isValidOutputType( preferredOutputTypeString ) ) {
@@ -579,12 +594,12 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
         final String mappedLegacyType = mapOutputTypeToOutputTarget( preferredOutputTypeString );
         if ( mappedLegacyType != null ) {
           log.warn( Messages.getInstance().getString( "ReportPlugin.warnLegacyLockedOutput",
-             preferredOutputTypeString ) );
+            preferredOutputTypeString ) );
           return mappedLegacyType;
         }
 
         log.warn( Messages.getInstance().getString( "ReportPlugin.warnInvalidLockedOutput",
-           preferredOutputTypeString ) );
+          preferredOutputTypeString ) );
       }
     }
 
@@ -605,7 +620,7 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
 
     // if nothing is specified explicity, we may as well ask the report what it prefers..
     final Object preferredOutputType =
-        report.getAttribute( AttributeNames.Core.NAMESPACE, AttributeNames.Core.PREFERRED_OUTPUT_TYPE );
+      report.getAttribute( AttributeNames.Core.NAMESPACE, AttributeNames.Core.PREFERRED_OUTPUT_TYPE );
     if ( preferredOutputType != null ) {
       final String preferredOutputTypeString = String.valueOf( preferredOutputType );
       if ( isValidOutputType( preferredOutputTypeString ) ) {
@@ -615,12 +630,12 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
       final String mappedLegacyType = mapOutputTypeToOutputTarget( preferredOutputTypeString );
       if ( mappedLegacyType != null ) {
         log.warn( Messages.getInstance()
-            .getString( "ReportPlugin.warnLegacyPreferredOutput", preferredOutputTypeString ) );
+          .getString( "ReportPlugin.warnLegacyPreferredOutput", preferredOutputTypeString ) );
         return mappedLegacyType;
       }
 
       log.warn( Messages.getInstance().getString( "ReportPlugin.warnInvalidPreferredOutput", preferredOutputTypeString,
-          getDefaultOutputTarget() ) );
+        getDefaultOutputTarget() ) );
       return getDefaultOutputTarget();
     }
 
@@ -628,7 +643,7 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
       // if you have come that far, it means you really messed up. Sorry, this error is not a error caused
       // by our legacy code - it is more likely that you just entered values that are totally wrong.
       log.error( Messages.getInstance().getString( "ReportPlugin.warnInvalidOutputType", getOutputType(),
-          getDefaultOutputTarget() ) );
+        getDefaultOutputTarget() ) );
     }
     return getDefaultOutputTarget();
   }
@@ -741,7 +756,8 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
    *           if the report of this component could not be parsed.
    */
   public ValidationResult applyInputsToReportParameters( final ParameterContext context,
-      ValidationResult validationResult ) throws IOException, ResourceException {
+                                                         ValidationResult validationResult )
+    throws IOException, ResourceException {
     if ( validationResult == null ) {
       validationResult = new ValidationResult();
     }
@@ -754,11 +770,11 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
         final String paramName = param.getName();
         try {
           final Object computedParameter =
-              ReportContentUtil.computeParameterValue( context, param, inputs.get( paramName ) );
+            ReportContentUtil.computeParameterValue( context, param, inputs.get( paramName ) );
           parameterValues.put( param.getName(), computedParameter );
           if ( log.isInfoEnabled() ) {
             log.info( Messages.getInstance().getString( "ReportPlugin.infoParameterValues", paramName,
-                String.valueOf( inputs.get( paramName ) ), String.valueOf( computedParameter ) ) );
+              String.valueOf( inputs.get( paramName ) ), String.valueOf( computedParameter ) ) );
           }
         } catch ( Exception e ) {
           if ( log.isWarnEnabled() ) {
@@ -874,9 +890,9 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
 
     final MasterReport report = getReport();
     int yieldRate = getYieldRate();
-    if (yieldRate > 0) {
-      report.getReportConfiguration().setConfigProperty
-          ("org.pentaho.reporting.engine.classic.core.YieldRate", String.valueOf(yieldRate));
+    if ( yieldRate > 0 ) {
+      report.getReportConfiguration().setConfigProperty(
+        "org.pentaho.reporting.engine.classic.core.YieldRate", String.valueOf( yieldRate ) );
     }
 
     try {
@@ -895,14 +911,14 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
         PrintService printService = PrintServiceLookup.lookupDefaultPrintService();
         if ( StringUtils.isEmpty( getPrinter() ) == false ) {
           final PrintService[] services =
-              PrintServiceLookup.lookupPrintServices( DocFlavor.SERVICE_FORMATTED.PAGEABLE, null );
+            PrintServiceLookup.lookupPrintServices( DocFlavor.SERVICE_FORMATTED.PAGEABLE, null );
           for ( final PrintService service : services ) {
             if ( service.getName().equals( printer ) ) {
               printService = service;
             }
           }
           if ( ( printer == null ) && ( services.length > 0 ) ) {
-            printService = services[0];
+            printService = services[ 0 ];
           }
         }
         Java14PrintUtil.printDirectly( report, printService );
@@ -936,7 +952,7 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
     }
 
     final Object attribute =
-        report.getAttribute( AttributeNames.Pentaho.NAMESPACE, AttributeNames.Pentaho.REPORT_CACHE );
+      report.getAttribute( AttributeNames.Pentaho.NAMESPACE, AttributeNames.Pentaho.REPORT_CACHE );
     final ReportCacheKey reportCacheKey = new ReportCacheKey( getViewerSessionId(), inputs );
     ReportCache cache;
     if ( Boolean.FALSE.equals( attribute ) ) {
@@ -956,14 +972,14 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
       report.getReportConfiguration().setConfigProperty( HtmlTableModule.BODY_FRAGMENT, "true" );
     }
 
-    ReportOutputHandlerFactory handlerFactory = PentahoSystem.get(ReportOutputHandlerFactory.class);
-    if (handlerFactory == null) {
+    ReportOutputHandlerFactory handlerFactory = PentahoSystem.get( ReportOutputHandlerFactory.class );
+    if ( handlerFactory == null ) {
       handlerFactory = new FastExportReportOutputHandlerFactory();
     }
 
     ReportOutputHandler reportOutputHandler =
-        handlerFactory.createOutputHandlerForOutputType(new InternalOutputHandlerSelector(outputType));
-    if (reportOutputHandler == null) {
+      handlerFactory.createOutputHandlerForOutputType( new InternalOutputHandlerSelector( outputType ) );
+    if ( reportOutputHandler == null ) {
       return null;
     }
     return cache.put( reportCacheKey, reportOutputHandler );
@@ -1029,38 +1045,32 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
   private class InternalOutputHandlerSelector implements ReportOutputHandlerSelector {
     private String outputType;
 
-    private InternalOutputHandlerSelector(final String outputType)
-    {
+    private InternalOutputHandlerSelector( final String outputType ) {
       this.outputType = outputType;
     }
 
-    public String getOutputType()
-    {
+    public String getOutputType() {
       return outputType;
     }
 
-    public MasterReport getReport()
-    {
+    public MasterReport getReport() {
       return report;
     }
 
-    public boolean isUseJcrOutput()
-    {
-      return Boolean.TRUE.equals(SimpleReportingAction.this.getUseJCR());
+    public boolean isUseJcrOutput() {
+      return Boolean.TRUE.equals( SimpleReportingAction.this.getUseJCR() );
     }
 
-    public String getJcrOutputPath()
-    {
+    public String getJcrOutputPath() {
       return SimpleReportingAction.this.getJcrOutputPath();
     }
 
-    public <T> T getInput(final String parameterName, final T defaultValue, final Class<T> idx)
-    {
-      Object input = SimpleReportingAction.this.getInput(parameterName, defaultValue);
-      if (input == null) {
+    public <T> T getInput( final String parameterName, final T defaultValue, final Class<T> idx ) {
+      Object input = SimpleReportingAction.this.getInput( parameterName, defaultValue );
+      if ( input == null ) {
         input = defaultValue;
       }
-      return idx.cast(input);
+      return idx.cast( input );
     }
   }
 

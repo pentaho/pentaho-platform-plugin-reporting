@@ -20,28 +20,37 @@ package org.pentaho.reporting.platform.plugin;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.util.concurrent.Callable;
 
-import junit.framework.TestCase;
+import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.StandaloneSession;
 import org.pentaho.platform.engine.security.SecurityHelper;
+import org.pentaho.platform.repository2.unified.fileio.RepositoryFileInputStream;
 import org.pentaho.test.platform.engine.core.MicroPlatform;
+
+import static org.pentaho.di.core.util.Assert.assertTrue;
 
 /**
  * Unit tests for the ReportingComponent.
  * 
  * @author Michael D'Amour
  */
-public class ReportingActionIT extends TestCase {
+public class ReportingActionIT {
 
-  private MicroPlatform microPlatform;
+  private static MicroPlatform microPlatform;
+  private static File tempFile;
+  private static String PATH = "resource/solution/test/reporting/report.prpt";
 
-  @Override
-  protected void setUp() throws Exception {
-    new File( "./resource/solution/system/tmp" ).mkdirs();
+  @BeforeClass
+  public static void setUp() throws Exception {
+    tempFile = new File( "./resource/solution/system/tmp" );
+    tempFile.mkdirs();
 
     microPlatform = MicroPlatformFactory.create();
     microPlatform.start();
@@ -50,19 +59,31 @@ public class ReportingActionIT extends TestCase {
     PentahoSessionHolder.setSession( session );
   }
 
-  @Override
-  protected void tearDown() throws Exception {
+  @AfterClass
+  public static void tearDown() throws Exception {
     microPlatform.stop();
+    tempFile.delete();
   }
 
-  public void testPdf() throws Exception {
+  @Test
+  public void convertToPdf_ViaFileInputStream() throws Exception {
+    FileInputStream fileInputStream = new FileInputStream( PATH ); //$NON-NLS-1$
+    convertToPdf( fileInputStream );
+  }
+
+  @Test
+  public void convertToPdf_ViaRepositoryFileInputStream() throws Exception {
+    RepositoryFileInputStream repositoryFileInputStream = new RepositoryFileInputStream( PATH ); //$NON-NLS-1$
+    convertToPdf( repositoryFileInputStream );
+  }
+
+  public void convertToPdf( InputStream stream ) throws Exception {
     final SimpleReportingAction reportingAction = new SimpleReportingAction();
-    FileInputStream reportDefinition = new FileInputStream( "resource/solution/test/reporting/report.prpt" ); //$NON-NLS-1$
-    reportingAction.setInputStream( reportDefinition );
+    reportingAction.setInputStream( stream );
     reportingAction.setOutputType( "application/pdf" ); //$NON-NLS-1$
 
     File outputFile = File.createTempFile( "reportingActionTestResult", ".pdf" ); //$NON-NLS-1$ //$NON-NLS-2$
-    System.out.println( "Test output locatated at: " + outputFile.getAbsolutePath() ); //$NON-NLS-1$
+    System.out.println( "Test output located at: " + outputFile.getAbsolutePath() ); //$NON-NLS-1$
     FileOutputStream outputStream = new FileOutputStream( outputFile );
     reportingAction.setOutputStream( outputStream );
 
