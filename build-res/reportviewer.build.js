@@ -64,6 +64,9 @@
     {
       name: "reportviewer/reportviewer-app",
       include: ["reportviewer/reportviewer-app"],
+      exclude: [	
+        "css!cdf/dashboard/Dashboard.notifications"
+        ],
       create: true
     }
   ]
