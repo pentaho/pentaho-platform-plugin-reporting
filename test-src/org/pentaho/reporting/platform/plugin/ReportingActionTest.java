@@ -23,7 +23,6 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.util.concurrent.Callable;
 
-import junit.framework.TestCase;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;

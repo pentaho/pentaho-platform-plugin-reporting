@@ -17,19 +17,6 @@
 
 package org.pentaho.reporting.platform.plugin;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.Serializable;
-import java.lang.reflect.Array;
-import java.net.URL;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import javax.print.DocFlavor;
-import javax.print.PrintService;
-import javax.print.PrintServiceLookup;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.pentaho.platform.api.action.IStreamProcessingAction;
@@ -70,6 +57,19 @@ import org.pentaho.reporting.platform.plugin.output.FastExportReportOutputHandle
 import org.pentaho.reporting.platform.plugin.output.ReportOutputHandler;
 import org.pentaho.reporting.platform.plugin.output.ReportOutputHandlerFactory;
 import org.pentaho.reporting.platform.plugin.output.ReportOutputHandlerSelector;
+
+import javax.print.DocFlavor;
+import javax.print.PrintService;
+import javax.print.PrintServiceLookup;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.Serializable;
+import java.lang.reflect.Array;
+import java.net.URL;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
 
 public class SimpleReportingAction implements IStreamProcessingAction, IStreamingAction, IVarArgsAction {
 
@@ -320,12 +320,12 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
         log.debug( Messages.getInstance().getString( "ReportPlugin.logComputedOutputTarget", outputTarget ) );
       }
 
-      ReportOutputHandlerFactory handlerFactory = PentahoSystem.get(ReportOutputHandlerFactory.class);
-      if (handlerFactory == null) {
+      ReportOutputHandlerFactory handlerFactory = PentahoSystem.get( ReportOutputHandlerFactory.class );
+      if ( handlerFactory == null ) {
         handlerFactory = new FastExportReportOutputHandlerFactory();
       }
 
-      return handlerFactory.getMimeType(new InternalOutputHandlerSelector(outputTarget));
+      return handlerFactory.getMimeType( new InternalOutputHandlerSelector( outputTarget ) );
 
     } catch ( IOException e ) {
       if ( log.isDebugEnabled() ) {
@@ -889,9 +889,9 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
 
     final MasterReport report = getReport();
     int yieldRate = getYieldRate();
-    if (yieldRate > 0) {
-      report.getReportConfiguration().setConfigProperty
-          ("org.pentaho.reporting.engine.classic.core.YieldRate", String.valueOf(yieldRate));
+    if ( yieldRate > 0 ) {
+      report.getReportConfiguration().setConfigProperty(
+        "org.pentaho.reporting.engine.classic.core.YieldRate", String.valueOf( yieldRate ) );
     }
 
     try {
@@ -971,14 +971,14 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
       report.getReportConfiguration().setConfigProperty( HtmlTableModule.BODY_FRAGMENT, "true" );
     }
 
-    ReportOutputHandlerFactory handlerFactory = PentahoSystem.get(ReportOutputHandlerFactory.class);
-    if (handlerFactory == null) {
+    ReportOutputHandlerFactory handlerFactory = PentahoSystem.get( ReportOutputHandlerFactory.class );
+    if ( handlerFactory == null ) {
       handlerFactory = new FastExportReportOutputHandlerFactory();
     }
 
     ReportOutputHandler reportOutputHandler =
-        handlerFactory.createOutputHandlerForOutputType(new InternalOutputHandlerSelector(outputType));
-    if (reportOutputHandler == null) {
+      handlerFactory.createOutputHandlerForOutputType( new InternalOutputHandlerSelector( outputType ) );
+    if ( reportOutputHandler == null ) {
       return null;
     }
     return cache.put( reportCacheKey, reportOutputHandler );
@@ -1044,38 +1044,32 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
   private class InternalOutputHandlerSelector implements ReportOutputHandlerSelector {
     private String outputType;
 
-    private InternalOutputHandlerSelector(final String outputType)
-    {
+    private InternalOutputHandlerSelector( final String outputType ) {
       this.outputType = outputType;
     }
 
-    public String getOutputType()
-    {
+    public String getOutputType() {
       return outputType;
     }
 
-    public MasterReport getReport()
-    {
+    public MasterReport getReport() {
       return report;
     }
 
-    public boolean isUseJcrOutput()
-    {
-      return Boolean.TRUE.equals(SimpleReportingAction.this.getUseJCR());
+    public boolean isUseJcrOutput() {
+      return Boolean.TRUE.equals( SimpleReportingAction.this.getUseJCR() );
     }
 
-    public String getJcrOutputPath()
-    {
+    public String getJcrOutputPath() {
       return SimpleReportingAction.this.getJcrOutputPath();
     }
 
-    public <T> T getInput(final String parameterName, final T defaultValue, final Class<T> idx)
-    {
-      Object input = SimpleReportingAction.this.getInput(parameterName, defaultValue);
-      if (input == null) {
+    public <T> T getInput( final String parameterName, final T defaultValue, final Class<T> idx ) {
+      Object input = SimpleReportingAction.this.getInput( parameterName, defaultValue );
+      if ( input == null ) {
         input = defaultValue;
       }
-      return idx.cast(input);
+      return idx.cast( input );
     }
   }
 
