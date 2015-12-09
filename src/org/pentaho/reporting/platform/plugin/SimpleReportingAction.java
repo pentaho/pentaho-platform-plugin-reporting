@@ -20,6 +20,7 @@ package org.pentaho.reporting.platform.plugin;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.net.URL;
 import java.util.Collection;
@@ -36,7 +37,9 @@ import org.pentaho.platform.api.action.IStreamingAction;
 import org.pentaho.platform.api.action.IVarArgsAction;
 import org.pentaho.platform.api.engine.IActionSequenceResource;
 import org.pentaho.platform.api.engine.IPluginManager;
+import org.pentaho.platform.api.repository2.unified.RepositoryFile;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
+import org.pentaho.platform.repository2.unified.fileio.RepositoryFileInputStream;
 import org.pentaho.reporting.engine.classic.core.AttributeNames;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.metadata.ReportProcessTaskRegistry;
@@ -454,7 +457,19 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
   public MasterReport getReport() throws ResourceException, IOException {
     if ( report == null ) {
       if ( reportDefinitionInputStream != null ) {
-        report = ReportCreator.createReport( reportDefinitionInputStream, getDefinedResourceURL( null ) );
+        if ( reportDefinitionInputStream instanceof RepositoryFileInputStream ) {
+          RepositoryFileInputStream repositoryFileInputStream = (RepositoryFileInputStream) reportDefinitionInputStream;
+          RepositoryFile repoFile = repositoryFileInputStream.getFile();
+          if ( repoFile != null ) {
+            Serializable fileId = repoFile.getId();
+            if ( fileId != null ) {
+              report = ReportCreator.createReport( fileId );
+            }
+          }
+        }
+        if ( report == null ) {
+          report = ReportCreator.createReport( reportDefinitionInputStream, getDefinedResourceURL( null ) );
+        }
       } else if ( reportDefinition != null ) {
         // load the report definition as an action-sequence resource
         report = ReportCreator.createReport( reportDefinition.getAddress() );
