@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2015 Pentaho Corporation..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
@@ -20,28 +20,36 @@ package org.pentaho.reporting.platform.plugin;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.util.concurrent.Callable;
 
-import junit.framework.TestCase;
+import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.StandaloneSession;
 import org.pentaho.platform.engine.security.SecurityHelper;
+import org.pentaho.platform.repository2.unified.fileio.RepositoryFileInputStream;
 import org.pentaho.test.platform.engine.core.MicroPlatform;
+
 
 /**
  * Unit tests for the ReportingComponent.
  * 
  * @author Michael D'Amour
  */
-public class ReportingActionTest extends TestCase {
+public class ReportingActionTest {
 
-  private MicroPlatform microPlatform;
+  private static MicroPlatform microPlatform;
+  private static File tempFile;
+  private static final String PATH = "resource/solution/test/reporting/report.prpt";
 
-  @Override
-  protected void setUp() throws Exception {
-    new File( "./resource/solution/system/tmp" ).mkdirs();
+  @BeforeClass
+  public static void setUp() throws Exception {
+    tempFile = new File( "./resource/solution/system/tmp" );
+    tempFile.mkdirs();
 
     microPlatform = MicroPlatformFactory.create();
     microPlatform.start();
@@ -50,15 +58,27 @@ public class ReportingActionTest extends TestCase {
     PentahoSessionHolder.setSession( session );
   }
 
-  @Override
-  protected void tearDown() throws Exception {
+  @AfterClass
+  public static void tearDown() throws Exception {
     microPlatform.stop();
+    tempFile.delete();
   }
 
-  public void testPdf() throws Exception {
+  @Test
+  public void convertToPdf_ViaFileInputStream() throws Exception {
+    FileInputStream fileInputStream = new FileInputStream( PATH ); //$NON-NLS-1$
+    convertToPdf( fileInputStream );
+  }
+
+  @Test
+  public void convertToPdf_ViaRepositoryFileInputStream() throws Exception {
+    RepositoryFileInputStream repositoryFileInputStream = new RepositoryFileInputStream( PATH ); //$NON-NLS-1$
+    convertToPdf( repositoryFileInputStream );
+  }
+
+  public void convertToPdf( InputStream inputStream ) throws Exception {
     final SimpleReportingAction reportingAction = new SimpleReportingAction();
-    FileInputStream reportDefinition = new FileInputStream( "resource/solution/test/reporting/report.prpt" ); //$NON-NLS-1$
-    reportingAction.setInputStream( reportDefinition );
+    reportingAction.setInputStream( inputStream );
     reportingAction.setOutputType( "application/pdf" ); //$NON-NLS-1$
 
     File outputFile = File.createTempFile( "reportingActionTestResult", ".pdf" ); //$NON-NLS-1$ //$NON-NLS-2$
@@ -67,7 +87,7 @@ public class ReportingActionTest extends TestCase {
     reportingAction.setOutputStream( outputStream );
 
     // validate the component
-    assertTrue( reportingAction.validate() );
+    Assert.assertTrue( reportingAction.validate() );
     SecurityHelper.getInstance().runAsUser( "joe", new Callable<Object>() { //$NON-NLS-1$
       public Object call() throws Exception {
         try {
@@ -81,8 +101,9 @@ public class ReportingActionTest extends TestCase {
 
     } );
 
-    assertTrue( outputFile.exists() );
+    Assert.assertTrue( outputFile.exists() );
   }
+
 
   // public void testHTML() throws Exception
   // {
