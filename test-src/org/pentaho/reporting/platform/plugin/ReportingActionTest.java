@@ -24,6 +24,7 @@ import java.io.InputStream;
 import java.util.concurrent.Callable;
 
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.pentaho.platform.api.engine.IPentahoSession;
@@ -33,8 +34,6 @@ import org.pentaho.platform.engine.security.SecurityHelper;
 import org.pentaho.platform.repository2.unified.fileio.RepositoryFileInputStream;
 import org.pentaho.test.platform.engine.core.MicroPlatform;
 
-import static junit.framework.Assert.assertTrue;
-import static junit.framework.Assert.fail;
 
 /**
  * Unit tests for the ReportingComponent.
@@ -88,21 +87,21 @@ public class ReportingActionTest {
     reportingAction.setOutputStream( outputStream );
 
     // validate the component
-    assertTrue( reportingAction.validate() );
+    Assert.assertTrue( reportingAction.validate() );
     SecurityHelper.getInstance().runAsUser( "joe", new Callable<Object>() { //$NON-NLS-1$
       public Object call() throws Exception {
         try {
           reportingAction.execute();
         } catch ( Exception e ) {
           e.printStackTrace();
-          fail();
+          Assert.fail();
         }
         return null;
       }
 
     } );
 
-    assertTrue( outputFile.exists() );
+    Assert.assertTrue( outputFile.exists() );
   }
 
 
