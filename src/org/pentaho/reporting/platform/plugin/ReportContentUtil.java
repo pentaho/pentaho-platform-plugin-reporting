@@ -106,25 +106,13 @@ public class ReportContentUtil {
 
   public static Object computeParameterValue( final ParameterContext parameterContext,
       final ParameterDefinitionEntry parameterDefinition, final Object value ) throws ReportProcessingException {
-      Object def = null;
-      if ( value == null ) {
+    if ( value == null ) {
       // there are still buggy report definitions out there ...
-      if ( parameterDefinition.getDefaultValue( parameterContext ) != null ) {
-        def = parameterDefinition.getDefaultValue( parameterContext );
-      } else {
-        return null;
-      }
+      return null;
     }
 
     final Class valueType = parameterDefinition.getValueType();
     final boolean allowMultiSelect = isAllowMultiSelect( parameterDefinition );
-
-    if ( def instanceof String ) {
-      String s = (String) def;
-      String[] result = s.split( "," );
-      def = result;
-    }
-
     if ( allowMultiSelect && Collection.class.isInstance( value ) ) {
       final Collection c = (Collection) value;
       final Class componentType;
@@ -141,7 +129,7 @@ public class ReportContentUtil {
         Array.set( array, i, convert( parameterContext, parameterDefinition, componentType, sourceArray[i] ) );
       }
       return array;
-    } else if ( value != null && value.getClass().isArray() ) {
+    } else if ( value.getClass().isArray() ) {
       final Class componentType;
       if ( valueType.isArray() ) {
         componentType = valueType.getComponentType();
@@ -153,20 +141,6 @@ public class ReportContentUtil {
       final Object array = Array.newInstance( componentType, length );
       for ( int i = 0; i < length; i++ ) {
         Array.set( array, i, convert( parameterContext, parameterDefinition, componentType, Array.get( value, i ) ) );
-      }
-      return array;
-    } else if ( def != null && def.getClass().isArray() ) {
-      final Class componentType;
-      if ( valueType.isArray() ) {
-        componentType = valueType.getComponentType();
-      } else {
-        componentType = valueType;
-      }
-
-      final int length = Array.getLength( def );
-      final Object array = Array.newInstance( componentType, length );
-      for ( int i = 0; i < length; i++ ) {
-        Array.set( array, i, convert( parameterContext, parameterDefinition, componentType, Array.get( def, i ) ) );
       }
       return array;
     } else if ( allowMultiSelect ) {
