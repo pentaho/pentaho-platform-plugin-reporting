@@ -26,6 +26,7 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
@@ -46,6 +47,7 @@ import org.pentaho.reporting.engine.classic.core.parameters.ParameterContext;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterDefinitionEntry;
 import org.pentaho.reporting.engine.classic.core.parameters.ValidationMessage;
 import org.pentaho.reporting.engine.classic.core.parameters.ValidationResult;
+import org.pentaho.reporting.engine.classic.core.parameters.DefaultListParameter;
 import org.pentaho.reporting.engine.classic.core.util.ReportParameterValues;
 import org.pentaho.reporting.engine.classic.core.util.beans.BeanException;
 import org.pentaho.reporting.engine.classic.core.util.beans.ConverterRegistry;
@@ -53,6 +55,7 @@ import org.pentaho.reporting.engine.classic.core.util.beans.ValueConverter;
 import org.pentaho.reporting.libraries.base.util.StringUtils;
 import org.pentaho.reporting.libraries.resourceloader.ResourceException;
 import org.pentaho.reporting.platform.plugin.messages.Messages;
+import org.pentaho.reporting.libraries.base.util.CSVTokenizer;
 
 public class ReportContentUtil {
 
@@ -86,8 +89,23 @@ public class ReportContentUtil {
       for ( final ParameterDefinitionEntry param : params ) {
         final String paramName = param.getName();
         try {
+          Object value = inputs.get( paramName );
+          if ( value == null && ReportContentUtil.isAllowMultiSelect( param ) ) {
+            if ( param.getDefaultValue( context ) != null ) {
+              Object defaultValue = param.getDefaultValue( context );
+              if ( defaultValue instanceof String && param instanceof DefaultListParameter ) {
+                CSVTokenizer csvt = new CSVTokenizer( (String) defaultValue );
+                ArrayList<String> result = new ArrayList<String>();
+                while ( csvt.hasMoreTokens() ) {
+                  final String el = csvt.nextToken();
+                  result.add( el );
+                }
+                ( (DefaultListParameter) param ).setDefaultValue( result.toArray( new String[ result.size() ] ) );
+              }
+            }
+          }
           final Object computedParameter =
-              ReportContentUtil.computeParameterValue( context, param, inputs.get( paramName ) );
+              ReportContentUtil.computeParameterValue( context, param, value );
           parameterValues.put( param.getName(), computedParameter );
           if ( log.isInfoEnabled() ) {
             log.info( Messages.getInstance().getString( "ReportPlugin.infoParameterValues", //$NON-NLS-1$
