@@ -366,13 +366,21 @@ define([ 'common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui/ut
           this.resize();
         },
 
+        _getAcceptedPage: function(promptPanel) {
+          var acceptedPage = promptPanel.paramDefn.getParameter('accepted-page');
+          if(acceptedPage != null && typeof acceptedPage === 'object') {
+            return acceptedPage;
+          }
+          throw 'accepted-page is not a proper parameter - ' + acceptedPage;
+        },
+
         updatePageControl: function(promptPanel) {
           var pc = registry.byId('pageControl');
 
           pc.registerPageNumberChangeCallback(undefined);
 
           if (!promptPanel.paramDefn.paginate) {
-            promptPanel.setParameterValue(promptPanel.paramDefn.getParameter('accepted-page'), '-1');
+            promptPanel.setParameterValue(this._getAcceptedPage(promptPanel), '-1');
             pc.setPageCount(1);
             pc.setPageNumber(1);
             // pc.disable();
@@ -385,7 +393,7 @@ define([ 'common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui/ut
 
             // add our default page, so we can keep this between selections of other parameters, otherwise it will not be on the
             // set of params are default back to zero (page 1)
-            promptPanel.setParameterValue(promptPanel.paramDefn.getParameter('accepted-page'), '' + page);
+            promptPanel.setParameterValue(this._getAcceptedPage(promptPanel), '' + page);
             pc.setPageCount(total);
             pc.setPageNumber(page + 1);
           }
@@ -396,7 +404,7 @@ define([ 'common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui/ut
         },
 
         pageChanged: function(promptPanel, pageNumber) {
-          promptPanel.setParameterValue(promptPanel.paramDefn.getParameter('accepted-page'), '' + (pageNumber - 1));
+          promptPanel.setParameterValue(this._getAcceptedPage(promptPanel), '' + (pageNumber - 1));
           promptPanel.submit(promptPanel, {isPageChange: true});
         },
 
