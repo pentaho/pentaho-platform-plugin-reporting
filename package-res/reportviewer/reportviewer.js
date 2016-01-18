@@ -12,7 +12,7 @@
 * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 * See the GNU Lesser General Public License for more details.
 *
-* Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
+* Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
 */
 
 define([ 'common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui/util/timeutil', 'common-ui/util/formatting', 'pentaho/common/Messages', "dojo/dom", "dojo/on", "dojo/_base/lang",
@@ -349,7 +349,7 @@ define([ 'common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui/ut
                          promptPanel.paramDefn.promptNeeded ||
                          !promptPanel.paramDefn.allowAutoSubmit();
           }
-          
+
           var parameters = util.getUrlParameters();
           var toggleParamName = 'toolbar-parameterToggle';
           if (parameters[toggleParamName] !== undefined) {
@@ -366,6 +366,15 @@ define([ 'common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui/ut
           this.resize();
         },
 
+        /**
+         * Retrieves 'accepted-page'parameter from the prompt panel.
+         *
+         * @method
+         * @private
+         * @param {PromptPanel} promptPanel The prompt panel instance
+         * @returns {Parameter} The 'accepted-page' parameter, see 'common-ui/parameters/Parameter'
+         * @throws {String} Exception if 'accepted-page' parameter is null or not an object
+         */
         _getAcceptedPage: function(promptPanel) {
           var acceptedPage = promptPanel.paramDefn.getParameter('accepted-page');
           if(acceptedPage != null && typeof acceptedPage === 'object') {
