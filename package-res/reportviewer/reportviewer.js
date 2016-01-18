@@ -12,7 +12,7 @@
 * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 * See the GNU Lesser General Public License for more details.
 *
-* Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
+* Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
 */
 
 define([ 'common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui/util/timeutil', 'common-ui/util/formatting', 'pentaho/common/Messages', "dojo/dom", "dojo/on", "dojo/_base/lang",
@@ -349,7 +349,7 @@ define([ 'common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui/ut
                          promptPanel.paramDefn.promptNeeded ||
                          !promptPanel.paramDefn.allowAutoSubmit();
           }
-          
+
           var parameters = util.getUrlParameters();
           var toggleParamName = 'toolbar-parameterToggle';
           if (parameters[toggleParamName] !== undefined) {
@@ -366,13 +366,30 @@ define([ 'common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui/ut
           this.resize();
         },
 
+        /**
+         * Retrieves 'accepted-page'parameter from the prompt panel.
+         *
+         * @method
+         * @private
+         * @param {PromptPanel} promptPanel The prompt panel instance
+         * @returns {Parameter} The 'accepted-page' parameter, see 'common-ui/parameters/Parameter'
+         * @throws {String} Exception if 'accepted-page' parameter is null or not an object
+         */
+        _getAcceptedPage: function(promptPanel) {
+          var acceptedPage = promptPanel.paramDefn.getParameter('accepted-page');
+          if(acceptedPage != null && typeof acceptedPage === 'object') {
+            return acceptedPage;
+          }
+          throw 'accepted-page is not a proper parameter - ' + acceptedPage;
+        },
+
         updatePageControl: function(promptPanel) {
           var pc = registry.byId('pageControl');
 
           pc.registerPageNumberChangeCallback(undefined);
 
           if (!promptPanel.paramDefn.paginate) {
-            promptPanel.setParameterValue(promptPanel.paramDefn.getParameter('accepted-page'), '-1');
+            promptPanel.setParameterValue(this._getAcceptedPage(promptPanel), '-1');
             pc.setPageCount(1);
             pc.setPageNumber(1);
             // pc.disable();
@@ -385,7 +402,7 @@ define([ 'common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui/ut
 
             // add our default page, so we can keep this between selections of other parameters, otherwise it will not be on the
             // set of params are default back to zero (page 1)
-            promptPanel.setParameterValue(promptPanel.paramDefn.getParameter('accepted-page'), '' + page);
+            promptPanel.setParameterValue(this._getAcceptedPage(promptPanel), '' + page);
             pc.setPageCount(total);
             pc.setPageNumber(page + 1);
           }
@@ -396,7 +413,7 @@ define([ 'common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui/ut
         },
 
         pageChanged: function(promptPanel, pageNumber) {
-          promptPanel.setParameterValue(promptPanel.paramDefn.getParameter('accepted-page'), '' + (pageNumber - 1));
+          promptPanel.setParameterValue(this._getAcceptedPage(promptPanel), '' + (pageNumber - 1));
           promptPanel.submit(promptPanel, {isPageChange: true});
         },
 
