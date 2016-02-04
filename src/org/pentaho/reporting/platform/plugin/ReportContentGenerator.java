@@ -40,7 +40,7 @@ public class ReportContentGenerator extends ParameterContentGenerator {
   private static final long serialVersionUID = 1L;
 
   public enum RENDER_TYPE {
-    REPORT, XML, PARAMETER, DOWNLOAD
+    REPORT, XML, PARAMETER, DOWNLOAD, ASYNC
   }
 
   private static final Log log = LogFactory.getLog( ReportContentGenerator.class );
@@ -95,6 +95,11 @@ public class ReportContentGenerator extends ParameterContentGenerator {
              new ExecuteReportContentHandler( this ); //$NON-NLS-1$
           executeReportContentHandler.createReportContent( outputStream, prptFile.getId(), prptFile.getPath(), false );
           break;
+        }
+        case ASYNC: {
+          // create future task and send redirect
+          final BackgroundJobReportContentGenerator genAsync = new BackgroundJobReportContentGenerator( this );
+          genAsync.createReportContent( outputStream, prptFile.getId(), prptFile.getPath() );
         }
         default:
           throw new IllegalArgumentException();

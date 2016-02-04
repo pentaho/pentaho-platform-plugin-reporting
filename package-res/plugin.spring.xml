@@ -53,4 +53,12 @@
         class="org.pentaho.reporting.platform.plugin.output.FastExportReportOutputHandlerFactory" scope="prototype"/>
   <bean id="org.pentaho.reporting.platform.plugin.cache.ReportCache"
         class="org.pentaho.reporting.platform.plugin.cache.NullReportCache" scope="prototype"/>
+
+  <!-- thread pool executor -->
+  <bean id="pentaho-reporting-async-thread-pool" class="org.pentaho.reporting.platform.plugin.cache.PentahoAsyncCache" scope="singltone" />
+
+  <!--  -->
+  <bean id="api" class="org.pentaho.platform.web.servlet.JAXRSPluginServlet"/>
+  <bean class="org.pentaho.reporting.platform.plugin.BackgroundJobReportContentGenerator" scope="prototype" />
+
 </beans>
