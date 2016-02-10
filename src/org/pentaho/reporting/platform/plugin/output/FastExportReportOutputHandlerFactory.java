@@ -23,8 +23,6 @@ import org.pentaho.reporting.platform.plugin.SimpleReportingAction;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.pentaho.reporting.platform.plugin.SimpleReportingAction;
-
 public class FastExportReportOutputHandlerFactory extends DefaultReportOutputHandlerFactory {
   public FastExportReportOutputHandlerFactory() {
   }
@@ -76,20 +74,20 @@ public class FastExportReportOutputHandlerFactory extends DefaultReportOutputHan
   }
 
   @Override
-  protected ReportOutputHandler createHtmlPageOutput(final ReportOutputHandlerSelector selector) {
-    if (isHtmlPageAvailable() == false) {
+  protected ReportOutputHandler createHtmlPageOutput( final ReportOutputHandlerSelector selector ) {
+    if ( isHtmlPageAvailable() == false ) {
       return null;
     }
 
     final ExtendedConfiguration config = ClassicEngineBoot.getInstance().getExtendedConfig();
-    if (config.getBoolProperty("org.pentaho.reporting.platform.plugin.output.CachePageableHtmlContent")) {
+    if ( config.getBoolProperty( "org.pentaho.reporting.platform.plugin.output.CachePageableHtmlContent" ) ) {
       // use the content repository
-      final String contentHandlerPattern = computeContentHandlerPattern(selector);
+      final String contentHandlerPattern = computeContentHandlerPattern( selector );
       final CachingPageableHTMLOutput pageableHTMLOutput = new CachingPageableHTMLOutput();
-      pageableHTMLOutput.setContentHandlerPattern(contentHandlerPattern);
+      pageableHTMLOutput.setContentHandlerPattern( contentHandlerPattern );
       return pageableHTMLOutput;
     }
 
-    return super.createHtmlPageOutput(selector);
+    return super.createHtmlPageOutput( selector );
   }
 }
