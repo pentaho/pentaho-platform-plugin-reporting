@@ -45,7 +45,7 @@ import org.pentaho.reporting.platform.plugin.staging.AbstractStagingHandler;
 import org.pentaho.reporting.platform.plugin.staging.StagingHandler;
 
 public class ExecuteReportContentHandler {
-  private static final String FORCED_BUFFERED_WRITING =
+  public static final String FORCED_BUFFERED_WRITING =
       "org.pentaho.reporting.engine.classic.core.modules.output.table.html.ForceBufferedWriting";
   private static final Log logger = LogFactory.getLog( ExecuteReportContentHandler.class );
   private static final StagingMode DEFAULT = StagingMode.THRU;
