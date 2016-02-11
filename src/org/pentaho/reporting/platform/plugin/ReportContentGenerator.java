@@ -48,6 +48,7 @@ public class ReportContentGenerator extends ParameterContentGenerator {
   public ReportContentGenerator() {
   }
 
+  @Override
   public void createContent( final OutputStream outputStream ) throws Exception {
     final String id = UUIDUtil.getUUIDAsString();
     String path = null;
@@ -95,11 +96,6 @@ public class ReportContentGenerator extends ParameterContentGenerator {
              new ExecuteReportContentHandler( this ); //$NON-NLS-1$
           executeReportContentHandler.createReportContent( outputStream, prptFile.getId(), prptFile.getPath(), false );
           break;
-        }
-        case ASYNC: {
-          // create future task and send redirect
-          final BackgroundJobReportContentGenerator genAsync = new BackgroundJobReportContentGenerator( this );
-          genAsync.createReportContent( outputStream, prptFile.getId(), prptFile.getPath() );
         }
         default:
           throw new IllegalArgumentException();

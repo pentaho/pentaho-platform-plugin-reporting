@@ -35,7 +35,9 @@
     <property name="mimeType" value="text/html" />
     <property name="relativeFilePath" value="reportviewer/gwt/report-test.html" />
     <property name="pluginId" value="reporting" />
-  </bean>  
+  </bean>
+
+  <bean id="prpt.reportjob" class="org.pentaho.reporting.platform.plugin.BackgroundJobReportContentGenerator" scope="prototype" />
   
   <bean id="SimpleReportingComponent" class="org.pentaho.reporting.platform.plugin.SimpleReportingComponent" scope="prototype"/>
   
@@ -55,10 +57,12 @@
         class="org.pentaho.reporting.platform.plugin.cache.NullReportCache" scope="prototype"/>
 
   <!-- thread pool executor -->
-  <bean id="pentaho-reporting-async-thread-pool" class="org.pentaho.reporting.platform.plugin.cache.PentahoAsyncCache" scope="singltone" />
+  <bean id="reporting-async-thread-pool" class="org.pentaho.reporting.platform.plugin.async.PentahoAsyncExecutor" scope="singleton" >
+    <!-- fixed thread pool capacity -->
+    <constructor-arg type="int" value="10" />
+  </bean>
 
-  <!--  -->
   <bean id="api" class="org.pentaho.platform.web.servlet.JAXRSPluginServlet"/>
-  <bean class="org.pentaho.reporting.platform.plugin.BackgroundJobReportContentGenerator" scope="prototype" />
+  <bean class="org.pentaho.reporting.platform.plugin.JobManager" />
 
 </beans>
