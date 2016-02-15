@@ -116,7 +116,7 @@
 
 <div id="reportArea" class="pentaho-transparent">
   <div id="reportPageOutline">
-    <form id="hiddenReportContentForm" method="post" target="reportContentIframe">
+    <form id="hiddenReportContentForm" method="get" target="reportContentIframe">
       <input type="hidden" type="submit" value="Submit" />
     </form>
     <iframe id="reportContent" frameborder="0" name="reportContentIframe"></iframe>
@@ -124,6 +124,8 @@
 </div>
 
 <div id="messageBox" data-dojo-type="pentaho.common.MessageBox" title="" style="width:400px; display:none;">
+</div>
+<div id="feedbackScreen" data-dojo-type="pentaho.common.FeedbackScreen" title="" style="width:400px; display:none;">
 </div>
 <div id="glassPane" data-dojo-type="pentaho.common.GlassPane">
 </div>
