@@ -35,13 +35,13 @@
     <property name="mimeType" value="text/html" />
     <property name="relativeFilePath" value="reportviewer/gwt/report-test.html" />
     <property name="pluginId" value="reporting" />
-  </bean>  
+  </bean>
   
   <bean id="SimpleReportingComponent" class="org.pentaho.reporting.platform.plugin.SimpleReportingComponent" scope="prototype"/>
-  
+
   <!-- Register with PentahoSystem -->
   <bean class="org.pentaho.platform.engine.core.system.objfac.spring.ApplicationContextPentahoSystemRegisterer" scope="singleton"/>
-  
+
   <bean class="org.pentaho.platform.engine.core.solution.ContentInfo">
   	<property name="mimeType" value="application/prpt"/>	
 		<property name="extension" value=".prpt"/>	
@@ -53,4 +53,17 @@
         class="org.pentaho.reporting.platform.plugin.output.FastExportReportOutputHandlerFactory" scope="prototype"/>
   <bean id="org.pentaho.reporting.platform.plugin.cache.ReportCache"
         class="org.pentaho.reporting.platform.plugin.cache.NullReportCache" scope="prototype"/>
+
+  <bean id="plugin-cache-backend"
+        class="org.pentaho.reporting.platform.plugin.cache.FileSystemCacheBackend" scope="singleton" >
+    <property name="cachePath" value="/reporting-plugin/"/>
+  </bean>
+  <bean id="plugin-cache-strategy"
+        class="org.pentaho.reporting.platform.plugin.cache.PluginSessionCache" scope="session">
+    <constructor-arg ref="plugin-cache-backend"/>
+  </bean>
+  <bean id="plugin-cache-manager"
+        class="org.pentaho.reporting.platform.plugin.cache.PluginCacheManagerImpl" scope="singleton">
+    <constructor-arg ref="plugin-cache-strategy"/>
+  </bean>
 </beans>
