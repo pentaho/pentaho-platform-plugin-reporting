@@ -52,7 +52,7 @@ import java.util.concurrent.Future;
     return Response.status( 418 ).build();
   }
 
-  @GET @POST @Path( "{job_id}/content" ) public Response getContent( @PathParam( "job_id" ) String job_id )
+  @POST @Path( "{job_id}/content" ) public Response getContent( @PathParam( "job_id" ) String job_id )
       throws IOException {
     UUID uuid = null;
     try {
