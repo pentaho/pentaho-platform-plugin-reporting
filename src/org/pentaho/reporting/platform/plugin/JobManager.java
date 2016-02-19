@@ -28,7 +28,12 @@ import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.platform.plugin.async.AsyncReportState;
 import org.pentaho.reporting.platform.plugin.async.PentahoAsyncExecutor;
 
-import javax.ws.rs.*;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
@@ -45,11 +50,18 @@ import java.util.concurrent.Future;
 
   private static final Log logger = LogFactory.getLog( JobManager.class );
 
-  @GET public Response getEcho() {
-    //TODO bi server settings on/off async calls
+  private boolean isSuportAsync = true;
 
-    // I'm a teapot
-    return Response.status( 418 ).build();
+  JobManager( boolean isSuportAsync ) {
+    if ( !isSuportAsync ) {
+      logger.info( "JobManager initialization: async mode marked as disabled." );
+    }
+    this.isSuportAsync = isSuportAsync;
+  }
+
+  @GET public Response getEcho() {
+    // I'm a teapot? Yes I am.
+    return isSuportAsync ? Response.status( 418 ).build() : Response.status( Response.Status.NOT_FOUND ).build();
   }
 
   @POST @Path( "{job_id}/content" ) public Response getContent( @PathParam( "job_id" ) String job_id )
@@ -58,7 +70,7 @@ import java.util.concurrent.Future;
     try {
       uuid = UUID.fromString( job_id );
     } catch ( Exception e ) {
-      logger.error( "Invalid UUID: " + job_id );
+      logger.error( "Content: invalid UUID: " + job_id );
       // The 422 (Unprocessable Entity) status code
       return Response.status( 422 ).build();
     }
@@ -101,7 +113,7 @@ import java.util.concurrent.Future;
     try {
       uuid = UUID.fromString( job_id );
     } catch ( Exception e ) {
-      logger.error( "Invalid UUID: " + job_id );
+      logger.error( "Status: invalid UUID: " + job_id );
       // The 422 (Unprocessable Entity) status code
       return Response.status( 422 ).build();
     }
@@ -125,6 +137,33 @@ import java.util.concurrent.Future;
       Response.serverError().build();
     }
     return Response.ok( json ).build();
+  }
+
+  @GET @Path( "{job_id}/cancel" )
+  public Response cancel( @PathParam( "job_id" ) String job_id ) {
+    UUID uuid = null;
+    try {
+      uuid = UUID.fromString( job_id );
+    } catch ( Exception e ) {
+      logger.error( "Status: invalid UUID: " + job_id );
+      // The 422 (Unprocessable Entity) status code
+      return Response.status( 422 ).build();
+    }
+
+    PentahoAsyncExecutor executor = getExecutor();
+    if ( executor == null ) {
+      // where is my bean?
+      return Response.serverError().build();
+    }
+    final IPentahoSession session = PentahoSessionHolder.getSession();
+
+    Future<InputStream> future = executor.getFuture( uuid, session );
+    AsyncReportState state = executor.getReportState( uuid, session );
+
+    logger.debug( "Cancellation of report: " + state.getPath() + ", requested by : " + session.getName() );
+    future.cancel( true );
+
+    return Response.ok().build();
   }
 
   //TODO since it is singlton, get it only one time?
@@ -151,5 +190,4 @@ import java.util.concurrent.Future;
       }
     }
   }
-
 }

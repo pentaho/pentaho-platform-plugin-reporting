@@ -31,7 +31,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  *
  * Created by dima.prokopenko@gmail.com on 2/12/2016.
  */
-public class AsyncReportStatusListener implements AsyncReportListener, ReportProgressListener, AsyncReportState {
+class AsyncReportStatusListener implements AsyncReportListener, ReportProgressListener, AsyncReportState {
 
   private String path;
   private UUID uuid;
