@@ -10,6 +10,8 @@ import org.pentaho.reporting.platform.plugin.SimpleReportingComponent;
 import org.pentaho.reporting.platform.plugin.staging.AsyncJobFileStagingHandler;
 
 import java.io.InputStream;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.RunnableFuture;
 
 /**
  * Created by dima.prokopenko@gmail.com on 2/2/2016.
@@ -80,6 +82,26 @@ public class PentahoAsyncReportExecution implements AsyncReportExecution<InputSt
   @Override
   public AsyncReportState getState() {
     return listener.clone();
+  }
+
+  @Override public void cancel() {
+    logger.info( "Cancellation of running report: " + this.getState().getPath() );
+    //reportComponent...
+    // TODO cancel report running?
+  }
+
+  @Override public RunnableFuture<InputStream> newTask() {
+    return new FutureTask<InputStream>( this ) {
+      public boolean cancel( boolean mayInterruptIfRunning )  {
+        try {
+          if ( mayInterruptIfRunning ) {
+            PentahoAsyncReportExecution.this.cancel();
+          }
+        } finally {
+          return super.cancel( mayInterruptIfRunning );
+        }
+      }
+    };
   }
 
   @Override

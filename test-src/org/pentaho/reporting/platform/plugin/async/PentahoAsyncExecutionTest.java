@@ -32,6 +32,8 @@ import org.pentaho.reporting.platform.plugin.staging.AsyncJobFileStagingHandler;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.UUID;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -93,5 +95,36 @@ public class PentahoAsyncExecutionTest {
     assertFalse( returnStream.equals( input ) );
 
     verify( handler, times(0) ).getStagingContent();
+  }
+
+  @Test
+  public void testCancellationFeature() throws InterruptedException {
+    final AtomicBoolean run = new AtomicBoolean( false );
+
+    PentahoAsyncReportExecution spy = this.getSleepingSpy( run );
+
+    PentahoAsyncExecutor executor = new PentahoAsyncExecutor( 13 );
+    UUID id = executor.addTask( spy, this.userSession );
+
+    Thread.sleep( 100 );
+    Future<InputStream> fu = executor.getFuture( id, this.userSession );
+    fu.cancel( true );
+
+    verify( spy, times( 1 )).cancel();
+  }
+
+  private PentahoAsyncReportExecution getSleepingSpy( final AtomicBoolean run ) {
+    PentahoAsyncReportExecution exec = new PentahoAsyncReportExecution( "junit-path", component, handler ) {
+      @Override
+      public InputStream call() throws Exception {
+        while ( !run.get() ) {
+          Thread.sleep( 100 );
+        }
+        return null;
+      }
+    };
+    PentahoAsyncReportExecution spy = spy( exec );
+
+    return spy;
   }
 }

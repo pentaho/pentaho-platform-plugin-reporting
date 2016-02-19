@@ -16,10 +16,7 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 
 /**
  * Created by dima.prokopenko@gmail.com on 2/2/2016.
@@ -43,7 +40,8 @@ public class PentahoAsyncExecutor implements ILogoutListener, IPentahoSystemList
   //package private visibility for testing purposes
   PentahoAsyncExecutor( int capacity ) {
     log.info( "Initialized reporting  async execution fixed thread pool with capacity: " + capacity );
-    executorService = Executors.newFixedThreadPool( capacity );
+    executorService = new PentahoAsyncCancellingExecutor( capacity, capacity, 0L, TimeUnit.MILLISECONDS,
+        new LinkedBlockingQueue<Runnable>() );
     PentahoSystem.addLogoutListener( this );
   }
 

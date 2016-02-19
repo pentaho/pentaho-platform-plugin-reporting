@@ -28,12 +28,17 @@ import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.pentaho.platform.api.engine.IPentahoSession;
+import org.pentaho.reporting.engine.classic.core.MasterReport;
+import org.pentaho.reporting.libraries.base.config.ModifiableConfiguration;
+import org.pentaho.reporting.platform.plugin.SimpleReportingComponent;
+import org.pentaho.reporting.platform.plugin.staging.AsyncJobFileStagingHandler;
 
 import javax.validation.constraints.NotNull;
 import java.io.InputStream;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static junit.framework.Assert.assertNull;
@@ -52,7 +57,7 @@ import static org.pentaho.reporting.platform.plugin.async.PentahoAsyncExecutor.C
  */
 public class PentahoAsyncReportExecutorTest {
 
-  //@Rule public Timeout globalTimeout = new Timeout( 10000 );
+  @Rule public Timeout globalTimeout = new Timeout( 10000 );
 
   IPentahoSession session1 = mock( IPentahoSession.class );
   IPentahoSession session2 = mock( IPentahoSession.class );
@@ -61,17 +66,31 @@ public class PentahoAsyncReportExecutorTest {
   UUID uuid1 = UUID.randomUUID();
   UUID uuid2 = UUID.randomUUID();
 
+  SimpleReportingComponent component = mock( SimpleReportingComponent.class );
+  AsyncJobFileStagingHandler handler = mock( AsyncJobFileStagingHandler.class );
+  MasterReport report = mock( MasterReport.class );
+  ModifiableConfiguration configuration = mock( ModifiableConfiguration.class );
+
   final InputStream input = new NullInputStream( 0 );
 
-  PentahoAsyncReportExecution task1 = mock( PentahoAsyncReportExecution.class );
+  PentahoAsyncReportExecution task1 = new PentahoAsyncReportExecution( "junit-path", component, handler );
 
   @Before public void before() throws Exception {
+    when( handler.getStagingContent() ).thenReturn( input );
+    when( report.getReportConfiguration() ).thenReturn( configuration );
+    when( component.getReport() ).thenReturn( report );
+
     when( session1.getId() ).thenReturn( sessionUid1.toString() );
     when( session2.getId() ).thenReturn( sessionUid2.toString() );
-    when( task1.call() ).thenReturn( input );
+
+    task1.setListener( mock( AsyncReportStatusListener.class ) );
+
+    //when( task1.call() ).thenReturn( input );
   }
 
-  @Test public void testCanCompleteTask() throws InterruptedException, ExecutionException {
+  @Test public void testCanCompleteTask() throws Exception {
+    when( component.execute() ).thenReturn( true );
+
     PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 10 );
     UUID id = exec.addTask( task1, session1 );
     Future<InputStream> result = exec.getFuture( id, session1 );
@@ -126,38 +145,6 @@ public class PentahoAsyncReportExecutorTest {
     assertNotNull( state );
   }
 
-  /**
-   * Waiting for Future cancel implementation.
-   *
-   * @throws Exception
-   */
-  @Test @Ignore public void testOnLogoutListner() throws Exception {
-    PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 10 );
-
-    AtomicBoolean switch1 = new AtomicBoolean( false );
-    AtomicBoolean switch2 = new AtomicBoolean( false );
-    AtomicBoolean switch3 = new AtomicBoolean( false );
-    AtomicBoolean switch4 = new AtomicBoolean( false );
-
-    PentahoAsyncReportExecution task1 = getControlledStub( switch1 );
-    PentahoAsyncReportExecution task2 = getControlledStub( switch2 );
-    PentahoAsyncReportExecution task3 = getControlledStub( switch3 );
-    PentahoAsyncReportExecution task4 = getControlledStub( switch4 );
-
-    // started for session 1
-    UUID id1 = exec.addTask( task1, session1 );
-    UUID id2 = exec.addTask( task2, session1 );
-
-    // started for session 2
-    UUID id3 = exec.addTask( task3, session2 );
-    UUID id4 = exec.addTask( task4, session2 );
-
-    // session is ended:
-    exec.onLogout( session2 );
-
-    fail( "Future cancel not implemented yet." );
-  }
-
   @Test public void compositeKeyEqualsHashCodeTest() {
     CompositeKey one = new CompositeKey( session1, uuid1 );
     CompositeKey two = new CompositeKey( session2, uuid2 );
@@ -178,7 +165,6 @@ public class PentahoAsyncReportExecutorTest {
 
   public PentahoAsyncReportExecution getControlledStub( final AtomicBoolean run ) throws Exception {
     PentahoAsyncReportExecution execution = mock( PentahoAsyncReportExecution.class );
-
     when( execution.call() ).thenAnswer( new Answer() {
       @Override public InputStream answer( InvocationOnMock invocationOnMock ) throws Throwable {
         while ( !run.get() ) {
@@ -187,7 +173,7 @@ public class PentahoAsyncReportExecutorTest {
         return input;
       }
     } );
-
+    when( execution.newTask() ).thenReturn( new FutureTask<InputStream>( execution ) );
 
     return execution;
   }
