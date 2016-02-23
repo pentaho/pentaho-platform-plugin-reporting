@@ -1,4 +1,4 @@
-/*!
+/*
  * This program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU Lesser General Public License, version 2.1 as published by the Free Software
  * Foundation.
@@ -12,20 +12,34 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
  */
-define([
-  "common-repo/pentaho-ajax",
-  "reportviewer/reportviewer",
-  "reportviewer/reportviewer-prompt",
-  'reportviewer/reportviewer-logging',
-  'reportviewer/formatter',
-  'dojo/parser',
-  'pentaho/common/Messages',
-  'pentaho/common/MessageBox',
-  'pentaho/common/Menu',
-  'pentaho/common/MenuItem',
-  'pentaho/common/PageControl', 'dijit/Toolbar', 'dijit/ToolbarSeparator', 'dijit/form/ToggleButton', 'pentaho/common/GlassPane', 'pentaho/common/FeedbackScreen'],
-    function (_pentaho_ajax, _reportViewer, Prompt, logging, formatter, parser, _Messages, _MessageBox, _Menu, _MenuItem, _PageControl) {
 
-    });
+package org.pentaho.reporting.platform.plugin.cache;
+
+import java.util.Map;
+
+/**
+ * Report representation for atomic cache operations
+ */
+public class ReportContentImpl implements IReportContent {
+
+  public ReportContentImpl( final int pageCount, final Map<Integer, byte[]> reportData ) {
+
+    this.pageCount = pageCount;
+    this.reportData = reportData;
+  }
+
+  private final int pageCount;
+
+  private final Map<Integer, byte[]> reportData;
+
+  @Override public int getPageCount() {
+    return pageCount;
+  }
+
+  @Override public byte[] getPageData( final int page ) {
+    return reportData.get( page );
+  }
+
+}

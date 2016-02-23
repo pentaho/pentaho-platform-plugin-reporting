@@ -40,7 +40,7 @@ public class ReportContentGenerator extends ParameterContentGenerator {
   private static final long serialVersionUID = 1L;
 
   public enum RENDER_TYPE {
-    REPORT, XML, PARAMETER, DOWNLOAD
+    REPORT, XML, PARAMETER, DOWNLOAD, ASYNC
   }
 
   private static final Log log = LogFactory.getLog( ReportContentGenerator.class );
@@ -48,6 +48,7 @@ public class ReportContentGenerator extends ParameterContentGenerator {
   public ReportContentGenerator() {
   }
 
+  @Override
   public void createContent( final OutputStream outputStream ) throws Exception {
     final String id = UUIDUtil.getUUIDAsString();
     String path = null;

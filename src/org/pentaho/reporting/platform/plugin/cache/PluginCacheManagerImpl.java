@@ -1,4 +1,4 @@
-/*!
+/*
  * This program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU Lesser General Public License, version 2.1 as published by the Free Software
  * Foundation.
@@ -12,20 +12,27 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
  */
-define([
-  "common-repo/pentaho-ajax",
-  "reportviewer/reportviewer",
-  "reportviewer/reportviewer-prompt",
-  'reportviewer/reportviewer-logging',
-  'reportviewer/formatter',
-  'dojo/parser',
-  'pentaho/common/Messages',
-  'pentaho/common/MessageBox',
-  'pentaho/common/Menu',
-  'pentaho/common/MenuItem',
-  'pentaho/common/PageControl', 'dijit/Toolbar', 'dijit/ToolbarSeparator', 'dijit/form/ToggleButton', 'pentaho/common/GlassPane', 'pentaho/common/FeedbackScreen'],
-    function (_pentaho_ajax, _reportViewer, Prompt, logging, formatter, parser, _Messages, _MessageBox, _Menu, _MenuItem, _PageControl) {
+package org.pentaho.reporting.platform.plugin.cache;
 
-    });
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+public class PluginCacheManagerImpl implements IPluginCacheManager {
+
+  private static final Log log = LogFactory.getLog( PluginCacheManagerImpl.class );
+
+  private IReportContentCache strategy;
+
+
+  public PluginCacheManagerImpl( final IReportContentCache strategy ) {
+    this.strategy = strategy;
+  }
+
+  @Override
+  public IReportContentCache getCache() {
+    return strategy;
+  }
+
+}
