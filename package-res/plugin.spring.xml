@@ -63,7 +63,9 @@
   </bean>
 
   <bean id="api" class="org.pentaho.platform.web.servlet.JAXRSPluginServlet"/>
-  <bean class="org.pentaho.reporting.platform.plugin.JobManager" />
+  <bean class="org.pentaho.reporting.platform.plugin.JobManager" >
+    <constructor-arg value="true"/>
+  </bean>
 
 <bean id="plugin-cache-backend"
         class="org.pentaho.reporting.platform.plugin.cache.FileSystemCacheBackend" scope="singleton" >
