@@ -36,6 +36,12 @@ import org.pentaho.platform.util.UUIDUtil;
 import org.pentaho.reporting.engine.classic.core.util.StagingMode;
 import org.pentaho.reporting.libraries.base.util.MemoryByteArrayOutputStream;
 
+/**
+ *
+ * @deprecated
+ * @use AbstractStagingHandler
+ */
+@Deprecated
 public class StagingHandler {
   private static final Log logger = LogFactory.getLog( StagingHandler.class );
 
