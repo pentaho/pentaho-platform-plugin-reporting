@@ -52,7 +52,7 @@ import java.util.concurrent.Future;
 
   private boolean isSuportAsync = true;
 
-  JobManager( boolean isSuportAsync ) {
+  public JobManager( boolean isSuportAsync ) {
     if ( !isSuportAsync ) {
       logger.info( "JobManager initialization: async mode marked as disabled." );
     }
