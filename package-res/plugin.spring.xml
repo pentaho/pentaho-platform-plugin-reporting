@@ -65,4 +65,16 @@
   <bean id="api" class="org.pentaho.platform.web.servlet.JAXRSPluginServlet"/>
   <bean class="org.pentaho.reporting.platform.plugin.JobManager" />
 
+<bean id="plugin-cache-backend"
+        class="org.pentaho.reporting.platform.plugin.cache.FileSystemCacheBackend" scope="singleton" >
+    <property name="cachePath" value="/reporting-plugin/"/>
+  </bean>
+  <bean id="plugin-cache-strategy"
+        class="org.pentaho.reporting.platform.plugin.cache.PluginSessionCache" scope="session">
+    <constructor-arg ref="plugin-cache-backend"/>
+  </bean>
+  <bean id="plugin-cache-manager"
+        class="org.pentaho.reporting.platform.plugin.cache.PluginCacheManagerImpl" scope="singleton">
+    <constructor-arg ref="plugin-cache-strategy"/>
+  </bean>
 </beans>

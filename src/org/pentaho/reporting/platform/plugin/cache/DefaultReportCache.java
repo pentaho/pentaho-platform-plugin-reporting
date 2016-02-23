@@ -315,7 +315,7 @@ public class DefaultReportCache implements ReportCache {
       final CacheManager manager;
       if ( attribute instanceof CacheManager == false ) {
         logger.debug( "id: " + session.getId() + " - Cache.put(..): No cache manager; creating one" );
-        manager = new CacheManager();
+        manager = CacheManager.create();
         session.setAttribute( SESSION_ATTRIBUTE, manager );
       } else {
         manager = (CacheManager) attribute;
