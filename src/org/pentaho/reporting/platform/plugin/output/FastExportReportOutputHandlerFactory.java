@@ -16,10 +16,14 @@
  */
 package org.pentaho.reporting.platform.plugin.output;
 
+import org.pentaho.reporting.engine.classic.core.AttributeNames;
+import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
+import org.pentaho.reporting.engine.classic.core.MasterReport;
+import org.pentaho.reporting.libraries.base.config.ExtendedConfiguration;
+import org.pentaho.reporting.platform.plugin.SimpleReportingAction;
+
 import java.io.IOException;
 import java.io.InputStream;
-
-import org.pentaho.reporting.platform.plugin.SimpleReportingAction;
 
 public class FastExportReportOutputHandlerFactory extends DefaultReportOutputHandlerFactory {
   public FastExportReportOutputHandlerFactory() {
@@ -70,6 +74,4 @@ public class FastExportReportOutputHandlerFactory extends DefaultReportOutputHan
       return new FastStreamHtmlOutput( computeContentHandlerPattern( selector ) );
     }
   }
-
-
 }
