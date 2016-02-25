@@ -50,6 +50,7 @@ public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputS
     listener.setStatus( AsyncExecutionStatus.WORKING );
 
     final MasterReport report = reportComponent.getReport();
+    report.addReportProgressListener( listener );
 
     if ( reportComponent.execute() ) {
       listener.setStatus( AsyncExecutionStatus.FINISHED );
