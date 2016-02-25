@@ -262,19 +262,14 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
 
   private Serializable computeCacheKey( final MasterReport report ) throws BeanException {
     final ResourceKey definitionSource = report.getDefinitionSource();
-    final ArrayList<String> sourceKey = new ArrayList<>();
+
     //We need a parent because ZipRepository always has the same values
     final ResourceKey parent = definitionSource.getParent();
+    final List<String> sourceKey;
     if ( parent != null ) {
-      if ( parent.getIdentifierAsString() != null ) {
-        sourceKey.add( String.valueOf( parent.getSchema() ) );
-        sourceKey.add( parent.getIdentifierAsString() );
-      }
-      //Check if report was replaced in repository
-      final String rawDataVersion = getRawDataVersion( report, parent );
-      if ( null != rawDataVersion ) {
-        sourceKey.add( rawDataVersion );
-      }
+      sourceKey = computeDefSourceKey( report, parent );
+    }else {
+      sourceKey = computeDefSourceKey( report, definitionSource );
     }
     final HashMap<String, String> params = new HashMap<>();
     final ReportParameterDefinition parameterDefinition = report.getParameterDefinition();
@@ -292,6 +287,20 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
     key.add( sourceKey );
     key.add( params );
     return key;
+  }
+
+  private List<String> computeDefSourceKey( final MasterReport report,  final ResourceKey definitionSource ) {
+    final ArrayList<String> sourceKey = new ArrayList<>(  );
+    if ( definitionSource.getIdentifierAsString() != null ) {
+      sourceKey.add( String.valueOf( definitionSource.getSchema() ) );
+      sourceKey.add( definitionSource.getIdentifierAsString() );
+    }
+    //Check if report was replaced in repository
+    final String rawDataVersion = getRawDataVersion( report, definitionSource );
+    if ( null != rawDataVersion ) {
+      sourceKey.add( rawDataVersion );
+    }
+    return sourceKey;
   }
 
   private String getRawDataVersion( final MasterReport report, final ResourceKey definitionSource ) {
