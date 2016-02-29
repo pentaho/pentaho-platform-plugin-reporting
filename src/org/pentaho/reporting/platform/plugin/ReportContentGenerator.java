@@ -48,6 +48,7 @@ public class ReportContentGenerator extends ParameterContentGenerator {
   public ReportContentGenerator() {
   }
 
+  @Override
   public void createContent( final OutputStream outputStream ) throws Exception {
     final String id = UUIDUtil.getUUIDAsString();
     String path = null;

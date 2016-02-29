@@ -41,9 +41,11 @@ import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlTableModule;
 import org.pentaho.reporting.engine.classic.core.util.StagingMode;
 import org.pentaho.reporting.platform.plugin.messages.Messages;
+import org.pentaho.reporting.platform.plugin.staging.AbstractStagingHandler;
+import org.pentaho.reporting.platform.plugin.staging.StagingHandler;
 
 public class ExecuteReportContentHandler {
-  private static final String FORCED_BUFFERED_WRITING =
+  public static final String FORCED_BUFFERED_WRITING =
       "org.pentaho.reporting.engine.classic.core.modules.output.table.html.ForceBufferedWriting";
   private static final Log logger = LogFactory.getLog( ExecuteReportContentHandler.class );
   private static final StagingMode DEFAULT = StagingMode.THRU;
@@ -85,7 +87,7 @@ public class ExecuteReportContentHandler {
 
       final MasterReport report = reportComponent.getReport();
       final StagingMode stagingMode = getStagingMode( inputs, report );
-      reportStagingHandler = new StagingHandler( outputStream, stagingMode, this.userSession );
+      reportStagingHandler = AbstractStagingHandler.getStagingHandlerImpl( outputStream, this.userSession, stagingMode );
 
       if ( reportStagingHandler.isFullyBuffered() ) {
         // it is safe to disable the buffered writing for the report now that we have a
