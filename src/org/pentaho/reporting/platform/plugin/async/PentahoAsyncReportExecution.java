@@ -42,31 +42,31 @@ public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputS
 
   @Override
   public InputStream call() throws Exception {
-    final long start = System.currentTimeMillis();
-    AuditHelper.audit( userSession, userSession, url, getClass().getName(), getClass()
+    try {
+      ReportListenerThreadHolder.setListener( listener );
+      final long start = System.currentTimeMillis();
+      AuditHelper.audit( userSession, userSession, url, getClass().getName(), getClass()
         .getName(), MessageTypes.INSTANCE_START, instanceId, "", 0, null );
 
-    // let's do it!
-    listener.setStatus( AsyncExecutionStatus.WORKING );
+      if ( reportComponent.execute() ) {
 
-    final MasterReport report = reportComponent.getReport();
-    report.addReportProgressListener( listener );
-
-    if ( reportComponent.execute() ) {
-      listener.setStatus( AsyncExecutionStatus.FINISHED );
-
-      long end = System.currentTimeMillis();
-      AuditHelper.audit( userSession, userSession, url, getClass().getName(), getClass()
+        final long end = System.currentTimeMillis();
+        AuditHelper.audit( userSession, userSession, url, getClass().getName(), getClass()
           .getName(), MessageTypes.FAILED, instanceId, "", ( (float) ( end - start ) / 1000 ), null );
 
-      return handler.getStagingContent();
-    }
+        listener.setStatus( AsyncExecutionStatus.FINISHED );
 
-    listener.setStatus( AsyncExecutionStatus.FAILED );
+        return handler.getStagingContent();
+      }
 
-    AuditHelper.audit( userSession, userSession, url, getClass().getName(), getClass()
+      listener.setStatus( AsyncExecutionStatus.FAILED );
+
+      AuditHelper.audit( userSession, userSession, url, getClass().getName(), getClass()
         .getName(), MessageTypes.FAILED, instanceId, "", 0, null );
-    return new NullInputStream( 0 );
+      return new NullInputStream( 0 );
+    } finally {
+      ReportListenerThreadHolder.clear();
+    }
   }
 
   @Override

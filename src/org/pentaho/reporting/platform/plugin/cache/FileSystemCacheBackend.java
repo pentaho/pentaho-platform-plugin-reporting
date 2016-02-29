@@ -51,6 +51,7 @@ public class FileSystemCacheBackend implements ICacheBackend {
 
   @Override
   public boolean write( final List<String> key, final Serializable value ) {
+    //TODO write to temp file and move it in the end - sync only mv
     final File file = new File( cachePath + StringUtils.join( cleanKey( key ), File.separator ) );
 
     final ObjectOutputStream oos;

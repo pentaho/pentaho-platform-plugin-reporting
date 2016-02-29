@@ -63,7 +63,7 @@ import java.util.concurrent.Future;
     }
     this.isSuportAsync = isSuportAsync;
   }
-  
+
   @GET @Path( "isasync" ) public Response isAsync() {
     return isSuportAsync ? Response.ok( Boolean.TRUE.toString(), MediaType.TEXT_PLAIN_TYPE ).build()
         : Response.ok( Boolean.FALSE.toString(), MediaType.TEXT_PLAIN_TYPE ).build();
