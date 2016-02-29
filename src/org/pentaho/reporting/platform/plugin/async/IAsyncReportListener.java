@@ -10,5 +10,6 @@ public interface IAsyncReportListener extends EventListener {
 
   void setProgress( int progress );
   void setPage( int page );
+  void setRow( int row );
   void setActivity( String activity );
 }

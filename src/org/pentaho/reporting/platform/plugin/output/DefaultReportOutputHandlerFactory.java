@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
  */
 package org.pentaho.reporting.platform.plugin.output;
 
@@ -527,7 +527,7 @@ public class DefaultReportOutputHandlerFactory implements ReportOutputHandlerFac
       final CachingPageableHTMLOutput pageableHTMLOutput = new CachingPageableHTMLOutput();
       pageableHTMLOutput.setContentHandlerPattern( contentHandlerPattern );
       return pageableHTMLOutput;
-    }else {
+    } else {
       final PageableHTMLOutput pageableHTMLOutput = new PageableHTMLOutput();
       pageableHTMLOutput.setContentHandlerPattern( contentHandlerPattern );
       return pageableHTMLOutput;

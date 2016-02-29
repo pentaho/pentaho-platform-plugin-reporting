@@ -36,6 +36,12 @@ public interface IAsyncReportState extends Serializable {
 
   /**
    *
+   * @return Row is currently being processed
+   */
+  int getRow();
+
+  /**
+   *
    * @return Activity code is currently being processed
    */
   String getActivity();

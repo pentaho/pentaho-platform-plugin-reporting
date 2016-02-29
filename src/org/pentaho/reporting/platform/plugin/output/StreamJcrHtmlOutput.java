@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin.output;
@@ -22,6 +22,7 @@ import org.pentaho.platform.api.repository2.unified.RepositoryFile;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
+import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
 import org.pentaho.reporting.engine.classic.core.modules.output.fast.html.FastHtmlContentItems;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.base.StreamReportProcessor;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.AllItemsHtmlPrinter;
@@ -32,6 +33,7 @@ import org.pentaho.reporting.libraries.repository.ContentIOException;
 import org.pentaho.reporting.libraries.repository.ContentLocation;
 import org.pentaho.reporting.libraries.repository.DefaultNameGenerator;
 import org.pentaho.reporting.libraries.repository.stream.StreamRepository;
+import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
 import org.pentaho.reporting.platform.plugin.repository.PentahoNameGenerator;
 import org.pentaho.reporting.platform.plugin.repository.PentahoURLRewriter;
 import org.pentaho.reporting.platform.plugin.repository.ReportContentRepository;
@@ -92,9 +94,17 @@ public class StreamJcrHtmlOutput extends AbstractHtmlOutput {
     outputProcessor.setPrinter( printer );
 
     final StreamReportProcessor sp = new StreamReportProcessor( report, outputProcessor );
+    final ReportProgressListener listener = ReportListenerThreadHolder.getListener();
+    //Add async job listener
+    if ( listener != null ) {
+      sp.addReportProgressListener( listener );
+    }
     try {
       sp.processReport();
     } finally {
+      if ( listener != null ) {
+        sp.removeReportProgressListener( listener );
+      }
       sp.close();
     }
 

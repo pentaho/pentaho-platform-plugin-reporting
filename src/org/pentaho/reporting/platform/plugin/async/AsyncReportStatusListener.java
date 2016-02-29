@@ -21,16 +21,19 @@ package org.pentaho.reporting.platform.plugin.async;
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressEvent;
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
 
-import java.util.Queue;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * Simple synchronized bean with async execution status.
- *
+ * <p/>
  * Created by dima.prokopenko@gmail.com on 2/12/2016.
  */
 public class AsyncReportStatusListener implements IAsyncReportListener, ReportProgressListener, IAsyncReportState {
+
+  public static final String COMPUTING_LAYOUT = "async_computing_layout_title";
+  public static final String PRECOMPUTING_VALUES = "async_precomputing_values_title";
+  public static final String PAGINATING = "async_paginating_title";
+  public static final String GENERATING_CONTENT = "async_generating_content_title";
 
   private volatile String path;
   private volatile UUID uuid;
@@ -38,19 +41,11 @@ public class AsyncReportStatusListener implements IAsyncReportListener, ReportPr
   private volatile int progress = 0;
   private volatile int page = 0;
   private volatile String activity;
+  private volatile int row = 0;
+  private volatile boolean firstPageMode = false;
+  private volatile String mimeType;
 
-  public static final String COMPUTING_LAYOUT = "async_computing_layout_title";
-  public static final String PRECOMPUTING_VALUES = "async_precomputing_values_title";
-  public static final String PAGINATING = "async_paginating_title";
-  public static final String GENERATING_CONTENT = "async_generating_content_title";
-
-
-
-  private Queue<ReportProgressEvent> events = new ConcurrentLinkedQueue<>();
-
-  private String mimeType;
-
-  public AsyncReportStatusListener( String path, UUID uuid, String mimeType ) {
+  public AsyncReportStatusListener( final String path, final UUID uuid, final String mimeType ) {
     this.path = path;
     this.uuid = uuid;
     this.mimeType = mimeType;
@@ -72,7 +67,7 @@ public class AsyncReportStatusListener implements IAsyncReportListener, ReportPr
   }
 
   @Override
-  public synchronized void setStatus( AsyncExecutionStatus status ) {
+  public synchronized void setStatus( final AsyncExecutionStatus status ) {
     this.status = status;
   }
 
@@ -82,23 +77,37 @@ public class AsyncReportStatusListener implements IAsyncReportListener, ReportPr
   }
 
   @Override
-  public synchronized void setProgress( int progress ) {
+  public synchronized void setProgress( final int progress ) {
     this.progress = progress;
   }
 
-  @Override  public synchronized int getPage() {
+  @Override
+  public synchronized int getPage() {
     return page;
   }
 
-  @Override public synchronized void setPage( int page ) {
+  @Override
+  public synchronized void setPage( final int page ) {
     this.page = page;
   }
 
-  @Override public synchronized String getActivity() {
+  @Override
+  public synchronized void setRow( final int row ) {
+    this.row = row;
+  }
+
+  @Override
+  public synchronized int getRow() {
+    return row;
+  }
+
+  @Override
+  public synchronized String getActivity() {
     return activity;
   }
 
-  @Override public synchronized void setActivity( String activity ) {
+  @Override
+  public synchronized void setActivity( final String activity ) {
     this.activity = activity;
   }
 
@@ -108,49 +117,64 @@ public class AsyncReportStatusListener implements IAsyncReportListener, ReportPr
   }
 
   @Override
-  public synchronized void reportProcessingStarted( ReportProgressEvent event ) {
-    // will be implemented in another commit
+  public synchronized void reportProcessingStarted( final ReportProgressEvent event ) {
+    this.status = AsyncExecutionStatus.WORKING;
   }
 
   @Override
-  public synchronized void reportProcessingUpdate( ReportProgressEvent event ) {
-    // will be implemented in another commit
-    this.activity = getActivityCode( event.getActivity() );
+  public synchronized void reportProcessingUpdate( final ReportProgressEvent event ) {
+    final int activity = event.getActivity();
+    if ( firstPageMode && ReportProgressEvent.GENERATING_CONTENT == activity && page > 0 ) {
+      //First page is ready here
+      this.status = AsyncExecutionStatus.CONTENT_AVAILABLE;
+    }
+    this.activity = getActivityCode( activity );
     this.progress = (int) ReportProgressEvent.computePercentageComplete( event, true );
     this.page = event.getPage();
+    this.row = event.getRow();
   }
 
   @Override
-  public synchronized void reportProcessingFinished( ReportProgressEvent event ) {
-    // will be implemented in another commit
+  public synchronized void reportProcessingFinished( final ReportProgressEvent event ) {
+    final int activity = event.getActivity();
+    this.activity = getActivityCode( activity );
+    this.progress = (int) ReportProgressEvent.computePercentageComplete( event, true );
+    this.page = event.getPage();
+    this.row = event.getRow();
+    this.status = AsyncExecutionStatus.FINISHED;
   }
 
-  // is not thread safe but we don't need it
+  public synchronized void setFirstPageMode( final boolean firstPageMode ) {
+    this.firstPageMode = firstPageMode;
+  }
+
   @Override
-  public AsyncReportState clone() {
-    AsyncReportStatusListener clone =
+  public synchronized IAsyncReportState clone() {
+    final AsyncReportStatusListener clone =
       new AsyncReportStatusListener( path, UUID.fromString( this.uuid.toString() ), mimeType );
     clone.setStatus( this.status );
     clone.setProgress( this.progress );
     clone.setPage( this.page );
+    clone.setRow( this.row );
     clone.setActivity( this.activity );
-
     return clone;
   }
 
-  @Override
-  public String toString() {
+  @Override public String toString() {
     return "AsyncReportStatusListener{"
       + "path='" + path + '\''
       + ", uuid=" + uuid
       + ", status=" + status
       + ", progress=" + progress
       + ", page=" + page
-      + ", activity=" + activity
+      + ", activity='" + activity + '\''
+      + ", row=" + row
+      + ", firstPageMode=" + firstPageMode
+      + ", mimeType='" + mimeType + '\''
       + '}';
   }
 
-  private String getActivityCode( int activity ) {
+  private static String getActivityCode( final int activity ) {
     String result = "";
 
     switch ( activity ) {
