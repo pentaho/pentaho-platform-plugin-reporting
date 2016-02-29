@@ -16,7 +16,7 @@
 */
 
 define([ 'common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui/util/timeutil', 'common-ui/util/formatting', 'pentaho/common/Messages', "dojo/dom", "dojo/on", "dojo/_base/lang",
-"dijit/registry", "dojo/has", "dojo/sniff", "dojo/dom-class", 'pentaho/reportviewer/ReportDialog', "dojo/dom-style", "dojo/query", "dojo/dom-geometry", "dojo/parser", "dojo/window", "dojo/_base/window", 'cdf/lib/jquery', 'amd!cdf/lib/jquery.ui'],
+"dijit/registry", "dojo/has", "dojo/sniff", "dojo/dom-class", 'pentaho/reportviewer/ReportDialog', "dojo/dom-style", "dojo/query", "dojo/dom-geometry", "dojo/parser", "dojo/window", "dojo/_base/window", 'cdf/lib/jquery', 'amd!cdf/lib/jquery.ui', "common-repo/pentaho-ajax", "dijit/ProgressBar", "common-data/xhr"],
     function(util, _prompt, _timeutil, _formatting, _Messages, dom, on, lang, registry, has, sniff, domClass, ReportDialog, domStyle, query, geometry, parser, win, win2, $) {
   return function(reportPrompt) {
     if (!reportPrompt) {
@@ -26,6 +26,7 @@ define([ 'common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui/ut
 
     var v = logged({
       prompt: reportPrompt,
+      _isAsync: null,
 
       load: function() {
         _Messages.addUrlBundle('reportviewer', CONTEXT_PATH+'i18n?plugin=reporting&name=reportviewer/messages/messages');
@@ -754,6 +755,32 @@ define([ 'common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui/ut
 
         var options = me._buildReportContentOptions(promptPanel);
         var url = me._buildReportContentUrl(options);
+
+        //BISERVER-1225
+        if (this._isAsync === null) {
+          this._isAsync = (pentahoGet(url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/isasync', "") == "true");
+        }
+        var currentUuid;
+        var isCanceled = false;
+        if(this._isAsync) {
+          var dlg = registry.byId('feedbackScreen');
+          var handleCancelCallback = dojo.hitch(this, function(result) {
+            isCanceled = true;
+          });
+          dlg.setTitle('Report Processing Feedback');
+          dlg.setText('Pass:');
+          dlg.setText2('Page:');
+          dlg.setText3('Row:');
+          dlg.setButtonText( 'Cancel' );
+          dlg.callbacks = [function feedbackscreenDone() {
+            pentahoGet(url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + currentUuid + '/cancel', "", handleCancelCallback);
+            dlg.hide();
+          }];
+          if( url.indexOf("debug=true") == -1 ) {
+            dlg.show();
+          }
+        }
+
         var outputFormat = options['output-target'];
         var isHtml = outputFormat.indexOf('html') != -1;
         var isProportionalWidth = isHtml && options['htmlProportionalWidth'] == "true";
@@ -775,15 +802,65 @@ define([ 'common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui/ut
           me.view._showReportContent(false, /*preserveSource*/true);
         }
 
-        logger && logger.log("Will set iframe url to " + url.substr(0, 50) + "... ");
+        if(this._isAsync) {
+          var handleResultCallback = dojo.hitch(this, function(result) {
+            if(!isCanceled) {
+              var resultJson;
+              try {
+                resultJson = JSON.parse(result);
+              } catch(e) {
+                var errorMessage = "Invalid request";
+                _prompt().showMessageBox(
+                  errorMessage,
+                  _Messages.getString('FatalErrorTitle'));
+                dlg.hide();
+                logger && logger.log("ERROR" + String(e));
+                return;
+              }
+              if(resultJson.status != null) {
+                dlg.setText2(resultJson.status);
+                currentUuid = resultJson.uuid;
 
-        //submit hidden form to POST data to iframe
-        $('#hiddenReportContentForm').attr("action", url);
-        $('#hiddenReportContentForm').submit();
-        //set data attribute so that we know what url is currently displayed in
-        //the iframe without actually triggering a GET
-        $('#reportContent').attr("data-src", url);
-        this._updatedIFrameSrc = true;
+                progressBar.set({value: resultJson.progress});
+
+                if(resultJson.status == "QUEUED" || resultJson.status == "WORKING") {
+                  var urlStatus = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + resultJson.uuid + '/status';
+                  setTimeout(function(){ pentahoGet(urlStatus, "", handleResultCallback); }, 1000);
+                } else if (resultJson.status == "CONTENT_AVAILABLE") {
+                  //first page
+                } else if (resultJson.status == "FINISHED") {
+                  var urlContent = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + resultJson.uuid + '/content';
+                  logger && logger.log("Will set iframe url to " + urlContent.substr(0, 50) + "... ");
+
+                  $('#hiddenReportContentForm').attr("action", urlContent);
+                  $('#hiddenReportContentForm').submit();
+                  $('#reportContent').attr("data-src", urlContent);
+                  this._updatedIFrameSrc = true;
+
+                  dlg.hide();
+                } else if (resultJson.status == "FAILED") {
+                  _prompt().showMessageBox(
+                    "Request failed",
+                    _Messages.getString('FatalErrorTitle'));
+                  dlg.hide();
+                  logger && logger.log("ERROR: Request status - FAILED");
+                }
+              }
+              return resultJson;
+            }
+          });
+
+          pentahoGet('reportjob', url.substring(url.lastIndexOf("/report?")+"/report?".length, url.length), handleResultCallback, 'text/text');
+        } else {
+          logger && logger.log("Will set iframe url to " + url.substr(0, 50) + "... ");
+          //submit hidden form to POST data to iframe
+          $('#hiddenReportContentForm').attr("action", url);
+          $('#hiddenReportContentForm').submit();
+          //set data attribute so that we know what url is currently displayed in
+          //the iframe without actually triggering a GET
+          $('#reportContent').attr("data-src", url);
+          this._updatedIFrameSrc = true;
+        }
 
         // Continue when iframe is loaded (called by #_onReportContentLoaded)
         me._submitLoadCallback = logged('_submitLoadCallback', function() {
