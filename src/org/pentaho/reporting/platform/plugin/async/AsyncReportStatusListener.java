@@ -26,16 +26,16 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
- * Simple bean with async execution status
+ * Simple synchronized bean with async execution status.
  *
  * Created by dima.prokopenko@gmail.com on 2/12/2016.
  */
 class AsyncReportStatusListener implements IAsyncReportListener, ReportProgressListener, IAsyncReportState {
 
-  private String path;
-  private UUID uuid;
-  private AsyncExecutionStatus status = AsyncExecutionStatus.QUEUED;
-  private int progress = 0;
+  private volatile String path;
+  private volatile UUID uuid;
+  private volatile AsyncExecutionStatus status = AsyncExecutionStatus.QUEUED;
+  private volatile int progress = 0;
 
   private String mimeType;
 
@@ -46,52 +46,52 @@ class AsyncReportStatusListener implements IAsyncReportListener, ReportProgressL
   }
 
   @Override
-  public String getPath() {
+  public synchronized String getPath() {
     return path;
   }
 
   @Override
-  public UUID getUuid() {
+  public synchronized UUID getUuid() {
     return uuid;
   }
 
   @Override
-  public AsyncExecutionStatus getStatus() {
+  public synchronized AsyncExecutionStatus getStatus() {
     return status;
   }
 
   @Override
-  public void setStatus( AsyncExecutionStatus status ) {
+  public synchronized void setStatus( AsyncExecutionStatus status ) {
     this.status = status;
   }
 
   @Override
-  public int getProgress() {
+  public synchronized int getProgress() {
     return progress;
   }
 
   @Override
-  public void setProgress( int progress ) {
+  public synchronized void setProgress( int progress ) {
     this.progress = progress;
   }
 
   @Override
-  public String getMimeType() {
+  public synchronized String getMimeType() {
     return this.mimeType;
   }
 
   @Override
-  public void reportProcessingStarted( ReportProgressEvent event ) {
+  public synchronized void reportProcessingStarted( ReportProgressEvent event ) {
     // will be implemented in another commit
   }
 
   @Override
-  public void reportProcessingUpdate( ReportProgressEvent event ) {
+  public synchronized void reportProcessingUpdate( ReportProgressEvent event ) {
     // will be implemented in another commit
   }
 
   @Override
-  public void reportProcessingFinished( ReportProgressEvent event ) {
+  public synchronized void reportProcessingFinished( ReportProgressEvent event ) {
     // will be implemented in another commit
   }
 
