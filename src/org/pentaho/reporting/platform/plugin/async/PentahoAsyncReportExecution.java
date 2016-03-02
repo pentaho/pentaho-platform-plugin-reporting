@@ -36,8 +36,8 @@ public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputS
     this.userSession = userSession;
   }
 
-  public void forInstanceId( String insnaceId ) {
-    this.instanceId = insnaceId;
+  public void forInstanceId( String instanceId ) {
+    this.instanceId = instanceId;
   }
 
   @Override

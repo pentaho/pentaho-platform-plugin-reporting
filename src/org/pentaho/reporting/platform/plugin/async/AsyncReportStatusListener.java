@@ -37,8 +37,6 @@ class AsyncReportStatusListener implements IAsyncReportListener, ReportProgressL
   private AsyncExecutionStatus status = AsyncExecutionStatus.QUEUED;
   private int progress = 0;
 
-  private Queue<ReportProgressEvent> events = new ConcurrentLinkedQueue<>();
-
   private String mimeType;
 
   public AsyncReportStatusListener( String path, UUID uuid, String mimeType ) {
@@ -84,17 +82,17 @@ class AsyncReportStatusListener implements IAsyncReportListener, ReportProgressL
 
   @Override
   public void reportProcessingStarted( ReportProgressEvent event ) {
-    events.add( event );
+    // will be implemented in another commit
   }
 
   @Override
   public void reportProcessingUpdate( ReportProgressEvent event ) {
-    events.add( event );
+    // will be implemented in another commit
   }
 
   @Override
   public void reportProcessingFinished( ReportProgressEvent event ) {
-    events.add( event );
+    // will be implemented in another commit
   }
 
   @Override

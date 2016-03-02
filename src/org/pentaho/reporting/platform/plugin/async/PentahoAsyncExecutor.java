@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class PentahoAsyncExecutor implements ILogoutListener, IPentahoSystemListener, IPentahoAsyncExecutor {
 
-  public static final String BEAN_NAME = "reporting-async-thread-pool";
+  public static final String BEAN_NAME = "IPentahoAsyncExecutor";
 
   private static final Log log = LogFactory.getLog( PentahoAsyncExecutor.class );
 
