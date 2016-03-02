@@ -360,6 +360,29 @@ div.prompt-panel {
 	box-shadow: 0px 0px 6px #b94a48;
 }
 
+  /* styles for feedback dialog */
+.feedbackscreen-content {
+  /* fallback color */
+  background: #f5f6f8;
+  width: 460px !important;
+}
+
+.feedbackscreentitle {
+  padding-top: 0px;
+  color: #1973bc;
+  font-family: opensanslight, Helvetica, Arial, Sans serif;
+  font-size: 18px;
+  vertical-align: top;
+  heightx: 60px;
+}
+
+.feedbackscreentext {
+  color: #26363d;
+   padding: 10px 0 0 0;
+  vertical-align: top;
+  line-height: 2em;
+}
+
 #reportControlPanel select {
   overflow-y: auto;
 }
