@@ -24,6 +24,8 @@ public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputS
   private String userSession = "";
   private String instanceId = "";
 
+  private long start = 0;
+
   private AsyncReportStatusListener listener;
 
   public PentahoAsyncReportExecution( String url, SimpleReportingComponent reportComponent, AsyncJobFileStagingHandler handler ) {
@@ -42,7 +44,7 @@ public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputS
 
   @Override
   public InputStream call() throws Exception {
-    final long start = System.currentTimeMillis();
+    start = System.currentTimeMillis();
     AuditHelper.audit( userSession, userSession, url, getClass().getName(), getClass()
         .getName(), MessageTypes.INSTANCE_START, instanceId, "", 0, null );
 
@@ -63,8 +65,9 @@ public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputS
 
     listener.setStatus( AsyncExecutionStatus.FAILED );
 
+    long end = System.currentTimeMillis();
     AuditHelper.audit( userSession, userSession, url, getClass().getName(), getClass()
-        .getName(), MessageTypes.FAILED, instanceId, "", 0, null );
+        .getName(), MessageTypes.FAILED, instanceId, "", ( (float) ( end - start ) / 1000 ), null );
     return new NullInputStream( 0 );
   }
 
@@ -75,6 +78,11 @@ public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputS
 
   @Override public void cancel() {
     this.listener.setStatus( AsyncExecutionStatus.CANCELED );
+
+    // try to call audit helper
+    long end = System.currentTimeMillis();
+    AuditHelper.audit( userSession, userSession, url, getClass().getName(), getClass()
+        .getName(), MessageTypes.FAILED, instanceId, "", ( (float) ( end - start ) / 1000 ), null );
 
     // hope processing engine is also do checks isInterrupted() sometimes
     Thread.currentThread().interrupt();
