@@ -41,6 +41,9 @@
       <dependency org="commons-collections" name="commons-collections" rev="3.2.2"  changing="true" />
 
 		<dependency org="javax.servlet" name="servlet-api" rev="2.4"/>
+		<dependency org="javax.ws.rs" name="javax.ws.rs-api" rev="2.0.1"/>
+		<dependency org="org.codehaus.jackson" name="jackson-mapper-asl" rev="1.9.13"/>
+		
     <dependency org="org.springframework.security" name="spring-security-core" rev="${dependency.spring.security.revision}" transitive="false"/>
 		<dependency org="org.springframework" name="spring-web" rev="${dependency.spring.framework.revision}" transitive="false"/>		        
         <!--  Codegen dependencies -->
@@ -67,7 +70,11 @@
         <dependency org="org.apache.commons" name="commons-lang3" rev="3.0" transitive="false" conf="test->default"/>
         <dependency org="org.mockito" name="mockito-all" rev="1.8.4" conf="test->default"/>
 
-      <!-- JavaScript dependencies -->
+        <dependency org="org.apache.cxf" name="cxf-rt-transports-http-jetty" rev="2.7.18" conf="test->default" />
+        <dependency org="org.apache.cxf" name="cxf-rt-transports-local" rev="2.7.18" conf="test->default" />
+        <dependency org="org.apache.cxf" name="cxf-bundle-jaxrs" rev="2.7.18" conf="test->default" />
+
+        <!-- JavaScript dependencies -->
       <dependency org="pentaho" name="common-ui" rev="${dependency.common-ui.revision}" conf="js->default" transitive="false" changing="true">
         <artifact name="common-ui" type="js" ext="zip" m:classifier="js"/>
       </dependency>

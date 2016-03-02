@@ -18,6 +18,7 @@
 package org.pentaho.reporting.platform.plugin;
 
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -46,19 +47,9 @@ public class ParameterContentGenerator extends SimpleContentGenerator {
 
   @Override
   public void createContent( OutputStream outputStream ) throws Exception {
-    IUnifiedRepository unifiedRepository = PentahoSystem.get( IUnifiedRepository.class, null );
     final IParameterProvider requestParams = getRequestParameters();
-    final IParameterProvider pathParams = getPathParameters();
 
-    if ( requestParams != null && requestParams.getStringParameter( "path", null ) != null ) {
-      path = requestParams.getStringParameter( "path", "" ); //$NON-NLS-1$ //$NON-NLS-2$
-    } else if ( pathParams != null && pathParams.getStringParameter( "path", null ) != null ) {
-      path = pathParams.getStringParameter( "path", "" ); //$NON-NLS-1$ //$NON-NLS-2$
-    }
-
-    path = idTopath( URLDecoder.decode( path, "UTF-8" ) );
-
-    RepositoryFile prptFile = unifiedRepository.getFile( path );
+    RepositoryFile prptFile = resolvePrptFile( requestParams );
 
     final RENDER_TYPE renderMode =
         RENDER_TYPE
@@ -80,7 +71,23 @@ public class ParameterContentGenerator extends SimpleContentGenerator {
       default:
         throw new IllegalArgumentException();
     }
+  }
 
+  protected RepositoryFile resolvePrptFile( IParameterProvider requestParams ) throws UnsupportedEncodingException {
+    IUnifiedRepository unifiedRepository = PentahoSystem.get( IUnifiedRepository.class, null );
+    final IParameterProvider pathParams = getPathParameters();
+
+    if ( requestParams != null && requestParams.getStringParameter( "path", null ) != null ) {
+      path = requestParams.getStringParameter( "path", "" ); //$NON-NLS-1$ //$NON-NLS-2$
+    } else if ( pathParams != null && pathParams.getStringParameter( "path", null ) != null ) {
+      path = pathParams.getStringParameter( "path", "" ); //$NON-NLS-1$ //$NON-NLS-2$
+    }
+
+    path = idTopath( URLDecoder.decode( path, "UTF-8" ) );
+
+    RepositoryFile prptFile = unifiedRepository.getFile( path );
+
+    return prptFile;
   }
 
   @Override

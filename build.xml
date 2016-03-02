@@ -58,12 +58,21 @@
     </copy>
   </target>
 
-  <target name="install">
-    <deltree dir="${install.target-dir}/pentaho-solutions/system/reporting/reportviewer"/>
-    <delete failonerror="false" file="${install.target-dir}/pentaho-solutions/system/reporting/plugin.xml"/>
-    <delete failonerror="false" file="${install.target-dir}/pentaho-solutions/system/reporting/settings.xml"/>
-    <copydir src="package-res" dest="${install.target-dir}/pentaho-solutions/system/reporting"/>
-    <copy failonerror="true" todir="${install.lib-dir}" file="${dist.dir}/${ivy.artifact.id}-${project.revision}.jar"/>
+  <target name="install" >
+    <echo message="delete tomcat plugin: ${install.target-dir}/pentaho-solutions/system/reporting" />
+    <delete failonerror="true" dir="${install.target-dir}/pentaho-solutions/system/reporting"/>
+	
+	<echo message="Unzip: ${dist.dir}/${package.basename}.zip" />
+	<echo message="install to directory: ${install.target-dir}/pentaho-solutions/system/" />
+	<unzip src="${dist.dir}/${package.basename}.zip" dest="${install.target-dir}/pentaho-solutions/system/" overwrite="true" />
+    
+	<echo message="install file: ${dist.dir}/${ivy.artifact.id}-${project.revision}.jar" />
+	<echo message="install jar to : ${install.lib-dir}/${ivy.artifact.id}-${project.revision}.jar" />
+	<copy overwrite="true" todir="${install.lib-dir}" file="${dist.dir}/${ivy.artifact.id}-${project.revision}.jar"/>
+	
+	<!--echo message="install jar" />
+	<delete failonerror="true" file="${install.target-dir}/tomcat/webapps/pentaho/WEB-INF/lib/pentaho-reporting-engine-classic-core-platform-plugin-6.1-SNAPSHOT.jar" />
+	<copy failonerror="true" file="dist/pentaho-reporting-engine-classic-core-platform-plugin-6.1-SNAPSHOT.jar" todir="${install.target-dir}/tomcat/webapps/pentaho/WEB-INF/lib" / -->
   </target>
 
   <target name="dist-source" depends="dist-js, subfloor.dist-source"/>
