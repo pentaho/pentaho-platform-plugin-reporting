@@ -71,7 +71,7 @@
   </bean>
 
   <!-- thread pool executor -->
-  <bean id="reporting-async-thread-pool" class="org.pentaho.reporting.platform.plugin.async.PentahoAsyncExecutor" scope="singleton" >
+  <bean id="IPentahoAsyncExecutor" class="org.pentaho.reporting.platform.plugin.async.PentahoAsyncExecutor" scope="singleton" >
     <!-- fixed thread pool capacity -->
     <constructor-arg type="int" value="10" />
   </bean>
