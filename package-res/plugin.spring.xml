@@ -61,8 +61,12 @@
         class="org.pentaho.reporting.platform.plugin.cache.FileSystemCacheBackend" scope="singleton" >
     <property name="cachePath" value="/reporting-plugin/"/>
   </bean>
+
+  <!--The bean is singleton, nevertheless it calls PentahoSessionHolder.getSession()
+   on each cache key computation, so we have separate cache per session.
+   Also it registers LogoutListener to clean cache for each session.-->
   <bean id="plugin-cache-strategy"
-        class="org.pentaho.reporting.platform.plugin.cache.PluginSessionCache" scope="session">
+        class="org.pentaho.reporting.platform.plugin.cache.PluginSessionCache" scope="singleton">
     <constructor-arg ref="plugin-cache-backend"/>
   </bean>
   <bean id="plugin-cache-manager"
