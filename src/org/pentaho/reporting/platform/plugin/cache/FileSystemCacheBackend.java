@@ -124,6 +124,9 @@ public class FileSystemCacheBackend implements ICacheBackend {
   public boolean purge( final List<String> key ) {
     try {
       final File file = new File( cachePath + StringUtils.join( cleanKey( key ), File.separator ) );
+      if ( !file.exists() ) {
+        return true;
+      }
       if ( file.isDirectory() ) {
         FileUtils.deleteDirectory( file );
         return !file.exists();
