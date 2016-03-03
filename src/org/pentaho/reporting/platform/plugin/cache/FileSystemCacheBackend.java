@@ -51,45 +51,73 @@ public class FileSystemCacheBackend implements ICacheBackend {
 
   @Override
   public boolean write( final List<String> key, final Serializable value ) {
-    //TODO write to temp file and move it in the end - sync only mv
-    final File file = new File( cachePath + StringUtils.join( cleanKey( key ), File.separator ) );
-
-    final ObjectOutputStream oos;
-    final FileOutputStream fout;
+    final String filePath = cachePath + StringUtils.join( cleanKey( key ), File.separator );
+    final File file = new File( filePath );
+    lock( filePath );
     try {
+      //create file structure
       file.getParentFile().mkdirs();
       if ( !file.exists() ) {
         file.createNewFile();
       }
-
-      fout = new FileOutputStream( file );
-      oos = new ObjectOutputStream( fout );
-      oos.writeObject( value );
-      oos.close();
-      fout.close();
+      //closable resources
+      try (
+        final FileOutputStream fout = new FileOutputStream( file );
+        final ObjectOutputStream oos = new ObjectOutputStream( fout ) ) {
+        oos.writeObject( value );
+      }
     } catch ( final IOException e ) {
       logger.error( "Can't write cache: ", e );
       return false;
+    } finally {
+      unlock( filePath );
     }
-
     return true;
+
+  }
+
+  private void lock( final String filePath ) {
+    final File lock = new File( filePath + ".lock" );
+    while ( lock.exists() ) {
+      try {
+        Thread.sleep( 100 );
+      } catch ( final InterruptedException e ) {
+        logger.error( "Can't create lock: ", e );
+        return;
+      }
+    }
+    //create file structure
+    lock.getParentFile().mkdirs();
+    if ( !lock.exists() ) {
+      try {
+        lock.createNewFile();
+      } catch ( final IOException e ) {
+        logger.error( "Can't create lock: ", e );
+      }
+    }
+  }
+
+  private void unlock( final String filePath ) {
+    final File lock = new File( filePath + ".lock" );
+    lock.delete();
   }
 
   @Override
   public Serializable read( final List<String> key ) {
-    final ObjectInputStream objectinputstream;
     Object result = null;
-    try {
-      final FileInputStream fis =
-        new FileInputStream( cachePath + StringUtils.join( cleanKey( key ), File.separator ) );
-      objectinputstream = new ObjectInputStream( fis );
-      result = objectinputstream.readObject();
-      objectinputstream.close();
-      fis.close();
+    final String filePath = cachePath + StringUtils.join( cleanKey( key ), File.separator );
+    lock( filePath );
+    try (
+      final FileInputStream fis = new FileInputStream( filePath );
+      final ObjectInputStream ois = new ObjectInputStream( fis ) ) {
+      result = ois.readObject();
     } catch ( final Exception e ) {
       logger.debug( "Can't read cache: ", e );
+    } finally {
+      unlock( filePath );
     }
     return (Serializable) result;
+
   }
 
   @Override
@@ -109,7 +137,7 @@ public class FileSystemCacheBackend implements ICacheBackend {
 
   @Override
   public Set<String> listKeys( final List<String> key ) {
-    final Set<String> resultSet = new HashSet<String>();
+    final Set<String> resultSet = new HashSet<>();
     final File directory = new File( cachePath + StringUtils.join( key, File.separator ) );
     final File[] fList = directory.listFiles();
     if ( fList != null ) {
