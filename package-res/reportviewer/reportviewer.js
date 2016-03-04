@@ -769,7 +769,8 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         //  and must be done now so that the page controls have enough info.
         if (!me.reportPrompt.panel.getAutoSubmitSetting()) {
           // FETCH page-count info before rendering report
-          var callback = logged("_updateReportContent_fetchParameterCallback", function(newParamDefn) {
+          var callback = logged("_updateReportContent_fetchParameterCallback", function(xmlString) {
+            var newParamDefn = me.prompt.parseParameterDefinition(xmlString);
 
             delete (me.reportPrompt.panel.forceAutoSubmit);
 
@@ -779,7 +780,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
             me._updateReportContentCore(keyArgs);
           });
 
-          me.reportPrompt.fetchParameterDefinition(callback, /*promptMode*/'MANUAL');
+          me.prompt.fetchParameterDefinition(callback, /*promptMode*/'MANUAL');
         } else {
           me._updateReportContentCore(keyArgs);
         }
