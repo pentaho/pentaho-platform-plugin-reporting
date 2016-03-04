@@ -15,11 +15,13 @@
 * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
 */
 
-define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'common-ui/prompting/parameters/ParameterXmlParser', 'common-ui/prompting/PromptPanel'],
+define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'common-ui/prompting/parameters/ParameterXmlParser', "common-ui/prompting/api/PromptingAPI"],
 
-    function(util, Messages, registry, ParameterXmlParser, PromptPanel) {
+    function(util, Messages, registry, ParameterXmlParser, PromptingAPI) {
   return function() {
     return logged({
+      api: new PromptingAPI('promptPanel'),
+
       // The current prompt mode
       mode: 'INITIAL',
 
@@ -40,7 +42,9 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
       },
 
       _createPromptPanelFetchCallback: function(paramDefn) {
-        var panel = this.panel = new PromptPanel('promptPanel', paramDefn);
+        // Temporary used prompt panel instance from api. Need delete it after fully applying prompting api functions.
+        var panel = this.panel = this.api.operation._getPromptPanel();
+        panel.setParamDefn(paramDefn);
 
         panel.submit = this.submit.bind(this);
         panel.submitStart = this.submitStart.bind(this);
