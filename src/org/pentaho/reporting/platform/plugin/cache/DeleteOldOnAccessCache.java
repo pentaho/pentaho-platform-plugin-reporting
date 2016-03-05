@@ -18,7 +18,11 @@ package org.pentaho.reporting.platform.plugin.cache;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.pentaho.platform.api.engine.IPentahoSession;
+import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
+import org.pentaho.reporting.libraries.xmlns.parser.Base64;
 
+import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -32,10 +36,15 @@ public class DeleteOldOnAccessCache extends AbstractReportContentCache {
   private static final String SEGMENT = "long_term";
   public static final String TIMESTAMP = "-timestamp";
   public static final int MILLIS_IN_DAY = 86400000;
+  public static final int NAME_INDEX = 2;
   private long millisToLive;
+
 
   public DeleteOldOnAccessCache( final ICacheBackend backend ) {
     super( backend );
+  }
+
+  public DeleteOldOnAccessCache() {
   }
 
   public void setDaysToLive( final long daysToLive ) {
@@ -43,12 +52,14 @@ public class DeleteOldOnAccessCache extends AbstractReportContentCache {
   }
 
   /*for testing purposes*/
-  protected void setMillisToLive( long millisToLive ) {
+  protected void setMillisToLive( final long millisToLive ) {
     this.millisToLive = millisToLive;
   }
 
   @Override protected List<String> computeKey( final String key ) {
-    return Collections.unmodifiableList( Arrays.asList( SEGMENT, key ) );
+    final IPentahoSession session = PentahoSessionHolder.getSession();
+    //Don't use username explicitly - compute hash
+    return Collections.unmodifiableList( Arrays.asList( SEGMENT, createKey( session.getName() ), key ) );
   }
 
   /**
@@ -61,11 +72,11 @@ public class DeleteOldOnAccessCache extends AbstractReportContentCache {
   @Override public boolean put( final String key, final IReportContent value ) {
     cleanUp();
     if ( super.put( key, value ) ) {
-      return super.getBackend()
-        .write( Collections.unmodifiableList( Arrays.asList( SEGMENT, key + TIMESTAMP ) ), System.currentTimeMillis() );
+      return super.getBackend().write( computeKey( key + TIMESTAMP ), System.currentTimeMillis() );
     }
     return false;
   }
+
 
   /**
    * @param key key
@@ -81,18 +92,32 @@ public class DeleteOldOnAccessCache extends AbstractReportContentCache {
     final long currentTimeMillis = System.currentTimeMillis();
     final ICacheBackend backend = getBackend();
     //Check all timestamps
-    for ( final String key : backend.listKeys( Collections.singletonList( SEGMENT ) ) ) {
-      if ( key.matches( ".*" + TIMESTAMP ) ) {
-        final List<String> compositeKey = Arrays.asList( SEGMENT, key );
-        final Long timestamp = (Long) backend.read( compositeKey );
-        if ( currentTimeMillis - timestamp > millisToLive ) {
-          backend.purge( compositeKey );
-          compositeKey.set( 1, compositeKey.get( 1 ).replace( TIMESTAMP, "" ) );
-          backend.purge( compositeKey );
-          logger.debug( "Purged long-term cache: " + key );
+    for ( final String userFolder : backend.listKeys( Collections.singletonList( SEGMENT ) ) ) {
+      for ( final String key : backend.listKeys( Arrays.asList( SEGMENT, userFolder ) ) ) {
+        if ( key.matches( ".*" + TIMESTAMP ) ) {
+          final List<String> compositeKey = Arrays.asList( SEGMENT, userFolder, key );
+          final Long timestamp = (Long) backend.read( compositeKey );
+          if ( currentTimeMillis - timestamp > millisToLive ) {
+            backend.purge( compositeKey );
+            compositeKey.set( NAME_INDEX, compositeKey.get( NAME_INDEX ).replace( TIMESTAMP, "" ) );
+            backend.purge( compositeKey );
+            logger.debug( "Purged long-term cache: " + key );
+          }
         }
       }
     }
     logger.debug( "Finished periodical cache eviction" );
+  }
+
+
+  private String createKey( final String key ) {
+    try {
+      final MessageDigest md = MessageDigest.getInstance( "SHA-256" );
+      md.update( key.getBytes() );
+      final byte[] digest = md.digest();
+      return new String( Base64.encode( digest ) );
+    } catch ( final Exception b ) {
+      return null;
+    }
   }
 }

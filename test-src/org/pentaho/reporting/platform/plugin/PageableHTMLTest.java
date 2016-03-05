@@ -539,26 +539,6 @@ public class PageableHTMLTest {
   }
 
   @Test
-  public void testFirstPageSetting() throws Exception {
-
-    final ModifiableConfiguration edConf = ClassicEngineBoot.getInstance().getEditableConfig();
-    edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.CachePageableHtmlContent", "true" );
-    edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.FirstPageMode", "true" );
-    try {
-      final ResourceManager mgr = new ResourceManager();
-      final File src = new File( "resource/solution/test/reporting/report.prpt" );
-      final MasterReport r = (MasterReport) mgr.createDirectly( src, MasterReport.class ).getResource();
-      final CachingPageableHTMLOutput out = new CachingPageableHTMLOutput();
-      assertEquals( 1, out.paginate( r, 0 ) );
-      edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.FirstPageMode", "false" );
-      assertEquals( 8, out.paginate( r, 0 ) );
-    } finally {
-      edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.CachePageableHtmlContent", null );
-      edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.FirstPageMode", null );
-    }
-  }
-
-  @Test
   public void testListener() throws Exception {
 
     final ModifiableConfiguration edConf = ClassicEngineBoot.getInstance().getEditableConfig();

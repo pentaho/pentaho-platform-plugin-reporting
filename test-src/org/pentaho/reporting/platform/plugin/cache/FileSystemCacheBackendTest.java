@@ -21,6 +21,8 @@ import junit.framework.Assert;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
+import org.pentaho.platform.engine.core.system.StandaloneSession;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -45,6 +47,7 @@ public class FileSystemCacheBackendTest {
 
   @BeforeClass
   public static void setUp() {
+    PentahoSessionHolder.setSession( new StandaloneSession(  ) );
     fileSystemCacheBackend = new FileSystemCacheBackend();
     fileSystemCacheBackend.setCachePath( "/test-cache/" );
   }
