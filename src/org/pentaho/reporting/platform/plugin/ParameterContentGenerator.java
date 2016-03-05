@@ -41,19 +41,15 @@ public class ParameterContentGenerator extends SimpleContentGenerator {
   private static final long serialVersionUID = 1L;
   private String path = null;
 
-  public enum RENDER_TYPE {
-    REPORT, XML, PARAMETER, SUBSCRIBE, DOWNLOAD
-  }
-
   @Override
   public void createContent( OutputStream outputStream ) throws Exception {
     final IParameterProvider requestParams = getRequestParameters();
 
     RepositoryFile prptFile = resolvePrptFile( requestParams );
 
-    final RENDER_TYPE renderMode =
-        RENDER_TYPE
-            .valueOf( requestParams.getStringParameter( "renderMode", RENDER_TYPE.XML.toString() ).toUpperCase() ); //$NON-NLS-1$
+    final RenderType renderMode =
+        RenderType
+            .valueOf( requestParams.getStringParameter( "renderMode", RenderType.XML.toString() ).toUpperCase() ); //$NON-NLS-1$
 
     switch ( renderMode ) {
       case XML: {

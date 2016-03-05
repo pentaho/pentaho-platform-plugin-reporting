@@ -23,13 +23,19 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
+import org.pentaho.platform.api.engine.IApplicationContext;
 import org.pentaho.platform.api.engine.IPentahoSession;
+import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.libraries.base.config.ModifiableConfiguration;
 import org.pentaho.reporting.platform.plugin.SimpleReportingComponent;
 import org.pentaho.reporting.platform.plugin.staging.AsyncJobFileStagingHandler;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.Future;
 
@@ -62,6 +68,11 @@ public class PentahoAsyncReportExecutorTest {
   MasterReport report = mock( MasterReport.class );
   ModifiableConfiguration configuration = mock( ModifiableConfiguration.class );
 
+  IApplicationContext context = mock( IApplicationContext.class );
+  Random bytes = new Random();
+
+
+
   final InputStream input = new NullInputStream( 0 );
 
   PentahoAsyncReportExecution
@@ -76,6 +87,13 @@ public class PentahoAsyncReportExecutorTest {
     when( session2.getId() ).thenReturn( sessionUid2.toString() );
 
     task1.setListener( mock( AsyncReportStatusListener.class ) );
+
+    String tempFolder = System.getProperty("java.io.tmpdir");
+    Path junitPrivate = Paths.get( tempFolder ).resolve( "JUNIT_" + UUID.randomUUID().toString() );
+    junitPrivate.toFile().deleteOnExit();
+
+    when( context.getSolutionPath( anyString() ) ).thenReturn( junitPrivate.toString() );
+    PentahoSystem.setApplicationContext( context );
   }
 
   @Test public void testCanCompleteTask() throws Exception {
@@ -151,5 +169,38 @@ public class PentahoAsyncReportExecutorTest {
     assertFalse( one.equals( two ) );
     assertFalse( two.equals( one ) );
     assertFalse( one.hashCode() == two.hashCode() );
+  }
+
+  @Test
+  public void onLogoutTest() throws IOException {
+    PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 1 );
+    AsyncJobFileStagingHandler handler1 = new AsyncJobFileStagingHandler( session1 );
+    AsyncJobFileStagingHandler handler2 = new AsyncJobFileStagingHandler( session2 );
+
+    Path stagingFolder = AsyncJobFileStagingHandler.getStagingDirPath();
+    // folders created on async file staging constructor call:
+    assertTrue( stagingFolder.toFile().list().length == 2 );
+
+
+    byte[] anyByte = new byte[1024];
+    bytes.nextBytes( anyByte );
+    handler1.getStagingOutputStream().write( anyByte );
+    handler1.getStagingOutputStream().close();
+    bytes.nextBytes( anyByte );
+    handler2.getStagingOutputStream().write( anyByte );
+    handler2.getStagingOutputStream().close();
+
+    String[] folders = stagingFolder.toFile().list();
+    assertTrue( folders.length == 2 );
+
+    exec.onLogout( session1 );
+
+    folders = stagingFolder.toFile().list();
+    assertTrue( folders.length == 1 );
+    assertTrue( folders[0].equals( session2.getId() ) );
+
+    exec.onLogout( session2 );
+    folders = stagingFolder.toFile().list();
+    assertTrue( folders.length == 0 );
   }
 }

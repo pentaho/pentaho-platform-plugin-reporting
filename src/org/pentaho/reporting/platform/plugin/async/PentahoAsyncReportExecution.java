@@ -61,7 +61,10 @@ public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputS
       return handler.getStagingContent();
     }
 
-    listener.setStatus( AsyncExecutionStatus.FAILED );
+    // do not erase canceled status
+    if ( listener.getStatus() != AsyncExecutionStatus.CANCELED ) {
+      listener.setStatus( AsyncExecutionStatus.FAILED );
+    }
 
     AuditHelper.audit( userSession, userSession, url, getClass().getName(), getClass()
         .getName(), MessageTypes.FAILED, instanceId, "", 0, null );
