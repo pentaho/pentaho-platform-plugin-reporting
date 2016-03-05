@@ -61,7 +61,7 @@ public class AsyncJobFileStagingHandler {
   // package private for testing purpose
   File tmpFile;
 
-  private static String stringParentDir = null;
+  private String stringParentDir = null;
 
   public AsyncJobFileStagingHandler( IPentahoSession userSession ) throws IOException {
     this.sessionId = userSession.getId();
@@ -98,7 +98,9 @@ public class AsyncJobFileStagingHandler {
   }
 
   public static Path getStagingDirPath() {
-    return stringParentDir == null ? null : Paths.get( stringParentDir ).resolve( STAGING_DIR_ATTR );
+    IApplicationContext context = PentahoSystem.getApplicationContext();
+    String solutionTempFolder = context == null ? null : context.getSolutionPath( "system/tmp" );
+    return solutionTempFolder == null ? null : Paths.get( solutionTempFolder ).resolve( STAGING_DIR_ATTR );
   }
 
   public OutputStream getStagingOutputStream() {

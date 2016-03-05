@@ -145,7 +145,8 @@ public class PentahoAsyncExecutor implements ILogoutListener, IPentahoSystemList
     // do it generic way according to staging handler was used?
     Path stagingSessionDir = AsyncJobFileStagingHandler.getStagingDirPath();
     if ( stagingSessionDir == null ) {
-      //never been initialized
+      // never been initialized or pentaho context is null?
+      // can't determine what to delete.
       return;
     }
     stagingSessionDir = stagingSessionDir.resolve( iPentahoSession.getId() );
@@ -154,7 +155,7 @@ public class PentahoAsyncExecutor implements ILogoutListener, IPentahoSystemList
     // some lib can do it for me?
     try {
       FileUtils.deleteDirectory( sessionStagingContent );
-    } catch ( IOException e ) {
+    } catch ( Exception e ) {
       log.debug( "Unable delete temp files on session logout." );
     }
   }
