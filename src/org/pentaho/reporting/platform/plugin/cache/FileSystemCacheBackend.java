@@ -21,6 +21,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -51,72 +52,44 @@ public class FileSystemCacheBackend implements ICacheBackend {
 
   @Override
   public boolean write( final List<String> key, final Serializable value ) {
-    final String filePath = cachePath + StringUtils.join( cleanKey( key ), File.separator );
-    final File file = new File( filePath );
-    lock( filePath );
-    try {
-      //create file structure
-      file.getParentFile().mkdirs();
-      if ( !file.exists() ) {
-        file.createNewFile();
-      }
-      //closable resources
-      try (
-        final FileOutputStream fout = new FileOutputStream( file );
-        final ObjectOutputStream oos = new ObjectOutputStream( fout ) ) {
-        oos.writeObject( value );
-      }
-    } catch ( final IOException e ) {
-      logger.error( "Can't write cache: ", e );
-      return false;
-    } finally {
-      unlock( filePath );
-    }
-    return true;
-
-  }
-
-  private void lock( final String filePath ) {
-    final File lock = new File( filePath + ".lock" );
-    while ( lock.exists() ) {
+    synchronized ( PentahoSessionHolder.getSession() ) {
+      final String filePath = cachePath + StringUtils.join( cleanKey( key ), File.separator );
+      final File file = new File( filePath );
       try {
-        Thread.sleep( 100 );
-      } catch ( final InterruptedException e ) {
-        logger.error( "Can't create lock: ", e );
-        return;
-      }
-    }
-    //create file structure
-    lock.getParentFile().mkdirs();
-    if ( !lock.exists() ) {
-      try {
-        lock.createNewFile();
+        //create file structure
+        file.getParentFile().mkdirs();
+        if ( !file.exists() ) {
+          file.createNewFile();
+        }
+        //closable resources
+        try ( final FileOutputStream fout = new FileOutputStream( file );
+              final ObjectOutputStream oos = new ObjectOutputStream( fout ) ) {
+          oos.writeObject( value );
+        }
       } catch ( final IOException e ) {
-        logger.error( "Can't create lock: ", e );
+        logger.error( "Can't write cache: ", e );
+        return false;
       }
+      return true;
     }
   }
 
-  private void unlock( final String filePath ) {
-    final File lock = new File( filePath + ".lock" );
-    lock.delete();
-  }
 
   @Override
   public Serializable read( final List<String> key ) {
     Object result = null;
-    final String filePath = cachePath + StringUtils.join( cleanKey( key ), File.separator );
-    lock( filePath );
-    try (
-      final FileInputStream fis = new FileInputStream( filePath );
-      final ObjectInputStream ois = new ObjectInputStream( fis ) ) {
-      result = ois.readObject();
-    } catch ( final Exception e ) {
-      logger.debug( "Can't read cache: ", e );
-    } finally {
-      unlock( filePath );
+    synchronized ( PentahoSessionHolder.getSession() ) {
+      final String filePath = cachePath + StringUtils.join( cleanKey( key ), File.separator );
+
+      try ( final FileInputStream fis = new FileInputStream( filePath );
+            final ObjectInputStream ois = new ObjectInputStream( fis ) ) {
+        result = ois.readObject();
+      } catch ( final Exception e ) {
+        logger.debug( "Can't read cache: ", e );
+      }
+      return (Serializable) result;
     }
-    return (Serializable) result;
+
 
   }
 
