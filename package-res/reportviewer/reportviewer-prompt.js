@@ -75,9 +75,6 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
           this.fetchParameterDefinition(promptPanel, callback, /*promptMode*/'USERINPUT');
         }.bind(this);
 
-        // Provide our own i18n function
-        panel.getString = Messages.getString;
-
         this.initPromptPanel();
 
         this._hideLoadingIndicator();
