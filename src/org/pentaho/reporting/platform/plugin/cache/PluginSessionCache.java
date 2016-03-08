@@ -35,9 +35,12 @@ public class PluginSessionCache extends AbstractReportContentCache {
   private static final Log logger = LogFactory.getLog( PluginSessionCache.class );
   private static final String SEGMENT = "session";
 
-
   public PluginSessionCache( final ICacheBackend backend ) {
     super( backend );
+    PentahoSystem.addLogoutListener( new LogoutHandler() );
+  }
+
+  public PluginSessionCache() {
     PentahoSystem.addLogoutListener( new LogoutHandler() );
   }
 

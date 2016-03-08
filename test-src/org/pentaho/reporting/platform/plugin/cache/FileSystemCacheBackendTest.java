@@ -21,11 +21,21 @@ import junit.framework.Assert;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
+import org.pentaho.platform.engine.core.system.StandaloneSession;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import static junit.framework.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -35,9 +45,9 @@ public class FileSystemCacheBackendTest {
 
   private static FileSystemCacheBackend fileSystemCacheBackend;
 
-
   @BeforeClass
   public static void setUp() {
+    PentahoSessionHolder.setSession( new StandaloneSession(  ) );
     fileSystemCacheBackend = new FileSystemCacheBackend();
     fileSystemCacheBackend.setCachePath( "/test-cache/" );
   }
@@ -72,6 +82,104 @@ public class FileSystemCacheBackendTest {
     assertTrue( fileSystemCacheBackend.purge( Collections.singletonList( directoryKey ) ) );
     assertNull( fileSystemCacheBackend.read( Arrays.asList( directoryKey, key ) ) );
   }
+
+
+  @Test
+  public void testReadWhileWriting() throws Exception {
+    final String val = "ShinySecretValue";
+    final ExecutorService executor = Executors.newFixedThreadPool( 2 );
+    final Future<Boolean> write = executor.submit( new Callable<Boolean>() {
+      @Override public Boolean call() throws Exception {
+        return fileSystemCacheBackend.write( Arrays.asList( directoryKey, key ), new LongWrite( val ) );
+      }
+    } );
+    final Future<LongWrite> read = executor.submit( new Callable<LongWrite>() {
+      @Override public LongWrite call() throws Exception {
+        Thread.sleep( 1000 );
+        return (LongWrite) fileSystemCacheBackend.read( Arrays.asList( directoryKey, key ) );
+      }
+    } );
+    assertTrue( write.get() );
+    assertEquals( read.get().getValue(), val );
+  }
+
+
+  @Test
+  public void testWriteWhileReading() throws Exception {
+    final String val = "ShinySecretValue";
+    final String val2 = "ShinySecretValue2";
+    final ExecutorService executor = Executors.newFixedThreadPool( 2 );
+    fileSystemCacheBackend.write( Arrays.asList( directoryKey, key ), new LongRead( val ) );
+    final Future<LongRead> read = executor.submit( new Callable<LongRead>() {
+      @Override public LongRead call() throws Exception {
+        return (LongRead) fileSystemCacheBackend.read( Arrays.asList( directoryKey, key ) );
+      }
+    } );
+    final Future<Boolean> write = executor.submit( new Callable<Boolean>() {
+      @Override public Boolean call() throws Exception {
+        return fileSystemCacheBackend.write( Arrays.asList( directoryKey, key ), new LongRead( val2 ) );
+      }
+    } );
+    assertTrue( write.get() );
+    assertEquals( read.get().getValue(), val );
+  }
+
+  private class LongWrite implements Serializable {
+
+    private String value;
+
+    public LongWrite( final String value ) {
+      this.value = value;
+    }
+
+    public String getValue() {
+      return value;
+    }
+
+    private void writeObject( final ObjectOutputStream oos ) throws IOException {
+      try {
+        Thread.sleep( 3000L );
+        oos.writeObject( value );
+      } catch ( final InterruptedException e ) {
+        e.printStackTrace();
+      }
+    }
+
+    private void readObject( final ObjectInputStream ois ) throws ClassNotFoundException, IOException {
+      final Object o = ois.readObject();
+      this.value = (String) o;
+    }
+  }
+
+
+  private class LongRead implements Serializable {
+
+    private String value;
+
+    public LongRead( final String value ) {
+      this.value = value;
+    }
+
+    public String getValue() {
+      return value;
+    }
+
+    private void writeObject( final ObjectOutputStream oos ) throws IOException {
+      oos.writeObject( value );
+    }
+
+    private void readObject( final ObjectInputStream ois ) throws ClassNotFoundException, IOException {
+      try {
+        Thread.sleep( 3000L );
+        final Object o = ois.readObject();
+        this.value = (String) o;
+      } catch ( final InterruptedException e ) {
+        e.printStackTrace();
+      }
+
+    }
+  }
+
 
   @Test
   public void testlistKeys() throws Exception {

@@ -16,17 +16,22 @@
  */
 package org.pentaho.reporting.platform.plugin.cache;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 public class PluginCacheManagerImpl implements IPluginCacheManager {
 
-  private static final Log log = LogFactory.getLog( PluginCacheManagerImpl.class );
+  public PluginCacheManagerImpl( final IReportContentCache strategy ) {
+    this.strategy = strategy;
+  }
+
+  public PluginCacheManagerImpl() {
+  }
 
   private IReportContentCache strategy;
 
+  public IReportContentCache getStrategy() {
+    return strategy;
+  }
 
-  public PluginCacheManagerImpl( final IReportContentCache strategy ) {
+  public void setStrategy( final IReportContentCache strategy ) {
     this.strategy = strategy;
   }
 

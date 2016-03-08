@@ -12,14 +12,10 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
  */
 package org.pentaho.reporting.platform.plugin.output;
 
-import org.pentaho.reporting.engine.classic.core.AttributeNames;
-import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
-import org.pentaho.reporting.engine.classic.core.MasterReport;
-import org.pentaho.reporting.libraries.base.config.ExtendedConfiguration;
 import org.pentaho.reporting.platform.plugin.SimpleReportingAction;
 
 import java.io.IOException;

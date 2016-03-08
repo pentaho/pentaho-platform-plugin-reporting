@@ -21,10 +21,12 @@ import java.io.OutputStream;
 
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
+import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
 import org.pentaho.reporting.engine.classic.core.modules.output.fast.html.FastHtmlContentItems;
 import org.pentaho.reporting.engine.classic.core.modules.output.fast.html.FastHtmlExportProcessor;
 import org.pentaho.reporting.engine.classic.core.modules.output.fast.validator.ReportStructureValidator;
 import org.pentaho.reporting.libraries.repository.ContentIOException;
+import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
 
 public class FastStreamHtmlOutput extends StreamHtmlOutput {
   public FastStreamHtmlOutput( final String contentHandlerPattern ) {
@@ -43,9 +45,17 @@ public class FastStreamHtmlOutput extends StreamHtmlOutput {
 
     FastHtmlContentItems contentItems = computeContentItems( outputStream );
     final FastHtmlExportProcessor reportProcessor = new FastHtmlExportProcessor( report, contentItems );
+    final ReportProgressListener listener = ReportListenerThreadHolder.getListener();
+    //Add async job listener
+    if ( listener != null ) {
+      reportProcessor.addReportProgressListener( listener );
+    }
     try {
       reportProcessor.processReport();
     } finally {
+      if ( listener != null ) {
+        reportProcessor.removeReportProgressListener( listener );
+      }
       reportProcessor.close();
     }
 
