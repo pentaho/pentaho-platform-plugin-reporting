@@ -21,7 +21,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -30,10 +29,13 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Set;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * Default interface for cache backend
@@ -43,6 +45,7 @@ public class FileSystemCacheBackend implements ICacheBackend {
   private static final Log logger = LogFactory.getLog( FileSystemCacheBackend.class );
   public static final String REPLACEMENT = "_";
   public static final String SLASHES = "[/\\\\]+";
+  private final Map<List<String>, Object> syncMap = new HashMap<>();
 
   private String cachePath;
 
@@ -52,8 +55,9 @@ public class FileSystemCacheBackend implements ICacheBackend {
 
   @Override
   public boolean write( final List<String> key, final Serializable value ) {
-    synchronized ( PentahoSessionHolder.getSession() ) {
-      final String filePath = cachePath + StringUtils.join( cleanKey( key ), File.separator );
+    final List<String> cleanKey = cleanKey( key );
+    synchronized ( getLock( cleanKey ) ) {
+      final String filePath = cachePath + StringUtils.join( cleanKey, File.separator );
       final File file = new File( filePath );
       try {
         //create file structure
@@ -78,8 +82,9 @@ public class FileSystemCacheBackend implements ICacheBackend {
   @Override
   public Serializable read( final List<String> key ) {
     Object result = null;
-    synchronized ( PentahoSessionHolder.getSession() ) {
-      final String filePath = cachePath + StringUtils.join( cleanKey( key ), File.separator );
+    final List<String> cleanKey = cleanKey( key );
+    synchronized ( getLock( cleanKey ) ) {
+      final String filePath = cachePath + StringUtils.join( cleanKey, File.separator );
 
       try ( final FileInputStream fis = new FileInputStream( filePath );
             final ObjectInputStream ois = new ObjectInputStream( fis ) ) {
@@ -89,25 +94,45 @@ public class FileSystemCacheBackend implements ICacheBackend {
       }
       return (Serializable) result;
     }
+  }
 
-
+  /**
+   * Returns an object for read/write synchronization
+   * @param key compound key
+   * @return lock object
+   */
+  private synchronized Object getLock( final List<String> key ) {
+    Object lock = syncMap.get( key );
+    if ( lock == null ) {
+      lock = new Object();
+      syncMap.put( key, lock );
+    }
+    return lock;
   }
 
   @Override
   public boolean purge( final List<String> key ) {
-    try {
-      final File file = new File( cachePath + StringUtils.join( cleanKey( key ), File.separator ) );
-      if ( !file.exists() ) {
-        return true;
+    final List<String> cleanKey = cleanKey( key );
+    synchronized ( getLock( cleanKey ) ) {
+      try {
+        final File file = new File( cachePath + StringUtils.join( cleanKey, File.separator ) );
+        if ( !file.exists() ) {
+          return true;
+        }
+        if ( file.isDirectory() ) {
+          FileUtils.deleteDirectory( file );
+          final Set<String> subKeys = listKeys( cleanKey );
+          for ( final String subKey : subKeys ) {
+            syncMap.remove( Arrays.asList( subKey.split( File.separator ) ) );
+          }
+          return !file.exists();
+        }
+        syncMap.remove( key );
+        return file.delete();
+      } catch ( final Exception e ) {
+        logger.debug( "Can't delete cache: ", e );
+        return false;
       }
-      if ( file.isDirectory() ) {
-        FileUtils.deleteDirectory( file );
-        return !file.exists();
-      }
-      return file.delete();
-    } catch ( final Exception e ) {
-      logger.debug( "Can't delete cache: ", e );
-      return false;
     }
   }
 
