@@ -29,13 +29,12 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.Set;
 import java.util.HashSet;
 import java.util.List;
-import java.util.ArrayList;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Default interface for cache backend
@@ -45,7 +44,7 @@ public class FileSystemCacheBackend implements ICacheBackend {
   private static final Log logger = LogFactory.getLog( FileSystemCacheBackend.class );
   public static final String REPLACEMENT = "_";
   public static final String SLASHES = "[/\\\\]+";
-  private final Map<List<String>, Object> syncMap = new HashMap<>();
+  private final ConcurrentHashMap<List<String>, Object> syncMap = new ConcurrentHashMap<>();
 
   private String cachePath;
 
@@ -102,10 +101,9 @@ public class FileSystemCacheBackend implements ICacheBackend {
    * @return lock object
    */
   private synchronized Object getLock( final List<String> key ) {
-    Object lock = syncMap.get( key );
+    Object lock = syncMap.putIfAbsent( key, new Object() );
     if ( lock == null ) {
-      lock = new Object();
-      syncMap.put( key, lock );
+      lock = syncMap.get( key );
     }
     return lock;
   }
