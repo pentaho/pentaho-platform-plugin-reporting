@@ -14,8 +14,15 @@
 *
 * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
 */
-var prefix = (typeof CONTEXT_PATH != "undefined") ? CONTEXT_PATH+'content/reporting/reportviewer' : 'reportviewer'; 
-if(typeof document == "undefined" || document.location.href.indexOf("debug=true") > 0){
+var prefix =
+// environment configured
+(typeof ENVIRONMENT_CONFIG !== "undefined" && typeof ENVIRONMENT_CONFIG.paths !== "undefined" &&
+  typeof ENVIRONMENT_CONFIG.paths["reportviewer"] !== "undefined") ? ENVIRONMENT_CONFIG.paths["reportviewer"] :
+// production
+(typeof CONTEXT_PATH != "undefined") ? CONTEXT_PATH+'content/reporting/reportviewer' :
+// build
+'reportviewer';
+if(typeof KARMA_RUN !== "undefined" || typeof document == "undefined" || document.location.href.indexOf("debug=true") > 0){
   requireCfg['paths']['reportviewer'] = prefix;
   requireCfg['paths']['pentaho/reportviewer'] = prefix+'/dojo/pentaho/reportviewer';
 } else {

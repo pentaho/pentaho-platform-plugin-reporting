@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright 2015 Pentaho Corporation. All rights reserved.
+ * Copyright 2016 Pentaho Corporation. All rights reserved.
  */
 
 /**
@@ -22,9 +22,8 @@
  *
  * @type {{paths: {common-ui: string, cdf: string}}}
  */
-var ENVIRONMENT_CONFIG = {
-  paths: {
-    "cdf": "../../bin/scriptOutput/cdf/js",
-    "cdf/lib": "../../bin/scriptOutput/cdf/js/lib"
-  }
-};
+
+var ENVIRONMENT_CONFIG = ENVIRONMENT_CONFIG || {};
+ENVIRONMENT_CONFIG.paths = ENVIRONMENT_CONFIG.paths || {};
+ENVIRONMENT_CONFIG.paths["cdf"] = ENVIRONMENT_CONFIG.paths["cdf"] || "../../bin/scriptOutput/cdf/js";
+ENVIRONMENT_CONFIG.paths["cdf/lib"] = ENVIRONMENT_CONFIG.paths["cdf/lib"] || "../../bin/scriptOutput/cdf/js/lib";
