@@ -17,6 +17,7 @@
 package org.pentaho.reporting.platform.plugin.cache;
 
 
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -35,7 +36,7 @@ public abstract class AbstractReportContentCache implements IReportContentCache 
 
   @Override
   public boolean put( final String key, final IReportContent value ) {
-    return getBackend().write( computeKey( key ), value );
+    return getBackend().write( computeKey( key ), value, new HashMap<>());
   }
 
   @Override

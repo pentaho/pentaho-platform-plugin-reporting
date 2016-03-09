@@ -22,9 +22,11 @@ import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.reporting.libraries.xmlns.parser.Base64;
 
+import java.io.Serializable;
 import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -71,9 +73,10 @@ public class DeleteOldOnAccessCache extends AbstractReportContentCache {
    */
   @Override public boolean put( final String key, final IReportContent value ) {
     cleanUp();
-    if ( super.put( key, value ) ) {
-      return super.getBackend().write( computeKey( key + TIMESTAMP ), System.currentTimeMillis() );
-    }
+
+    HashMap<String, Serializable> metadata =new HashMap<>();
+    metadata.put(TIMESTAMP, System.currentTimeMillis());
+    getBackend().write( computeKey( key ), value, metadata );
     return false;
   }
 
@@ -91,21 +94,19 @@ public class DeleteOldOnAccessCache extends AbstractReportContentCache {
     logger.debug( "Starting periodical cache eviction" );
     final long currentTimeMillis = System.currentTimeMillis();
     final ICacheBackend backend = getBackend();
-    //Check all timestamps
-    for ( final String userFolder : backend.listKeys( Collections.singletonList( SEGMENT ) ) ) {
-      for ( final String key : backend.listKeys( Arrays.asList( SEGMENT, userFolder ) ) ) {
-        if ( key.matches( ".*" + TIMESTAMP ) ) {
-          final List<String> compositeKey = Arrays.asList( SEGMENT, userFolder, key );
-          final Long timestamp = (Long) backend.read( compositeKey );
-          if ( currentTimeMillis - timestamp > millisToLive ) {
-            backend.purge( compositeKey );
-            compositeKey.set( NAME_INDEX, compositeKey.get( NAME_INDEX ).replace( TIMESTAMP, "" ) );
-            backend.purge( compositeKey );
-            logger.debug( "Purged long-term cache: " + key );
-          }
+
+    backend.purgeSegment(Collections.singletonList( SEGMENT ), (key, md) -> {
+      final Object o = md.get(TIMESTAMP);
+      if (o instanceof Long) {
+        final long timestamp = (Long) o;
+        if ( currentTimeMillis - timestamp > millisToLive ) {
+          logger.debug( "Purged long-term cache: " + key );
+
         }
       }
-    }
+      return false;
+    });
+
     logger.debug( "Finished periodical cache eviction" );
   }
 

@@ -18,7 +18,10 @@ package org.pentaho.reporting.platform.plugin.cache;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.BiPredicate;
+import java.util.function.Predicate;
 
 /**
  * Simple interface for cache backend
@@ -32,7 +35,7 @@ public interface ICacheBackend {
    * @param value object
    * @return if operation succeed
    */
-  boolean write( List<String> key, Serializable value );
+  boolean write( List<String> key, Serializable value, Map<String,Serializable> metaData );
 
   /**
    * Retrive object from storage
@@ -49,12 +52,14 @@ public interface ICacheBackend {
    * @return if operation succeed
    */
   boolean purge( List<String> key );
+  void purgeSegment(final List<String> key,
+                    final BiPredicate<List<String>, Map<String,Serializable>> p);
 
   /**
    * Provides all keys that are children for key
    *
    * @return set of keys
    */
-  Set<String> listKeys( List<String> key );
+  //Set<String> listKeys( List<String> key );
 
 }

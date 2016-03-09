@@ -21,6 +21,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.pentaho.reporting.libraries.base.util.IOUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -29,12 +30,11 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.BiPredicate;
 
 /**
  * Default interface for cache backend
@@ -44,55 +44,164 @@ public class FileSystemCacheBackend implements ICacheBackend {
   private static final Log logger = LogFactory.getLog( FileSystemCacheBackend.class );
   public static final String REPLACEMENT = "_";
   public static final String SLASHES = "[/\\\\]+";
-  private final ConcurrentHashMap<List<String>, Object> syncMap = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<List<String>, ReentrantReadWriteLock> syncMap;
 
   private String cachePath;
 
-  public void setCachePath( final String cachePath ) {
+  public FileSystemCacheBackend() {
+    syncMap = new ConcurrentHashMap<>();
+  }
+
+  public void setCachePath(final String cachePath ) {
     this.cachePath = getSystemTmp() + cachePath;
   }
 
   @Override
-  public boolean write( final List<String> key, final Serializable value ) {
-    final List<String> cleanKey = cleanKey( key );
-    synchronized ( getLock( cleanKey ) ) {
+  public boolean write( final List<String> key, final Serializable value,
+                        final Map<String,Serializable> metaData) {
+    final List<String> cleanKey = sanitizeKeySegments( key );
+    final List<Lock> locks = lockForWrite(cleanKey);
+    try {
       final String filePath = cachePath + StringUtils.join( cleanKey, File.separator );
-      final File file = new File( filePath );
-      try {
-        //create file structure
-        file.getParentFile().mkdirs();
-        if ( !file.exists() ) {
-          file.createNewFile();
-        }
-        //closable resources
-        try ( final FileOutputStream fout = new FileOutputStream( file );
-              final ObjectOutputStream oos = new ObjectOutputStream( fout ) ) {
-          oos.writeObject( value );
-        }
-      } catch ( final IOException e ) {
-        logger.error( "Can't write cache: ", e );
+      if (writeFile(value, filePath + ".data")) {
+        return false;
+      }
+
+      final HashMap<String,Serializable> writeableMetaData = new HashMap<>();
+      if (metaData != null)
+      {
+        writeableMetaData.putAll(metaData);
+      }
+      if (writeFile(writeableMetaData, filePath + ".metadata")) {
         return false;
       }
       return true;
+    } finally {
+      unlock(locks);
     }
+  }
+
+  private boolean writeFile(Serializable value, String filePath) {
+    final File file = new File( filePath );
+    try {
+      //create file structure
+      file.getParentFile().mkdirs();
+      if ( !file.exists() ) {
+        file.createNewFile();
+      }
+      //closable resources
+      try (final FileOutputStream fout = new FileOutputStream( file );
+           final ObjectOutputStream oos = new ObjectOutputStream( fout ) ) {
+        oos.writeObject( value );
+      }
+    } catch ( final IOException e ) {
+      logger.error( "Can't write cache: ", e );
+      return true;
+    }
+    return false;
   }
 
 
   @Override
   public Serializable read( final List<String> key ) {
     Object result = null;
-    final List<String> cleanKey = cleanKey( key );
-    synchronized ( getLock( cleanKey ) ) {
-      final String filePath = cachePath + StringUtils.join( cleanKey, File.separator );
+    final List<String> cleanKey = sanitizeKeySegments( key );
+    final List<Lock> locks = lockForRead(cleanKey);
+    try {
+      final String filePath = cachePath + StringUtils.join( cleanKey, File.separator ) + ".data";
+      final File f = new File(filePath);
+      if (!f.exists()) {
+        return null;
+      }
 
-      try ( final FileInputStream fis = new FileInputStream( filePath );
+      try ( final FileInputStream fis = new FileInputStream( f );
             final ObjectInputStream ois = new ObjectInputStream( fis ) ) {
         result = ois.readObject();
       } catch ( final Exception e ) {
         logger.debug( "Can't read cache: ", e );
       }
       return (Serializable) result;
+    } finally {
+      unlock(locks);
     }
+  }
+  private Map<String,Serializable> readMetaData( final List<String> key ) {
+    Object result = null;
+    final List<String> cleanKey = sanitizeKeySegments( key );
+
+    final List<Lock> locks = lockForRead(cleanKey);
+    try {
+      final String filePath = cachePath + StringUtils.join( cleanKey, File.separator ) + ".metadata";
+      final File f = new File(filePath);
+      if (!f.exists()) {
+        return null;
+      }
+
+      try ( final FileInputStream fis = new FileInputStream( f );
+            final ObjectInputStream ois = new ObjectInputStream( fis ) ) {
+        result = ois.readObject();
+      } catch ( final Exception e ) {
+        logger.debug( "Can't read cache: ", e );
+      }
+      if (result instanceof Map) {
+        return (Map<String, Serializable>) result;
+      }
+      else {
+        return null;
+      }
+    } finally {
+      unlock(locks);
+    }
+  }
+
+  /**
+   * Locks are released in reverse order. First we release the more specialized locks and traverse upwards towards
+   * the root directory.
+   *
+   * @param locks
+     */
+  private void unlock(final List<Lock> locks) {
+    for (int i = locks.size() - 1; i >= 0; i--) {
+      final Lock lock = locks.get(i);
+      lock.unlock();
+    }
+  }
+
+  private List<Lock> lockForRead(List<String> key) {
+    List<Lock> retval;
+    if (!key.isEmpty()) {
+      final List<String> parent = key.subList(0, key.size() - 1);
+      retval = lockForRead(parent);
+    } else {
+      retval = new ArrayList<>();
+    }
+
+    final Lock lock = getLock(key).readLock();
+    lock.lock();
+    retval.add(lock);
+    return retval;
+  }
+
+  /**
+   * Acquires read locks for all sub-directories, and a final write lock for the current working directory.
+   * It acquires the parent locks first, before trying to get more local locks.
+   *
+   * @param key
+   * @return
+     */
+  private List<Lock> lockForWrite(List<String> key) {
+    List<Lock> retval;
+    if (!key.isEmpty()) {
+      final List<String> parent = key.subList(0, key.size() - 1);
+      retval = lockForRead(parent);
+    } else {
+      retval = new ArrayList<>();
+    }
+
+    final Lock lock = getLock(key).writeLock();
+    lock.lock();
+    retval.add(lock);
+    return retval;
   }
 
   /**
@@ -100,48 +209,93 @@ public class FileSystemCacheBackend implements ICacheBackend {
    * @param key compound key
    * @return lock object
    */
-  private synchronized Object getLock( final List<String> key ) {
-    Object lock = syncMap.putIfAbsent( key, new Object() );
-    if ( lock == null ) {
-      lock = syncMap.get( key );
-    }
-    return lock;
+  private synchronized ReentrantReadWriteLock getLock(final List<String> key ) {
+    return syncMap.putIfAbsent( key, new ReentrantReadWriteLock(true) );
   }
 
-  @Override
-  public boolean purge( final List<String> key ) {
-    final List<String> cleanKey = cleanKey( key );
-    synchronized ( getLock( cleanKey ) ) {
-      try {
-        final File file = new File( cachePath + StringUtils.join( cleanKey, File.separator ) );
-        if ( !file.exists() ) {
-          return true;
+  public void purgeSegment(final List<String> key,
+                           final BiPredicate<List<String>, Map<String,Serializable>> p) {
+    final List<String> cleanKey = sanitizeKeySegments( key );
+    final List<Lock> locks = lockForWrite(cleanKey);
+    try {
+      for (String name : listKeys(cleanKey)) {
+        ArrayList<String> entryKey = new ArrayList<>(cleanKey);
+        entryKey.add(name);
+        final Map<String, Serializable> metaData = readMetaData(entryKey);
+        if (p.test(entryKey, metaData)) {
+          purge(entryKey);
         }
-        if ( file.isDirectory() ) {
-          FileUtils.deleteDirectory( file );
-          final Set<String> subKeys = listKeys( cleanKey );
-          for ( final String subKey : subKeys ) {
-            syncMap.remove( Arrays.asList( subKey.split( File.separator ) ) );
-          }
-          return !file.exists();
-        }
-        syncMap.remove( key );
-        return file.delete();
-      } catch ( final Exception e ) {
-        logger.debug( "Can't delete cache: ", e );
-        return false;
       }
+      for (String name : listSegments(cleanKey)) {
+        ArrayList<String> entryKey = new ArrayList<>(cleanKey);
+        entryKey.add(name);
+        purgeSegment(entryKey, p);
+      }
+    } finally {
+      unlock(locks);
     }
   }
 
   @Override
-  public Set<String> listKeys( final List<String> key ) {
+  public boolean purge(final List<String> key) {
+    final List<String> cleanKey = sanitizeKeySegments( key );
+    final List<Lock> locks = lockForWrite(cleanKey);
+    try {
+      final String fileName = cachePath + StringUtils.join( cleanKey, File.separator );
+      final File file = new File( fileName );
+      if ( !file.exists() ) {
+        return true;
+      }
+
+      if ( file.isDirectory() ) {
+        final Set<String> subKeys = listKeys( cleanKey );
+        for ( final String subKey : subKeys ) {
+          final ArrayList<String> subEntry = new ArrayList<>(cleanKey);
+          subEntry.add(subKey);
+          purge(subEntry);
+        }
+
+        syncMap.remove( cleanKey );
+        FileUtils.deleteDirectory( file );
+        return !file.exists();
+      }
+
+      syncMap.remove( cleanKey );
+      return file.delete();
+    } catch ( final Exception e ) {
+      logger.debug( "Can't delete cache: ", e );
+      return false;
+    } finally {
+      unlock(locks);
+    }
+  }
+
+  private Set<String> listKeys( final List<String> unsafeKey ) {
+    final List<String> sanitized = sanitizeKeySegments(unsafeKey);
     final Set<String> resultSet = new HashSet<>();
-    final File directory = new File( cachePath + StringUtils.join( key, File.separator ) );
+    final File directory = new File( cachePath + StringUtils.join( sanitized, File.separator ) );
     final File[] fList = directory.listFiles();
     if ( fList != null ) {
       for ( final File file : fList ) {
-        resultSet.add( file.getName() );
+        final String name = file.getName();
+        if (file.isFile() && name.endsWith(".data")) {
+          resultSet.add(IOUtils.getInstance().getFileName(name));
+        }
+      }
+    }
+    return resultSet;
+  }
+
+  private Set<String> listSegments( final List<String> unsafeKey ) {
+    final List<String> sanitized = sanitizeKeySegments(unsafeKey);
+    final Set<String> resultSet = new HashSet<>();
+    final File directory = new File( cachePath + StringUtils.join( sanitized, File.separator ) );
+    final File[] fList = directory.listFiles();
+    if ( fList != null ) {
+      for ( final File file : fList ) {
+        if (file.isDirectory()) {
+          resultSet.add(file.getName());
+        }
       }
     }
     return resultSet;
@@ -156,7 +310,7 @@ public class FileSystemCacheBackend implements ICacheBackend {
     return s;
   }
 
-  private static List<String> cleanKey( final List<String> key ) {
+  private static List<String> sanitizeKeySegments(final List<String> key ) {
     final List<String> clean = new ArrayList<>( key.size() );
     for ( final String keyPart : key ) {
       clean.add( keyPart.replaceAll( SLASHES, REPLACEMENT ) );
