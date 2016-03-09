@@ -7,8 +7,7 @@ import java.util.concurrent.RunnableFuture;
  * Created by dima.prokopenko@gmail.com on 2/11/2016.
  */
 public interface IAsyncReportExecution<T> extends Callable<T> {
-  void setListener( AsyncReportStatusListener listener );
-  IAsyncReportState getState();
+  void setListener( IAsyncReportListener listener );
 
   void cancel();
   RunnableFuture<T> newTask();

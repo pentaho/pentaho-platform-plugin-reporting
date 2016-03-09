@@ -49,6 +49,7 @@ import org.pentaho.reporting.libraries.resourceloader.ResourceKey;
 import org.pentaho.reporting.libraries.resourceloader.ResourceLoadingException;
 import org.pentaho.reporting.libraries.resourceloader.ResourceManager;
 import org.pentaho.reporting.libraries.xmlns.parser.Base64;
+import org.pentaho.reporting.platform.plugin.async.IAsyncReportListener;
 import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
 import org.pentaho.reporting.platform.plugin.cache.IPluginCacheManager;
 import org.pentaho.reporting.platform.plugin.cache.IReportContent;
@@ -117,7 +118,7 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
   public int paginate( final MasterReport report, final int yieldRate )
     throws ReportProcessingException, IOException, ContentIOException {
     try {
-      String key = report.getContentCacheKey();
+      String key = "";//report.getContentCacheKey();
       if ( key == null ) {
         key = createKey( report );
       }
@@ -143,7 +144,7 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
     }
 
     try {
-      String key = report.getContentCacheKey();
+      String key = "";// report.getContentCacheKey();
       if ( key == null ) {
         key = createKey( report );
       }
@@ -214,25 +215,17 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
     final PageableHtmlOutputProcessor outputProcessor = (PageableHtmlOutputProcessor) proc.getOutputProcessor();
     outputProcessor.setFlowSelector( new DisplayAllFlowSelector() );
 
-    final ExtendedConfiguration config = ClassicEngineBoot.getInstance().getExtendedConfig();
-    final boolean firstPageMode =
-      config.getBoolProperty( "org.pentaho.reporting.platform.plugin.output.FirstPageMode" );
-
     //Async listener
-    final ReportProgressListener listener = ReportListenerThreadHolder.getListener();
+    final IAsyncReportListener listener = ReportListenerThreadHolder.getListener();
     ReportProgressListener cacheListener = null;
     try {
       final ZipRepository targetRepository = reinitOutputTargetForCaching();
-      if ( firstPageMode ) {
-        //Create cache listener to write first requested page when needed
-        cacheListener = new CacheListener( key, acceptedPage, proc, targetRepository );
-        proc.addReportProgressListener( cacheListener );
-      }
       if ( listener != null ) {
         proc.addReportProgressListener( listener );
         //Enable First Page Content available feature
-        if ( firstPageMode ) {
-          ReportListenerThreadHolder.enableFirstPageMode();
+        if ( listener.isFirstPageMode() ) {
+          cacheListener = new CacheListener( key, acceptedPage, proc, targetRepository );
+          proc.addReportProgressListener( cacheListener );
         }
       }
       proc.processReport();

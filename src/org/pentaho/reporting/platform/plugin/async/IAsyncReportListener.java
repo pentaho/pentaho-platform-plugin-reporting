@@ -1,15 +1,8 @@
 package org.pentaho.reporting.platform.plugin.async;
 
-import java.util.EventListener;
+import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
 
-/**
- * Created by dima.prokopenko@gmail.com on 2/11/2016.
- */
-public interface IAsyncReportListener extends EventListener {
+public interface IAsyncReportListener extends ReportProgressListener {
   void setStatus( AsyncExecutionStatus status );
-
-  void setProgress( int progress );
-  void setPage( int page );
-  void setRow( int row );
-  void setActivity( String activity );
+  boolean isFirstPageMode();
 }

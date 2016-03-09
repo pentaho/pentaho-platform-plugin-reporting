@@ -18,8 +18,10 @@
 
 package org.pentaho.reporting.platform.plugin.async;
 
+import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressEvent;
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
+import org.pentaho.reporting.libraries.base.config.ExtendedConfiguration;
 
 import java.util.UUID;
 
@@ -46,10 +48,16 @@ public class AsyncReportStatusListener implements IAsyncReportListener, ReportPr
   private boolean firstPageMode = false;
 
 
-  public AsyncReportStatusListener( final String path, final UUID uuid, final String mimeType ) {
+  public AsyncReportStatusListener( final String path,
+                                    final UUID uuid,
+                                    final String mimeType ) {
     this.path = path;
     this.uuid = uuid;
     this.mimeType = mimeType;
+
+    final ExtendedConfiguration config = ClassicEngineBoot.getInstance().getExtendedConfig();
+    firstPageMode = config.getBoolProperty( "org.pentaho.reporting.platform.plugin.output.FirstPageMode" );
+
   }
 
   @Override
@@ -73,28 +81,18 @@ public class AsyncReportStatusListener implements IAsyncReportListener, ReportPr
   }
 
   @Override
+  public boolean isFirstPageMode() {
+    return firstPageMode;
+  }
+
+  @Override
   public synchronized int getProgress() {
     return progress;
   }
 
   @Override
-  public synchronized void setProgress( final int progress ) {
-    this.progress = progress;
-  }
-
-  @Override
   public synchronized int getPage() {
     return page;
-  }
-
-  @Override
-  public synchronized void setPage( final int page ) {
-    this.page = page;
-  }
-
-  @Override
-  public synchronized void setRow( final int row ) {
-    this.row = row;
   }
 
   @Override
@@ -105,11 +103,6 @@ public class AsyncReportStatusListener implements IAsyncReportListener, ReportPr
   @Override
   public synchronized String getActivity() {
     return activity;
-  }
-
-  @Override
-  public synchronized void setActivity( final String activity ) {
-    this.activity = activity;
   }
 
   @Override
@@ -139,7 +132,7 @@ public class AsyncReportStatusListener implements IAsyncReportListener, ReportPr
     this.status = AsyncExecutionStatus.FINISHED;
   }
 
-  public synchronized void setFirstPageMode( final boolean firstPageMode ) {
+  public void setFirstPageMode( final boolean firstPageMode ) {
     this.firstPageMode = firstPageMode;
   }
 

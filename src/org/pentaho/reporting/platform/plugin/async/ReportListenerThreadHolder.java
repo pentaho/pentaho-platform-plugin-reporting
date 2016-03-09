@@ -20,14 +20,14 @@ package org.pentaho.reporting.platform.plugin.async;
 
 public class ReportListenerThreadHolder {
 
-  private static final ThreadLocal<AsyncReportStatusListener> listenerThreadLocal =
-    new ThreadLocal<AsyncReportStatusListener>();
+  private static final ThreadLocal<IAsyncReportListener> listenerThreadLocal =
+    new ThreadLocal<>();
 
-  public static AsyncReportStatusListener getListener() {
+  public static IAsyncReportListener getListener() {
     return listenerThreadLocal.get();
   }
 
-  public static void setListener( final AsyncReportStatusListener listener ) {
+  public static void setListener( final IAsyncReportListener listener ) {
     listenerThreadLocal.set( listener );
   }
 
@@ -35,8 +35,4 @@ public class ReportListenerThreadHolder {
     listenerThreadLocal.remove();
   }
 
-  public static void enableFirstPageMode() {
-    final AsyncReportStatusListener asyncReportStatusListener = listenerThreadLocal.get();
-    asyncReportStatusListener.setFirstPageMode( java.lang.Boolean.TRUE );
-  }
 }

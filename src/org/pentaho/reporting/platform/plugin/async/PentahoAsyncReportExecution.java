@@ -3,8 +3,6 @@ package org.pentaho.reporting.platform.plugin.async;
 import org.apache.commons.io.input.NullInputStream;
 import org.pentaho.platform.engine.core.audit.AuditHelper;
 import org.pentaho.platform.engine.core.audit.MessageTypes;
-import org.pentaho.reporting.engine.classic.core.MasterReport;
-import org.pentaho.reporting.platform.plugin.ExecuteReportContentHandler;
 import org.pentaho.reporting.platform.plugin.SimpleReportingComponent;
 import org.pentaho.reporting.platform.plugin.staging.AsyncJobFileStagingHandler;
 
@@ -12,9 +10,6 @@ import java.io.InputStream;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.RunnableFuture;
 
-/**
- * Created by dima.prokopenko@gmail.com on 2/2/2016.
- */
 public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputStream> {
 
   private SimpleReportingComponent reportComponent;
@@ -24,7 +19,7 @@ public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputS
   private String userSession = "";
   private String instanceId = "";
 
-  private AsyncReportStatusListener listener;
+  private IAsyncReportListener listener;
 
   public PentahoAsyncReportExecution( String url, SimpleReportingComponent reportComponent, AsyncJobFileStagingHandler handler ) {
     this.reportComponent = reportComponent;
@@ -72,11 +67,6 @@ public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputS
     return new NullInputStream( 0 );
   }
 
-  @Override
-  public IAsyncReportState getState() {
-    return listener;
-  }
-
   @Override public void cancel() {
     this.listener.setStatus( AsyncExecutionStatus.CANCELED );
 
@@ -100,15 +90,15 @@ public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputS
 
   @Override
   public String toString() {
-    return this.getState().toString();
+    return listener.toString();
   }
 
   @Override
-  public void setListener( AsyncReportStatusListener listener ) {
+  public void setListener( IAsyncReportListener listener ) {
     this.listener = listener;
   }
 
-  public AsyncReportStatusListener getListener() {
+  public IAsyncReportListener getListener() {
     return this.listener;
   }
 
