@@ -32,8 +32,8 @@ module.exports = function(config) {
 
       // Reporting
       {pattern: "package-res/reportviewer/**/*.+(js|css)", included: false},
-      {pattern: 'test-js/**/*-spec.js', included: false},
-      {pattern: 'test-js/*.js', included: true},
+      // everything in test-js must be an amd module
+      {pattern: 'test-js/**/*.js', included: false},
 
       'config/context.js',
       'build-res/requireCfg-raw.js',
