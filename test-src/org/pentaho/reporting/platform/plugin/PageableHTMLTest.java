@@ -85,7 +85,7 @@ public class PageableHTMLTest {
     microPlatform.define( ReportOutputHandlerFactory.class, FastExportReportOutputHandlerFactory.class );
     IPluginCacheManager iPluginCacheManager =
       new PluginCacheManagerImpl( new PluginSessionCache( fileSystemCacheBackend ) );
-    microPlatform.define( "plugin-cache-manager", iPluginCacheManager );
+    microPlatform.define( "IPluginCacheManager", iPluginCacheManager );
     microPlatform.start();
 
     IPentahoSession session = new StandaloneSession();

@@ -20,22 +20,21 @@ package org.pentaho.reporting.platform.plugin.async;
 
 import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressEvent;
-import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
 import org.pentaho.reporting.libraries.base.config.ExtendedConfiguration;
 
 import java.util.UUID;
 
 /**
  * Simple synchronized bean with async execution status.
- * <p/>
+ * <p>
  * Created by dima.prokopenko@gmail.com on 2/12/2016.
  */
-public class AsyncReportStatusListener implements IAsyncReportListener, ReportProgressListener, IAsyncReportState {
+class AsyncReportStatusListener implements IAsyncReportListener {
 
-  public static final String COMPUTING_LAYOUT = "asyncComputingLayoutTitle";
-  public static final String PRECOMPUTING_VALUES = "asyncPrecomputingValuesTitle";
-  public static final String PAGINATING = "asyncPaginatingTitle";
-  public static final String GENERATING_CONTENT = "asyncGeneratingContentTitle";
+  public static final String COMPUTING_LAYOUT = "AsyncComputingLayoutTitle";
+  public static final String PRECOMPUTING_VALUES = "AsyncPrecomputingValuesTitle";
+  public static final String PAGINATING = "AsyncPaginatingTitle";
+  public static final String GENERATING_CONTENT = "AsyncGeneratingContentTitle";
 
   private final String path;
   private final UUID uuid;
@@ -130,10 +129,6 @@ public class AsyncReportStatusListener implements IAsyncReportListener, ReportPr
     final int activity = event.getActivity();
     updateState( event, activity );
     this.status = AsyncExecutionStatus.FINISHED;
-  }
-
-  public void setFirstPageMode( final boolean firstPageMode ) {
-    this.firstPageMode = firstPageMode;
   }
 
   @Override public String toString() {

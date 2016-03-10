@@ -20,9 +20,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.pentaho.platform.api.engine.IApplicationContext;
-import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
-import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressEvent;
@@ -36,7 +34,6 @@ import org.pentaho.reporting.engine.classic.core.parameters.ReportParameterDefin
 import org.pentaho.reporting.engine.classic.core.util.ReportParameterValues;
 import org.pentaho.reporting.engine.classic.core.util.beans.BeanException;
 import org.pentaho.reporting.engine.classic.core.util.beans.ConverterRegistry;
-import org.pentaho.reporting.libraries.base.config.ExtendedConfiguration;
 import org.pentaho.reporting.libraries.repository.ContentEntity;
 import org.pentaho.reporting.libraries.repository.ContentIOException;
 import org.pentaho.reporting.libraries.repository.ContentItem;
@@ -118,7 +115,7 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
   public int paginate( final MasterReport report, final int yieldRate )
     throws ReportProcessingException, IOException, ContentIOException {
     try {
-      String key = "";//report.getContentCacheKey();
+      String key = report.getContentCacheKey();
       if ( key == null ) {
         key = createKey( report );
       }
@@ -144,7 +141,7 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
     }
 
     try {
-      String key = "";// report.getContentCacheKey();
+      String key = report.getContentCacheKey();
       if ( key == null ) {
         key = createKey( report );
       }
@@ -221,12 +218,12 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
     try {
       final ZipRepository targetRepository = reinitOutputTargetForCaching();
       if ( listener != null ) {
-        proc.addReportProgressListener( listener );
-        //Enable First Page Content available feature
         if ( listener.isFirstPageMode() ) {
+          //Create cache listener to write first requested page when needed
           cacheListener = new CacheListener( key, acceptedPage, proc, targetRepository );
           proc.addReportProgressListener( cacheListener );
         }
+        proc.addReportProgressListener( listener );
       }
       proc.processReport();
 
@@ -323,15 +320,13 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
 
 
   public IReportContent getCachedContent( final String key ) {
-    final IPluginCacheManager cacheManager = PentahoSystem.get( IPluginCacheManager.class, "plugin-cache-manager",
-      PentahoSessionHolder.getSession() );
+    final IPluginCacheManager cacheManager = PentahoSystem.get( IPluginCacheManager.class );
     final IReportContentCache cache = cacheManager.getCache();
     return cache.get( key );
   }
 
   private void persistContent( final String key, final IReportContent data ) {
-    final IPluginCacheManager cacheManager = PentahoSystem.get( IPluginCacheManager.class, "plugin-cache-manager",
-      PentahoSessionHolder.getSession() );
+    final IPluginCacheManager cacheManager = PentahoSystem.get( IPluginCacheManager.class );
     final IReportContentCache cache = cacheManager.getCache();
     if ( cache != null ) {
       cache.put( key, data );

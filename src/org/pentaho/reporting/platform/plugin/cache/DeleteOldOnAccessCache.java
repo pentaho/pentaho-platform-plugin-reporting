@@ -20,10 +20,12 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
+import org.pentaho.platform.util.StringUtil;
 import org.pentaho.reporting.libraries.xmlns.parser.Base64;
 
 import java.io.Serializable;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -36,9 +38,9 @@ public class DeleteOldOnAccessCache extends AbstractReportContentCache {
 
   private static final Log logger = LogFactory.getLog( DeleteOldOnAccessCache.class );
   private static final String SEGMENT = "long_term";
-  public static final String TIMESTAMP = "-timestamp";
+  public static final String TIMESTAMP = "timestamp";
   public static final int MILLIS_IN_DAY = 86400000;
-  public static final int NAME_INDEX = 2;
+  public static final String ANONYMOUS = "anonymous";
   private long millisToLive;
 
 
@@ -74,8 +76,8 @@ public class DeleteOldOnAccessCache extends AbstractReportContentCache {
   @Override public boolean put( final String key, final IReportContent value ) {
     cleanUp();
 
-    HashMap<String, Serializable> metadata =new HashMap<>();
-    metadata.put(TIMESTAMP, System.currentTimeMillis());
+    final HashMap<String, Serializable> metadata = new HashMap<>();
+    metadata.put( TIMESTAMP, System.currentTimeMillis() );
     getBackend().write( computeKey( key ), value, metadata );
     return false;
   }
@@ -95,30 +97,33 @@ public class DeleteOldOnAccessCache extends AbstractReportContentCache {
     final long currentTimeMillis = System.currentTimeMillis();
     final ICacheBackend backend = getBackend();
 
-    backend.purgeSegment(Collections.singletonList( SEGMENT ), (key, md) -> {
-      final Object o = md.get(TIMESTAMP);
-      if (o instanceof Long) {
+    backend.purgeSegment( Collections.singletonList( SEGMENT ), ( key, md ) -> {
+      final Object o = md.get( TIMESTAMP );
+      if ( o instanceof Long ) {
         final long timestamp = (Long) o;
         if ( currentTimeMillis - timestamp > millisToLive ) {
           logger.debug( "Purged long-term cache: " + key );
-
+          return true;
         }
       }
       return false;
-    });
+    } );
 
     logger.debug( "Finished periodical cache eviction" );
   }
 
 
   private String createKey( final String key ) {
+    if ( StringUtil.isEmpty( key ) ) {
+      return ANONYMOUS;
+    }
     try {
       final MessageDigest md = MessageDigest.getInstance( "SHA-256" );
       md.update( key.getBytes() );
       final byte[] digest = md.digest();
       return new String( Base64.encode( digest ) );
-    } catch ( final Exception b ) {
-      return null;
+    } catch ( final NoSuchAlgorithmException e ) {
+      throw new Error( e );
     }
   }
 }

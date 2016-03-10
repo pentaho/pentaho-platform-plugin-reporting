@@ -39,7 +39,7 @@ public class DeleteOldOnAccessCacheTest {
 
   @BeforeClass
   public static void setUp() {
-    PentahoSessionHolder.setSession( new StandaloneSession(  ) );
+    PentahoSessionHolder.setSession( new StandaloneSession() );
     fileSystemCacheBackend = new FileSystemCacheBackend();
     fileSystemCacheBackend.setCachePath( "/test-cache/" );
   }

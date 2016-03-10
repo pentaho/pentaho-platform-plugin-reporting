@@ -36,7 +36,7 @@ public abstract class AbstractReportContentCache implements IReportContentCache 
 
   @Override
   public boolean put( final String key, final IReportContent value ) {
-    return getBackend().write( computeKey( key ), value, new HashMap<>());
+    return getBackend().write( computeKey( key ), value, new HashMap<>() );
   }
 
   @Override

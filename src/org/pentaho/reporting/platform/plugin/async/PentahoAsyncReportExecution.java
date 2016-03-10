@@ -21,50 +21,47 @@ public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputS
 
   private IAsyncReportListener listener;
 
-  public PentahoAsyncReportExecution( String url, SimpleReportingComponent reportComponent, AsyncJobFileStagingHandler handler ) {
+  public PentahoAsyncReportExecution( final String url, final SimpleReportingComponent reportComponent, final AsyncJobFileStagingHandler handler ) {
     this.reportComponent = reportComponent;
     this.handler = handler;
     this.url = url;
   }
 
-  public void forSession( String userSession ) {
+  public void forSession( final String userSession ) {
     this.userSession = userSession;
   }
 
-  public void forInstanceId( String instanceId ) {
+  public void forInstanceId( final String instanceId ) {
     this.instanceId = instanceId;
   }
 
   @Override
   public InputStream call() throws Exception {
-    final long start = System.currentTimeMillis();
-    AuditHelper.audit( userSession, userSession, url, getClass().getName(), getClass()
+    try {
+      ReportListenerThreadHolder.setListener( listener );
+      final long start = System.currentTimeMillis();
+      AuditHelper.audit( userSession, userSession, url, getClass().getName(), getClass()
         .getName(), MessageTypes.INSTANCE_START, instanceId, "", 0, null );
 
-    // let's do it!
-    listener.setStatus( AsyncExecutionStatus.WORKING );
+      if ( reportComponent.execute() ) {
 
-    final MasterReport report = reportComponent.getReport();
-    report.addReportProgressListener( listener );
-
-    if ( reportComponent.execute() ) {
-      listener.setStatus( AsyncExecutionStatus.FINISHED );
-
-      long end = System.currentTimeMillis();
-      AuditHelper.audit( userSession, userSession, url, getClass().getName(), getClass()
+        final long end = System.currentTimeMillis();
+        AuditHelper.audit( userSession, userSession, url, getClass().getName(), getClass()
           .getName(), MessageTypes.INSTANCE_END, instanceId, "", ( (float) ( end - start ) / 1000 ), null );
 
-      return handler.getStagingContent();
-    }
+        listener.setStatus( AsyncExecutionStatus.FINISHED );
 
-    // do not erase canceled status
-    if ( listener.getStatus() != AsyncExecutionStatus.CANCELED ) {
+        return handler.getStagingContent();
+      }
+
       listener.setStatus( AsyncExecutionStatus.FAILED );
-    }
 
-    AuditHelper.audit( userSession, userSession, url, getClass().getName(), getClass()
+      AuditHelper.audit( userSession, userSession, url, getClass().getName(), getClass()
         .getName(), MessageTypes.FAILED, instanceId, "", 0, null );
-    return new NullInputStream( 0 );
+      return new NullInputStream( 0 );
+    } finally {
+      ReportListenerThreadHolder.clear();
+    }
   }
 
   @Override public void cancel() {
@@ -76,7 +73,7 @@ public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputS
 
   @Override public RunnableFuture<InputStream> newTask() {
     return new FutureTask<InputStream>( this ) {
-      public boolean cancel( boolean mayInterruptIfRunning )  {
+      public boolean cancel( final boolean mayInterruptIfRunning )  {
         try {
           if ( mayInterruptIfRunning ) {
             PentahoAsyncReportExecution.this.cancel();
@@ -88,13 +85,16 @@ public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputS
     };
   }
 
-  @Override
-  public String toString() {
-    return listener.toString();
+  @Override public String toString() {
+    return "PentahoAsyncReportExecution{"
+      + "url='" + url + '\''
+      + ", instanceId='" + instanceId + '\''
+      + ", listener=" + listener
+      + '}';
   }
 
   @Override
-  public void setListener( IAsyncReportListener listener ) {
+  public void setListener( final IAsyncReportListener listener ) {
     this.listener = listener;
   }
 
