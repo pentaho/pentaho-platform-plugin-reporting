@@ -408,13 +408,29 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           throw 'accepted-page is not a proper parameter - ' + acceptedPage;
         },
 
+        /**
+         *
+         * @param pageNumber
+         * @private
+         */
+        _setAcceptedPage: function(pageNumber) {
+          this.reportPrompt.api.operation.setParameterValue(this._getAcceptedPage(), pageNumber);
+        },
+
+        /**
+         * @private
+         */
+        _getPageControl: function(){
+          return registry.byId('pageControl');
+        },
+
         updatePageControl: function() {
-          var pc = registry.byId('pageControl');
+          var pc = this._getPageControl();
 
           pc.registerPageNumberChangeCallback(undefined);
 
           if (!this.reportPrompt.panel.paramDefn.paginate) {
-            this.reportPrompt.panel.setParameterValue(this._getAcceptedPage(), '-1');
+            this._setAcceptedPage('-1');
             pc.setPageCount(1);
             pc.setPageNumber(1);
             // pc.disable();
@@ -427,7 +443,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
             // add our default page, so we can keep this between selections of other parameters, otherwise it will not be on the
             // set of params are default back to zero (page 1)
-            this.reportPrompt.panel.setParameterValue(this._getAcceptedPage(promptPanel), '' + page);
+            this._setAcceptedPage('' + page);
             pc.setPageCount(total);
             pc.setPageNumber(page + 1);
           }
@@ -438,7 +454,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         },
 
         pageChanged: function(pageNumber) {
-          this.reportPrompt.panel.setParameterValue(this._getAcceptedPage(), '' + (pageNumber - 1));
+          this._setAcceptedPage('' + (pageNumber - 1));
           this.reportPrompt.panel.submit({isPageChange: true});
         },
 

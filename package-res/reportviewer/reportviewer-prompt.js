@@ -15,9 +15,9 @@
 * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
 */
 
-define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'common-ui/prompting/parameters/ParameterXmlParser', "common-ui/prompting/api/PromptingAPI"],
+define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'common-ui/prompting/parameters/ParameterXmlParser', "common-ui/prompting/api/PromptingAPI", "common-ui/jquery-clean"],
 
-    function(util, Messages, registry, ParameterXmlParser, PromptingAPI) {
+    function(util, Messages, registry, ParameterXmlParser, PromptingAPI, $) {
       var _api =  new PromptingAPI('promptPanel');
 
   return function() {
