@@ -99,7 +99,7 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
         //  ScrollingPromptPanelLayoutComponent.postExecute ->
         //    PromptPanel._ready ->
         //
-        this.panel.getParameterDefinition = function(callback) {
+        this.panel.getParameterDefinition = function(promptPanel, callback) {
           // promptPanel === panel
           this.fetchParameterDefinition(callback, /*promptMode*/'USERINPUT');
         }.bind(this);
@@ -370,7 +370,7 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
               return 'PARAMETER';
 
           case 'USERINPUT':
-            if (!this.panel() || !this.panel().getAutoSubmitSetting()) {
+            if (!this.panel || !this.panel.getAutoSubmitSetting()) {
               return 'PARAMETER';
             }
             break;
