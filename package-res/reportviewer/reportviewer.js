@@ -449,13 +449,13 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           }
 
           pc.registerPageNumberChangeCallback(function(pageNumber) {
-            this.pageChanged(this.reportPrompt.panel, pageNumber);
+            this.pageChanged(pageNumber);
           }.bind(this));
         },
 
         pageChanged: function(pageNumber) {
           this._setAcceptedPage('' + (pageNumber - 1));
-          this.reportPrompt.panel.submit({isPageChange: true});
+          this.reportPrompt.panel.submit(this.reportPrompt.panel, {isPageChange: true});
         },
 
         togglePromptPanel: function() {
@@ -708,7 +708,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
       // Called by SubmitPromptComponent#expression (the submit button's click)
       // Also may be called by PromptPanel#init, when there is no submit button (independently of autoSubmit?).
-      submitReport: function(keyArgs) {
+      submitReport: function(promptPanel, keyArgs) {
         var isInit = keyArgs && keyArgs.isInit;
         if(!isInit) {
           if(this.reportPrompt.ignoreNextClickSubmit) {
@@ -762,19 +762,19 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
         // When !AutoSubmit, a renderMode=XML call has not been done yet,
         //  and must be done now so that the page controls have enough info.
-        if(!this.reportPrompt.panel.getAutoSubmitSetting()) {
+        if (!me.reportPrompt.panel.getAutoSubmitSetting()) {
           // FETCH page-count info before rendering report
           var callback = logged("_updateReportContent_fetchParameterCallback", function(newParamDefn) {
 
-            delete (this.reportPrompt.panel.forceAutoSubmit);
+            delete (me.reportPrompt.panel.forceAutoSubmit);
 
             // Recreates the prompt panel's CDF components
-            this.reportPrompt.panel.refresh(newParamDefn, /*noAutoAutoSubmit*/true);
+            me.reportPrompt.panel.refresh(newParamDefn, /*noAutoAutoSubmit*/true);
 
             me._updateReportContentCore(keyArgs);
           });
 
-          this.reportPrompt.fetchParameterDefinition(callback, /*promptMode*/'MANUAL');
+          me.reportPrompt.fetchParameterDefinition(callback, /*promptMode*/'MANUAL');
         } else {
           me._updateReportContentCore(keyArgs);
         }
