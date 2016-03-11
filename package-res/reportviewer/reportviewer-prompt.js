@@ -78,7 +78,7 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
             //
             // [PIR-1163] Used 'inSchedulerDialog' variable to make sure that the second request is not sent if it's scheduler dialog.
             // Because the scheduler needs only parameters without full XML.
-            if (!inSchedulerDialog && this.mode === 'INITIAL' && paramDefn.allowAutoSubmit()) {
+            if ( (typeof inSchedulerDialog === "undefined" || !inSchedulerDialog) && this.mode === 'INITIAL' && paramDefn.allowAutoSubmit()) {
               this.fetchParameterDefinition(paramDefnCallback.bind(this), 'MANUAL');
               return;
             }
@@ -113,7 +113,7 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
         this.panel.ready = this.ready.bind(this);
 
         // Provide our own i18n function
-        panel.getString = Messages.getString;
+        this.panel.getString = Messages.getString;
 
         this.initPromptPanel();
 
