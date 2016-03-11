@@ -138,6 +138,10 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           return _reportPrompt;
         },
 
+        _getPromptNeeded: function() {
+          return this.reportPrompt.api.operation.state().promptNeeded;
+        },
+
         /**
          * Localize the Report Viewer.
          */
@@ -197,7 +201,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
             this._hasReportContent() &&
 
             // Valid data (although report content should be blank here)
-            !(this.reportPrompt.panel.paramDefn.promptNeeded) &&
+            !(this._getPromptNeeded()) &&
 
             // Hide the report area when in the "New Schedule" dialog
             !inSchedulerDialog &&
@@ -315,7 +319,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
             // don't show the report or the submit panel, or the pages toolbar
             this.showPromptPanel(true);
 
-            registry.byId('glassPane').hide();
+            this._getRegistryObjectById('glassPane').hide();
             domClass.add('reportContent', 'hidden');
             // SubmitPanel can be absent in DOM
             var submitPanel = query('.submit-panel');
@@ -329,7 +333,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
             domClass.remove('reportControlPanel', 'pentaho-rounded-panel-bottom-lr');
 
             if (typeof window.parameterValidityCallback !== 'undefined') {
-              var isValid = !this.reportPrompt.panel.paramDefn.promptNeeded;
+              var isValid = !this._getPromptNeeded();
               window.parameterValidityCallback(isValid);
             }
           }
@@ -370,8 +374,9 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           } else if(!navigating) {
             // Shown or hidden by default?
             // Don't show parameter panel by default unless prompt needed
+
             showOrHide = (!inMobile && _isTopReportViewer)  ||
-                this.reportPrompt.panel.paramDefn.promptNeeded ||
+                this._getPromptNeeded() ||
                          !this.reportPrompt.panel.paramDefn.allowAutoSubmit();
           }
 
@@ -420,12 +425,12 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         /**
          * @private
          */
-        _getPageControl: function(){
-          return registry.byId('pageControl');
+        _getRegistryObjectById: function(id) {
+          return registry.byId(id);
         },
 
         updatePageControl: function() {
-          var pc = this._getPageControl();
+          var pc = this._getRegistryObjectById('pageControl');
 
           pc.registerPageNumberChangeCallback(undefined);
 
@@ -732,7 +737,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           this.view._initLayout();
 
           // Don't do anything if we need to prompt
-          var isValid = !this.reportPrompt.panel.paramDefn.promptNeeded;
+          var isValid = !this.view._getPromptNeeded();
           if (!isValid) {
             logger && logger.log("Prompt is needed. Will clear htmlObject.data-src");
 

@@ -326,7 +326,7 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
             //
             // [PIR-1163] Used 'inSchedulerDialog' variable to make sure that the second request is not sent if it's scheduler dialog.
             // Because the scheduler needs only parameters without full XML.
-            if(!inSchedulerDialog && promptMode === 'INITIAL' && newParamDefn.allowAutoSubmit()) {
+            if( (typeof inSchedulerDialog !== "undefined" && !inSchedulerDialog) && promptMode === 'INITIAL' && newParamDefn.allowAutoSubmit()) {
               // assert promptPanel == null
               me.fetchParameterDefinition(callback, /*promptMode*/'MANUAL');
               return;
