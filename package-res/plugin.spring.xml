@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:context="http://www.springframework.org/schema/context"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ws="http://jax-ws.dev.java.net/spring/core" xmlns:wss="http://jax-ws.dev.java.net/spring/servlet"
-  xmlns:pen="http://www.pentaho.com/schema/pentaho-system"
-  xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ws="http://jax-ws.dev.java.net/spring/core"
+       xmlns:wss="http://jax-ws.dev.java.net/spring/servlet"
+       xmlns:pen="http://www.pentaho.com/schema/pentaho-system" xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
                            http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-2.5.xsd
                            http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.5.xsd
                            http://jax-ws.dev.java.net/spring/core http://jax-ws.dev.java.net/spring/core.xsd
                            http://jax-ws.dev.java.net/spring/servlet http://jax-ws.dev.java.net/spring/servlet.xsd
-                           http://www.pentaho.com/schema/pentaho-system http://www.pentaho.com/schema/pentaho-system.xsd">
+                           http://www.pentaho.com/schema/pentaho-system http://www.pentaho.com/schema/pentaho-system.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd">
 
   <context:annotation-config />
 
@@ -57,17 +58,22 @@
   <bean id="org.pentaho.reporting.platform.plugin.cache.ReportCache"
         class="org.pentaho.reporting.platform.plugin.cache.NullReportCache" scope="prototype"/>
 
-  <bean id="plugin-cache-backend"
+  <bean id="ICacheBackend"
         class="org.pentaho.reporting.platform.plugin.cache.FileSystemCacheBackend" scope="singleton" >
     <property name="cachePath" value="/reporting-plugin/"/>
   </bean>
-  <bean id="plugin-cache-strategy"
-        class="org.pentaho.reporting.platform.plugin.cache.PluginSessionCache" scope="session">
-    <constructor-arg ref="plugin-cache-backend"/>
+
+  <!--The bean is singleton, nevertheless it calls PentahoSessionHolder.getSession()
+   on each cache key computation, so we have separate cache per session.
+   Also it registers LogoutListener to clean cache for each session.-->
+  <bean id="IReportContentCache"
+        class="org.pentaho.reporting.platform.plugin.cache.PluginSessionCache" scope="singleton">
+    <property name="backend" ref="ICacheBackend"/>
   </bean>
-  <bean id="plugin-cache-manager"
+
+  <bean id="IPluginCacheManager"
         class="org.pentaho.reporting.platform.plugin.cache.PluginCacheManagerImpl" scope="singleton">
-    <constructor-arg ref="plugin-cache-strategy"/>
+    <property name="strategy" ref="IReportContentCache" />
   </bean>
 
   <!-- thread pool executor -->

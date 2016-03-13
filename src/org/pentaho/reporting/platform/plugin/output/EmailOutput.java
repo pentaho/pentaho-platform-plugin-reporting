@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin.output;
@@ -27,6 +27,7 @@ import org.pentaho.platform.api.engine.IApplicationContext;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
+import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
 import org.pentaho.reporting.engine.classic.core.layout.output.YieldReportListener;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.base.StreamReportProcessor;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.AllItemsHtmlPrinter;
@@ -38,6 +39,7 @@ import org.pentaho.reporting.libraries.repository.ContentIOException;
 import org.pentaho.reporting.libraries.repository.ContentLocation;
 import org.pentaho.reporting.libraries.repository.DefaultNameGenerator;
 import org.pentaho.reporting.libraries.repository.email.EmailRepository;
+import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
 
 public class EmailOutput implements ReportOutputHandler {
   public EmailOutput() {
@@ -59,6 +61,8 @@ public class EmailOutput implements ReportOutputHandler {
       return -1;
     }
 
+
+
     try {
       final Properties props = new Properties();
       final Session session = Session.getInstance( props );
@@ -78,6 +82,11 @@ public class EmailOutput implements ReportOutputHandler {
         sp.addReportProgressListener( new YieldReportListener( yieldRate ) );
       }
 
+      final ReportProgressListener listener = ReportListenerThreadHolder.getListener();
+      //Add async job listener
+      if ( listener != null ) {
+        sp.addReportProgressListener( listener );
+      }
       try {
         sp.processReport();
         dataRepository.writeEmail( outputStream );
@@ -85,6 +94,9 @@ public class EmailOutput implements ReportOutputHandler {
         outputStream.flush();
         return 0;
       } finally {
+        if ( listener != null ) {
+          sp.removeReportProgressListener( listener );
+        }
         sp.close();
       }
     } catch ( MessagingException e ) {

@@ -21,6 +21,8 @@ import junit.framework.Assert;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
+import org.pentaho.platform.engine.core.system.StandaloneSession;
 
 import java.util.Collections;
 
@@ -32,11 +34,12 @@ public class DeleteOldOnAccessCacheTest {
 
   private static final String SOME_KEY = "some_key";
   private static final IReportContent SOME_VALUE =
-    new ReportContentImpl( 100, Collections.singletonMap(1, new byte[] { 1, 3, 4, 5 } ) );
+    new ReportContentImpl( 100, Collections.singletonMap( 1, new byte[] { 1, 3, 4, 5 } ) );
   private static FileSystemCacheBackend fileSystemCacheBackend;
 
   @BeforeClass
   public static void setUp() {
+    PentahoSessionHolder.setSession( new StandaloneSession() );
     fileSystemCacheBackend = new FileSystemCacheBackend();
     fileSystemCacheBackend.setCachePath( "/test-cache/" );
   }
