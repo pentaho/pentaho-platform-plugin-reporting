@@ -71,12 +71,12 @@ public class PentahoAsyncExecutionTest {
 
     exec.setListener( listner );
 
-    assertEquals( AsyncExecutionStatus.QUEUED, exec.getListener().getStatus() );
-    assertEquals( AsyncExecutionStatus.QUEUED, exec.getListener().getStatus() );
+    assertEquals( AsyncExecutionStatus.QUEUED, extractImpl( exec ).getStatus() );
+    assertEquals( AsyncExecutionStatus.QUEUED, extractImpl( exec ).getStatus() );
 
     InputStream returnStream = exec.call();
 
-    assertEquals( AsyncExecutionStatus.FINISHED, exec.getListener().getStatus() );
+    assertEquals( AsyncExecutionStatus.FINISHED, extractImpl( exec ).getStatus() );
     assertEquals( input, returnStream );
 
     verify( handler, times( 1 ) ).getStagingContent();
@@ -92,11 +92,11 @@ public class PentahoAsyncExecutionTest {
       new AsyncReportStatusListener( "display_path", UUID.randomUUID(), "text/html" );
 
     exec.setListener( listener );
-    assertEquals( AsyncExecutionStatus.QUEUED, exec.getListener().getStatus() );
+    assertEquals( AsyncExecutionStatus.QUEUED, extractImpl( exec ).getStatus() );
 
     InputStream returnStream = exec.call();
 
-    assertEquals( AsyncExecutionStatus.FAILED, exec.getListener().getStatus() );
+    assertEquals( AsyncExecutionStatus.FAILED, extractImpl( exec ).getStatus() );
     assertFalse( returnStream.equals( input ) );
 
     verify( handler, times( 0 ) ).getStagingContent();
@@ -134,5 +134,9 @@ public class PentahoAsyncExecutionTest {
     PentahoAsyncReportExecution spy = spy( exec );
 
     return spy;
+  }
+
+  private AsyncReportStatusListener extractImpl( final PentahoAsyncReportExecution e ) {
+    return (AsyncReportStatusListener) e.getListener();
   }
 }

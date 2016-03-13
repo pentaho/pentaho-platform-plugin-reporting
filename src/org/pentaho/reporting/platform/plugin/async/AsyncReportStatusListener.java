@@ -29,7 +29,7 @@ import java.util.UUID;
  * <p>
  * Created by dima.prokopenko@gmail.com on 2/12/2016.
  */
-class AsyncReportStatusListener implements IAsyncReportListener {
+class AsyncReportStatusListener implements IAsyncReportListener, IAsyncReportState {
 
   public static final String COMPUTING_LAYOUT = "AsyncComputingLayoutTitle";
   public static final String PRECOMPUTING_VALUES = "AsyncPrecomputingValuesTitle";

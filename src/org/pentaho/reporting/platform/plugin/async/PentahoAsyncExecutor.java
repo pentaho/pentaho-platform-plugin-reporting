@@ -23,9 +23,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Created by dima.prokopenko@gmail.com on 2/2/2016.
- */
 public class PentahoAsyncExecutor implements ILogoutListener, IPentahoSystemListener, IPentahoAsyncExecutor {
 
   public static final String BEAN_NAME = "IPentahoAsyncExecutor";
@@ -33,7 +30,7 @@ public class PentahoAsyncExecutor implements ILogoutListener, IPentahoSystemList
   private static final Log log = LogFactory.getLog( PentahoAsyncExecutor.class );
 
   private Map<CompositeKey, Future<InputStream>> tasks = new ConcurrentHashMap<>();
-  private Map<CompositeKey, IAsyncReportListener> listeners = new ConcurrentHashMap<>();
+  private Map<CompositeKey, AsyncReportStatusListener> listeners = new ConcurrentHashMap<>();
 
   private ExecutorService executorService;
 
@@ -121,7 +118,7 @@ public class PentahoAsyncExecutor implements ILogoutListener, IPentahoSystemList
       throw new NullPointerException( "session is null" );
     }
     // link to running task
-    final IAsyncReportListener runningTask = listeners.get( new CompositeKey( session, id ) );
+    final AsyncReportStatusListener runningTask = listeners.get( new CompositeKey( session, id ) );
 
     return runningTask == null ? null : runningTask;
   }
