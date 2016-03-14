@@ -120,7 +120,15 @@ public class JobManagerTest extends JaxRsServerProvider {
         return 0;
       }
 
+      @Override public int getTotalPages() {
+        return 0;
+      }
+
       @Override public int getRow() {
+        return 0;
+      }
+
+      @Override public int getTotalRows() {
         return 0;
       }
 

@@ -43,6 +43,8 @@ class AsyncReportStatusListener implements IAsyncReportListener, IAsyncReportSta
   private int progress = 0;
   private int page = 0;
   private int row = 0;
+  private int totalPages = 0;
+  private int totalRows = 0;
   private String activity;
   private boolean firstPageMode = false;
 
@@ -79,6 +81,10 @@ class AsyncReportStatusListener implements IAsyncReportListener, IAsyncReportSta
     this.status = status;
   }
 
+  @Override public synchronized void setTotalPages( final int totalPages ) {
+    this.totalPages = totalPages;
+  }
+
   @Override
   public boolean isFirstPageMode() {
     return firstPageMode;
@@ -94,9 +100,17 @@ class AsyncReportStatusListener implements IAsyncReportListener, IAsyncReportSta
     return page;
   }
 
+  @Override public synchronized int getTotalPages() {
+    return totalPages;
+  }
+
   @Override
   public synchronized int getRow() {
     return row;
+  }
+
+  @Override public synchronized int getTotalRows() {
+    return totalRows;
   }
 
   @Override
@@ -150,6 +164,7 @@ class AsyncReportStatusListener implements IAsyncReportListener, IAsyncReportSta
     this.progress = (int) ReportProgressEvent.computePercentageComplete( event, true );
     this.page = event.getPage();
     this.row = event.getRow();
+    this.totalRows = event.getMaximumRow();
   }
 
   private static String getActivityCode( final int activity ) {

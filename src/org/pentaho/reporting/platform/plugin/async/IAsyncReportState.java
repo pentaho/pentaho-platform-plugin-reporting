@@ -36,9 +36,21 @@ public interface IAsyncReportState extends Serializable {
 
   /**
    *
+   * @return Quantity of pages in the report
+   */
+  int getTotalPages();
+
+  /**
+   *
    * @return Row is currently being processed
    */
   int getRow();
+
+  /**
+   *
+   * @return Quantity of rows in the report
+   */
+  int getTotalRows();
 
   /**
    *

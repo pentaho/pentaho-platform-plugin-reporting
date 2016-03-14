@@ -74,20 +74,22 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
 
   private class CacheListener implements ReportProgressListener {
 
-
     public CacheListener( final String key, final int acceptedPage,
                           final PageableReportProcessor proc,
-                          final ZipRepository targetRepository ) {
+                          final ZipRepository targetRepository,
+                          final IAsyncReportListener asyncReportListener ) {
       this.key = key;
       this.acceptedPage = acceptedPage;
       this.proc = proc;
       this.targetRepository = targetRepository;
+      this.asyncReportListener = asyncReportListener;
     }
 
     private final String key;
     private final int acceptedPage;
     private final PageableReportProcessor proc;
     private final ZipRepository targetRepository;
+    private final IAsyncReportListener asyncReportListener;
 
     @Override public void reportProcessingStarted( final ReportProgressEvent reportProgressEvent ) {
       //ignore
@@ -98,6 +100,7 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
         && reportProgressEvent.getPage() == acceptedPage ) {
         // we finished pagination, and thus have the page numbers ready.
         // we also have the first set of pages ready ..
+        asyncReportListener.setTotalPages( proc.getLogicalPageCount() );
         try {
           persistContent( key, produceReportContent( proc, targetRepository ) );
         } catch ( final Exception e ) {
@@ -220,7 +223,7 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
       if ( listener != null ) {
         if ( listener.isFirstPageMode() ) {
           //Create cache listener to write first requested page when needed
-          cacheListener = new CacheListener( key, acceptedPage, proc, targetRepository );
+          cacheListener = new CacheListener( key, acceptedPage, proc, targetRepository, listener );
           proc.addReportProgressListener( cacheListener );
         }
         proc.addReportProgressListener( listener );
