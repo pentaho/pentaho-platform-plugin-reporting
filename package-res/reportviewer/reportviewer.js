@@ -752,7 +752,8 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         //  and must be done now so that the page controls have enough info.
         if (!me.reportPrompt.panel.getAutoSubmitSetting()) {
           // FETCH page-count info before rendering report
-          var callback = logged("_updateReportContent_fetchParameterCallback", function(newParamDefn) {
+          var callback = logged("_updateReportContent_fetchParameterCallback", function(xmlString) {
+            var newParamDefn = me.reportPrompt.parseParameterDefinition(xmlString);
 
             delete (me.reportPrompt.panel.forceAutoSubmit);
 
