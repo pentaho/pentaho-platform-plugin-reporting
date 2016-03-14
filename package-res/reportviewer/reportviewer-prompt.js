@@ -15,9 +15,9 @@
 * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
 */
 
-define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'common-ui/prompting/parameters/ParameterXmlParser', "common-ui/prompting/api/PromptingAPI"],
+define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'common-ui/prompting/parameters/ParameterXmlParser', "common-ui/prompting/api/PromptingAPI", "common-ui/jquery-clean"],
 
-    function(util, Messages, registry, ParameterXmlParser, PromptingAPI) {
+    function(util, Messages, registry, ParameterXmlParser, PromptingAPI, $) {
       var _api =  new PromptingAPI('promptPanel');
 
   return function() {
@@ -99,7 +99,7 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
         //  ScrollingPromptPanelLayoutComponent.postExecute ->
         //    PromptPanel._ready ->
         //
-        this.panel.getParameterDefinition = function(callback) {
+        this.panel.getParameterDefinition = function(promptPanel, callback) {
           // promptPanel === panel
           this.fetchParameterDefinition(callback, /*promptMode*/'USERINPUT');
         }.bind(this);
@@ -326,7 +326,7 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
             //
             // [PIR-1163] Used 'inSchedulerDialog' variable to make sure that the second request is not sent if it's scheduler dialog.
             // Because the scheduler needs only parameters without full XML.
-            if(!inSchedulerDialog && promptMode === 'INITIAL' && newParamDefn.allowAutoSubmit()) {
+            if( (typeof inSchedulerDialog !== "undefined" && !inSchedulerDialog) && promptMode === 'INITIAL' && newParamDefn.allowAutoSubmit()) {
               // assert promptPanel == null
               me.fetchParameterDefinition(callback, /*promptMode*/'MANUAL');
               return;
@@ -370,7 +370,7 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
               return 'PARAMETER';
 
           case 'USERINPUT':
-            if (!this.panel() || !this.panel().getAutoSubmitSetting()) {
+            if (!this.panel || !this.panel.getAutoSubmitSetting()) {
               return 'PARAMETER';
             }
             break;
