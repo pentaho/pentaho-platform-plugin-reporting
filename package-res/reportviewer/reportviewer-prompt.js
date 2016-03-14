@@ -59,16 +59,49 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
         Messages.addUrlBundle('reportviewer', CONTEXT_PATH+'i18n?plugin=reporting&name=reportviewer/messages/messages');
       },
 
-      /**
-       * Create the prompt panel
-       */
       createPromptPanel: function() {
-        // Obtain initial parameter definition and
-        // only then create the PromptPanel
-        this.fetchParameterDefinition(
-          this._createPromptPanelFetchCallback.bind(this),
-          /*promptMode*/'INITIAL');
-      },
+        var initFlag = true;
+        this.api.operation.render(function(api, callback) {
+          var paramDefnCallback = function(xml) {
+            var paramDefn = this.parseParameterDefinition(xml);
+
+            // A first request is made with promptMode='INITIAL' and renderMode='PARAMETER'.
+            //
+            // The response will not have page count information (pagination was not performed), but simply information about the prompt parameters (paramDefn).
+            //
+            // When paramDefn.allowAutoSubmit() is true,
+            // And no validation errors/required parameters exist to be specified, TODO: Don't think that this is being checked here!
+            // Then a second request is made with promptMode='MANUAL' and renderMode='XML' is performed.
+            //
+            // When the response to the second request arrives,
+            // Then the prompt panel is rendered, including with page count information, and  the report content is loaded and shown.
+            //
+            // [PIR-1163] Used 'inSchedulerDialog' variable to make sure that the second request is not sent if it's scheduler dialog.
+            // Because the scheduler needs only parameters without full XML.
+            if ( (typeof inSchedulerDialog === "undefined" || !inSchedulerDialog) && this.mode === 'INITIAL' && paramDefn.allowAutoSubmit()) {
+              this.fetchParameterDefinition(paramDefnCallback.bind(this), 'MANUAL');
+              return;
+            }
+
+            // Make sure we retain the current auto-submit setting
+            //  pp.getAutoSubmitSetting -> pp.autoSubmit, which is updated by the check-box
+            var autoSubmit = this.panel && this.panel.getAutoSubmitSetting();
+            if (autoSubmit != null) {
+              paramDefn.autoSubmitUI = autoSubmit;
+            }
+            callback(paramDefn);
+
+            if (initFlag) {
+              this._createPromptPanelFetchCallback(paramDefn);
+              initFlag = false;
+            } else {
+              this.mode = 'USERINPUT';
+            }
+            this.hideGlassPane();
+          };
+          this.fetchParameterDefinition(paramDefnCallback.bind(this), this.mode);
+        }.bind(this));
+       },
 
       _createPromptPanelFetchCallback: function(paramDefn) {
         // Temporary used prompt panel instance from api. Need delete it after fully applying prompting api functions.
@@ -79,30 +112,8 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
         this.panel.submitStart = this.submitStart.bind(this);
         this.panel.ready = this.ready.bind(this);
 
-        // User changes the value of a parameter:
-        //
-        // PromptingComponent:postChange ->
-        //    PromptPanel.parameterChanged -> .refreshPrompt -> .getParameterDefinition ->
-        //      (x) We Are Here
-        //      Prompt.fetchParameterDefinition ->
-        //        (callback)
-        //        PromptPanel.refresh -> .init ->
-        //           Dashboards.init ->
-        //
-        //  (...a few setTimeouts later...)
-        //
-        //  SubmitPromptComponent.update ->
-        //    PromptPanel._submit -> (When auto Submit)
-        //               .submit  ->
-        //       ReportViewer.submitReport
-        //
-        //  ScrollingPromptPanelLayoutComponent.postExecute ->
-        //    PromptPanel._ready ->
-        //
-        this.panel.getParameterDefinition = function(promptPanel, callback) {
-          // promptPanel === panel
-          this.fetchParameterDefinition(callback, /*promptMode*/'USERINPUT');
-        }.bind(this);
+        // Provide our own i18n function
+        this.panel.getString = Messages.getString;
 
         this.initPromptPanel();
 
@@ -241,10 +252,9 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
 
       /**
        * Loads the parameter xml definition from the server.
-       * @param promptPanel panel to fetch parameter definition for
        * @param {function} callback function to call when successful.
        * The callback signature is:
-       * <pre>void function(newParamDef)</pre>
+       * <pre>void function(xmlString)</pre>
        *  and is called in the context of the report viewer prompt instance.
        * @param {string} [promptMode='MANUAL'] the prompt mode to request from server:
        *  x INITIAL   - first time
@@ -260,22 +270,21 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
 
         me.showGlassPane();
 
-        if(!promptMode) {
+        if (!promptMode) {
           promptMode = 'MANUAL';
-        }
-        else if (promptMode == 'USERINPUT') {
+        } else if (promptMode == 'USERINPUT') {
           // Hide glass pane to prevent user from being blocked from changing his selection
           me.hideGlassPane();
         }
 
-        if(me.clicking) {
+        if (me.clicking) {
           // If "Upgrading" a Change to a Submit we do not want to process the next Submit Click, if any
           var upgrade = (promptMode === 'USERINPUT');
 
           me.ignoreNextClickSubmit = upgrade;
 
           // Also, force the Change to behave as if AutoSubmit was on!
-          if(this.panel) { this.panel.forceAutoSubmit = upgrade; }
+          if (me.panel) { me.panel.forceAutoSubmit = upgrade; }
 
           delete me.clicking;
         }
@@ -288,11 +297,10 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
         var options = util.getUrlParameters();
 
         // If we aren't passed a prompt panel this is the first request
-        if(this.panel) {
-          $.extend(options, this.panel.getParameterValues());
+        if (me.panel) {
+          $.extend(options, me.panel.getParameterValues());
         }
-
-        options['renderMode'] = this._getParameterDefinitionRenderMode(promptMode);
+        options['renderMode'] = this._getParameterDefinitionRenderMode(me.panel, promptMode);
 
         // Never send the session back. This is generated by the server.
         delete options['::session'];
@@ -301,45 +309,13 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
         var args = arguments;
 
         var onSuccess = logged('fetchParameterDefinition_success', function(xmlString) {
-          if(me.checkSessionTimeout(xmlString, args)) { return; }
+          if (me.checkSessionTimeout(xmlString, args)) { return; }
 
           // Another request was made after this one, so this one is ignored.
-          if(fetchParamDefId !== me._fetchParamDefId) { return; }
+          if (fetchParamDefId !== me._fetchParamDefId) { return; }
 
           try {
-            var newParamDefn = me.parseParameterDefinition(xmlString);
-
-            // A first request is made,
-            // With promptMode='INITIAL' and renderMode='PARAMETER'.
-            //
-            // The response will not have page count information (pagination was not performed),
-            // but simply information about the prompt parameters (newParamDef).
-            //
-            // When newParamDefn.allowAutoSubmit() is true,
-            // And no validation errors/required parameters exist to be specified, TODO: Don't think that this is being checked here!
-            // Then a second request is made,
-            // With promptMode='MANUAL' and renderMode='XML' is performed.
-            //
-            // When the response to the second request arrives,
-            // Then the prompt panel is rendered, including with page count information,
-            // And  the report content is loaded and shown.
-            //
-            // [PIR-1163] Used 'inSchedulerDialog' variable to make sure that the second request is not sent if it's scheduler dialog.
-            // Because the scheduler needs only parameters without full XML.
-            if( (typeof inSchedulerDialog !== "undefined" && !inSchedulerDialog) && promptMode === 'INITIAL' && newParamDefn.allowAutoSubmit()) {
-              // assert promptPanel == null
-              me.fetchParameterDefinition(callback, /*promptMode*/'MANUAL');
-              return;
-            }
-
-            // Make sure we retain the current auto-submit setting
-            //  pp.getAutoSubmitSetting -> pp.autoSubmit, which is updated by the check-box
-            var autoSubmit = this.panel && this.panel.getAutoSubmitSetting();
-            if(autoSubmit != null) {
-              newParamDefn.autoSubmitUI = autoSubmit;
-            }
-
-            callback.call(me, newParamDefn);
+            callback(xmlString);
           } catch (e) {
             me.onFatalError(e);
           }
