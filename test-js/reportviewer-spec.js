@@ -99,33 +99,22 @@ define(["reportviewer/reportviewer", "reportviewer/reportviewer-logging", "repor
         });
 
         describe("accepted page", function () {
-          var acceptedPageParam;
-
-          beforeEach(function () {
-            acceptedPageParam = reportViewer.view._getAcceptedPage();
-          });
-
-          it("get was executed correctly", function () {
-            expect(acceptedPageParam.getSelectedValuesValue()[0]).toEqual("1");
-          });
 
           describe("set", function () {
-            var acceptedPageParam;
 
             beforeEach(function () {
-              acceptedPageParam = reportViewer.view._getAcceptedPage();
               spyOn(reportViewer.reportPrompt.api.operation, "setParameterValue").and.callThrough();
             });
 
             it("was called correctly", function () {
               reportViewer.view._setAcceptedPage("2");
-              expect(reportViewer.reportPrompt.api.operation.setParameterValue).toHaveBeenCalledWith(acceptedPageParam, "2");
+              expect(reportViewer.reportPrompt.api.operation.setParameterValue).toHaveBeenCalledWith("accepted-page", "2");
             });
 
             it("was called correctly on pageChanged", function () {
               spyOn(reportViewer.view, "pageChanged").and.callThrough();
               reportViewer.view.pageChanged("20");
-              expect(reportViewer.reportPrompt.api.operation.setParameterValue).toHaveBeenCalledWith(acceptedPageParam, "19");
+              expect(reportViewer.reportPrompt.api.operation.setParameterValue).toHaveBeenCalledWith("accepted-page", "19");
             });
 
             describe("was called correctly on updatePageControl with paginate as", function () {
@@ -140,7 +129,7 @@ define(["reportviewer/reportviewer", "reportviewer/reportviewer-logging", "repor
                 reportViewer.reportPrompt.panel.paramDefn.paginate = false;
                 reportViewer.view.updatePageControl();
                 expect(reportViewer.view._setAcceptedPage).toHaveBeenCalledWith("-1");
-                expect(reportViewer.reportPrompt.api.operation.setParameterValue).toHaveBeenCalledWith(acceptedPageParam, "-1");
+                expect(reportViewer.reportPrompt.api.operation.setParameterValue).toHaveBeenCalledWith("accepted-page", "-1");
               });
 
               it("true", function () {
@@ -149,7 +138,7 @@ define(["reportviewer/reportviewer", "reportviewer/reportviewer-logging", "repor
                 reportViewer.reportPrompt.panel.paramDefn.totalPages = 8;
                 reportViewer.view.updatePageControl();
                 expect(reportViewer.view._setAcceptedPage).toHaveBeenCalledWith("5");
-                expect(reportViewer.reportPrompt.api.operation.setParameterValue).toHaveBeenCalledWith(acceptedPageParam, "5");
+                expect(reportViewer.reportPrompt.api.operation.setParameterValue).toHaveBeenCalledWith("accepted-page", "5");
               });
             });
           });

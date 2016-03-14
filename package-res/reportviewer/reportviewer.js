@@ -398,29 +398,12 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         },
 
         /**
-         * Retrieves 'accepted-page'parameter from the prompt panel.
-         *
-         * @method
-         * @private
-         * @param {PromptPanel} promptPanel The prompt panel instance
-         * @returns {Parameter} The 'accepted-page' parameter, see 'common-ui/parameters/Parameter'
-         * @throws {String} Exception if 'accepted-page' parameter is null or not an object
-         */
-        _getAcceptedPage: function() {
-          var acceptedPage = this.reportPrompt.panel.paramDefn.getParameter('accepted-page');
-          if(acceptedPage != null && typeof acceptedPage === 'object') {
-            return acceptedPage;
-          }
-          throw 'accepted-page is not a proper parameter - ' + acceptedPage;
-        },
-
-        /**
          *
          * @param pageNumber
          * @private
          */
         _setAcceptedPage: function(pageNumber) {
-          this.reportPrompt.api.operation.setParameterValue(this._getAcceptedPage(), pageNumber);
+          this.reportPrompt.api.operation.setParameterValue("accepted-page", pageNumber);
         },
 
         /**
