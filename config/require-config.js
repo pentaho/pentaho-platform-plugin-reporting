@@ -26,6 +26,12 @@
     }
   }
 
+  // relativizing test paths, so relative resources also work fine
+  // see https://gist.github.com/thomassuckow/6372324
+  for(var i=0; i< tests.length; i++) {
+    tests[i] = tests[i].replace(/^\/base\/|\.js$/g, "")
+  }
+
   requireCfg['baseUrl'] = '/base';
   requirejs.config(requireCfg);
 
