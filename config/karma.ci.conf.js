@@ -52,22 +52,26 @@ module.exports = function(config) {
 
     // test results reporter to use
     // possible values: 'dots', 'progress', 'junit', 'growl', 'coverage'
-    reporters: ['progress', 'junit', 'html', 'coverage'],
-
-    coverageReporter: {
-      type: 'cobertura',
-      dir: 'bin/test-reports/coverage/reports/'
-    },
+    reporters: ['progress', 'junit', 'coverage'],
 
     junitReporter: {
+      useBrowserName: false,
       outputFile: 'bin/test-reports/test-results.xml',
       suite: 'unit'
     },
 
-    // the default configuration
-    htmlReporter: {
-      outputDir:    'bin/test-reports/karma_html',
-      templatePath: 'node_modules/karma-html-reporter/jasmine_template.html'
+    coverageReporter: {
+      reporters: [
+        {
+          type: "html",
+          dir:  "bin/test-reports/jscoverage/html/"
+        },
+        {
+          type: "cobertura",
+          dir:  "bin/test-reports/cobertura/xml/"
+        }
+      ],
+      dir: "bin/test-reports/"
     },
 
     //hostname
