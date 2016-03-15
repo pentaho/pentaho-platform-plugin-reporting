@@ -42,7 +42,6 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
       get reportPrompt () {
         return _reportPrompt;
       },
-      _isAsync: null,
 
       load: function() {
         _Messages.addUrlBundle('reportviewer', CONTEXT_PATH+'i18n?plugin=reporting&name=reportviewer/messages/messages');
@@ -419,7 +418,11 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           pc.registerPageNumberChangeCallback(undefined);
 
           if (!this.reportPrompt.panel.paramDefn.paginate) {
-            this._setAcceptedPage('-1');
+            if(this.reportPrompt._isAsync) {
+              this._setAcceptedPage('0');
+            } else {
+              this._setAcceptedPage('-1');
+            }
             pc.setPageCount(1);
             pc.setPageNumber(1);
             // pc.disable();
@@ -787,12 +790,11 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         var url = me._buildReportContentUrl(options);
 
         //BISERVER-1225
-        if (this._isAsync === null) {
-          this._isAsync = (pentahoGet(url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/isasync', "") == "true");
-        }
         var currentUuid;
         var isCanceled = false;
-        if(this._isAsync) {
+        var isFirstContAvStatus = true;
+        var isIframeContentSet = false;
+        if(this.reportPrompt._isAsync) {
           var dlg = registry.byId('feedbackScreen');
           var handleCancelCallback = dojo.hitch(this, function(result) {
             isCanceled = true;
@@ -832,7 +834,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           me.view._showReportContent(false, /*preserveSource*/true);
         }
 
-        if(this._isAsync) {
+        if(this.reportPrompt._isAsync) {
           var handleResultCallback = dojo.hitch(this, function(result) {
             if(!isCanceled) {
               var resultJson;
@@ -849,10 +851,10 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
               }
               if(resultJson.status != null) {
                 if(resultJson.activity != null) {
-                  dlg.setText(_Messages.getString(resultJson.activity));
+                  dlg.setText(_Messages.getString(resultJson.activity) + '...');
                 }
-                dlg.setText2(_Messages.getString('FeedbackScreenPage') + ':' + resultJson.page + '/' + resultJson.totalPages);
-                dlg.setText3(_Messages.getString('FeedbackScreenRow') + ':' + resultJson.row + '/' + resultJson.totalRows);
+                dlg.setText2(_Messages.getString('FeedbackScreenPage') + ': ' + resultJson.page + ' / ' + resultJson.totalPages);
+                dlg.setText3(_Messages.getString('FeedbackScreenRow') + ': ' + resultJson.row + ' / ' + resultJson.totalRows);
                 currentUuid = resultJson.uuid;
 
                 progressBar.set({value: resultJson.progress});
@@ -861,17 +863,52 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                   var urlStatus = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + resultJson.uuid + '/status';
                   setTimeout(function(){ pentahoGet(urlStatus, "", handleResultCallback); }, 1000);
                 } else if (resultJson.status == "CONTENT_AVAILABLE") {
-                  //first page
+                  if(isFirstContAvStatus) {
+                    isFirstContAvStatus = false;
+                    var handleContAvailCallback = dojo.hitch(this, function(result2) {
+                      resultJson2 = JSON.parse(result2);
+                      if(resultJson2.status == "QUEUED" || resultJson2.status == "WORKING") {
+                        var urlStatus2 = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + resultJson2.uuid + '/status';
+                        setTimeout(function(){ pentahoGet(urlStatus2, "", handleContAvailCallback); }, 1000);
+                      } else if (resultJson2.status == "FINISHED") {
+                        var urlContent2 = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + resultJson2.uuid + '/content';
+                        logger && logger.log("Will set iframe url to " + urlContent2.substr(0, 50) + "... ");
+ 
+                        $('#hiddenReportContentForm').attr("action", urlContent2);
+                        $('#hiddenReportContentForm').submit();
+                        $('#reportContent').attr("data-src", urlContent2);
+                        this._updatedIFrameSrc = true;
+                        dlg.hide();
+                        isIframeContentSet = true;
+                      }
+                    });
+                    //get first page
+                    pentahoGet('reportjob', url.substring(url.lastIndexOf("/report?")+"/report?".length, url.length), handleContAvailCallback, 'text/text');
+                    var urlStatus = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + resultJson.uuid + '/status';
+                    setTimeout(function(){ pentahoGet(urlStatus, "", handleResultCallback); }, 1000);
+                  } else {
+                    //update page number
+                    var pageContr = registry.byId('pageControl');
+                    pageContr.setPageCount(resultJson.page);
+
+                    var urlStatus = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + resultJson.uuid + '/status';
+                    setTimeout(function(){ pentahoGet(urlStatus, "", handleResultCallback); }, 1000);
+                  }
                 } else if (resultJson.status == "FINISHED") {
-                  var urlContent = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + resultJson.uuid + '/content';
-                  logger && logger.log("Will set iframe url to " + urlContent.substr(0, 50) + "... ");
+                  if(!isIframeContentSet) {
+                    var urlContent = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + resultJson.uuid + '/content';
+                    logger && logger.log("Will set iframe url to " + urlContent.substr(0, 50) + "... ");
 
-                  $('#hiddenReportContentForm').attr("action", urlContent);
-                  $('#hiddenReportContentForm').submit();
-                  $('#reportContent').attr("data-src", urlContent);
-                  this._updatedIFrameSrc = true;
+                    $('#hiddenReportContentForm').attr("action", urlContent);
+                    $('#hiddenReportContentForm').submit();
+                    $('#reportContent').attr("data-src", urlContent);
+                    this._updatedIFrameSrc = true;
 
-                  dlg.hide();
+                    dlg.hide();
+                  }
+
+                  var pageContr = registry.byId('pageControl');
+                  pageContr.setPageCount(resultJson.page);
                 } else if (resultJson.status == "FAILED") {
                   this.reportPrompt.showMessageBox(
                     "Request failed",
