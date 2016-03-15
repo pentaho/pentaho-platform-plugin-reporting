@@ -16,8 +16,8 @@
  */
 
 define(["reportviewer/reportviewer", "reportviewer/reportviewer-logging", "reportviewer/reportviewer-prompt", "common-ui/jquery-clean",
-      "text!./parameterDefinition.xml!strip", "dojo/dom-class", "./utils/registryMock"],
-    function (ReportViewer, Logging, Prompt, $, parameterDefinition, domClass, registryMock) {
+      "text!./parameterDefinition.xml!strip", "dojo/dom-class", 'common-ui/util/util', "./utils/registryMock"],
+    function (ReportViewer, Logging, Prompt, $, parameterDefinition, domClass, util, registryMock) {
 
       describe("Report Viewer", function () {
         var reportViewer;
@@ -151,6 +151,21 @@ define(["reportviewer/reportviewer", "reportviewer/reportviewer-logging", "repor
                 expect(reportViewer.view._setAcceptedPage).toHaveBeenCalledWith("5");
                 expect(reportViewer.reportPrompt.api.operation.setParameterValue).toHaveBeenCalledWith("accepted-page", "5");
               });
+            });
+          });
+
+          describe("_buildReportContentOptions", function() {
+
+            it("should call the _buildReportContentOptions on the report viewer prompt", function() {
+              var options = {"option1": "option1", 'action': 'testAction'};
+              spyOn(reportViewer.reportPrompt, "_buildReportContentOptions").and.returnValue(options);
+
+              var result = reportViewer._buildReportContentOptions();
+
+              expect(reportViewer.reportPrompt._buildReportContentOptions).toHaveBeenCalledWith('REPORT');
+
+              expect(result).toBe(options);
+              expect(result['name']).toBe(options['action']);
             });
           });
         });

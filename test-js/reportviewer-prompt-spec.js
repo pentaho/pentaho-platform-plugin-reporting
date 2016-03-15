@@ -16,8 +16,9 @@
  */
 
 define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging", "common-ui/jquery-clean",
-      "text!./parameterDefinition.xml!strip", "./utils/registryMock", "common-ui/prompting/api/PromptingAPI"],
-    function (Prompt, Logging, $, parameterDefinition, registryMock, PromptingAPI) {
+      "text!./parameterDefinition.xml!strip", "./utils/registryMock", "common-ui/prompting/api/PromptingAPI",
+      "dojo/dom-class", 'common-ui/util/util'],
+    function (Prompt, Logging, $, parameterDefinition, registryMock, PromptingAPI, domClass, util) {
 
       describe("Report Viewer Prompt", function () {
         var reportPrompt;
@@ -79,6 +80,46 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
             return paramDefn;
           });
           createPromptExpectactions(done, {ajaxCalls: 2, mode: "MANUAL"});
+        });
+
+        describe("_buildReportContentOptions", function() {
+          var parameterValues = {'::session': '::sessionVALUE', 'action': 'testAction'};
+          beforeEach(function() {
+            spyOn(util, "getUrlParameters").and.returnValue({});
+            spyOn(reportPrompt.api.operation, "getParameterValues").and.returnValue(parameterValues);
+
+            window.inMobile = true;
+            spyOn(reportPrompt, 'showGlassPane').and.callFake(function () {});
+            spyOn(reportPrompt, 'hideGlassPane').and.callFake(function () {});
+
+            spyOn(domClass, 'add').and.callFake(function() {});
+            spyOn(domClass, 'remove').and.callFake(function() {});
+
+            reportPrompt.createPromptPanel();
+          });
+
+          it("should verify the parameter values are being retrieved from the API", function() {
+            var renderMode = "renderMode";
+            var result = reportPrompt._buildReportContentOptions(renderMode, true);
+            expect(util.getUrlParameters).toHaveBeenCalled();
+            expect(reportPrompt.api.operation.getParameterValues).toHaveBeenCalled();
+
+            expect(result['::session']).not.toBeDefined();
+            expect(result['renderMode']).toBe(renderMode);
+
+          });
+
+          it("should verify the parameter values are being retrieved from the API", function() {
+            reportPrompt.panel = null;
+            var renderMode = "renderMode";
+            var result = reportPrompt._buildReportContentOptions(renderMode, true);
+            expect(util.getUrlParameters).toHaveBeenCalled();
+            expect(reportPrompt.api.operation.getParameterValues).not.toHaveBeenCalled();
+
+            expect(result['::session']).not.toBeDefined();
+            expect(result['renderMode']).toBe(renderMode);
+            expect(result['name']).not.toBeDefined();
+          });
         });
       });
     });
