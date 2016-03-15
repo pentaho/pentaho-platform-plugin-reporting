@@ -44,7 +44,6 @@ import static org.junit.Assert.assertEquals;
 public class PentahoAsyncExecutionInterrupt {
 
   private MicroPlatform microPlatform;
-  private String stagingDir = System.getProperty( "java.io.tmpdir" );
   private PentahoAsyncExecutor executor = new PentahoAsyncExecutor( 2 );
 
   @Before public void before() throws PlatformInitializationException {

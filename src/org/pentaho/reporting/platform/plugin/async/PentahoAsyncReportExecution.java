@@ -37,6 +37,7 @@ public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputS
 
   @Override
   public InputStream call() throws Exception {
+    listener.setStatus( AsyncExecutionStatus.WORKING );
     try {
       ReportListenerThreadHolder.setListener( listener );
       final long start = System.currentTimeMillis();
@@ -44,10 +45,6 @@ public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputS
         .getName(), MessageTypes.INSTANCE_START, instanceId, "", 0, null );
 
       if ( reportComponent.execute() ) {
-
-        final long end = System.currentTimeMillis();
-        AuditHelper.audit( userSession, userSession, url, getClass().getName(), getClass()
-          .getName(), MessageTypes.INSTANCE_END, instanceId, "", ( (float) ( end - start ) / 1000 ), null );
 
         listener.setStatus( AsyncExecutionStatus.FINISHED );
 

@@ -43,7 +43,7 @@ import java.nio.file.Paths;
  * Write to TEMP file but:
  * - live between requests.
  * - require to re-set output stream for ready-to-fetch-request to fetch ready to use data.
- * <p/>
+ *
  * Created by dima.prokopenko@gmail.com on 2/10/2016.
  */
 public class AsyncJobFileStagingHandler {
