@@ -60,13 +60,13 @@ public class FileSystemCacheBackendTest {
 
   @Test
   public void testWriteRead() throws Exception {
-    assertTrue( fileSystemCacheBackend.write( Arrays.asList( directoryKey, key ), value, new HashMap<>()) );
+    assertTrue( fileSystemCacheBackend.write( Arrays.asList( directoryKey, key ), value, new HashMap<String, Serializable>()) );
     assertEquals( fileSystemCacheBackend.read( Arrays.asList( directoryKey, key ) ), value );
   }
 
   @Test
   public void testPurge() throws Exception {
-    assertTrue( fileSystemCacheBackend.write( Arrays.asList( directoryKey, key ), value, new HashMap<>() ) );
+    assertTrue( fileSystemCacheBackend.write( Arrays.asList( directoryKey, key ), value, new HashMap<String, Serializable>() ) );
     assertEquals( fileSystemCacheBackend.read( Arrays.asList( directoryKey, key ) ), value );
     assertTrue( fileSystemCacheBackend.purge( Arrays.asList( directoryKey, key ) ) );
     assertNull( fileSystemCacheBackend.read( Arrays.asList( directoryKey, key ) ) );
@@ -74,7 +74,7 @@ public class FileSystemCacheBackendTest {
 
   @Test
   public void testPurgeDir() throws Exception {
-    assertTrue( fileSystemCacheBackend.write( Arrays.asList( directoryKey, key ), value , new HashMap<>()) );
+    assertTrue( fileSystemCacheBackend.write( Arrays.asList( directoryKey, key ), value , new HashMap<String, Serializable>()) );
     assertEquals( fileSystemCacheBackend.read( Arrays.asList( directoryKey, key ) ), value );
     assertTrue( fileSystemCacheBackend.purge( Collections.singletonList( directoryKey ) ) );
     assertNull( fileSystemCacheBackend.read( Arrays.asList( directoryKey, key ) ) );
@@ -87,7 +87,7 @@ public class FileSystemCacheBackendTest {
     final ExecutorService executor = Executors.newFixedThreadPool( 2 );
     final Future<Boolean> write = executor.submit( new Callable<Boolean>() {
       @Override public Boolean call() throws Exception {
-        return fileSystemCacheBackend.write( Arrays.asList( directoryKey, key ), new LongWrite( val ) , new HashMap<>());
+        return fileSystemCacheBackend.write( Arrays.asList( directoryKey, key ), new LongWrite( val ) , new HashMap<String, Serializable>());
       }
     } );
     final Future<LongWrite> read = executor.submit( new Callable<LongWrite>() {
@@ -106,7 +106,7 @@ public class FileSystemCacheBackendTest {
     final String val = "ShinySecretValue";
     final String val2 = "ShinySecretValue2";
     final ExecutorService executor = Executors.newFixedThreadPool( 2 );
-    fileSystemCacheBackend.write( Arrays.asList( directoryKey, key ), new LongRead( val ) , new HashMap<>());
+    fileSystemCacheBackend.write( Arrays.asList( directoryKey, key ), new LongRead( val ) , new HashMap<String, Serializable>());
     final Future<LongRead> read = executor.submit( new Callable<LongRead>() {
       @Override public LongRead call() throws Exception {
         return (LongRead) fileSystemCacheBackend.read( Arrays.asList( directoryKey, key ) );
@@ -114,7 +114,7 @@ public class FileSystemCacheBackendTest {
     } );
     final Future<Boolean> write = executor.submit( new Callable<Boolean>() {
       @Override public Boolean call() throws Exception {
-        return fileSystemCacheBackend.write( Arrays.asList( directoryKey, key ), new LongRead( val2 ), new HashMap<>() );
+        return fileSystemCacheBackend.write( Arrays.asList( directoryKey, key ), new LongRead( val2 ), new HashMap<String, Serializable>() );
       }
     } );
     assertTrue( write.get() );
@@ -176,20 +176,4 @@ public class FileSystemCacheBackendTest {
 
     }
   }
-
-/*
-  @Test
-  public void testlistKeys() throws Exception {
-    final Set<String> resultSet = new HashSet<String>();
-
-    for ( int i = 0; i < 10; i++ ) {
-      final String filename = "file" + i + ".html";
-      fileSystemCacheBackend.write( Arrays.asList( directoryKey, filename ), value , new HashMap<>());
-      resultSet.add( filename );
-    }
-
-    assertEquals( resultSet, fileSystemCacheBackend.listKeys( Collections.singletonList( directoryKey ) ) );
-  }
-*/
-
 }

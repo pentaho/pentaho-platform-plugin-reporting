@@ -30,6 +30,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Eviction strategy that kills old cache when accessed
@@ -97,17 +98,20 @@ public class DeleteOldOnAccessCache extends AbstractReportContentCache {
     final long currentTimeMillis = System.currentTimeMillis();
     final ICacheBackend backend = getBackend();
 
-    backend.purgeSegment( Collections.singletonList( SEGMENT ), ( key, md ) -> {
-      final Object o = md.get( TIMESTAMP );
-      if ( o instanceof Long ) {
-        final long timestamp = (Long) o;
-        if ( currentTimeMillis - timestamp > millisToLive ) {
-          logger.debug( "Purged long-term cache: " + key );
-          return true;
+    backend.purgeSegment( Collections.singletonList( SEGMENT ),
+      new BiPredicate<List<String>, Map<String, Serializable>>() {
+        @Override public boolean test( final List<String> key, final Map<String, Serializable> md ) {
+          final Object o = md.get( TIMESTAMP );
+          if ( o instanceof Long ) {
+            final long timestamp = (Long) o;
+            if ( currentTimeMillis - timestamp > millisToLive ) {
+              logger.debug( "Purged long-term cache: " + key );
+              return true;
+            }
+          }
+          return false;
         }
-      }
-      return false;
-    } );
+      } );
 
     logger.debug( "Finished periodical cache eviction" );
   }
