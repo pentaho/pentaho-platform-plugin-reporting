@@ -12,44 +12,21 @@
  *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  *  See the GNU Lesser General Public License for more details.
  *
- *  Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved. *
+ *  Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
  */
 package org.pentaho.reporting.platform.plugin.cache;
 
-import java.io.Serializable;
-import java.util.List;
-import java.util.Map;
-
 /**
- * Simple interface for cache backend
- */
-public interface ICacheBackend {
+ * Copied from JDK 1.8
+ **/
+public interface BiPredicate<T, U> {
 
   /**
-   * Persist object
+   * Evaluates this predicate on the given arguments.
    *
-   * @param key   path
-   * @param value object
-   * @return if operation succeed
+   * @param t the first input argument
+   * @param u the second input argument
+   * @return {@code true} if the input arguments match the predicate, otherwise {@code false}
    */
-  boolean write( List<String> key, Serializable value, Map<String, Serializable> metaData );
-
-  /**
-   * Retrive object from storage
-   *
-   * @param key path
-   * @return object
-   */
-  Serializable read( List<String> key );
-
-  /**
-   * Remove object from storage
-   *
-   * @param key path
-   * @return if operation succeed
-   */
-  boolean purge( List<String> key );
-
-  void purgeSegment( final List<String> key, final BiPredicate<List<String>, Map<String, Serializable>> p );
-
+  boolean test( T t, U u );
 }

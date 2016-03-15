@@ -38,8 +38,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.BiPredicate;
-import java.util.stream.Collectors;
 
 /**
  * Default interface for cache backend
@@ -135,12 +133,16 @@ public class FileSystemCacheBackend implements ICacheBackend {
 
   private Map<String, Serializable> readMetaData( final List<String> key ) {
     Object result = null;
-    final List<String> cleanKey = sanitizeKeySegments( key ).stream().map( s -> s.replaceAll( EXT, "" ) ).collect(
-      Collectors.toList() );
+    final List<String> cleanKey = sanitizeKeySegments( key );
+    final List<String> noExtCleanKey = new ArrayList<>( cleanKey.size() );
 
-    final List<Lock> locks = lockForRead( cleanKey );
+    for ( final String cleanSegment : cleanKey ) {
+      noExtCleanKey.add( cleanSegment.replaceAll( EXT, "" ) );
+    }
+
+    final List<Lock> locks = lockForRead( noExtCleanKey );
     try {
-      final String filePath = cachePath + StringUtils.join( cleanKey, File.separator ) + METADATA;
+      final String filePath = cachePath + StringUtils.join( noExtCleanKey, File.separator ) + METADATA;
       final File f = new File( filePath );
       if ( !f.exists() ) {
         return null;
@@ -219,9 +221,12 @@ public class FileSystemCacheBackend implements ICacheBackend {
    * @return lock object
    */
   private synchronized ReentrantReadWriteLock getLock( final List<String> key ) {
-    ReentrantReadWriteLock lock = new ReentrantReadWriteLock( true );
-    ReentrantReadWriteLock existing = syncMap.putIfAbsent(key, lock);
-    return existing != null ? existing : lock;
+    final ReentrantReadWriteLock lock = new ReentrantReadWriteLock( true );
+    if ( !syncMap.containsKey( key ) ) {
+      syncMap.put( key, lock );
+      return lock;
+    }
+    return syncMap.get( key );
   }
 
   public void purgeSegment( final List<String> key,
@@ -339,8 +344,11 @@ public class FileSystemCacheBackend implements ICacheBackend {
   }
 
   private static List<String> sanitizeKeySegments( final List<String> key ) {
-    return key.stream().map( s -> s.replaceAll( SLASHES, REPLACEMENT ) )
-      .collect( Collectors.toList() );
+    final List<String> clean = new ArrayList<>( key.size() );
+    for ( final String segment : key ) {
+      clean.add( segment.replaceAll( SLASHES, REPLACEMENT ) );
+    }
+    return clean;
   }
 
 }
