@@ -221,9 +221,12 @@ public class FileSystemCacheBackend implements ICacheBackend {
    * @return lock object
    */
   private synchronized ReentrantReadWriteLock getLock( final List<String> key ) {
-    ReentrantReadWriteLock lock = new ReentrantReadWriteLock( true );
-    ReentrantReadWriteLock existing = syncMap.putIfAbsent( key, lock );
-    return existing != null ? existing : lock;
+    final ReentrantReadWriteLock lock = new ReentrantReadWriteLock( true );
+    if ( !syncMap.containsKey( key ) ) {
+      syncMap.put( key, lock );
+      return lock;
+    }
+    return syncMap.get( key );
   }
 
   public void purgeSegment( final List<String> key,
