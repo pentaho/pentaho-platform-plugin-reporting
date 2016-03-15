@@ -41,6 +41,7 @@ public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputS
 
   @Override
   public InputStream call() throws Exception {
+    listener.setStatus( AsyncExecutionStatus.WORKING );
     PentahoSessionHolder.setSession( safeSession );
     try {
       ReportListenerThreadHolder.setListener( listener );
@@ -104,8 +105,8 @@ public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputS
     this.listener = listener;
   }
 
-  public IAsyncReportListener getListener() {
-    return this.listener;
+  @Override public IAsyncReportState getState() {
+    return listener;
   }
 
   public String getMimeType() {

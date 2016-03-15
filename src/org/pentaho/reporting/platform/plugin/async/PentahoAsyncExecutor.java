@@ -77,7 +77,7 @@ public class PentahoAsyncExecutor implements ILogoutListener, IPentahoSystemList
     }
   }
 
-  @Override public UUID addTask( final PentahoAsyncReportExecution task, final IPentahoSession session ) {
+  @Override public UUID addTask( final IAsyncReportExecution<InputStream> task, final IPentahoSession session ) {
 
     final UUID id = UUID.randomUUID();
     final CompositeKey key = new CompositeKey( session, id );
