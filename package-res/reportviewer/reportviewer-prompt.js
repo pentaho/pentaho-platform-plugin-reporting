@@ -15,9 +15,9 @@
 * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
 */
 
-define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'common-ui/prompting/parameters/ParameterXmlParser', "common-ui/prompting/api/PromptingAPI", "common-ui/jquery-clean"],
+define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'common-ui/prompting/parameters/ParameterXmlParser', "common-ui/prompting/api/PromptingAPI", "common-ui/jquery-clean", "common-ui/underscore"],
 
-    function(util, Messages, registry, ParameterXmlParser, PromptingAPI, $) {
+    function(util, Messages, registry, ParameterXmlParser, PromptingAPI, $, _) {
       var _api =  new PromptingAPI('promptPanel');
 
   return function() {
@@ -60,7 +60,6 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
       },
 
       createPromptPanel: function() {
-        var initFlag = true;
         this.api.operation.render(function(api, callback) {
           var paramDefnCallback = function(xml) {
             var paramDefn = this.parseParameterDefinition(xml);
@@ -78,7 +77,7 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
             //
             // [PIR-1163] Used 'inSchedulerDialog' variable to make sure that the second request is not sent if it's scheduler dialog.
             // Because the scheduler needs only parameters without full XML.
-            if ( (typeof inSchedulerDialog === "undefined" || !inSchedulerDialog) && this.mode === 'INITIAL' && paramDefn.allowAutoSubmit()) {
+            if (!inSchedulerDialog && this.mode === 'INITIAL' && paramDefn.allowAutoSubmit()) {
               this.fetchParameterDefinition(paramDefnCallback.bind(this), 'MANUAL');
               return;
             }
@@ -91,19 +90,14 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
             }
             callback(paramDefn);
 
-            if (initFlag) {
-              this._createPromptPanelFetchCallback(paramDefn);
-              initFlag = false;
-            } else {
-              this.mode = 'USERINPUT';
-            }
+            this._createPromptPanelFetchCallback(paramDefn);
             this.hideGlassPane();
           };
           this.fetchParameterDefinition(paramDefnCallback.bind(this), this.mode);
         }.bind(this));
        },
 
-      _createPromptPanelFetchCallback: function(paramDefn) {
+      _createPromptPanelFetchCallback: _.once(function(paramDefn) {
         // Temporary used prompt panel instance from api. Need delete it after fully applying prompting api functions.
         this.panel = this.api.operation._getPromptPanel();
         this.panel.setParamDefn(paramDefn);
@@ -115,7 +109,7 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
         this.initPromptPanel();
 
         this._hideLoadingIndicator();
-      },
+      }),
 
       _hideLoadingIndicator: function() {
         try{
@@ -315,6 +309,8 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
             callback(xmlString);
           } catch (e) {
             me.onFatalError(e);
+          } finally {
+            me.mode = 'USERINPUT';
           }
         });
 
