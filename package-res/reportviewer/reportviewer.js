@@ -813,11 +813,11 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           var handleCancelCallback = dojo.hitch(this, function(result) {
             isCanceled = true;
           });
-          dlg.setTitle('Report Processing Feedback');
-          dlg.setText('Pass:');
-          dlg.setText2('Page:');
-          dlg.setText3('Row:');
-          dlg.setButtonText( 'Cancel' );
+          dlg.setTitle(_Messages.getString('FeedbackScreenTitle'));
+          dlg.setText(_Messages.getString('FeedbackScreenActivity'));
+          dlg.setText2(_Messages.getString('FeedbackScreenPage'));
+          dlg.setText3(_Messages.getString('FeedbackScreenRow'));
+          dlg.setButtonText(_Messages.getString('FeedbackScreenCancel'));
           dlg.callbacks = [function feedbackscreenDone() {
             pentahoGet(url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + currentUuid + '/cancel', "", handleCancelCallback);
             dlg.hide();
@@ -864,7 +864,11 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                 return;
               }
               if(resultJson.status != null) {
-                dlg.setText2(resultJson.status);
+                if(resultJson.activity != null) {
+                  dlg.setText(_Messages.getString(resultJson.activity));
+                }
+                dlg.setText2(_Messages.getString('FeedbackScreenPage') + ':' + resultJson.page + '/' + resultJson.totalPages);
+                dlg.setText3(_Messages.getString('FeedbackScreenRow') + ':' + resultJson.row + '/' + resultJson.totalRows);
                 currentUuid = resultJson.uuid;
 
                 progressBar.set({value: resultJson.progress});
