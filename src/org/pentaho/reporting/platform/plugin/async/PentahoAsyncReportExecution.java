@@ -45,10 +45,6 @@ public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputS
 
       if ( reportComponent.execute() ) {
 
-        final long end = System.currentTimeMillis();
-        AuditHelper.audit( userSession, userSession, url, getClass().getName(), getClass()
-          .getName(), MessageTypes.INSTANCE_END, instanceId, "", ( (float) ( end - start ) / 1000 ), null );
-
         listener.setStatus( AsyncExecutionStatus.FINISHED );
 
         return handler.getStagingContent();
