@@ -46,6 +46,7 @@ import org.pentaho.reporting.libraries.resourceloader.ResourceKey;
 import org.pentaho.reporting.libraries.resourceloader.ResourceLoadingException;
 import org.pentaho.reporting.libraries.resourceloader.ResourceManager;
 import org.pentaho.reporting.libraries.xmlns.parser.Base64;
+import org.pentaho.reporting.platform.plugin.async.AsyncExecutionStatus;
 import org.pentaho.reporting.platform.plugin.async.IAsyncReportListener;
 import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
 import org.pentaho.reporting.platform.plugin.cache.IPluginCacheManager;
@@ -96,16 +97,22 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
     }
 
     @Override public void reportProcessingUpdate( final ReportProgressEvent reportProgressEvent ) {
+      //When we request X page the accepted-page is X-1
+      //then to be sure that X page is already stored the current page in event should be X+1
+      //in other words acceptedPage + 2
+      final boolean requestedPageIsStored = reportProgressEvent.getPage() == acceptedPage + 2;
       if ( reportProgressEvent.getActivity() == ReportProgressEvent.GENERATING_CONTENT
-        && reportProgressEvent.getPage() == acceptedPage ) {
+        && requestedPageIsStored ) {
         // we finished pagination, and thus have the page numbers ready.
-        // we also have the first set of pages ready ..
-        asyncReportListener.setTotalPages( proc.getLogicalPageCount() );
+        // we also have pages in repository
         try {
           persistContent( key, produceReportContent( proc, targetRepository ) );
         } catch ( final Exception e ) {
           logger.error( "Can't persist" );
         }
+        //Update after pages are in cache
+        asyncReportListener.setTotalPages( proc.getLogicalPageCount() );
+        asyncReportListener.setStatus( AsyncExecutionStatus.CONTENT_AVAILABLE );
       }
     }
 
@@ -135,12 +142,13 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
   }
 
   @Override
-  public synchronized int generate( final MasterReport report, final int acceptedPage,
+  public synchronized int generate( final MasterReport report, /*final*/ int acceptedPage,
                                     final OutputStream outputStream, final int yieldRate )
     throws ReportProcessingException, IOException, ContentIOException {
 
     if ( acceptedPage < 0 ) {
-      return generateNonCaching( report, acceptedPage, outputStream, yieldRate );
+     /* return generateNonCaching( report, acceptedPage, outputStream, yieldRate );*/
+      acceptedPage = 0;
     }
 
     try {
@@ -328,7 +336,7 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
     return cache.get( key );
   }
 
-  private void persistContent( final String key, final IReportContent data ) {
+  private synchronized void persistContent( final String key, final IReportContent data ) {
     final IPluginCacheManager cacheManager = PentahoSystem.get( IPluginCacheManager.class );
     final IReportContentCache cache = cacheManager.getCache();
     if ( cache != null ) {

@@ -24,6 +24,7 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
     return logged({
       // The current prompt mode
       mode: 'INITIAL',
+      _isAsync: null,
 
       /**
        * Gets the prompt api instance
@@ -78,7 +79,7 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
             //
             // [PIR-1163] Used 'inSchedulerDialog' variable to make sure that the second request is not sent if it's scheduler dialog.
             // Because the scheduler needs only parameters without full XML.
-            if ( (typeof inSchedulerDialog === "undefined" || !inSchedulerDialog) && this.mode === 'INITIAL' && paramDefn.allowAutoSubmit()) {
+            if ( (typeof inSchedulerDialog === "undefined" || !inSchedulerDialog) && this.mode === 'INITIAL' && paramDefn.allowAutoSubmit() && !this._isAsync) {
               this.fetchParameterDefinition(paramDefnCallback.bind(this), 'MANUAL');
               return;
             }
@@ -272,6 +273,11 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
         } else if (promptMode == 'USERINPUT') {
           // Hide glass pane to prevent user from being blocked from changing his selection
           me.hideGlassPane();
+        }
+
+        var curUrl = window.location.href.split('?')[0];
+        if (this._isAsync === null) {
+          this._isAsync = (pentahoGet(curUrl.substring(0, curUrl.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/isasync', "") == "true");
         }
 
         if (me.clicking) {
