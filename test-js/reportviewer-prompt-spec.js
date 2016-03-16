@@ -120,6 +120,21 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
             expect(result['renderMode']).toBe(renderMode);
             expect(result['name']).not.toBeDefined();
           });
+
+          it("should not call _getStateProperty when promptMode is INITIAL", function() {
+            spyOn(reportPrompt, '_getStateProperty').and.callThrough();
+
+            reportPrompt._getParameterDefinitionRenderMode("INITIAL");
+            expect(reportPrompt._getStateProperty).not.toHaveBeenCalled();
+          });
+
+          it("should call _getStateProperty when promptMode is USERINPUT", function() {
+            spyOn(reportPrompt, '_getStateProperty').and.callFake(function () {});
+            reportPrompt.panel = {};
+
+            reportPrompt._getParameterDefinitionRenderMode("USERINPUT");
+            expect(reportPrompt._getStateProperty).toHaveBeenCalledWith('autoSubmit');
+          });
         });
       });
     });

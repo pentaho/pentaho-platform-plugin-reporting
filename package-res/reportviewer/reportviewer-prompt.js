@@ -74,6 +74,17 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
         Messages.addUrlBundle('reportviewer', CONTEXT_PATH+'i18n?plugin=reporting&name=reportviewer/messages/messages');
       },
 
+      /*
+       * Gets a property value from the state object in the Prompting API.
+       * 
+       * @param prop The property which value to fetch.
+       * 
+       * @private
+       */
+      _getStateProperty: function(prop) {
+        return this.api.operation.state()[prop];
+      },
+
       createPromptPanel: function() {
         this.api.operation.render(function(api, callback) {
           var paramDefnCallback = function(xml) {
@@ -99,7 +110,7 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
 
             // Make sure we retain the current auto-submit setting
             //  pp.getAutoSubmitSetting -> pp.autoSubmit, which is updated by the check-box
-            var autoSubmit = this.panel && this.panel.getAutoSubmitSetting();
+            var autoSubmit = this.panel && this._getStateProperty('autoSubmit');
             if (autoSubmit != null) {
               paramDefn.autoSubmitUI = autoSubmit;
             }
@@ -343,7 +354,7 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
               return 'PARAMETER';
 
           case 'USERINPUT':
-            if (!this.panel || !this.panel.getAutoSubmitSetting()) {
+            if (!this.panel || !this._getStateProperty('autoSubmit')) {
               return 'PARAMETER';
             }
             break;
