@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin.output;
@@ -22,8 +22,10 @@ import java.io.OutputStream;
 
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
+import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.csv.CSVReportUtil;
 import org.pentaho.reporting.libraries.repository.ContentIOException;
+import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
 
 public class CSVOutput implements ReportOutputHandler {
   public CSVOutput() {
@@ -43,7 +45,8 @@ public class CSVOutput implements ReportOutputHandler {
                        final OutputStream outputStream,
                        final int yieldRate )
     throws ReportProcessingException, IOException, ContentIOException {
-    CSVReportUtil.createCSV( report, outputStream, null );
+    final ReportProgressListener listener = ReportListenerThreadHolder.getListener();
+    CSVReportUtil.createCSV( report, outputStream, null, listener );
     return 0;
   }
 

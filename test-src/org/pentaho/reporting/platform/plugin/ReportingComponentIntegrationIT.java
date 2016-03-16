@@ -66,6 +66,11 @@ public class ReportingComponentIntegrationIT extends TestCase {
     PentahoSessionHolder.setSession( session );
   }
 
+  @Override
+  protected void tearDown() throws Exception {
+    microPlatform.stop();
+  }
+
   @Test
   public void test1_pdf() {
     SimpleParameterProvider parameterProvider = new SimpleParameterProvider();

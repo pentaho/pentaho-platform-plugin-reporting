@@ -46,7 +46,7 @@ public class DefaultReportCacheIT {
     assertNull( dataCache.get( dataCacheKey ) );
 
     addAttributeToPentahoSession( "org.pentaho.reporting.platform.plugin.cache.DefaultReportCache-Cache",
-        new CacheManager() );
+        CacheManager.create() );
     assertNull( dataCache.get( dataCacheKey ) );
 
     ReportOutputHandler report = mock( ReportOutputHandler.class );

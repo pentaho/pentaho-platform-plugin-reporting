@@ -25,7 +25,7 @@ define([
   'pentaho/common/MessageBox',
   'pentaho/common/Menu',
   'pentaho/common/MenuItem',
-  'pentaho/common/PageControl', 'dijit/Toolbar', 'dijit/ToolbarSeparator', 'dijit/form/ToggleButton', 'pentaho/common/GlassPane'],
+  'pentaho/common/PageControl', 'dijit/Toolbar', 'dijit/ToolbarSeparator', 'dijit/form/ToggleButton', 'pentaho/common/GlassPane', 'pentaho/reportviewer/FeedbackScreen'],
     function (_pentaho_ajax, _reportViewer, Prompt, logging, formatter, parser, _Messages, _MessageBox, _Menu, _MenuItem, _PageControl) {
 
     });

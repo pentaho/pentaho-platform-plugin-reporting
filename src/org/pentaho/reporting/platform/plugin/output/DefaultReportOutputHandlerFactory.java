@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
  */
 package org.pentaho.reporting.platform.plugin.output;
 
@@ -24,7 +24,9 @@ import java.util.Map;
 import java.util.Set;
 
 import org.pentaho.platform.engine.core.system.PentahoRequestContextHolder;
+import org.pentaho.reporting.engine.classic.core.AttributeNames;
 import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
+import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.pdf.PdfPageableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.plaintext.PlainTextPageableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.xml.XmlPageableModule;
@@ -34,6 +36,7 @@ import org.pentaho.reporting.engine.classic.core.modules.output.table.rtf.RTFTab
 import org.pentaho.reporting.engine.classic.core.modules.output.table.xls.ExcelTableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.xml.XmlTableModule;
 import org.pentaho.reporting.libraries.base.config.Configuration;
+import org.pentaho.reporting.libraries.base.config.ExtendedConfiguration;
 import org.pentaho.reporting.platform.plugin.SimpleReportingAction;
 import org.pentaho.reporting.platform.plugin.SimpleReportingComponent;
 import org.pentaho.reporting.platform.plugin.messages.Messages;
@@ -516,11 +519,29 @@ public class DefaultReportOutputHandlerFactory implements ReportOutputHandlerFac
     if ( isHtmlPageAvailable() == false ) {
       return null;
     }
-    // use the content repository
-    String contentHandlerPattern = computeContentHandlerPattern( selector );
 
-    PageableHTMLOutput pageableHTMLOutput = new PageableHTMLOutput();
-    pageableHTMLOutput.setContentHandlerPattern( contentHandlerPattern );
-    return pageableHTMLOutput;
+    // use the content repository
+    final String contentHandlerPattern = computeContentHandlerPattern( selector );
+
+    if ( isCachePageableHtmlContentEnabled( selector.getReport() ) ) {
+      final CachingPageableHTMLOutput pageableHTMLOutput = new CachingPageableHTMLOutput();
+      pageableHTMLOutput.setContentHandlerPattern( contentHandlerPattern );
+      return pageableHTMLOutput;
+    } else {
+      final PageableHTMLOutput pageableHTMLOutput = new PageableHTMLOutput();
+      pageableHTMLOutput.setContentHandlerPattern( contentHandlerPattern );
+      return pageableHTMLOutput;
+    }
+  }
+
+  protected boolean isCachePageableHtmlContentEnabled( final MasterReport report ) {
+    final Object isAtReportLevelCacheEnabled =
+      report.getAttribute( AttributeNames.Pentaho.NAMESPACE, AttributeNames.Pentaho.DYNAMIC_REPORT_CACHE );
+    if ( isAtReportLevelCacheEnabled != null ) {
+      return Boolean.TRUE.equals( isAtReportLevelCacheEnabled );
+    } else {
+      final ExtendedConfiguration config = ClassicEngineBoot.getInstance().getExtendedConfig();
+      return config.getBoolProperty( "org.pentaho.reporting.platform.plugin.output.CachePageableHtmlContent" );
+    }
   }
 }

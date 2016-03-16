@@ -24,3 +24,4 @@ build-res/module-scripts/
 *.lck
 /pentaho.log
 node_modules/
+.idea/encodings.xml
