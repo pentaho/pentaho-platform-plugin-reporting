@@ -12,14 +12,14 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2016 Pentaho Corporation..  All rights reserved.
  */
 
-define(["dijit/registry"], function (registry) {
+define(["dijit/registry"], function(registry) {
   var real = {};
   return {
     mock: function(widget) {
-      if(typeof registry.byId(widget.id) !== "undefined") {
+      if (typeof registry.byId(widget.id) !== "undefined") {
         real[widget.id] = registry.byId(widget.id);
       }
       registry.remove(widget.id);
@@ -27,8 +27,8 @@ define(["dijit/registry"], function (registry) {
     },
     unMock: function(id) {
       registry.remove(id);
-      if(typeof real[id] !== "undefined") {
-      	registry.add(real[id]);
+      if (typeof real[id] !== "undefined") {
+        registry.add(real[id]);
         delete real[id];
       }
     }
