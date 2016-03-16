@@ -23,4 +23,5 @@ build-res/module-scripts/
 .idea/uiDesigner.xml
 *.lck
 /pentaho.log
+node_modules/
 .idea/encodings.xml

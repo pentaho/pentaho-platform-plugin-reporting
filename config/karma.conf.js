@@ -48,29 +48,8 @@ module.exports = function(config) {
       "build-res/module-scripts/reportviewer/*"
     ],
 
-    //preprocessors: {'package-res/reportviewer/**/*.js': 'coverage'},
+    reporters: ["mocha"], // "progress"
 
-    // test results reporter to use
-    // possible values: 'dots', 'progress', 'junit', 'growl', 'coverage'
-    reporters: ['progress', 'junit', 'html', 'coverage'],
-
-    coverageReporter: {
-      type: 'cobertura',
-      dir: 'bin/test-reports/coverage/reports/'
-    },
-
-    junitReporter: {
-      outputFile: 'bin/test-reports/test-results.xml',
-      suite: 'unit'
-    },
-
-    // the default configuration
-    htmlReporter: {
-      outputDir:    'bin/test-reports/karma_html',
-      templatePath: 'node_modules/karma-html-reporter/jasmine_template.html'
-    },
-
-    //hostname
     hostname: ['localhost'],
 
     // web server port
@@ -111,12 +90,8 @@ module.exports = function(config) {
     plugins: [
       'karma-jasmine',
       'karma-requirejs',
-      'karma-junit-reporter',
-      'karma-html-reporter',
-      'karma-coverage',
-      'karma-phantomjs-launcher',
       'karma-chrome-launcher',
-      'karma-firefox-launcher'
+      'karma-mocha-reporter'
     ]
   });
 };
