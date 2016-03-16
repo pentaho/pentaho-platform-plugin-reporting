@@ -41,7 +41,7 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
           window.logged = Logging.create(window.name, options);
 
           reportPrompt = new Prompt();
-          spyOn(reportPrompt, 'initPromptPanel').and.callFake(function () {});
+          spyOn(reportPrompt.api.operation, 'init');
 
           spyOn($, "ajax").and.callFake(function (params) {
             params.success(parameterDefinition);
@@ -54,7 +54,7 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
             expect(reportPrompt.panel).not.toBe(undefined);
             expect(reportPrompt.parseParameterDefinition).toHaveBeenCalled();
             expect(reportPrompt.parseParameterDefinition).toHaveBeenCalledWith(parameterDefinition);
-            expect(reportPrompt.initPromptPanel).toHaveBeenCalled();
+            expect(reportPrompt.api.operation.init).toHaveBeenCalled();
             expect($.ajax).toHaveBeenCalled();
             expect($.ajax.calls.count()).toEqual(options.ajaxCalls);
             expect(reportPrompt.mode).toEqual(options.mode);
@@ -106,7 +106,6 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
 
             expect(result['::session']).not.toBeDefined();
             expect(result['renderMode']).toBe(renderMode);
-
           });
 
           it("should verify the parameter values are being retrieved from the API", function() {
@@ -135,6 +134,11 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
             reportPrompt._getParameterDefinitionRenderMode("USERINPUT");
             expect(reportPrompt._getStateProperty).toHaveBeenCalledWith('autoSubmit');
           });
+        });
+
+        it("initPromptPanel - should call OperationAPI#init", function() {
+          reportPrompt.initPromptPanel();
+          expect(reportPrompt.api.operation.init).toHaveBeenCalled();
         });
       });
     });
