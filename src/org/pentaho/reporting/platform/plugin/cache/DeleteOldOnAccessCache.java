@@ -18,10 +18,19 @@ package org.pentaho.reporting.platform.plugin.cache;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.pentaho.platform.api.engine.IPentahoSession;
+import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
+import org.pentaho.platform.util.StringUtil;
+import org.pentaho.reporting.libraries.xmlns.parser.Base64;
 
+import java.io.Serializable;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Eviction strategy that kills old cache when accessed
@@ -30,12 +39,17 @@ public class DeleteOldOnAccessCache extends AbstractReportContentCache {
 
   private static final Log logger = LogFactory.getLog( DeleteOldOnAccessCache.class );
   private static final String SEGMENT = "long_term";
-  public static final String TIMESTAMP = "-timestamp";
+  public static final String TIMESTAMP = "timestamp";
   public static final int MILLIS_IN_DAY = 86400000;
+  public static final String ANONYMOUS = "anonymous";
   private long millisToLive;
+
 
   public DeleteOldOnAccessCache( final ICacheBackend backend ) {
     super( backend );
+  }
+
+  public DeleteOldOnAccessCache() {
   }
 
   public void setDaysToLive( final long daysToLive ) {
@@ -43,12 +57,14 @@ public class DeleteOldOnAccessCache extends AbstractReportContentCache {
   }
 
   /*for testing purposes*/
-  protected void setMillisToLive( long millisToLive ) {
+  protected void setMillisToLive( final long millisToLive ) {
     this.millisToLive = millisToLive;
   }
 
   @Override protected List<String> computeKey( final String key ) {
-    return Collections.unmodifiableList( Arrays.asList( SEGMENT, key ) );
+    final IPentahoSession session = PentahoSessionHolder.getSession();
+    //Don't use username explicitly - compute hash
+    return Collections.unmodifiableList( Arrays.asList( SEGMENT, createKey( session.getName() ), key ) );
   }
 
   /**
@@ -60,12 +76,13 @@ public class DeleteOldOnAccessCache extends AbstractReportContentCache {
    */
   @Override public boolean put( final String key, final IReportContent value ) {
     cleanUp();
-    if ( super.put( key, value ) ) {
-      return super.getBackend()
-        .write( Collections.unmodifiableList( Arrays.asList( SEGMENT, key + TIMESTAMP ) ), System.currentTimeMillis() );
-    }
+
+    final HashMap<String, Serializable> metadata = new HashMap<>();
+    metadata.put( TIMESTAMP, System.currentTimeMillis() );
+    getBackend().write( computeKey( key ), value, metadata );
     return false;
   }
+
 
   /**
    * @param key key
@@ -80,19 +97,37 @@ public class DeleteOldOnAccessCache extends AbstractReportContentCache {
     logger.debug( "Starting periodical cache eviction" );
     final long currentTimeMillis = System.currentTimeMillis();
     final ICacheBackend backend = getBackend();
-    //Check all timestamps
-    for ( final String key : backend.listKeys( Collections.singletonList( SEGMENT ) ) ) {
-      if ( key.matches( ".*" + TIMESTAMP ) ) {
-        final List<String> compositeKey = Arrays.asList( SEGMENT, key );
-        final Long timestamp = (Long) backend.read( compositeKey );
-        if ( currentTimeMillis - timestamp > millisToLive ) {
-          backend.purge( compositeKey );
-          compositeKey.set( 1, compositeKey.get( 1 ).replace( TIMESTAMP, "" ) );
-          backend.purge( compositeKey );
-          logger.debug( "Purged long-term cache: " + key );
+
+    backend.purgeSegment( Collections.singletonList( SEGMENT ),
+      new BiPredicate<List<String>, Map<String, Serializable>>() {
+        @Override public boolean test( final List<String> key, final Map<String, Serializable> md ) {
+          final Object o = md.get( TIMESTAMP );
+          if ( o instanceof Long ) {
+            final long timestamp = (Long) o;
+            if ( currentTimeMillis - timestamp > millisToLive ) {
+              logger.debug( "Purged long-term cache: " + key );
+              return true;
+            }
+          }
+          return false;
         }
-      }
-    }
+      } );
+
     logger.debug( "Finished periodical cache eviction" );
+  }
+
+
+  private String createKey( final String key ) {
+    if ( StringUtil.isEmpty( key ) ) {
+      return ANONYMOUS;
+    }
+    try {
+      final MessageDigest md = MessageDigest.getInstance( "SHA-256" );
+      md.update( key.getBytes() );
+      final byte[] digest = md.digest();
+      return new String( Base64.encode( digest ) );
+    } catch ( final NoSuchAlgorithmException e ) {
+      throw new Error( e );
+    }
   }
 }

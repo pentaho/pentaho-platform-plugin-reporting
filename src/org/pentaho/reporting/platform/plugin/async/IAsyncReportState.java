@@ -29,6 +29,36 @@ public interface IAsyncReportState extends Serializable {
   int getProgress();
 
   /**
+   *
+   * @return Page is currently being processed
+   */
+  int getPage();
+
+  /**
+   *
+   * @return Quantity of pages in the report
+   */
+  int getTotalPages();
+
+  /**
+   *
+   * @return Row is currently being processed
+   */
+  int getRow();
+
+  /**
+   *
+   * @return Quantity of rows in the report
+   */
+  int getTotalRows();
+
+  /**
+   *
+   * @return Activity code is currently being processed
+   */
+  String getActivity();
+
+  /**
    * @return mime type advice of report content that will be generated at the end.
    */
   String getMimeType();

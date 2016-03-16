@@ -53,7 +53,7 @@ public class PageableHTMLIT {
 
   @AfterClass
   public static void tearDownClass() {
-      Assert.assertTrue( fileSystemCacheBackend.purge( Collections.singletonList( "" ) ) );
+    Assert.assertTrue( fileSystemCacheBackend.purge( Collections.singletonList( "" ) ) );
   }
 
   @Before
@@ -64,7 +64,7 @@ public class PageableHTMLIT {
     microPlatform = MicroPlatformFactory.create();
     IPluginCacheManager iPluginCacheManager =
       new PluginCacheManagerImpl( new PluginSessionCache( fileSystemCacheBackend ) );
-    microPlatform.define( "plugin-cache-manager", iPluginCacheManager );
+    microPlatform.define( "IPluginCacheManager", iPluginCacheManager );
     microPlatform.start();
 
     IPentahoSession session = new StandaloneSession();

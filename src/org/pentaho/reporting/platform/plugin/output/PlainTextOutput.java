@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin.output;
@@ -22,11 +22,13 @@ import java.io.OutputStream;
 
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
+import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
 import org.pentaho.reporting.engine.classic.core.layout.output.YieldReportListener;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.base.PageableReportProcessor;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.plaintext.PageableTextOutputProcessor;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.plaintext.driver.TextFilePrinterDriver;
 import org.pentaho.reporting.libraries.repository.ContentIOException;
+import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
 
 public class PlainTextOutput implements ReportOutputHandler {
   private ProxyOutputStream proxyOutputStream;
@@ -47,6 +49,11 @@ public class PlainTextOutput implements ReportOutputHandler {
                        final int yieldRate ) throws ReportProcessingException, IOException, ContentIOException {
     final PageableReportProcessor proc = create( report, yieldRate );
     proxyOutputStream.setParent( outputStream );
+    final ReportProgressListener listener = ReportListenerThreadHolder.getListener();
+    //Add async job listener
+    if ( listener != null ) {
+      proc.addReportProgressListener( listener );
+    }
     try {
       if ( proc.isPaginated() == false ) {
         proc.paginate();
@@ -54,6 +61,9 @@ public class PlainTextOutput implements ReportOutputHandler {
       proc.processReport();
       return 0;
     } finally {
+      if ( listener != null ) {
+        proc.removeReportProgressListener( listener );
+      }
       proc.close();
       proxyOutputStream.setParent( null );
     }

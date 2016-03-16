@@ -42,7 +42,6 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
       get reportPrompt () {
         return _reportPrompt;
       },
-      _isAsync: null,
 
       load: function() {
         _Messages.addUrlBundle('reportviewer', CONTEXT_PATH+'i18n?plugin=reporting&name=reportviewer/messages/messages');
@@ -139,6 +138,10 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           return _reportPrompt;
         },
 
+        _getPromptNeeded: function() {
+          return this.reportPrompt.api.operation.state().promptNeeded;
+        },
+
         /**
          * Localize the Report Viewer.
          */
@@ -198,7 +201,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
             this._hasReportContent() &&
 
             // Valid data (although report content should be blank here)
-            !(this.reportPrompt.panel.paramDefn.promptNeeded) &&
+            !(this._getPromptNeeded()) &&
 
             // Hide the report area when in the "New Schedule" dialog
             !inSchedulerDialog &&
@@ -316,7 +319,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
             // don't show the report or the submit panel, or the pages toolbar
             this.showPromptPanel(true);
 
-            registry.byId('glassPane').hide();
+            this._getRegistryObjectById('glassPane').hide();
             domClass.add('reportContent', 'hidden');
             // SubmitPanel can be absent in DOM
             var submitPanel = query('.submit-panel');
@@ -330,7 +333,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
             domClass.remove('reportControlPanel', 'pentaho-rounded-panel-bottom-lr');
 
             if (typeof window.parameterValidityCallback !== 'undefined') {
-              var isValid = !this.reportPrompt.panel.paramDefn.promptNeeded;
+              var isValid = !this._getPromptNeeded();
               window.parameterValidityCallback(isValid);
             }
           }
@@ -371,8 +374,9 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           } else if(!navigating) {
             // Shown or hidden by default?
             // Don't show parameter panel by default unless prompt needed
+
             showOrHide = (!inMobile && _isTopReportViewer)  ||
-                this.reportPrompt.panel.paramDefn.promptNeeded ||
+                this._getPromptNeeded() ||
                          !this.reportPrompt.panel.paramDefn.allowAutoSubmit();
           }
 
@@ -393,29 +397,32 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         },
 
         /**
-         * Retrieves 'accepted-page'parameter from the prompt panel.
          *
-         * @method
+         * @param pageNumber
          * @private
-         * @param {PromptPanel} promptPanel The prompt panel instance
-         * @returns {Parameter} The 'accepted-page' parameter, see 'common-ui/parameters/Parameter'
-         * @throws {String} Exception if 'accepted-page' parameter is null or not an object
          */
-        _getAcceptedPage: function() {
-          var acceptedPage = this.reportPrompt.panel.paramDefn.getParameter('accepted-page');
-          if(acceptedPage != null && typeof acceptedPage === 'object') {
-            return acceptedPage;
-          }
-          throw 'accepted-page is not a proper parameter - ' + acceptedPage;
+        _setAcceptedPage: function(pageNumber) {
+          this.reportPrompt.api.operation.setParameterValue("accepted-page", pageNumber);
+        },
+
+        /**
+         * @private
+         */
+        _getRegistryObjectById: function(id) {
+          return registry.byId(id);
         },
 
         updatePageControl: function() {
-          var pc = registry.byId('pageControl');
+          var pc = this._getRegistryObjectById('pageControl');
 
           pc.registerPageNumberChangeCallback(undefined);
 
           if (!this.reportPrompt.panel.paramDefn.paginate) {
-            this.reportPrompt.panel.setParameterValue(this._getAcceptedPage(), '-1');
+            if(this.reportPrompt._isAsync) {
+              this._setAcceptedPage('0');
+            } else {
+              this._setAcceptedPage('-1');
+            }
             pc.setPageCount(1);
             pc.setPageNumber(1);
             // pc.disable();
@@ -428,19 +435,19 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
             // add our default page, so we can keep this between selections of other parameters, otherwise it will not be on the
             // set of params are default back to zero (page 1)
-            this.reportPrompt.panel.setParameterValue(this._getAcceptedPage(promptPanel), '' + page);
+            this._setAcceptedPage('' + page);
             pc.setPageCount(total);
             pc.setPageNumber(page + 1);
           }
 
           pc.registerPageNumberChangeCallback(function(pageNumber) {
-            this.pageChanged(this.reportPrompt.panel, pageNumber);
+            this.pageChanged(pageNumber);
           }.bind(this));
         },
 
         pageChanged: function(pageNumber) {
-          this.reportPrompt.panel.setParameterValue(this._getAcceptedPage(), '' + (pageNumber - 1));
-          this.reportPrompt.panel.submit({isPageChange: true});
+          this._setAcceptedPage('' + (pageNumber - 1));
+          this.reportPrompt.panel.submit(this.reportPrompt.panel, {isPageChange: true});
         },
 
         togglePromptPanel: function() {
@@ -693,7 +700,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
       // Called by SubmitPromptComponent#expression (the submit button's click)
       // Also may be called by PromptPanel#init, when there is no submit button (independently of autoSubmit?).
-      submitReport: function(keyArgs) {
+      submitReport: function(promptPanel, keyArgs) {
         var isInit = keyArgs && keyArgs.isInit;
         if(!isInit) {
           if(this.reportPrompt.ignoreNextClickSubmit) {
@@ -717,7 +724,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           this.view._initLayout();
 
           // Don't do anything if we need to prompt
-          var isValid = !this.reportPrompt.panel.paramDefn.promptNeeded;
+          var isValid = !this.view._getPromptNeeded();
           if (!isValid) {
             logger && logger.log("Prompt is needed. Will clear htmlObject.data-src");
 
@@ -747,19 +754,20 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
         // When !AutoSubmit, a renderMode=XML call has not been done yet,
         //  and must be done now so that the page controls have enough info.
-        if(!this.reportPrompt.panel.getAutoSubmitSetting()) {
+        if (!me.reportPrompt.panel.getAutoSubmitSetting()) {
           // FETCH page-count info before rendering report
-          var callback = logged("_updateReportContent_fetchParameterCallback", function(newParamDefn) {
+          var callback = logged("_updateReportContent_fetchParameterCallback", function(xmlString) {
+            var newParamDefn = me.reportPrompt.parseParameterDefinition(xmlString);
 
-            delete (this.reportPrompt.panel.forceAutoSubmit);
+            delete (me.reportPrompt.panel.forceAutoSubmit);
 
             // Recreates the prompt panel's CDF components
-            this.reportPrompt.panel.refresh(newParamDefn, /*noAutoAutoSubmit*/true);
+            me.reportPrompt.panel.refresh(newParamDefn, /*noAutoAutoSubmit*/true);
 
             me._updateReportContentCore(keyArgs);
           });
 
-          this.reportPrompt.fetchParameterDefinition(callback, /*promptMode*/'MANUAL');
+          me.reportPrompt.fetchParameterDefinition(callback, /*promptMode*/'MANUAL');
         } else {
           me._updateReportContentCore(keyArgs);
         }
@@ -782,21 +790,20 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         var url = me._buildReportContentUrl(options);
 
         //BISERVER-1225
-        if (this._isAsync === null) {
-          this._isAsync = (pentahoGet(url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/isasync', "") == "true");
-        }
         var currentUuid;
         var isCanceled = false;
-        if(this._isAsync) {
+        var isFirstContAvStatus = true;
+        var isIframeContentSet = false;
+        if(this.reportPrompt._isAsync) {
           var dlg = registry.byId('feedbackScreen');
           var handleCancelCallback = dojo.hitch(this, function(result) {
             isCanceled = true;
           });
-          dlg.setTitle('Report Processing Feedback');
-          dlg.setText('Pass:');
-          dlg.setText2('Page:');
-          dlg.setText3('Row:');
-          dlg.setButtonText( 'Cancel' );
+          dlg.setTitle(_Messages.getString('FeedbackScreenTitle'));
+          dlg.setText(_Messages.getString('FeedbackScreenActivity'));
+          dlg.setText2(_Messages.getString('FeedbackScreenPage'));
+          dlg.setText3(_Messages.getString('FeedbackScreenRow'));
+          dlg.setButtonText(_Messages.getString('FeedbackScreenCancel'));
           dlg.callbacks = [function feedbackscreenDone() {
             pentahoGet(url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + currentUuid + '/cancel', "", handleCancelCallback);
             dlg.hide();
@@ -827,7 +834,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           me.view._showReportContent(false, /*preserveSource*/true);
         }
 
-        if(this._isAsync) {
+        if(this.reportPrompt._isAsync) {
           var handleResultCallback = dojo.hitch(this, function(result) {
             if(!isCanceled) {
               var resultJson;
@@ -843,7 +850,11 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                 return;
               }
               if(resultJson.status != null) {
-                dlg.setText2(resultJson.status);
+                if(resultJson.activity != null) {
+                  dlg.setText(_Messages.getString(resultJson.activity) + '...');
+                }
+                dlg.setText2(_Messages.getString('FeedbackScreenPage') + ': ' + resultJson.page + ' / ' + resultJson.totalPages);
+                dlg.setText3(_Messages.getString('FeedbackScreenRow') + ': ' + resultJson.row + ' / ' + resultJson.totalRows);
                 currentUuid = resultJson.uuid;
 
                 progressBar.set({value: resultJson.progress});
@@ -852,17 +863,52 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                   var urlStatus = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + resultJson.uuid + '/status';
                   setTimeout(function(){ pentahoGet(urlStatus, "", handleResultCallback); }, 1000);
                 } else if (resultJson.status == "CONTENT_AVAILABLE") {
-                  //first page
+                  if(isFirstContAvStatus) {
+                    isFirstContAvStatus = false;
+                    var handleContAvailCallback = dojo.hitch(this, function(result2) {
+                      resultJson2 = JSON.parse(result2);
+                      if(resultJson2.status == "QUEUED" || resultJson2.status == "WORKING") {
+                        var urlStatus2 = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + resultJson2.uuid + '/status';
+                        setTimeout(function(){ pentahoGet(urlStatus2, "", handleContAvailCallback); }, 1000);
+                      } else if (resultJson2.status == "FINISHED") {
+                        var urlContent2 = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + resultJson2.uuid + '/content';
+                        logger && logger.log("Will set iframe url to " + urlContent2.substr(0, 50) + "... ");
+ 
+                        $('#hiddenReportContentForm').attr("action", urlContent2);
+                        $('#hiddenReportContentForm').submit();
+                        $('#reportContent').attr("data-src", urlContent2);
+                        this._updatedIFrameSrc = true;
+                        dlg.hide();
+                        isIframeContentSet = true;
+                      }
+                    });
+                    //get first page
+                    pentahoGet('reportjob', url.substring(url.lastIndexOf("/report?")+"/report?".length, url.length), handleContAvailCallback, 'text/text');
+                    var urlStatus = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + resultJson.uuid + '/status';
+                    setTimeout(function(){ pentahoGet(urlStatus, "", handleResultCallback); }, 1000);
+                  } else {
+                    //update page number
+                    var pageContr = registry.byId('pageControl');
+                    pageContr.setPageCount(resultJson.page);
+
+                    var urlStatus = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + resultJson.uuid + '/status';
+                    setTimeout(function(){ pentahoGet(urlStatus, "", handleResultCallback); }, 1000);
+                  }
                 } else if (resultJson.status == "FINISHED") {
-                  var urlContent = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + resultJson.uuid + '/content';
-                  logger && logger.log("Will set iframe url to " + urlContent.substr(0, 50) + "... ");
+                  if(!isIframeContentSet) {
+                    var urlContent = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + resultJson.uuid + '/content';
+                    logger && logger.log("Will set iframe url to " + urlContent.substr(0, 50) + "... ");
 
-                  $('#hiddenReportContentForm').attr("action", urlContent);
-                  $('#hiddenReportContentForm').submit();
-                  $('#reportContent').attr("data-src", urlContent);
-                  this._updatedIFrameSrc = true;
+                    $('#hiddenReportContentForm').attr("action", urlContent);
+                    $('#hiddenReportContentForm').submit();
+                    $('#reportContent').attr("data-src", urlContent);
+                    this._updatedIFrameSrc = true;
 
-                  dlg.hide();
+                    dlg.hide();
+                  }
+
+                  var pageContr = registry.byId('pageControl');
+                  pageContr.setPageCount(resultJson.page);
                 } else if (resultJson.status == "FAILED") {
                   this.reportPrompt.showMessageBox(
                     "Request failed",
@@ -990,19 +1036,12 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
       },
 
       _buildReportContentOptions: function() {
-        var options = util.getUrlParameters();
-
-        $.extend(options, this.reportPrompt.panel.getParameterValues());
-
-        options['renderMode'] = 'REPORT';
+        var options = this.reportPrompt._buildReportContentOptions('REPORT');
 
         // SimpleReportingComponent expects name to be set
         if (options['name'] === undefined) {
           options['name'] = options['action'];
         }
-
-        // Never send the session back. This is generated by the server.
-        delete options['::session'];
 
         return options;
       },

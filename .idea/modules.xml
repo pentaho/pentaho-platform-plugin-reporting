@@ -3,7 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/pentaho-platform-plugin-reporting.iml" filepath="$PROJECT_DIR$/pentaho-platform-plugin-reporting.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform-plugin TRUNK.iml" filepath="$PROJECT_DIR$/platform-plugin TRUNK.iml" />
     </modules>
   </component>
 </project>
-

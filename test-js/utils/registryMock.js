@@ -1,4 +1,4 @@
-/*
+/*!
  * This program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU Lesser General Public License, version 2.1 as published by the Free Software
  * Foundation.
@@ -14,30 +14,23 @@
  *
  * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
  */
-package org.pentaho.reporting.platform.plugin.cache;
 
-public class PluginCacheManagerImpl implements IPluginCacheManager {
-
-  public PluginCacheManagerImpl( final IReportContentCache strategy ) {
-    this.strategy = strategy;
-  }
-
-  public PluginCacheManagerImpl() {
-  }
-
-  private IReportContentCache strategy;
-
-  public IReportContentCache getStrategy() {
-    return strategy;
-  }
-
-  public void setStrategy( final IReportContentCache strategy ) {
-    this.strategy = strategy;
-  }
-
-  @Override
-  public IReportContentCache getCache() {
-    return strategy;
-  }
-
-}
+define(["dijit/registry"], function (registry) {
+  var real = {};
+  return {
+    mock: function(widget) {
+      if(typeof registry.byId(widget.id) !== "undefined") {
+        real[widget.id] = registry.byId(widget.id);
+      }
+      registry.remove(widget.id);
+      registry.add(widget);
+    },
+    unMock: function(id) {
+      registry.remove(id);
+      if(typeof real[id] !== "undefined") {
+      	registry.add(real[id]);
+        delete real[id];
+      }
+    }
+  };
+});

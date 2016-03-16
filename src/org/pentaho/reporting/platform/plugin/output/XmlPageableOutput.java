@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin.output;
@@ -22,11 +22,13 @@ import java.io.OutputStream;
 
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
+import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
 import org.pentaho.reporting.engine.classic.core.layout.output.YieldReportListener;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.base.AllPageFlowSelector;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.base.PageableReportProcessor;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.base.SinglePageFlowSelector;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.xml.XmlPageOutputProcessor;
+import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
 
 public class XmlPageableOutput implements ReportOutputHandler {
   private PageableReportProcessor proc;
@@ -66,6 +68,11 @@ public class XmlPageableOutput implements ReportOutputHandler {
       proc = createProcessor( report, yieldRate );
     }
 
+    final ReportProgressListener listener = ReportListenerThreadHolder.getListener();
+    //Add async job listener
+    if ( listener != null ) {
+      proc.addReportProgressListener( listener );
+    }
     try {
       if ( acceptedPage >= 0 ) {
         final XmlPageOutputProcessor outputProcessor = (XmlPageOutputProcessor) proc.getOutputProcessor();
@@ -75,6 +82,9 @@ public class XmlPageableOutput implements ReportOutputHandler {
       proc.processReport();
       return proc.getPhysicalPageCount();
     } finally {
+      if ( listener != null ) {
+        proc.removeReportProgressListener( listener );
+      }
       if ( acceptedPage >= 0 ) {
         final XmlPageOutputProcessor outputProcessor = (XmlPageOutputProcessor) proc.getOutputProcessor();
         outputProcessor.setFlowSelector( new AllPageFlowSelector() );
