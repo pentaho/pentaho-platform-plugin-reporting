@@ -319,12 +319,12 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
           var showParamUI = this.reportPrompt._getStateProperty('showParameterUI');
 
-          this.updatePageControl(this.reportPrompt.panel);
+          this.updatePageControl();
 
           // Hide the toolbar, 'toppanel',  when it would be empty and
           // un-style the report so it's the only visible element
           // when both the pagination controls and the parameter UI are hidden.
-          var isToolbarEmpty = !this.reportPrompt.panel.paramDefn.paginate && !showParamUI;
+          var isToolbarEmpty = !this.reportPrompt._getStateProperty("paginate") && !showParamUI;
           domClass[isToolbarEmpty ? 'add' : 'remove']('toppanel', 'hidden');
 
           // Don't mess with the parameters if we're "navigating".
@@ -382,14 +382,14 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
           pc.registerPageNumberChangeCallback(undefined);
 
-          if (!this.reportPrompt.panel.paramDefn.paginate) {
+          if (!this.reportPrompt._getStateProperty("paginate")) {
             this._setAcceptedPage('-1');
             pc.setPageCount(1);
             pc.setPageNumber(1);
             // pc.disable();
           } else {
-            var total = this.reportPrompt.panel.paramDefn.totalPages;
-            var page = this.reportPrompt.panel.paramDefn.page;
+            var total = this.reportPrompt._getStateProperty("totalPages");
+            var page = this.reportPrompt._getStateProperty("page");
             // We can't accept pages out of range. This can happen if we are on a page and then change a parameter value
             // resulting in a new report with less pages. When this happens we'll just reduce the accepted page.
             page = Math.max(0, Math.min(page, total - 1));
