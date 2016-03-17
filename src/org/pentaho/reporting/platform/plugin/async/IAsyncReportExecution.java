@@ -4,10 +4,11 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.RunnableFuture;
 
 public interface IAsyncReportExecution<T> extends Callable<T> {
-  void setListener( AsyncReportStatusListener listener );
 
   IAsyncReportState getState();
   String getReportPath();
+
+  void setListener( IAsyncReportListener listener );
 
   /**
    * Get generated content mime-type suggestion to

@@ -137,6 +137,6 @@ public class PentahoAsyncExecutionTest {
   }
 
   private AsyncReportStatusListener extractImpl( final PentahoAsyncReportExecution e ) {
-    return (AsyncReportStatusListener) e.getListener();
+    return (AsyncReportStatusListener) e.getState();
   }
 }
