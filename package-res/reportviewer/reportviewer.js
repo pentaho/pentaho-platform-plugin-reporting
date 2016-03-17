@@ -137,11 +137,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         get reportPrompt () {
           return _reportPrompt;
         },
-
-        _getPromptNeeded: function() {
-          return this.reportPrompt.api.operation.state().promptNeeded;
-        },
-
+        
         /**
          * Localize the Report Viewer.
          */
@@ -201,7 +197,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
             this._hasReportContent() &&
 
             // Valid data (although report content should be blank here)
-            !(this._getPromptNeeded()) &&
+            !(this.reportPrompt._getStateProperty('promptNeeded')) &&
 
             // Hide the report area when in the "New Schedule" dialog
             !inSchedulerDialog &&
@@ -333,7 +329,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
             domClass.remove('reportControlPanel', 'pentaho-rounded-panel-bottom-lr');
 
             if (typeof window.parameterValidityCallback !== 'undefined') {
-              var isValid = !this._getPromptNeeded();
+              var isValid = !this.reportPrompt._getStateProperty('promptNeeded');
               window.parameterValidityCallback(isValid);
             }
           }
@@ -376,8 +372,8 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
             // Don't show parameter panel by default unless prompt needed
 
             showOrHide = (!inMobile && _isTopReportViewer)  ||
-                this._getPromptNeeded() ||
-                         !this.reportPrompt.panel.paramDefn.allowAutoSubmit();
+                this.reportPrompt._getStateProperty('promptNeeded') ||
+                !this.reportPrompt.panel.paramDefn.allowAutoSubmit();
           }
 
           var parameters = util.getUrlParameters();
@@ -720,7 +716,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           this.view._initLayout();
 
           // Don't do anything if we need to prompt
-          var isValid = !this.view._getPromptNeeded();
+          var isValid = !this.reportPrompt._getStateProperty('promptNeeded');
           if (!isValid) {
             logger && logger.log("Prompt is needed. Will clear htmlObject.data-src");
 
@@ -750,7 +746,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
         // When !AutoSubmit, a renderMode=XML call has not been done yet,
         //  and must be done now so that the page controls have enough info.
-        if (!me.reportPrompt.panel.getAutoSubmitSetting()) {
+        if(!me.reportPrompt._getStateProperty('autoSubmit')) {
           // FETCH page-count info before rendering report
           var callback = logged("_updateReportContent_fetchParameterCallback", function(xmlString) {
             var newParamDefn = me.reportPrompt.parseParameterDefinition(xmlString);

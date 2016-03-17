@@ -53,54 +53,62 @@ define(["reportviewer/reportviewer", "reportviewer/reportviewer-logging", "repor
           reportViewer = new ReportViewer(reportPrompt);
         });
 
-        describe("prompt needed", function() {
+        describe("state properties", function() {
 
           beforeEach(function () {
             window.inSchedulerDialog = true;
-            spyOn(reportViewer.view, '_getPromptNeeded').and.callThrough();
+            spyOn(reportViewer.reportPrompt, '_getStateProperty').and.callThrough();
           });
 
           it("should get the promtpNeeded value", function() {
-            expect(reportViewer.view._getPromptNeeded()).toBeFalsy();
+            expect(reportViewer.reportPrompt._getStateProperty('promptNeeded')).toBeFalsy();
 
             // Force new value for promptNeeded on the parameter definition
             reportViewer.reportPrompt.panel.paramDefn.promptNeeded = true;
-            expect(reportViewer.view._getPromptNeeded()).toBeTruthy();
+            expect(reportViewer.reportPrompt._getStateProperty('promptNeeded')).toBeTruthy();
           });
 
-          it("should be called on initPrompt", function() {
+          it("should get promtpNeeded on initPrompt", function() {
             spyOn(reportViewer.view, '_initLayout').and.callFake(function() {});
             spyOn(reportViewer.view, '_showReportContent').and.callFake(function() {});
             spyOn(reportViewer.view, '_hasReportContent').and.returnValue(true);
 
             reportViewer.view.initPrompt(function() {});
-            expect(reportViewer.view._getPromptNeeded).toHaveBeenCalled();
+            expect(reportViewer.reportPrompt._getStateProperty).toHaveBeenCalledWith('promptNeeded');
           });
 
-          it("should be called on promptReady", function() {
+          it("should get promtpNeeded on promptReady", function() {
             window.parameterValidityCallback = function() {};
 
             spyOn(reportViewer.view, 'showPromptPanel').and.callFake(function() {});
 
             reportViewer.view.promptReady(function() {});
-            expect(reportViewer.view._getPromptNeeded).toHaveBeenCalled();
+            expect(reportViewer.reportPrompt._getStateProperty).toHaveBeenCalledWith('promptNeeded');
           });
 
-          it("should be called on initLayout", function() {
+          it("should get promtpNeeded on initLayout", function() {
             spyOn(reportViewer.view, 'updatePageControl').and.callFake(function() {});
             spyOn(reportViewer.view, 'showPromptPanel').and.callFake(function() {});
 
             reportViewer.view._initLayout();
-            expect(reportViewer.view._getPromptNeeded).toHaveBeenCalled();
+            expect(reportViewer.reportPrompt._getStateProperty).toHaveBeenCalledWith('promptNeeded');
           });
 
-          it("should be called on submitReport", function() {
+          it("should get promtpNeeded on submitReport", function() {
             window.inSchedulerDialog = false;
             spyOn(reportViewer.view, '_initLayout').and.callFake(function() {});
             spyOn(reportViewer, '_updateReportContent').and.callFake(function() {});
 
             reportViewer.submitReport();
-            expect(reportViewer.view._getPromptNeeded).toHaveBeenCalled();
+            expect(reportViewer.reportPrompt._getStateProperty).toHaveBeenCalledWith('promptNeeded');
+          });
+
+          it("should get autoSubmit on _updateReportContent", function() {
+            spyOn(reportViewer.reportPrompt.panel, 'refresh').and.callFake(function() {});
+            spyOn(reportViewer, '_updateReportContentCore').and.callFake(function() {});
+            
+            reportViewer._updateReportContent();
+            expect(reportViewer.reportPrompt._getStateProperty).toHaveBeenCalledWith('autoSubmit');
           });
         });
 
