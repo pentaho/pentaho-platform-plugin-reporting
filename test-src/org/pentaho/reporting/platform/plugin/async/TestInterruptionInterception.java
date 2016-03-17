@@ -25,7 +25,7 @@ import org.pentaho.reporting.engine.classic.core.modules.output.pageable.pdf.Pdf
 
 /**
  * See BACKLOG-7081 for additional details.
- *
+ * <p/>
  * Created by dima.prokopenko@gmail.com on 3/15/2016.
  */
 public class TestInterruptionInterception {
@@ -44,7 +44,7 @@ public class TestInterruptionInterception {
     PentahoAsyncExecutionInterrupt t1 = new PentahoAsyncExecutionInterrupt();
     t1.before();
     t1.testInterrupt();
+
     PdfReportUtil.createPDF( new MasterReport(), new NullOutputStream() );
   }
-
 }
