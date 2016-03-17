@@ -72,9 +72,6 @@ public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputS
 
   @Override public void cancel() {
     this.listener.setStatus( AsyncExecutionStatus.CANCELED );
-
-    // hope processing engine is also do checks isInterrupted() sometimes
-    Thread.currentThread().interrupt();
   }
 
   @Override public RunnableFuture<InputStream> newTask() {
