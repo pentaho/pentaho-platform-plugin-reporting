@@ -218,7 +218,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
         // Called on page load and every time the prompt panel is refreshed
         updateLayout: function() {
-          if (!this.reportPrompt.panel.paramDefn.showParameterUI()) {
+          if (!this.reportPrompt._getStateProperty('showParameterUI')) {
             this._hideToolbarPromptControls();
           }
 
@@ -317,7 +317,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           var navigating  = !!this._initedOnce;
           this._initedOnce = true;
 
-          var showParamUI = this.reportPrompt.panel.paramDefn.showParameterUI();
+          var showParamUI = this.reportPrompt._getStateProperty('showParameterUI');
 
           this.updatePageControl(this.reportPrompt.panel);
 
