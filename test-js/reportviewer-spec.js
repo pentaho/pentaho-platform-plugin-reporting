@@ -111,6 +111,34 @@ define(["reportviewer/reportviewer", "reportviewer/reportviewer-logging", "repor
           reportViewer._updateReportContent();
           expect(reportViewer.reportPrompt._getStateProperty).toHaveBeenCalledWith('autoSubmit');
         });
+
+        it("should get showParameterUI on initLayout", function() {
+          spyOn(reportViewer.view, 'updatePageControl').and.callFake(function() {});
+          spyOn(reportViewer.view, 'showPromptPanel').and.callFake(function() {});
+
+          reportViewer.view._initLayout();
+          expect(reportViewer.reportPrompt._getStateProperty).toHaveBeenCalledWith('showParameterUI');
+        });
+
+        it("should get showParameterUI on updateLayout", function() {
+          spyOn(reportViewer.view, '_initLayout').and.callFake(function() {});
+          spyOn(reportViewer.view, '_showReportContent').and.callFake(function() {});
+          spyOn(reportViewer.view, '_hasReportContent').and.returnValue(true);
+
+          reportViewer.view.updateLayout(function() {});
+          expect(reportViewer.reportPrompt._getStateProperty).toHaveBeenCalledWith('showParameterUI');
+        });
+
+        it("should hide prompt when showParameterUI is false", function() {
+          spyOn(reportViewer.view, '_initLayout').and.callFake(function() {});
+          spyOn(reportViewer.view, '_showReportContent').and.callFake(function() {});
+          spyOn(reportViewer.view, '_hasReportContent').and.returnValue(true);
+          spyOn(reportViewer.view, '_hideToolbarPromptControls').and.callFake(function() {});
+
+          reportViewer.reportPrompt.panel.paramDefn.showParameterUI = function() { return false; };
+          reportViewer.view.updateLayout(function() {});
+          expect(reportViewer.view._hideToolbarPromptControls).toHaveBeenCalled();
+        });
       });
 
       describe("accepted page", function() {
