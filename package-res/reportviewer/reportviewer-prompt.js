@@ -128,7 +128,6 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
         this.panel = this.api.operation._getPromptPanel();
         this.panel.setParamDefn(paramDefn);
 
-        this.panel.submit = this.submit.bind(this);
         this.panel.submitStart = this.submitStart.bind(this);
         this.panel.ready = this.ready.bind(this);
 
@@ -162,13 +161,6 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
 
       ready: function() {
         this.hideGlassPane();
-      },
-
-      /**
-       * Called by the prompt-panel component when the CDE components have been updated.
-       */
-      submit: function(promptPanel, options) {
-        alert('submit fired for panel: ' + promptPanel);
       },
 
       /**

@@ -139,7 +139,7 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
         });
 
         it("should call _getStateProperty when promptMode is USERINPUT", function() {
-          spyOn(reportPrompt, '_getStateProperty').and.callFake(function() {});
+          spyOn(reportPrompt, '_getStateProperty');
           reportPrompt.panel = {};
 
           reportPrompt._getParameterDefinitionRenderMode("USERINPUT");
