@@ -41,6 +41,7 @@ import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.core.AttributeNames;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportDataFactoryException;
+import org.pentaho.reporting.engine.classic.core.ReportInterruptedException;
 import org.pentaho.reporting.engine.classic.core.metadata.ReportProcessTaskRegistry;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.pdf.PdfPageableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.plaintext.PlainTextPageableModule;
@@ -934,6 +935,8 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       }
     } catch ( ReportDataFactoryException e ) {
       throw e;
+    } catch ( ReportInterruptedException interrupt ) {
+      log.info( "Report execution interrupted: " + reportDefinitionPath );
     } catch ( Exception e ) {
       log.error( Messages.getInstance().getString( "ReportPlugin.executionFailed" ), e ); //$NON-NLS-1$
     }
