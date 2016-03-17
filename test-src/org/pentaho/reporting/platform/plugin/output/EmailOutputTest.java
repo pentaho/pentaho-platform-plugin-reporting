@@ -38,9 +38,5 @@ public class EmailOutputTest extends TestCase {
   public void testGetReportLock() throws Exception {
     assertEquals( emailOutput, emailOutput.getReportLock() );
   }
-
-  public void testGenerateContextNull() throws Exception {
-    assertEquals( -1, emailOutput.generate( null, 0, null, 0 ) );
-  }
 }
 
