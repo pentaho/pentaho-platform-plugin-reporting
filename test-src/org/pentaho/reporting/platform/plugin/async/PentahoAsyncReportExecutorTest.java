@@ -76,7 +76,7 @@ public class PentahoAsyncReportExecutorTest {
   final InputStream input = new NullInputStream( 0 );
 
   PentahoAsyncReportExecution
-      task1 = new PentahoAsyncReportExecution( "junit-path", component, handler );
+      task1 = new PentahoAsyncReportExecution( "junit-path", component, handler, null );
 
   @Before public void before() throws Exception {
     when( handler.getStagingContent() ).thenReturn( input );

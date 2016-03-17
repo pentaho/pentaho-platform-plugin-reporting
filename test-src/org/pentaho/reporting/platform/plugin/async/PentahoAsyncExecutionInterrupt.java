@@ -65,7 +65,7 @@ public class PentahoAsyncExecutionInterrupt {
         handler =
         new AsyncJobFileStagingHandler( session );
     PentahoAsyncReportExecution
-        task = new PentahoAsyncReportExecution( "junit", reportComponent, handler );
+        task = new PentahoAsyncReportExecution( "junit", reportComponent, handler, null );
 
     UUID id = executor.addTask( task, session );
 
