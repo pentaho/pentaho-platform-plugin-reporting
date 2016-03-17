@@ -12,170 +12,210 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2016 Pentaho Corporation..  All rights reserved.
  */
 
 define(["reportviewer/reportviewer", "reportviewer/reportviewer-logging", "reportviewer/reportviewer-prompt", "common-ui/jquery-clean",
-      "text!./parameterDefinition.xml!strip", "dojo/dom-class", 'common-ui/util/util', "./utils/registryMock"],
-    function (ReportViewer, Logging, Prompt, $, parameterDefinition, domClass, util, registryMock) {
+    "text!./parameterDefinition.xml!strip", "dojo/dom-class", 'common-ui/util/util', "./utils/registryMock"
+  ],
+  function(ReportViewer, Logging, Prompt, $, parameterDefinition, domClass, util, registryMock) {
 
-      describe("Report Viewer", function () {
-        var reportViewer;
+    describe("Report Viewer", function() {
+      var reportViewer;
 
-        beforeAll(function() {
-          var mockGlassPane = jasmine.createSpyObj("glassPane", ["show", "hide"]);
-          mockGlassPane.id = "glassPane";
-          registryMock.mock(mockGlassPane);
+      beforeAll(function() {
+        var mockGlassPane = jasmine.createSpyObj("glassPane", ["show", "hide"]);
+        mockGlassPane.id = "glassPane";
+        registryMock.mock(mockGlassPane);
+      });
+
+      afterAll(function() {
+        registryMock.unMock("glassPane");
+      });
+
+      beforeEach(function() {
+        window._isTopReportViewer = true;
+        window.inMobile = true;
+        var options = {
+          parent: window.parent.logger
+        };
+        window.logged = Logging.create(window.name, options);
+
+        var reportPrompt = new Prompt();
+
+        spyOn($, 'ajax').and.callFake(function(params) {
+          params.success(parameterDefinition);
         });
 
-        afterAll(function() {
-          registryMock.unMock("glassPane");
+        spyOn(domClass, 'add');
+        spyOn(domClass, 'remove');
+
+        reportPrompt.createPromptPanel();
+        reportViewer = new ReportViewer(reportPrompt);
+        reportViewer._bindPromptEvents();
+      });
+
+      describe("state properties", function() {
+        beforeEach(function() {
+          window.inSchedulerDialog = true;
+          spyOn(reportViewer.reportPrompt, '_getStateProperty').and.callThrough();
         });
 
-        beforeEach(function () {
-          window._isTopReportViewer = true;
-          window.inMobile = true;
-          var options = {parent: window.parent.logger};
-          window.logged = Logging.create(window.name, options);
+        it("should get the promtpNeeded value", function() {
+          expect(reportViewer.reportPrompt._getStateProperty('promptNeeded')).toBeFalsy();
 
-          var reportPrompt = new Prompt();
-
-          spyOn(reportPrompt, 'initPromptPanel').and.callFake(function () {});
-
-          spyOn($, 'ajax').and.callFake(function (params) {
-            params.success(parameterDefinition);
-          });
-
-          spyOn(domClass, 'add').and.callFake(function() {});
-          spyOn(domClass, 'remove').and.callFake(function() {});
-
-          reportPrompt.createPromptPanel();
-          reportViewer = new ReportViewer(reportPrompt);
+          // Force new value for promptNeeded on the parameter definition
+          reportViewer.reportPrompt.panel.paramDefn.promptNeeded = true;
+          expect(reportViewer.reportPrompt._getStateProperty('promptNeeded')).toBeTruthy();
         });
 
-        describe("state properties", function() {
+        it("should get promtpNeeded on updateLayout", function() {
+          spyOn(reportViewer.view, '_initLayout');
+          spyOn(reportViewer.view, '_showReportContent');
+          spyOn(reportViewer.view, '_hasReportContent').and.returnValue(true);
 
-          beforeEach(function () {
-            window.inSchedulerDialog = true;
-            spyOn(reportViewer.reportPrompt, '_getStateProperty').and.callThrough();
-          });
-
-          it("should get the promtpNeeded value", function() {
-            expect(reportViewer.reportPrompt._getStateProperty('promptNeeded')).toBeFalsy();
-
-            // Force new value for promptNeeded on the parameter definition
-            reportViewer.reportPrompt.panel.paramDefn.promptNeeded = true;
-            expect(reportViewer.reportPrompt._getStateProperty('promptNeeded')).toBeTruthy();
-          });
-
-          it("should get promtpNeeded on initPrompt", function() {
-            spyOn(reportViewer.view, '_initLayout').and.callFake(function() {});
-            spyOn(reportViewer.view, '_showReportContent').and.callFake(function() {});
-            spyOn(reportViewer.view, '_hasReportContent').and.returnValue(true);
-
-            reportViewer.view.initPrompt(function() {});
-            expect(reportViewer.reportPrompt._getStateProperty).toHaveBeenCalledWith('promptNeeded');
-          });
-
-          it("should get promtpNeeded on promptReady", function() {
-            window.parameterValidityCallback = function() {};
-
-            spyOn(reportViewer.view, 'showPromptPanel').and.callFake(function() {});
-
-            reportViewer.view.promptReady(function() {});
-            expect(reportViewer.reportPrompt._getStateProperty).toHaveBeenCalledWith('promptNeeded');
-          });
-
-          it("should get promtpNeeded on initLayout", function() {
-            spyOn(reportViewer.view, 'updatePageControl').and.callFake(function() {});
-            spyOn(reportViewer.view, 'showPromptPanel').and.callFake(function() {});
-
-            reportViewer.view._initLayout();
-            expect(reportViewer.reportPrompt._getStateProperty).toHaveBeenCalledWith('promptNeeded');
-          });
-
-          it("should get promtpNeeded on submitReport", function() {
-            window.inSchedulerDialog = false;
-            spyOn(reportViewer.view, '_initLayout').and.callFake(function() {});
-            spyOn(reportViewer, '_updateReportContent').and.callFake(function() {});
-
-            reportViewer.submitReport();
-            expect(reportViewer.reportPrompt._getStateProperty).toHaveBeenCalledWith('promptNeeded');
-          });
-
-          it("should get autoSubmit on _updateReportContent", function() {
-            spyOn(reportViewer.reportPrompt.panel, 'refresh').and.callFake(function() {});
-            spyOn(reportViewer, '_updateReportContentCore').and.callFake(function() {});
-            
-            reportViewer._updateReportContent();
-            expect(reportViewer.reportPrompt._getStateProperty).toHaveBeenCalledWith('autoSubmit');
-          });
+          reportViewer.view.updateLayout();
+          expect(reportViewer.reportPrompt._getStateProperty).toHaveBeenCalledWith('promptNeeded');
         });
 
-        describe("accepted page", function () {
+        it("should get promtpNeeded on promptReady", function() {
+          window.parameterValidityCallback = function() {};
 
-          describe("set", function () {
+          spyOn(reportViewer.view, 'showPromptPanel');
 
-            beforeEach(function () {
-              spyOn(reportViewer.reportPrompt.api.operation, "setParameterValue").and.callThrough();
-            });
+          reportViewer.view.promptReady(function() {});
+          expect(reportViewer.reportPrompt._getStateProperty).toHaveBeenCalledWith('promptNeeded');
+        });
 
-            it("was called correctly", function () {
-              reportViewer.view._setAcceptedPage("2");
-              expect(reportViewer.reportPrompt.api.operation.setParameterValue).toHaveBeenCalledWith("accepted-page", "2");
-            });
+        it("should get promtpNeeded on initLayout", function() {
+          spyOn(reportViewer.view, 'updatePageControl');
+          spyOn(reportViewer.view, 'showPromptPanel');
 
-            it("was called correctly on pageChanged", function () {
-              spyOn(reportViewer.view, "pageChanged").and.callThrough();
-              reportViewer.view.pageChanged("20");
-              expect(reportViewer.reportPrompt.api.operation.setParameterValue).toHaveBeenCalledWith("accepted-page", "19");
-            });
+          reportViewer.view._initLayout();
+          expect(reportViewer.reportPrompt._getStateProperty).toHaveBeenCalledWith('promptNeeded');
+        });
 
-            describe("was called correctly on updatePageControl with paginate as", function () {
-              beforeEach(function () {
-                var pageControlMock = jasmine.createSpyObj("pageControl", ["registerPageNumberChangeCallback", "setPageCount", "setPageNumber"]);
-                pageControlMock.id = "pageControl";
-                registryMock.mock(pageControlMock);
+        it("should get promtpNeeded on submitReport", function() {
+          window.inSchedulerDialog = false;
+          spyOn(reportViewer.view, '_initLayout');
+          spyOn(reportViewer, '_updateReportContent');
 
-                spyOn(reportViewer.view, "_setAcceptedPage").and.callThrough();
-              });
+          reportViewer.submitReport();
+          expect(reportViewer.reportPrompt._getStateProperty).toHaveBeenCalledWith('promptNeeded');
+        });
 
-              afterEach(function() {
-                registryMock.unMock("pageControl");
-              });
+        it("should get autoSubmit on _updateReportContent", function() {
+          spyOn(reportViewer.reportPrompt.panel, 'refresh').and.callFake(function() {});
+          spyOn(reportViewer, '_updateReportContentCore').and.callFake(function() {});
 
-              it("false", function () {
-                reportViewer.reportPrompt.panel.paramDefn.paginate = false;
-                reportViewer.view.updatePageControl();
-                expect(reportViewer.view._setAcceptedPage).toHaveBeenCalledWith("-1");
-                expect(reportViewer.reportPrompt.api.operation.setParameterValue).toHaveBeenCalledWith("accepted-page", "-1");
-              });
+          reportViewer._updateReportContent();
+          expect(reportViewer.reportPrompt._getStateProperty).toHaveBeenCalledWith('autoSubmit');
+        });
+      });
 
-              it("true", function () {
-                reportViewer.reportPrompt.panel.paramDefn.paginate = true;
-                reportViewer.reportPrompt.panel.paramDefn.page = 5;
-                reportViewer.reportPrompt.panel.paramDefn.totalPages = 8;
-                reportViewer.view.updatePageControl();
-                expect(reportViewer.view._setAcceptedPage).toHaveBeenCalledWith("5");
-                expect(reportViewer.reportPrompt.api.operation.setParameterValue).toHaveBeenCalledWith("accepted-page", "5");
-              });
-            });
+      describe("accepted page", function() {
+
+        describe("set", function() {
+          beforeEach(function() {
+            spyOn(reportViewer.reportPrompt.api.operation, "setParameterValue").and.callThrough();
           });
 
-          describe("_buildReportContentOptions", function() {
+          it("was called correctly", function() {
+            reportViewer.view._setAcceptedPage("2");
+            expect(reportViewer.reportPrompt.api.operation.setParameterValue).toHaveBeenCalledWith("accepted-page", "2");
+          });
 
-            it("should call the _buildReportContentOptions on the report viewer prompt", function() {
-              var options = {"option1": "option1", 'action': 'testAction'};
-              spyOn(reportViewer.reportPrompt, "_buildReportContentOptions").and.returnValue(options);
+          it("was called correctly on pageChanged", function() {
+            spyOn(reportViewer.view, "pageChanged").and.callThrough();
+            reportViewer.view.pageChanged("20");
+            expect(reportViewer.reportPrompt.api.operation.setParameterValue).toHaveBeenCalledWith("accepted-page", "19");
+          });
 
-              var result = reportViewer._buildReportContentOptions();
+          describe("was called correctly on updatePageControl with paginate as", function() {
+            beforeEach(function() {
+              var pageControlMock = jasmine.createSpyObj("pageControl", ["registerPageNumberChangeCallback", "setPageCount", "setPageNumber"]);
+              pageControlMock.id = "pageControl";
+              registryMock.mock(pageControlMock);
+              spyOn(reportViewer.view, "_setAcceptedPage").and.callThrough();
+            });
 
-              expect(reportViewer.reportPrompt._buildReportContentOptions).toHaveBeenCalledWith('REPORT');
+            afterEach(function() {
+              registryMock.unMock("pageControl");
+            });
 
-              expect(result).toBe(options);
-              expect(result['name']).toBe(options['action']);
+            it("false", function() {
+              reportViewer.reportPrompt.panel.paramDefn.paginate = false;
+              reportViewer.view.updatePageControl();
+              expect(reportViewer.view._setAcceptedPage).toHaveBeenCalledWith("-1");
+              expect(reportViewer.reportPrompt.api.operation.setParameterValue).toHaveBeenCalledWith("accepted-page", "-1");
+            });
+
+            it("true", function() {
+              reportViewer.reportPrompt.panel.paramDefn.paginate = true;
+              reportViewer.reportPrompt.panel.paramDefn.page = 5;
+              reportViewer.reportPrompt.panel.paramDefn.totalPages = 8;
+              reportViewer.view.updatePageControl();
+              expect(reportViewer.view._setAcceptedPage).toHaveBeenCalledWith("5");
+              expect(reportViewer.reportPrompt.api.operation.setParameterValue).toHaveBeenCalledWith("accepted-page", "5");
             });
           });
         });
       });
+
+      describe("_buildReportContentOptions", function() {
+        it("should call the _buildReportContentOptions on the report viewer prompt", function() {
+          var options = {
+            "option1": "option1",
+            'action': 'testAction'
+          };
+          spyOn(reportViewer.reportPrompt, "_buildReportContentOptions").and.returnValue(options);
+
+          var result = reportViewer._buildReportContentOptions();
+
+          expect(reportViewer.reportPrompt._buildReportContentOptions).toHaveBeenCalledWith('REPORT');
+          expect(result).toBe(options);
+          expect(result['name']).toBe(options['action']);
+        });
+      });
+
+      describe("updateLayout", function() {
+        beforeEach(function() {
+          spyOn(reportViewer.view, "_hideToolbarPromptControls");
+          spyOn(reportViewer.view, "_showReportContent");
+          spyOn(reportViewer.view, "_initLayout");
+        });
+
+        // This test checks subscription on afterUpdate event.
+        it("should update layout after refreshing prompt panel", function(done) {
+          spyOn(reportViewer.view, "updateLayout");
+
+          reportViewer.reportPrompt.api.operation.refreshPrompt();
+          done();
+
+          expect(reportViewer.view.updateLayout).toHaveBeenCalled();
+        });
+
+        it("should hide toolbar prompts control and should show report content", function() {
+          spyOn(reportViewer.reportPrompt.panel.paramDefn, "showParameterUI").and.returnValue(false);
+          spyOn(reportViewer.view, "_calcReportContentVisibility").and.returnValue(false);
+
+          reportViewer.view.updateLayout();
+
+          expect(reportViewer.view._hideToolbarPromptControls).toHaveBeenCalled();
+          expect(reportViewer.view._showReportContent).toHaveBeenCalledWith(false);
+          expect(reportViewer.view._initLayout).toHaveBeenCalled();
+        });
+
+        it("should not hide toolbar prompts control and should not show report content", function() {
+          spyOn(reportViewer.reportPrompt.panel.paramDefn, "showParameterUI").and.returnValue(true);
+          spyOn(reportViewer.view, "_calcReportContentVisibility").and.returnValue(true);
+
+          reportViewer.view.updateLayout();
+
+          expect(reportViewer.view._hideToolbarPromptControls).not.toHaveBeenCalled();
+          expect(reportViewer.view._showReportContent).not.toHaveBeenCalled();
+          expect(reportViewer.view._initLayout).toHaveBeenCalled();
+        });
+      });
     });
+  });

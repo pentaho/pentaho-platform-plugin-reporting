@@ -148,7 +148,7 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
       },
 
       initPromptPanel: function() {
-        this.panel.init();
+        this.api.operation.init();
       },
 
       showGlassPane: function() {

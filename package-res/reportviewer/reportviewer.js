@@ -43,6 +43,19 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         return _reportPrompt;
       },
 
+      _bindPromptEvents: function() {
+        var basePromptReady   = this.reportPrompt.ready.bind(this.reportPrompt);
+        var baseShowGlassPane = this.reportPrompt.showGlassPane.bind(this.reportPrompt);
+        var baseHideGlassPane = this.reportPrompt.hideGlassPane.bind(this.reportPrompt);
+
+        this.reportPrompt.ready         = this.view.promptReady  .bind(this.view,  basePromptReady);
+        this.reportPrompt.showGlassPane = this.view.showGlassPane.bind(this.view,  baseShowGlassPane);
+        this.reportPrompt.hideGlassPane = this.view.hideGlassPane.bind(this.view,  baseHideGlassPane);
+        this.reportPrompt.submit        = this.submitReport.bind(this);
+        this.reportPrompt.submitStart   = this.submitReportStart.bind(this);
+        this.reportPrompt.api.event.afterUpdate(this.view.updateLayout.bind(this.view));
+      },
+
       load: function() {
         _Messages.addUrlBundle('reportviewer', CONTEXT_PATH+'i18n?plugin=reporting&name=reportviewer/messages/messages');
         this.view.localize();
@@ -89,40 +102,13 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           on(dom.byId('reportContent'),  "load", lang.hitch( onFrameLoaded));
         }
 
-        var basePromptReady   = this.reportPrompt.ready.bind(this.reportPrompt);
-        var baseShowGlassPane = this.reportPrompt.showGlassPane.bind(this.reportPrompt);
-        var baseHideGlassPane = this.reportPrompt.hideGlassPane.bind(this.reportPrompt);
-
-        this.reportPrompt.ready         = this.view.promptReady  .bind(this.view,  basePromptReady);
-        this.reportPrompt.showGlassPane = this.view.showGlassPane.bind(this.view,  baseShowGlassPane);
-        this.reportPrompt.hideGlassPane = this.view.hideGlassPane.bind(this.view,  baseHideGlassPane);
-        this.reportPrompt.submit        = this.submitReport.bind(this);
-        this.reportPrompt.submitStart   = this.submitReportStart.bind(this);
-
         $('body')
           .addClass(_isTopReportViewer ? 'topViewer leafViewer' : 'leafViewer')
           .addClass(inMobile ? 'mobile' : 'nonMobile');
 
         logger && $('body').addClass('debug');
 
-        // The following is *not* confusing at all :-/
-
-        // Default implementation of this.prompt.initPromptPanel
-        // calls this.prompt.panel.init();
-        var decorated = this.reportPrompt.initPromptPanel.bind(this.reportPrompt);
-
-        this.reportPrompt.initPromptPanel = logged('prompt.initPromptPanel', function() {
-          // Decorate the original init to first initialize our view then the panel
-          var panel = this.reportPrompt.panel;
-          var init  = panel.init;
-
-          panel.init = function(noAutoAutoSubmit) {
-            this.view.initPrompt(init, noAutoAutoSubmit);
-          }.bind(this);
-
-          decorated();
-        }.bind(this));
-
+        this._bindPromptEvents();
         this.reportPrompt.createPromptPanel();
       },
 
@@ -231,33 +217,18 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         },
 
         // Called on page load and every time the prompt panel is refreshed
-        //  PromptingComponent.postChange ->
-        //  PromptPanel.parameterChanged ->
-        //             .refreshPrompt ->
-        //             .getParameterDefinition ->
-        //             .refresh ->
-        //             .init ->
-        initPrompt: function(basePanelInit, noAutoAutoSubmit) {
+        updateLayout: function() {
           if (!this.reportPrompt.panel.paramDefn.showParameterUI()) {
             this._hideToolbarPromptControls();
           }
 
-          // The following call is important for clearing
-          // the report content when autoSubmit=false and
+          // The following call is important for clearing the report content when autoSubmit=false and
           // the user has changed a value (prompt.mode === 'USERINPUT').
           if(!this._calcReportContentVisibility()) {
             this._showReportContent(false);
           }
 
-          // NOTE: `basePanelInit` may call submit, in which case submitReport
-          // is called without _initLayout having been called...
-          // (depends on whether there's a submit button or not).
-          // Because of that, `submitReport` calls _initLayout also,
-          // to make sure it has ran at least once.
-          // Reset layout inited flag.
-          // Note also that initLayout cannot be executed before init.
           this._layoutInited = false;
-          basePanelInit.call(this.reportPrompt.panel, noAutoAutoSubmit);
           this._initLayout();
 
           $.widget( "ui.autocomplete", $.ui.autocomplete, {
@@ -337,8 +308,6 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
         /**
          * Initializes the report viewer's layout based on the loaded parameter definition.
-         *
-         * @param promptPanel A prompt panel whose settings should be used to configure the report viewer
          */
         _initLayout: function() {
           if(this._layoutInited) { return; } // reset on every navigation (see #init)
