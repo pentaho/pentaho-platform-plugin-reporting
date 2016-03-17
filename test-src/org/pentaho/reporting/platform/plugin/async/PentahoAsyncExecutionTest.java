@@ -66,7 +66,7 @@ public class PentahoAsyncExecutionTest {
     when( component.execute() ).thenReturn( true );
 
     PentahoAsyncReportExecution
-      exec = new PentahoAsyncReportExecution( "junit-path", component, handler );
+      exec = new PentahoAsyncReportExecution( "junit-path", component, handler, null );
     AsyncReportStatusListener listner = new AsyncReportStatusListener( "display_path", UUID.randomUUID(), "text/html" );
 
     exec.setListener( listner );
@@ -87,7 +87,7 @@ public class PentahoAsyncExecutionTest {
     when( component.execute() ).thenReturn( false );
 
     PentahoAsyncReportExecution
-      exec = new PentahoAsyncReportExecution( "junit-path", component, handler );
+      exec = new PentahoAsyncReportExecution( "junit-path", component, handler, null );
     AsyncReportStatusListener listener =
       new AsyncReportStatusListener( "display_path", UUID.randomUUID(), "text/html" );
 
@@ -122,7 +122,7 @@ public class PentahoAsyncExecutionTest {
   }
 
   private PentahoAsyncReportExecution getSleepingSpy( final AtomicBoolean run ) {
-    PentahoAsyncReportExecution exec = new PentahoAsyncReportExecution( "junit-path", component, handler ) {
+    PentahoAsyncReportExecution exec = new PentahoAsyncReportExecution( "junit-path", component, handler, null ) {
       @Override
       public InputStream call() throws Exception {
         while ( !run.get() && !Thread.currentThread().isInterrupted() ) {
