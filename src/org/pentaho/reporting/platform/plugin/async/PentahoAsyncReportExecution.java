@@ -1,8 +1,10 @@
 package org.pentaho.reporting.platform.plugin.async;
 
 import org.apache.commons.io.input.NullInputStream;
+import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.audit.AuditHelper;
 import org.pentaho.platform.engine.core.audit.MessageTypes;
+import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.reporting.platform.plugin.SimpleReportingComponent;
 import org.pentaho.reporting.platform.plugin.staging.AsyncJobFileStagingHandler;
 
@@ -18,6 +20,7 @@ public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputS
 
   private String userSession = "";
   private String instanceId = "";
+  private final IPentahoSession safeSession;
 
   private IAsyncReportListener listener;
 
@@ -25,6 +28,7 @@ public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputS
     this.reportComponent = reportComponent;
     this.handler = handler;
     this.url = url;
+    this.safeSession = PentahoSessionHolder.getSession();
   }
 
   public void forSession( final String userSession ) {
@@ -37,6 +41,7 @@ public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputS
 
   @Override
   public InputStream call() throws Exception {
+    PentahoSessionHolder.setSession( safeSession );
     try {
       ReportListenerThreadHolder.setListener( listener );
       final long start = System.currentTimeMillis();
@@ -61,6 +66,7 @@ public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputS
       return new NullInputStream( 0 );
     } finally {
       ReportListenerThreadHolder.clear();
+      PentahoSessionHolder.removeSession();
     }
   }
 
