@@ -35,6 +35,7 @@ define(["reportviewer/reportviewer", "reportviewer/reportviewer-logging", "repor
 
       beforeEach(function() {
         window._isTopReportViewer = true;
+        window.inSchedulerDialog = false;
         window.inMobile = true;
         var options = {
           parent: window.parent.logger
@@ -141,9 +142,9 @@ define(["reportviewer/reportviewer", "reportviewer/reportviewer-logging", "repor
         });
       });
 
-      describe("accepted page", function() {
+      describe("page controllers", function() {
 
-        describe("set", function() {
+        describe("set using accepted-page", function() {
           beforeEach(function() {
             spyOn(reportViewer.reportPrompt.api.operation, "setParameterValue").and.callThrough();
           });
@@ -165,6 +166,7 @@ define(["reportviewer/reportviewer", "reportviewer/reportviewer-logging", "repor
               pageControlMock.id = "pageControl";
               registryMock.mock(pageControlMock);
               spyOn(reportViewer.view, "_setAcceptedPage").and.callThrough();
+              spyOn(reportViewer.reportPrompt, '_getStateProperty').and.callThrough();
             });
 
             afterEach(function() {
@@ -175,6 +177,9 @@ define(["reportviewer/reportviewer", "reportviewer/reportviewer-logging", "repor
               reportViewer.reportPrompt.panel.paramDefn.paginate = false;
               reportViewer.view.updatePageControl();
               expect(reportViewer.view._setAcceptedPage).toHaveBeenCalledWith("-1");
+              expect(reportViewer.reportPrompt._getStateProperty).toHaveBeenCalledWith('paginate');
+              expect(reportViewer.reportPrompt._getStateProperty).not.toHaveBeenCalledWith('page');
+              expect(reportViewer.reportPrompt._getStateProperty).not.toHaveBeenCalledWith('totalPages');
               expect(reportViewer.reportPrompt.api.operation.setParameterValue).toHaveBeenCalledWith("accepted-page", "-1");
             });
 
@@ -184,9 +189,27 @@ define(["reportviewer/reportviewer", "reportviewer/reportviewer-logging", "repor
               reportViewer.reportPrompt.panel.paramDefn.totalPages = 8;
               reportViewer.view.updatePageControl();
               expect(reportViewer.view._setAcceptedPage).toHaveBeenCalledWith("5");
+              expect(reportViewer.reportPrompt._getStateProperty).toHaveBeenCalledWith('paginate');
+              expect(reportViewer.reportPrompt._getStateProperty).toHaveBeenCalledWith('page');
+              expect(reportViewer.reportPrompt._getStateProperty).toHaveBeenCalledWith('totalPages');
               expect(reportViewer.reportPrompt.api.operation.setParameterValue).toHaveBeenCalledWith("accepted-page", "5");
             });
           });
+        });
+
+        describe("on _initLayout handle paginate", function(){
+          beforeEach(function(){
+            spyOn(reportViewer.view, "updatePageControl");
+            spyOn(reportViewer.view, "showPromptPanel");
+            spyOn(reportViewer.reportPrompt, '_getStateProperty').and.callThrough();
+            spyOn(reportViewer.reportPrompt.api.operation, "state").and.callThrough();
+          });
+
+          it("correctly", function(){
+            reportViewer._layoutInited = false;
+            reportViewer.view._initLayout();
+            expect(reportViewer.reportPrompt._getStateProperty).toHaveBeenCalledWith('paginate');
+          })
         });
       });
 

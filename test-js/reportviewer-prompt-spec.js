@@ -23,7 +23,6 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
 
     describe("Report Viewer Prompt", function() {
       var reportPrompt;
-      var testGuid = -1;
 
       beforeAll(function() {
         window.inSchedulerDialog = false;
