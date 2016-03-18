@@ -15,9 +15,9 @@
 * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
 */
 
-define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'common-ui/prompting/parameters/ParameterXmlParser', "common-ui/prompting/api/PromptingAPI", "common-ui/jquery-clean", "underscore"],
+define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", "common-ui/prompting/api/PromptingAPI", "common-ui/jquery-clean", "underscore"],
 
-    function(util, Messages, registry, ParameterXmlParser, PromptingAPI, $, _) {
+    function(util, Messages, registry, PromptingAPI, $, _) {
       var _api =  new PromptingAPI('promptPanel');
 
   return function() {
@@ -170,11 +170,9 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
         alert('submit start fired for panel: ' + promptPanel);
       },
 
-      parameterParser: new ParameterXmlParser(),
-
       parseParameterDefinition: function(xmlString) {
         xmlString = this.removeControlCharacters(xmlString);
-        return this.parameterParser.parseParameterXml(xmlString);
+        return this.api.util.parseParameterXml(xmlString);
       },
 
       /**

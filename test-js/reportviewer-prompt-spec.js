@@ -151,5 +151,20 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
         reportPrompt.initPromptPanel();
         expect(reportPrompt.api.operation.init).toHaveBeenCalled();
       });
+
+      describe("parseParameterDefinition", function() {
+        it("should parse the parameter xml", function() {
+          var xmlString = "xmlString";
+          var xmlString1 = "xmlString";
+          var parseVal = "parseVal";
+          spyOn(reportPrompt, "removeControlCharacters").and.returnValue(xmlString1);
+          spyOn(reportPrompt.api.util, "parseParameterXml").and.returnValue(parseVal);
+
+          var returnVal = reportPrompt.parseParameterDefinition(xmlString);
+          expect(reportPrompt.removeControlCharacters).toHaveBeenCalledWith(xmlString);
+          expect(reportPrompt.api.util.parseParameterXml).toHaveBeenCalledWith(xmlString);
+          expect(returnVal).toBe(parseVal);
+        });
+      });
     });
   });
