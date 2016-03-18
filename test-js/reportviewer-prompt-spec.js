@@ -44,13 +44,20 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
 
         reportPrompt = new Prompt();
         spyOn(reportPrompt.api.operation, 'init');
-
-        spyOn($, "ajax").and.callFake(function(params) {
-          params.success(parameterDefinition);
-        });
       });
 
+      var makeAjaxSpy = function(error) {
+        spyOn($, "ajax").and.callFake(function (params) {
+          if (error) {
+            params.error({statusText: "error"});
+          } else {
+            params.success(parameterDefinition);
+          }
+        });
+      };
+
       var createPromptExpectactions = function createPromptExpectactions(done, options) {
+        makeAjaxSpy();
         // hijacking this function to check the post create expectations
         reportPrompt._hideLoadingIndicator = function() {
           expect(reportPrompt.panel).toBeDefined();
@@ -100,11 +107,10 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
           spyOn(reportPrompt.api.operation, "getParameterValues").and.returnValue(parameterValues);
 
           window.inMobile = true;
-          spyOn(reportPrompt, 'showGlassPane');
-          spyOn(reportPrompt, 'hideGlassPane');
 
           spyOn(domClass, 'add');
           spyOn(domClass, 'remove');
+          makeAjaxSpy();
 
           reportPrompt.createPromptPanel();
         });
@@ -147,7 +153,39 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
         });
       });
 
+      describe("showMessageBox", function() {
+        var messageBox;
+        beforeEach(function() {
+          messageBox = jasmine.createSpyObj("messageBox", ["hide", "setTitle", "setMessage", "setButtons", "show"]);
+          messageBox.id = "messageBox";
+          registryMock.mock(messageBox);
+        });
+
+        afterEach(function() {
+          registryMock.unMock("messageBox");
+        });
+
+        it("should call show and hide progress indicator from the PromptingApi", function(done) {
+          makeAjaxSpy(true);
+
+          spyOn(reportPrompt.api.ui, "hideProgressIndicator").and.callThrough();
+          spyOn(reportPrompt.api.ui, "showProgressIndicator").and.callThrough();
+          messageBox.show = function() {
+            expect(messageBox.onCancel).toBeDefined();
+            expect(reportPrompt.api.ui.showProgressIndicator).toHaveBeenCalled();
+            expect(reportPrompt.api.ui.hideProgressIndicator).not.toHaveBeenCalled();
+            messageBox.onCancel();
+            expect(reportPrompt.api.ui.hideProgressIndicator).toHaveBeenCalled();
+            done();
+          };
+          // createPromptPanel will fail due to intentional error, so we set panel true, so the api calls are actually executed
+          reportPrompt.panel = true;
+          reportPrompt.createPromptPanel();
+        });
+      });
+
       it("initPromptPanel - should call OperationAPI#init", function() {
+        makeAjaxSpy();
         reportPrompt.initPromptPanel();
         expect(reportPrompt.api.operation.init).toHaveBeenCalled();
       });

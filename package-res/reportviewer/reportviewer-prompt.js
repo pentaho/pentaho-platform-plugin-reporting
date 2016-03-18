@@ -368,12 +368,12 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
         if (blocker) {
           messageBox.setButtons([]);
         } else {
-          var closeFunc = function() {
-            if (this.panel) {
-              this.panel.dashboard.hideProgressIndicator();
+          var closeFunc = (function() {
+            if(this.panel) {
+              this.api.ui.hideProgressIndicator();
             }
             messageBox.hide.call(messageBox);
-          };
+          }).bind(this);
 
           if(!button1Text) {
             button1Text = Messages.getString('OK');
@@ -397,8 +397,8 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
             messageBox.setButtons([button1Text]);
           }
         }
-        if (this.panel) {
-          this.panel.dashboard.showProgressIndicator();
+        if(this.panel) {
+          this.api.ui.showProgressIndicator();
         }
         messageBox.show();
       },
