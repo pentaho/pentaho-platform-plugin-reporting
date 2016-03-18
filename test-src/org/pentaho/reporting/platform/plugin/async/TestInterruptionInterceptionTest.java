@@ -28,10 +28,10 @@ import org.pentaho.reporting.engine.classic.core.modules.output.pageable.pdf.Pdf
  *
  * Created by dima.prokopenko@gmail.com on 3/15/2016.
  */
-public class TestInterruptionInterception {
+public class TestInterruptionInterceptionTest {
 
   @Test public void testInterruptFlagProblem() throws Exception {
-    PentahoAsyncExecutionInterrupt t1 = new PentahoAsyncExecutionInterrupt();
+    PentahoAsyncExecutionInterruptTest t1 = new PentahoAsyncExecutionInterruptTest();
     t1.before();
     t1.testInterrupt();
 
@@ -41,7 +41,7 @@ public class TestInterruptionInterception {
   }
 
   @Test public void testInterruptFlagProblem2() throws Exception {
-    PentahoAsyncExecutionInterrupt t1 = new PentahoAsyncExecutionInterrupt();
+    PentahoAsyncExecutionInterruptTest t1 = new PentahoAsyncExecutionInterruptTest();
     t1.before();
     t1.testInterrupt();
     PdfReportUtil.createPDF( new MasterReport(), new NullOutputStream() );

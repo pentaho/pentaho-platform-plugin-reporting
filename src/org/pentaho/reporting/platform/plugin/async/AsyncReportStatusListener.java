@@ -25,11 +25,10 @@ import org.pentaho.reporting.libraries.base.config.ExtendedConfiguration;
 import java.util.UUID;
 
 /**
- * Simple synchronized bean with async execution status.
- * <p>
- * Created by dima.prokopenko@gmail.com on 2/12/2016.
+ * Simple synchronized bean with async execution status. This class is part of the PentahoAsyncReportExecution
+ * implementation and should not be used outside of that.
  */
-class AsyncReportStatusListener implements IAsyncReportListener, IAsyncReportState {
+class AsyncReportStatusListener implements IAsyncReportListener {
 
   public static final String COMPUTING_LAYOUT = "AsyncComputingLayoutTitle";
   public static final String PRECOMPUTING_VALUES = "AsyncPrecomputingValuesTitle";
@@ -62,65 +61,16 @@ class AsyncReportStatusListener implements IAsyncReportListener, IAsyncReportSta
   }
 
   @Override
-  public synchronized String getPath() {
-    return path;
-  }
-
-  @Override
-  public synchronized UUID getUuid() {
-    return uuid;
-  }
-
-  @Override
-  public synchronized AsyncExecutionStatus getStatus() {
-    return status;
-  }
-
-  @Override
   public synchronized void setStatus( final AsyncExecutionStatus status ) {
     this.status = status;
   }
 
-  @Override public synchronized void setTotalPages( final int totalPages ) {
+  public synchronized void setTotalPages( final int totalPages ) {
     this.totalPages = totalPages;
   }
 
-  @Override
   public boolean isFirstPageMode() {
     return firstPageMode;
-  }
-
-  @Override
-  public synchronized int getProgress() {
-    return progress;
-  }
-
-  @Override
-  public synchronized int getPage() {
-    return page;
-  }
-
-  @Override public synchronized int getTotalPages() {
-    return totalPages;
-  }
-
-  @Override
-  public synchronized int getRow() {
-    return row;
-  }
-
-  @Override public synchronized int getTotalRows() {
-    return totalRows;
-  }
-
-  @Override
-  public synchronized String getActivity() {
-    return activity;
-  }
-
-  @Override
-  public synchronized String getMimeType() {
-    return this.mimeType;
   }
 
   @Override
@@ -186,5 +136,9 @@ class AsyncReportStatusListener implements IAsyncReportListener, IAsyncReportSta
     }
 
     return result;
+  }
+
+  public synchronized IAsyncReportState getState() {
+    return new AsyncReportState(uuid, path, status, progress, row, totalRows, page, totalPages, activity, mimeType);
   }
 }

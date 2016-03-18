@@ -25,3 +25,5 @@ build-res/module-scripts/
 /pentaho.log
 node_modules/
 .idea/encodings.xml
+checkstyle/
+out/

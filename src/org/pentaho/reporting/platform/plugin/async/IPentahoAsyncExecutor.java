@@ -10,7 +10,7 @@ import java.util.concurrent.Future;
  * Created by dima.prokopenko@gmail.com on 2/25/2016.
  */
 public interface IPentahoAsyncExecutor {
-  UUID addTask( PentahoAsyncReportExecution task, IPentahoSession session );
+  UUID addTask( IAsyncReportExecution<InputStream> task, IPentahoSession session );
 
   Future<InputStream> getFuture( UUID id, IPentahoSession session );
 

@@ -41,7 +41,7 @@ public class TestListener extends AsyncReportStatusListener {
   @Override public synchronized void reportProcessingUpdate( final ReportProgressEvent event ) {
     onUpdate = true;
     super.reportProcessingUpdate( event );
-    if ( getStatus().equals( AsyncExecutionStatus.CONTENT_AVAILABLE ) ) {
+    if ( getState().getStatus().equals( AsyncExecutionStatus.CONTENT_AVAILABLE ) ) {
       onFirstPage = true;
     }
   }
