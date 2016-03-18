@@ -41,7 +41,7 @@ import static org.junit.Assert.assertEquals;
 /**
  * Created by dima.prokopenko@gmail.com on 2/24/2016.
  */
-public class PentahoAsyncExecutionInterrupt {
+public class PentahoAsyncExecutionInterruptTest {
 
   private MicroPlatform microPlatform;
   private String stagingDir = System.getProperty( "java.io.tmpdir" );
