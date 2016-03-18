@@ -18,6 +18,7 @@
 
 package org.pentaho.reporting.platform.plugin.async;
 
+import junit.framework.Assert;
 import org.apache.commons.io.input.NullInputStream;
 import org.junit.Before;
 import org.junit.Rule;
@@ -75,9 +76,6 @@ public class PentahoAsyncReportExecutorTest {
 
   final InputStream input = new NullInputStream( 0 );
 
-  PentahoAsyncReportExecution
-      task1 = new PentahoAsyncReportExecution( "junit-path", component, handler, null );
-
   @Before public void before() throws Exception {
     when( handler.getStagingContent() ).thenReturn( input );
     when( report.getReportConfiguration() ).thenReturn( configuration );
@@ -86,7 +84,7 @@ public class PentahoAsyncReportExecutorTest {
     when( session1.getId() ).thenReturn( sessionUid1.toString() );
     when( session2.getId() ).thenReturn( sessionUid2.toString() );
 
-    task1.setListener( mock( AsyncReportStatusListener.class ) );
+    PentahoAsyncReportExecution task1 = createMockCallable();
 
     String tempFolder = System.getProperty("java.io.tmpdir");
     Path junitPrivate = Paths.get( tempFolder ).resolve( "JUNIT_" + UUID.randomUUID().toString() );
@@ -98,6 +96,8 @@ public class PentahoAsyncReportExecutorTest {
 
   @Test public void testCanCompleteTask() throws Exception {
     when( component.execute() ).thenReturn( true );
+
+    PentahoAsyncReportExecution task1 = createMockCallable();
 
     PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 10 );
     UUID id = exec.addTask( task1, session1 );
@@ -112,8 +112,9 @@ public class PentahoAsyncReportExecutorTest {
   @Test public void testCorrectFuturePerSessionRetrival() {
     PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 1 );
 
-    UUID id1 = exec.addTask( task1, session1 );
-    UUID id2 = exec.addTask( task1, session2 );
+    UUID id1 = exec.addTask( createMockCallable(), session1 );
+    UUID id2 = exec.addTask( createMockCallable(), session2 );
+    Assert.assertFalse(id1.equals(id2));
 
     Future<InputStream> r1 = exec.getFuture( id1, session1 );
     assertNotNull( r1 );
@@ -131,11 +132,24 @@ public class PentahoAsyncReportExecutorTest {
     assertNotNull( r2 );
   }
 
+  private PentahoAsyncReportExecution createMockCallable() {
+    return new PentahoAsyncReportExecution( "junit-path", component, handler, null ) {
+      @Override
+      protected AsyncReportStatusListener createListener(final UUID id) {
+        final AsyncReportState state = new AsyncReportState(id, getReportPath());
+        final AsyncReportStatusListener retval = mock(AsyncReportStatusListener.class);
+        when(retval.getState()).thenReturn(state);
+        return retval;
+      }
+    };
+  }
+
   @Test public void testCorrectStatePerSessionRetrieval() {
     PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 1 );
 
-    UUID id1 = exec.addTask( task1, session1 );
-    UUID id2 = exec.addTask( task1, session2 );
+    // must have two separate instances, as callable holds unique ID and listener for each addTask(..)
+    UUID id1 = exec.addTask( createMockCallable(), session1 );
+    UUID id2 = exec.addTask( createMockCallable(), session2 );
 
     IAsyncReportState state = exec.getReportState( id1, session1 );
     assertNotNull( state );

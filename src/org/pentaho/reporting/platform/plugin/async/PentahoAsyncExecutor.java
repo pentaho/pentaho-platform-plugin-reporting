@@ -29,8 +29,8 @@ public class PentahoAsyncExecutor implements ILogoutListener, IPentahoSystemList
 
   private static final Log log = LogFactory.getLog( PentahoAsyncExecutor.class );
 
-  private Map<CompositeKey, Future<InputStream>> tasks = new ConcurrentHashMap<>();
-  private Map<CompositeKey, AsyncReportStatusListener> listeners = new ConcurrentHashMap<>();
+  private Map<CompositeKey, Future<InputStream>> futures = new ConcurrentHashMap<>();
+  private Map<CompositeKey, IAsyncReportExecution<InputStream>> tasks = new ConcurrentHashMap<>();
 
   private ExecutorService executorService;
 
@@ -82,15 +82,13 @@ public class PentahoAsyncExecutor implements ILogoutListener, IPentahoSystemList
     final UUID id = UUID.randomUUID();
     final CompositeKey key = new CompositeKey( session, id );
 
-    final AsyncReportStatusListener listener =
-      new AsyncReportStatusListener( task.getReportPath(), id, task.getMimeType() );
-    task.setListener( listener );
+    task.notifyTaskQueued( id );
 
     log.debug( "register async execution for task: " + task.toString() );
 
     final Future<InputStream> result = executorService.submit( task );
-    tasks.put( key, result );
-    listeners.put( key, listener );
+    futures.put( key, result );
+    tasks.put( key, task );
     return id;
   }
 
@@ -101,13 +99,13 @@ public class PentahoAsyncExecutor implements ILogoutListener, IPentahoSystemList
     if ( session == null ) {
       throw new NullPointerException( "Session is null" );
     }
-    return tasks.get( new CompositeKey( session, id ) );
+    return futures.get( new CompositeKey( session, id ) );
   }
 
   @Override public void cleanFuture( final UUID id, final IPentahoSession session ) {
     final CompositeKey key = new CompositeKey( session, id );
+    futures.remove( key );
     tasks.remove( key );
-    listeners.remove( key );
   }
 
   @Override public IAsyncReportState getReportState( final UUID id, final IPentahoSession session ) {
@@ -118,9 +116,8 @@ public class PentahoAsyncExecutor implements ILogoutListener, IPentahoSystemList
       throw new NullPointerException( "session is null" );
     }
     // link to running task
-    final AsyncReportStatusListener runningTask = listeners.get( new CompositeKey( session, id ) );
-
-    return runningTask == null ? null : runningTask;
+    final IAsyncReportExecution<InputStream> runningTask = tasks.get( new CompositeKey( session, id ) );
+    return runningTask == null ? null : runningTask.getState();
   }
 
   @Override public void onLogout( final IPentahoSession iPentahoSession ) {
@@ -128,14 +125,14 @@ public class PentahoAsyncExecutor implements ILogoutListener, IPentahoSystemList
       // don't expose full session id.
       log.debug( "killing async report execution cache for user: " + iPentahoSession.getName() );
     }
-    for ( final Map.Entry<CompositeKey, Future<InputStream>> entry : tasks.entrySet() ) {
+    for ( final Map.Entry<CompositeKey, Future<InputStream>> entry : futures.entrySet() ) {
       if ( ObjectUtils.equals( entry.getKey().getSessionId(), iPentahoSession.getId() ) ) {
         // attempt to cancel running task
         entry.getValue().cancel( true );
 
         // remove all links to release GC
+        futures.remove( entry.getKey() );
         tasks.remove( entry.getKey() );
-        listeners.remove( entry.getKey() );
       }
     }
 
@@ -164,12 +161,12 @@ public class PentahoAsyncExecutor implements ILogoutListener, IPentahoSystemList
 
   @Override public void shutdown() {
     // attempt to stop all
-    for ( final Map.Entry<CompositeKey, Future<InputStream>> entry : tasks.entrySet() ) {
+    for ( final Map.Entry<CompositeKey, Future<InputStream>> entry : futures.entrySet() ) {
       entry.getValue().cancel( true );
     }
     // forget all
+    this.futures.clear();
     this.tasks.clear();
-    this.listeners.clear();
 
     // delete all staging dir
     final Path stagingDir = AsyncJobFileStagingHandler.getStagingDirPath();
