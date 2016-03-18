@@ -44,20 +44,18 @@ import java.io.OutputStream;
 import java.util.UUID;
 import java.util.concurrent.Future;
 
-/**
- * Created by dima.prokopenko@gmail.com on 2/8/2016.
- */
-@Path( "/reporting/api/jobs" ) public class JobManager {
+@Path( "/reporting/api/jobs" )
+public class JobManager {
 
   private static final Log logger = LogFactory.getLog( JobManager.class );
 
   private boolean isSuportAsync = true;
 
-  JobManager() {
+  public JobManager() {
     this( true );
   }
 
-  JobManager( boolean isSuportAsync ) {
+  public JobManager( boolean isSuportAsync ) {
     if ( !isSuportAsync ) {
       logger.info( "JobManager initialization: async mode marked as disabled." );
     }
@@ -95,6 +93,9 @@ import java.util.concurrent.Future;
     }
 
     IAsyncReportState state = executor.getReportState( uuid, session );
+    if (state == null) {
+      return get404();
+    }
 
     InputStream input = null;
     try {
@@ -171,6 +172,9 @@ import java.util.concurrent.Future;
 
     Future<InputStream> future = executor.getFuture( uuid, session );
     IAsyncReportState state = executor.getReportState( uuid, session );
+    if (state == null) {
+      return get404();
+    }
 
     logger.debug( "Cancellation of report: " + state.getPath() + ", requested by : " + session.getName() );
     future.cancel( true );
