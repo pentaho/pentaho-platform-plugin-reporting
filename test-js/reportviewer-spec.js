@@ -139,6 +139,20 @@ define(["reportviewer/reportviewer", "reportviewer/reportviewer-logging", "repor
           reportViewer.view.updateLayout(function() {});
           expect(reportViewer.view._hideToolbarPromptControls).toHaveBeenCalled();
         });
+
+        it("should call allowAutoSubmit on initLayout", function() {
+          spyOn(reportViewer.view, 'updatePageControl');
+          spyOn(reportViewer.view, 'showPromptPanel');
+
+          reportViewer.view._initLayout();
+          expect(reportViewer.reportPrompt._getStateProperty).toHaveBeenCalledWith('allowAutoSubmit');
+        });
+
+        it("should return the correct value for allowAutoSubmit on _isAutoSubmitAllowed", function() {
+          expect(reportViewer.view._isAutoSubmitAllowed()).toBeFalsy();
+          reportViewer.reportPrompt.panel.paramDefn.allowAutoSubmit = function() { return true; };
+          expect(reportViewer.view._isAutoSubmitAllowed()).toBeTruthy();
+        });
       });
 
       describe("page controllers", function() {

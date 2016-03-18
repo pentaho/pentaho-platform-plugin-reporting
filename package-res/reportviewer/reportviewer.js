@@ -194,7 +194,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         },
 
         _isAutoSubmitAllowed : function() {
-          if(this.reportPrompt.panel.forceAutoSubmit || this.reportPrompt.panel.paramDefn.allowAutoSubmit()) { // (BISERVER-6915)
+          if(this.reportPrompt.panel.forceAutoSubmit || this.reportPrompt._getStateProperty('allowAutoSubmit')) { // (BISERVER-6915)
             return true;
           }
 
@@ -342,7 +342,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
             showOrHide = (!inMobile && _isTopReportViewer)  ||
                 this.reportPrompt._getStateProperty('promptNeeded') ||
-                !this.reportPrompt.panel.paramDefn.allowAutoSubmit();
+                !this.reportPrompt._getStateProperty('allowAutoSubmit');
           }
 
           var parameters = util.getUrlParameters();
