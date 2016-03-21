@@ -367,9 +367,7 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", "com
           messageBox.setButtons([]);
         } else {
           var closeFunc = (function() {
-            if(this.panel) {
-              this.api.ui.hideProgressIndicator();
-            }
+            this.api.ui.hideProgressIndicator();
             messageBox.hide.call(messageBox);
           }).bind(this);
 
@@ -395,9 +393,8 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", "com
             messageBox.setButtons([button1Text]);
           }
         }
-        if(this.panel) {
-          this.api.ui.showProgressIndicator();
-        }
+
+        this.api.ui.showProgressIndicator();
         messageBox.show();
       },
 
