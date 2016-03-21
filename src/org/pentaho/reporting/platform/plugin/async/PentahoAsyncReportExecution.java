@@ -1,6 +1,8 @@
 package org.pentaho.reporting.platform.plugin.async;
 
 import org.apache.commons.io.input.NullInputStream;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.audit.AuditHelper;
 import org.pentaho.platform.engine.core.audit.MessageTypes;
@@ -23,6 +25,8 @@ public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputS
   private final IPentahoSession safeSession;
 
   private AsyncReportStatusListener listener;
+
+  private static final Log log = LogFactory.getLog( PentahoAsyncReportExecution.class );
 
   /**
    * Creates callable execuiton task.
@@ -51,11 +55,22 @@ public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputS
     this.listener = createListener(id);
   }
 
+  /**
+   * Generate report and return input stream to a generated report from server.
+   *
+   * Pay attention - it is important to set proper status during execution. In case
+   * 'fail' or 'complete' status not set - status remains 'working' and executor unable to
+   * determine that actual execution has ended.
+   *
+   * @return input stream for client
+   * @throws Exception
+   */
   @Override public InputStream call() throws Exception {
-
-    listener.setStatus( AsyncExecutionStatus.WORKING );
-    PentahoSessionHolder.setSession( safeSession );
     try {
+      listener.setStatus( AsyncExecutionStatus.WORKING );
+
+      PentahoSessionHolder.setSession( safeSession );
+
       ReportListenerThreadHolder.setListener( listener );
       final long start = System.currentTimeMillis();
       AuditHelper.audit( safeSession.getId(), safeSession.getId(), url, getClass().getName(), getClass().getName(),
@@ -72,15 +87,29 @@ public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputS
         return handler.getStagingContent();
       }
 
-      listener.setStatus( AsyncExecutionStatus.FAILED );
+      // in case execute just returns false without an exception.
+      fail();
+      return new NullInputStream( 0 );
+    } catch ( Throwable ee ) {
+      // it is bad practice to catch throwable.
+      // but we has to to set proper execution status in any case.
+      // Example: NoSuchMethodError (instance of Error) in case of usage of
+      // uncompilable jar versions.
+      // We have to avoid to hang on working status.
+      log.error( "fail to execute report in async mode: " + ee );
 
-      AuditHelper.audit( safeSession.getId(), safeSession.getId(), url, getClass().getName(), getClass().getName(),
-          MessageTypes.FAILED, auditId, "", 0, null );
+      fail();
       return new NullInputStream( 0 );
     } finally {
       ReportListenerThreadHolder.clear();
       PentahoSessionHolder.removeSession();
     }
+  }
+
+  private void fail() {
+    listener.setStatus( AsyncExecutionStatus.FAILED );
+    AuditHelper.audit( safeSession.getId(), safeSession.getId(), url, getClass().getName(), getClass().getName(),
+        MessageTypes.FAILED, auditId, "", 0, null );
   }
 
   protected AsyncReportStatusListener createListener(UUID instanceId) {
