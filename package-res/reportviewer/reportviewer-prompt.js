@@ -15,9 +15,9 @@
 * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
 */
 
-define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'common-ui/prompting/parameters/ParameterXmlParser', "common-ui/prompting/api/PromptingAPI", "common-ui/jquery-clean", "underscore"],
+define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", "common-ui/prompting/api/PromptingAPI", "common-ui/jquery-clean", "underscore"],
 
-    function(util, Messages, registry, ParameterXmlParser, PromptingAPI, $, _) {
+    function(util, Messages, registry, PromptingAPI, $, _) {
       var _api =  new PromptingAPI('promptPanel');
 
   return function() {
@@ -129,7 +129,6 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
         this.panel = this.api.operation._getPromptPanel();
         this.panel.setParamDefn(paramDefn);
 
-        this.panel.submit = this.submit.bind(this);
         this.panel.submitStart = this.submitStart.bind(this);
         this.panel.ready = this.ready.bind(this);
 
@@ -166,24 +165,15 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
       },
 
       /**
-       * Called by the prompt-panel component when the CDE components have been updated.
-       */
-      submit: function(promptPanel, options) {
-        alert('submit fired for panel: ' + promptPanel);
-      },
-
-      /**
        * Called when the prompt-panel component's submit button is pressed (mouse-down only).
        */
       submitStart: function(promptPanel) {
         alert('submit start fired for panel: ' + promptPanel);
       },
 
-      parameterParser: new ParameterXmlParser(),
-
       parseParameterDefinition: function(xmlString) {
         xmlString = this.removeControlCharacters(xmlString);
-        return this.parameterParser.parseParameterXml(xmlString);
+        return this.api.util.parseParameterXml(xmlString);
       },
 
       /**
@@ -382,12 +372,12 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
         if (blocker) {
           messageBox.setButtons([]);
         } else {
-          var closeFunc = function() {
-            if (this.panel) {
-              this.panel.dashboard.hideProgressIndicator();
+          var closeFunc = (function() {
+            if(this.panel) {
+              this.api.ui.hideProgressIndicator();
             }
             messageBox.hide.call(messageBox);
-          };
+          }).bind(this);
 
           if(!button1Text) {
             button1Text = Messages.getString('OK');
@@ -411,8 +401,8 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
             messageBox.setButtons([button1Text]);
           }
         }
-        if (this.panel) {
-          this.panel.dashboard.showProgressIndicator();
+        if(this.panel) {
+          this.api.ui.showProgressIndicator();
         }
         messageBox.show();
       },

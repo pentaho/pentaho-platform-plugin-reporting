@@ -26,11 +26,6 @@ define(["reportviewer/reportviewer-main-module", 'dojo/parser',"reportviewer/rep
   var inMobile = false;
   try { inMobile = !!window.top.PentahoMobile; } catch(ex) { /*XSS*/ }
 
- // TODO: REVIEW!!!!!!
- // Dashboards.blockUIwithDrag = function() {
-    // blockUI has concurrency issues (see BISERVER-8124)
-    // forcing no-op with override
- // }
   var options;
   if(_isTopReportViewer) {
     var qs;

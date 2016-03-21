@@ -51,7 +51,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         this.reportPrompt.ready         = this.view.promptReady  .bind(this.view,  basePromptReady);
         this.reportPrompt.showGlassPane = this.view.showGlassPane.bind(this.view,  baseShowGlassPane);
         this.reportPrompt.hideGlassPane = this.view.hideGlassPane.bind(this.view,  baseHideGlassPane);
-        this.reportPrompt.submit        = this.submitReport.bind(this);
+        this.reportPrompt.api.event.submit(this.submitReport.bind(this));
         this.reportPrompt.submitStart   = this.submitReportStart.bind(this);
         this.reportPrompt.api.event.afterUpdate(this.view.updateLayout.bind(this.view));
       },
@@ -194,7 +194,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         },
 
         _isAutoSubmitAllowed : function() {
-          if(this.reportPrompt.panel.forceAutoSubmit || this.reportPrompt.panel.paramDefn.allowAutoSubmit()) { // (BISERVER-6915)
+          if(this.reportPrompt.panel.forceAutoSubmit || this.reportPrompt._getStateProperty('allowAutoSubmit')) { // (BISERVER-6915)
             return true;
           }
 
@@ -342,7 +342,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
             showOrHide = (!inMobile && _isTopReportViewer)  ||
                 this.reportPrompt._getStateProperty('promptNeeded') ||
-                !this.reportPrompt.panel.paramDefn.allowAutoSubmit();
+                !this.reportPrompt._getStateProperty('allowAutoSubmit');
           }
 
           var parameters = util.getUrlParameters();
@@ -412,7 +412,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
         pageChanged: function(pageNumber) {
           this._setAcceptedPage('' + (pageNumber - 1));
-          this.reportPrompt.panel.submit(this.reportPrompt.panel, {isPageChange: true});
+          this.reportPrompt.api.operation.submit();
         },
 
         togglePromptPanel: function() {
@@ -665,7 +665,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
       // Called by SubmitPromptComponent#expression (the submit button's click)
       // Also may be called by PromptPanel#init, when there is no submit button (independently of autoSubmit?).
-      submitReport: function(promptPanel, keyArgs) {
+      submitReport: function(keyArgs) {
         var isInit = keyArgs && keyArgs.isInit;
         if(!isInit) {
           if(this.reportPrompt.ignoreNextClickSubmit) {
@@ -688,18 +688,15 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           // Make sure that layout is initialized
           this.view._initLayout();
 
-          // Don't do anything if we need to prompt
+          // Don't do anything if we need prompting (hide report content -> clear iframe data-src)
           var isValid = !this.reportPrompt._getStateProperty('promptNeeded');
           if (!isValid) {
-            logger && logger.log("Prompt is needed. Will clear htmlObject.data-src");
-
-            $('#' + this.htmlObject).attr('data-src', 'about:blank'); // TODO: why htmlObject? Why not this._showReportContent(false)?
-
+            this.view._showReportContent(false);
             this._submitReportEnded();
             return;
           }
 
-          this._updateReportContent(keyArgs);
+          this._updateReportContent();
 
         } catch(ex) {
           this._submitReportEnded();
@@ -714,7 +711,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         return this._updateReportTimeout >= 0;
       },
 
-      _updateReportContent: function(keyArgs) {
+      _updateReportContent: function() {
         var me = this;
 
         // When !AutoSubmit, a renderMode=XML call has not been done yet,
@@ -729,16 +726,16 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
             // Recreates the prompt panel's CDF components
             me.reportPrompt.panel.refresh(newParamDefn, /*noAutoAutoSubmit*/true);
 
-            me._updateReportContentCore(keyArgs);
+            me._updateReportContentCore();
           });
 
           me.reportPrompt.fetchParameterDefinition(callback, /*promptMode*/'MANUAL');
         } else {
-          me._updateReportContentCore(keyArgs);
+          me._updateReportContentCore();
         }
       },
 
-      _updateReportContentCore: function(keyArgs) {
+      _updateReportContentCore: function() {
         var me = this;
 
         // PRD-3962 - remove glass pane after 5 seconds in case iframe onload/onreadystatechange was not detected
