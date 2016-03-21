@@ -86,6 +86,8 @@
   <bean class="org.pentaho.reporting.platform.plugin.JobManager">
     <!-- set to false to globally disable async reports generation -->
     <constructor-arg type="boolean" value="true" />
+    <!-- configure status polling interval -->
+    <constructor-arg type="long" value="1000" />
   </bean>
 
 </beans>

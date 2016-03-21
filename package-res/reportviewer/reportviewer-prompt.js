@@ -25,6 +25,7 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", "com
       // The current prompt mode
       mode: 'INITIAL',
       _isAsync: null,
+      _pollingInterval: 1000,
 
       /**
        * Gets the prompt api instance
@@ -287,7 +288,12 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", "com
 
         var curUrl = window.location.href.split('?')[0];
         if (this._isAsync === null) {
-          this._isAsync = (pentahoGet(curUrl.substring(0, curUrl.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/isasync', "") == "true");
+          var asyncConf = pentahoGet(curUrl.substring(0, curUrl.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/config', "");
+          if (asyncConf) {
+            asyncConf = JSON.parse(asyncConf);
+            this._isAsync = asyncConf.supportAsync;
+            this._pollingInterval = asyncConf.pollingIntervalMilliseconds;
+          }
         }
 
         if (me.clicking) {
