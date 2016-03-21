@@ -25,6 +25,8 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
+import org.pentaho.platform.util.RepositoryPathEncoder;
+import org.pentaho.platform.util.web.MimeHelper;
 import org.pentaho.reporting.platform.plugin.async.IAsyncReportState;
 import org.pentaho.reporting.platform.plugin.async.IPentahoAsyncExecutor;
 import org.pentaho.reporting.platform.plugin.async.PentahoAsyncExecutor;
@@ -35,6 +37,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
@@ -117,15 +120,51 @@ public class JobManager {
     StreamingOutput stream = new StreamingOutputWrapper( input );
 
     MediaType mediaType = null;
+    Response.ResponseBuilder response = null;
     try {
       mediaType = MediaType.valueOf( state.getMimeType() );
+      response = Response.ok( stream, mediaType );
     } catch ( Exception e ) {
       logger.error( "can't determine JAX-RS media type for: " + state.getMimeType() );
-      // may be this will work?
-      return Response.ok( stream, state.getMimeType() ).build();
+      response = Response.ok( stream, state.getMimeType() );
     }
 
-    return Response.ok( stream, mediaType ).build();
+    // no cache
+    CacheControl cacheControl = new CacheControl();
+    cacheControl.setPrivate( true );
+    cacheControl.setMaxAge( 0 );
+    cacheControl.setMustRevalidate( true );
+
+    response.cacheControl( cacheControl );
+
+    response = calculateContentDisposition( response, state );
+
+    return response.build();
+  }
+
+  private Response.ResponseBuilder calculateContentDisposition( Response.ResponseBuilder response,
+      IAsyncReportState state ) {
+    org.pentaho.reporting.libraries.base.util.IOUtils utils = org.pentaho.reporting.libraries
+        .base.util.IOUtils.getInstance();
+
+    String extension = MimeHelper.getExtension( state.getMimeType() );
+    String path = state.getPath();
+
+    String reportExtension = utils.stripFileExtension( path );
+    String fileName = utils.getFileName( path );
+    if ( fileName == null || fileName.isEmpty() ) {
+      fileName = "content";
+    }
+
+    String
+        disposition =
+        "inline; filename*=UTF-8''" + RepositoryPathEncoder
+            .encode( RepositoryPathEncoder.encodeRepositoryPath( fileName + extension ) );
+    response.header( "Content-Disposition", disposition );
+
+    response.header( "Content-Description", fileName + reportExtension );
+
+    return response;
   }
 
   @GET @Path( "{job_id}/status" ) @Produces( "application/json" )
