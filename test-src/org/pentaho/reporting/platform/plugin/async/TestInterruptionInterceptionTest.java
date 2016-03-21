@@ -19,9 +19,16 @@
 package org.pentaho.reporting.platform.plugin.async;
 
 import org.apache.commons.io.output.NullOutputStream;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
+import org.pentaho.platform.api.engine.IPentahoSession;
+import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
+import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.pdf.PdfReportUtil;
+
+import static org.mockito.Mockito.mock;
 
 /**
  * See BACKLOG-7081 for additional details.
@@ -29,6 +36,21 @@ import org.pentaho.reporting.engine.classic.core.modules.output.pageable.pdf.Pdf
  * Created by dima.prokopenko@gmail.com on 3/15/2016.
  */
 public class TestInterruptionInterceptionTest {
+
+  IPentahoSession userSession = mock( IPentahoSession.class );
+
+  @Before
+  public void before() {
+    PentahoSystem.clearObjectFactory();
+    PentahoSessionHolder.removeSession();
+    PentahoSessionHolder.setSession( userSession );
+  }
+
+  @After
+  public void after() {
+    PentahoSystem.clearObjectFactory();
+    PentahoSessionHolder.removeSession();
+  }
 
   @Test public void testInterruptFlagProblem() throws Exception {
     PentahoAsyncExecutionInterruptTest t1 = new PentahoAsyncExecutionInterruptTest();

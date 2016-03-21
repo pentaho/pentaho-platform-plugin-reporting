@@ -20,12 +20,14 @@ package org.pentaho.reporting.platform.plugin.async;
 
 import junit.framework.Assert;
 import org.apache.commons.io.input.NullInputStream;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
 import org.pentaho.platform.api.engine.IApplicationContext;
 import org.pentaho.platform.api.engine.IPentahoSession;
+import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.libraries.base.config.ModifiableConfiguration;
@@ -77,6 +79,10 @@ public class PentahoAsyncReportExecutorTest {
   final InputStream input = new NullInputStream( 0 );
 
   @Before public void before() throws Exception {
+    PentahoSystem.clearObjectFactory();
+    PentahoSessionHolder.removeSession();
+
+
     when( handler.getStagingContent() ).thenReturn( input );
     when( report.getReportConfiguration() ).thenReturn( configuration );
     when( component.getReport() ).thenReturn( report );
@@ -94,8 +100,16 @@ public class PentahoAsyncReportExecutorTest {
     PentahoSystem.setApplicationContext( context );
   }
 
+  @After
+  public void after() {
+    PentahoSystem.clearObjectFactory();
+    PentahoSessionHolder.removeSession();
+  }
+
   @Test public void testCanCompleteTask() throws Exception {
     when( component.execute() ).thenReturn( true );
+    PentahoSessionHolder.setSession( session1 );
+
 
     PentahoAsyncReportExecution task1 = createMockCallable();
 
