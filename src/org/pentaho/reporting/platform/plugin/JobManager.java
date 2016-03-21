@@ -48,23 +48,29 @@ import java.util.concurrent.Future;
 public class JobManager {
 
   private static final Log logger = LogFactory.getLog( JobManager.class );
-
-  private boolean isSuportAsync = true;
+  private final Config config;
 
   public JobManager() {
-    this( true );
+    this( true, 1000 );
   }
 
-  public JobManager( boolean isSuportAsync ) {
-    if ( !isSuportAsync ) {
+  public JobManager( final boolean isSupportAsync, final long pollingIntervalMilliseconds ) {
+    if ( !isSupportAsync ) {
       logger.info( "JobManager initialization: async mode marked as disabled." );
     }
-    this.isSuportAsync = isSuportAsync;
+    this.config = new Config( isSupportAsync, pollingIntervalMilliseconds );
   }
 
-  @GET @Path( "isasync" ) public Response isAsync() {
-    return isSuportAsync ? Response.ok( Boolean.TRUE.toString(), MediaType.TEXT_PLAIN_TYPE ).build()
-        : Response.ok( Boolean.FALSE.toString(), MediaType.TEXT_PLAIN_TYPE ).build();
+  @GET @Path( "config" ) public Response getConfig() {
+    final ObjectMapper mapper = new ObjectMapper();
+    try {
+      return Response
+        .ok( mapper.writeValueAsString( config ),
+          MediaType.APPLICATION_JSON ).build();
+    } catch ( final IOException e ) {
+      e.printStackTrace();
+    }
+    return null;
   }
 
   @POST @Path( "{job_id}/content" ) public Response getContent( @PathParam( "job_id" ) String job_id )
@@ -93,7 +99,7 @@ public class JobManager {
     }
 
     IAsyncReportState state = executor.getReportState( uuid, session );
-    if (state == null) {
+    if ( state == null ) {
       return get404();
     }
 
@@ -172,7 +178,7 @@ public class JobManager {
 
     Future<InputStream> future = executor.getFuture( uuid, session );
     IAsyncReportState state = executor.getReportState( uuid, session );
-    if (state == null) {
+    if ( state == null ) {
       return get404();
     }
 
@@ -212,6 +218,25 @@ public class JobManager {
         IOUtils.closeQuietly( outputStream );
         IOUtils.closeQuietly( input );
       }
+    }
+  }
+
+  private class Config {
+    private final boolean isSupportAsync;
+    private final long pollingIntervalMilliseconds;
+
+    private Config( final boolean isSupportAsync, final long pollingIntervalMilliseconds ) {
+      this.isSupportAsync = isSupportAsync;
+      this.pollingIntervalMilliseconds = pollingIntervalMilliseconds;
+    }
+
+
+    public boolean isSupportAsync() {
+      return isSupportAsync;
+    }
+
+    public long getPollingIntervalMilliseconds() {
+      return pollingIntervalMilliseconds;
     }
   }
 }

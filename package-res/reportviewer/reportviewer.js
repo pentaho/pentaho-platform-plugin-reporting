@@ -823,7 +823,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
                 if(resultJson.status == "QUEUED" || resultJson.status == "WORKING") {
                   var urlStatus = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + resultJson.uuid + '/status';
-                  setTimeout(function(){ pentahoGet(urlStatus, "", handleResultCallback); }, 1000);
+                  setTimeout(function(){ pentahoGet(urlStatus, "", handleResultCallback); }, this.reportPrompt._pollingInterval);
                 } else if (resultJson.status == "CONTENT_AVAILABLE") {
                   if(isFirstContAvStatus) {
                     isFirstContAvStatus = false;
@@ -831,7 +831,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                       resultJson2 = JSON.parse(result2);
                       if(resultJson2.status == "QUEUED" || resultJson2.status == "WORKING") {
                         var urlStatus2 = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + resultJson2.uuid + '/status';
-                        setTimeout(function(){ pentahoGet(urlStatus2, "", handleContAvailCallback); }, 1000);
+                        setTimeout(function(){ pentahoGet(urlStatus2, "", handleContAvailCallback); }, this.reportPrompt._pollingInterval);
                       } else if (resultJson2.status == "FINISHED") {
                         var urlContent2 = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + resultJson2.uuid + '/content';
                         logger && logger.log("Will set iframe url to " + urlContent2.substr(0, 50) + "... ");
@@ -847,14 +847,14 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                     //get first page
                     pentahoGet('reportjob', url.substring(url.lastIndexOf("/report?")+"/report?".length, url.length), handleContAvailCallback, 'text/text');
                     var urlStatus = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + resultJson.uuid + '/status';
-                    setTimeout(function(){ pentahoGet(urlStatus, "", handleResultCallback); }, 1000);
+                    setTimeout(function(){ pentahoGet(urlStatus, "", handleResultCallback); }, this.reportPrompt._pollingInterval);
                   } else {
                     //update page number
                     var pageContr = registry.byId('pageControl');
                     pageContr.setPageCount(resultJson.page);
 
                     var urlStatus = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + resultJson.uuid + '/status';
-                    setTimeout(function(){ pentahoGet(urlStatus, "", handleResultCallback); }, 1000);
+                    setTimeout(function(){ pentahoGet(urlStatus, "", handleResultCallback); }, this.reportPrompt._pollingInterval);
                   }
                 } else if (resultJson.status == "FINISHED") {
                   if(!isIframeContentSet) {

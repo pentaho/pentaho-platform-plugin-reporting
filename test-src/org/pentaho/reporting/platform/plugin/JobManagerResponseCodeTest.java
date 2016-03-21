@@ -19,35 +19,37 @@
 package org.pentaho.reporting.platform.plugin;
 
 import org.apache.cxf.jaxrs.client.WebClient;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.Test;
 
 import javax.ws.rs.core.Response;
+import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
-/**
- * Created by dima.prokopenko@gmail.com on 2/23/2016.
- */
+
 public class JobManagerResponseCodeTest extends JaxRsServerProvider {
 
   public static final String URL_FORMAT = "/reporting/api/jobs/%1$s%2$s";
-  WebClient client = WebClient.create( ENDPOINT_ADDRESS );
+  private WebClient client = WebClient.create( ENDPOINT_ADDRESS );
 
   @Test public void testEchoStatusCode() throws Exception {
-    client.path( String.format( URL_FORMAT, "isasync", "" ) );
-    Response response = client.get();
+    client.path( String.format( URL_FORMAT, "config", "" ) );
+    final Response response = client.get();
 
     assertNotNull( response );
     assertEquals( 200, response.getStatus() );
 
-    assertTrue( response.readEntity( Boolean.class ) );
+    final String json = response.readEntity( String.class );
+    final ObjectMapper objectMapper = new ObjectMapper();
+    final Map config = objectMapper.readValue( json, Map.class );
+    assertEquals( Boolean.TRUE, (Boolean) config.get( "supportAsync" ) );
+    assertTrue( 1000 == (int) config.get( "pollingIntervalMilliseconds" ) );
   }
 
   @Test public void testAddJobIncorrectContentUUID() {
     client.path( String.format( URL_FORMAT, "123", "/content" ) );
-    Response response = client.post( null );
+    final Response response = client.post( null );
     assertNotNull( response );
     assertEquals( 404, response.getStatus() );
   }
