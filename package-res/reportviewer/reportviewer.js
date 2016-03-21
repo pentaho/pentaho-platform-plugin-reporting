@@ -849,9 +849,6 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                     var urlStatus = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + resultJson.uuid + '/status';
                     setTimeout(function(){ pentahoGet(urlStatus, "", handleResultCallback); }, 1000);
                   } else {
-                    //update page number
-                    var pageContr = registry.byId('pageControl');
-                    pageContr.setPageCount(resultJson.page);
 
                     var urlStatus = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + resultJson.uuid + '/status';
                     setTimeout(function(){ pentahoGet(urlStatus, "", handleResultCallback); }, 1000);
