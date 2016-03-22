@@ -51,14 +51,14 @@ public class JobManager {
   private final Config config;
 
   public JobManager() {
-    this( true, 1000 );
+    this( true, 1000, 1500 );
   }
 
-  public JobManager( final boolean isSupportAsync, final long pollingIntervalMilliseconds ) {
+  public JobManager( final boolean isSupportAsync, final long pollingIntervalMilliseconds, final long dialogThresholdMilliseconds ) {
     if ( !isSupportAsync ) {
       logger.info( "JobManager initialization: async mode marked as disabled." );
     }
-    this.config = new Config( isSupportAsync, pollingIntervalMilliseconds );
+    this.config = new Config( isSupportAsync, pollingIntervalMilliseconds, dialogThresholdMilliseconds );
   }
 
   @GET @Path( "config" ) public Response getConfig() {
@@ -224,10 +224,13 @@ public class JobManager {
   private class Config {
     private final boolean isSupportAsync;
     private final long pollingIntervalMilliseconds;
+    private final long dialogThresholdMilliseconds;
 
-    private Config( final boolean isSupportAsync, final long pollingIntervalMilliseconds ) {
+    private Config( final boolean isSupportAsync, final long pollingIntervalMilliseconds,
+                    final long dialogThresholdMilliseconds ) {
       this.isSupportAsync = isSupportAsync;
       this.pollingIntervalMilliseconds = pollingIntervalMilliseconds;
+      this.dialogThresholdMilliseconds = dialogThresholdMilliseconds;
     }
 
 
@@ -237,6 +240,10 @@ public class JobManager {
 
     public long getPollingIntervalMilliseconds() {
       return pollingIntervalMilliseconds;
+    }
+
+    public long getDialogThresholdMilliseconds() {
+      return dialogThresholdMilliseconds;
     }
   }
 }

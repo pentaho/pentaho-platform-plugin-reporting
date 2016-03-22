@@ -756,6 +756,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         var isCanceled = false;
         var isFirstContAvStatus = true;
         var isIframeContentSet = false;
+        var isFinished = false;
         if(this.reportPrompt._isAsync) {
           var dlg = registry.byId('feedbackScreen');
           var handleCancelCallback = dojo.hitch(this, function(result) {
@@ -771,7 +772,11 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
             dlg.hide();
           }];
           if( url.indexOf("debug=true") == -1 ) {
-            dlg.show();
+            setTimeout(function () {
+              if(!isFinished){
+                dlg.show();
+              }
+            }, this.reportPrompt._dialogThreshold);
           }
         }
 
@@ -869,6 +874,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                     dlg.hide();
                   }
 
+                  isFinished = true;
                   var pageContr = registry.byId('pageControl');
                   pageContr.setPageCount(resultJson.page);
                 } else if (resultJson.status == "FAILED") {
