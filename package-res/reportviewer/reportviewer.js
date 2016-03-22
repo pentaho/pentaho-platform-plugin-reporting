@@ -410,10 +410,12 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           }.bind(this));
         },
 
-        pageChanged: function(pageNumber) {
-          this._setAcceptedPage('' + (pageNumber - 1));
-          this.reportPrompt.api.operation.submit();
-        },
+          pageChanged: function (pageNumber) {
+              if (!isNaN(pageNumber)) {
+                  this._setAcceptedPage('' + (pageNumber - 1));
+                  this.reportPrompt.api.operation.submit();
+              }
+          },
 
         togglePromptPanel: function() {
           this.showPromptPanel(registry.byId('toolbar-parameterToggle').checked);
