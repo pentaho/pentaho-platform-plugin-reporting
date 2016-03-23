@@ -171,9 +171,11 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
         logger.warn( "Using cached report data for " + key );
         final ReportProgressListener listener = ReportListenerThreadHolder.getListener();
         if ( listener != null ) {
-          listener.reportProcessingFinished(
-            new ReportProgressEvent( "Cache", ReportProgressEvent.GENERATING_CONTENT, 0, 0,
-              acceptedPage + 1, cachedContent.getPageCount(), 0,  0 ) );
+          final ReportProgressEvent event =
+            new ReportProgressEvent( this, ReportProgressEvent.GENERATING_CONTENT, 0, 0,
+              acceptedPage + 1, cachedContent.getPageCount(), 0, 0 );
+          listener.reportProcessingUpdate( event );
+          listener.reportProcessingFinished( event );
         }
         outputStream.write( page );
         outputStream.flush();
