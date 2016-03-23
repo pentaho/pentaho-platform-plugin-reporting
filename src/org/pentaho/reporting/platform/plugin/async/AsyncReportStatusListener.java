@@ -81,7 +81,6 @@ class AsyncReportStatusListener implements IAsyncReportListener {
 
   @Override
   public synchronized void reportProcessingFinished( final ReportProgressEvent event ) {
-    updateState( event );
     this.status = AsyncExecutionStatus.FINISHED;
   }
 

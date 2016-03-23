@@ -558,6 +558,8 @@ public class PageableHTMLTest {
       assertTrue( listener.isOnUpdate() );
       assertTrue( listener.isOnFinish() );
       assertTrue( listener.isOnFirstPage() );
+      assertFalse( -1 == listener.getState().getRow());
+      assertFalse( -1 == listener.getState().getTotalRows());
 
       ReportListenerThreadHolder.clear();
 
@@ -572,7 +574,7 @@ public class PageableHTMLTest {
       execute( r2 );
 
       assertFalse( listener2.isOnStart() );
-      assertFalse( listener2.isOnUpdate() );
+      assertTrue( listener2.isOnUpdate() );
       assertTrue( listener2.isOnFinish() );
       assertFalse( listener2.isOnFirstPage() );
 
@@ -603,6 +605,8 @@ public class PageableHTMLTest {
       assertTrue( listener.isOnUpdate() );
       assertTrue( listener.isOnFinish() );
       assertFalse( listener.isOnFirstPage() );
+      assertFalse( -1 == listener.getState().getRow());
+      assertFalse( -1 == listener.getState().getTotalRows());
 
       ReportListenerThreadHolder.clear();
 
@@ -617,7 +621,7 @@ public class PageableHTMLTest {
       execute( r2 );
 
       assertFalse( listener2.isOnStart() );
-      assertFalse( listener2.isOnUpdate() );
+      assertTrue( listener2.isOnUpdate() );
       assertTrue( listener2.isOnFinish() );
       assertFalse( listener2.isOnFirstPage() );
 
