@@ -111,7 +111,6 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
           logger.error( "Can't persist" );
         }
         //Update after pages are in cache
-        asyncReportListener.setTotalPages( proc.getLogicalPageCount() );
         asyncReportListener.setStatus( AsyncExecutionStatus.CONTENT_AVAILABLE );
       }
     }
@@ -142,13 +141,12 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
   }
 
   @Override
-  public synchronized int generate( final MasterReport report, /*final*/ int acceptedPage,
+  public synchronized int generate( final MasterReport report, final int acceptedPage,
                                     final OutputStream outputStream, final int yieldRate )
     throws ReportProcessingException, IOException, ContentIOException {
 
     if ( acceptedPage < 0 ) {
-     /* return generateNonCaching( report, acceptedPage, outputStream, yieldRate );*/
-      acceptedPage = 0;
+      return generateNonCaching( report, acceptedPage, outputStream, yieldRate );
     }
 
     try {
@@ -175,7 +173,7 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
         if ( listener != null ) {
           listener.reportProcessingFinished(
             new ReportProgressEvent( "Cache", ReportProgressEvent.GENERATING_CONTENT, 0, 0,
-              cachedContent.getPageCount(), 0, 0 ) );
+              acceptedPage + 1, cachedContent.getPageCount(), 0,  0 ) );
         }
         outputStream.write( page );
         outputStream.flush();
@@ -257,7 +255,7 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
   private IReportContent produceReportContent( final PageableReportProcessor proc,
                                                final ZipRepository targetRepository )
     throws ContentIOException, IOException {
-    final int pageCount = proc.getPhysicalPageCount();
+    final int pageCount = proc.getLogicalPageCount();
     final ContentLocation root = targetRepository.getRoot();
     final Map<Integer, byte[]> pages = new HashMap<>();
 

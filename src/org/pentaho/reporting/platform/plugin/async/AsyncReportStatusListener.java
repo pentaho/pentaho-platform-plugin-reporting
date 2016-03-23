@@ -30,10 +30,10 @@ import java.util.UUID;
  */
 class AsyncReportStatusListener implements IAsyncReportListener {
 
-  public static final String COMPUTING_LAYOUT = "AsyncComputingLayoutTitle";
-  public static final String PRECOMPUTING_VALUES = "AsyncPrecomputingValuesTitle";
-  public static final String PAGINATING = "AsyncPaginatingTitle";
-  public static final String GENERATING_CONTENT = "AsyncGeneratingContentTitle";
+  private static final String COMPUTING_LAYOUT = "AsyncComputingLayoutTitle";
+  private static final String PRECOMPUTING_VALUES = "AsyncPrecomputingValuesTitle";
+  private static final String PAGINATING = "AsyncPaginatingTitle";
+  private static final String GENERATING_CONTENT = "AsyncGeneratingContentTitle";
 
   private final String path;
   private final UUID uuid;
@@ -48,9 +48,9 @@ class AsyncReportStatusListener implements IAsyncReportListener {
   private boolean firstPageMode = false;
 
 
-  public AsyncReportStatusListener( final String path,
-                                    final UUID uuid,
-                                    final String mimeType ) {
+  AsyncReportStatusListener( final String path,
+                             final UUID uuid,
+                             final String mimeType ) {
     this.path = path;
     this.uuid = uuid;
     this.mimeType = mimeType;
@@ -65,10 +65,6 @@ class AsyncReportStatusListener implements IAsyncReportListener {
     this.status = status;
   }
 
-  public synchronized void setTotalPages( final int totalPages ) {
-    this.totalPages = totalPages;
-  }
-
   public boolean isFirstPageMode() {
     return firstPageMode;
   }
@@ -80,14 +76,12 @@ class AsyncReportStatusListener implements IAsyncReportListener {
 
   @Override
   public synchronized void reportProcessingUpdate( final ReportProgressEvent event ) {
-    final int activity = event.getActivity();
-    updateState( event, activity );
+    updateState( event );
   }
 
   @Override
   public synchronized void reportProcessingFinished( final ReportProgressEvent event ) {
-    final int activity = event.getActivity();
-    updateState( event, activity );
+    updateState( event );
     this.status = AsyncExecutionStatus.FINISHED;
   }
 
@@ -105,12 +99,13 @@ class AsyncReportStatusListener implements IAsyncReportListener {
       + '}';
   }
 
-  private void updateState( final ReportProgressEvent event, final int activity ) {
-    this.activity = getActivityCode( activity );
+  private void updateState( final ReportProgressEvent event ) {
+    this.activity = getActivityCode( event.getActivity() );
     this.progress = (int) ReportProgressEvent.computePercentageComplete( event, true );
     this.page = event.getPage();
     this.row = event.getRow();
     this.totalRows = event.getMaximumRow();
+    this.totalPages = event.getTotalPages();
   }
 
   private static String getActivityCode( final int activity ) {
@@ -139,6 +134,6 @@ class AsyncReportStatusListener implements IAsyncReportListener {
   }
 
   public synchronized IAsyncReportState getState() {
-    return new AsyncReportState(uuid, path, status, progress, row, totalRows, page, totalPages, activity, mimeType);
+    return new AsyncReportState( uuid, path, status, progress, row, totalRows, page, totalPages, activity, mimeType );
   }
 }
