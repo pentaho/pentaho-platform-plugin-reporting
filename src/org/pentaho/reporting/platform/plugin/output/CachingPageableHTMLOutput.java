@@ -17,9 +17,12 @@
 package org.pentaho.reporting.platform.plugin.output;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.pentaho.platform.api.engine.IApplicationContext;
+import org.pentaho.platform.api.engine.IPentahoSession;
+import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
@@ -65,20 +68,29 @@ import java.io.OutputStream;
 import java.io.Serializable;
 import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 
 public class CachingPageableHTMLOutput extends PageableHTMLOutput {
 
   private static Log logger = LogFactory.getLog( CachingPageableHTMLOutput.class );
+  private static final ConcurrentHashMap<List<String>, CacheListener> inProgress = new ConcurrentHashMap<>();
+
 
   private class CacheListener implements ReportProgressListener {
 
-    public CacheListener( final String key, final int acceptedPage,
-                          final PageableReportProcessor proc,
-                          final ZipRepository targetRepository,
-                          final IAsyncReportListener asyncReportListener ) {
+    private final CountDownLatch isRequestedAvailable = new CountDownLatch( 1 );
+
+    private volatile int requestedPage = -1;
+
+    CacheListener( final String key, final int acceptedPage,
+                   final PageableReportProcessor proc,
+                   final ZipRepository targetRepository,
+                   final IAsyncReportListener asyncReportListener ) {
       this.key = key;
       this.acceptedPage = acceptedPage;
       this.proc = proc;
@@ -113,10 +125,52 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
         //Update after pages are in cache
         asyncReportListener.setStatus( AsyncExecutionStatus.CONTENT_AVAILABLE );
       }
+      if ( requestedPage > 0 ) {
+        isRequestedAvailable.countDown();
+      }
     }
 
     @Override public void reportProcessingFinished( final ReportProgressEvent reportProgressEvent ) {
-      //ignore
+      //free latch if report is ready
+      isRequestedAvailable.countDown();
+    }
+
+    /**
+     * By logic is not thread safe - is called when user requests page from UI when the first page is ready but report
+     * processing is not finished yet. Only one such request could exist at a time for concrete generation task.
+     * <p>
+     * Doesn't write content to cache to increase performance.
+     *
+     * @param acceptedPage accepted page
+     * @return not sored report content
+     */
+    private IReportContent getFreshContent( final int acceptedPage ) {
+      try {
+        //try to get requested page from running generation
+        final IReportContent iReportContent = produceReportContent( proc, targetRepository );
+        final byte[] pageData = iReportContent.getPageData( acceptedPage );
+        if ( pageData != null && pageData.length > 0 ) {
+          //Already available - then return        
+          return iReportContent;
+        } else {
+          //let's wait until page is ready
+          requestedPage = acceptedPage + 2;
+          isRequestedAvailable.await();
+          requestedPage = -1;
+          return  produceReportContent( proc, targetRepository );
+        }
+      } catch ( final Exception e ) {
+        logger.error( "Can't retrieve from repo" );
+      }
+      return null;
+    }
+
+    /**
+     * For some reason generation can fail,
+     * need to ensure that nobody waits for update/finish events
+     */
+    private void tearDown() {
+      isRequestedAvailable.countDown();
     }
   }
 
@@ -155,7 +209,7 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
         key = createKey( report );
       }
 
-      final IReportContent cachedContent = getCachedContent( key );
+      IReportContent cachedContent = getCachedContent( key );
 
       if ( cachedContent == null ) {
         logger.warn( "No cached content found for key: " + key );
@@ -166,14 +220,29 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
         return freshCache.getPageCount();
       }
 
-      final byte[] page = cachedContent.getPageData( acceptedPage );
-      if ( page != null && page.length > 0 ) {
+      byte[] page = cachedContent.getPageData( acceptedPage );
+
+      final List<String> sessionAwareKey = getSessionAwareKey( key );
+
+      final boolean isStillInProgress = ( ArrayUtils.isEmpty( page ) && inProgress.containsKey( sessionAwareKey ) );
+
+      if ( isStillInProgress ) {
+        //Retrieve requested page from generation
+        final CacheListener cacheListener = inProgress.get( sessionAwareKey );
+        final IReportContent freshContent = cacheListener.getFreshContent( acceptedPage );
+        if ( freshContent != null ) {
+          cachedContent = freshContent;
+          page = cachedContent.getPageData( acceptedPage );
+        }
+      }
+
+      if ( ArrayUtils.isNotEmpty( page ) ) {
         logger.warn( "Using cached report data for " + key );
         final ReportProgressListener listener = ReportListenerThreadHolder.getListener();
         if ( listener != null ) {
           listener.reportProcessingFinished(
             new ReportProgressEvent( "Cache", ReportProgressEvent.GENERATING_CONTENT, 0, 0,
-              acceptedPage + 1, cachedContent.getPageCount(), 0,  0 ) );
+              acceptedPage + 1, cachedContent.getPageCount(), 0, 0 ) );
         }
         outputStream.write( page );
         outputStream.flush();
@@ -223,13 +292,15 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
 
     //Async listener
     final IAsyncReportListener listener = ReportListenerThreadHolder.getListener();
-    ReportProgressListener cacheListener = null;
+    CacheListener cacheListener = null;
+    final List<String> sessionAwareKey = getSessionAwareKey( key );
     try {
       final ZipRepository targetRepository = reinitOutputTargetForCaching();
       if ( listener != null ) {
         if ( listener.isFirstPageMode() ) {
           //Create cache listener to write first requested page when needed
           cacheListener = new CacheListener( key, acceptedPage, proc, targetRepository, listener );
+          inProgress.putIfAbsent( sessionAwareKey, cacheListener );
           proc.addReportProgressListener( cacheListener );
         }
         proc.addReportProgressListener( listener );
@@ -246,9 +317,20 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
         proc.removeReportProgressListener( listener );
       }
       if ( cacheListener != null ) {
+        cacheListener.tearDown();
         proc.removeReportProgressListener( cacheListener );
       }
+      inProgress.remove( sessionAwareKey );
     }
+  }
+
+  private List<String> getSessionAwareKey( final String key ) {
+    String sessionId = null;
+    final IPentahoSession session = PentahoSessionHolder.getSession();
+    if ( session != null ) {
+      sessionId = session.getId();
+    }
+    return Arrays.asList( key, sessionId );
   }
 
 
