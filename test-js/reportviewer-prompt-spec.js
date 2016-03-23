@@ -178,8 +178,6 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
             expect(reportPrompt.api.ui.hideProgressIndicator).toHaveBeenCalled();
             done();
           };
-          // createPromptPanel will fail due to intentional error, so we set panel true, so the api calls are actually executed
-          reportPrompt.panel = true;
           reportPrompt.createPromptPanel();
         });
       });
