@@ -42,6 +42,8 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
       get reportPrompt () {
         return _reportPrompt;
       },
+      _currentReportStatus: null,
+      _currentReportUuid: null,
 
       _bindPromptEvents: function() {
         var basePromptReady   = this.reportPrompt.ready.bind(this.reportPrompt);
@@ -85,6 +87,22 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         on(registry.byId('toolbar-parameterToggle'),  "click", lang.hitch( this,  function() {
           this.view.togglePromptPanel();
         }));
+
+        window.onbeforeunload = function(e) {
+          this.cancel(this._currentReportStatus, this._currentReportUuid);
+          return;
+        }.bind(this);
+
+        $("#reportContent")[0].contentWindow.onbeforeunload = function(e) {
+          if($("#reportContent")[0].contentWindow._isFirstIframeUrlSet == true) {
+            //user clicking a link in the report
+            this.cancel(this._currentReportStatus, this._currentReportUuid);
+          } else {
+            //content is writing in the reportContent iframe first time
+            $("#reportContent")[0].contentWindow._isFirstIframeUrlSet = true;
+          }
+          return;
+        }.bind(this);
 
         var boundOnReportContentLoaded = this._onReportContentLoaded.bind(this);
 
@@ -576,6 +594,19 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         }
       }), // end view
 
+      onTabCloseEvent: function (event) {
+        if (window && event.eventSubType == 'tabClosing' && event.stringParam == window.frameElement.id) {
+          this.cancel(this._currentReportStatus, this._currentReportUuid);
+        }
+      },
+
+      cancel: function(status, uuid) {
+        var url = window.location.href.split('?')[0];
+        if(status == 'WORKING' || status == 'QUEUED' || status == 'CONTENT_AVAILABLE') {
+          pentahoGet(url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + uuid + '/cancel', "");
+        }
+      },
+
       createRequiredHooks: function() {
         // [PIR-543] - Allow new/refreshed reports to re-attach or override instance functions in the top window object
         // Top window functions may become orphaned due to content linking refresh or when a report tab in PUC is closed
@@ -617,6 +648,10 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         }
 
         window.reportViewer_hide = this.hide.bind(this);
+
+        if(top.mantle_addHandler) {
+          top.mantle_addHandler("GenericEvent", this.onTabCloseEvent.bind(this));
+        }
 
         var localThis = this;
 
@@ -752,7 +787,6 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         var url = me._buildReportContentUrl(options);
 
         //BISERVER-1225
-        var currentUuid;
         var isCanceled = false;
         var isFirstContAvStatus = true;
         var isIframeContentSet = false;
@@ -768,16 +802,14 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           dlg.setText3(_Messages.getString('FeedbackScreenRow'));
           dlg.setButtonText(_Messages.getString('FeedbackScreenCancel'));
           dlg.callbacks = [function feedbackscreenDone() {
-            pentahoGet(url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + currentUuid + '/cancel', "", handleCancelCallback);
+            this.cancel(this._currentReportStatus, this._currentReportUuid);
             dlg.hide();
-          }];
-          if( url.indexOf("debug=true") == -1 ) {
-            setTimeout(function () {
-              if(!isFinished){
-                dlg.show();
-              }
-            }, this.reportPrompt._dialogThreshold);
-          }
+          }.bind(this)];
+          setTimeout(function () {
+            if(!isFinished){
+              dlg.show();
+            }
+          }, this.reportPrompt._dialogThreshold);
         }
 
         var outputFormat = options['output-target'];
@@ -822,7 +854,8 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                 }
                 dlg.setText2(_Messages.getString('FeedbackScreenPage') + ': ' + resultJson.page + ' / ' + resultJson.totalPages);
                 dlg.setText3(_Messages.getString('FeedbackScreenRow') + ': ' + resultJson.row + ' / ' + resultJson.totalRows);
-                currentUuid = resultJson.uuid;
+                this._currentReportStatus = resultJson.status;
+                this._currentReportUuid = resultJson.uuid;
 
                 progressBar.set({value: resultJson.progress});
 
