@@ -19,11 +19,14 @@
 package org.pentaho.reporting.platform.plugin.async;
 
 import org.apache.commons.io.input.NullInputStream;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
 import org.pentaho.platform.api.engine.IPentahoSession;
+import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
+import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.libraries.base.config.ModifiableConfiguration;
 import org.pentaho.reporting.platform.plugin.SimpleReportingComponent;
@@ -56,9 +59,20 @@ public class PentahoAsyncExecutionTest {
 
   @Before
   public void before() throws Exception {
+    PentahoSystem.clearObjectFactory();
+    PentahoSessionHolder.removeSession();
+
+    PentahoSessionHolder.setSession( userSession );
+
     when( handler.getStagingContent() ).thenReturn( input );
     when( report.getReportConfiguration() ).thenReturn( configuration );
     when( component.getReport() ).thenReturn( report );
+  }
+
+  @After
+  public void after() {
+    PentahoSystem.clearObjectFactory();
+    PentahoSessionHolder.removeSession();
   }
 
   @Test
