@@ -750,8 +750,8 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         var me = this;
 
         // When !AutoSubmit, a renderMode=XML call has not been done yet,
-        //  and must be done now so that the page controls have enough info.
-        if(!me.reportPrompt._getStateProperty('autoSubmit')) {
+        //  and must be done now(if asynchronous mode is off) so that the page controls have enough info.
+        if(!me.reportPrompt._getStateProperty('autoSubmit') && !this.reportPrompt._isAsync) {
           // FETCH page-count info before rendering report
           var callback = logged("_updateReportContent_fetchParameterCallback", function(xmlString) {
             var newParamDefn = me.reportPrompt.parseParameterDefinition(xmlString);
