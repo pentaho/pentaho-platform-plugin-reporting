@@ -99,7 +99,7 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", "com
             //
             // When paramDefn.allowAutoSubmit() is true,
             // And no validation errors/required parameters exist to be specified, TODO: Don't think that this is being checked here!
-            // Then a second request is made with promptMode='MANUAL' and renderMode='XML' is performed.
+            // In case when asynchronous mode is off - then a second request is made with promptMode='MANUAL' and renderMode='XML' is performed.
             //
             // When the response to the second request arrives,
             // Then the prompt panel is rendered, including with page count information, and  the report content is loaded and shown.
