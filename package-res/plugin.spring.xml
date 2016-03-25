@@ -84,6 +84,7 @@
 
   <bean id="api" class="org.pentaho.platform.web.servlet.JAXRSPluginServlet"/>
   <bean class="org.pentaho.reporting.platform.plugin.JobManager">
+    <!-- !!! If you want to change defaults - you must specify all available parameters-->
     <!--set to false to globally disable async reports generation -->
     <!--<constructor-arg type="boolean" value="true" />-->
     <!-- configure status polling interval -->
