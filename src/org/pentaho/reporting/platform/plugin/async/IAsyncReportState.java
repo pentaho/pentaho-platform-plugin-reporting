@@ -3,9 +3,6 @@ package org.pentaho.reporting.platform.plugin.async;
 import java.io.Serializable;
 import java.util.UUID;
 
-/**
- * Created by dima.prokopenko@gmail.com on 2/12/2016.
- */
 public interface IAsyncReportState extends Serializable {
 
   /**
@@ -29,31 +26,31 @@ public interface IAsyncReportState extends Serializable {
   int getProgress();
 
   /**
-   *
    * @return Page is currently being processed
    */
   int getPage();
 
   /**
-   *
    * @return Quantity of pages in the report
    */
   int getTotalPages();
 
   /**
-   *
+   * @return Quantity of pages that were already generated
+   */
+  int getGeneratedPage();
+
+  /**
    * @return Row is currently being processed
    */
   int getRow();
 
   /**
-   *
    * @return Quantity of rows in the report
    */
   int getTotalRows();
 
   /**
-   *
    * @return Activity code is currently being processed
    */
   String getActivity();

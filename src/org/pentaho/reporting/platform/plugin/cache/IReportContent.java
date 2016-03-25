@@ -26,6 +26,8 @@ public interface IReportContent extends Serializable {
 
   int getPageCount();
 
+  int getStoredPageCount();
+
   byte[] getPageData( final int page );
 
 }

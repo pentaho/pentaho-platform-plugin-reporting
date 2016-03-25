@@ -36,6 +36,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.MediaType;
@@ -57,7 +58,8 @@ public class JobManager {
     this( true, 1000, 1500 );
   }
 
-  public JobManager( final boolean isSupportAsync, final long pollingIntervalMilliseconds, final long dialogThresholdMilliseconds ) {
+  public JobManager( final boolean isSupportAsync, final long pollingIntervalMilliseconds,
+                     final long dialogThresholdMilliseconds ) {
     if ( !isSupportAsync ) {
       logger.info( "JobManager initialization: async mode marked as disabled." );
     }
@@ -77,7 +79,7 @@ public class JobManager {
   }
 
   @POST @Path( "{job_id}/content" ) public Response getContent( @PathParam( "job_id" ) String job_id )
-      throws IOException {
+    throws IOException {
     UUID uuid = null;
     try {
       uuid = UUID.fromString( job_id );
@@ -143,9 +145,9 @@ public class JobManager {
   }
 
   private Response.ResponseBuilder calculateContentDisposition( Response.ResponseBuilder response,
-      IAsyncReportState state ) {
+                                                                IAsyncReportState state ) {
     org.pentaho.reporting.libraries.base.util.IOUtils utils = org.pentaho.reporting.libraries
-        .base.util.IOUtils.getInstance();
+      .base.util.IOUtils.getInstance();
 
     String extension = MimeHelper.getExtension( state.getMimeType() );
     String path = state.getPath();
@@ -157,9 +159,9 @@ public class JobManager {
     }
 
     String
-        disposition =
-        "inline; filename*=UTF-8''" + RepositoryPathEncoder
-            .encode( RepositoryPathEncoder.encodeRepositoryPath( fileName + extension ) );
+      disposition =
+      "inline; filename*=UTF-8''" + RepositoryPathEncoder
+        .encode( RepositoryPathEncoder.encodeRepositoryPath( fileName + extension ) );
     response.header( "Content-Disposition", disposition );
 
     response.header( "Content-Description", fileName + reportExtension );
@@ -227,6 +229,28 @@ public class JobManager {
     return Response.ok().build();
   }
 
+
+  @GET @Path( "{job_id}/requestPage/{page}" ) @Produces( "text/text" )
+  public Response requestPage( @PathParam( "job_id" ) final String job_id, @PathParam( "page" ) final int page ) {
+    UUID uuid = null;
+    try {
+      uuid = UUID.fromString( job_id );
+    } catch ( final Exception e ) {
+      logger.error( "Status: invalid UUID: " + job_id );
+      return get404();
+    }
+
+    final IPentahoAsyncExecutor executor = getExecutor();
+    if ( executor == null ) {
+      // where is my bean?
+      return Response.serverError().build();
+    }
+    final IPentahoSession session = PentahoSessionHolder.getSession();
+    executor.requestPage( uuid, session, page );
+
+    return Response.ok( String.valueOf( page ) ).build();
+  }
+
   private Response get404() {
     return Response.status( Response.Status.NOT_FOUND ).build();
   }
@@ -236,14 +260,13 @@ public class JobManager {
   }
 
   /**
-   * In-place implementation to support streaming responses.
-   * By default - even InputStream passed - streaming is not occurs.
-   *
+   * In-place implementation to support streaming responses. By default - even InputStream passed - streaming is not
+   * occurs.
    */
   public static final class StreamingOutputWrapper implements StreamingOutput {
 
     private InputStream input;
-    public static final byte[] BUFFER = new byte[8192];
+    public static final byte[] BUFFER = new byte[ 8192 ];
 
     public StreamingOutputWrapper( InputStream readFrom ) {
       this.input = readFrom;

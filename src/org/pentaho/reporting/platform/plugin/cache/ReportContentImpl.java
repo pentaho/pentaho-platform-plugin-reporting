@@ -38,6 +38,13 @@ public class ReportContentImpl implements IReportContent {
     return pageCount;
   }
 
+  @Override public int getStoredPageCount() {
+    if ( reportData != null ) {
+      return reportData.size();
+    }
+    return 0;
+  }
+
   @Override public byte[] getPageData( final int page ) {
     return reportData.get( page );
   }

@@ -38,7 +38,7 @@ public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputS
   public PentahoAsyncReportExecution( final String url,
                                       final SimpleReportingComponent reportComponent,
                                       final AsyncJobFileStagingHandler handler,
-                                      final String auditId) {
+                                      final String auditId ) {
     this.reportComponent = reportComponent;
     this.handler = handler;
     this.url = url;
@@ -46,13 +46,13 @@ public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputS
     this.safeSession = PentahoSessionHolder.getSession();
   }
 
-  public void notifyTaskQueued(UUID id) {
-    ArgumentNullException.validate("id", id);
+  public void notifyTaskQueued( final UUID id ) {
+    ArgumentNullException.validate( "id", id );
 
-    if (listener != null) {
-      throw new IllegalStateException("This instance has already been scheduled.");
+    if ( listener != null ) {
+      throw new IllegalStateException( "This instance has already been scheduled." );
     }
-    this.listener = createListener(id);
+    this.listener = createListener( id );
   }
 
   /**
@@ -90,7 +90,7 @@ public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputS
       // in case execute just returns false without an exception.
       fail();
       return new NullInputStream( 0 );
-    } catch ( Throwable ee ) {
+    } catch ( final Throwable ee ) {
       // it is bad practice to catch throwable.
       // but we has to to set proper execution status in any case.
       // Example: NoSuchMethodError (instance of Error) in case of usage of
@@ -112,7 +112,7 @@ public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputS
         MessageTypes.FAILED, auditId, "", 0, null );
   }
 
-  protected AsyncReportStatusListener createListener(UUID instanceId) {
+  protected AsyncReportStatusListener createListener( final UUID instanceId ) {
     return new AsyncReportStatusListener( getReportPath(), instanceId, getMimeType() );
   }
 
@@ -128,12 +128,16 @@ public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputS
           if ( mayInterruptIfRunning ) {
             PentahoAsyncReportExecution.this.cancel();
           }
-        } catch (final Exception e) {
+        } catch ( final Exception e ) {
           // ignored.
         }
         return super.cancel( mayInterruptIfRunning );
       }
     };
+  }
+
+  @Override public void requestPage( final int page ) {
+    listener.setRequestedPage( page );
   }
 
   @Override public String toString() {
@@ -142,8 +146,8 @@ public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputS
   }
 
   @Override public IAsyncReportState getState() {
-    if (listener == null) {
-      throw new IllegalStateException("Cannot query state until job is added to the executor.");
+    if ( listener == null ) {
+      throw new IllegalStateException( "Cannot query state until job is added to the executor." );
     }
     return listener.getState();
   }

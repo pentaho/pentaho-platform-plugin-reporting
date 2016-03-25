@@ -93,12 +93,7 @@ public class PentahoAsyncExecutor implements ILogoutListener, IPentahoSystemList
   }
 
   @Override public Future<InputStream> getFuture( final UUID id, final IPentahoSession session ) {
-    if ( id == null ) {
-      throw new NullPointerException( "uuid is null" );
-    }
-    if ( session == null ) {
-      throw new NullPointerException( "Session is null" );
-    }
+    validateParams( id, session );
     return futures.get( new CompositeKey( session, id ) );
   }
 
@@ -108,16 +103,28 @@ public class PentahoAsyncExecutor implements ILogoutListener, IPentahoSystemList
     tasks.remove( key );
   }
 
+  @Override public void requestPage( final UUID id, final IPentahoSession session, final int page ) {
+    validateParams( id, session );
+    final IAsyncReportExecution<InputStream> runningTask = tasks.get( new CompositeKey( session, id ) );
+    if ( runningTask != null ) {
+      runningTask.requestPage( page );
+    }
+  }
+
   @Override public IAsyncReportState getReportState( final UUID id, final IPentahoSession session ) {
+    validateParams( id, session );
+    // link to running task
+    final IAsyncReportExecution<InputStream> runningTask = tasks.get( new CompositeKey( session, id ) );
+    return runningTask == null ? null : runningTask.getState();
+  }
+
+  private void validateParams( final UUID id, final IPentahoSession session ) {
     if ( id == null ) {
       throw new NullPointerException( "uuid is null" );
     }
     if ( session == null ) {
-      throw new NullPointerException( "session is null" );
+      throw new NullPointerException( "Session is null" );
     }
-    // link to running task
-    final IAsyncReportExecution<InputStream> runningTask = tasks.get( new CompositeKey( session, id ) );
-    return runningTask == null ? null : runningTask.getState();
   }
 
   @Override public void onLogout( final IPentahoSession iPentahoSession ) {

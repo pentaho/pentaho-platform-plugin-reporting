@@ -97,10 +97,21 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
     }
 
     @Override public void reportProcessingUpdate( final ReportProgressEvent reportProgressEvent ) {
-      //When we request X page the accepted-page is X-1
-      //then to be sure that X page is already stored the current page in event should be X+1
-      //in other words acceptedPage + 2
-      final boolean requestedPageIsStored = reportProgressEvent.getPage() == acceptedPage + 2;
+      //When we request X page the index that comes to server is X-1
+      //then to be sure that X page is already stored the current index in event should be X+1
+      //in other words page + 2
+      final int page;
+
+      if ( asyncReportListener.getRequestedPage() > 0 ) {
+        //user requested new page before original generation finished
+        //Generation could already pass the page but we need to update cache anyway
+        page = Math.max( asyncReportListener.getRequestedPage() + 2, reportProgressEvent.getPage() );
+      } else {
+        //it's just an original request
+        page = acceptedPage + 2;
+      }
+
+      final boolean requestedPageIsStored = reportProgressEvent.getPage() == page;
       if ( reportProgressEvent.getActivity() == ReportProgressEvent.GENERATING_CONTENT
         && requestedPageIsStored ) {
         // we finished pagination, and thus have the page numbers ready.
@@ -111,6 +122,7 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
           logger.error( "Can't persist" );
         }
         //Update after pages are in cache
+        asyncReportListener.updateGenerationStatus( page - 1 );
         asyncReportListener.setStatus( AsyncExecutionStatus.CONTENT_AVAILABLE );
       }
     }
@@ -169,8 +181,9 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
       final byte[] page = cachedContent.getPageData( acceptedPage );
       if ( page != null && page.length > 0 ) {
         logger.warn( "Using cached report data for " + key );
-        final ReportProgressListener listener = ReportListenerThreadHolder.getListener();
+        final IAsyncReportListener listener = ReportListenerThreadHolder.getListener();
         if ( listener != null ) {
+          listener.updateGenerationStatus( cachedContent.getStoredPageCount() );
           final ReportProgressEvent event =
             new ReportProgressEvent( this, ReportProgressEvent.GENERATING_CONTENT, 0, 0,
               acceptedPage + 1, cachedContent.getPageCount(), 0, 0 );

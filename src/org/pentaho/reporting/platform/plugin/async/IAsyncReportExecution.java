@@ -11,7 +11,7 @@ public interface IAsyncReportExecution<T> extends Callable<T> {
    *
    * @param id
    */
-  void notifyTaskQueued(UUID id);
+  void notifyTaskQueued( UUID id );
 
   /**
    * Return the current state. Never null.
@@ -29,4 +29,6 @@ public interface IAsyncReportExecution<T> extends Callable<T> {
   String getMimeType();
 
   RunnableFuture<T> newTask();
+
+  void requestPage( int page );
 }
