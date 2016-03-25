@@ -950,7 +950,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
           //Navigation on report in progress section
           var reportUrl = url.substring(url.lastIndexOf("/report?")+"/report?".length, url.length);
-          if(this._currentReportStatus && this._currentReportStatus!='FINISHED'){
+          if(this._currentReportStatus && this._currentReportStatus!='FINISHED' && this._currentReportStatus!='FAILED' && this._currentReportStatus!='CANCELED'){
              //In progress
             var acceptedPage = me.view._getAcceptedPage();
             if(this._currentStoredPagesCount > acceptedPage){
