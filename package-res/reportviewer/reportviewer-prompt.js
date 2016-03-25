@@ -358,7 +358,7 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", "com
               return 'PARAMETER';
 
           case 'USERINPUT':
-            if (!this.panel || !this._getStateProperty('autoSubmit')) {
+            if (!this.panel || !this._getStateProperty('autoSubmit') || this._isAsync) {
               return 'PARAMETER';
             }
             break;
