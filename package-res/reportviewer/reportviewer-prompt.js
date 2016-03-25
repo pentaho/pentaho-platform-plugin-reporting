@@ -82,9 +82,9 @@ define([
 
       /*
        * Gets a property value from the state object in the Prompting API.
-       * 
+       *
        * @param prop The property which value to fetch.
-       * 
+       *
        * @private
        */
       _getStateProperty: function(prop) {
@@ -135,10 +135,8 @@ define([
         this.panel.setParamDefn(paramDefn);
 
         this.panel.submitStart = this.submitStart.bind(this);
-        this.panel.ready = this.ready.bind(this);
 
         this.initPromptPanel();
-
         this._hideLoadingIndicator();
       }),
 
@@ -163,10 +161,6 @@ define([
 
       hideGlassPane: function() {
         registry.byId('glassPane').hide();
-      },
-
-      ready: function() {
-        this.hideGlassPane();
       },
 
       /**
