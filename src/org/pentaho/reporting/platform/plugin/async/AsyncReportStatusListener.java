@@ -28,7 +28,7 @@ import java.util.UUID;
  * Simple synchronized bean with async execution status. This class is part of the PentahoAsyncReportExecution
  * implementation and should not be used outside of that.
  */
-class AsyncReportStatusListener implements IAsyncReportListener {
+public class AsyncReportStatusListener implements IAsyncReportListener {
 
   private static final String COMPUTING_LAYOUT = "AsyncComputingLayoutTitle";
   private static final String PRECOMPUTING_VALUES = "AsyncPrecomputingValuesTitle";
@@ -50,7 +50,7 @@ class AsyncReportStatusListener implements IAsyncReportListener {
   private int generatedPage = 0;
 
 
-  AsyncReportStatusListener( final String path,
+  public AsyncReportStatusListener( final String path,
                              final UUID uuid,
                              final String mimeType ) {
     this.path = path;

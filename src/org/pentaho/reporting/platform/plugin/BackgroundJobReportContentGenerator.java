@@ -85,7 +85,7 @@ public class BackgroundJobReportContentGenerator extends ParameterContentGenerat
     reportComponent.setOutputStream( handler.getStagingOutputStream() );
 
     PentahoAsyncReportExecution
-        asyncExec = new PentahoAsyncReportExecution( path, reportComponent, handler, instanceId );
+        asyncExec = new PentahoAsyncReportExecution( path, reportComponent, handler, userSession, instanceId );
 
     PentahoAsyncExecutor executor =
       PentahoSystem.get( PentahoAsyncExecutor.class, PentahoAsyncExecutor.BEAN_NAME, null );

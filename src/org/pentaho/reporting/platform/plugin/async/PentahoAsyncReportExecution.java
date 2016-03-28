@@ -1,5 +1,6 @@
 package org.pentaho.reporting.platform.plugin.async;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.NullInputStream;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -10,19 +11,21 @@ import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.reporting.libraries.base.util.ArgumentNullException;
 import org.pentaho.reporting.platform.plugin.SimpleReportingComponent;
 import org.pentaho.reporting.platform.plugin.staging.AsyncJobFileStagingHandler;
+import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
 
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.UUID;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.RunnableFuture;
 
-public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputStream> {
+public class PentahoAsyncReportExecution implements IAsyncReportExecution<IFixedSizeStreamingContent, IAsyncReportState> {
 
-  private final SimpleReportingComponent reportComponent;
-  private final AsyncJobFileStagingHandler handler;
-  private final String url;
-  private final String auditId;
-  private final IPentahoSession safeSession;
+  protected final SimpleReportingComponent reportComponent;
+  protected final AsyncJobFileStagingHandler handler;
+  protected final String url;
+  protected final String auditId;
+  protected final IPentahoSession safeSession;
 
   private AsyncReportStatusListener listener;
 
@@ -38,12 +41,13 @@ public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputS
   public PentahoAsyncReportExecution( final String url,
                                       final SimpleReportingComponent reportComponent,
                                       final AsyncJobFileStagingHandler handler,
+                                      final IPentahoSession safeSession,
                                       final String auditId ) {
     this.reportComponent = reportComponent;
     this.handler = handler;
     this.url = url;
     this.auditId = auditId;
-    this.safeSession = PentahoSessionHolder.getSession();
+    this.safeSession = safeSession;
   }
 
   public void notifyTaskQueued( final UUID id ) {
@@ -53,6 +57,10 @@ public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputS
       throw new IllegalStateException( "This instance has already been scheduled." );
     }
     this.listener = createListener( id );
+  }
+
+  protected AsyncReportStatusListener getListener() {
+    return this.listener;
   }
 
   /**
@@ -65,7 +73,11 @@ public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputS
    * @return input stream for client
    * @throws Exception
    */
-  @Override public InputStream call() throws Exception {
+  @Override public IFixedSizeStreamingContent call() throws Exception {
+    if ( listener == null ) {
+      throw new NullPointerException( "No listener for async report execution: " + url );
+    }
+
     try {
       listener.setStatus( AsyncExecutionStatus.WORKING );
 
@@ -89,7 +101,7 @@ public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputS
 
       // in case execute just returns false without an exception.
       fail();
-      return new NullInputStream( 0 );
+      return NULL;
     } catch ( final Throwable ee ) {
       // it is bad practice to catch throwable.
       // but we has to to set proper execution status in any case.
@@ -97,18 +109,23 @@ public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputS
       // uncompilable jar versions.
       // We have to avoid to hang on working status.
       log.error( "fail to execute report in async mode: " + ee );
-
+      // to be sure after an error output stream is closed
+      IOUtils.closeQuietly( handler.getStagingOutputStream() );
       fail();
-      return new NullInputStream( 0 );
+      return NULL;
     } finally {
+      // in case report processor not going to close it
+      OutputStream out = handler.getStagingOutputStream();
+      IOUtils.closeQuietly( out );
+
       ReportListenerThreadHolder.clear();
       PentahoSessionHolder.removeSession();
     }
   }
 
-  private void fail() {
+  protected void fail() {
     // do not erase canceled status
-    if ( !listener.getState().getStatus().equals( AsyncExecutionStatus.CANCELED ) ) {
+    if ( listener != null && !listener.getState().getStatus().equals( AsyncExecutionStatus.CANCELED ) ) {
       listener.setStatus( AsyncExecutionStatus.FAILED );
     }
     AuditHelper.audit( safeSession.getId(), safeSession.getId(), url, getClass().getName(), getClass().getName(),
@@ -126,8 +143,8 @@ public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputS
     this.listener.setStatus( AsyncExecutionStatus.CANCELED );
   }
 
-  @Override public RunnableFuture<InputStream> newTask() {
-    return new FutureTask<InputStream>( this ) {
+  @Override public RunnableFuture<IFixedSizeStreamingContent> newTask() {
+    return new FutureTask<IFixedSizeStreamingContent>( this ) {
       public boolean cancel( final boolean mayInterruptIfRunning ) {
         try {
           if ( mayInterruptIfRunning ) {
@@ -163,5 +180,18 @@ public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputS
 
   public String getReportPath() {
     return this.url;
+  }
+
+  public static final IFixedSizeStreamingContent NULL = new NullSizeStreamingContent();
+
+  public static final class NullSizeStreamingContent implements IFixedSizeStreamingContent {
+
+    @Override public InputStream getStream() {
+      return new NullInputStream( 0 );
+    }
+
+    @Override public long getContentSize() {
+      return 0;
+    }
   }
 }

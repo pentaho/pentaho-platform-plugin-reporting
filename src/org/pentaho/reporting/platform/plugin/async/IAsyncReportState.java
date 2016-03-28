@@ -59,4 +59,5 @@ public interface IAsyncReportState extends Serializable {
    * @return mime type advice of report content that will be generated at the end.
    */
   String getMimeType();
+
 }

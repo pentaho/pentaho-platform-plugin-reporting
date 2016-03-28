@@ -33,6 +33,7 @@ import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.libraries.base.config.ModifiableConfiguration;
 import org.pentaho.reporting.platform.plugin.SimpleReportingComponent;
 import org.pentaho.reporting.platform.plugin.staging.AsyncJobFileStagingHandler;
+import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -52,7 +53,7 @@ import static org.pentaho.reporting.platform.plugin.async.PentahoAsyncExecutor.C
 
 /**
  * Tests uses concurrency and potentially can hang. See test timeout rule (globalTimeout).
- *
+ * <p>
  * Created by dima.prokopenko@gmail.com on 2/17/2016.
  */
 public class PentahoAsyncReportExecutorTest {
@@ -74,14 +75,12 @@ public class PentahoAsyncReportExecutorTest {
   IApplicationContext context = mock( IApplicationContext.class );
   Random bytes = new Random();
 
-
-
-  final InputStream input = new NullInputStream( 0 );
+  final IFixedSizeStreamingContent input =
+    new AsyncJobFileStagingHandler.FixedSizeStagingContent( new NullInputStream( 0 ), 0 );
 
   @Before public void before() throws Exception {
     PentahoSystem.clearObjectFactory();
     PentahoSessionHolder.removeSession();
-
 
     when( handler.getStagingContent() ).thenReturn( input );
     when( report.getReportConfiguration() ).thenReturn( configuration );
@@ -90,9 +89,7 @@ public class PentahoAsyncReportExecutorTest {
     when( session1.getId() ).thenReturn( sessionUid1.toString() );
     when( session2.getId() ).thenReturn( sessionUid2.toString() );
 
-    PentahoAsyncReportExecution task1 = createMockCallable();
-
-    String tempFolder = System.getProperty("java.io.tmpdir");
+    String tempFolder = System.getProperty( "java.io.tmpdir" );
     Path junitPrivate = Paths.get( tempFolder ).resolve( "JUNIT_" + UUID.randomUUID().toString() );
     junitPrivate.toFile().deleteOnExit();
 
@@ -108,33 +105,32 @@ public class PentahoAsyncReportExecutorTest {
 
   @Test public void testCanCompleteTask() throws Exception {
     when( component.execute() ).thenReturn( true );
-    PentahoSessionHolder.setSession( session1 );
+    //PentahoSessionHolder.setSession( session1 );
 
-
-    PentahoAsyncReportExecution task1 = createMockCallable();
+    PentahoAsyncReportExecution task1 = createMockCallable( session1 );
 
     PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 10 );
     UUID id = exec.addTask( task1, session1 );
-    Future<InputStream> result = exec.getFuture( id, session1 );
+    Future<IFixedSizeStreamingContent> result = exec.getFuture( id, session1 );
     while ( result.isDone() ) {
       Thread.sleep( 150 );
     }
-    InputStream resultInput = result.get();
-    assertEquals( input, resultInput );
+    IFixedSizeStreamingContent resultInput = result.get();
+    assertEquals( input.getStream(), resultInput.getStream() );
   }
 
   @Test public void testCorrectFuturePerSessionRetrival() {
     PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 1 );
 
-    UUID id1 = exec.addTask( createMockCallable(), session1 );
-    UUID id2 = exec.addTask( createMockCallable(), session2 );
-    Assert.assertFalse(id1.equals(id2));
+    UUID id1 = exec.addTask( createMockCallable( session1 ), session1 );
+    UUID id2 = exec.addTask( createMockCallable( session2 ), session2 );
+    Assert.assertFalse( id1.equals( id2 ) );
 
-    Future<InputStream> r1 = exec.getFuture( id1, session1 );
+    Future<IFixedSizeStreamingContent> r1 = exec.getFuture( id1, session1 );
     assertNotNull( r1 );
 
     // incorrect session
-    Future<InputStream> r2 = exec.getFuture( id2, session1 );
+    Future<IFixedSizeStreamingContent> r2 = exec.getFuture( id2, session1 );
     assertNull( r2 );
 
     // incorrect id
@@ -146,13 +142,13 @@ public class PentahoAsyncReportExecutorTest {
     assertNotNull( r2 );
   }
 
-  private PentahoAsyncReportExecution createMockCallable() {
-    return new PentahoAsyncReportExecution( "junit-path", component, handler, null ) {
+  private PentahoAsyncReportExecution createMockCallable( IPentahoSession session ) {
+    return new PentahoAsyncReportExecution( "junit-path", component, handler, session, null ) {
       @Override
-      protected AsyncReportStatusListener createListener(final UUID id) {
-        final AsyncReportState state = new AsyncReportState(id, getReportPath());
-        final AsyncReportStatusListener retval = mock(AsyncReportStatusListener.class);
-        when(retval.getState()).thenReturn(state);
+      protected AsyncReportStatusListener createListener( final UUID id ) {
+        final AsyncReportState state = new AsyncReportState( id, getReportPath() );
+        final AsyncReportStatusListener retval = mock( AsyncReportStatusListener.class );
+        when( retval.getState() ).thenReturn( state );
         return retval;
       }
     };
@@ -162,8 +158,8 @@ public class PentahoAsyncReportExecutorTest {
     PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 1 );
 
     // must have two separate instances, as callable holds unique ID and listener for each addTask(..)
-    UUID id1 = exec.addTask( createMockCallable(), session1 );
-    UUID id2 = exec.addTask( createMockCallable(), session2 );
+    UUID id1 = exec.addTask( createMockCallable( session1 ), session1 );
+    UUID id2 = exec.addTask( createMockCallable( session2 ), session2 );
 
     IAsyncReportState state = exec.getReportState( id1, session1 );
     assertNotNull( state );
@@ -182,9 +178,9 @@ public class PentahoAsyncReportExecutorTest {
   }
 
   @Test public void compositeKeyEqualsHashCodeTest() {
-    CompositeKey one = new CompositeKey( session1, uuid1 );
-    CompositeKey two = new CompositeKey( session2, uuid2 );
-    CompositeKey three = new CompositeKey( session2, uuid2 );
+    CompositeKey one = AbstractPentahoAsyncExecutor.getCompositeKey( session1, uuid1 );
+    CompositeKey two = AbstractPentahoAsyncExecutor.getCompositeKey( session2, uuid2 );
+    CompositeKey three = AbstractPentahoAsyncExecutor.getCompositeKey( session2, uuid2 );
 
     assertEquals( three, two );
     // in 4,294,967,295 * 2 + 0 probability it will fail
@@ -210,7 +206,7 @@ public class PentahoAsyncReportExecutorTest {
     assertTrue( stagingFolder.toFile().list().length == 2 );
 
 
-    byte[] anyByte = new byte[1024];
+    byte[] anyByte = new byte[ 1024 ];
     bytes.nextBytes( anyByte );
     handler1.getStagingOutputStream().write( anyByte );
     handler1.getStagingOutputStream().close();
@@ -225,7 +221,7 @@ public class PentahoAsyncReportExecutorTest {
 
     folders = stagingFolder.toFile().list();
     assertTrue( folders.length == 1 );
-    assertTrue( folders[0].equals( session2.getId() ) );
+    assertTrue( folders[ 0 ].equals( session2.getId() ) );
 
     exec.onLogout( session2 );
     folders = stagingFolder.toFile().list();

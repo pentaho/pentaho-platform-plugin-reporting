@@ -102,15 +102,15 @@ public class AsyncJobFileStagingHandlerTest {
 
     // this simulate when result is response output stream
     // so we just copy data from staged file into response stream
-    InputStream input = handler.getStagingContent();
-    byte[] result = IOUtils.toByteArray( input );
+    IFixedSizeStreamingContent input = handler.getStagingContent();
+    byte[] result = IOUtils.toByteArray( input.getStream() );
 
     assertArrayEquals( "byte wise read an writes", data, result );
 
     // this is custom input stream
     // call to input.close() will delete temp staging file
     // in normal situation copy utility is responsible for calling close.
-    input.close();
+    input.getStream().close();
 
     assertFalse( "File deleted after input stream get closed", tempFile.exists() );
     assertTrue( "temp dir is not deleted", tempDir.toFile().exists() );
@@ -160,13 +160,13 @@ public class AsyncJobFileStagingHandlerTest {
         out.close();
 
         // read from
-        InputStream input = handler.getStagingContent();
-        byte[] result = IOUtils.toByteArray( input );
+        IFixedSizeStreamingContent input = handler.getStagingContent();
+        byte[] result = IOUtils.toByteArray( input.getStream() );
 
         assertArrayEquals( "byte wise read an writes", data, result );
 
         // close input stream, implicitly delete staging file.
-        input.close();
+        input.getStream().close();
       } catch ( Exception e ) {
         fail( "Unexpected exception: " + e.getClass().getName() );
       }

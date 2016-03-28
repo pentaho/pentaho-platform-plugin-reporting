@@ -31,6 +31,7 @@ import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.libraries.base.config.ModifiableConfiguration;
 import org.pentaho.reporting.platform.plugin.SimpleReportingComponent;
 import org.pentaho.reporting.platform.plugin.staging.AsyncJobFileStagingHandler;
+import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
 
 import java.io.InputStream;
 import java.util.UUID;
@@ -38,9 +39,11 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
 import static org.pentaho.di.core.util.Assert.assertFalse;
+import static org.pentaho.di.core.util.Assert.assertNull;
 
 /**
  * Created by dima.prokopenko@gmail.com on 2/17/2016.
@@ -52,7 +55,8 @@ public class PentahoAsyncExecutionTest {
   IPentahoSession userSession = mock( IPentahoSession.class );
   SimpleReportingComponent component = mock( SimpleReportingComponent.class );
   AsyncJobFileStagingHandler handler = mock( AsyncJobFileStagingHandler.class );
-  InputStream input = new NullInputStream( 0 );
+  IFixedSizeStreamingContent input =
+    new AsyncJobFileStagingHandler.FixedSizeStagingContent( new NullInputStream( 0 ), 0 );
 
   MasterReport report = mock( MasterReport.class );
   ModifiableConfiguration configuration = mock( ModifiableConfiguration.class );
@@ -67,6 +71,7 @@ public class PentahoAsyncExecutionTest {
     when( handler.getStagingContent() ).thenReturn( input );
     when( report.getReportConfiguration() ).thenReturn( configuration );
     when( component.getReport() ).thenReturn( report );
+    when( userSession.getId() ).thenReturn( "junit" );
   }
 
   @After
@@ -82,11 +87,11 @@ public class PentahoAsyncExecutionTest {
     PentahoAsyncReportExecution exec = createMockCallable();
 
     // simulates queuing
-    exec.notifyTaskQueued(UUID.randomUUID());
+    exec.notifyTaskQueued( UUID.randomUUID() );
 
-    assertEquals( AsyncExecutionStatus.QUEUED, exec.getState().getStatus());
+    assertEquals( AsyncExecutionStatus.QUEUED, exec.getState().getStatus() );
 
-    InputStream returnStream = exec.call();
+    IFixedSizeStreamingContent returnStream = exec.call();
 
     assertEquals( AsyncExecutionStatus.FINISHED, exec.getState().getStatus() );
     assertEquals( input, returnStream );
@@ -95,9 +100,9 @@ public class PentahoAsyncExecutionTest {
   }
 
   private PentahoAsyncReportExecution createMockCallable() {
-    return new PentahoAsyncReportExecution( "junit-path", component, handler, null ) {
+    return new PentahoAsyncReportExecution( "junit-path", component, handler, userSession, null ) {
       @Override
-      protected AsyncReportStatusListener createListener(UUID id) {
+      protected AsyncReportStatusListener createListener( UUID id ) {
         return new AsyncReportStatusListener( "display_path", id, "text/html" );
       }
     };
@@ -109,13 +114,13 @@ public class PentahoAsyncExecutionTest {
 
     PentahoAsyncReportExecution exec = createMockCallable();
     // simulates queuing
-    exec.notifyTaskQueued(UUID.randomUUID());
+    exec.notifyTaskQueued( UUID.randomUUID() );
 
-    assertEquals( AsyncExecutionStatus.QUEUED, exec.getState().getStatus());
+    assertEquals( AsyncExecutionStatus.QUEUED, exec.getState().getStatus() );
 
-    InputStream returnStream = exec.call();
+    IFixedSizeStreamingContent returnStream = exec.call();
 
-    assertEquals( AsyncExecutionStatus.FAILED, exec.getState().getStatus());
+    assertEquals( AsyncExecutionStatus.FAILED, exec.getState().getStatus() );
     assertFalse( returnStream.equals( input ) );
 
     verify( handler, times( 0 ) ).getStagingContent();
@@ -125,13 +130,13 @@ public class PentahoAsyncExecutionTest {
   public void testCancellationFeature() throws InterruptedException {
     final AtomicBoolean run = new AtomicBoolean( false );
 
-    PentahoAsyncReportExecution spy = this.getSleepingSpy( run );
+    PentahoAsyncReportExecution spy = this.getSleepingSpy( run, this.userSession );
 
     PentahoAsyncExecutor executor = new PentahoAsyncExecutor( 13 );
     UUID id = executor.addTask( spy, this.userSession );
 
     Thread.sleep( 100 );
-    Future<InputStream> fu = executor.getFuture( id, this.userSession );
+    Future<IFixedSizeStreamingContent> fu = executor.getFuture( id, this.userSession );
     assertFalse( fu.isDone() );
 
     fu.cancel( true );
@@ -140,16 +145,58 @@ public class PentahoAsyncExecutionTest {
     assertTrue( fu.isCancelled() );
   }
 
-  private PentahoAsyncReportExecution getSleepingSpy( final AtomicBoolean run ) {
-    PentahoAsyncReportExecution exec = new PentahoAsyncReportExecution( "junit-path", component, handler, null ) {
-      @Override
-      public InputStream call() throws Exception {
-        while ( !run.get() && !Thread.currentThread().isInterrupted() ) {
-          Thread.sleep( 10 );
+  @Test
+  public void testOnLogout() {
+    // mock 2 separate sessions
+    IPentahoSession session1 = mock( IPentahoSession.class );
+    IPentahoSession session2 = mock( IPentahoSession.class );
+    UUID sessionUid1 = UUID.randomUUID();
+    UUID sessionUid2 = UUID.randomUUID();
+    UUID uuid1 = UUID.randomUUID();
+    UUID uuid2 = UUID.randomUUID();
+    when( session1.getId() ).thenReturn( sessionUid1.toString() );
+    when( session2.getId() ).thenReturn( sessionUid2.toString() );
+
+    PentahoSessionHolder.setSession( session1 );
+    PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 10 );
+
+    AtomicBoolean run = new AtomicBoolean( false );
+    PentahoAsyncReportExecution napster = getSleepingSpy( run, session1 );
+    assertEquals( "Task created for fist session", session1, napster.safeSession );
+
+    // invoke never ending execution:
+    UUID id1 = exec.addTask( napster, session1 );
+
+    // invoke logout for incorrect session
+    PentahoSystem.invokeLogoutListeners( session2 );
+
+    Future<IFixedSizeStreamingContent> input1 = exec.getFuture( id1, session1 );
+    assertNotNull( input1 );
+    assertFalse( input1.isCancelled() );
+
+    // invoke logout for correct session
+    PentahoSystem.invokeLogoutListeners( session1 );
+    Future<IFixedSizeStreamingContent> input11 = exec.getFuture( id1, session1 );
+
+    // unable to get link to a canceled future
+    assertNull( input11 );
+
+    // but since we ALREADY has a link to it we can check cancel status:
+    assertTrue( input1.isCancelled() );
+  }
+
+
+  private PentahoAsyncReportExecution getSleepingSpy( final AtomicBoolean run, IPentahoSession session ) {
+    PentahoAsyncReportExecution exec =
+      new PentahoAsyncReportExecution( "junit-path", component, handler, session, "junit" ) {
+        @Override
+        public IFixedSizeStreamingContent call() throws Exception {
+          while ( !run.get() && !Thread.currentThread().isInterrupted() ) {
+            Thread.sleep( 10 );
+          }
+          return null;
         }
-        return null;
-      }
-    };
+      };
     PentahoAsyncReportExecution spy = spy( exec );
 
     return spy;
