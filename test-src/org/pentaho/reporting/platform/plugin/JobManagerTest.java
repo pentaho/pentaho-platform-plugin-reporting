@@ -19,6 +19,7 @@
 package org.pentaho.reporting.platform.plugin;
 
 import org.apache.cxf.jaxrs.client.WebClient;
+import org.apache.cxf.jaxrs.impl.ResponseBuilderImpl;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -26,14 +27,18 @@ import org.pentaho.platform.api.engine.IPentahoObjectFactory;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.platform.plugin.async.AsyncExecutionStatus;
+import org.pentaho.reporting.platform.plugin.async.AsyncReportState;
 import org.pentaho.reporting.platform.plugin.async.IAsyncReportState;
 import org.pentaho.reporting.platform.plugin.async.PentahoAsyncExecutor;
 
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.util.UUID;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -65,6 +70,20 @@ public class JobManagerTest extends JaxRsServerProvider {
     // currently no simple way to restore to AsyncReportState interface here
     // at least we get uuid in return.
     assertTrue( json.contains( uuid.toString() ) );
+  }
+
+  @Test
+  public void calculateContentDisposition() throws Exception {
+    final IAsyncReportState state = new AsyncReportState( UUID.randomUUID(), "/somepath/anotherlevel/file.prpt", AsyncExecutionStatus.FINISHED, 0, 0, 0, 0, 0, 0, "", "text/csv");
+
+    final Response.ResponseBuilder builder = new ResponseBuilderImpl();
+
+    JobManager.calculateContentDisposition( builder, state );
+    final Response resp = builder.build();
+    final MultivaluedMap<String, String> stringHeaders = resp.getStringHeaders();
+    assertTrue( stringHeaders.get( "Content-Description" ).contains( "file.prpt" ) );
+    assertTrue( stringHeaders.get( "Content-Disposition" ).contains( "inline; filename*=UTF-8''file.csv" ) );
+    resp.close();
   }
 
 

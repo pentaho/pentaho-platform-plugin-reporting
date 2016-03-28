@@ -36,7 +36,6 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.MediaType;
@@ -144,27 +143,26 @@ public class JobManager {
     return response.build();
   }
 
-  private Response.ResponseBuilder calculateContentDisposition( Response.ResponseBuilder response,
-                                                                IAsyncReportState state ) {
-    org.pentaho.reporting.libraries.base.util.IOUtils utils = org.pentaho.reporting.libraries
-      .base.util.IOUtils.getInstance();
+  static Response.ResponseBuilder calculateContentDisposition( final Response.ResponseBuilder response,
+                                                                final IAsyncReportState state ) {
+    final org.pentaho.reporting.libraries.base.util.IOUtils utils = org.pentaho.reporting.libraries
+        .base.util.IOUtils.getInstance();
 
-    String extension = MimeHelper.getExtension( state.getMimeType() );
-    String path = state.getPath();
-
-    String reportExtension = utils.stripFileExtension( path );
-    String fileName = utils.getFileName( path );
-    if ( fileName == null || fileName.isEmpty() ) {
-      fileName = "content";
+    final String targetExt = MimeHelper.getExtension( state.getMimeType() );
+    final String fullPath = state.getPath();
+    final String sourceExt = utils.getFileExtension( fullPath );
+    String cleanFileName = utils.stripFileExtension( utils.getFileName( fullPath ) );
+    if ( cleanFileName == null || cleanFileName.isEmpty() ) {
+      cleanFileName = "content";
     }
 
-    String
-      disposition =
-      "inline; filename*=UTF-8''" + RepositoryPathEncoder
-        .encode( RepositoryPathEncoder.encodeRepositoryPath( fileName + extension ) );
+    final String
+        disposition =
+        "inline; filename*=UTF-8''" + RepositoryPathEncoder
+            .encode( RepositoryPathEncoder.encodeRepositoryPath( cleanFileName + targetExt ) );
     response.header( "Content-Disposition", disposition );
 
-    response.header( "Content-Description", fileName + reportExtension );
+    response.header( "Content-Description", cleanFileName + sourceExt );
 
     return response;
   }
