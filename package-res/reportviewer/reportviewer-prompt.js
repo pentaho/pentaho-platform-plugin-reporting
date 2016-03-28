@@ -134,8 +134,6 @@ define([
         this.panel = this.api.operation._getPromptPanel();
         this.panel.setParamDefn(paramDefn);
 
-        this.panel.submitStart = this.submitStart.bind(this);
-
         this.initPromptPanel();
         this._hideLoadingIndicator();
       }),
@@ -161,13 +159,6 @@ define([
 
       hideGlassPane: function() {
         registry.byId('glassPane').hide();
-      },
-
-      /**
-       * Called when the prompt-panel component's submit button is pressed (mouse-down only).
-       */
-      submitStart: function(promptPanel) {
-        alert('submit start fired for panel: ' + promptPanel);
       },
 
       parseParameterDefinition: function(xmlString) {
@@ -282,13 +273,6 @@ define([
         } else if (promptMode == 'USERINPUT') {
           // Hide glass pane to prevent user from being blocked from changing his selection
           me.hideGlassPane();
-        }
-
-        if (me.clicking) {
-          // If "Upgrading" a Change to a Submit we do not want to process the next Submit Click, if any
-          me.ignoreNextClickSubmit = (promptMode === 'USERINPUT');
-
-          delete me.clicking;
         }
 
         // Store mode so we can check if we need to refresh the report content or not in the view

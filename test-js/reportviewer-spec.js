@@ -98,7 +98,7 @@ define(["reportviewer/reportviewer", "reportviewer/reportviewer-logging", "repor
         it("should get promtpNeeded on submitReport", function() {
           window.inSchedulerDialog = false;
           spyOn(reportViewer.view, '_initLayout');
-          spyOn(reportViewer, '_updateReportContent');
+          spyOn(reportViewer, "_updateReportContentCore");
 
           reportViewer.submitReport();
           expect(reportViewer.reportPrompt._getStateProperty).toHaveBeenCalledWith('promptNeeded');
@@ -247,19 +247,33 @@ define(["reportviewer/reportviewer", "reportviewer/reportviewer-logging", "repor
       });
 
       describe("[EVENTS] checking subscription on prompt events", function() {
-        it("should check subscription on prompt events (with autoSubmit = true)", function(done) {
-          spyOn(reportViewer.view, "updateLayout");
+        beforeEach(function() {
+          spyOn(reportViewer, "afterUpdateCallback");
           spyOn(reportViewer, "submitReport");
           spyOn(reportViewer.view, "promptReady");
-
           reportViewer._bindPromptEvents();
-          reportViewer.reportPrompt.api.operation.refreshPrompt(true);
+        });
 
+        it("should check subscription on prompt events (with autoSubmit = true)", function(done) {
+          reportViewer.reportPrompt.api.operation.refreshPrompt(true);
           setTimeout(function() {
-            expect(reportViewer.view.updateLayout).toHaveBeenCalled();
+            expect(reportViewer.afterUpdateCallback).toHaveBeenCalled();
             expect(reportViewer.submitReport).toHaveBeenCalledWith({
               isInit: true
             });
+            expect(reportViewer.view.promptReady).toHaveBeenCalled();
+            done();
+          }, 500);
+        });
+
+        it("should check subscription on prompt events (with autoSubmit = false)", function(done) {
+          reportViewer.reportPrompt.api.operation.state({
+            "autoSubmit": false
+          });
+          reportViewer.reportPrompt.api.operation.refreshPrompt(true);
+          setTimeout(function() {
+            expect(reportViewer.afterUpdateCallback).toHaveBeenCalled();
+            expect(reportViewer.submitReport).not.toHaveBeenCalled();
             expect(reportViewer.view.promptReady).toHaveBeenCalled();
             done();
           }, 500);
@@ -300,8 +314,9 @@ define(["reportviewer/reportviewer", "reportviewer/reportviewer-logging", "repor
         beforeEach(function() {
           spyOn(reportViewer, "_submitReportEnded");
           spyOn(reportViewer.view, "_initLayout");
-          spyOn(reportViewer, "_updateReportContent");
+          spyOn(reportViewer, "_updateReportContentCore");
           spyOn(reportViewer.view, "_showReportContent");
+          spyOn(reportViewer.reportPrompt.api.operation, "refreshPrompt");
         });
 
         afterEach(function() {
@@ -310,42 +325,53 @@ define(["reportviewer/reportviewer", "reportviewer/reportviewer-logging", "repor
 
         it("should not update report content for scheduler dialog", function() {
           window.inSchedulerDialog = true;
-          reportViewer.submitReport({
-            isInit: true
-          });
+          reportViewer.submitReport();
 
           expect(reportViewer._submitReportEnded).toHaveBeenCalled();
           expect(reportViewer.view._initLayout).not.toHaveBeenCalled();
-          expect(reportViewer._updateReportContent).not.toHaveBeenCalled();
+          expect(reportViewer._updateReportContentCore).not.toHaveBeenCalled();
           expect(reportViewer.view._showReportContent).not.toHaveBeenCalled();
+          expect(reportViewer.reportPrompt.api.operation.refreshPrompt).not.toHaveBeenCalled();
         });
 
         it("should not update report content if needed prompt", function() {
-          //spy for 'promptNeeded' property
+          //spy for 'promptNeeded' and 'autoSubmit' property
           spyOn(reportViewer.reportPrompt, "_getStateProperty").and.returnValue(true);
 
-          reportViewer.submitReport({
-            isInit: true
-          });
+          reportViewer.submitReport();
 
           expect(reportViewer._submitReportEnded).toHaveBeenCalled();
           expect(reportViewer.view._initLayout).toHaveBeenCalled();
-          expect(reportViewer._updateReportContent).not.toHaveBeenCalled();
+          expect(reportViewer._updateReportContentCore).not.toHaveBeenCalled();
           expect(reportViewer.view._showReportContent).toHaveBeenCalledWith(false);
+          expect(reportViewer.reportPrompt.api.operation.refreshPrompt).not.toHaveBeenCalled();
         });
 
-        it("should update report content", function() {
-          //spy for 'promptNeeded' property
-          spyOn(reportViewer.reportPrompt, "_getStateProperty").and.returnValue(false);
-
-          reportViewer.submitReport({
-            isInit: true
+        it("should update report content if autoSubmit on", function() {
+          spyOn(reportViewer.reportPrompt, "_getStateProperty").and.callFake(function(param) {
+            return (param === "autoSubmit") ? true : false;
           });
+
+          reportViewer.submitReport();
 
           expect(reportViewer._submitReportEnded).not.toHaveBeenCalled();
           expect(reportViewer.view._initLayout).toHaveBeenCalled();
-          expect(reportViewer._updateReportContent).toHaveBeenCalled();
+          expect(reportViewer._updateReportContentCore).toHaveBeenCalled();
           expect(reportViewer.view._showReportContent).not.toHaveBeenCalled();
+          expect(reportViewer.reportPrompt.api.operation.refreshPrompt).not.toHaveBeenCalled();
+        });
+
+        it("should refresh prompt if autoSubmit off", function() {
+          //spy for 'promptNeeded' and 'autoSubmit' property
+          spyOn(reportViewer.reportPrompt, "_getStateProperty").and.returnValue(false);
+
+          reportViewer.submitReport();
+
+          expect(reportViewer._submitReportEnded).not.toHaveBeenCalled();
+          expect(reportViewer.view._initLayout).toHaveBeenCalled();
+          expect(reportViewer._updateReportContentCore).not.toHaveBeenCalled();
+          expect(reportViewer.view._showReportContent).not.toHaveBeenCalled();
+          expect(reportViewer.reportPrompt.api.operation.refreshPrompt).toHaveBeenCalled();
         });
       });
 
