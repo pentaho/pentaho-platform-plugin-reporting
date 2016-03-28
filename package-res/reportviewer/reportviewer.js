@@ -852,7 +852,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                 if(resultJson.activity != null) {
                   dlg.setText(_Messages.getString(resultJson.activity) + '...');
                 }
-                dlg.setText2(_Messages.getString('FeedbackScreenPage') + ': ' + resultJson.page + ' / ' + resultJson.totalPages);
+                dlg.setText2(_Messages.getString('FeedbackScreenPage') + ': ' + resultJson.page);
                 dlg.setText3(_Messages.getString('FeedbackScreenRow') + ': ' + resultJson.row + ' / ' + resultJson.totalRows);
                 this._currentReportStatus = resultJson.status;
                 this._currentReportUuid = resultJson.uuid;
