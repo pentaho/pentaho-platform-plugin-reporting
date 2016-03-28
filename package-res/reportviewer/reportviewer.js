@@ -46,6 +46,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
       _currentReportUuid: null,
       _currentStoredPagesCount: null,
       _requestedPage: 0,
+      _isReportHtmlPagebleOutputFormat : null,
 
       _bindPromptEvents: function() {
         var basePromptReady   = this.reportPrompt.ready.bind(this.reportPrompt);
@@ -236,6 +237,10 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           return !$('body').hasClass('contentHidden');
         },
 
+        _isHtmlPagebleOutputFormat : function(outputFormat) {
+          return outputFormat.indexOf('table/html;page-mode=page') !== -1;
+        },
+
         // Called on page load and every time the prompt panel is refreshed
         updateLayout: function() {
           if (!this.reportPrompt._getStateProperty('showParameterUI')) {
@@ -344,7 +349,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           // Hide the toolbar, 'toppanel',  when it would be empty and
           // un-style the report so it's the only visible element
           // when both the pagination controls and the parameter UI are hidden.
-          var isToolbarEmpty = !this.reportPrompt._getStateProperty("paginate") && !showParamUI;
+          var isToolbarEmpty = !this.reportPrompt._getStateProperty("paginate") && !showParamUI && !window.viewer._isReportHtmlPagebleOutputFormat;
           domClass[isToolbarEmpty ? 'add' : 'remove']('toppanel', 'hidden');
 
           // Don't mess with the parameters if we're "navigating".
@@ -796,6 +801,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
         var options = me._buildReportContentOptions();
         var url = me._buildReportContentUrl(options);
+        this._isReportHtmlPagebleOutputFormat=me.view._isHtmlPagebleOutputFormat(options['output-target']);
 
         //BISERVER-1225
         var isCanceled = false;
