@@ -44,11 +44,10 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
       },
 
       _bindPromptEvents: function() {
-        var basePromptReady   = this.reportPrompt.ready.bind(this.reportPrompt);
         var baseShowGlassPane = this.reportPrompt.showGlassPane.bind(this.reportPrompt);
         var baseHideGlassPane = this.reportPrompt.hideGlassPane.bind(this.reportPrompt);
 
-        this.reportPrompt.ready         = this.view.promptReady  .bind(this.view,  basePromptReady);
+        this.reportPrompt.api.event.ready(this.view.promptReady.bind(this.view));
         this.reportPrompt.showGlassPane = this.view.showGlassPane.bind(this.view,  baseShowGlassPane);
         this.reportPrompt.hideGlassPane = this.view.hideGlassPane.bind(this.view,  baseHideGlassPane);
         this.reportPrompt.api.event.submit(this.submitReport.bind(this));
@@ -123,7 +122,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         get reportPrompt () {
           return _reportPrompt;
         },
-        
+
         /**
          * Localize the Report Viewer.
          */
@@ -276,17 +275,14 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           $("#glasspane").css("background", "");
         },
 
-        // Called by PromptPanel#postExecution (soon after initPrompt)
-        promptReady: function(basePromptReady) {
-
-          basePromptReady(this.reportPrompt.panel); // hides the glass pane...
+        promptReady: function() {
+          this.reportPrompt.hideGlassPane();
 
           if (inSchedulerDialog) {
             // If we are rendering parameters for the "New Schedule" dialog,
             // don't show the report or the submit panel, or the pages toolbar
             this.showPromptPanel(true);
 
-            this._getRegistryObjectById('glassPane').hide();
             domClass.add('reportContent', 'hidden');
             // SubmitPanel can be absent in DOM
             var submitPanel = query('.submit-panel');
