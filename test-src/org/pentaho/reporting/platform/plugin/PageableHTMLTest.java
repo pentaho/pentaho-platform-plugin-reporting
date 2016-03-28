@@ -560,6 +560,7 @@ public class PageableHTMLTest {
       assertTrue( listener.isOnFirstPage() );
       assertFalse( -1 == listener.getState().getRow());
       assertFalse( -1 == listener.getState().getTotalRows());
+      assertEquals( 1, listener.getState().getGeneratedPage() );
 
       ReportListenerThreadHolder.clear();
 
@@ -624,6 +625,53 @@ public class PageableHTMLTest {
       assertTrue( listener2.isOnUpdate() );
       assertTrue( listener2.isOnFinish() );
       assertFalse( listener2.isOnFirstPage() );
+
+    } finally {
+      edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.CachePageableHtmlContent", null );
+      edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.FirstPageMode", null );
+    }
+  }
+
+
+
+  @Test
+  public void testRequestPage() throws Exception {
+
+    final ModifiableConfiguration edConf = ClassicEngineBoot.getInstance().getEditableConfig();
+    edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.CachePageableHtmlContent", "true" );
+    edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.FirstPageMode", "true" );
+    try {
+
+      final TestListener listener = new TestListener( "1", UUID.randomUUID(), "" );
+      final int requestedPage = 3;
+      listener.setRequestedPage( requestedPage );
+      assertEquals( requestedPage, listener.getRequestedPage() );
+      ReportListenerThreadHolder.setListener( listener );
+      final ResourceManager mgr = new ResourceManager();
+      final File src = new File( "resource/solution/test/reporting/report.prpt" );
+      final MasterReport r = (MasterReport) mgr.createDirectly( src, MasterReport.class ).getResource();
+
+      execute( r );
+
+      assertEquals( 0, listener.getRequestedPage() );
+      assertEquals( requestedPage + 1, listener.getState().getGeneratedPage() );
+
+
+      final MasterReport r2 = (MasterReport) mgr.createDirectly( src, MasterReport.class ).getResource();
+
+      final TestListener listener2 = new TestListener( "2", UUID.randomUUID(), "" );
+      ReportListenerThreadHolder.setListener( listener2 );
+
+      //From cache
+      execute( r2 );
+
+
+      assertEquals( 0, listener2.getRequestedPage() );
+      assertEquals( 8, listener2.getState().getGeneratedPage() );
+
+      ReportListenerThreadHolder.clear();
+
+      assertNull( ReportListenerThreadHolder.getListener() );
 
     } finally {
       edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.CachePageableHtmlContent", null );

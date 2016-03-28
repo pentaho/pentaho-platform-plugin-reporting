@@ -8,6 +8,7 @@ import org.pentaho.platform.api.engine.ILogoutListener;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.api.engine.IPentahoSystemListener;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
+import org.pentaho.reporting.libraries.base.util.ArgumentNullException;
 import org.pentaho.reporting.platform.plugin.staging.AsyncJobFileStagingHandler;
 
 import java.io.File;
@@ -93,12 +94,7 @@ public class PentahoAsyncExecutor implements ILogoutListener, IPentahoSystemList
   }
 
   @Override public Future<InputStream> getFuture( final UUID id, final IPentahoSession session ) {
-    if ( id == null ) {
-      throw new NullPointerException( "uuid is null" );
-    }
-    if ( session == null ) {
-      throw new NullPointerException( "Session is null" );
-    }
+    validateParams( id, session );
     return futures.get( new CompositeKey( session, id ) );
   }
 
@@ -108,16 +104,24 @@ public class PentahoAsyncExecutor implements ILogoutListener, IPentahoSystemList
     tasks.remove( key );
   }
 
+  @Override public void requestPage( final UUID id, final IPentahoSession session, final int page ) {
+    validateParams( id, session );
+    final IAsyncReportExecution<InputStream> runningTask = tasks.get( new CompositeKey( session, id ) );
+    if ( runningTask != null ) {
+      runningTask.requestPage( page );
+    }
+  }
+
   @Override public IAsyncReportState getReportState( final UUID id, final IPentahoSession session ) {
-    if ( id == null ) {
-      throw new NullPointerException( "uuid is null" );
-    }
-    if ( session == null ) {
-      throw new NullPointerException( "session is null" );
-    }
+    validateParams( id, session );
     // link to running task
     final IAsyncReportExecution<InputStream> runningTask = tasks.get( new CompositeKey( session, id ) );
     return runningTask == null ? null : runningTask.getState();
+  }
+
+  private void validateParams( final UUID id, final IPentahoSession session ) {
+    ArgumentNullException.validate( "uuid", id );
+    ArgumentNullException.validate( "session", session );
   }
 
   @Override public void onLogout( final IPentahoSession iPentahoSession ) {

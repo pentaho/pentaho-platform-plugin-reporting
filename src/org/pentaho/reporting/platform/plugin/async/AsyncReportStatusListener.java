@@ -46,6 +46,8 @@ class AsyncReportStatusListener implements IAsyncReportListener {
   private int totalRows = 0;
   private String activity;
   private boolean firstPageMode = false;
+  private int requestedPage = 0;
+  private int generatedPage = 0;
 
 
   AsyncReportStatusListener( final String path,
@@ -69,6 +71,26 @@ class AsyncReportStatusListener implements IAsyncReportListener {
     return firstPageMode;
   }
 
+
+  public synchronized void setRequestedPage( final int requestedPage ) {
+    this.requestedPage = requestedPage;
+  }
+
+  @Override public synchronized int getRequestedPage() {
+    return requestedPage;
+  }
+
+  /**
+   * Updates generation status with latest generated page
+   * and restores requested page in order to avoid continuous cache writing
+   * @param generatedPage
+   */
+  @Override public synchronized void updateGenerationStatus( final int generatedPage ) {
+    this.generatedPage = generatedPage;
+    this.requestedPage = 0;
+  }
+
+
   @Override
   public synchronized void reportProcessingStarted( final ReportProgressEvent event ) {
     this.status = AsyncExecutionStatus.WORKING;
@@ -91,6 +113,8 @@ class AsyncReportStatusListener implements IAsyncReportListener {
       + ", status=" + status
       + ", progress=" + progress
       + ", page=" + page
+      + ", totalPages=" + totalPages
+      + ", generatedPage=" + generatedPage
       + ", activity='" + activity + '\''
       + ", row=" + row
       + ", firstPageMode=" + firstPageMode
@@ -133,6 +157,6 @@ class AsyncReportStatusListener implements IAsyncReportListener {
   }
 
   public synchronized IAsyncReportState getState() {
-    return new AsyncReportState( uuid, path, status, progress, row, totalRows, page, totalPages, activity, mimeType );
+    return new AsyncReportState( uuid, path, status, progress, row, totalRows, page, totalPages, generatedPage, activity, mimeType );
   }
 }

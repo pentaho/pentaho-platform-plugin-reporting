@@ -17,4 +17,6 @@ public interface IPentahoAsyncExecutor {
   IAsyncReportState getReportState( UUID id, IPentahoSession session );
 
   void cleanFuture( UUID id, IPentahoSession session );
+
+  void requestPage( UUID id, IPentahoSession session, int page );
 }

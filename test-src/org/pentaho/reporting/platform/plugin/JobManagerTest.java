@@ -24,8 +24,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.pentaho.platform.api.engine.IPentahoObjectFactory;
 import org.pentaho.platform.api.engine.IPentahoSession;
-import org.pentaho.platform.engine.core.system.IPentahoSessionHolderStrategy;
-import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.platform.plugin.async.AsyncExecutionStatus;
 import org.pentaho.reporting.platform.plugin.async.IAsyncReportState;
@@ -40,9 +38,6 @@ import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-/**
- * Created by dima.prokopenko@gmail.com on 2/22/2016.
- */
 public class JobManagerTest extends JaxRsServerProvider {
 
   public static final String URL_FORMAT = "/reporting/api/jobs/%1$s%2$s";
@@ -70,6 +65,19 @@ public class JobManagerTest extends JaxRsServerProvider {
     // currently no simple way to restore to AsyncReportState interface here
     // at least we get uuid in return.
     assertTrue( json.contains( uuid.toString() ) );
+  }
+
+
+  @Test public void testRequestPage() throws IOException {
+    client.path( String.format( URL_FORMAT, UUID.randomUUID().toString(), "/requestPage/100" ) );
+
+    final Response response = client.get();
+    assertNotNull( response );
+    assertTrue( response.hasEntity() );
+
+    final String page = response.readEntity( String.class );
+
+    assertEquals( "100", page );
   }
 
   @BeforeClass public static void initialize() throws Exception {
@@ -121,6 +129,10 @@ public class JobManagerTest extends JaxRsServerProvider {
       }
 
       @Override public int getTotalPages() {
+        return 0;
+      }
+
+      @Override public int getGeneratedPage() {
         return 0;
       }
 
