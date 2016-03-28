@@ -942,8 +942,10 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                   }
 
                   isFinished = true;
-                  var pageContr = registry.byId('pageControl');
-                  pageContr.setPageCount(resultJson.totalPages);
+                  if (this._isReportHtmlPagebleOutputFormat) {
+                    var pageContr = registry.byId('pageControl');
+                    pageContr.setPageCount(resultJson.totalPages);
+                  }
                 } else if (resultJson.status == "FAILED") {
                   this.reportPrompt.showMessageBox(
                     "Request failed",
