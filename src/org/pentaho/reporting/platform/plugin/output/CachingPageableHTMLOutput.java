@@ -92,6 +92,8 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
     private final ZipRepository targetRepository;
     private final IAsyncReportListener asyncReportListener;
 
+    private int lastAcceptedPageWritten;
+
     @Override public void reportProcessingStarted( final ReportProgressEvent reportProgressEvent ) {
       //ignore
     }
@@ -111,19 +113,20 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
         page = acceptedPage + 2;
       }
 
-      final boolean requestedPageIsStored = reportProgressEvent.getPage() == page;
+      final boolean needToStorePages = reportProgressEvent.getPage() == page && reportProgressEvent.getPage() > lastAcceptedPageWritten;
       if ( reportProgressEvent.getActivity() == ReportProgressEvent.GENERATING_CONTENT
-        && requestedPageIsStored ) {
+        && needToStorePages ) {
         // we finished pagination, and thus have the page numbers ready.
         // we also have pages in repository
         try {
           persistContent( key, produceReportContent( proc, targetRepository ) );
+          lastAcceptedPageWritten = page;
+          //Update after pages are in cache
+          asyncReportListener.updateGenerationStatus( page - 1 );
+          asyncReportListener.setStatus( AsyncExecutionStatus.CONTENT_AVAILABLE );
         } catch ( final Exception e ) {
           logger.error( "Can't persist" );
         }
-        //Update after pages are in cache
-        asyncReportListener.updateGenerationStatus( page - 1 );
-        asyncReportListener.setStatus( AsyncExecutionStatus.CONTENT_AVAILABLE );
       }
     }
 

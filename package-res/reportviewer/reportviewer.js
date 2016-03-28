@@ -45,7 +45,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
       _currentReportStatus: null,
       _currentReportUuid: null,
       _currentStoredPagesCount: null,
-      _requestedPage: -1,
+      _requestedPage: 0,
 
       _bindPromptEvents: function() {
         var basePromptReady   = this.reportPrompt.ready.bind(this.reportPrompt);
@@ -802,6 +802,8 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         var isFirstContAvStatus = true;
         var isIframeContentSet = false;
         var isFinished = false;
+        this._requestedPage = me.view._getAcceptedPage();
+
         if(this.reportPrompt._isAsync) {
           var dlg = registry.byId('feedbackScreen');
           var handleCancelCallback = dojo.hitch(this, function(result) {
@@ -897,7 +899,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                   if(isFirstContAvStatus) {
                     isFirstContAvStatus = false;
 
-                    if(this._currentStoredPagesCount > me.view._getAcceptedPage()){
+                    if(this._currentStoredPagesCount > this._requestedPage){
                       pentahoGet('reportjob', url.substring(url.lastIndexOf("/report?")+"/report?".length, url.length), handleContAvailCallback, 'text/text');
                     }
 
@@ -909,7 +911,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                       //adjust accepted page in url
                       var newUrl =url.substring(url.lastIndexOf("/report?")+"/report?".length, url.length);
                       newUrl = newUrl.replace(/(accepted-page=)\d*?(&)/,'$1' + this._requestedPage + '$2');
-                      this._requestedPage = -1;
+                      this._requestedPage = 0;
                       pentahoGet('reportjob', newUrl , handleContAvailCallback, 'text/text');
                     }
 
@@ -949,26 +951,25 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           });
 
           //Navigation on report in progress section
+
+
           var reportUrl = url.substring(url.lastIndexOf("/report?")+"/report?".length, url.length);
           if(this._currentReportStatus && this._currentReportStatus!='FINISHED' && this._currentReportStatus!='FAILED' && this._currentReportStatus!='CANCELED'){
              //In progress
-            var acceptedPage = me.view._getAcceptedPage();
-            if(this._currentStoredPagesCount > acceptedPage){
+            if(this._currentStoredPagesCount > this._requestedPage){
               //Page available
               pentahoGet('reportjob', reportUrl, handleResultCallback, 'text/text');
             } else {
               //Need to wait for page
               var urlRequestPage = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + this._currentReportUuid
-                  + '/requestPage/' + acceptedPage ;
+                  + '/requestPage/' + this._requestedPage ;
               pentahoGet( urlRequestPage, "");
-              this._requestedPage = acceptedPage;
               isFinished = true;
             }
           } else {
             //Not started or finished
             pentahoGet('reportjob', reportUrl, handleResultCallback, 'text/text');
           }
-
         } else {
           logger && logger.log("Will set iframe url to " + url.substr(0, 50) + "... ");
           //submit hidden form to POST data to iframe
