@@ -22,11 +22,11 @@
     var _isReportViewer = true;
     var _isTopReportViewer = true;
     try { _isTopReportViewer = ((window.parent === window) || !window.parent._isReportViewer); } catch(ex) { } // Ignore "Same-origin policy" violation in embedded IFrame
-    
+
     var inMobile = false;
-    try { 
+    try {
       var ua = navigator.userAgent;
-      inMobile = ua.match(/iPhone/i) || ua.match(/iPod/i) || ua.match(/iPad/i) || ua.match(/Android/i); 
+      inMobile = ua.match(/iPhone/i) || ua.match(/iPod/i) || ua.match(/iPad/i) || ua.match(/Android/i);
     } catch(ex) { /*XSS*/ }
 
     var dojoConfig = {
@@ -60,7 +60,7 @@
       } else if(window.parent.showLoadingIndicator) {
         window.parent.showLoadingIndicator();
       }
-    } catch(ex) { } // Ignore "Same-origin policy" violation in embedded IFrame  
+    } catch(ex) { } // Ignore "Same-origin policy" violation in embedded IFrame
   </script>
   <script type="text/javascript" src="../../../content/common-ui/resources/web/formatter/formatter.nocache.js"></script>
 
@@ -91,12 +91,12 @@
                 '<div style="display: -webkit-box; -webkit-box-flex: 1; box-sizing: border-box; -webkit-box-align: center; -webkit-box-pack: center;">' +
                 '<div id="pageControl" data-dojo-type="pentaho.common.PageControl" class="dijitInline"></div>' +
                 '</div>' +
-                '<div style="visibility: hidden" data-dojo-type="dijit.form.ToggleButton">Prompts</div>' + // TODO: What is this? A second button? 
+                '<div style="visibility: hidden" data-dojo-type="dijit.form.ToggleButton">Prompts</div>' + // TODO: What is this? A second button?
                 '</div>';
       }
 
       var inSchedulerDialog = window.location.pathname.toLowerCase().indexOf('parameterui') >= 0;
-      var getParams = function() { return prompt.panel.getParameterValues(); };
+      var getParams = function() { return prompt.api.operation.getParameterValues(); };
 
       var initSchedulingParams = function(filePath, validParamsCallback) {
         this.file = filePath;

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<parameters accepted-page="1" autoSubmitUI="false" ignore-biserver-5538="true" is-prompt-needed="false"
+<parameters accepted-page="1" autoSubmitUI="true" ignore-biserver-5538="true" is-prompt-needed="false"
             layout="vertical" page-count="1" paginate="true" subscribe="false">
   <parameter is-list="true" is-mandatory="false" is-multi-select="false" is-strict="true" name="PROD_LINE" type="java.lang.String">
     <attribute name="role" namespace="http://reporting.pentaho.org/namespaces/engine/parameter-attributes/core" value="user"/>

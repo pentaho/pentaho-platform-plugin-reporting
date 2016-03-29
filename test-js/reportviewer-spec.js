@@ -149,9 +149,11 @@ define(["reportviewer/reportviewer", "reportviewer/reportviewer-logging", "repor
         });
 
         it("should return the correct value for allowAutoSubmit on _isAutoSubmitAllowed", function() {
-          expect(reportViewer.view._isAutoSubmitAllowed()).toBeFalsy();
-          reportViewer.reportPrompt.panel.paramDefn.allowAutoSubmit = function() { return true; };
           expect(reportViewer.view._isAutoSubmitAllowed()).toBeTruthy();
+          reportViewer.reportPrompt._getStateProperty.and.callFake(function(param) {
+            return (param && param === "allowAutoSubmit") ? false : undefined;
+          });
+          expect(reportViewer.view._isAutoSubmitAllowed()).toBeFalsy();
         });
       });
 
@@ -245,17 +247,22 @@ define(["reportviewer/reportviewer", "reportviewer/reportviewer-logging", "repor
       });
 
       describe("[EVENTS] checking subscription on prompt events", function() {
-        it("should check subscription on prompt events", function(done) {
+        it("should check subscription on prompt events (with autoSubmit = true)", function(done) {
           spyOn(reportViewer.view, "updateLayout");
           spyOn(reportViewer, "submitReport");
           spyOn(reportViewer.view, "promptReady");
-          reportViewer._bindPromptEvents();
-          reportViewer.reportPrompt.api.operation.refreshPrompt();
-          done();
 
-          expect(reportViewer.view.updateLayout).toHaveBeenCalled();
-          expect(reportViewer.submitReport).toHaveBeenCalledWith(true);
-          expect(reportViewer.view.promptReady).toHaveBeenCalled();
+          reportViewer._bindPromptEvents();
+          reportViewer.reportPrompt.api.operation.refreshPrompt(true);
+
+          setTimeout(function() {
+            expect(reportViewer.view.updateLayout).toHaveBeenCalled();
+            expect(reportViewer.submitReport).toHaveBeenCalledWith({
+              isInit: true
+            });
+            expect(reportViewer.view.promptReady).toHaveBeenCalled();
+            done();
+          }, 500);
         });
       });
 
@@ -339,6 +346,37 @@ define(["reportviewer/reportviewer", "reportviewer/reportviewer-logging", "repor
           expect(reportViewer.view._initLayout).toHaveBeenCalled();
           expect(reportViewer._updateReportContent).toHaveBeenCalled();
           expect(reportViewer.view._showReportContent).not.toHaveBeenCalled();
+        });
+      });
+
+      describe("promptReady", function() {
+        beforeEach(function() {
+          spyOn(reportViewer.reportPrompt, "hideGlassPane");
+          spyOn(reportViewer.view, "showPromptPanel");
+        });
+
+        it("should execute logic not for scheduler dialog", function() {
+          window.inSchedulerDialog = false;
+
+          reportViewer.view.promptReady();
+
+          expect(reportViewer.reportPrompt.hideGlassPane).toHaveBeenCalled();
+          expect(reportViewer.view.showPromptPanel).not.toHaveBeenCalled();
+          expect(domClass.add).not.toHaveBeenCalled();
+          expect(domClass.remove).not.toHaveBeenCalled();
+        });
+
+        it("should execute logic for scheduler dialog", function() {
+          window.inSchedulerDialog = true;
+
+          reportViewer.view.promptReady();
+
+          expect(reportViewer.reportPrompt.hideGlassPane).toHaveBeenCalled();
+          expect(reportViewer.view.showPromptPanel).toHaveBeenCalledWith(true);
+          expect(domClass.add).toHaveBeenCalledWith('toolbarlinner2', 'hidden');
+          expect(domClass.remove).toHaveBeenCalledWith('promptPanel', 'pentaho-rounded-panel-bottom-lr');
+          expect(domClass.remove).toHaveBeenCalledWith('reportControlPanel', 'pentaho-shadow');
+          expect(domClass.remove).toHaveBeenCalledWith('reportControlPanel', 'pentaho-rounded-panel-bottom-lr');
         });
       });
     });

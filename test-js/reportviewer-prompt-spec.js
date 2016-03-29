@@ -47,9 +47,11 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
       });
 
       var makeAjaxSpy = function(error) {
-        spyOn($, "ajax").and.callFake(function (params) {
+        spyOn($, "ajax").and.callFake(function(params) {
           if (error) {
-            params.error({statusText: "error"});
+            params.error({
+              statusText: "error"
+            });
           } else {
             params.success(parameterDefinition);
           }
@@ -76,24 +78,24 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
         reportPrompt.createPromptPanel();
       };
 
-      it("Properly creates a prompt panel", function(done) {
+      it("Properly creates a prompt panel with allowAutoSubmit = true (see parameterDefinition.xml)", function(done) {
         spyOn(reportPrompt, "parseParameterDefinition").and.callThrough();
-        createPromptExpectactions(done, {
-          ajaxCalls: 1,
-          mode: "INITIAL"
-        });
-      });
-
-      it("Properly creates a prompt panel with allowAutoSubmit = true", function(done) {
-        var realParseParameterDefinition = reportPrompt.parseParameterDefinition.bind(reportPrompt);
-        spyOn(reportPrompt, "parseParameterDefinition").and.callFake(function(xmlString) {
-          var paramDefn = realParseParameterDefinition(xmlString);
-          spyOn(paramDefn, "allowAutoSubmit").and.returnValue(true);
-          return paramDefn;
-        });
         createPromptExpectactions(done, {
           ajaxCalls: 2,
           mode: "MANUAL"
+        });
+      });
+
+      it("Properly creates a prompt panel with allowAutoSubmit = false", function(done) {
+        var realParseParameterDefinition = reportPrompt.parseParameterDefinition.bind(reportPrompt);
+        spyOn(reportPrompt, "parseParameterDefinition").and.callFake(function(xmlString) {
+          var paramDefn = realParseParameterDefinition(xmlString);
+          spyOn(paramDefn, "allowAutoSubmit").and.returnValue(false);
+          return paramDefn;
+        });
+        createPromptExpectactions(done, {
+          ajaxCalls: 1,
+          mode: "INITIAL"
         });
       });
 
