@@ -249,6 +249,27 @@ public class JobManager {
     return Response.ok( String.valueOf( page ) ).build();
   }
 
+  @GET @Path( "{job_id}/clean" ) public Response clean( @PathParam( "job_id" ) final String job_id ) {
+    UUID uuid = null;
+    try {
+      uuid = UUID.fromString( job_id );
+    } catch ( final Exception e ) {
+      logger.error( "Status: invalid UUID: " + job_id );
+      return get404();
+    }
+
+    final IPentahoAsyncExecutor executor = getExecutor();
+    if ( executor == null ) {
+      // where is my bean?
+      return Response.serverError().build();
+    }
+    final IPentahoSession session = PentahoSessionHolder.getSession();
+
+    executor.cleanFuture( uuid, session );
+
+    return Response.ok( ).build();
+  }
+
   private Response get404() {
     return Response.status( Response.Status.NOT_FOUND ).build();
   }

@@ -935,6 +935,9 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                     this._updatedIFrameSrc = true;
 
                     dlg.hide();
+                  } else {
+                    var urlClean = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + this._currentReportUuid  + '/clean';
+                    pentahoGet( urlClean, "");
                   }
 
                   isFinished = true;
