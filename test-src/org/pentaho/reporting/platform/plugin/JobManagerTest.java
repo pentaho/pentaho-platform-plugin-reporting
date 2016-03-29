@@ -99,6 +99,14 @@ public class JobManagerTest extends JaxRsServerProvider {
     assertEquals( "100", page );
   }
 
+  @Test public void testClean() throws IOException {
+    client.path( String.format( URL_FORMAT, UUID.randomUUID().toString(), "/clean" ) );
+
+    final Response response = client.get();
+    assertNotNull( response );
+    assertEquals(200, response.getStatus() );
+  }
+
   @BeforeClass public static void initialize() throws Exception {
     JaxRsServerProvider.initialize();
 
