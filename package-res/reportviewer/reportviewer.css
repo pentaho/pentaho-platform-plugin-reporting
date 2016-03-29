@@ -411,6 +411,78 @@ div.prompt-panel {
   background: #dce7ed;
 }
 
+.pentaho-notification {
+  z-index: 99999;
+  top: 5px !important;
+
+  /* center the div */
+  left: 0;
+  right: 0;
+
+  bottom: auto !important;
+  width: 240px !important;
+  min-height: 45px;
+  max-height: 78px;
+  margin: auto;
+  color: #333;
+  background-color: #fefde7;
+  border: 1px solid #ccc;
+
+  /* shadow */
+  -webkit-box-shadow: 0 3px 5px 0px rgba(0,0,0,.20);
+  -moz-box-shadow: 0 3px 5px 0px rgba(0,0,0,.20);
+  box-shadow: 0 3px 5px 0px rgba(0,0,0,.20);
+}
+
+#notification-screen {
+  position: absolute;
+}
+
+/* Close button */
+#notification-close {
+  padding-right: 7px;
+  z-index: 10;
+  position: absolute;
+  right: 0;
+    top: 0;
+}
+
+#notification-message {
+  padding: 12px !important;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+#notification-indicator {
+  position: absolute;
+  left: 23px;
+  top: 10px;
+}
+
+.glasspanespinner {
+  background-image: url('../../../content/common-ui/resources/web/dojo/dojox/widget/Standby/images/loading.gif');
+  background-position-y: 10px;
+  background-repeat: no-repeat;
+  width: 31px;
+}
+
+.glasspanetitle {
+  padding-top: 0px;
+  color: #1973bc;
+  font-family: opensanslight, Helvetica, Arial, Sans serif;
+  font-size: 18px;
+  vertical-align: top;
+  padding-left: 15px;
+}
+
+.glasspanetext {
+  color: #26363d;
+  padding: 10px 0 20px 0;
+  vertical-align: top;
+  line-height: 2em;
+  padding-left: 15px;
+}
+
 #reportControlPanel select {
   overflow-y: auto;
 }

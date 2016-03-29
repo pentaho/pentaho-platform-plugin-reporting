@@ -362,6 +362,12 @@ define([
               return 'PARAMETER';
             }
             break;
+
+          case 'MANUAL':
+            if (this._isAsync) {
+              return 'PARAMETER';
+            }
+            break;
         }
 
         return 'XML';
