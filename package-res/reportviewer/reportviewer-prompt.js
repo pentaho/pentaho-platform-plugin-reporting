@@ -286,12 +286,7 @@ define([
 
         if (me.clicking) {
           // If "Upgrading" a Change to a Submit we do not want to process the next Submit Click, if any
-          var upgrade = (promptMode === 'USERINPUT');
-
-          me.ignoreNextClickSubmit = upgrade;
-
-          // Also, force the Change to behave as if AutoSubmit was on!
-          if (me.panel) { me.panel.forceAutoSubmit = upgrade; }
+          me.ignoreNextClickSubmit = (promptMode === 'USERINPUT');
 
           delete me.clicking;
         }
