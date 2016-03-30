@@ -975,6 +975,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                     "Request failed",
                     _Messages.getString('FatalErrorTitle'));
                   dlg.hide();
+                  isFinished = true;
                   logger && logger.log("ERROR: Request status - FAILED");
                 }
               }
