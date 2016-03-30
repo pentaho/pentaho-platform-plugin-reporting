@@ -229,15 +229,6 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
           this._layoutInited = false;
           this._initLayout();
-
-          $.widget( "ui.autocomplete", $.ui.autocomplete, {
-            _renderItem: function( ul, item) {
-              return $( "<li></li>" )
-                .data( "item.autocomplete", item )
-                .append( $( "<a></a>" ).html( item.label ) )
-                .appendTo( ul );
-            },
-          });
         },
 
         _hideToolbarPromptControls: function() {
