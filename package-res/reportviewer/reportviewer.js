@@ -957,10 +957,14 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
                   if( (this._requestedPage > 0) && (this._currentStoredPagesCount > this._requestedPage)) {
                     // main request finished before requested page was stored in cache
-                    var newUrl =url.substring(url.lastIndexOf("/report?")+"/report?".length, url.length);
-                    newUrl = newUrl.replace(/(accepted-page=)\d*?(&)/,'$1' + this._requestedPage + '$2');
-                    this._requestedPage = 0;
-                    pentahoGet('reportjob', newUrl , handleContAvailCallback, 'text/text');
+                    var newUrl = url.substring(url.lastIndexOf("/report?") + "/report?".length, url.length);
+                    var match = newUrl.match(/(^.*accepted-page=)(\d*?)(&.*$)/);
+                    //if not handled by another job
+                    if(match[2] != this._requestedPage){
+                      newUrl = match[1] + this._requestedPage + match[3];
+                      this._requestedPage = 0;
+                      pentahoGet('reportjob', newUrl, handleContAvailCallback, 'text/text');
+                    }
                   }
 
                   isFinished = true;
@@ -990,7 +994,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
              //In progress
             if(this._currentStoredPagesCount > this._requestedPage){
               //Page available
-              pentahoGet('reportjob', reportUrl, handleResultCallback, 'text/text');
+              isFinished = true;
             } else {
               //Need to wait for page
               var urlRequestPage = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + this._currentReportUuid
