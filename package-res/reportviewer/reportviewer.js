@@ -49,6 +49,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
       _requestedPage: 0,
       _previousPage: 0,
       _isReportHtmlPagebleOutputFormat : null,
+      _reportUrl : null,
 
       _bindPromptEvents: function() {
         var baseShowGlassPane = this.reportPrompt.showGlassPane.bind(this.reportPrompt);
@@ -994,7 +995,20 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
              //In progress
             if(this._currentStoredPagesCount > this._requestedPage){
               //Page available
-              isFinished = true;
+              var current = reportUrl.match(/(^.*accepted-page=)(\d*?)(&.*$)/);
+              var running = this._reportUrl.match(/(^.*accepted-page=)(\d*?)(&.*$)/);
+              //parameters besides accepted-page have been changed
+              if( current[1] != running[1] ){
+                this._reportUrl = reportUrl;
+                domClass.add('notification-screen', 'hidden');
+                this.cancel(this._currentReportStatus, this._currentReportUuid);
+                pentahoGet('reportjob', reportUrl, handleResultCallback, 'text/text');
+              } else {
+                //just different page, as far as requested page is updated 
+                //nothing to do here
+                isFinished = true;
+              }
+
             } else {
               //Need to wait for page
               var urlRequestPage = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + this._currentReportUuid
@@ -1017,6 +1031,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
             }
           } else {
             //Not started or finished
+            this._reportUrl = reportUrl;
             pentahoGet('reportjob', reportUrl, handleResultCallback, 'text/text');
           }
         } else {
