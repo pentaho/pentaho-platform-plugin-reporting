@@ -454,9 +454,12 @@ div.prompt-panel {
 }
 
 #notification-indicator {
-  position: absolute;
-  left: 23px;
-  top: 10px;
+  background-image: url('../../../content/common-ui/resources/themes/crystal/images/indicator_ball.gif');
+  width: 35px;
+  height: 22px;
+  background-repeat: no-repeat;
+  background-position-y: 8px;
+  background-position-x: 14px;
 }
 
 .glasspanespinner {
