@@ -220,7 +220,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         },
 
         _isAutoSubmitAllowed : function() {
-          if(this.reportPrompt.panel.forceAutoSubmit || this.reportPrompt._getStateProperty('allowAutoSubmit')) { // (BISERVER-6915)
+          if(this.reportPrompt._getStateProperty('allowAutoSubmit')) { // (BISERVER-6915)
             return true;
           }
 
@@ -774,8 +774,6 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           var callback = logged("_updateReportContent_fetchParameterCallback", function(xmlString) {
             var newParamDefn = me.reportPrompt.parseParameterDefinition(xmlString);
 
-            delete (me.reportPrompt.panel.forceAutoSubmit);
-
             // Recreates the prompt panel's CDF components
             me.reportPrompt.panel.refresh(newParamDefn, /*noAutoAutoSubmit*/true);
 
@@ -1048,7 +1046,6 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
       _submitReportEnded: function(isTimeout) {
         // Clear submit-related control flags
         delete this.reportPrompt.clicking;
-        if(this.reportPrompt.panel) { delete this.reportPrompt.panel.forceAutoSubmit; }
         delete this.reportPrompt.ignoreNextClickSubmit;
 
         // Awaiting for update report response?
