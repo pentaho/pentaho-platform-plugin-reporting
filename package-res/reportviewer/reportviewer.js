@@ -49,6 +49,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
       _requestedPage: 0,
       _previousPage: 0,
       _isReportHtmlPagebleOutputFormat : null,
+      _reportUrl : null,
 
       _bindPromptEvents: function() {
         var baseShowGlassPane = this.reportPrompt.showGlassPane.bind(this.reportPrompt);
@@ -804,7 +805,6 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         this._isReportHtmlPagebleOutputFormat=me.view._isHtmlPagebleOutputFormat(options['output-target']);
 
         //BISERVER-1225
-        var isCanceled = false;
         var isFirstContAvStatus = true;
         var isIframeContentSet = false;
         var isFinished = false;
@@ -812,9 +812,6 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
         if(this.reportPrompt._isAsync) {
           var dlg = registry.byId('feedbackScreen');
-          var handleCancelCallback = dojo.hitch(this, function(result) {
-            isCanceled = true;
-          });
           dlg.setTitle(_Messages.getString('ScreenTitle'));
           dlg.setText(_Messages.getString('FeedbackScreenActivity'));
           dlg.setText2(_Messages.getString('FeedbackScreenPage'));
@@ -854,7 +851,6 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
         if(this.reportPrompt._isAsync) {
           var handleResultCallback = dojo.hitch(this, function(result) {
-            if(!isCanceled) {
               var resultJson;
               try {
                 resultJson = JSON.parse(result);
@@ -955,10 +951,14 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
                   if( (this._requestedPage > 0) && (this._currentStoredPagesCount > this._requestedPage)) {
                     // main request finished before requested page was stored in cache
-                    var newUrl =url.substring(url.lastIndexOf("/report?")+"/report?".length, url.length);
-                    newUrl = newUrl.replace(/(accepted-page=)\d*?(&)/,'$1' + this._requestedPage + '$2');
-                    this._requestedPage = 0;
-                    pentahoGet('reportjob', newUrl , handleContAvailCallback, 'text/text');
+                    var newUrl = url.substring(url.lastIndexOf("/report?") + "/report?".length, url.length);
+                    var match = newUrl.match(/(^.*accepted-page=)(\d*?)(&.*$)/);
+                    //if not handled by another job
+                    if(match[2] != this._requestedPage){
+                      newUrl = match[1] + this._requestedPage + match[3];
+                      this._requestedPage = 0;
+                      pentahoGet('reportjob', newUrl, handleContAvailCallback, 'text/text');
+                    }
                   }
 
                   isFinished = true;
@@ -978,7 +978,6 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                 }
               }
               return resultJson;
-            }
           });
 
           //Navigation on report in progress section
@@ -989,7 +988,19 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
              //In progress
             if(this._currentStoredPagesCount > this._requestedPage){
               //Page available
-              pentahoGet('reportjob', reportUrl, handleResultCallback, 'text/text');
+              var current = reportUrl.match(/(^.*accepted-page=)(\d*?)(&.*$)/);
+              var running = this._reportUrl.match(/(^.*accepted-page=)(\d*?)(&.*$)/);
+              //parameters besides accepted-page have been changed
+              if( current[1] != running[1] ){
+                this._reportUrl = reportUrl;
+                domClass.add('notification-screen', 'hidden');
+                this.cancel(this._currentReportStatus, this._currentReportUuid);
+                pentahoGet('reportjob', reportUrl, handleResultCallback, 'text/text');
+              } else {
+                //just different page, as far as requested page is updated 
+                //nothing to do here
+                isFinished = true;
+              }
             } else {
               //Need to wait for page
               var urlRequestPage = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + this._currentReportUuid
@@ -1012,6 +1023,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
             }
           } else {
             //Not started or finished
+            this._reportUrl = reportUrl;
             pentahoGet('reportjob', reportUrl, handleResultCallback, 'text/text');
           }
         } else {
