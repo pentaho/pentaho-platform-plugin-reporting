@@ -65,7 +65,7 @@ define(["reportviewer/reportviewer", "reportviewer/reportviewer-logging", "repor
           expect(reportViewer.reportPrompt._getStateProperty('promptNeeded')).toBeFalsy();
 
           // Force new value for promptNeeded on the parameter definition
-          reportViewer.reportPrompt.panel.paramDefn.promptNeeded = true;
+          reportViewer.reportPrompt.api.operation._getPromptPanel().getParamDefn().promptNeeded = true;
           expect(reportViewer.reportPrompt._getStateProperty('promptNeeded')).toBeTruthy();
         });
 
@@ -105,7 +105,6 @@ define(["reportviewer/reportviewer", "reportviewer/reportviewer-logging", "repor
         });
 
         it("should get autoSubmit on _updateReportContent", function() {
-          spyOn(reportViewer.reportPrompt.panel, 'refresh');
           spyOn(reportViewer, '_updateReportContentCore');
 
           reportViewer._updateReportContent();
@@ -125,7 +124,7 @@ define(["reportviewer/reportviewer", "reportviewer/reportviewer-logging", "repor
           spyOn(reportViewer.view, '_showReportContent');
           spyOn(reportViewer.view, '_hasReportContent').and.returnValue(true);
 
-          reportViewer.view.updateLayout(function() {});
+          reportViewer.view.updateLayout();
           expect(reportViewer.reportPrompt._getStateProperty).toHaveBeenCalledWith('showParameterUI');
         });
 
@@ -134,9 +133,11 @@ define(["reportviewer/reportviewer", "reportviewer/reportviewer-logging", "repor
           spyOn(reportViewer.view, '_showReportContent');
           spyOn(reportViewer.view, '_hasReportContent').and.returnValue(true);
           spyOn(reportViewer.view, '_hideToolbarPromptControls');
-          spyOn(reportViewer.reportPrompt.panel.paramDefn, 'showParameterUI').and.returnValue(false);
+          reportViewer.reportPrompt._getStateProperty.and.callFake(function(param) {
+            return (param === "showParameterUI") ? false : true;
+          });
 
-          reportViewer.view.updateLayout(function() {});
+          reportViewer.view.updateLayout();
           expect(reportViewer.view._hideToolbarPromptControls).toHaveBeenCalled();
         });
 
@@ -191,7 +192,7 @@ define(["reportviewer/reportviewer", "reportviewer/reportviewer-logging", "repor
             });
 
             it("false", function() {
-              reportViewer.reportPrompt.panel.paramDefn.paginate = false;
+              reportViewer.reportPrompt.api.operation._getPromptPanel().getParamDefn().paginate = false;
               reportViewer.view.updatePageControl();
               expect(reportViewer.view._setAcceptedPage).toHaveBeenCalledWith("-1");
               expect(reportViewer.reportPrompt._getStateProperty).toHaveBeenCalledWith('paginate');
@@ -201,9 +202,9 @@ define(["reportviewer/reportviewer", "reportviewer/reportviewer-logging", "repor
             });
 
             it("true", function() {
-              reportViewer.reportPrompt.panel.paramDefn.paginate = true;
-              reportViewer.reportPrompt.panel.paramDefn.page = 5;
-              reportViewer.reportPrompt.panel.paramDefn.totalPages = 8;
+              reportViewer.reportPrompt.api.operation._getPromptPanel().getParamDefn().paginate = true;
+              reportViewer.reportPrompt.api.operation._getPromptPanel().getParamDefn().page = 5;
+              reportViewer.reportPrompt.api.operation._getPromptPanel().getParamDefn().totalPages = 8;
               reportViewer.view.updatePageControl();
               expect(reportViewer.view._setAcceptedPage).toHaveBeenCalledWith("5");
               expect(reportViewer.reportPrompt._getStateProperty).toHaveBeenCalledWith('paginate');
@@ -288,7 +289,9 @@ define(["reportviewer/reportviewer", "reportviewer/reportviewer-logging", "repor
         });
 
         it("should hide toolbar prompts control and should show report content", function() {
-          spyOn(reportViewer.reportPrompt.panel.paramDefn, "showParameterUI").and.returnValue(false);
+          spyOn(reportViewer.reportPrompt, "_getStateProperty").and.callFake(function(param) {
+            return (param === "showParameterUI") ? false : true;
+          });
           spyOn(reportViewer.view, "_calcReportContentVisibility").and.returnValue(false);
 
           reportViewer.view.updateLayout();
@@ -299,7 +302,9 @@ define(["reportviewer/reportviewer", "reportviewer/reportviewer-logging", "repor
         });
 
         it("should not hide toolbar prompts control and should not show report content", function() {
-          spyOn(reportViewer.reportPrompt.panel.paramDefn, "showParameterUI").and.returnValue(true);
+          spyOn(reportViewer.reportPrompt, "_getStateProperty").and.callFake(function(param) {
+            return (param === "showParameterUI") ? true : false;
+          });
           spyOn(reportViewer.view, "_calcReportContentVisibility").and.returnValue(true);
 
           reportViewer.view.updateLayout();
