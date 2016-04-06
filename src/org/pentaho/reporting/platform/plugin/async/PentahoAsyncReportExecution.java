@@ -121,6 +121,8 @@ public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputS
 
   // cancel can only be called from the future created by "newTask".
   protected void cancel() {
+    String userName = safeSession == null ? "Unknown" : safeSession.getName();
+    log.info( "Report execution canceled: " + url + " , requested by : " + userName );
     this.listener.setStatus( AsyncExecutionStatus.CANCELED );
   }
 

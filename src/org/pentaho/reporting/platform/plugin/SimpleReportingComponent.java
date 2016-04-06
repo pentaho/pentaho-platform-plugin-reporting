@@ -936,7 +936,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     } catch ( ReportDataFactoryException e ) {
       throw e;
     } catch ( ReportInterruptedException interrupt ) {
-      log.info( "Report execution interrupted: " + reportDefinitionPath );
+      log.info( "Report execution interrupted." );
     } catch ( Exception e ) {
       log.error( Messages.getInstance().getString( "ReportPlugin.executionFailed" ), e ); //$NON-NLS-1$
     }
