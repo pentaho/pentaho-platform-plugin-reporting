@@ -18,32 +18,40 @@
 
 package org.pentaho.reporting.platform.plugin;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
+import org.pentaho.platform.util.RepositoryPathEncoder;
+import org.pentaho.platform.util.web.MimeHelper;
 import org.pentaho.reporting.platform.plugin.async.IAsyncReportState;
 import org.pentaho.reporting.platform.plugin.async.IPentahoAsyncExecutor;
 import org.pentaho.reporting.platform.plugin.async.PentahoAsyncExecutor;
-import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.UUID;
 import java.util.concurrent.Future;
 
 @Path( "/reporting/api/jobs" )
-public class JobManager extends AbstractJobManager {
+public class JobManager {
 
   private static final Log logger = LogFactory.getLog( JobManager.class );
+  private final Config config;
 
   public JobManager() {
     this( true, 1000, 1500 );
@@ -51,11 +59,26 @@ public class JobManager extends AbstractJobManager {
 
   public JobManager( final boolean isSupportAsync, final long pollingIntervalMilliseconds,
                      final long dialogThresholdMilliseconds ) {
-    super( isSupportAsync, pollingIntervalMilliseconds, dialogThresholdMilliseconds );
+    if ( !isSupportAsync ) {
+      logger.info( "JobManager initialization: async mode marked as disabled." );
+    }
+    this.config = new Config( isSupportAsync, pollingIntervalMilliseconds, dialogThresholdMilliseconds );
   }
 
-  @POST @Path( "{job_id}/content" ) public Response getContent( @PathParam( "job_id" ) final String job_id )
-    throws IOException {
+  @GET @Path( "config" ) public Response getConfig() {
+    final ObjectMapper mapper = new ObjectMapper();
+    try {
+      return Response
+              .ok( mapper.writeValueAsString( config ),
+                      MediaType.APPLICATION_JSON ).build();
+    } catch ( final IOException e ) {
+      e.printStackTrace();
+    }
+    return null;
+  }
+
+  @POST @Path( "{job_id}/content" ) public Response getContent( @PathParam( "job_id" ) String job_id )
+          throws IOException {
     UUID uuid = null;
     try {
       uuid = UUID.fromString( job_id );
@@ -66,25 +89,25 @@ public class JobManager extends AbstractJobManager {
     }
 
     // get async bean:
-    final IPentahoAsyncExecutor executor = getExecutor();
+    IPentahoAsyncExecutor executor = getExecutor();
     if ( executor == null ) {
       return Response.serverError().build();
     }
 
-    final IPentahoSession session = getSession();
+    final IPentahoSession session = PentahoSessionHolder.getSession();
 
-    final Future<IFixedSizeStreamingContent> future = executor.getFuture( uuid, session );
+    Future<InputStream> future = executor.getFuture( uuid, session );
     if ( future == null || !future.isDone() ) {
       logger.warn( "Attempt to get content while execution is not done. Called by: " + session.getName() );
       return get404();
     }
 
-    final IAsyncReportState state = executor.getReportState( uuid, session );
+    IAsyncReportState state = executor.getReportState( uuid, session );
     if ( state == null ) {
       return get404();
     }
 
-    IFixedSizeStreamingContent input = null;
+    InputStream input = null;
     try {
       input = future.get();
     } catch ( Exception e ) {
@@ -95,7 +118,7 @@ public class JobManager extends AbstractJobManager {
     // release internal links to objects
     executor.cleanFuture( uuid, session );
 
-    final StreamingOutput stream = new StreamingOutputWrapper( input.getStream() );
+    StreamingOutput stream = new StreamingOutputWrapper( input );
 
     MediaType mediaType = null;
     Response.ResponseBuilder response = null;
@@ -107,15 +130,50 @@ public class JobManager extends AbstractJobManager {
       response = Response.ok( stream, state.getMimeType() );
     }
 
-    response = AbstractJobManager.noCache( response );
-    response = AbstractJobManager.calculateContentDisposition( response, state );
-    response.header( "Content-Length", input.getContentSize() );
+    response = noCache(response);
+    response = calculateContentDisposition( response, state );
 
     return response.build();
   }
 
+  protected static Response.ResponseBuilder noCache(Response.ResponseBuilder response)
+  {
+    // no cache
+    CacheControl cacheControl = new CacheControl();
+    cacheControl.setPrivate( true );
+    cacheControl.setMaxAge( 0 );
+    cacheControl.setMustRevalidate( true );
+
+    response.cacheControl( cacheControl );
+    return response;
+  }
+
+  protected static Response.ResponseBuilder calculateContentDisposition( final Response.ResponseBuilder response,
+                                                               final IAsyncReportState state ) {
+    final org.pentaho.reporting.libraries.base.util.IOUtils utils = org.pentaho.reporting.libraries
+            .base.util.IOUtils.getInstance();
+
+    final String targetExt = MimeHelper.getExtension( state.getMimeType() );
+    final String fullPath = state.getPath();
+    final String sourceExt = utils.getFileExtension( fullPath );
+    String cleanFileName = utils.stripFileExtension( utils.getFileName( fullPath ) );
+    if ( cleanFileName == null || cleanFileName.isEmpty() ) {
+      cleanFileName = "content";
+    }
+
+    final String
+            disposition =
+            "inline; filename*=UTF-8''" + RepositoryPathEncoder
+                    .encode( RepositoryPathEncoder.encodeRepositoryPath( cleanFileName + targetExt ) );
+    response.header( "Content-Disposition", disposition );
+
+    response.header( "Content-Description", cleanFileName + sourceExt );
+
+    return response;
+  }
+
   @GET @Path( "{job_id}/status" ) @Produces( "application/json" )
-  public Response getStatus( @PathParam( "job_id" ) final String job_id ) {
+  public Response getStatus( @PathParam( "job_id" ) String job_id ) {
     UUID uuid = null;
     try {
       uuid = UUID.fromString( job_id );
@@ -124,20 +182,21 @@ public class JobManager extends AbstractJobManager {
       return get404();
     }
 
-    final IPentahoAsyncExecutor executor = getExecutor();
+    IPentahoAsyncExecutor executor = getExecutor();
     if ( executor == null ) {
       // where is my bean?
       return Response.serverError().build();
     }
     final IPentahoSession session = PentahoSessionHolder.getSession();
-    final IAsyncReportState responseJson = executor.getReportState( uuid, session );
+    IAsyncReportState responseJson = executor.getReportState( uuid, session );
     if ( responseJson == null ) {
       return get404();
     }
     // ...someday refactor it to convenient jax-rs way.
+    ObjectMapper mapper = new ObjectMapper();
     String json = null;
     try {
-      json = writer.writeValueAsString( responseJson );
+      json = mapper.writeValueAsString( responseJson );
     } catch ( Exception e ) {
       logger.error( "unable to deserialize to json : " + responseJson.toString() );
       Response.serverError().build();
@@ -145,7 +204,7 @@ public class JobManager extends AbstractJobManager {
     return Response.ok( json ).build();
   }
 
-  @GET @Path( "{job_id}/cancel" ) public Response cancel( @PathParam( "job_id" ) final String job_id ) {
+  @GET @Path( "{job_id}/cancel" ) public Response cancel( @PathParam( "job_id" ) String job_id ) {
     UUID uuid = null;
     try {
       uuid = UUID.fromString( job_id );
@@ -154,15 +213,15 @@ public class JobManager extends AbstractJobManager {
       return get404();
     }
 
-    final IPentahoAsyncExecutor executor = getExecutor();
+    IPentahoAsyncExecutor executor = getExecutor();
     if ( executor == null ) {
       // where is my bean?
       return Response.serverError().build();
     }
     final IPentahoSession session = PentahoSessionHolder.getSession();
 
-    final Future<IFixedSizeStreamingContent> future = executor.getFuture( uuid, session );
-    final IAsyncReportState state = executor.getReportState( uuid, session );
+    Future<InputStream> future = executor.getFuture( uuid, session );
+    IAsyncReportState state = executor.getReportState( uuid, session );
     if ( state == null ) {
       return get404();
     }
@@ -189,7 +248,7 @@ public class JobManager extends AbstractJobManager {
       // where is my bean?
       return Response.serverError().build();
     }
-    final IPentahoSession session = getSession();
+    final IPentahoSession session = PentahoSessionHolder.getSession();
     executor.requestPage( uuid, session, page );
 
     return Response.ok( String.valueOf( page ) ).build();
@@ -213,10 +272,64 @@ public class JobManager extends AbstractJobManager {
 
     executor.cleanFuture( uuid, session );
 
-    return Response.ok().build();
+    return Response.ok( ).build();
   }
 
-  private IPentahoAsyncExecutor getExecutor() {
+  protected final Response get404() {
+    return Response.status( Response.Status.NOT_FOUND ).build();
+  }
+
+  protected IPentahoAsyncExecutor getExecutor() {
     return PentahoSystem.get( IPentahoAsyncExecutor.class, PentahoAsyncExecutor.BEAN_NAME, null );
+  }
+
+  /**
+   * In-place implementation to support streaming responses. By default - even InputStream passed - streaming is not
+   * occurs.
+   */
+  public static final class StreamingOutputWrapper implements StreamingOutput {
+
+    private InputStream input;
+    public static final byte[] BUFFER = new byte[ 8192 ];
+
+    public StreamingOutputWrapper( InputStream readFrom ) {
+      this.input = readFrom;
+    }
+
+    @Override public void write( OutputStream outputStream ) throws IOException, WebApplicationException {
+      try {
+        IOUtils.copy( input, outputStream );
+        outputStream.flush();
+      } finally {
+        IOUtils.closeQuietly( outputStream );
+        IOUtils.closeQuietly( input );
+      }
+    }
+  }
+
+  private class Config {
+    private final boolean isSupportAsync;
+    private final long pollingIntervalMilliseconds;
+    private final long dialogThresholdMilliseconds;
+
+    private Config( final boolean isSupportAsync, final long pollingIntervalMilliseconds,
+                    final long dialogThresholdMilliseconds ) {
+      this.isSupportAsync = isSupportAsync;
+      this.pollingIntervalMilliseconds = pollingIntervalMilliseconds;
+      this.dialogThresholdMilliseconds = dialogThresholdMilliseconds;
+    }
+
+
+    public boolean isSupportAsync() {
+      return isSupportAsync;
+    }
+
+    public long getPollingIntervalMilliseconds() {
+      return pollingIntervalMilliseconds;
+    }
+
+    public long getDialogThresholdMilliseconds() {
+      return dialogThresholdMilliseconds;
+    }
   }
 }

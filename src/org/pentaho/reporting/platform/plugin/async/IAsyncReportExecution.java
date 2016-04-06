@@ -1,10 +1,12 @@
 package org.pentaho.reporting.platform.plugin.async;
 
+import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
+
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.RunnableFuture;
 
-public interface IAsyncReportExecution<K, V> extends Callable<K> {
+public interface IAsyncReportExecution<V extends IAsyncReportState> extends Callable<IFixedSizeStreamingContent> {
 
   /**
    * Assigns the UUID and create task listener. This should be called before actual execution if we expect any state
@@ -31,7 +33,7 @@ public interface IAsyncReportExecution<K, V> extends Callable<K> {
    */
   String getMimeType();
 
-  RunnableFuture<K> newTask();
+  RunnableFuture<IFixedSizeStreamingContent> newTask();
 
   void requestPage( int page );
 }

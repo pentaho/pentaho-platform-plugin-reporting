@@ -176,7 +176,7 @@ public class PentahoAsyncReportExecutorTest {
     state = exec.getReportState( id2, session2 );
     assertNotNull( state );
   }
-
+/*
   @Test public void compositeKeyEqualsHashCodeTest() {
     CompositeKey one = AbstractPentahoAsyncExecutor.getCompositeKey( session1, uuid1 );
     CompositeKey two = AbstractPentahoAsyncExecutor.getCompositeKey( session2, uuid2 );
@@ -194,7 +194,7 @@ public class PentahoAsyncReportExecutorTest {
     assertFalse( two.equals( one ) );
     assertFalse( one.hashCode() == two.hashCode() );
   }
-
+*/
   @Test
   public void onLogoutTest() throws IOException {
     PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 1 );
