@@ -59,8 +59,8 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         this.reportPrompt.showGlassPane = this.view.showGlassPane.bind(this.view,  baseShowGlassPane);
         this.reportPrompt.hideGlassPane = this.view.hideGlassPane.bind(this.view,  baseHideGlassPane);
         this.reportPrompt.api.event.submit(this.submitReport.bind(this));
-        this.reportPrompt.submitStart   = this.submitReportStart.bind(this);
-        this.reportPrompt.api.event.afterUpdate(this.view.updateLayout.bind(this.view));
+        this.reportPrompt.api.event.beforeUpdate(this.beforeUpdateCallback.bind(this));
+        this.reportPrompt.api.event.afterUpdate(this.afterUpdateCallback.bind(this));
       },
 
       load: function() {
@@ -215,8 +215,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
             // Hide the report area when in the "New Schedule" dialog
             !inSchedulerDialog &&
 
-            (this._isAutoSubmitAllowed() || this.reportPrompt.mode === 'MANUAL');
-
+            (this._isAutoSubmitAllowed() || this.reportPrompt._isSubmitPromptPhaseActivated);
           return visible;
         },
 
@@ -253,8 +252,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
             this._hideToolbarPromptControls();
           }
 
-          // The following call is important for clearing the report content when autoSubmit=false and
-          // the user has changed a value (prompt.mode === 'USERINPUT').
+          // The following call is important for clearing the report content when autoSubmit=false and the user has changed a value.
           if(!this._calcReportContentVisibility()) {
             this._showReportContent(false);
           }
@@ -692,35 +690,19 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         this.view.resize();
       },
 
-      submitReportStart: function() {
-        // Submit button was mouse-downed!
+      beforeUpdateCallback: function() {
+        this.reportPrompt._isUpdatingPrompting = true;
+      },
 
-        // In case that a focusout already issued a "fetchParameterDefinition", and a response is to be received,
-        // we upgrade that request to behave like if a button had been clicked, by setting prompt.mode to 'MANUAL'.
-        // This way, if the user takes longer to release the mouse button,
-        // than the focusout response takes to replace the being clicked button by another one (Dashboards.init recreates everything),
-        // causing the click event no be generated,
-        // the focusout response processing will behave as if it were the response of a click.
-        //
-        // Because Dashboards.processChange ends up calling postChange in a setTimeout...
-        // this call actually gets executed **before** the logic fired by the focusout path,
-        // and fetchParameterDefinition has not been called yet.
-        this.reportPrompt.clicking = true;
+      afterUpdateCallback: function() {
+        this.view.updateLayout();
+        this._updateReportContent();
       },
 
       // Called by SubmitPromptComponent#expression (the submit button's click)
       // Also may be called by PromptPanel#init, when there is no submit button (independently of autoSubmit?).
       submitReport: function(keyArgs) {
-        var isInit = keyArgs && keyArgs.isInit;
-        if(!isInit) {
-          if(this.reportPrompt.ignoreNextClickSubmit) {
-            delete (this.reportPrompt.ignoreNextClickSubmit);
-            logger && logger.log("Ignored submit click");
-            return;
-          }
-
-          this.reportPrompt.mode = 'MANUAL';
-        }
+        this.reportPrompt._isSubmitPromptPhaseActivated = true;
 
         try {
           // If we are rendering parameters for the "New Schedule" dialog,
@@ -741,8 +723,12 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
             return;
           }
 
-          this._updateReportContent();
-
+          if (!this.reportPrompt._getStateProperty("autoSubmit") && !this.reportPrompt._isAsync) {
+            this.reportPrompt.mode = 'MANUAL';
+            this.reportPrompt.api.operation.refreshPrompt();
+          } else if (!this.reportPrompt._isUpdatingPrompting) { // no need updating report content during submit because we have afterUpdate event subscription
+            this._updateReportContentCore();
+          }
         } catch(ex) {
           this._submitReportEnded();
           throw ex;
@@ -757,24 +743,8 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
       },
 
       _updateReportContent: function() {
-        var me = this;
-
-        // When !AutoSubmit, a renderMode=XML call has not been done yet,
-        //  and must be done now(if asynchronous mode is off) so that the page controls have enough info.
-        if(!me.reportPrompt._getStateProperty('autoSubmit') && !this.reportPrompt._isAsync) {
-          // FETCH page-count info before rendering report
-          var callback = logged("_updateReportContent_fetchParameterCallback", function(xmlString) {
-            var newParamDefn = me.reportPrompt.parseParameterDefinition(xmlString);
-
-            // Recreates the prompt panel's CDF components
-            me.reportPrompt.panel.refresh(newParamDefn, /*noAutoAutoSubmit*/true);
-
-            me._updateReportContentCore();
-          });
-
-          me.reportPrompt.fetchParameterDefinition(callback, /*promptMode*/'MANUAL');
-        } else {
-          me._updateReportContentCore();
+        if (this.reportPrompt._isSubmitPromptPhaseActivated || this.reportPrompt._getStateProperty("autoSubmit")) {
+          this._updateReportContentCore();
         }
       },
 
@@ -789,7 +759,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         // PRD-3962 - show glass pane on submit, hide when iframe is loaded.
         // Must be done AFTER _updateReportTimeout has been set, cause it's used to know
         // that the report content is being updated.
-        this.reportPrompt.showGlassPane();
+        me.reportPrompt.showGlassPane();
 
         var options = me._buildReportContentOptions();
         var url = me._buildReportContentUrl(options);
@@ -1019,13 +989,14 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           }
         } else {
           logger && logger.log("Will set iframe url to " + url.substr(0, 50) + "... ");
+
           //submit hidden form to POST data to iframe
           $('#hiddenReportContentForm').attr("action", url);
           $('#hiddenReportContentForm').submit();
           //set data attribute so that we know what url is currently displayed in
           //the iframe without actually triggering a GET
           $('#reportContent').attr("data-src", url);
-          this._updatedIFrameSrc = true;
+          me._updatedIFrameSrc = true;
         }
 
         // Continue when iframe is loaded (called by #_onReportContentLoaded)
@@ -1036,7 +1007,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           var visible = me.view._calcReportContentVisibility();
           if(visible) {
             // A child viewer forces changing to non-styled
-            me.view.setPageStyled(styled && !this._isParentViewer);
+            me.view.setPageStyled(styled && !me._isParentViewer);
             me.view.resize();
           }
 
@@ -1048,8 +1019,8 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
       _submitReportEnded: function(isTimeout) {
         // Clear submit-related control flags
-        delete this.reportPrompt.clicking;
-        delete this.reportPrompt.ignoreNextClickSubmit;
+        delete this.reportPrompt._isSubmitPromptPhaseActivated;
+        delete this.reportPrompt._isUpdatingPrompting;
 
         // Awaiting for update report response?
         if(this._updateReportTimeout >= 0) {

@@ -62,7 +62,6 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
         makeAjaxSpy();
         // hijacking this function to check the post create expectations
         reportPrompt._hideLoadingIndicator = function() {
-          expect(reportPrompt.panel).toBeDefined();
           expect(reportPrompt.parseParameterDefinition).toHaveBeenCalled();
           expect(reportPrompt.parseParameterDefinition).toHaveBeenCalledWith(parameterDefinition);
           expect(reportPrompt.api.operation.init).toHaveBeenCalled();
@@ -72,7 +71,6 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
           done();
         };
 
-        expect(reportPrompt.panel).not.toBeDefined();
         expect(reportPrompt.mode).toEqual("INITIAL");
 
         reportPrompt.createPromptPanel();
@@ -127,18 +125,6 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
           expect(result['renderMode']).toBe(renderMode);
         });
 
-        it("should verify the parameter values are being retrieved from the API", function() {
-          reportPrompt.panel = null;
-          var renderMode = "renderMode";
-          var result = reportPrompt._buildReportContentOptions(renderMode, true);
-          expect(util.getUrlParameters).toHaveBeenCalled();
-          expect(reportPrompt.api.operation.getParameterValues).not.toHaveBeenCalled();
-
-          expect(result['::session']).not.toBeDefined();
-          expect(result['renderMode']).toBe(renderMode);
-          expect(result['name']).not.toBeDefined();
-        });
-
         it("should not call _getStateProperty when promptMode is INITIAL", function() {
           spyOn(reportPrompt, '_getStateProperty').and.callThrough();
 
@@ -148,7 +134,6 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
 
         it("should call _getStateProperty when promptMode is USERINPUT", function() {
           spyOn(reportPrompt, '_getStateProperty');
-          reportPrompt.panel = {};
 
           reportPrompt._getParameterDefinitionRenderMode("USERINPUT");
           expect(reportPrompt._getStateProperty).toHaveBeenCalledWith('autoSubmit');
