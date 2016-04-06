@@ -50,6 +50,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
       _previousPage: 0,
       _isReportHtmlPagebleOutputFormat : null,
       _reportUrl : null,
+      _handlerRegistration : null,
 
       _bindPromptEvents: function() {
         var baseShowGlassPane = this.reportPrompt.showGlassPane.bind(this.reportPrompt);
@@ -605,6 +606,9 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
       onTabCloseEvent: function (event) {
         if (window && event.eventSubType == 'tabClosing' && event.stringParam == window.frameElement.id) {
           this.cancel(this._currentReportStatus, this._currentReportUuid);
+          if(top.mantle_removeHandler) {
+            top.mantle_removeHandler(this._handlerRegistration);
+          }
         }
       },
 
@@ -658,7 +662,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         window.reportViewer_hide = this.hide.bind(this);
 
         if(top.mantle_addHandler) {
-          top.mantle_addHandler("GenericEvent", this.onTabCloseEvent.bind(this));
+          this._handlerRegistration = top.mantle_addHandler("GenericEvent", this.onTabCloseEvent.bind(this));
         }
 
         var localThis = this;

@@ -458,13 +458,12 @@ div.prompt-panel {
   width: 35px;
   height: 22px;
   background-repeat: no-repeat;
-  background-position-y: 8px;
-  background-position-x: 14px;
+  background-position: 14px 8px;
 }
 
 .glasspanespinner {
   background-image: url('../../../content/common-ui/resources/web/dojo/dojox/widget/Standby/images/loading.gif');
-  background-position-y: 10px;
+  background-position: 0 10px;
   background-repeat: no-repeat;
   width: 31px;
 }
