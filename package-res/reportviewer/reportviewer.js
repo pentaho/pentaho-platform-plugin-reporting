@@ -781,11 +781,24 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           dlg.setText(_Messages.getString('FeedbackScreenActivity'));
           dlg.setText2(_Messages.getString('FeedbackScreenPage'));
           dlg.setText3(_Messages.getString('FeedbackScreenRow'));
-          dlg.setButtonText(_Messages.getString('ScreenCancel'));
+          dlg.setCancelText(_Messages.getString('ScreenCancel'));
+
+          if(this._isReportHtmlPagebleOutputFormat){
+            dlg.hideBackgroundBtn();
+          } else {
+            dlg.showBackgroundBtn(_Messages.getString('FeedbackScreenBackground'));
+          }
+
           dlg.callbacks = [function feedbackscreenDone() {
             this.cancel(this._currentReportStatus, this._currentReportUuid);
             dlg.hide();
-          }.bind(this)];
+          }.bind(this),
+            function scheduleReport() {
+              var urlSchedule = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + this._currentReportUuid + '/schedule';
+              pentahoGet( urlSchedule, "");
+              dlg.hide();
+            }.bind(this)
+          ];
           setTimeout(function () {
             if(!isFinished){
               dlg.show();
@@ -909,11 +922,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                     this._updatedIFrameSrc = true;
 
                     dlg.hide();
-                  } else {
-                    var urlClean = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + this._currentReportUuid  + '/clean';
-                    pentahoGet( urlClean, "");
                   }
-
                   if( (this._requestedPage > 0) && (this._currentStoredPagesCount > this._requestedPage)) {
                     // main request finished before requested page was stored in cache
                     var newUrl = url.substring(url.lastIndexOf("/report?") + "/report?".length, url.length);
@@ -940,6 +949,26 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                   dlg.hide();
                   isFinished = true;
                   logger && logger.log("ERROR: Request status - FAILED");
+                } else  if ( resultJson.status == 'SCHEDULED'){
+                  var dlgBackground = registry.byId('scheduleScreen');
+                  dlgBackground.setTitle(_Messages.getString('ScheduleTitle'));
+                  dlgBackground.setText(_Messages.getString('ScheduleText'));
+                  dlgBackground.setSkipBtnText(_Messages.getString('OK'));
+                  dlgBackground.setOkBtnText(_Messages.getString('ScheduleSkipAlert'));
+                  dlgBackground.callbacks = [
+
+                    function hide() {
+                      dlgBackground.hide();
+                    }.bind(this),
+
+                    function skipAndHide() {
+                      dlgBackground.skip();
+                      dlgBackground.hide();
+                    }.bind(this)
+                  ];
+                  if(!dlgBackground.isSkipped()){
+                    dlgBackground.show();
+                  }
                 }
               }
               return resultJson;
@@ -949,7 +978,8 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
 
           var reportUrl = url.substring(url.lastIndexOf("/report?")+"/report?".length, url.length);
-          if(this._currentReportStatus && this._currentReportStatus!='FINISHED' && this._currentReportStatus!='FAILED' && this._currentReportStatus!='CANCELED'){
+          if(this._currentReportStatus && this._currentReportStatus!='FINISHED' && this._currentReportStatus!='FAILED'
+              && this._currentReportStatus!='CANCELED' && this._currentReportStatus!='SCHEDULED'){
              //In progress
             if(this._currentStoredPagesCount > this._requestedPage){
               //Page available

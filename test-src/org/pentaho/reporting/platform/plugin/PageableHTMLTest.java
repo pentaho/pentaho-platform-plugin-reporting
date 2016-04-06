@@ -23,8 +23,10 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.pentaho.platform.api.engine.ICacheManager;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
+import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.engine.core.system.StandaloneSession;
 import org.pentaho.platform.engine.services.actionsequence.ActionSequenceResource;
 import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
@@ -32,6 +34,7 @@ import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.libraries.base.config.ModifiableConfiguration;
 import org.pentaho.reporting.libraries.resourceloader.ResourceException;
 import org.pentaho.reporting.libraries.resourceloader.ResourceManager;
+import org.pentaho.reporting.platform.plugin.async.AsyncExecutionStatus;
 import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
 import org.pentaho.reporting.platform.plugin.async.TestListener;
 import org.pentaho.reporting.platform.plugin.cache.FileSystemCacheBackend;
@@ -558,8 +561,8 @@ public class PageableHTMLTest {
       assertTrue( listener.isOnUpdate() );
       assertTrue( listener.isOnFinish() );
       assertTrue( listener.isOnFirstPage() );
-      assertFalse( -1 == listener.getState().getRow());
-      assertFalse( -1 == listener.getState().getTotalRows());
+      assertFalse( -1 == listener.getState().getRow() );
+      assertFalse( -1 == listener.getState().getTotalRows() );
       assertEquals( 1, listener.getState().getGeneratedPage() );
 
       ReportListenerThreadHolder.clear();
@@ -606,8 +609,8 @@ public class PageableHTMLTest {
       assertTrue( listener.isOnUpdate() );
       assertTrue( listener.isOnFinish() );
       assertFalse( listener.isOnFirstPage() );
-      assertFalse( -1 == listener.getState().getRow());
-      assertFalse( -1 == listener.getState().getTotalRows());
+      assertFalse( -1 == listener.getState().getRow() );
+      assertFalse( -1 == listener.getState().getTotalRows() );
 
       ReportListenerThreadHolder.clear();
 
@@ -631,7 +634,6 @@ public class PageableHTMLTest {
       edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.FirstPageMode", null );
     }
   }
-
 
 
   @Test
@@ -699,5 +701,6 @@ public class PageableHTMLTest {
     // execute the component
     assertTrue( rc.execute() );
   }
+
 
 }

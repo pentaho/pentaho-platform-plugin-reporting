@@ -18,34 +18,26 @@
 
 package org.pentaho.reporting.platform.plugin.async;
 
-import java.util.UUID;
-import java.util.concurrent.Callable;
+import org.pentaho.platform.api.engine.IPentahoSession;
+import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
+import org.pentaho.platform.api.repository2.unified.RepositoryFile;
+import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
+import org.pentaho.platform.repository2.ClientRepositoryPaths;
 
-public interface IAsyncReportExecution<T> extends Callable<T> {
+/**
+ * Use home directory as scheduling directory
+ */
+public class HomeSchedulingDirStrategy implements ISchedulingDirectoryStrategy {
 
-  /**
-   * Assigns the UUID. This is called exclusively from the AsyncExecutor, which manages ids and guarantees the validity of them.
-   *
-   * @param id
-   */
-  void notifyTaskQueued( UUID id );
+  @Override public RepositoryFile getSchedulingDir( final IUnifiedRepository repo ) {
+    final IPentahoSession session = PentahoSessionHolder.getSession();
 
-  /**
-   * Return the current state. Never null.
-   * @return
-     */
-  IAsyncReportState getState();
-  String getReportPath();
+    if ( session != null ) {
+      final String userHomeFolderPath = ClientRepositoryPaths.getUserHomeFolderPath( session.getName() );
+      return repo.getFile( userHomeFolderPath );
+    }
 
-  /**
-   * Get generated content mime-type suggestion to
-   * set proper http response header
-   *
-   * @return
-   */
-  String getMimeType();
+    return null;
+  }
 
-  void requestPage( int page );
-
-  boolean schedule();
 }

@@ -18,34 +18,14 @@
 
 package org.pentaho.reporting.platform.plugin.async;
 
-import java.util.UUID;
-import java.util.concurrent.Callable;
+import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
+import org.pentaho.platform.api.repository2.unified.RepositoryFile;
 
-public interface IAsyncReportExecution<T> extends Callable<T> {
+/**
+ * Strategy for scheduling directory calculation
+ */
+public interface ISchedulingDirectoryStrategy {
 
-  /**
-   * Assigns the UUID. This is called exclusively from the AsyncExecutor, which manages ids and guarantees the validity of them.
-   *
-   * @param id
-   */
-  void notifyTaskQueued( UUID id );
+  RepositoryFile getSchedulingDir( final IUnifiedRepository repo );
 
-  /**
-   * Return the current state. Never null.
-   * @return
-     */
-  IAsyncReportState getState();
-  String getReportPath();
-
-  /**
-   * Get generated content mime-type suggestion to
-   * set proper http response header
-   *
-   * @return
-   */
-  String getMimeType();
-
-  void requestPage( int page );
-
-  boolean schedule();
 }

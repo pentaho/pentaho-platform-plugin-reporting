@@ -18,34 +18,15 @@
 
 package org.pentaho.reporting.platform.plugin.async;
 
-import java.util.UUID;
-import java.util.concurrent.Callable;
+import com.google.common.util.concurrent.ListenableFuture;
 
-public interface IAsyncReportExecution<T> extends Callable<T> {
+/**
+ * Interface to implement in order to return extended ListenableFuture
+ *
+ * @param <T> type parameter
+ */
+public interface IListenableFutureDelegator<T> {
 
-  /**
-   * Assigns the UUID. This is called exclusively from the AsyncExecutor, which manages ids and guarantees the validity of them.
-   *
-   * @param id
-   */
-  void notifyTaskQueued( UUID id );
+  ListenableFuture<T> delegate( ListenableFuture<T> delegate );
 
-  /**
-   * Return the current state. Never null.
-   * @return
-     */
-  IAsyncReportState getState();
-  String getReportPath();
-
-  /**
-   * Get generated content mime-type suggestion to
-   * set proper http response header
-   *
-   * @return
-   */
-  String getMimeType();
-
-  void requestPage( int page );
-
-  boolean schedule();
 }

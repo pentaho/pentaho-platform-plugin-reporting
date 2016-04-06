@@ -231,4 +231,26 @@ public class PentahoAsyncReportExecutorTest {
     folders = stagingFolder.toFile().list();
     assertTrue( folders.length == 0 );
   }
+
+
+  @Test public void testSchedule() {
+    final PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 1 );
+
+    final TestListener testListener = new TestListener( "1", UUID.randomUUID(), "" );
+
+    // must have two separate instances, as callable holds unique ID and listener for each addTask(..)
+    final UUID id1 = exec.addTask(  new PentahoAsyncReportExecution( "junit-path", component, handler, null ) {
+      @Override
+      protected AsyncReportStatusListener createListener(final UUID id) {
+        return testListener;
+      }
+    }, session1 );
+
+    exec.schedule( id1, session1 );
+
+    final IAsyncReportState state = exec.getReportState( id1, session1 );
+    assertNotNull( state );
+    assertEquals( AsyncExecutionStatus.SCHEDULED, testListener.getState().getStatus() );
+
+  }
 }

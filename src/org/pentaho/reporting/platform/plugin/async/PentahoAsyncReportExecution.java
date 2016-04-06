@@ -1,5 +1,25 @@
+/*
+ * This program is free software; you can redistribute it and/or modify it under the
+ * terms of the GNU General Public License, version 2 as published by the Free Software
+ * Foundation.
+ *
+ * You should have received a copy of the GNU General Public License along with this
+ * program; if not, you can obtain a copy at http://www.gnu.org/licenses/gpl-2.0.html
+ * or from the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ *
+ * Copyright 2006 - 2016 Pentaho Corporation.  All rights reserved.
+ */
+
+
 package org.pentaho.reporting.platform.plugin.async;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.commons.io.input.NullInputStream;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -13,10 +33,9 @@ import org.pentaho.reporting.platform.plugin.staging.AsyncJobFileStagingHandler;
 
 import java.io.InputStream;
 import java.util.UUID;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.RunnableFuture;
 
-public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputStream> {
+public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputStream>,
+  IListenableFutureDelegator<InputStream> {
 
   private final SimpleReportingComponent reportComponent;
   private final AsyncJobFileStagingHandler handler;
@@ -110,6 +129,7 @@ public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputS
   }
 
   private void fail() {
+    handler.close();
     // do not erase canceled status
     if ( !listener.getState().getStatus().equals( AsyncExecutionStatus.CANCELED ) ) {
       listener.setStatus( AsyncExecutionStatus.FAILED );
@@ -129,23 +149,14 @@ public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputS
     this.listener.setStatus( AsyncExecutionStatus.CANCELED );
   }
 
-  @Override public RunnableFuture<InputStream> newTask() {
-    return new FutureTask<InputStream>( this ) {
-      public boolean cancel( final boolean mayInterruptIfRunning ) {
-        try {
-          if ( mayInterruptIfRunning ) {
-            PentahoAsyncReportExecution.this.cancel();
-          }
-        } catch ( final Exception e ) {
-          // ignored.
-        }
-        return super.cancel( mayInterruptIfRunning );
-      }
-    };
-  }
 
   @Override public void requestPage( final int page ) {
     listener.setRequestedPage( page );
+  }
+
+  @Override public boolean schedule() {
+    listener.setStatus( AsyncExecutionStatus.SCHEDULED );
+    return listener.isScheduled();
   }
 
   @Override public String toString() {
@@ -164,7 +175,35 @@ public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputS
     return reportComponent.getMimeType();
   }
 
+  @Override public ListenableFuture<InputStream> delegate( final ListenableFuture<InputStream> delegate ) {
+    return new CancelableListenableFuture( delegate );
+  }
+
   public String getReportPath() {
     return this.url;
+  }
+
+  /**
+   * Implements cancel functionality
+   */
+  private class CancelableListenableFuture extends SimpleDelegatedListenableFuture<InputStream> {
+    private CancelableListenableFuture( final ListenableFuture<InputStream> delegate ) {
+      super( delegate );
+    }
+
+    @Override public boolean cancel( final boolean mayInterruptIfRunning ) {
+      if ( !listener.isScheduled() ) {
+        try {
+          if ( mayInterruptIfRunning ) {
+            PentahoAsyncReportExecution.this.cancel();
+          }
+        } catch ( final Exception e ) {
+          // ignored.
+        }
+        return super.cancel( mayInterruptIfRunning );
+      } else {
+        return Boolean.FALSE;
+      }
+    }
   }
 }

@@ -104,7 +104,7 @@ public class JobManager {
       return get404();
     }
 
-    if( !AsyncExecutionStatus.FINISHED.equals( state.getStatus() ) ){
+    if ( !AsyncExecutionStatus.FINISHED.equals( state.getStatus() ) ) {
       return Response.status( Response.Status.ACCEPTED ).build();
     }
 
@@ -145,9 +145,9 @@ public class JobManager {
   }
 
   static Response.ResponseBuilder calculateContentDisposition( final Response.ResponseBuilder response,
-                                                                final IAsyncReportState state ) {
+                                                               final IAsyncReportState state ) {
     final org.pentaho.reporting.libraries.base.util.IOUtils utils = org.pentaho.reporting.libraries
-        .base.util.IOUtils.getInstance();
+      .base.util.IOUtils.getInstance();
 
     final String targetExt = MimeHelper.getExtension( state.getMimeType() );
     final String fullPath = state.getPath();
@@ -158,9 +158,9 @@ public class JobManager {
     }
 
     final String
-        disposition =
-        "inline; filename*=UTF-8''" + RepositoryPathEncoder
-            .encode( RepositoryPathEncoder.encodeRepositoryPath( cleanFileName + targetExt ) );
+      disposition =
+      "inline; filename*=UTF-8''" + RepositoryPathEncoder
+        .encode( RepositoryPathEncoder.encodeRepositoryPath( cleanFileName + targetExt ) );
     response.header( "Content-Disposition", disposition );
 
     response.header( "Content-Description", cleanFileName + sourceExt );
@@ -250,7 +250,9 @@ public class JobManager {
     return Response.ok( String.valueOf( page ) ).build();
   }
 
-  @GET @Path( "{job_id}/clean" ) public Response clean( @PathParam( "job_id" ) final String job_id ) {
+
+  @GET @Path( "{job_id}/schedule" ) @Produces( "text/text" )
+  public Response schedule( @PathParam( "job_id" ) final String job_id ) {
     UUID uuid = null;
     try {
       uuid = UUID.fromString( job_id );
@@ -265,10 +267,9 @@ public class JobManager {
       return Response.serverError().build();
     }
     final IPentahoSession session = PentahoSessionHolder.getSession();
+    executor.schedule( uuid, session );
 
-    executor.cleanFuture( uuid, session );
-
-    return Response.ok( ).build();
+    return Response.ok().build();
   }
 
   private Response get404() {
@@ -286,13 +287,12 @@ public class JobManager {
   public static final class StreamingOutputWrapper implements StreamingOutput {
 
     private InputStream input;
-    public static final byte[] BUFFER = new byte[ 8192 ];
 
-    public StreamingOutputWrapper( InputStream readFrom ) {
+    public StreamingOutputWrapper( final InputStream readFrom ) {
       this.input = readFrom;
     }
 
-    @Override public void write( OutputStream outputStream ) throws IOException, WebApplicationException {
+    @Override public void write( final OutputStream outputStream ) throws IOException, WebApplicationException {
       try {
         IOUtils.copy( input, outputStream );
         outputStream.flush();
