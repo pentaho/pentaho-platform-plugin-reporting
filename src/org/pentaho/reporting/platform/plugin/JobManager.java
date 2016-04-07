@@ -27,6 +27,7 @@ import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.util.RepositoryPathEncoder;
 import org.pentaho.platform.util.web.MimeHelper;
+import org.pentaho.reporting.platform.plugin.async.AsyncExecutionStatus;
 import org.pentaho.reporting.platform.plugin.async.IAsyncReportState;
 import org.pentaho.reporting.platform.plugin.async.IPentahoAsyncExecutor;
 import org.pentaho.reporting.platform.plugin.async.PentahoAsyncExecutor;
@@ -97,14 +98,14 @@ public class JobManager {
     final IPentahoSession session = PentahoSessionHolder.getSession();
 
     Future<InputStream> future = executor.getFuture( uuid, session );
-    if ( future == null || !future.isDone() ) {
-      logger.warn( "Attempt to get content while execution is not done. Called by: " + session.getName() );
-      return get404();
-    }
 
     IAsyncReportState state = executor.getReportState( uuid, session );
     if ( state == null ) {
       return get404();
+    }
+
+    if( !AsyncExecutionStatus.FINISHED.equals( state.getStatus() ) ){
+      return Response.status( Response.Status.ACCEPTED ).build();
     }
 
     InputStream input = null;
