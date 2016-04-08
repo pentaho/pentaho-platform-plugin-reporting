@@ -10,10 +10,10 @@ import org.pentaho.platform.api.engine.IPentahoSystemListener;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.libraries.base.util.ArgumentNullException;
 import org.pentaho.reporting.platform.plugin.staging.AsyncJobFileStagingHandler;
+import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Objects;
@@ -24,31 +24,31 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-public class PentahoAsyncExecutor implements ILogoutListener, IPentahoSystemListener, IPentahoAsyncExecutor {
+public class PentahoAsyncExecutor<TReportState extends IAsyncReportState>
+        implements ILogoutListener, IPentahoSystemListener, IPentahoAsyncExecutor<TReportState> {
 
   public static final String BEAN_NAME = "IPentahoAsyncExecutor";
 
   private static final Log log = LogFactory.getLog( PentahoAsyncExecutor.class );
 
-  private Map<CompositeKey, Future<InputStream>> futures = new ConcurrentHashMap<>();
-  private Map<CompositeKey, IAsyncReportExecution<InputStream>> tasks = new ConcurrentHashMap<>();
+  private Map<CompositeKey, Future<IFixedSizeStreamingContent>> futures = new ConcurrentHashMap<>();
+  private Map<CompositeKey, IAsyncReportExecution<TReportState>> tasks = new ConcurrentHashMap<>();
 
   private ExecutorService executorService;
 
   /**
    * @param capacity
    */
-  //package private visibility for testing purposes
-  PentahoAsyncExecutor( final int capacity ) {
+  public PentahoAsyncExecutor( final int capacity ) {
     log.info( "Initialized reporting  async execution fixed thread pool with capacity: " + capacity );
     executorService =
-      new PentahoAsyncCancellingExecutor( capacity, capacity, 0L, TimeUnit.MILLISECONDS,
-        new LinkedBlockingQueue<Runnable>() );
+            new PentahoAsyncCancellingExecutor( capacity, capacity, 0L, TimeUnit.MILLISECONDS,
+                    new LinkedBlockingQueue<Runnable>() );
     PentahoSystem.addLogoutListener( this );
   }
 
   // default visibility for testing purpose
-  static class CompositeKey {
+  protected static class CompositeKey {
 
     private String sessionId;
     private String uuid;
@@ -78,7 +78,7 @@ public class PentahoAsyncExecutor implements ILogoutListener, IPentahoSystemList
     }
   }
 
-  @Override public UUID addTask( final IAsyncReportExecution<InputStream> task, final IPentahoSession session ) {
+  @Override public UUID addTask( final IAsyncReportExecution<TReportState> task, final IPentahoSession session ) {
 
     final UUID id = UUID.randomUUID();
     final CompositeKey key = new CompositeKey( session, id );
@@ -87,13 +87,13 @@ public class PentahoAsyncExecutor implements ILogoutListener, IPentahoSystemList
 
     log.debug( "register async execution for task: " + task.toString() );
 
-    final Future<InputStream> result = executorService.submit( task );
+    final Future<IFixedSizeStreamingContent> result = executorService.submit( task );
     futures.put( key, result );
     tasks.put( key, task );
     return id;
   }
 
-  @Override public Future<InputStream> getFuture( final UUID id, final IPentahoSession session ) {
+  @Override public Future<IFixedSizeStreamingContent> getFuture( final UUID id, final IPentahoSession session ) {
     validateParams( id, session );
     return futures.get( new CompositeKey( session, id ) );
   }
@@ -106,47 +106,47 @@ public class PentahoAsyncExecutor implements ILogoutListener, IPentahoSystemList
 
   @Override public void requestPage( final UUID id, final IPentahoSession session, final int page ) {
     validateParams( id, session );
-    final IAsyncReportExecution<InputStream> runningTask = tasks.get( new CompositeKey( session, id ) );
+    final IAsyncReportExecution<TReportState> runningTask = tasks.get( new CompositeKey( session, id ) );
     if ( runningTask != null ) {
       runningTask.requestPage( page );
     }
   }
 
-  @Override public IAsyncReportState getReportState( final UUID id, final IPentahoSession session ) {
+  @Override public TReportState getReportState( final UUID id, final IPentahoSession session ) {
     validateParams( id, session );
     // link to running task
-    final IAsyncReportExecution<InputStream> runningTask = tasks.get( new CompositeKey( session, id ) );
+    final IAsyncReportExecution<TReportState> runningTask = tasks.get( new CompositeKey( session, id ) );
     return runningTask == null ? null : runningTask.getState();
   }
 
-  private void validateParams( final UUID id, final IPentahoSession session ) {
+  protected void validateParams( final UUID id, final IPentahoSession session ) {
     ArgumentNullException.validate( "uuid", id );
     ArgumentNullException.validate( "session", session );
   }
 
-  @Override public void onLogout( final IPentahoSession iPentahoSession ) {
+  @Override public void onLogout( final IPentahoSession session ) {
     if ( log.isDebugEnabled() ) {
       // don't expose full session id.
-      log.debug( "killing async report execution cache for user: " + iPentahoSession.getName() );
+      log.debug( "killing async report execution cache for user: " + session.getName() );
     }
-    for ( final Map.Entry<CompositeKey, Future<InputStream>> entry : futures.entrySet() ) {
-      if ( ObjectUtils.equals( entry.getKey().getSessionId(), iPentahoSession.getId() ) ) {
+    for ( final Map.Entry<CompositeKey, Future<IFixedSizeStreamingContent>> entry : futures.entrySet() ) {
+      if ( ObjectUtils.equals( entry.getKey().getSessionId(), session.getId() ) ) {
         // attempt to cancel running task
         entry.getValue().cancel( true );
-
         // remove all links to release GC
         futures.remove( entry.getKey() );
         tasks.remove( entry.getKey() );
       }
     }
 
+    AsyncJobFileStagingHandler.cleanSession( session );
     // do it generic way according to staging handler was used?
     Path stagingSessionDir = AsyncJobFileStagingHandler.getStagingDirPath();
     if ( stagingSessionDir == null ) {
       //never been initialized
       return;
     }
-    stagingSessionDir = stagingSessionDir.resolve( iPentahoSession.getId() );
+    stagingSessionDir = stagingSessionDir.resolve( session.getId() );
     final File sessionStagingContent = stagingSessionDir.toFile();
 
     // some lib can do it for me?
@@ -165,24 +165,13 @@ public class PentahoAsyncExecutor implements ILogoutListener, IPentahoSystemList
 
   @Override public void shutdown() {
     // attempt to stop all
-    for ( final Map.Entry<CompositeKey, Future<InputStream>> entry : futures.entrySet() ) {
-      entry.getValue().cancel( true );
+    for ( final Future<IFixedSizeStreamingContent> entry : futures.values() ) {
+      entry.cancel( true );
     }
     // forget all
     this.futures.clear();
     this.tasks.clear();
 
-    // delete all staging dir
-    final Path stagingDir = AsyncJobFileStagingHandler.getStagingDirPath();
-    final File stagingDirFile;
-    if ( stagingDir != null ) {
-      stagingDirFile = stagingDir.toFile();
-      try {
-        FileUtils.deleteDirectory( stagingDirFile );
-      } catch ( final IOException e ) {
-        log.debug( "Unable to delete async staging content on shutdown. Directory: " + stagingDirFile.getName() );
-      }
-    }
-
+    AsyncJobFileStagingHandler.cleanStagingDir();
   }
 }

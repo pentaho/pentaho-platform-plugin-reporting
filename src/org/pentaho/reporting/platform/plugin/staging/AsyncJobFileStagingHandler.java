@@ -18,6 +18,7 @@
 
 package org.pentaho.reporting.platform.plugin.staging;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -39,10 +40,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
- * Async stage handler.
- * Write to TEMP file but:
- * - live between requests.
- * - require to re-set output stream for ready-to-fetch-request to fetch ready to use data.
+ * Async stage handler. Write to TEMP file but: - live between requests. - require to re-set output stream for
+ * ready-to-fetch-request to fetch ready to use data.
  * <p/>
  * Created by dima.prokopenko@gmail.com on 2/10/2016.
  */
@@ -56,17 +55,16 @@ public class AsyncJobFileStagingHandler {
   private String sessionId;
 
   private OutputStream fileTrackingStream;
-  private StagingInputStream stagingInputStream;
 
   // package private for testing purpose
   File tmpFile;
 
   private String stringParentDir = null;
 
-  public AsyncJobFileStagingHandler( IPentahoSession userSession ) throws IOException {
+  public AsyncJobFileStagingHandler( final IPentahoSession userSession ) throws IOException {
     this.sessionId = userSession.getId();
 
-    IApplicationContext context = PentahoSystem.getApplicationContext();
+    final IApplicationContext context = PentahoSystem.getApplicationContext();
     stringParentDir = context == null ? null : context.getSolutionPath( "system/tmp" );
 
     this.initialize();
@@ -80,26 +78,26 @@ public class AsyncJobFileStagingHandler {
     }
 
     // /system/tmp/<STAGING_DIR_ATTR>/<session-id>/tmpFile
-    Path stagingExecutionFolder = getStagingExecutionFolder( sessionId );
+    final Path stagingExecutionFolder = getStagingExecutionFolder( sessionId );
     if ( !stagingExecutionFolder.toFile().exists() ) {
       if ( !stagingExecutionFolder.toFile().mkdirs() ) {
         throw new IOException( "Unable to create staging async directory" );
       }
     }
-    Path tempFilePath = stagingExecutionFolder.resolve( UUIDUtil.getUUIDAsString() + POSTFIX );
+    final Path tempFilePath = stagingExecutionFolder.resolve( UUIDUtil.getUUIDAsString() + POSTFIX );
     tmpFile = tempFilePath.toFile();
     tmpFile.deleteOnExit();
 
     fileTrackingStream = new BufferedOutputStream( new FileOutputStream( tmpFile ) );
   }
 
-  private Path getStagingExecutionFolder( String userSession ) {
+  private Path getStagingExecutionFolder( final String userSession ) {
     return getStagingDirPath().resolve( userSession );
   }
 
   public static Path getStagingDirPath() {
-    IApplicationContext context = PentahoSystem.getApplicationContext();
-    String solutionTempFolder = context == null ? null : context.getSolutionPath( "system/tmp" );
+    final IApplicationContext context = PentahoSystem.getApplicationContext();
+    final String solutionTempFolder = context == null ? null : context.getSolutionPath( "system/tmp" );
     return solutionTempFolder == null ? null : Paths.get( solutionTempFolder ).resolve( STAGING_DIR_ATTR );
   }
 
@@ -107,10 +105,42 @@ public class AsyncJobFileStagingHandler {
     return fileTrackingStream;
   }
 
-  public InputStream getStagingContent() throws FileNotFoundException {
+  public IFixedSizeStreamingContent getStagingContent() throws FileNotFoundException {
     // hold a reference to object ot be able to close and release staging file.
-    stagingInputStream = new StagingInputStream( new FileInputStream( tmpFile ) );
-    return stagingInputStream;
+    StagingInputStream stagingInputStream = new StagingInputStream( new FileInputStream( tmpFile ) );
+    return new FixedSizeStagingContent( stagingInputStream, tmpFile.length() );
+  }
+
+  public static void cleanSession( final IPentahoSession iPentahoSession ) {
+    // do it generic way according to staging handler was used?
+    Path stagingSessionDir = AsyncJobFileStagingHandler.getStagingDirPath();
+    if ( stagingSessionDir == null ) {
+      //never been initialized
+      return;
+    }
+    stagingSessionDir = stagingSessionDir.resolve( iPentahoSession.getId() );
+    final File sessionStagingContent = stagingSessionDir.toFile();
+
+    // some lib can do it for me?
+    try {
+      FileUtils.deleteDirectory( sessionStagingContent );
+    } catch ( final IOException e ) {
+      logger.debug( "Unable delete temp files on session logout." );
+    }
+  }
+
+  public static void cleanStagingDir() {
+    // delete all staging dir
+    final Path stagingDir = AsyncJobFileStagingHandler.getStagingDirPath();
+    final File stagingDirFile;
+    if ( stagingDir != null ) {
+      stagingDirFile = stagingDir.toFile();
+      try {
+        FileUtils.deleteDirectory( stagingDirFile );
+      } catch ( final IOException e ) {
+        logger.debug( "Unable to delete async staging content on shutdown. Directory: " + stagingDirFile.getName() );
+      }
+    }
   }
 
   public void close() {
@@ -132,15 +162,13 @@ public class AsyncJobFileStagingHandler {
   }
 
   /**
-   * Inner class to be able to close staging resources
-   * after closing of InputStream.
+   * Inner class to be able to close staging resources after closing of InputStream.
    * <p/>
-   * Holding a link to this particular InputStream object will prevent
-   * GC to collect staging handler.
+   * Holding a link to this particular InputStream object will prevent GC to collect staging handler.
    */
   private class StagingInputStream extends BufferedInputStream {
 
-    public StagingInputStream( InputStream in ) {
+    public StagingInputStream( final InputStream in ) {
       super( in );
     }
 
@@ -151,6 +179,25 @@ public class AsyncJobFileStagingHandler {
       } catch ( Exception e ) {
         logger.debug( "Attempt to close quietly is not quietly" );
       }
+    }
+  }
+
+  public static final class FixedSizeStagingContent implements IFixedSizeStreamingContent {
+
+    private InputStream in;
+    private long size;
+
+    public FixedSizeStagingContent( InputStream in, long size ) {
+      this.in = in;
+      this.size = size;
+    }
+
+    @Override public InputStream getStream() {
+      return in;
+    }
+
+    @Override public long getContentSize() {
+      return size;
     }
   }
 }

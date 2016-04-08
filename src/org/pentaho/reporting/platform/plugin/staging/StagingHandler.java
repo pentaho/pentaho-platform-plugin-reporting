@@ -17,38 +17,24 @@
 
 package org.pentaho.reporting.platform.plugin.staging;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
+import org.pentaho.reporting.engine.classic.core.util.StagingMode;
+
 import java.io.IOException;
 import java.io.OutputStream;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.pentaho.platform.api.engine.IApplicationContext;
-import org.pentaho.platform.api.engine.IPentahoSession;
-import org.pentaho.platform.api.util.ITempFileDeleter;
-import org.pentaho.platform.engine.core.system.PentahoSystem;
-import org.pentaho.platform.util.UUIDUtil;
-import org.pentaho.reporting.engine.classic.core.util.StagingMode;
-import org.pentaho.reporting.libraries.base.util.MemoryByteArrayOutputStream;
-
 public interface StagingHandler {
 
-  public StagingMode getStagingMode();
+  StagingMode getStagingMode();
 
-  public boolean isFullyBuffered();
+  boolean isFullyBuffered();
 
-  public boolean canSendHeaders();
+  boolean canSendHeaders();
 
-  public OutputStream getStagingOutputStream();
+  OutputStream getStagingOutputStream();
 
-  public void complete() throws IOException;
+  void complete() throws IOException;
 
-  public void close();
+  void close();
 
-  public int getWrittenByteCount();
+  int getWrittenByteCount();
 }

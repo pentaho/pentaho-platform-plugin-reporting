@@ -178,6 +178,7 @@ public class JobManagerTest extends JaxRsServerProvider {
       @Override public String getMimeType() {
         return MIME;
       }
+      
     };
   }
 }

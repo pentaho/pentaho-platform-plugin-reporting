@@ -131,6 +131,13 @@ public class JobManager {
       response = Response.ok( stream, state.getMimeType() );
     }
 
+    response = noCache( response );
+    response = calculateContentDisposition( response, state );
+
+    return response.build();
+  }
+
+  protected static Response.ResponseBuilder noCache( Response.ResponseBuilder response ) {
     // no cache
     CacheControl cacheControl = new CacheControl();
     cacheControl.setPrivate( true );
@@ -138,16 +145,13 @@ public class JobManager {
     cacheControl.setMustRevalidate( true );
 
     response.cacheControl( cacheControl );
-
-    response = calculateContentDisposition( response, state );
-
-    return response.build();
+    return response;
   }
 
-  static Response.ResponseBuilder calculateContentDisposition( final Response.ResponseBuilder response,
-                                                                final IAsyncReportState state ) {
+  protected static Response.ResponseBuilder calculateContentDisposition( final Response.ResponseBuilder response,
+                                                                         final IAsyncReportState state ) {
     final org.pentaho.reporting.libraries.base.util.IOUtils utils = org.pentaho.reporting.libraries
-        .base.util.IOUtils.getInstance();
+      .base.util.IOUtils.getInstance();
 
     final String targetExt = MimeHelper.getExtension( state.getMimeType() );
     final String fullPath = state.getPath();
@@ -158,9 +162,9 @@ public class JobManager {
     }
 
     final String
-        disposition =
-        "inline; filename*=UTF-8''" + RepositoryPathEncoder
-            .encode( RepositoryPathEncoder.encodeRepositoryPath( cleanFileName + targetExt ) );
+      disposition =
+      "inline; filename*=UTF-8''" + RepositoryPathEncoder
+        .encode( RepositoryPathEncoder.encodeRepositoryPath( cleanFileName + targetExt ) );
     response.header( "Content-Disposition", disposition );
 
     response.header( "Content-Description", cleanFileName + sourceExt );
@@ -268,14 +272,14 @@ public class JobManager {
 
     executor.cleanFuture( uuid, session );
 
-    return Response.ok( ).build();
+    return Response.ok().build();
   }
 
-  private Response get404() {
+  protected final Response get404() {
     return Response.status( Response.Status.NOT_FOUND ).build();
   }
 
-  private IPentahoAsyncExecutor getExecutor() {
+  protected IPentahoAsyncExecutor getExecutor() {
     return PentahoSystem.get( IPentahoAsyncExecutor.class, PentahoAsyncExecutor.BEAN_NAME, null );
   }
 

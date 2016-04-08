@@ -106,4 +106,5 @@ public class AsyncReportState implements IAsyncReportState {
   public String getMimeType() {
     return mimeType;
   }
+
 }
