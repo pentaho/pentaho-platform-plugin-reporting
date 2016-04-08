@@ -99,9 +99,8 @@ public class JobManagerTest extends JaxRsServerProvider {
     assertEquals( "100", page );
   }
 
-  @Test public void testClean() throws IOException {
-    client.path( String.format( URL_FORMAT, UUID.randomUUID().toString(), "/clean" ) );
-
+  @Test public void testSchedule() throws IOException {
+    client.path( String.format( URL_FORMAT, UUID.randomUUID().toString(), "/schedule" ) );
     final Response response = client.get();
     assertNotNull( response );
     assertEquals(200, response.getStatus() );

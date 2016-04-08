@@ -16,26 +16,16 @@
  * Copyright 2006 - 2016 Pentaho Corporation.  All rights reserved.
  */
 
-
 package org.pentaho.reporting.platform.plugin.async;
 
-import org.pentaho.platform.api.engine.IPentahoSession;
-import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
+import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
+import org.pentaho.platform.api.repository2.unified.RepositoryFile;
 
-import java.util.UUID;
-import java.util.concurrent.Future;
+/**
+ * Strategy for scheduling directory calculation
+ */
+public interface ISchedulingDirectoryStrategy {
 
-public interface IPentahoAsyncExecutor<TReportState extends IAsyncReportState> {
+  RepositoryFile getSchedulingDir( final IUnifiedRepository repo );
 
-  Future<IFixedSizeStreamingContent> getFuture( UUID id, IPentahoSession session );
-
-  void cleanFuture( UUID id, IPentahoSession session );
-
-  UUID addTask( IAsyncReportExecution<TReportState> task, IPentahoSession session );
-
-  TReportState getReportState( UUID id, IPentahoSession session );
-
-  void requestPage( UUID id, IPentahoSession session, int page );
-
-  void schedule( UUID uuid, IPentahoSession session );
 }

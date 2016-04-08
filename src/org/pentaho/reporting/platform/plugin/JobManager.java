@@ -105,7 +105,7 @@ public class JobManager {
       return get404();
     }
 
-    if( !AsyncExecutionStatus.FINISHED.equals( state.getStatus() ) ){
+    if ( !AsyncExecutionStatus.FINISHED.equals( state.getStatus() ) ) {
       return Response.status( Response.Status.ACCEPTED ).build();
     }
 
@@ -255,7 +255,9 @@ public class JobManager {
     return Response.ok( String.valueOf( page ) ).build();
   }
 
-  @GET @Path( "{job_id}/clean" ) public Response clean( @PathParam( "job_id" ) final String job_id ) {
+
+  @GET @Path( "{job_id}/schedule" ) @Produces( "text/text" )
+  public Response schedule( @PathParam( "job_id" ) final String job_id ) {
     UUID uuid = null;
     try {
       uuid = UUID.fromString( job_id );
@@ -270,9 +272,7 @@ public class JobManager {
       return Response.serverError().build();
     }
     final IPentahoSession session = PentahoSessionHolder.getSession();
-
-    executor.cleanFuture( uuid, session );
-
+    executor.schedule( uuid, session );
     return Response.ok().build();
   }
 
@@ -291,13 +291,12 @@ public class JobManager {
   public static final class StreamingOutputWrapper implements StreamingOutput {
 
     private InputStream input;
-    public static final byte[] BUFFER = new byte[ 8192 ];
 
-    public StreamingOutputWrapper( InputStream readFrom ) {
+    public StreamingOutputWrapper( final InputStream readFrom ) {
       this.input = readFrom;
     }
 
-    @Override public void write( OutputStream outputStream ) throws IOException, WebApplicationException {
+    @Override public void write( final OutputStream outputStream ) throws IOException, WebApplicationException {
       try {
         IOUtils.copy( input, outputStream );
         outputStream.flush();

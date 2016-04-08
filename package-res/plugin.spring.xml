@@ -93,4 +93,12 @@
     <!--<constructor-arg type="long" value="1500" />-->
   </bean>
 
+  <!--Scheduling-->
+  <bean id="ISchedulingDirectoryStrategy" class="org.pentaho.reporting.platform.plugin.async.HomeSchedulingDirStrategy" />
+
+  <!--You can provide your own absolute or relatve to home path-->
+  <!--<bean id="ISchedulingDirectoryStrategy" class="org.pentaho.reporting.platform.plugin.async.ProvidedSchedulingDirStrategy" >
+    <constructor-arg value="/public"/>
+  </bean>-->
+
 </beans>

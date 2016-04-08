@@ -19,7 +19,7 @@ define(["dojo/_base/declare", "dijit/_WidgetBase", "dijit/_Templated", "dojo/on"
     function(declare, _WidgetBase, _Templated, on, query, button, Dialog, templateStr){
       return declare("pentaho.reportviewer.FeedbackScreen", [Dialog],
      {
-        buttons: ['ok'],
+        buttons: [ 'background', 'cancel'],
 
         imagePath: '',
 
@@ -41,12 +41,30 @@ define(["dojo/_base/declare", "dijit/_WidgetBase", "dijit/_Templated", "dojo/on"
             this.feedbackmessage3.innerHTML = text;
         },
 
-        setButtonText: function(text) {
-            this.buttons[0] = text;
-            query("#button"+0, this.domNode).innerHTML = text;
+        setCancelText: function(text) {
+          var i = this.buttons.length > 1 ? 1 : 0;
+          this.buttons[i] = text;
+          query("#button"+i, this.domNode).forEach(function(node, index, arr){
+            node.innerHTML = text;
+          });
         },
-    
-        templateString: templateStr,
+
+       hideBackgroundBtn: function( ) {
+         if(this.buttons.length > 1 ){
+           this.buttons.shift();
+         }
+       },
+
+       showBackgroundBtn: function(text) {
+         if(this.buttons.length == 1 ){
+           this.buttons.unshift(text);
+           query("#button"+1, this.domNode).forEach(function(node, index, arr){
+             node.innerHTML = text;
+           });
+         }
+       },
+
+       templateString: templateStr,
 
        postCreate: function() {
            this.inherited(arguments);

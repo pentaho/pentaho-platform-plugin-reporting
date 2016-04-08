@@ -64,7 +64,9 @@ public class AsyncReportStatusListener implements IAsyncReportListener {
 
   @Override
   public synchronized void setStatus( final AsyncExecutionStatus status ) {
-    this.status = status;
+    if ( this.status == null || !this.status.isFinal()) {
+      this.status = status;
+    }
   }
 
   public boolean isFirstPageMode() {
@@ -90,10 +92,14 @@ public class AsyncReportStatusListener implements IAsyncReportListener {
     this.requestedPage = 0;
   }
 
+  @Override public boolean isScheduled() {
+    return AsyncExecutionStatus.SCHEDULED.equals( this.status );
+  }
+
 
   @Override
   public synchronized void reportProcessingStarted( final ReportProgressEvent event ) {
-    this.status = AsyncExecutionStatus.WORKING;
+    setStatus( AsyncExecutionStatus.WORKING );
   }
 
   @Override

@@ -1,6 +1,27 @@
+/*
+ * This program is free software; you can redistribute it and/or modify it under the
+ * terms of the GNU General Public License, version 2 as published by the Free Software
+ * Foundation.
+ *
+ * You should have received a copy of the GNU General Public License along with this
+ * program; if not, you can obtain a copy at http://www.gnu.org/licenses/gpl-2.0.html
+ * or from the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ *
+ * Copyright 2006 - 2016 Pentaho Corporation.  All rights reserved.
+ */
+
+
 package org.pentaho.reporting.platform.plugin.async;
 
 import org.apache.commons.io.IOUtils;
+import com.google.common.util.concurrent.ListenableFuture;
+import org.apache.commons.io.input.NullInputStream;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.pentaho.platform.api.engine.IPentahoSession;
@@ -13,7 +34,9 @@ import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
 
 import java.io.OutputStream;
 
-public class PentahoAsyncReportExecution extends AbstractAsyncReportExecution<IAsyncReportState> {
+public class PentahoAsyncReportExecution
+        extends AbstractAsyncReportExecution<IAsyncReportState>
+        implements IListenableFutureDelegator<IFixedSizeStreamingContent> {
 
   private static final Log log = LogFactory.getLog( PentahoAsyncReportExecution.class );
 
@@ -89,8 +112,12 @@ public class PentahoAsyncReportExecution extends AbstractAsyncReportExecution<IA
     }
   }
 
-  @Override
-  public IAsyncReportState getState() {
+  @Override public String toString() {
+    return "PentahoAsyncReportExecution{" + "url='" + url + '\'' + ", instanceId='" + auditId + '\'' + ", listener="
+        + getListener() + '}';
+  }
+
+  @Override public IAsyncReportState getState() {
     final AsyncReportStatusListener listener = getListener();
     if ( listener == null ) {
       throw new IllegalStateException( "Cannot query state until job is added to the executor." );
@@ -98,4 +125,34 @@ public class PentahoAsyncReportExecution extends AbstractAsyncReportExecution<IA
     return listener.getState();
   }
 
+  @Override
+  public ListenableFuture<IFixedSizeStreamingContent> delegate
+          ( final ListenableFuture<IFixedSizeStreamingContent> delegate ) {
+    return new CancelableListenableFuture( delegate );
+  }
+  /**
+   * Implements cancel functionality
+   */
+  private class CancelableListenableFuture extends SimpleDelegatedListenableFuture<IFixedSizeStreamingContent> {
+    private CancelableListenableFuture( final ListenableFuture<IFixedSizeStreamingContent> delegate ) {
+      super( delegate );
+    }
+
+    @Override
+    public boolean cancel( final boolean mayInterruptIfRunning ) {
+      final AsyncReportStatusListener listener = getListener();
+      if ( !listener.isScheduled() ) {
+        try {
+          if ( mayInterruptIfRunning ) {
+            PentahoAsyncReportExecution.this.cancel();
+          }
+        } catch ( final Exception e ) {
+          // ignored.
+        }
+        return super.cancel( mayInterruptIfRunning );
+      } else {
+        return Boolean.FALSE;
+      }
+    }
+  }
 }
