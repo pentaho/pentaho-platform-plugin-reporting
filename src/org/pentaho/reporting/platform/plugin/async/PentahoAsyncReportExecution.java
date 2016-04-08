@@ -58,7 +58,7 @@ public class PentahoAsyncReportExecution extends AbstractAsyncReportExecution<IA
           MessageTypes.INSTANCE_END, auditId, "", ( (float) ( end - start ) / 1000 ), null );
 
 
-        final InputStream stagingContent = handler.getStagingContent();
+        final IFixedSizeStreamingContent stagingContent = handler.getStagingContent();
 
         listener.setStatus( AsyncExecutionStatus.FINISHED );
 

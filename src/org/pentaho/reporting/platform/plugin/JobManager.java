@@ -31,6 +31,7 @@ import org.pentaho.reporting.platform.plugin.async.AsyncExecutionStatus;
 import org.pentaho.reporting.platform.plugin.async.IAsyncReportState;
 import org.pentaho.reporting.platform.plugin.async.IPentahoAsyncExecutor;
 import org.pentaho.reporting.platform.plugin.async.PentahoAsyncExecutor;
+import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -97,7 +98,7 @@ public class JobManager {
 
     final IPentahoSession session = PentahoSessionHolder.getSession();
 
-    Future<InputStream> future = executor.getFuture( uuid, session );
+    Future<IFixedSizeStreamingContent> future = executor.getFuture( uuid, session );
 
     IAsyncReportState state = executor.getReportState( uuid, session );
     if ( state == null ) {
@@ -108,7 +109,7 @@ public class JobManager {
       return Response.status( Response.Status.ACCEPTED ).build();
     }
 
-    InputStream input = null;
+    IFixedSizeStreamingContent input = null;
     try {
       input = future.get();
     } catch ( Exception e ) {
@@ -119,7 +120,7 @@ public class JobManager {
     // release internal links to objects
     executor.cleanFuture( uuid, session );
 
-    StreamingOutput stream = new StreamingOutputWrapper( input );
+    StreamingOutput stream = new StreamingOutputWrapper( input.getStream() );
 
     MediaType mediaType = null;
     Response.ResponseBuilder response = null;
