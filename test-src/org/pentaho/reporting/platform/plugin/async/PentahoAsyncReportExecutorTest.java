@@ -176,11 +176,11 @@ public class PentahoAsyncReportExecutorTest {
     state = exec.getReportState( id2, session2 );
     assertNotNull( state );
   }
-/*
+
   @Test public void compositeKeyEqualsHashCodeTest() {
-    CompositeKey one = AbstractPentahoAsyncExecutor.getCompositeKey( session1, uuid1 );
-    CompositeKey two = AbstractPentahoAsyncExecutor.getCompositeKey( session2, uuid2 );
-    CompositeKey three = AbstractPentahoAsyncExecutor.getCompositeKey( session2, uuid2 );
+    CompositeKey one = new CompositeKey( session1, uuid1 );
+    CompositeKey two = new CompositeKey( session2, uuid2 );
+    CompositeKey three = new CompositeKey( session2, uuid2 );
 
     assertEquals( three, two );
     // in 4,294,967,295 * 2 + 0 probability it will fail
@@ -194,7 +194,7 @@ public class PentahoAsyncReportExecutorTest {
     assertFalse( two.equals( one ) );
     assertFalse( one.hashCode() == two.hashCode() );
   }
-*/
+
   @Test
   public void onLogoutTest() throws IOException {
     PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 1 );
@@ -235,7 +235,8 @@ public class PentahoAsyncReportExecutorTest {
     final TestListener testListener = new TestListener( "1", UUID.randomUUID(), "" );
 
     // must have two separate instances, as callable holds unique ID and listener for each addTask(..)
-    final UUID id1 = exec.addTask(  new PentahoAsyncReportExecution( "junit-path", component, handler, null ) {
+    final UUID id1 = exec.addTask(  new PentahoAsyncReportExecution( "junit-path",
+            component, handler, PentahoSessionHolder.getSession(), null ) {
       @Override
       protected AsyncReportStatusListener createListener(final UUID id) {
         return testListener;

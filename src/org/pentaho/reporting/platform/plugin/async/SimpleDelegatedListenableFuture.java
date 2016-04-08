@@ -19,6 +19,7 @@
 package org.pentaho.reporting.platform.plugin.async;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import org.pentaho.reporting.libraries.base.util.ArgumentNullException;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -35,6 +36,7 @@ public abstract class SimpleDelegatedListenableFuture<T> implements ListenableFu
   private ListenableFuture<T> delegate;
 
   public SimpleDelegatedListenableFuture( final ListenableFuture<T> delegate ) {
+    ArgumentNullException.validate("delegate", delegate);
     this.delegate = delegate;
   }
 
