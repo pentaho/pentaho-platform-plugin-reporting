@@ -40,10 +40,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
- * Async stage handler.
- * Write to TEMP file but:
- * - live between requests.
- * - require to re-set output stream for ready-to-fetch-request to fetch ready to use data.
+ * Async stage handler. Write to TEMP file but: - live between requests. - require to re-set output stream for
+ * ready-to-fetch-request to fetch ready to use data.
  * <p/>
  * Created by dima.prokopenko@gmail.com on 2/10/2016.
  */
@@ -164,11 +162,9 @@ public class AsyncJobFileStagingHandler {
   }
 
   /**
-   * Inner class to be able to close staging resources
-   * after closing of InputStream.
+   * Inner class to be able to close staging resources after closing of InputStream.
    * <p/>
-   * Holding a link to this particular InputStream object will prevent
-   * GC to collect staging handler.
+   * Holding a link to this particular InputStream object will prevent GC to collect staging handler.
    */
   private class StagingInputStream extends BufferedInputStream {
 
@@ -191,7 +187,7 @@ public class AsyncJobFileStagingHandler {
     private InputStream in;
     private long size;
 
-    public FixedSizeStagingContent ( InputStream in, long size ) {
+    public FixedSizeStagingContent( InputStream in, long size ) {
       this.in = in;
       this.size = size;
     }

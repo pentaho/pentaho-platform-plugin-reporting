@@ -69,8 +69,8 @@ public class JobManager {
     final ObjectMapper mapper = new ObjectMapper();
     try {
       return Response
-              .ok( mapper.writeValueAsString( config ),
-                      MediaType.APPLICATION_JSON ).build();
+        .ok( mapper.writeValueAsString( config ),
+          MediaType.APPLICATION_JSON ).build();
     } catch ( final IOException e ) {
       e.printStackTrace();
     }
@@ -78,7 +78,7 @@ public class JobManager {
   }
 
   @POST @Path( "{job_id}/content" ) public Response getContent( @PathParam( "job_id" ) String job_id )
-          throws IOException {
+    throws IOException {
     UUID uuid = null;
     try {
       uuid = UUID.fromString( job_id );
@@ -130,14 +130,13 @@ public class JobManager {
       response = Response.ok( stream, state.getMimeType() );
     }
 
-    response = noCache(response);
+    response = noCache( response );
     response = calculateContentDisposition( response, state );
 
     return response.build();
   }
 
-  protected static Response.ResponseBuilder noCache(Response.ResponseBuilder response)
-  {
+  protected static Response.ResponseBuilder noCache( Response.ResponseBuilder response ) {
     // no cache
     CacheControl cacheControl = new CacheControl();
     cacheControl.setPrivate( true );
@@ -149,9 +148,9 @@ public class JobManager {
   }
 
   protected static Response.ResponseBuilder calculateContentDisposition( final Response.ResponseBuilder response,
-                                                               final IAsyncReportState state ) {
+                                                                         final IAsyncReportState state ) {
     final org.pentaho.reporting.libraries.base.util.IOUtils utils = org.pentaho.reporting.libraries
-            .base.util.IOUtils.getInstance();
+      .base.util.IOUtils.getInstance();
 
     final String targetExt = MimeHelper.getExtension( state.getMimeType() );
     final String fullPath = state.getPath();
@@ -162,9 +161,9 @@ public class JobManager {
     }
 
     final String
-            disposition =
-            "inline; filename*=UTF-8''" + RepositoryPathEncoder
-                    .encode( RepositoryPathEncoder.encodeRepositoryPath( cleanFileName + targetExt ) );
+      disposition =
+      "inline; filename*=UTF-8''" + RepositoryPathEncoder
+        .encode( RepositoryPathEncoder.encodeRepositoryPath( cleanFileName + targetExt ) );
     response.header( "Content-Disposition", disposition );
 
     response.header( "Content-Description", cleanFileName + sourceExt );
@@ -272,7 +271,7 @@ public class JobManager {
 
     executor.cleanFuture( uuid, session );
 
-    return Response.ok( ).build();
+    return Response.ok().build();
   }
 
   protected final Response get404() {

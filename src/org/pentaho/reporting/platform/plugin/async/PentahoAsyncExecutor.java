@@ -139,7 +139,7 @@ public class PentahoAsyncExecutor<TReportState extends IAsyncReportState>
       }
     }
 
-    AsyncJobFileStagingHandler.cleanSession(session);
+    AsyncJobFileStagingHandler.cleanSession( session );
     // do it generic way according to staging handler was used?
     Path stagingSessionDir = AsyncJobFileStagingHandler.getStagingDirPath();
     if ( stagingSessionDir == null ) {

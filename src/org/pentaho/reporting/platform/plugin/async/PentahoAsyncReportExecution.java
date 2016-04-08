@@ -17,21 +17,20 @@ public class PentahoAsyncReportExecution extends AbstractAsyncReportExecution<IA
 
   private static final Log log = LogFactory.getLog( PentahoAsyncReportExecution.class );
 
-  public PentahoAsyncReportExecution(String url,
-                                     SimpleReportingComponent reportComponent,
-                                     AsyncJobFileStagingHandler handler,
-                                     IPentahoSession safeSession,
-                                     String auditId) {
-    super(url, reportComponent, handler, safeSession, auditId);
+  public PentahoAsyncReportExecution( String url,
+                                      SimpleReportingComponent reportComponent,
+                                      AsyncJobFileStagingHandler handler,
+                                      IPentahoSession safeSession,
+                                      String auditId ) {
+    super( url, reportComponent, handler, safeSession, auditId );
   }
 
 
   /**
    * Generate report and return input stream to a generated report from server.
-   *
-   * Pay attention - it is important to set proper status during execution. In case
-   * 'fail' or 'complete' status not set - status remains 'working' and executor unable to
-   * determine that actual execution has ended.
+   * <p>
+   * Pay attention - it is important to set proper status during execution. In case 'fail' or 'complete' status not set
+   * - status remains 'working' and executor unable to determine that actual execution has ended.
    *
    * @return input stream for client
    * @throws Exception
@@ -50,13 +49,13 @@ public class PentahoAsyncReportExecution extends AbstractAsyncReportExecution<IA
       ReportListenerThreadHolder.setListener( listener );
       final long start = System.currentTimeMillis();
       AuditHelper.audit( safeSession.getId(), safeSession.getId(), url, getClass().getName(), getClass().getName(),
-              MessageTypes.INSTANCE_START, auditId, "", 0, null );
+        MessageTypes.INSTANCE_START, auditId, "", 0, null );
 
       if ( reportComponent.execute() ) {
 
         final long end = System.currentTimeMillis();
         AuditHelper.audit( safeSession.getId(), safeSession.getId(), url, getClass().getName(), getClass().getName(),
-                MessageTypes.INSTANCE_END, auditId, "", ( (float) ( end - start ) / 1000 ), null );
+          MessageTypes.INSTANCE_END, auditId, "", ( (float) ( end - start ) / 1000 ), null );
 
         listener.setStatus( AsyncExecutionStatus.FINISHED );
 
