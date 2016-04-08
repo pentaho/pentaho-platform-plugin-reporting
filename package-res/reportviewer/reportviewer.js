@@ -934,9 +934,18 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                     registry.byId('reportGlassPane').hide();
                   }
                 } else if (resultJson.status == "FAILED") {
-                  this.reportPrompt.showMessageBox(
-                    "Request failed",
-                    _Messages.getString('FatalErrorTitle'));
+                  if(resultJson.errorMessage != null) {
+                    document.getElementById('reportContent').contentWindow.document.body.innerHTML = '';
+                    document.getElementById('reportContent').contentWindow.document.write("<html><body>" + resultJson.errorMessage + "</body></html>");
+                    $('#reportContent').attr("data-src", resultJson.errorMessage);
+                    this.view._showReportContent(true);
+                    this._updatedIFrameSrc = true;
+                    this._onReportContentLoaded();
+                  } else {
+                    this.reportPrompt.showMessageBox(
+                      "Request failed",
+                      _Messages.getString('FatalErrorTitle'));	
+                  }
                   dlg.hide();
                   isFinished = true;
                   logger && logger.log("ERROR: Request status - FAILED");
