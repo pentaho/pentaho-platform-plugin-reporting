@@ -82,9 +82,12 @@ public class PentahoAsyncReportExecution implements IAsyncReportExecution<InputS
         AuditHelper.audit( safeSession.getId(), safeSession.getId(), url, getClass().getName(), getClass().getName(),
             MessageTypes.INSTANCE_END, auditId, "", ( (float) ( end - start ) / 1000 ), null );
 
+
+        final InputStream stagingContent = handler.getStagingContent();
+
         listener.setStatus( AsyncExecutionStatus.FINISHED );
 
-        return handler.getStagingContent();
+        return stagingContent;
       }
 
       // in case execute just returns false without an exception.
