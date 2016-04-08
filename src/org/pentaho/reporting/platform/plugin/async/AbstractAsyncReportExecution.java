@@ -1,5 +1,6 @@
 package org.pentaho.reporting.platform.plugin.async;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.commons.io.input.NullInputStream;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -13,11 +14,9 @@ import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
 
 import java.io.InputStream;
 import java.util.UUID;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.RunnableFuture;
 
 public abstract class AbstractAsyncReportExecution<TReportState extends IAsyncReportState>
-  implements IAsyncReportExecution<TReportState> {
+  implements IAsyncReportExecution<TReportState>, IListenableFutureDelegator<IFixedSizeStreamingContent>  {
 
   protected final SimpleReportingComponent reportComponent;
   protected final AsyncJobFileStagingHandler handler;
@@ -81,26 +80,13 @@ public abstract class AbstractAsyncReportExecution<TReportState extends IAsyncRe
     this.listener.setStatus( AsyncExecutionStatus.CANCELED );
   }
 
-  @Override public RunnableFuture<IFixedSizeStreamingContent> newTask() {
-    return new FutureTask<IFixedSizeStreamingContent>( this ) {
-      public boolean cancel( final boolean mayInterruptIfRunning ) {
-        try {
-          if ( mayInterruptIfRunning ) {
-            AbstractAsyncReportExecution.this.cancel();
-          }
-        } catch ( final Exception e ) {
-          // ignored.
-        }
-        return super.cancel( mayInterruptIfRunning );
-      }
-    };
-  }
-
-  @Override public void requestPage( final int page ) {
+  @Override
+  public void requestPage( final int page ) {
     listener.setRequestedPage( page );
   }
 
-  @Override public String toString() {
+  @Override
+  public String toString() {
     return "PentahoAsyncReportExecution{" + "url='" + url + '\'' + ", instanceId='" + auditId + '\'' + ", listener="
       + listener + '}';
   }
@@ -113,6 +99,11 @@ public abstract class AbstractAsyncReportExecution<TReportState extends IAsyncRe
     return this.url;
   }
 
+  @Override public boolean schedule() {
+    listener.setStatus( AsyncExecutionStatus.SCHEDULED );
+    return listener.isScheduled();
+  }
+
   public static final IFixedSizeStreamingContent NULL = new NullSizeStreamingContent();
 
   public static final class NullSizeStreamingContent implements IFixedSizeStreamingContent {
@@ -123,6 +114,38 @@ public abstract class AbstractAsyncReportExecution<TReportState extends IAsyncRe
 
     @Override public long getContentSize() {
       return 0;
+    }
+  }
+
+
+  @Override
+  public ListenableFuture<IFixedSizeStreamingContent> delegate
+          ( final ListenableFuture<IFixedSizeStreamingContent> delegate ) {
+    return new CancelableListenableFuture( delegate );
+  }
+  /**
+   * Implements cancel functionality
+   */
+  private class CancelableListenableFuture extends SimpleDelegatedListenableFuture<IFixedSizeStreamingContent> {
+    private CancelableListenableFuture( final ListenableFuture<IFixedSizeStreamingContent> delegate ) {
+      super( delegate );
+    }
+
+    @Override
+    public boolean cancel( final boolean mayInterruptIfRunning ) {
+      final AsyncReportStatusListener listener = getListener();
+      if ( !listener.isScheduled() ) {
+        try {
+          if ( mayInterruptIfRunning ) {
+            AbstractAsyncReportExecution.this.cancel();
+          }
+        } catch ( final Exception e ) {
+          // ignored.
+        }
+        return super.cancel( mayInterruptIfRunning );
+      } else {
+        return Boolean.FALSE;
+      }
     }
   }
 }

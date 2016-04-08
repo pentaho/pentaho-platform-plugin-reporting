@@ -558,8 +558,8 @@ public class PageableHTMLTest {
       assertTrue( listener.isOnUpdate() );
       assertTrue( listener.isOnFinish() );
       assertTrue( listener.isOnFirstPage() );
-      assertFalse( -1 == listener.getState().getRow());
-      assertFalse( -1 == listener.getState().getTotalRows());
+      assertFalse( -1 == listener.getState().getRow() );
+      assertFalse( -1 == listener.getState().getTotalRows() );
       assertEquals( 1, listener.getState().getGeneratedPage() );
 
       ReportListenerThreadHolder.clear();
@@ -606,8 +606,8 @@ public class PageableHTMLTest {
       assertTrue( listener.isOnUpdate() );
       assertTrue( listener.isOnFinish() );
       assertFalse( listener.isOnFirstPage() );
-      assertFalse( -1 == listener.getState().getRow());
-      assertFalse( -1 == listener.getState().getTotalRows());
+      assertFalse( -1 == listener.getState().getRow() );
+      assertFalse( -1 == listener.getState().getTotalRows() );
 
       ReportListenerThreadHolder.clear();
 
@@ -631,7 +631,6 @@ public class PageableHTMLTest {
       edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.FirstPageMode", null );
     }
   }
-
 
 
   @Test
@@ -699,5 +698,6 @@ public class PageableHTMLTest {
     // execute the component
     assertTrue( rc.execute() );
   }
+
 
 }

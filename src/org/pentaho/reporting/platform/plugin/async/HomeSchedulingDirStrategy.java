@@ -16,26 +16,28 @@
  * Copyright 2006 - 2016 Pentaho Corporation.  All rights reserved.
  */
 
-
 package org.pentaho.reporting.platform.plugin.async;
 
 import org.pentaho.platform.api.engine.IPentahoSession;
-import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
+import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
+import org.pentaho.platform.api.repository2.unified.RepositoryFile;
+import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
+import org.pentaho.platform.repository2.ClientRepositoryPaths;
 
-import java.util.UUID;
-import java.util.concurrent.Future;
+/**
+ * Use home directory as scheduling directory
+ */
+public class HomeSchedulingDirStrategy implements ISchedulingDirectoryStrategy {
 
-public interface IPentahoAsyncExecutor<TReportState extends IAsyncReportState> {
+  @Override public RepositoryFile getSchedulingDir( final IUnifiedRepository repo ) {
+    final IPentahoSession session = PentahoSessionHolder.getSession();
 
-  Future<IFixedSizeStreamingContent> getFuture( UUID id, IPentahoSession session );
+    if ( session != null ) {
+      final String userHomeFolderPath = ClientRepositoryPaths.getUserHomeFolderPath( session.getName() );
+      return repo.getFile( userHomeFolderPath );
+    }
 
-  void cleanFuture( UUID id, IPentahoSession session );
+    return null;
+  }
 
-  UUID addTask( IAsyncReportExecution<TReportState> task, IPentahoSession session );
-
-  TReportState getReportState( UUID id, IPentahoSession session );
-
-  void requestPage( UUID id, IPentahoSession session, int page );
-
-  void schedule( UUID uuid, IPentahoSession session );
 }

@@ -16,26 +16,17 @@
  * Copyright 2006 - 2016 Pentaho Corporation.  All rights reserved.
  */
 
-
 package org.pentaho.reporting.platform.plugin.async;
 
-import org.pentaho.platform.api.engine.IPentahoSession;
-import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
+import com.google.common.util.concurrent.ListenableFuture;
 
-import java.util.UUID;
-import java.util.concurrent.Future;
+/**
+ * Interface to implement in order to return extended ListenableFuture
+ *
+ * @param <T> type parameter
+ */
+public interface IListenableFutureDelegator<T> {
 
-public interface IPentahoAsyncExecutor<TReportState extends IAsyncReportState> {
+  ListenableFuture<T> delegate( ListenableFuture<T> delegate );
 
-  Future<IFixedSizeStreamingContent> getFuture( UUID id, IPentahoSession session );
-
-  void cleanFuture( UUID id, IPentahoSession session );
-
-  UUID addTask( IAsyncReportExecution<TReportState> task, IPentahoSession session );
-
-  TReportState getReportState( UUID id, IPentahoSession session );
-
-  void requestPage( UUID id, IPentahoSession session, int page );
-
-  void schedule( UUID uuid, IPentahoSession session );
 }
