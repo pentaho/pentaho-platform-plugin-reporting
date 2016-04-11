@@ -86,9 +86,7 @@ public class RepositoryResourceData extends AbstractResourceData {
       if ( stream != null ) {
         return stream;
       }
-      
-      SimpleRepositoryFileData fileData =
-          unifiedRepository.getDataForRead( repositoryFile.getId(), SimpleRepositoryFileData.class );
+      SimpleRepositoryFileData fileData = unifiedRepository.getDataForRead( repositoryFile.getId(), SimpleRepositoryFileData.class );
       return fileData.getStream();
     } catch ( UnifiedRepositoryException ex ) {
       // might be due to access denial
@@ -97,12 +95,10 @@ public class RepositoryResourceData extends AbstractResourceData {
   }
 
   private InputStream convert( RepositoryFile repositoryFile ) {
-    
-    IRepositoryContentConverterHandler converterHandler = PentahoSystem.get( IRepositoryContentConverterHandler.class);
+    IRepositoryContentConverterHandler converterHandler = PentahoSystem.get( IRepositoryContentConverterHandler.class );
     if ( converterHandler != null ) {
       String extension = FilenameUtils.getExtension( repositoryFile.getPath() );
       Converter converter = converterHandler.getConverter( extension );
-      
       if ( converter != null ) {
         InputStream stream = converter.convert( repositoryFile.getId() );
         return stream;
@@ -110,12 +106,11 @@ public class RepositoryResourceData extends AbstractResourceData {
     }
     return null;
   }
-  
+
   /**
    * returns a requested attribute, currently only supporting filename.
-   * 
-   * @param lookupKey
-   *          attribute requested
+   *
+   * @param lookupKey attribute requested
    * @return attribute value
    */
   public Object getAttribute( final String lookupKey ) {

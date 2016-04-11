@@ -64,7 +64,7 @@ public class AsyncReportStatusListener implements IAsyncReportListener {
 
   @Override
   public synchronized void setStatus( final AsyncExecutionStatus status ) {
-    if ( this.status == null || !this.status.isFinal()) {
+    if ( this.status == null || !this.status.isFinal() ) {
       this.status = status;
     }
   }

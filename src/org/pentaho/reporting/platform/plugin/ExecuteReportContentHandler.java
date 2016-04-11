@@ -148,7 +148,7 @@ public class ExecuteReportContentHandler {
       if ( filename.lastIndexOf( "." ) != -1 ) { //$NON-NLS-1$
         filename = filename.substring( 0, filename.lastIndexOf( "." ) ); //$NON-NLS-1$
       }
-      String disposition = "inline; filename*=UTF-8''" + RepositoryPathEncoder.encode( RepositoryPathEncoder.encodeRepositoryPath( filename + extension));
+      String disposition = "inline; filename*=UTF-8''" + RepositoryPathEncoder.encode( RepositoryPathEncoder.encodeRepositoryPath( filename + extension ) );
 
       final boolean validates = reportComponent.validate();
       if ( !validates ) {

@@ -57,13 +57,12 @@ public class ReportContentGenerator extends ParameterContentGenerator {
     IUnifiedRepository unifiedRepository = PentahoSystem.get( IUnifiedRepository.class, null );
     final IParameterProvider requestParams = getRequestParameters();
     final IParameterProvider pathParams = getPathParameters();
-    
     if ( requestParams != null && requestParams.getStringParameter( "path", null ) != null ) {
       path = requestParams.getStringParameter( "path", "" ); //$NON-NLS-1$ //$NON-NLS-2$
     } else if ( pathParams != null && pathParams.getStringParameter( "path", null ) != null ) {
       path = pathParams.getStringParameter( "path", "" ); //$NON-NLS-1$ //$NON-NLS-2$
     }
-    path = URLDecoder.decode( path, "UTF-8");
+    path = URLDecoder.decode( path, "UTF-8" );
 
     if ( requestParams != null && requestParams.getStringParameter( "renderMode", null ) != null ) {
       renderMode =
@@ -156,8 +155,8 @@ public class ReportContentGenerator extends ParameterContentGenerator {
       } else if ( pathParams != null && pathParams.getStringParameter( "path", null ) != null ) {
         path = pathParams.getStringParameter( "path", "" ); //$NON-NLS-1$ //$NON-NLS-2$
       }
-      path = idTopath( URLDecoder.decode(path, "UTF-8") );
-    } catch (UnsupportedEncodingException e) {
+      path = idTopath( URLDecoder.decode( path, "UTF-8" ) );
+    } catch ( UnsupportedEncodingException e ) {
       e.printStackTrace();
     }
 

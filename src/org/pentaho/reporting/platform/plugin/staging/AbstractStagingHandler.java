@@ -24,15 +24,12 @@ import org.pentaho.reporting.engine.classic.core.util.StagingMode;
 import java.io.IOException;
 import java.io.OutputStream;
 
-/**
- * Created by dima.prokopenko@gmail.com on 2/3/2016.
- */
 public abstract class AbstractStagingHandler implements StagingHandler {
 
   protected OutputStream outputStream;
   protected IPentahoSession userSession;
 
-  public AbstractStagingHandler ( final OutputStream outputStream, final IPentahoSession userSession ) throws IOException {
+  public AbstractStagingHandler( final OutputStream outputStream, final IPentahoSession userSession ) throws IOException {
     this.outputStream = outputStream;
     this.userSession = userSession;
     initialize();
