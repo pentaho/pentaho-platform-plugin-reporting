@@ -785,20 +785,27 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
           if(this._isReportHtmlPagebleOutputFormat){
             dlg.hideBackgroundBtn();
-          } else {
-            dlg.showBackgroundBtn(_Messages.getString('FeedbackScreenBackground'));
-          }
-
-          dlg.callbacks = [function feedbackscreenDone() {
-            this.cancel(this._currentReportStatus, this._currentReportUuid);
-            dlg.hide();
-          }.bind(this),
-            function scheduleReport() {
-              var urlSchedule = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + this._currentReportUuid + '/schedule';
-              pentahoGet( urlSchedule, "");
+            dlg.callbacks = [function feedbackscreenDone() {
+              this.cancel(this._currentReportStatus, this._currentReportUuid);
               dlg.hide();
             }.bind(this)
-          ];
+            ];
+          } else {
+            dlg.showBackgroundBtn(_Messages.getString('FeedbackScreenBackground'));
+            dlg.callbacks = [
+              function scheduleReport() {
+                var urlSchedule = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + this._currentReportUuid + '/schedule';
+                pentahoGet( urlSchedule, "");
+                dlg.hide();
+              }.bind(this),
+              function feedbackscreenDone() {
+                this.cancel(this._currentReportStatus, this._currentReportUuid);
+                dlg.hide();
+              }.bind(this)
+            ];
+          }
+
+
           setTimeout(function () {
             if(!isFinished){
               dlg.show();
