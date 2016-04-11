@@ -29,7 +29,13 @@ import org.pentaho.platform.util.UUIDUtil;
 import org.pentaho.reporting.engine.classic.core.util.StagingMode;
 import org.pentaho.reporting.platform.plugin.TrackingOutputStream;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 
 /**
  * Write data to FS temp file

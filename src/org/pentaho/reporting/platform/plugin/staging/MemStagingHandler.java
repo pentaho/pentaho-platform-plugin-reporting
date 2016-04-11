@@ -43,7 +43,7 @@ public class MemStagingHandler extends AbstractStagingHandler {
   TrackingOutputStream memoryTrackingStream;
 
   public MemStagingHandler( final OutputStream outputStream, final IPentahoSession userSession ) throws IOException {
-    super ( outputStream, userSession );
+    super( outputStream, userSession );
   }
 
   @Override

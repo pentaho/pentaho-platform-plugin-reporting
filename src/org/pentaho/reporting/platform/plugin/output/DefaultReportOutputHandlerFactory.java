@@ -437,8 +437,7 @@ public class DefaultReportOutputHandlerFactory implements ReportOutputHandlerFac
       return null;
     }
     XLSXOutput xlsxOutput = new XLSXOutput();
-    xlsxOutput.setTemplateDataFromStream
-      ( selector.getInput( SimpleReportingAction.XLS_WORKBOOK_PARAM, null, InputStream.class ) );
+    xlsxOutput.setTemplateDataFromStream( selector.getInput( SimpleReportingAction.XLS_WORKBOOK_PARAM, null, InputStream.class ) );
     return xlsxOutput;
   }
 
@@ -447,8 +446,7 @@ public class DefaultReportOutputHandlerFactory implements ReportOutputHandlerFac
       return null;
     }
     XLSOutput xlsOutput = new XLSOutput();
-    xlsOutput.setTemplateDataFromStream
-      ( selector.getInput( SimpleReportingAction.XLS_WORKBOOK_PARAM, null, InputStream.class ) );
+    xlsOutput.setTemplateDataFromStream( selector.getInput( SimpleReportingAction.XLS_WORKBOOK_PARAM, null, InputStream.class ) );
     return xlsOutput;
   }
 

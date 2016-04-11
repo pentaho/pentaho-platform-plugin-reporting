@@ -34,7 +34,7 @@ import java.util.concurrent.ExecutorService;
 public class DelegatedListenableExecutor extends ForwardingListeningExecutorService {
 
   public DelegatedListenableExecutor( final ExecutorService delegateExecutor ) {
-    ArgumentNullException.validate("delegateExecutor", delegateExecutor);
+    ArgumentNullException.validate( "delegateExecutor", delegateExecutor );
     this.delegateExecutor = MoreExecutors.listeningDecorator( delegateExecutor );
   }
 

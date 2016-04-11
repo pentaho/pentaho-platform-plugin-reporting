@@ -2,8 +2,7 @@ package org.pentaho.reporting.platform.plugin.output;
 
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 
-public interface ReportOutputHandlerSelector
-{
+public interface ReportOutputHandlerSelector {
   public String getOutputType();
 
   public MasterReport getReport();
@@ -12,5 +11,5 @@ public interface ReportOutputHandlerSelector
 
   public String getJcrOutputPath();
 
-  public <T> T getInput(String parameterName, T defaultValue, Class<T> idx);
+  public <T> T getInput( String parameterName, T defaultValue, Class<T> idx );
 }

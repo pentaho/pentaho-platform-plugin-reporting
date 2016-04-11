@@ -885,8 +885,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     final MasterReport report = getReport();
     int yieldRate = getYieldRate();
     if ( yieldRate > 0 ) {
-      report.getReportConfiguration().setConfigProperty
-          ( "org.pentaho.reporting.engine.classic.core.YieldRate", String.valueOf( yieldRate ) );
+      report.getReportConfiguration().setConfigProperty( "org.pentaho.reporting.engine.classic.core.YieldRate", String.valueOf( yieldRate ) );
     }
 
     try {
@@ -925,7 +924,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
         log.warn( Messages.getInstance().getString( "ReportPlugin.warnUnprocessableRequest", outputType ) );
         return false;
       }
-      synchronized( reportOutputHandler.getReportLock() ) {
+      synchronized ( reportOutputHandler.getReportLock() ) {
         try {
           pageCount = reportOutputHandler.generate( report, acceptedPage, outputStream, getYieldRate() );
           return pageCount != -1;
@@ -990,7 +989,6 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    */
   public int paginate() throws IOException, ResourceException {
     final MasterReport report = getReport();
-
     try {
       final ParameterContext parameterContext = new DefaultParameterContext( report );
       // open parameter context

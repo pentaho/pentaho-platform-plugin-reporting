@@ -36,7 +36,7 @@ public abstract class SimpleDelegatedListenableFuture<T> implements ListenableFu
   private ListenableFuture<T> delegate;
 
   public SimpleDelegatedListenableFuture( final ListenableFuture<T> delegate ) {
-    ArgumentNullException.validate("delegate", delegate);
+    ArgumentNullException.validate( "delegate", delegate );
     this.delegate = delegate;
   }
 

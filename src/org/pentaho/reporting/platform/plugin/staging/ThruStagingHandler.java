@@ -43,7 +43,7 @@ public class ThruStagingHandler extends AbstractStagingHandler {
   private TrackingOutputStream thruTrackingStream;
 
   public ThruStagingHandler( final OutputStream outputStream, final IPentahoSession userSession ) throws IOException {
-    super(outputStream, userSession);
+    super( outputStream, userSession );
   }
 
   @Override

@@ -119,8 +119,7 @@ public abstract class AbstractAsyncReportExecution<TReportState extends IAsyncRe
 
 
   @Override
-  public ListenableFuture<IFixedSizeStreamingContent> delegate
-          ( final ListenableFuture<IFixedSizeStreamingContent> delegate ) {
+  public ListenableFuture<IFixedSizeStreamingContent> delegate( final ListenableFuture<IFixedSizeStreamingContent> delegate ) {
     return new CancelableListenableFuture( delegate );
   }
   /**
