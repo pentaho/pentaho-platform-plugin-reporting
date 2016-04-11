@@ -604,10 +604,20 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
       }), // end view
 
       onTabCloseEvent: function (event) {
-        if (window && event.eventSubType == 'tabClosing' && event.stringParam == window.frameElement.id) {
-          this.cancel(this._currentReportStatus, this._currentReportUuid);
-          if(top.mantle_removeHandler) {
-            top.mantle_removeHandler(this._handlerRegistration);
+        if(window.frameElement.src != null && window.frameElement.src.indexOf('dashboard-mode') !== -1 ){
+          if (event.eventSubType == 'tabClosing' && event.stringParam == window.parent.frameElement.id) {
+            this.cancel(this._currentReportStatus, this._currentReportUuid);
+            if(top.mantle_removeHandler) {
+              top.mantle_removeHandler(this._handlerRegistration);
+            }
+          }
+        }
+        else {
+          if (event.eventSubType == 'tabClosing' && event.stringParam == window.frameElement.id) {
+            this.cancel(this._currentReportStatus, this._currentReportUuid);
+            if(top.mantle_removeHandler) {
+              top.mantle_removeHandler(this._handlerRegistration);
+            }
           }
         }
       },
