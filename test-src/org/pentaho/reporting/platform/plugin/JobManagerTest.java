@@ -74,7 +74,7 @@ public class JobManagerTest extends JaxRsServerProvider {
 
   @Test
   public void calculateContentDisposition() throws Exception {
-    final IAsyncReportState state = new AsyncReportState( UUID.randomUUID(), "/somepath/anotherlevel/file.prpt", AsyncExecutionStatus.FINISHED, 0, 0, 0, 0, 0, 0, "", "text/csv");
+    final IAsyncReportState state = new AsyncReportState( UUID.randomUUID(), "/somepath/anotherlevel/file.prpt", AsyncExecutionStatus.FINISHED, 0, 0, 0, 0, 0, 0, "", "text/csv", "");
 
     final Response.ResponseBuilder builder = new ResponseBuilderImpl();
 
@@ -177,7 +177,11 @@ public class JobManagerTest extends JaxRsServerProvider {
       @Override public String getMimeType() {
         return MIME;
       }
-      
+
+      @Override public String getErrorMessage() {
+        return null;
+      }
+
     };
   }
 }

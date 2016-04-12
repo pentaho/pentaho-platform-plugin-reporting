@@ -30,5 +30,7 @@ public interface IAsyncReportListener extends ReportProgressListener {
 
   void updateGenerationStatus( int generatedPage );
 
+  void setErrorMessage( String errorMessage );
+
   boolean isScheduled();
 }

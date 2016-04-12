@@ -31,6 +31,7 @@ public class AsyncReportState implements IAsyncReportState {
   private final int totalRows;
   private final String activity;
   private final String mimeType;
+  private final String errorMessage;
   private final int generatedPage;
 
   public AsyncReportState( final UUID id, final String path ) {
@@ -45,6 +46,7 @@ public class AsyncReportState implements IAsyncReportState {
     this.totalRows = 0;
     this.activity = null;
     this.mimeType = null;
+    this.errorMessage = null;
   }
 
   public AsyncReportState( final UUID uuid,
@@ -57,7 +59,8 @@ public class AsyncReportState implements IAsyncReportState {
                            final int totalPages,
                            final int generatedPage,
                            final String activity,
-                           final String mimeType ) {
+                           final String mimeType,
+                           final String errorMessage ) {
     this.uuid = uuid;
     this.path = path;
     this.status = status;
@@ -69,6 +72,7 @@ public class AsyncReportState implements IAsyncReportState {
     this.generatedPage = generatedPage;
     this.activity = activity;
     this.mimeType = mimeType;
+    this.errorMessage = errorMessage;
   }
 
   @Override
@@ -123,6 +127,11 @@ public class AsyncReportState implements IAsyncReportState {
   @Override
   public String getMimeType() {
     return mimeType;
+  }
+
+  @Override
+  public String getErrorMessage() {
+    return errorMessage;
   }
 
 }
