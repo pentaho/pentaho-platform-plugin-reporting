@@ -33,6 +33,7 @@ define([
       _isAsync: null,
       _pollingInterval: 1000,
       _dialogThreshold: 1500,
+      _autoScheduleRowThreshold: 0,
 
       /**
        * Gets the prompt api instance
@@ -258,6 +259,7 @@ define([
             this._isAsync = asyncConf.supportAsync;
             this._pollingInterval = asyncConf.pollingIntervalMilliseconds;
             this._dialogThreshold = asyncConf.dialogThresholdMilliseconds;
+            this._autoScheduleRowThreshold = asyncConf.autoScheduleRowThreshold;
           }
         }        
 

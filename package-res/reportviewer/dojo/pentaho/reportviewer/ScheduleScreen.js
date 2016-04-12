@@ -19,7 +19,7 @@ define(["dojo/_base/declare", "dijit/_WidgetBase", "dijit/_Templated", "dojo/on"
     function(declare, _WidgetBase, _Templated, on, query, button, Dialog, templateStr){
       return declare("pentaho.reportviewer.ScheduleScreen", [Dialog],
       {
-        buttons: ['skip', 'ok'],
+        buttons: ['ok'],
 
         imagePath: '',
 
@@ -31,19 +31,28 @@ define(["dojo/_base/declare", "dijit/_WidgetBase", "dijit/_Templated", "dojo/on"
             this.glasspanemessage.innerHTML = text;
         },
 
-        setSkipBtnText: function(text) {
-          this.buttons[0] = text;
-          query("#button"+0, this.domNode).forEach(function(node, index, arr){
-            node.innerHTML = text;
-          });
+        showSkipBtn: function(text) {
+          if(this.buttons.length == 1 ){
+            this.buttons.unshift(text);
+            query("#button"+1, this.domNode).forEach(function(node, index, arr){
+              node.innerHTML = text;
+            });
+          }
+        },
+
+        hideSkipBtn: function( ) {
+          if(this.buttons.length > 1 ){
+            this.buttons.shift();
+          }
         },
 
         setOkBtnText: function(text) {
-          this.buttons[1] = text;
-          query("#button"+1, this.domNode).forEach(function(node, index, arr){
+          var i = this.buttons.length > 1 ? 1 : 0;
+          this.buttons[i] = text;
+          query("#button"+i, this.domNode).forEach(function(node, index, arr){
             node.innerHTML = text;
           });
-        },
+        },        
 
         skip: function() {
           if(window.localStorage){

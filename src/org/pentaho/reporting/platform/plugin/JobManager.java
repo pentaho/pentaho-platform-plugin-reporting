@@ -56,15 +56,16 @@ public class JobManager {
   private final Config config;
 
   public JobManager() {
-    this( true, 1000, 1500 );
+    this( true, 1000, 1500, 0 );
   }
 
   public JobManager( final boolean isSupportAsync, final long pollingIntervalMilliseconds,
-                     final long dialogThresholdMilliseconds ) {
+                     final long dialogThresholdMillisecond, final int autoScheduleRowThreshold ) {
     if ( !isSupportAsync ) {
       logger.info( "JobManager initialization: async mode marked as disabled." );
     }
-    this.config = new Config( isSupportAsync, pollingIntervalMilliseconds, dialogThresholdMilliseconds );
+    this.config = new Config( isSupportAsync, pollingIntervalMilliseconds, dialogThresholdMillisecond,
+      autoScheduleRowThreshold );
   }
 
   @GET @Path( "config" ) public Response getConfig() {
@@ -311,12 +312,14 @@ public class JobManager {
     private final boolean isSupportAsync;
     private final long pollingIntervalMilliseconds;
     private final long dialogThresholdMilliseconds;
+    private final int autoScheduleRowThreshold;
 
     private Config( final boolean isSupportAsync, final long pollingIntervalMilliseconds,
-                    final long dialogThresholdMilliseconds ) {
+                    final long dialogThresholdMilliseconds, final int autoScheduleRowThreshold ) {
       this.isSupportAsync = isSupportAsync;
       this.pollingIntervalMilliseconds = pollingIntervalMilliseconds;
       this.dialogThresholdMilliseconds = dialogThresholdMilliseconds;
+      this.autoScheduleRowThreshold = autoScheduleRowThreshold;
     }
 
 
@@ -330,6 +333,10 @@ public class JobManager {
 
     public long getDialogThresholdMilliseconds() {
       return dialogThresholdMilliseconds;
+    }
+
+    public int getAutoScheduleRowThreshold() {
+      return autoScheduleRowThreshold;
     }
   }
 }

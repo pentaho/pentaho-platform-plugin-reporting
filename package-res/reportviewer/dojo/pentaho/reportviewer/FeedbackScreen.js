@@ -19,7 +19,7 @@ define(["dojo/_base/declare", "dijit/_WidgetBase", "dijit/_Templated", "dojo/on"
     function(declare, _WidgetBase, _Templated, on, query, button, Dialog, templateStr){
       return declare("pentaho.reportviewer.FeedbackScreen", [Dialog],
      {
-        buttons: [ 'background', 'cancel'],
+        buttons: ['cancel'],
 
         imagePath: '',
 
