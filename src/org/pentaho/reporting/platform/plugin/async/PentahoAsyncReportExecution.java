@@ -96,6 +96,9 @@ public class PentahoAsyncReportExecution extends AbstractAsyncReportExecution<IA
       log.error( "fail to execute report in async mode: " + ee );
       // to be sure after an error output stream is closed
       IOUtils.closeQuietly( handler.getStagingOutputStream() );
+      if ( ee.getMessage() != null ) {
+        listener.setErrorMessage( ee.getMessage() );
+      }
       fail();
       return NULL;
     } finally {

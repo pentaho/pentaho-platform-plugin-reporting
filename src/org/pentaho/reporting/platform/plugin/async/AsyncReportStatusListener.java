@@ -38,6 +38,7 @@ public class AsyncReportStatusListener implements IAsyncReportListener {
   private final String path;
   private final UUID uuid;
   private final String mimeType;
+  private String errorMessage = null;
   private AsyncExecutionStatus status = AsyncExecutionStatus.QUEUED;
   private int progress = 0;
   private int page = 0;
@@ -67,6 +68,11 @@ public class AsyncReportStatusListener implements IAsyncReportListener {
     if ( this.status == null || !this.status.isFinal() ) {
       this.status = status;
     }
+  }
+
+  @Override
+  public synchronized void setErrorMessage( final String errorMessage ) {
+    this.errorMessage = errorMessage;
   }
 
   public boolean isFirstPageMode() {
@@ -125,6 +131,7 @@ public class AsyncReportStatusListener implements IAsyncReportListener {
       + ", row=" + row
       + ", firstPageMode=" + firstPageMode
       + ", mimeType='" + mimeType + '\''
+      + ", errorMessage='" + errorMessage + '\''
       + '}';
   }
 
@@ -163,6 +170,6 @@ public class AsyncReportStatusListener implements IAsyncReportListener {
   }
 
   public synchronized IAsyncReportState getState() {
-    return new AsyncReportState( uuid, path, status, progress, row, totalRows, page, totalPages, generatedPage, activity, mimeType );
+    return new AsyncReportState( uuid, path, status, progress, row, totalRows, page, totalPages, generatedPage, activity, mimeType, errorMessage );
   }
 }

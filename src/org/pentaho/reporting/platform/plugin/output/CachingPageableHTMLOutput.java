@@ -22,6 +22,7 @@ import org.apache.commons.logging.LogFactory;
 import org.pentaho.platform.api.engine.IApplicationContext;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
+import org.pentaho.reporting.engine.classic.core.ReportDataFactoryException;
 import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressEvent;
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
@@ -255,9 +256,10 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
       proc.processReport();
 
       return produceReportContent( proc, targetRepository );
-    } catch ( final ContentIOException e ) {
-      return null;
-    } catch ( final IOException e ) {
+    } catch ( final ContentIOException | IOException | ReportDataFactoryException e ) {
+      if ( e.getMessage() != null ) {
+        listener.setErrorMessage( e.getMessage() );
+      }
       return null;
     } finally {
       if ( listener != null ) {

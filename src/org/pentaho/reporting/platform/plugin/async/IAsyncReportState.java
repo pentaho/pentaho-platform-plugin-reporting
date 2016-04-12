@@ -78,4 +78,9 @@ public interface IAsyncReportState extends Serializable {
    */
   String getMimeType();
 
+  /**
+   * @return error message in case of exception
+   */
+  String getErrorMessage();
+
 }

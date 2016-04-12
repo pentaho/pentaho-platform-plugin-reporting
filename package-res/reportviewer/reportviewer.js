@@ -854,10 +854,10 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
               try {
                 resultJson = JSON.parse(result);
               } catch(e) {
-                var errorMessage = "Invalid request";
+                var errorMessage = _Messages.getString('DefaultErrorMessage');
                 this.reportPrompt.showMessageBox(
                   errorMessage,
-                  _Messages.getString('FatalErrorTitle'));
+                  _Messages.getString('ErrorPromptTitle'));
                 dlg.hide();
                 logger && logger.log("ERROR" + String(e));
                 return;
@@ -964,9 +964,13 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                     registry.byId('reportGlassPane').hide();
                   }
                 } else if (resultJson.status == "FAILED") {
+                  var errorMsg = _Messages.getString('DefaultErrorMessage');
+                  if(resultJson.errorMessage != null) {
+                    errorMsg = resultJson.errorMessage;
+                  }
                   this.reportPrompt.showMessageBox(
-                    "Request failed",
-                    _Messages.getString('FatalErrorTitle'));
+                    errorMsg,
+                    _Messages.getString('ErrorPromptTitle'));
                   dlg.hide();
                   isFinished = true;
                   logger && logger.log("ERROR: Request status - FAILED");
