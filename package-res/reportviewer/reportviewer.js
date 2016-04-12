@@ -787,6 +787,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         var isFirstContAvStatus = true;
         var isIframeContentSet = false;
         var isFinished = false;
+        var manuallyScheduled = false;
         this._requestedPage = me.view._getAcceptedPage();
 
         if(this.reportPrompt._isAsync) {
@@ -810,6 +811,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
               function scheduleReport() {
                 var urlSchedule = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + this._currentReportUuid + '/schedule';
                 pentahoGet( urlSchedule, "");
+                manuallyScheduled = true;
                 dlg.hide();
               }.bind(this),
               function feedbackscreenDone() {
@@ -898,6 +900,16 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                 });
 
                 if(resultJson.status == "QUEUED" || resultJson.status == "WORKING") {
+                  //auto schedule the report
+                  if( !manuallyScheduled &&
+                      !this._isReportHtmlPagebleOutputFormat &&
+                      this.reportPrompt._autoScheduleRowThreshold !=0 &&
+                      resultJson.totalRows >= this.reportPrompt._autoScheduleRowThreshold ){
+
+                    var urlSchedule = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + this._currentReportUuid + '/schedule';
+                    pentahoGet( urlSchedule, "");
+                  }
+
                   var urlStatus = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + resultJson.uuid + '/status';
                   setTimeout(function(){ pentahoGet(urlStatus, "", handleResultCallback); }, this.reportPrompt._pollingInterval);
                 } else if (resultJson.status == "CONTENT_AVAILABLE") {
@@ -975,23 +987,33 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                   isFinished = true;
                   logger && logger.log("ERROR: Request status - FAILED");
                 } else  if ( resultJson.status == 'SCHEDULED'){
+                  dlg.hide();
                   var dlgBackground = registry.byId('scheduleScreen');
                   dlgBackground.setTitle(_Messages.getString('ScheduleTitle'));
-                  dlgBackground.setText(_Messages.getString('ScheduleText'));
-                  dlgBackground.setSkipBtnText(_Messages.getString('OK'));
-                  dlgBackground.setOkBtnText(_Messages.getString('ScheduleSkipAlert'));
-                  dlgBackground.callbacks = [
+                  dlgBackground.setOkBtnText(_Messages.getString('OK'));
+                  if(manuallyScheduled){
+                    dlgBackground.setText(_Messages.getString('ScheduleText'));
+                    dlgBackground.showSkipBtn(_Messages.getString('ScheduleSkipAlert'));
+                    dlgBackground.callbacks = [
+                      function skipAndHide() {
+                        dlgBackground.skip();
+                        dlgBackground.hide();
+                      }.bind(this),
+                      function hide() {
+                        dlgBackground.hide();
+                      }.bind(this)
+                    ];
+                  }else {
+                    dlgBackground.setText(_Messages.getString('AutoScheduleText'));
+                    dlgBackground.hideSkipBtn();
+                    dlgBackground.callbacks = [
+                      function hide() {
+                        dlgBackground.hide();
+                      }.bind(this)
+                    ];
+                  }
 
-                    function hide() {
-                      dlgBackground.hide();
-                    }.bind(this),
-
-                    function skipAndHide() {
-                      dlgBackground.skip();
-                      dlgBackground.hide();
-                    }.bind(this)
-                  ];
-                  if(!dlgBackground.isSkipped()){
+                  if(!manuallyScheduled || !dlgBackground.isSkipped()){
                     dlgBackground.show();
                   }
                 }

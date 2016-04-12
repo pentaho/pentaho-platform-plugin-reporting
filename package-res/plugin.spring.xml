@@ -86,17 +86,19 @@
   <bean class="org.pentaho.reporting.platform.plugin.JobManager">
     <!-- !!! If you want to change defaults - you must specify all available parameters-->
     <!--set to false to globally disable async reports generation -->
-    <!--<constructor-arg type="boolean" value="true" />-->
+    <constructor-arg type="boolean" value="true" />
     <!-- configure status polling interval -->
-    <!--<constructor-arg type="long" value="1000" />-->
+    <constructor-arg type="long" value="1000" />
     <!-- configure dialog showing threshold -->
-    <!--<constructor-arg type="long" value="1500" />-->
+    <constructor-arg type="long" value="1500" />
+    <!-- configure maximum row threshold for automatic scheduling, 0 means no automatic scheduling-->
+    <constructor-arg type="int" value="0" />
   </bean>
 
   <!--Scheduling-->
   <bean id="ISchedulingDirectoryStrategy" class="org.pentaho.reporting.platform.plugin.async.HomeSchedulingDirStrategy" />
 
-  <!--You can provide your own absolute or relatve to home path-->
+  <!--You can provide your own absolute or relative to home path-->
   <!--<bean id="ISchedulingDirectoryStrategy" class="org.pentaho.reporting.platform.plugin.async.ProvidedSchedulingDirStrategy" >
     <constructor-arg value="/public"/>
   </bean>-->
