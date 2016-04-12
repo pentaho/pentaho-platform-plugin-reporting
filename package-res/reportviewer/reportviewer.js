@@ -737,10 +737,14 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
             return;
           }
 
-          if (!this.reportPrompt._getStateProperty("autoSubmit") && !this.reportPrompt._isAsync) {
-            this.reportPrompt.mode = 'MANUAL';
-            this.reportPrompt.api.operation.refreshPrompt();
-          } else if (!this.reportPrompt._isUpdatingPrompting || this.reportPrompt._isAsync) { // no need updating report content during submit because we have afterUpdate event subscription
+          if (!this.reportPrompt._getStateProperty("autoSubmit") ) {
+            if(!this.reportPrompt._isAsync){
+              this.reportPrompt.mode = 'MANUAL';
+              this.reportPrompt.api.operation.refreshPrompt();
+            }else{
+              this._updateReportContentCore();
+            }
+          } else if (!this.reportPrompt._isUpdatingPrompting ) { // no need updating report content during submit because we have afterUpdate event subscription
             this._updateReportContentCore();
           }
         } catch(ex) {
