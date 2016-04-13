@@ -48,7 +48,6 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
       _cachedReportCanceled: null,
       _requestedPage: 0,
       _previousPage: 0,
-      _isReportHtmlPagebleOutputFormat : null,
       _reportUrl : null,
       _handlerRegistration : null,
 
@@ -243,10 +242,6 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           return !$('body').hasClass('contentHidden');
         },
 
-        _isHtmlPagebleOutputFormat : function(outputFormat) {
-          return outputFormat.indexOf('table/html;page-mode=page') !== -1;
-        },
-
         // Called on page load and every time the prompt panel is refreshed
         updateLayout: function() {
           if (!this.reportPrompt._getStateProperty('showParameterUI')) {
@@ -342,7 +337,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           // Hide the toolbar, 'toppanel',  when it would be empty and
           // un-style the report so it's the only visible element
           // when both the pagination controls and the parameter UI are hidden.
-          var isToolbarEmpty = !this.reportPrompt._getStateProperty("paginate") && !showParamUI && !window.viewer._isReportHtmlPagebleOutputFormat;
+          var isToolbarEmpty = !this.reportPrompt._getStateProperty("paginate") && !showParamUI && !this.reportPrompt._isReportHtmlPagebleOutputFormat;
           domClass[isToolbarEmpty ? 'add' : 'remove']('toppanel', 'hidden');
 
           // Don't mess with the parameters if we're "navigating".
@@ -781,7 +776,6 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
         var options = me._buildReportContentOptions();
         var url = me._buildReportContentUrl(options);
-        this._isReportHtmlPagebleOutputFormat=me.view._isHtmlPagebleOutputFormat(options['output-target']);
 
         //BISERVER-1225
         var isFirstContAvStatus = true;
@@ -798,7 +792,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           dlg.setText3(_Messages.getString('FeedbackScreenRow'));
           dlg.setCancelText(_Messages.getString('ScreenCancel'));
 
-          if(this._isReportHtmlPagebleOutputFormat){
+          if(this.reportPrompt._isReportHtmlPagebleOutputFormat){
             dlg.hideBackgroundBtn();
             dlg.callbacks = [function feedbackscreenDone() {
               this.cancel(this._currentReportStatus, this._currentReportUuid);
@@ -902,7 +896,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                 if(resultJson.status == "QUEUED" || resultJson.status == "WORKING") {
                   //auto schedule the report
                   if( !manuallyScheduled &&
-                      !this._isReportHtmlPagebleOutputFormat &&
+                      !this.reportPrompt._isReportHtmlPagebleOutputFormat &&
                       this.reportPrompt._autoScheduleRowThreshold !=0 &&
                       resultJson.totalRows >= this.reportPrompt._autoScheduleRowThreshold ){
 
@@ -969,7 +963,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                   }
 
                   isFinished = true;
-                  if (this._isReportHtmlPagebleOutputFormat) {
+                  if (this.reportPrompt._isReportHtmlPagebleOutputFormat) {
                     var pageContr = registry.byId('pageControl');
                     pageContr.setPageCount(resultJson.totalPages);
                     domClass.add('notification-screen', 'hidden');
