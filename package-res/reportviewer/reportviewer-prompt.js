@@ -34,6 +34,7 @@ define([
       _pollingInterval: 1000,
       _dialogThreshold: 1500,
       _autoScheduleRowThreshold: 0,
+      _isReportHtmlPagebleOutputFormat : null,
 
       /**
        * Gets the prompt api instance
@@ -75,6 +76,12 @@ define([
         this.api.operation.render(function(api, callback) {
           var paramDefnCallback = function(xml) {
             var paramDefn = this.parseParameterDefinition(xml);
+
+            try {
+              var outputFormat = paramDefn.getParameter("output-target").getSelectedValuesValue();
+              this._isReportHtmlPagebleOutputFormat = outputFormat.indexOf('table/html;page-mode=page') !== -1;
+            } catch (ignored) {
+            }           
 
             // A first request is made with promptMode='INITIAL' and renderMode='PARAMETER'.
             //
