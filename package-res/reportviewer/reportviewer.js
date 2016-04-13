@@ -767,6 +767,12 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
       },
 
       _updateReportContentCore: function() {
+
+        //no report generation in scheduling dialog ever!
+        if(inSchedulerDialog){
+          return;
+        }
+
         var me = this;
 
         // PRD-3962 - remove glass pane after 5 seconds in case iframe onload/onreadystatechange was not detected
