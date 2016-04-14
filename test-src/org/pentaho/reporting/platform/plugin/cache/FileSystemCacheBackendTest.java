@@ -28,8 +28,11 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -85,14 +88,18 @@ public class FileSystemCacheBackendTest {
   public void testReadWhileWriting() throws Exception {
     final String val = "ShinySecretValue";
     final ExecutorService executor = Executors.newFixedThreadPool( 2 );
+    final CountDownLatch countDownLatch = new CountDownLatch( 1 );
     final Future<Boolean> write = executor.submit( new Callable<Boolean>() {
       @Override public Boolean call() throws Exception {
-        return fileSystemCacheBackend.write( Arrays.asList( directoryKey, key ), new LongWrite( val ) , new HashMap<String, Serializable>());
+        countDownLatch.countDown();
+        return fileSystemCacheBackend
+          .write( Arrays.asList( directoryKey, key ), new LongWrite( val ),
+            new HashMap<String, Serializable>() );
       }
     } );
+    countDownLatch.await();
     final Future<LongWrite> read = executor.submit( new Callable<LongWrite>() {
       @Override public LongWrite call() throws Exception {
-        Thread.sleep( 1000 );
         return (LongWrite) fileSystemCacheBackend.read( Arrays.asList( directoryKey, key ) );
       }
     } );
@@ -106,15 +113,21 @@ public class FileSystemCacheBackendTest {
     final String val = "ShinySecretValue";
     final String val2 = "ShinySecretValue2";
     final ExecutorService executor = Executors.newFixedThreadPool( 2 );
-    fileSystemCacheBackend.write( Arrays.asList( directoryKey, key ), new LongRead( val ) , new HashMap<String, Serializable>());
+    final CountDownLatch countDownLatch = new CountDownLatch( 1 );
+
+    fileSystemCacheBackend.write( Arrays.asList( directoryKey, key ), new LongRead( val ),
+      new HashMap<String, Serializable>() );
     final Future<LongRead> read = executor.submit( new Callable<LongRead>() {
       @Override public LongRead call() throws Exception {
+        countDownLatch.countDown();
         return (LongRead) fileSystemCacheBackend.read( Arrays.asList( directoryKey, key ) );
       }
     } );
+    countDownLatch.await();
     final Future<Boolean> write = executor.submit( new Callable<Boolean>() {
       @Override public Boolean call() throws Exception {
-        return fileSystemCacheBackend.write( Arrays.asList( directoryKey, key ), new LongRead( val2 ), new HashMap<String, Serializable>() );
+        return fileSystemCacheBackend
+          .write( Arrays.asList( directoryKey, key ), new LongRead( val2 ), new HashMap<String, Serializable>() );
       }
     } );
     assertTrue( write.get() );
@@ -135,7 +148,7 @@ public class FileSystemCacheBackendTest {
 
     private void writeObject( final ObjectOutputStream oos ) throws IOException {
       try {
-        Thread.sleep( 3000L );
+        Thread.sleep( 1000L );
         oos.writeObject( value );
       } catch ( final InterruptedException e ) {
         e.printStackTrace();
@@ -167,7 +180,7 @@ public class FileSystemCacheBackendTest {
 
     private void readObject( final ObjectInputStream ois ) throws ClassNotFoundException, IOException {
       try {
-        Thread.sleep( 3000L );
+        Thread.sleep( 1000L );
         final Object o = ois.readObject();
         this.value = (String) o;
       } catch ( final InterruptedException e ) {
