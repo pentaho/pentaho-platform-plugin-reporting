@@ -18,6 +18,7 @@
 package org.pentaho.reporting.platform.plugin.cache;
 
 import junit.framework.Assert;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -45,9 +46,18 @@ public class FileSystemCacheBackendTest {
 
   private static FileSystemCacheBackend fileSystemCacheBackend;
 
+  @After
+  public void clearLatchesAfterEachTest() {
+    readStartedSignal = null;
+    writeStartedSignal = null;
+  }
+
+  private static CountDownLatch readStartedSignal;
+  private static CountDownLatch writeStartedSignal;
+
   @BeforeClass
   public static void setUp() {
-    PentahoSessionHolder.setSession( new StandaloneSession(  ) );
+    PentahoSessionHolder.setSession( new StandaloneSession() );
     fileSystemCacheBackend = new FileSystemCacheBackend();
     fileSystemCacheBackend.setCachePath( "/test-cache/" );
   }
@@ -63,13 +73,15 @@ public class FileSystemCacheBackendTest {
 
   @Test
   public void testWriteRead() throws Exception {
-    assertTrue( fileSystemCacheBackend.write( Arrays.asList( directoryKey, key ), value, new HashMap<String, Serializable>()) );
+    assertTrue(
+      fileSystemCacheBackend.write( Arrays.asList( directoryKey, key ), value, new HashMap<String, Serializable>() ) );
     assertEquals( fileSystemCacheBackend.read( Arrays.asList( directoryKey, key ) ), value );
   }
 
   @Test
   public void testPurge() throws Exception {
-    assertTrue( fileSystemCacheBackend.write( Arrays.asList( directoryKey, key ), value, new HashMap<String, Serializable>() ) );
+    assertTrue(
+      fileSystemCacheBackend.write( Arrays.asList( directoryKey, key ), value, new HashMap<String, Serializable>() ) );
     assertEquals( fileSystemCacheBackend.read( Arrays.asList( directoryKey, key ) ), value );
     assertTrue( fileSystemCacheBackend.purge( Arrays.asList( directoryKey, key ) ) );
     assertNull( fileSystemCacheBackend.read( Arrays.asList( directoryKey, key ) ) );
@@ -77,7 +89,8 @@ public class FileSystemCacheBackendTest {
 
   @Test
   public void testPurgeDir() throws Exception {
-    assertTrue( fileSystemCacheBackend.write( Arrays.asList( directoryKey, key ), value , new HashMap<String, Serializable>()) );
+    assertTrue(
+      fileSystemCacheBackend.write( Arrays.asList( directoryKey, key ), value, new HashMap<String, Serializable>() ) );
     assertEquals( fileSystemCacheBackend.read( Arrays.asList( directoryKey, key ) ), value );
     assertTrue( fileSystemCacheBackend.purge( Collections.singletonList( directoryKey ) ) );
     assertNull( fileSystemCacheBackend.read( Arrays.asList( directoryKey, key ) ) );
@@ -86,20 +99,25 @@ public class FileSystemCacheBackendTest {
 
   @Test
   public void testReadWhileWriting() throws Exception {
+
+    readStartedSignal = new CountDownLatch( 1 );
+    writeStartedSignal = new CountDownLatch( 1 );
+
     final String val = "ShinySecretValue";
     final ExecutorService executor = Executors.newFixedThreadPool( 2 );
-    final CountDownLatch countDownLatch = new CountDownLatch( 1 );
     final Future<Boolean> write = executor.submit( new Callable<Boolean>() {
       @Override public Boolean call() throws Exception {
-        countDownLatch.countDown();
         return fileSystemCacheBackend
           .write( Arrays.asList( directoryKey, key ), new LongWrite( val ),
             new HashMap<String, Serializable>() );
       }
     } );
-    countDownLatch.await();
+
     final Future<LongWrite> read = executor.submit( new Callable<LongWrite>() {
       @Override public LongWrite call() throws Exception {
+        writeStartedSignal.await();
+        // unblock the writer ...
+        readStartedSignal.countDown();
         return (LongWrite) fileSystemCacheBackend.read( Arrays.asList( directoryKey, key ) );
       }
     } );
@@ -113,19 +131,25 @@ public class FileSystemCacheBackendTest {
     final String val = "ShinySecretValue";
     final String val2 = "ShinySecretValue2";
     final ExecutorService executor = Executors.newFixedThreadPool( 2 );
-    final CountDownLatch countDownLatch = new CountDownLatch( 1 );
+    readStartedSignal = null;
+    writeStartedSignal = null;
+    // setup writes without any signals ...
+    fileSystemCacheBackend
+      .write( Arrays.asList( directoryKey, key ), new LongRead( val ), new HashMap<String, Serializable>() );
+    // now we can setup the signals ..
+    readStartedSignal = new CountDownLatch( 1 );
+    writeStartedSignal = new CountDownLatch( 1 );
 
-    fileSystemCacheBackend.write( Arrays.asList( directoryKey, key ), new LongRead( val ),
-      new HashMap<String, Serializable>() );
     final Future<LongRead> read = executor.submit( new Callable<LongRead>() {
       @Override public LongRead call() throws Exception {
-        countDownLatch.countDown();
         return (LongRead) fileSystemCacheBackend.read( Arrays.asList( directoryKey, key ) );
       }
     } );
-    countDownLatch.await();
     final Future<Boolean> write = executor.submit( new Callable<Boolean>() {
       @Override public Boolean call() throws Exception {
+        readStartedSignal.await();
+        // unblock the reader ...
+        writeStartedSignal.countDown();
         return fileSystemCacheBackend
           .write( Arrays.asList( directoryKey, key ), new LongRead( val2 ), new HashMap<String, Serializable>() );
       }
@@ -148,11 +172,22 @@ public class FileSystemCacheBackendTest {
 
     private void writeObject( final ObjectOutputStream oos ) throws IOException {
       try {
-        Thread.sleep( 1000L );
+        if ( writeStartedSignal != null ) {
+          // unlock the reader ...
+          writeStartedSignal.countDown();
+        }
+        if ( readStartedSignal != null ) {
+          // wait for the reader to start working ..
+          readStartedSignal.await();
+        }
+        // now that small time frame should be enough, as we guarantee that the writer is
+        // ready to enter the file-system write method as soon as it sees the latch go.
+        Thread.sleep( 100 );
         oos.writeObject( value );
       } catch ( final InterruptedException e ) {
         e.printStackTrace();
       }
+
     }
 
     private void readObject( final ObjectInputStream ois ) throws ClassNotFoundException, IOException {
@@ -160,7 +195,6 @@ public class FileSystemCacheBackendTest {
       this.value = (String) o;
     }
   }
-
 
   private class LongRead implements Serializable {
 
@@ -180,7 +214,17 @@ public class FileSystemCacheBackendTest {
 
     private void readObject( final ObjectInputStream ois ) throws ClassNotFoundException, IOException {
       try {
-        Thread.sleep( 1000L );
+        if ( readStartedSignal != null ) {
+          // unlock the writer ...
+          readStartedSignal.countDown();
+        }
+        if ( writeStartedSignal != null ) {
+          // wait for the writer to start working ..
+          writeStartedSignal.await();
+        }
+        // now that small time frame should be enough, as we guarantee that the writer is
+        // ready to enter the file-system write method as soon as it sees the latch go.
+        Thread.sleep( 100 );
         final Object o = ois.readObject();
         this.value = (String) o;
       } catch ( final InterruptedException e ) {
