@@ -215,7 +215,7 @@ public class PentahoAsyncExecutor<TReportState extends IAsyncReportState>
         Futures.addCallback( value, new FutureCallback<IFixedSizeStreamingContent>() {
           @Override public void onSuccess( final IFixedSizeStreamingContent result ) {
             if ( result != null ) {
-              IOUtils.closeQuietly( result.getStream() );
+              result.cleanContent();
             }
           }
 

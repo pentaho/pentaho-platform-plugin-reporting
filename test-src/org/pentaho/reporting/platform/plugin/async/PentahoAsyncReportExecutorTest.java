@@ -20,6 +20,7 @@ package org.pentaho.reporting.platform.plugin.async;
 
 import junit.framework.Assert;
 import org.apache.commons.io.input.NullInputStream;
+import org.apache.poi.util.IOUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -35,6 +36,8 @@ import org.pentaho.reporting.platform.plugin.SimpleReportingComponent;
 import org.pentaho.reporting.platform.plugin.staging.AsyncJobFileStagingHandler;
 import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
@@ -67,6 +70,8 @@ public class PentahoAsyncReportExecutorTest {
   UUID uuid1 = UUID.randomUUID();
   UUID uuid2 = UUID.randomUUID();
 
+  final static String MAGIC = "13";
+
   SimpleReportingComponent component = mock( SimpleReportingComponent.class );
   AsyncJobFileStagingHandler handler = mock( AsyncJobFileStagingHandler.class );
   MasterReport report = mock( MasterReport.class );
@@ -75,12 +80,19 @@ public class PentahoAsyncReportExecutorTest {
   IApplicationContext context = mock( IApplicationContext.class );
   Random bytes = new Random();
 
-  final IFixedSizeStreamingContent input =
-    new AsyncJobFileStagingHandler.FixedSizeStagingContent( new NullInputStream( 0 ), 0 );
+  IFixedSizeStreamingContent input;
 
   @Before public void before() throws Exception {
     PentahoSystem.clearObjectFactory();
     PentahoSessionHolder.removeSession();
+
+    File temp = File.createTempFile( "junit", "tmp" );
+    FileOutputStream fout = new FileOutputStream( temp );
+    fout.write( MAGIC.getBytes() );
+    fout.flush();
+    fout.close();
+
+    input = new AsyncJobFileStagingHandler.FixedSizeStagingContent( temp );
 
     when( handler.getStagingContent() ).thenReturn( input );
     when( report.getReportConfiguration() ).thenReturn( configuration );
@@ -105,7 +117,6 @@ public class PentahoAsyncReportExecutorTest {
 
   @Test public void testCanCompleteTask() throws Exception {
     when( component.execute() ).thenReturn( true );
-    //PentahoSessionHolder.setSession( session1 );
 
     PentahoAsyncReportExecution task1 = createMockCallable( session1 );
 
@@ -116,7 +127,10 @@ public class PentahoAsyncReportExecutorTest {
       Thread.sleep( 150 );
     }
     IFixedSizeStreamingContent resultInput = result.get();
-    assertEquals( input.getStream(), resultInput.getStream() );
+
+    String actual = new String( IOUtils.toByteArray( input.getStream() ) );
+
+    assertEquals( MAGIC, actual );
   }
 
   @Test public void testCorrectFuturePerSessionRetrival() {

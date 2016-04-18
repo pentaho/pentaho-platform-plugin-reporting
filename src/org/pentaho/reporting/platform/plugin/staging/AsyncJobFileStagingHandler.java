@@ -27,7 +27,6 @@ import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.util.UUIDUtil;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -106,9 +105,7 @@ public class AsyncJobFileStagingHandler {
   }
 
   public IFixedSizeStreamingContent getStagingContent() throws FileNotFoundException {
-    // hold a reference to object ot be able to close and release staging file.
-    StagingInputStream stagingInputStream = new StagingInputStream( new FileInputStream( tmpFile ) );
-    return new FixedSizeStagingContent( stagingInputStream, tmpFile.length() );
+    return new FixedSizeStagingContent( tmpFile );
   }
 
   public static void cleanSession( final IPentahoSession iPentahoSession ) {
@@ -138,46 +135,7 @@ public class AsyncJobFileStagingHandler {
       try {
         FileUtils.deleteDirectory( stagingDirFile );
       } catch ( final IOException e ) {
-        logger.debug( "Unable to delete async staging content on shutdown. Directory: " + stagingDirFile.getName() );
-      }
-    }
-  }
-
-  public void close() {
-    this.closeQuietly();
-  }
-
-  private void closeQuietly() {
-    IOUtils.closeQuietly( fileTrackingStream );
-    if ( tmpFile != null && tmpFile.exists() ) {
-      try {
-        boolean deleted = tmpFile.delete();
-        if ( !deleted ) {
-          logger.debug( "Unable to delete temp file: " + tmpFile.getName() );
-        }
-      } catch ( Exception ignored ) {
-        logger.debug( "Exception when try to delete temp file" + tmpFile.getName() );
-      }
-    }
-  }
-
-  /**
-   * Inner class to be able to close staging resources after closing of InputStream.
-   * <p/>
-   * Holding a link to this particular InputStream object will prevent GC to collect staging handler.
-   */
-  private class StagingInputStream extends BufferedInputStream {
-
-    public StagingInputStream( final InputStream in ) {
-      super( in );
-    }
-
-    @Override public void close() throws IOException {
-      try {
-        super.close();
-        closeQuietly();
-      } catch ( Exception e ) {
-        logger.debug( "Attempt to close quietly is not quietly" );
+        logger.debug( "Unable to delete async staging content on shutdown. Directory: " + stagingDirFile.getName(), e );
       }
     }
   }
@@ -186,18 +144,29 @@ public class AsyncJobFileStagingHandler {
 
     private InputStream in;
     private long size;
+    File tmpFile;
 
-    public FixedSizeStagingContent( InputStream in, long size ) {
-      this.in = in;
-      this.size = size;
+    public FixedSizeStagingContent( File tmpFile ) {
+      this.size = tmpFile.length();
+      this.tmpFile = tmpFile;
     }
 
     @Override public InputStream getStream() {
-      return in;
+      FileInputStream stagingInputStream = null;
+      try {
+        stagingInputStream = new FileInputStream( tmpFile );
+      } catch ( FileNotFoundException e ) {
+        logger.error( "staging file not found: " + tmpFile.toPath().toString() );
+      }
+      return stagingInputStream;
     }
 
     @Override public long getContentSize() {
       return size;
+    }
+
+    @Override public boolean cleanContent() {
+      return tmpFile.delete();
     }
   }
 }
