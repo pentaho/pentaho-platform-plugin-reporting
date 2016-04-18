@@ -80,6 +80,13 @@ public class JobManager {
     return null;
   }
 
+  @GET @Path( "{job_id}/content" )
+  public Response getPDFContent( @PathParam( "job_id" ) String job_id ) throws IOException {
+    logger.debug( "Chrome pdf viewer workaround. See BACKLOG-7598 fir details" );
+
+    return this.getContent( job_id );
+  }
+
   @POST @Path( "{job_id}/content" ) public Response getContent( @PathParam( "job_id" ) String job_id )
     throws IOException {
     UUID uuid = null;
@@ -117,9 +124,6 @@ public class JobManager {
       logger.error( "Error generating report", e );
       return Response.serverError().build();
     }
-    // ok we have InputStream so future will not be used anymore.
-    // release internal links to objects
-    executor.cleanFuture( uuid, session );
 
     StreamingOutput stream = new StreamingOutputWrapper( input.getStream() );
 

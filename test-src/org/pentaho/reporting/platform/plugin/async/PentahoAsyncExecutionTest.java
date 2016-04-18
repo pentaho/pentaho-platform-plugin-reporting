@@ -33,6 +33,7 @@ import org.pentaho.reporting.platform.plugin.SimpleReportingComponent;
 import org.pentaho.reporting.platform.plugin.staging.AsyncJobFileStagingHandler;
 import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
 
+import java.io.File;
 import java.io.InputStream;
 import java.util.UUID;
 import java.util.concurrent.Future;
@@ -55,8 +56,7 @@ public class PentahoAsyncExecutionTest {
   IPentahoSession userSession = mock( IPentahoSession.class );
   SimpleReportingComponent component = mock( SimpleReportingComponent.class );
   AsyncJobFileStagingHandler handler = mock( AsyncJobFileStagingHandler.class );
-  IFixedSizeStreamingContent input =
-    new AsyncJobFileStagingHandler.FixedSizeStagingContent( new NullInputStream( 0 ), 0 );
+  IFixedSizeStreamingContent input;
 
   MasterReport report = mock( MasterReport.class );
   ModifiableConfiguration configuration = mock( ModifiableConfiguration.class );
@@ -67,6 +67,9 @@ public class PentahoAsyncExecutionTest {
     PentahoSessionHolder.removeSession();
 
     PentahoSessionHolder.setSession( userSession );
+
+    File temp = File.createTempFile( "junit", "tmp" );
+    input = new AsyncJobFileStagingHandler.FixedSizeStagingContent( temp );
 
     when( handler.getStagingContent() ).thenReturn( input );
     when( report.getReportConfiguration() ).thenReturn( configuration );

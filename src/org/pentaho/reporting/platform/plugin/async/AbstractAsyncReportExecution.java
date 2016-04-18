@@ -115,6 +115,10 @@ public abstract class AbstractAsyncReportExecution<TReportState extends IAsyncRe
     @Override public long getContentSize() {
       return 0;
     }
+
+    @Override public boolean cleanContent() {
+      return true;
+    }
   }
 
 

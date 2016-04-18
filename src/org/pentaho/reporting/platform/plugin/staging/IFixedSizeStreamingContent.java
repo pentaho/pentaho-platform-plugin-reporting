@@ -7,7 +7,14 @@ import java.io.InputStream;
  */
 public interface IFixedSizeStreamingContent {
 
+  /**
+   * Creates input stream from staging content.
+   * This stream must be closed manually.
+   *
+   * @return
+   */
   InputStream getStream();
   long getContentSize();
+  boolean cleanContent();
 
 }
