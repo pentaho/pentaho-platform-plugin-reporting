@@ -988,8 +988,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                   isFinished = true;
                   logger && logger.log("ERROR: Request status - FAILED");
                   me._submitReportEnded();
-                } else  if ( resultJson.status == 'SCHEDULED'){                 
-                  hideDlgAndPane();
+                } else  if ( resultJson.status == 'SCHEDULED'){
                   var dlgBackground = registry.byId('scheduleScreen');
                   dlgBackground.setTitle(_Messages.getString('ScheduleTitle'));
                   dlgBackground.setOkBtnText(_Messages.getString('OK'));
@@ -1010,6 +1009,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                     dlgBackground.hideSkipBtn();
                     dlgBackground.callbacks = [
                       function hide() {
+                        hideDlgAndPane();
                         dlgBackground.hide();
                       }.bind(this)
                     ];
@@ -1018,6 +1018,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                   if(!manuallyScheduled || !dlgBackground.isSkipped()){
                     dlgBackground.show();
                   }
+                  hideDlgAndPane();
                   me._submitReportEnded();
                 }else if(resultJson.status = 'CANCELED'){
                   me._submitReportEnded();
