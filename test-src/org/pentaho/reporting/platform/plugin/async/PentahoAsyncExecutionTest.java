@@ -29,6 +29,7 @@ import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.libraries.base.config.ModifiableConfiguration;
+import org.pentaho.reporting.platform.plugin.AuditWrapper;
 import org.pentaho.reporting.platform.plugin.SimpleReportingComponent;
 import org.pentaho.reporting.platform.plugin.staging.AsyncJobFileStagingHandler;
 import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
@@ -103,7 +104,7 @@ public class PentahoAsyncExecutionTest {
   }
 
   private PentahoAsyncReportExecution createMockCallable() {
-    return new PentahoAsyncReportExecution( "junit-path", component, handler, userSession, null ) {
+    return new PentahoAsyncReportExecution( "junit-path", component, handler, userSession, null, AuditWrapper.NULL ) {
       @Override
       protected AsyncReportStatusListener createListener( UUID id ) {
         return new AsyncReportStatusListener( "display_path", id, "text/html" );
@@ -204,7 +205,7 @@ public class PentahoAsyncExecutionTest {
 
   private PentahoAsyncReportExecution getSleepingSpy( final AtomicBoolean run, IPentahoSession session ) {
     PentahoAsyncReportExecution exec =
-      new PentahoAsyncReportExecution( "junit-path", component, handler, session, "junit" ) {
+      new PentahoAsyncReportExecution( "junit-path", component, handler, session, "junit", AuditWrapper.NULL ) {
         @Override
         public IFixedSizeStreamingContent call() throws Exception {
           while ( !run.get() && !Thread.currentThread().isInterrupted() ) {

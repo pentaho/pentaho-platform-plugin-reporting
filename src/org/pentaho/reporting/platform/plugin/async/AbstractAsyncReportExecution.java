@@ -22,9 +22,9 @@ import org.apache.commons.io.input.NullInputStream;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.pentaho.platform.api.engine.IPentahoSession;
-import org.pentaho.platform.engine.core.audit.AuditHelper;
 import org.pentaho.platform.engine.core.audit.MessageTypes;
 import org.pentaho.reporting.libraries.base.util.ArgumentNullException;
+import org.pentaho.reporting.platform.plugin.AuditWrapper;
 import org.pentaho.reporting.platform.plugin.SimpleReportingComponent;
 import org.pentaho.reporting.platform.plugin.staging.AsyncJobFileStagingHandler;
 import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
@@ -33,7 +33,7 @@ import java.io.InputStream;
 import java.util.UUID;
 
 public abstract class AbstractAsyncReportExecution<TReportState extends IAsyncReportState>
-  implements IAsyncReportExecution<TReportState>, IListenableFutureDelegator<IFixedSizeStreamingContent>  {
+  implements IAsyncReportExecution<TReportState>, IListenableFutureDelegator<IFixedSizeStreamingContent> {
 
   protected final SimpleReportingComponent reportComponent;
   protected final AsyncJobFileStagingHandler handler;
@@ -45,13 +45,8 @@ public abstract class AbstractAsyncReportExecution<TReportState extends IAsyncRe
 
   private static final Log log = LogFactory.getLog( AbstractAsyncReportExecution.class );
 
-  /**
-   * Creates callable execuiton task.
-   *
-   * @param url             for audit purposes
-   * @param reportComponent component responsible for gererating report
-   * @param handler         content staging handler between requests
-   */
+  private AuditWrapper audit;
+
   public AbstractAsyncReportExecution( final String url,
                                        final SimpleReportingComponent reportComponent,
                                        final AsyncJobFileStagingHandler handler,
@@ -62,6 +57,31 @@ public abstract class AbstractAsyncReportExecution<TReportState extends IAsyncRe
     this.url = url;
     this.auditId = auditId;
     this.safeSession = safeSession;
+    this.audit = AuditWrapper.NULL;
+  }
+
+  /**
+   * Creates callable execuiton task.
+   *
+   * @param url             for audit purposes
+   * @param reportComponent component responsible for gererating report
+   * @param handler         content staging handler between requests
+   * @param safeSession     pentaho session used mostly for log/audit purposes
+   * @param auditId         audit id per execution. Typically nested from http controller that do create this task
+   * @param audit           audit record handler implementation
+   */
+  public AbstractAsyncReportExecution( final String url,
+                                       final SimpleReportingComponent reportComponent,
+                                       final AsyncJobFileStagingHandler handler,
+                                       final IPentahoSession safeSession,
+                                       final String auditId,
+                                       final AuditWrapper audit ) {
+    this.reportComponent = reportComponent;
+    this.handler = handler;
+    this.url = url;
+    this.auditId = auditId;
+    this.safeSession = safeSession;
+    this.audit = audit;
   }
 
   public void notifyTaskQueued( final UUID id ) {
@@ -77,12 +97,16 @@ public abstract class AbstractAsyncReportExecution<TReportState extends IAsyncRe
     return this.listener;
   }
 
+  protected AuditWrapper getAudit() {
+    return this.audit;
+  }
+
   protected void fail() {
     // do not erase canceled status
     if ( listener != null && !listener.getState().getStatus().equals( AsyncExecutionStatus.CANCELED ) ) {
       listener.setStatus( AsyncExecutionStatus.FAILED );
     }
-    AuditHelper.audit( safeSession.getId(), safeSession.getId(), url, getClass().getName(), getClass().getName(),
+    audit.audit( safeSession.getId(), safeSession.getName(), url, getClass().getName(), getClass().getName(),
       MessageTypes.FAILED, auditId, "", 0, null );
   }
 
