@@ -22,12 +22,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.pentaho.platform.api.engine.IParameterProvider;
 import org.pentaho.platform.api.repository2.unified.RepositoryFile;
-import org.pentaho.platform.engine.core.audit.AuditHelper;
 import org.pentaho.platform.engine.core.audit.MessageTypes;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlTableModule;
+import org.pentaho.reporting.platform.plugin.async.IPentahoAsyncExecutor;
 import org.pentaho.reporting.platform.plugin.async.PentahoAsyncExecutor;
 import org.pentaho.reporting.platform.plugin.async.PentahoAsyncReportExecution;
+import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
 import org.pentaho.reporting.platform.plugin.staging.AsyncJobFileStagingHandler;
 
 import javax.servlet.http.HttpServletResponse;
@@ -58,19 +59,30 @@ public class BackgroundJobReportContentGenerator extends ParameterContentGenerat
   public void createContent( OutputStream outputStream ) throws Exception {
     final IParameterProvider requestParams = getRequestParameters();
     RepositoryFile prptFile = resolvePrptFile( requestParams );
-    this.createReportContent( outputStream, prptFile.getId(), prptFile.getPath() );
+    // we don't write directly for servlet output stream for async mode
+    // typically we send redirect or error using HttpServletResponse mechanism
+    this.createReportContent( prptFile.getId(), prptFile.getPath() );
   }
 
-  public void createReportContent( final OutputStream outputStream, final Serializable fileId, final String path )
+  public void createReportContent( final Serializable fileId, final String path )
+    throws Exception {
+    this.createReportContent( fileId, path, new SimpleReportingComponent(), new AuditWrapper() );
+  }
+
+  public void createReportContent( final Serializable fileId, final String path,
+                            final SimpleReportingComponent reportComponent,
+                            AuditWrapper audit )
     throws Exception {
     final Map<String, Object> inputs = this.createInputs();
 
+    // set instance id to be accessible for debug (if debug is enabled)
+    ReportListenerThreadHolder.setRequestId( this.instanceId );
+
     // register execution attempt
-    AuditHelper.audit( userSession.getId(), userSession.getName(), path, getObjectName(), getClass().getName(),
+    audit.audit( userSession.getId(), userSession.getName(), path, getObjectName(), getClass().getName(),
       MessageTypes.EXECUTION, instanceId, "", 0, this );
 
     // prepare execution, copy-paste from ExecuteReportContentHandler.
-    final SimpleReportingComponent reportComponent = new SimpleReportingComponent();
     reportComponent.setReportFileId( fileId );
     reportComponent.setPaginateOutput( true );
     reportComponent.setForceDefaultOutputTarget( false );
@@ -85,9 +97,9 @@ public class BackgroundJobReportContentGenerator extends ParameterContentGenerat
     reportComponent.setOutputStream( handler.getStagingOutputStream() );
 
     PentahoAsyncReportExecution
-        asyncExec = new PentahoAsyncReportExecution( path, reportComponent, handler, userSession, instanceId );
+      asyncExec = new PentahoAsyncReportExecution( path, reportComponent, handler, userSession, instanceId, audit );
 
-    PentahoAsyncExecutor executor =
+    IPentahoAsyncExecutor executor =
       PentahoSystem.get( PentahoAsyncExecutor.class, PentahoAsyncExecutor.BEAN_NAME, null );
     // delegation
     if ( reportComponent.validate() ) {
@@ -95,29 +107,28 @@ public class BackgroundJobReportContentGenerator extends ParameterContentGenerat
       sendSuccessRedirect( uuid );
     } else {
       // register failed parameters execution attempt
-      AuditHelper.audit( userSession.getId(), userSession.getName(), path, getObjectName(), getClass()
-        .getName(), MessageTypes.FAILED, instanceId, "Parameters did not validate", 0, this );
+      audit.audit( userSession.getId(), userSession.getName(), path, getObjectName(), getClass().getName(),
+        MessageTypes.FAILED, instanceId, "", 0, this );
       sendErrorResponse();
     }
   }
 
-  private void sendErrorResponse() throws IOException {
-    //TODO move HTTPServletResponse out of this!
-    final IParameterProvider pathProviders = parameterProviders.get( "path" );
-    final Object httpResponseObj = pathProviders.getParameter( "httpresponse" );
-    HttpServletResponse httpResponse = HttpServletResponse.class.cast( httpResponseObj );
-
+  protected void sendErrorResponse() throws IOException {
+    HttpServletResponse httpResponse = getServletResponse();
     httpResponse.setStatus( HttpServletResponse.SC_INTERNAL_SERVER_ERROR );
   }
 
-  public void sendSuccessRedirect( UUID uuid ) throws IOException {
-    //TODO move HTTPServletResponse out of this!
+  protected void sendSuccessRedirect( UUID uuid ) throws IOException {
+    HttpServletResponse httpResponse = getServletResponse();
+    httpResponse.setStatus( HttpServletResponse102.SC_PROCESSING );
+    httpResponse.sendRedirect( REDIRECT_PREFIX + uuid.toString() + REDIRECT_POSTFIX );
+  }
+
+  protected HttpServletResponse getServletResponse() {
     final IParameterProvider pathProviders = parameterProviders.get( "path" );
     final Object httpResponseObj = pathProviders.getParameter( "httpresponse" );
     HttpServletResponse httpResponse = HttpServletResponse.class.cast( httpResponseObj );
-
-    httpResponse.setStatus( HttpServletResponse102.SC_PROCESSING );
-    httpResponse.sendRedirect( REDIRECT_PREFIX + uuid.toString() + REDIRECT_POSTFIX );
+    return httpResponse;
   }
 
   @Override

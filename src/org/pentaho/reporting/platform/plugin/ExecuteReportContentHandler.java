@@ -40,6 +40,7 @@ import org.pentaho.reporting.engine.classic.core.AttributeNames;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlTableModule;
 import org.pentaho.reporting.engine.classic.core.util.StagingMode;
+import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
 import org.pentaho.reporting.platform.plugin.messages.Messages;
 import org.pentaho.reporting.platform.plugin.staging.AbstractStagingHandler;
 import org.pentaho.reporting.platform.plugin.staging.StagingHandler;
@@ -60,9 +61,12 @@ public class ExecuteReportContentHandler {
 
   public void createReportContent( final OutputStream outputStream, final Serializable fileId, final String path,
       final boolean forceDefaultOutputTarget ) throws Exception {
+    ReportListenerThreadHolder.setRequestId( contentGenerator.getInstanceId() );
+
     final long start = System.currentTimeMillis();
     final Map<String, Object> inputs = contentGenerator.createInputs();
 
+    // Deprecated call. See AuditWrapper.
     AuditHelper.audit( userSession.getId(), userSession.getName(), path, contentGenerator.getObjectName(), getClass()
         .getName(), MessageTypes.INSTANCE_START, contentGenerator.getInstanceId(), "", 0, contentGenerator ); //$NON-NLS-1$
 

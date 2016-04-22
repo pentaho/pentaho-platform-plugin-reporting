@@ -23,9 +23,9 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.pentaho.platform.api.engine.IPentahoSession;
-import org.pentaho.platform.engine.core.audit.AuditHelper;
 import org.pentaho.platform.engine.core.audit.MessageTypes;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
+import org.pentaho.reporting.platform.plugin.AuditWrapper;
 import org.pentaho.reporting.platform.plugin.SimpleReportingComponent;
 import org.pentaho.reporting.platform.plugin.staging.AsyncJobFileStagingHandler;
 import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
@@ -40,8 +40,9 @@ public class PentahoAsyncReportExecution extends AbstractAsyncReportExecution<IA
                                       SimpleReportingComponent reportComponent,
                                       AsyncJobFileStagingHandler handler,
                                       IPentahoSession safeSession,
-                                      String auditId ) {
-    super( url, reportComponent, handler, safeSession, auditId );
+                                      String auditId,
+                                      AuditWrapper audit ) {
+    super( url, reportComponent, handler, safeSession, auditId, audit );
   }
 
 
@@ -66,16 +67,19 @@ public class PentahoAsyncReportExecution extends AbstractAsyncReportExecution<IA
       PentahoSessionHolder.setSession( safeSession );
 
       ReportListenerThreadHolder.setListener( listener );
+      ReportListenerThreadHolder.setRequestId( auditId );
+
       final long start = System.currentTimeMillis();
-      AuditHelper.audit( safeSession.getId(), safeSession.getId(), url, getClass().getName(), getClass().getName(),
+
+      getAudit().audit( safeSession.getId(), safeSession.getName(), url, getClass().getName(), getClass().getName(),
         MessageTypes.INSTANCE_START, auditId, "", 0, null );
 
       if ( reportComponent.execute() ) {
 
         final long end = System.currentTimeMillis();
-        AuditHelper.audit( safeSession.getId(), safeSession.getId(), url, getClass().getName(), getClass().getName(),
-          MessageTypes.INSTANCE_END, auditId, "", ( (float) ( end - start ) / 1000 ), null );
 
+        getAudit().audit( safeSession.getId(), safeSession.getName(), url, getClass().getName(), getClass().getName(),
+          MessageTypes.INSTANCE_END, auditId, "", ( (float) ( end - start ) / 1000 ), null );
 
         final IFixedSizeStreamingContent stagingContent = handler.getStagingContent();
 

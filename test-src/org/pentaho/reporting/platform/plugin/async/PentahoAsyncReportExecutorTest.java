@@ -32,6 +32,7 @@ import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.libraries.base.config.ModifiableConfiguration;
+import org.pentaho.reporting.platform.plugin.AuditWrapper;
 import org.pentaho.reporting.platform.plugin.SimpleReportingComponent;
 import org.pentaho.reporting.platform.plugin.staging.AsyncJobFileStagingHandler;
 import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
@@ -157,7 +158,7 @@ public class PentahoAsyncReportExecutorTest {
   }
 
   private PentahoAsyncReportExecution createMockCallable( IPentahoSession session ) {
-    return new PentahoAsyncReportExecution( "junit-path", component, handler, session, null ) {
+    return new PentahoAsyncReportExecution( "junit-path", component, handler, session, null, AuditWrapper.NULL ) {
       @Override
       protected AsyncReportStatusListener createListener( final UUID id ) {
         final AsyncReportState state = new AsyncReportState( id, getReportPath() );
@@ -250,7 +251,7 @@ public class PentahoAsyncReportExecutorTest {
 
     // must have two separate instances, as callable holds unique ID and listener for each addTask(..)
     final UUID id1 = exec.addTask(  new PentahoAsyncReportExecution( "junit-path",
-            component, handler, PentahoSessionHolder.getSession(), null ) {
+            component, handler, PentahoSessionHolder.getSession(), null, AuditWrapper.NULL ) {
       @Override
       protected AsyncReportStatusListener createListener(final UUID id) {
         return testListener;
