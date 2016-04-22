@@ -985,6 +985,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                     errorMsg,
                     _Messages.getString('ErrorPromptTitle'));
                   hideDlgAndPane();
+                  domClass.add('notification-screen', 'hidden');
                   isFinished = true;
                   logger && logger.log("ERROR: Request status - FAILED");
                   me._submitReportEnded();
@@ -1020,8 +1021,9 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                   }
                   hideDlgAndPane();
                   me._submitReportEnded();
-                }else if(resultJson.status = 'CANCELED'){
+                } else if(resultJson.status = 'CANCELED') {
                   me._submitReportEnded();
+                  domClass.add('notification-screen', 'hidden');
                 }
               }
               return resultJson;
