@@ -211,7 +211,8 @@ public class PentahoAsyncExecutor<TReportState extends IAsyncReportState>
         if ( task != null && task.getState() != null && AsyncExecutionStatus.SCHEDULED
           .equals( task.getState().getStatus() ) ) {
           hasScheduled = true;
-          //Don't remove scheduled task
+          //After the session end nobody can poll status, we can remove task
+          tasks.remove( entry.getKey() );
           continue;
         }
 
@@ -348,7 +349,10 @@ public class PentahoAsyncExecutor<TReportState extends IAsyncReportState>
         log.error( "Cant't persist report: ", e );
       } finally {
         IOUtils.closeQuietly( inputStream );
-        cleanFuture( id, safeSession );
+        //Time to remove future - nobody will ask for content at this moment
+        //We need to keep task because status polling may still occur ( or it already has been removed on logout )
+        final CompositeKey key = new CompositeKey( safeSession, id );
+        futures.remove( key );
         tryCleanStagingDir( safeSession );
       }
 
