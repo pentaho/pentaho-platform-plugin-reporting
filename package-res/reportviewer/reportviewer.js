@@ -901,15 +901,6 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                 });
 
                 if(resultJson.status == "QUEUED" || resultJson.status == "WORKING") {
-                  //auto schedule the report
-                  if( !manuallyScheduled &&
-                      !this.reportPrompt._isReportHtmlPagebleOutputFormat &&
-                      this.reportPrompt._autoScheduleRowThreshold !=0 &&
-                      resultJson.totalRows >= this.reportPrompt._autoScheduleRowThreshold ){
-
-                    var urlSchedule = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + this._currentReportUuid + '/schedule';
-                    pentahoGet( urlSchedule, "");
-                  }
 
                   var urlStatus = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + resultJson.uuid + '/status';
                   setTimeout(function(){ pentahoGet(urlStatus, "", handleResultCallback); }, this.reportPrompt._pollingInterval);
@@ -990,6 +981,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                   logger && logger.log("ERROR: Request status - FAILED");
                   me._submitReportEnded();
                 } else  if ( resultJson.status == 'SCHEDULED'){
+                  isFinished = true;
                   var dlgBackground = registry.byId('scheduleScreen');
                   dlgBackground.setTitle(_Messages.getString('ScheduleTitle'));
                   dlgBackground.setOkBtnText(_Messages.getString('OK'));
