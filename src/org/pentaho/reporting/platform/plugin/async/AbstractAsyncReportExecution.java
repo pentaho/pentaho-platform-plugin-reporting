@@ -23,6 +23,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.audit.MessageTypes;
+import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
 import org.pentaho.reporting.libraries.base.util.ArgumentNullException;
 import org.pentaho.reporting.platform.plugin.AuditWrapper;
 import org.pentaho.reporting.platform.plugin.SimpleReportingComponent;
@@ -30,6 +31,7 @@ import org.pentaho.reporting.platform.plugin.staging.AsyncJobFileStagingHandler;
 import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
 
 import java.io.InputStream;
+import java.util.List;
 import java.util.UUID;
 
 public abstract class AbstractAsyncReportExecution<TReportState extends IAsyncReportState>
@@ -84,13 +86,13 @@ public abstract class AbstractAsyncReportExecution<TReportState extends IAsyncRe
     this.audit = audit;
   }
 
-  public void notifyTaskQueued( final UUID id ) {
+  public void notifyTaskQueued( final UUID id, final List<? extends ReportProgressListener> callbackListeners ) {
     ArgumentNullException.validate( "id", id );
 
     if ( listener != null ) {
       throw new IllegalStateException( "This instance has already been scheduled." );
     }
-    this.listener = createListener( id );
+    this.listener = createListener( id, callbackListeners );
   }
 
   protected AsyncReportStatusListener getListener() {
@@ -110,8 +112,8 @@ public abstract class AbstractAsyncReportExecution<TReportState extends IAsyncRe
       MessageTypes.FAILED, auditId, "", 0, null );
   }
 
-  protected AsyncReportStatusListener createListener( final UUID instanceId ) {
-    return new AsyncReportStatusListener( getReportPath(), instanceId, getMimeType() );
+  protected AsyncReportStatusListener createListener( final UUID instanceId, final List<? extends ReportProgressListener> callbackListeners ) {
+    return new AsyncReportStatusListener( getReportPath(), instanceId, getMimeType(), callbackListeners );
   }
 
   // cancel can only be called from the future created by "newTask".

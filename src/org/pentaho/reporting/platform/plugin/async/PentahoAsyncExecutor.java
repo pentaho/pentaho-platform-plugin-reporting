@@ -35,6 +35,8 @@ import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.engine.security.SecurityHelper;
 import org.pentaho.platform.util.StringUtil;
 import org.pentaho.platform.util.web.MimeHelper;
+import org.pentaho.reporting.engine.classic.core.event.ReportProgressEvent;
+import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
 import org.pentaho.reporting.libraries.base.util.ArgumentNullException;
 import org.pentaho.reporting.libraries.repository.ContentLocation;
 import org.pentaho.reporting.platform.plugin.repository.ReportContentRepository;
@@ -46,6 +48,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -62,22 +65,32 @@ public class PentahoAsyncExecutor<TReportState extends IAsyncReportState>
   public static final String BEAN_NAME = "IPentahoAsyncExecutor";
 
   private static final Log log = LogFactory.getLog( PentahoAsyncExecutor.class );
-  public static final String UNABLE_DELETE_TEMP_FILES_ON_SESSION_LOGOUT = "Unable delete temp files on session logout.";
+  private static final String UNABLE_DELETE_TEMP_FILES_ON_SESSION_LOGOUT = "Unable delete temp files on session logout.";
 
   private Map<CompositeKey, ListenableFuture<IFixedSizeStreamingContent>> futures = new ConcurrentHashMap<>();
   private Map<CompositeKey, IAsyncReportExecution<TReportState>> tasks = new ConcurrentHashMap<>();
 
   private ListeningExecutorService executorService;
 
+  private final int autoSchedulerThreshold;
+
   /**
    * @param capacity
+   * @param autoSchedulerThreshold
    */
-  public PentahoAsyncExecutor( final int capacity ) {
+  public PentahoAsyncExecutor( final int capacity, int autoSchedulerThreshold ) {
+    this.autoSchedulerThreshold = autoSchedulerThreshold;
     log.info( "Initialized reporting  async execution fixed thread pool with capacity: " + capacity );
     executorService =
       new DelegatedListenableExecutor( new ThreadPoolExecutor( capacity, capacity, 0L, TimeUnit.MILLISECONDS,
         new LinkedBlockingQueue<Runnable>() ) );
     PentahoSystem.addLogoutListener( this );
+  }
+
+
+  @Deprecated
+  public PentahoAsyncExecutor( final int capacity ) {
+    this( capacity, 0 );
   }
 
   // default visibility for testing purpose
@@ -114,9 +127,11 @@ public class PentahoAsyncExecutor<TReportState extends IAsyncReportState>
   @Override public UUID addTask( final IAsyncReportExecution<TReportState> task, final IPentahoSession session ) {
 
     final UUID id = UUID.randomUUID();
+
     final CompositeKey key = new CompositeKey( session, id );
 
-    task.notifyTaskQueued( id );
+    task.notifyTaskQueued( id,
+      Collections.singletonList( new AutoScheduleListener( id, session, autoSchedulerThreshold ) ) );
 
     log.debug( "register async execution for task: " + task.toString() );
 
@@ -159,7 +174,7 @@ public class PentahoAsyncExecutor<TReportState extends IAsyncReportState>
             try {
               if ( session != null && !StringUtil.isEmpty( session.getName() ) ) {
                 SecurityHelper.getInstance().runAsUser( session.getName(),
-                  getWriteTask( result, id, session, runningTask ) );
+                  new WriteToJcrTask( id, session, runningTask, result.getStream() ) );
               }
 
             } catch ( final Exception e ) {
@@ -359,5 +374,38 @@ public class PentahoAsyncExecutor<TReportState extends IAsyncReportState>
       return null;
     }
 
+  }
+
+  private class AutoScheduleListener implements ReportProgressListener {
+
+    private boolean scheduled = false;
+    private int threshold;
+    private UUID id;
+    private IPentahoSession session;
+
+    AutoScheduleListener( final UUID id, final IPentahoSession session, final int threshold ) {
+      this.id = id;
+      this.threshold = threshold;
+      this.session = session;
+    }
+
+    private synchronized void autoSchedule( final ReportProgressEvent reportProgressEvent ) {
+      if ( !scheduled && threshold > 0 && reportProgressEvent != null && reportProgressEvent.getMaximumRow() > threshold ) {
+        schedule( id, session );
+        scheduled = true;
+      }
+    }
+
+    @Override public void reportProcessingStarted( final ReportProgressEvent reportProgressEvent ) {
+      autoSchedule( reportProgressEvent );
+    }
+
+    @Override public void reportProcessingUpdate( final ReportProgressEvent reportProgressEvent ) {
+      autoSchedule( reportProgressEvent );
+    }
+
+    @Override public void reportProcessingFinished( final ReportProgressEvent reportProgressEvent ) {
+
+    }
   }
 }

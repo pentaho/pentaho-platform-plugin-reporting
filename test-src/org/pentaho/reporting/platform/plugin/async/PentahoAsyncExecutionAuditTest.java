@@ -24,10 +24,12 @@ import org.mockito.Mockito;
 import org.pentaho.platform.api.engine.ILogger;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.audit.MessageTypes;
+import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
 import org.pentaho.reporting.platform.plugin.AuditWrapper;
 import org.pentaho.reporting.platform.plugin.SimpleReportingComponent;
 import org.pentaho.reporting.platform.plugin.staging.AsyncJobFileStagingHandler;
 
+import java.util.Collections;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -64,7 +66,7 @@ public class PentahoAsyncExecutionAuditTest {
   public void testSuccessExecutionAudit() throws Exception {
     PentahoAsyncReportExecution execution =
       new PentahoAsyncReportExecution( url, component, handler, session, auditId, wrapper );
-    execution.notifyTaskQueued( uuid );
+    execution.notifyTaskQueued( uuid, Collections.<ReportProgressListener>emptyList() );
 
     //this is successful story
     when( component.execute() ).thenReturn( true );
@@ -81,7 +83,7 @@ public class PentahoAsyncExecutionAuditTest {
       eq( auditId ),
       eq( "" ),
       eq( (float) 0 ),
-      eq( null )
+      any( ILogger.class )
     );
 
     verify( wrapper, Mockito.times( 1 ) ).audit(
@@ -94,7 +96,7 @@ public class PentahoAsyncExecutionAuditTest {
       eq( auditId ),
       eq( "" ),
       anyFloat(), // hope more than 0
-      eq( null )
+      any( ILogger.class )
     );
   }
 
@@ -102,7 +104,7 @@ public class PentahoAsyncExecutionAuditTest {
   public void testFailedExecutionAudit() throws Exception {
     PentahoAsyncReportExecution execution =
       new PentahoAsyncReportExecution( url, component, handler, session, auditId, wrapper );
-    execution.notifyTaskQueued( uuid );
+    execution.notifyTaskQueued( uuid, Collections.<ReportProgressListener>emptyList() );
 
     //this is sad story
     when( component.execute() ).thenReturn( false );
@@ -120,7 +122,7 @@ public class PentahoAsyncExecutionAuditTest {
       eq( auditId ),
       eq( "" ),
       eq( (float) 0 ),
-      eq( null )
+      any( ILogger.class )
     );
 
     // no async reports for this case.
@@ -134,20 +136,20 @@ public class PentahoAsyncExecutionAuditTest {
       eq( auditId ),
       eq( "" ),
       eq( (float) 0 ),
-      eq( null )
+      any( ILogger.class )
     );
   }
 
   /**
-   * We need a special wrapper that will be able to get id from one thread (created for report execution)
-   * and made this value accessible in contest of this junit test thread.
+   * We need a special wrapper that will be able to get id from one thread (created for report execution) and made this
+   * value accessible in contest of this junit test thread.
    *
    * @throws Exception
    */
   @Test
   public void testInstanceIdIsSet() throws Exception {
 
-    final CountDownLatch latch = new CountDownLatch(1);
+    final CountDownLatch latch = new CountDownLatch( 1 );
     ThreadSpyAuditWrapper wrapper = new ThreadSpyAuditWrapper( latch );
 
     String expected = UUID.randomUUID().toString();
@@ -158,8 +160,7 @@ public class PentahoAsyncExecutionAuditTest {
     PentahoAsyncExecutor executor = new PentahoAsyncExecutor( 2 );
     executor.addTask( execution, session );
 
-    // hope 10 sec is enough
-    latch.await( 10, TimeUnit.SECONDS );
+    latch.await();
 
     assertEquals( expected, wrapper.capturedId );
   }
@@ -169,13 +170,14 @@ public class PentahoAsyncExecutionAuditTest {
     String capturedId;
     private CountDownLatch latch;
 
-    ThreadSpyAuditWrapper ( CountDownLatch latch ) {
+    ThreadSpyAuditWrapper( CountDownLatch latch ) {
       this.latch = latch;
     }
 
     @Override
     public void audit( String instanceId, final String userId, String actionName, final String objectType,
-                       String processId, final String messageType, final String message, final String value, final float duration,
+                       String processId, final String messageType, final String message, final String value,
+                       final float duration,
                        final ILogger logger ) {
       latch.countDown();
       capturedId = ReportListenerThreadHolder.getRequestId();
