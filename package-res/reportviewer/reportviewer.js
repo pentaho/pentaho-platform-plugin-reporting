@@ -799,29 +799,21 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           dlg.setText3(_Messages.getString('FeedbackScreenRow'));
           dlg.setCancelText(_Messages.getString('ScreenCancel'));
 
-          if(this.reportPrompt._isReportHtmlPagebleOutputFormat){
-            dlg.hideBackgroundBtn();
-            dlg.callbacks = [function feedbackscreenDone() {
+
+          dlg.showBackgroundBtn(_Messages.getString('FeedbackScreenBackground'));
+          dlg.callbacks = [
+            function scheduleReport() {
+              var urlSchedule = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + this._currentReportUuid + '/schedule';
+              pentahoGet( urlSchedule, "");
+              manuallyScheduled = true;
+              hideDlgAndPane(registry.byId('feedbackScreen'));
+            }.bind(this),
+            function feedbackscreenDone() {
               this.cancel(this._currentReportStatus, this._currentReportUuid);
               hideDlgAndPane(registry.byId('feedbackScreen'));
             }.bind(this)
-            ];
-          } else {
-            dlg.showBackgroundBtn(_Messages.getString('FeedbackScreenBackground'));
-            dlg.callbacks = [
-              function scheduleReport() {
-                var urlSchedule = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + this._currentReportUuid + '/schedule';
-                pentahoGet( urlSchedule, "");
-                manuallyScheduled = true;
-                hideDlgAndPane(registry.byId('feedbackScreen'));
-              }.bind(this),
-              function feedbackscreenDone() {
-                this.cancel(this._currentReportStatus, this._currentReportUuid);
-                hideDlgAndPane(registry.byId('feedbackScreen'));
-              }.bind(this)
-            ];
-          }
-
+          ];
+         
 
           setTimeout(function () {
             if(!isFinished){
