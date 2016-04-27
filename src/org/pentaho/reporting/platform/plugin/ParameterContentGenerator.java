@@ -33,6 +33,7 @@ import org.pentaho.platform.api.repository2.unified.RepositoryFile;
 import org.pentaho.platform.engine.core.solution.SimpleParameterProvider;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.engine.services.solution.SimpleContentGenerator;
+import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
 
 public class ParameterContentGenerator extends SimpleContentGenerator {
   /**
@@ -43,6 +44,9 @@ public class ParameterContentGenerator extends SimpleContentGenerator {
 
   @Override
   public void createContent( OutputStream outputStream ) throws Exception {
+    // set instance Id if debug is enabled.
+    ReportListenerThreadHolder.setRequestId( this.instanceId );
+
     final IParameterProvider requestParams = getRequestParameters();
 
     RepositoryFile prptFile = resolvePrptFile( requestParams );

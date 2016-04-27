@@ -27,6 +27,7 @@ import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.engine.core.system.boot.PlatformInitializationException;
+import org.pentaho.reporting.platform.plugin.AuditWrapper;
 import org.pentaho.reporting.platform.plugin.MicroPlatformFactory;
 import org.pentaho.reporting.platform.plugin.SimpleReportingComponent;
 import org.pentaho.reporting.platform.plugin.staging.AsyncJobFileStagingHandler;
@@ -80,7 +81,7 @@ public class PentahoAsyncExecutionInterruptTest {
         handler =
         new AsyncJobFileStagingHandler( session );
     PentahoAsyncReportExecution
-        task = new PentahoAsyncReportExecution( "junit", reportComponent, handler, session, null );
+        task = new PentahoAsyncReportExecution( "junit", reportComponent, handler, session, null, AuditWrapper.NULL );
 
     UUID id = executor.addTask( task, session );
 
