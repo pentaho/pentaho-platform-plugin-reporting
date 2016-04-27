@@ -176,13 +176,22 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
       if ( cachedContent == null ) {
         logger.warn( "No cached content found for key: " + key );
         final IReportContent freshCache = regenerateCache( report, yieldRate, key, acceptedPage );
+
+        final IAsyncReportListener listener = ReportListenerThreadHolder.getListener();
+        //write all pages for scheduling case
+        if ( listener != null && listener.isScheduled() ) {
+          PaginationControlWrapper.write( outputStream, freshCache );
+          return freshCache.getPageCount();
+        }
+
         final byte[] pageData = freshCache.getPageData( acceptedPage );
+
         outputStream.write( pageData );
         outputStream.flush();
         return freshCache.getPageCount();
       }
 
-      final byte[] page = cachedContent.getPageData( acceptedPage );
+      byte[] page = cachedContent.getPageData( acceptedPage );
       if ( page != null && page.length > 0 ) {
         logger.warn( "Using cached report data for " + key );
         final IAsyncReportListener listener = ReportListenerThreadHolder.getListener();
@@ -193,6 +202,12 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
               acceptedPage + 1, cachedContent.getPageCount(), 0, 0 );
           listener.reportProcessingUpdate( event );
           listener.reportProcessingFinished( event );
+
+          //write all pages for scheduling case
+          if ( listener.isScheduled() ) {
+            PaginationControlWrapper.write( outputStream, cachedContent );
+            return cachedContent.getPageCount();
+          }
         }
         outputStream.write( page );
         outputStream.flush();
