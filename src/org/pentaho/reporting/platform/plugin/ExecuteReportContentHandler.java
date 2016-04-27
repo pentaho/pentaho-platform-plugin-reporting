@@ -30,7 +30,6 @@ import org.pentaho.platform.api.engine.IParameterProvider;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
 import org.pentaho.platform.api.repository2.unified.RepositoryFile;
-import org.pentaho.platform.engine.core.audit.AuditHelper;
 import org.pentaho.platform.engine.core.audit.MessageTypes;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.util.RepositoryPathEncoder;
@@ -61,16 +60,22 @@ public class ExecuteReportContentHandler {
 
   public void createReportContent( final OutputStream outputStream, final Serializable fileId, final String path,
       final boolean forceDefaultOutputTarget ) throws Exception {
+    this.createReportContent( outputStream, fileId, path, forceDefaultOutputTarget, new SimpleReportingComponent(), new AuditWrapper() );
+  }
+
+  public void createReportContent( final OutputStream outputStream, final Serializable fileId, final String path,
+                                   final boolean forceDefaultOutputTarget,
+                                   final SimpleReportingComponent reportComponent,
+                                   final AuditWrapper audit ) throws Exception {
     ReportListenerThreadHolder.setRequestId( contentGenerator.getInstanceId() );
 
     final long start = System.currentTimeMillis();
     final Map<String, Object> inputs = contentGenerator.createInputs();
 
-    // Deprecated call. See AuditWrapper.
-    AuditHelper.audit( userSession.getId(), userSession.getName(), path, contentGenerator.getObjectName(), getClass()
+    audit.audit( userSession.getId(), userSession.getName(), path, contentGenerator.getObjectName(), getClass()
         .getName(), MessageTypes.INSTANCE_START, contentGenerator.getInstanceId(), "", 0, contentGenerator ); //$NON-NLS-1$
 
-    String result = MessageTypes.INSTANCE_END;
+    String result = MessageTypes.FAILED;
     StagingHandler reportStagingHandler = null;
     try {
       final Object rawSessionId = inputs.get( ParameterXmlContentHandler.SYS_PARAM_SESSION_ID );
@@ -79,7 +84,6 @@ public class ExecuteReportContentHandler {
       }
 
       // produce rendered report
-      final SimpleReportingComponent reportComponent = new SimpleReportingComponent();
       reportComponent.setReportFileId( fileId );
       reportComponent.setPaginateOutput( true );
       reportComponent.setForceDefaultOutputTarget( forceDefaultOutputTarget );
@@ -159,7 +163,7 @@ public class ExecuteReportContentHandler {
         sendErrorResponse( response, outputStream, reportStagingHandler );
       } else {
         if ( response != null ) {
-          // Send headers before we begin execution
+          // set headers before we begin execution
           response.setHeader( "Content-Disposition", disposition );
           response.setHeader( "Content-Description", file.getName() ); //$NON-NLS-1$
           response.setHeader( "Cache-Control", "private, max-age=0, must-revalidate" );
@@ -167,9 +171,7 @@ public class ExecuteReportContentHandler {
         if ( reportComponent.execute() ) {
           if ( response != null ) {
             if ( reportStagingHandler.canSendHeaders() ) {
-              response.setHeader( "Content-Disposition", disposition );
-              response.setHeader( "Content-Description", file.getName() ); //$NON-NLS-1$
-              response.setHeader( "Cache-Control", "private, max-age=0, must-revalidate" );
+              // we can set content lenght after execution - so we know exact response weight
               response.setContentLength( reportStagingHandler.getWrittenByteCount() );
             }
           }
@@ -179,26 +181,24 @@ public class ExecuteReportContentHandler {
                 String.valueOf( reportStagingHandler.getWrittenByteCount() ) ) ); //$NON-NLS-1$
           }
           reportStagingHandler.complete(); // will copy bytes to final destination...
-
+          result = MessageTypes.INSTANCE_END;
         } else { // failed execution
           sendErrorResponse( response, outputStream, reportStagingHandler );
         }
       }
-    } catch ( Exception ex ) {
-      result = MessageTypes.INSTANCE_FAILED;
-      throw ex;
     } finally {
       if ( reportStagingHandler != null ) {
         reportStagingHandler.close();
       }
       final long end = System.currentTimeMillis();
-      AuditHelper.audit( userSession.getId(), userSession.getName(), path, contentGenerator.getObjectName(),
+      audit.audit( userSession.getId(), userSession.getName(), path, contentGenerator.getObjectName(),
           getClass().getName(), result, contentGenerator.getInstanceId(),
           "", ( (float) ( end - start ) / 1000 ), contentGenerator ); //$NON-NLS-1$
     }
   }
 
-  private StagingMode getStagingMode( final Map<String, Object> inputs, final MasterReport report ) {
+  // default visibility for testing purposes
+  StagingMode getStagingMode( final Map<String, Object> inputs, final MasterReport report ) {
     final Object o = inputs.get( "report-staging-mode" );
     if ( o != null ) {
       try {
