@@ -803,7 +803,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
             dlg.hideBackgroundBtn();
             dlg.callbacks = [function feedbackscreenDone() {
               this.cancel(this._currentReportStatus, this._currentReportUuid);
-              hideDlgAndPane();
+              hideDlgAndPane(registry.byId('feedbackScreen'));
             }.bind(this)
             ];
           } else {
@@ -813,11 +813,11 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                 var urlSchedule = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + this._currentReportUuid + '/schedule';
                 pentahoGet( urlSchedule, "");
                 manuallyScheduled = true;
-                hideDlgAndPane();
+                hideDlgAndPane(registry.byId('feedbackScreen'));
               }.bind(this),
               function feedbackscreenDone() {
                 this.cancel(this._currentReportStatus, this._currentReportUuid);
-                hideDlgAndPane();
+                hideDlgAndPane(registry.byId('feedbackScreen'));
               }.bind(this)
             ];
           }
@@ -861,7 +861,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                 this.reportPrompt.showMessageBox(
                   errorMessage,
                   _Messages.getString('ErrorPromptTitle'));
-                hideDlgAndPane();
+                hideDlgAndPane(registry.byId('feedbackScreen'));
                 logger && logger.log("ERROR" + String(e));
                 return;
               }
@@ -890,7 +890,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                     $('#hiddenReportContentForm').submit();
                     $('#reportContent').attr("data-src", urlContent2);
                     this._updatedIFrameSrc = true;
-                    hideDlgAndPane();
+                    hideDlgAndPane(registry.byId('feedbackScreen'));
                     isIframeContentSet = true;
                     $('#notification-message').html(_Messages.getString('LoadingPage'));
                     if(this._currentReportStatus && this._currentReportStatus!='FINISHED' && this._currentReportStatus!='FAILED' && this._currentReportStatus!='CANCELED'){
@@ -955,7 +955,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                     $('#reportContent').attr("data-src", urlContent);
                     this._updatedIFrameSrc = true;
 
-                    hideDlgAndPane();
+                    hideDlgAndPane(registry.byId('feedbackScreen'));
                   }
                   if( (this._requestedPage > 0) && (this._currentStoredPagesCount > this._requestedPage)) {
                     // main request finished before requested page was stored in cache
@@ -984,7 +984,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                   this.reportPrompt.showMessageBox(
                     errorMsg,
                     _Messages.getString('ErrorPromptTitle'));
-                  hideDlgAndPane();
+                  hideDlgAndPane(registry.byId('feedbackScreen'));
                   domClass.add('notification-screen', 'hidden');
                   isFinished = true;
                   logger && logger.log("ERROR: Request status - FAILED");
@@ -1005,21 +1005,22 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                         dlgBackground.hide();
                       }.bind(this)
                     ];
-                  }else {
+                  } else {
                     dlgBackground.setText(_Messages.getString('AutoScheduleText'));
                     dlgBackground.hideSkipBtn();
                     dlgBackground.callbacks = [
                       function hide() {
-                        hideDlgAndPane();
-                        dlgBackground.hide();
+                        hideDlgAndPane(dlgBackground);
                       }.bind(this)
                     ];
                   }
 
-                  if(!manuallyScheduled || !dlgBackground.isSkipped()){
+                  if(!manuallyScheduled || !dlgBackground.isSkipped()) {
+                    registry.byId('feedbackScreen').hide(); // glasspane is still needed
                     dlgBackground.show();
+                  } else {
+                    hideDlgAndPane(registry.byId('feedbackScreen'));
                   }
-                  hideDlgAndPane();
                   me._submitReportEnded();
                 } else if(resultJson.status = 'CANCELED') {
                   me._submitReportEnded();
@@ -1106,8 +1107,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         });
       },
 
-      _hideDialogAndPane: function() {
-        var dlg = registry.byId('feedbackScreen');
+      _hideDialogAndPane: function(dlg) {
         dlg.hide();
         if(this._updateReportTimeout >= 0) {
           clearTimeout(this._updateReportTimeout);
