@@ -12,22 +12,14 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2015 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin.connection;
 
-import java.io.*;
-import java.lang.reflect.Method;
-import java.net.URLDecoder;
-import java.security.Principal;
-import java.util.*;
-import java.util.Map.Entry;
-
 import org.pentaho.platform.api.engine.IParameterProvider;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.api.engine.IPluginManager;
-
 import org.pentaho.platform.engine.core.solution.SimpleParameterProvider;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
@@ -44,10 +36,27 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Method;
+import java.security.Principal;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * Class that implements CDA to be used LOCAL inside pentaho platform
- * 
+ *
  * @author dduque
  */
 
@@ -62,7 +71,7 @@ public class CdaPluginLocalQueryBackend extends CdaQueryBackend {
 
       final Set<Entry<String, String>> parameterSet = extraParameter.entrySet();
       for ( final Entry<String, String> entry : parameterSet ) {
-          parameters.put( entry.getKey(), entry.getValue() );
+        parameters.put( entry.getKey(), entry.getValue() );
       }
 
       parameters.put( "outputType", "xml" );
@@ -90,7 +99,7 @@ public class CdaPluginLocalQueryBackend extends CdaQueryBackend {
     final IPluginManager pluginManager = PentahoSystem.get( IPluginManager.class, userSession );
 
     try {
-      Object cdaBean = pluginManager.getBean("cda.api");
+      Object cdaBean = pluginManager.getBean( "cda.api" );
       Class cdaBeanClass = cdaBean.getClass();
 
       Class[] paramTypes;
@@ -103,28 +112,28 @@ public class CdaPluginLocalQueryBackend extends CdaQueryBackend {
 
         paramTypes = new Class[] { String.class, String.class, String.class, String.class, String.class,
           HttpServletResponse.class, HttpServletRequest.class };
-        m =  cdaBeanClass.getMethod("listParameters", paramTypes);
-        paramValues = new Object[7];
-        paramValues[0] = params.getStringParameter( "path", null );
-        paramValues[1] = params.getStringParameter( "solution", "" );
-        paramValues[2] = params.getStringParameter( "file", "" );
-        paramValues[3] = params.getStringParameter( "outputType", "json" );
-        paramValues[4] = params.getStringParameter( "dataAccessId", "<blank>" );
-        paramValues[5] = getResponse( outputStream );
-        paramValues[6] = getRequest( parameters );
+        m = cdaBeanClass.getMethod( "listParameters", paramTypes );
+        paramValues = new Object[ 7 ];
+        paramValues[ 0 ] = params.getStringParameter( "path", null );
+        paramValues[ 1 ] = params.getStringParameter( "solution", "" );
+        paramValues[ 2 ] = params.getStringParameter( "file", "" );
+        paramValues[ 3 ] = params.getStringParameter( "outputType", "json" );
+        paramValues[ 4 ] = params.getStringParameter( "dataAccessId", "<blank>" );
+        paramValues[ 5 ] = getResponse( outputStream );
+        paramValues[ 6 ] = getRequest( parameters );
 
-        m.invoke(cdaBean, paramValues);
+        m.invoke( cdaBean, paramValues );
 
         return outputStream.toString();
 
       } else {
         paramTypes = new Class[] { HttpServletRequest.class };
-        m = cdaBeanClass.getMethod("doQueryInterPlugin", paramTypes);
+        m = cdaBeanClass.getMethod( "doQueryInterPlugin", paramTypes );
 
-        paramValues = new Object[1];
-        paramValues[0] = getRequest( parameters );
+        paramValues = new Object[ 1 ];
+        paramValues[ 0 ] = getRequest( parameters );
 
-        return (String) m.invoke(cdaBean, paramValues);
+        return (String) m.invoke( cdaBean, paramValues );
 
       }
 
@@ -143,21 +152,21 @@ public class CdaPluginLocalQueryBackend extends CdaQueryBackend {
 
       @Override
       public Cookie[] getCookies() {
-        return new Cookie[0];
+        return new Cookie[ 0 ];
       }
 
       @Override
-      public long getDateHeader(String s) {
+      public long getDateHeader( String s ) {
         return 0;
       }
 
       @Override
-      public String getHeader(String s) {
+      public String getHeader( String s ) {
         return null;
       }
 
       @Override
-      public Enumeration getHeaders(String s) {
+      public Enumeration getHeaders( String s ) {
         return null;
       }
 
@@ -167,7 +176,7 @@ public class CdaPluginLocalQueryBackend extends CdaQueryBackend {
       }
 
       @Override
-      public int getIntHeader(String s) {
+      public int getIntHeader( String s ) {
         return 0;
       }
 
@@ -202,7 +211,7 @@ public class CdaPluginLocalQueryBackend extends CdaQueryBackend {
       }
 
       @Override
-      public boolean isUserInRole(String s) {
+      public boolean isUserInRole( String s ) {
         return false;
       }
 
@@ -232,7 +241,7 @@ public class CdaPluginLocalQueryBackend extends CdaQueryBackend {
       }
 
       @Override
-      public HttpSession getSession(boolean b) {
+      public HttpSession getSession( boolean b ) {
         return null;
       }
 
@@ -262,7 +271,7 @@ public class CdaPluginLocalQueryBackend extends CdaQueryBackend {
       }
 
       @Override
-      public Object getAttribute(String s) {
+      public Object getAttribute( String s ) {
         return null;
       }
 
@@ -277,7 +286,7 @@ public class CdaPluginLocalQueryBackend extends CdaQueryBackend {
       }
 
       @Override
-      public void setCharacterEncoding(String s) throws UnsupportedEncodingException {
+      public void setCharacterEncoding( String s ) throws UnsupportedEncodingException {
       }
 
       @Override
@@ -307,7 +316,7 @@ public class CdaPluginLocalQueryBackend extends CdaQueryBackend {
 
       @Override
       public String[] getParameterValues( String s ) {
-        return requestParameters.getStringArrayParameter( s, new String[0] );
+        return requestParameters.getStringArrayParameter( s, new String[ 0 ] );
       }
 
       @Override
@@ -351,11 +360,11 @@ public class CdaPluginLocalQueryBackend extends CdaQueryBackend {
       }
 
       @Override
-      public void setAttribute(String s, Object o) {
+      public void setAttribute( String s, Object o ) {
       }
 
       @Override
-      public void removeAttribute(String s) {
+      public void removeAttribute( String s ) {
       }
 
       @Override
@@ -374,12 +383,12 @@ public class CdaPluginLocalQueryBackend extends CdaQueryBackend {
       }
 
       @Override
-      public RequestDispatcher getRequestDispatcher(String s) {
+      public RequestDispatcher getRequestDispatcher( String s ) {
         return null;
       }
 
       @Override
-      public String getRealPath(String s) {
+      public String getRealPath( String s ) {
         return null;
       }
 
@@ -405,86 +414,86 @@ public class CdaPluginLocalQueryBackend extends CdaQueryBackend {
     };
   }
 
-  private static HttpServletResponse getResponse (final OutputStream stream) {
+  private static HttpServletResponse getResponse( final OutputStream stream ) {
     return new HttpServletResponse() {
       @Override
       public ServletOutputStream getOutputStream() throws IOException {
-        return new DelegatingServletOutputStream(stream);
+        return new DelegatingServletOutputStream( stream );
       }
 
       //Needed to override but no implementation provided
 
       @Override
-      public void addCookie(Cookie cookie) {
+      public void addCookie( Cookie cookie ) {
       }
 
       @Override
-      public boolean containsHeader(String s) {
+      public boolean containsHeader( String s ) {
         return false;
       }
 
       @Override
-      public String encodeURL(String s) {
+      public String encodeURL( String s ) {
         return null;
       }
 
       @Override
-      public String encodeRedirectURL(String s) {
+      public String encodeRedirectURL( String s ) {
         return null;
       }
 
       @Override
-      public String encodeUrl(String s) {
+      public String encodeUrl( String s ) {
         return null;
       }
 
       @Override
-      public String encodeRedirectUrl(String s) {
+      public String encodeRedirectUrl( String s ) {
         return null;
       }
 
       @Override
-      public void sendError(int i, String s) throws IOException {
+      public void sendError( int i, String s ) throws IOException {
       }
 
       @Override
-      public void sendError(int i) throws IOException {
+      public void sendError( int i ) throws IOException {
       }
 
       @Override
-      public void sendRedirect(String s) throws IOException {
+      public void sendRedirect( String s ) throws IOException {
       }
 
       @Override
-      public void setDateHeader(String s, long l) {
+      public void setDateHeader( String s, long l ) {
       }
 
       @Override
-      public void addDateHeader(String s, long l) {
+      public void addDateHeader( String s, long l ) {
       }
 
       @Override
-      public void setHeader(String s, String s2) {
+      public void setHeader( String s, String s2 ) {
       }
 
       @Override
-      public void addHeader(String s, String s2) {
+      public void addHeader( String s, String s2 ) {
       }
 
       @Override
-      public void setIntHeader(String s, int i) {
+      public void setIntHeader( String s, int i ) {
       }
 
       @Override
-      public void addIntHeader(String s, int i) {
+      public void addIntHeader( String s, int i ) {
       }
 
       @Override
-      public void setStatus(int i) {
+      public void setStatus( int i ) {
       }
 
       @Override
-      public void setStatus(int i, String s) {
+      public void setStatus( int i, String s ) {
 
       }
 
@@ -504,19 +513,19 @@ public class CdaPluginLocalQueryBackend extends CdaQueryBackend {
       }
 
       @Override
-      public void setCharacterEncoding(String s) {
+      public void setCharacterEncoding( String s ) {
       }
 
       @Override
-      public void setContentLength(int i) {
+      public void setContentLength( int i ) {
       }
 
       @Override
-      public void setContentType(String s) {
+      public void setContentType( String s ) {
       }
 
       @Override
-      public void setBufferSize(int i) {
+      public void setBufferSize( int i ) {
       }
 
       @Override
@@ -542,30 +551,32 @@ public class CdaPluginLocalQueryBackend extends CdaQueryBackend {
       }
 
       @Override
-      public void setLocale(Locale locale) {
+      public void setLocale( Locale locale ) {
       }
 
       @Override
       public Locale getLocale() {
         return null;
       }
-    } ;
+    };
   }
 
   private static class DelegatingServletOutputStream extends ServletOutputStream {
     private final OutputStream targetStream;
+
     /**
      * Create a new DelegatingServletOutputStream.
+     *
      * @param targetStream the target OutputStream
      */
 
-    public DelegatingServletOutputStream(OutputStream targetStream) {
+    public DelegatingServletOutputStream( OutputStream targetStream ) {
       this.targetStream = targetStream;
     }
 
 
-    public void write(int b) throws IOException {
-      this.targetStream.write(b);
+    public void write( int b ) throws IOException {
+      this.targetStream.write( b );
     }
 
     public void flush() throws IOException {

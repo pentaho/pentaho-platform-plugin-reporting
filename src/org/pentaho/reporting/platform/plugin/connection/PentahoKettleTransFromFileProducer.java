@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin.connection;
@@ -25,15 +25,15 @@ import org.pentaho.reporting.libraries.resourceloader.ResourceKey;
 import org.pentaho.reporting.platform.plugin.RepositoryResourceLoader;
 
 public class PentahoKettleTransFromFileProducer extends KettleTransFromFileProducer {
-  public PentahoKettleTransFromFileProducer(final String repositoryName,
-                                            final String transformationFile,
-                                            final String stepName,
-                                            final String username,
-                                            final String password,
-                                            final FormulaArgument[] definedArgumentNames,
-                                            final FormulaParameter[] definedVariableNames) {
-    super(repositoryName, transformationFile, stepName, username, password,
-        definedArgumentNames, definedVariableNames);
+  public PentahoKettleTransFromFileProducer( final String repositoryName,
+                                             final String transformationFile,
+                                             final String stepName,
+                                             final String username,
+                                             final String password,
+                                             final FormulaArgument[] definedArgumentNames,
+                                             final FormulaParameter[] definedVariableNames ) {
+    super( repositoryName, transformationFile, stepName, username, password,
+      definedArgumentNames, definedVariableNames );
   }
 
   protected String computeFullFilename( ResourceKey key ) {
@@ -58,6 +58,6 @@ public class PentahoKettleTransFromFileProducer extends KettleTransFromFileProdu
       key = key.getParent();
     }
 
-    return super.computeFullFilename(key);
+    return super.computeFullFilename( key );
   }
 }

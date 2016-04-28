@@ -28,3 +28,6 @@ build-res/requireCfg.js
 *.lck
 /pentaho.log
 node_modules/
+.idea/encodings.xml
+checkstyle/
+out/

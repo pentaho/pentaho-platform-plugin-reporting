@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
@@ -41,6 +41,7 @@ import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.core.AttributeNames;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportDataFactoryException;
+import org.pentaho.reporting.engine.classic.core.ReportInterruptedException;
 import org.pentaho.reporting.engine.classic.core.metadata.ReportProcessTaskRegistry;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.pdf.PdfPageableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.plaintext.PlainTextPageableModule;
@@ -884,8 +885,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     final MasterReport report = getReport();
     int yieldRate = getYieldRate();
     if ( yieldRate > 0 ) {
-      report.getReportConfiguration().setConfigProperty
-          ( "org.pentaho.reporting.engine.classic.core.YieldRate", String.valueOf( yieldRate ) );
+      report.getReportConfiguration().setConfigProperty( "org.pentaho.reporting.engine.classic.core.YieldRate", String.valueOf( yieldRate ) );
     }
 
     try {
@@ -924,7 +924,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
         log.warn( Messages.getInstance().getString( "ReportPlugin.warnUnprocessableRequest", outputType ) );
         return false;
       }
-      synchronized( reportOutputHandler.getReportLock() ) {
+      synchronized ( reportOutputHandler.getReportLock() ) {
         try {
           pageCount = reportOutputHandler.generate( report, acceptedPage, outputStream, getYieldRate() );
           return pageCount != -1;
@@ -934,6 +934,8 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       }
     } catch ( ReportDataFactoryException e ) {
       throw e;
+    } catch ( ReportInterruptedException interrupt ) {
+      log.info( "Report execution interrupted." );
     } catch ( Exception e ) {
       log.error( Messages.getInstance().getString( "ReportPlugin.executionFailed" ), e ); //$NON-NLS-1$
     }
@@ -987,7 +989,6 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    */
   public int paginate() throws IOException, ResourceException {
     final MasterReport report = getReport();
-
     try {
       final ParameterContext parameterContext = new DefaultParameterContext( report );
       // open parameter context

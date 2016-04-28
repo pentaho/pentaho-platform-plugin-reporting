@@ -12,48 +12,78 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.util.HashMap;
-
-import junit.framework.TestCase;
+import junit.framework.Assert;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.StandaloneSession;
+import org.pentaho.reporting.platform.plugin.cache.FileSystemCacheBackend;
+import org.pentaho.reporting.platform.plugin.cache.IPluginCacheManager;
+import org.pentaho.reporting.platform.plugin.cache.PluginCacheManagerImpl;
+import org.pentaho.reporting.platform.plugin.cache.PluginSessionCache;
 import org.pentaho.test.platform.engine.core.MicroPlatform;
 
-public class PageableHTMLIT extends TestCase {
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.util.Collections;
+import java.util.HashMap;
+
+import static org.junit.Assert.*;
+
+public class PageableHTMLIT {
   private MicroPlatform microPlatform;
   private File tmp;
+  private static FileSystemCacheBackend fileSystemCacheBackend;
 
-  @Override
-  protected void setUp() throws Exception {
-    tmp = new File("./resource/solution/system/tmp");
+  @BeforeClass
+  public static void setUpClass() {
+    fileSystemCacheBackend = new FileSystemCacheBackend();
+    fileSystemCacheBackend.setCachePath( "/test-cache/" );
+  }
+
+  @AfterClass
+  public static void tearDownClass() {
+    Assert.assertTrue( fileSystemCacheBackend.purge( Collections.singletonList( "" ) ) );
+  }
+
+  @Before
+  public void setUp() throws Exception {
+    tmp = new File( "./resource/solution/system/tmp" );
     tmp.mkdirs();
 
     microPlatform = MicroPlatformFactory.create();
+    IPluginCacheManager iPluginCacheManager =
+      new PluginCacheManagerImpl( new PluginSessionCache( fileSystemCacheBackend ) );
+    microPlatform.define( "IPluginCacheManager", iPluginCacheManager );
     microPlatform.start();
 
     IPentahoSession session = new StandaloneSession();
     PentahoSessionHolder.setSession( session );
   }
 
-  @Override
-  protected void tearDown() throws Exception {
+  @After
+  public void tearDown() throws Exception {
     microPlatform.stop();
   }
 
+  @Test
   public void testPageCount() throws Exception {
+
     // create an instance of the component
     SimpleReportingComponent rc = new SimpleReportingComponent();
     // create/set the InputStream
-    FileInputStream reportDefinition = new FileInputStream( "resource/solution/test/reporting/report.prpt" ); //$NON-NLS-1$
+    FileInputStream reportDefinition =
+      new FileInputStream( "resource/solution/test/reporting/report.prpt" ); //$NON-NLS-1$
     rc.setReportDefinitionInputStream( reportDefinition );
     rc.setOutputType( "text/html" ); //$NON-NLS-1$
 
@@ -63,7 +93,8 @@ public class PageableHTMLIT extends TestCase {
     inputs.put( "accepted-page", "0" ); //$NON-NLS-1$ //$NON-NLS-2$
     rc.setInputs( inputs );
 
-    FileOutputStream outputStream = new FileOutputStream( new File(tmp, System.currentTimeMillis() + ".html" )); //$NON-NLS-1$ //$NON-NLS-2$
+    FileOutputStream outputStream =
+      new FileOutputStream( new File( tmp, System.currentTimeMillis() + ".html" ) ); //$NON-NLS-1$ //$NON-NLS-2$
     rc.setOutputStream( outputStream );
 
     // execute the component
@@ -73,11 +104,14 @@ public class PageableHTMLIT extends TestCase {
     assertEquals( 8, rc.getPageCount() );
   }
 
+
+  @Test
   public void testPaginatedHTML() throws Exception {
     // create an instance of the component
     SimpleReportingComponent rc = new SimpleReportingComponent();
     // create/set the InputStream
-    FileInputStream reportDefinition = new FileInputStream( "resource/solution/test/reporting/report.prpt" ); //$NON-NLS-1$
+    FileInputStream reportDefinition =
+      new FileInputStream( "resource/solution/test/reporting/report.prpt" ); //$NON-NLS-1$
     rc.setReportDefinitionInputStream( reportDefinition );
     rc.setOutputType( "text/html" ); //$NON-NLS-1$
 
@@ -95,7 +129,8 @@ public class PageableHTMLIT extends TestCase {
     inputs.put( "accepted-page", "0" ); //$NON-NLS-1$ //$NON-NLS-2$
     rc.setInputs( inputs );
 
-    FileOutputStream outputStream = new FileOutputStream( new File(tmp, System.currentTimeMillis() + ".html" )); //$NON-NLS-1$ //$NON-NLS-2$
+    FileOutputStream outputStream =
+      new FileOutputStream( new File( tmp, System.currentTimeMillis() + ".html" ) ); //$NON-NLS-1$ //$NON-NLS-2$
     rc.setOutputStream( outputStream );
 
     // check the accepted page

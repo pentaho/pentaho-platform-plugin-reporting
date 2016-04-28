@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
@@ -48,6 +48,7 @@ public class ReportContentGenerator extends ParameterContentGenerator {
   public ReportContentGenerator() {
   }
 
+  @Override
   public void createContent( final OutputStream outputStream ) throws Exception {
     final String id = UUIDUtil.getUUIDAsString();
     String path = null;
@@ -56,13 +57,12 @@ public class ReportContentGenerator extends ParameterContentGenerator {
     IUnifiedRepository unifiedRepository = PentahoSystem.get( IUnifiedRepository.class, null );
     final IParameterProvider requestParams = getRequestParameters();
     final IParameterProvider pathParams = getPathParameters();
-    
     if ( requestParams != null && requestParams.getStringParameter( "path", null ) != null ) {
       path = requestParams.getStringParameter( "path", "" ); //$NON-NLS-1$ //$NON-NLS-2$
     } else if ( pathParams != null && pathParams.getStringParameter( "path", null ) != null ) {
       path = pathParams.getStringParameter( "path", "" ); //$NON-NLS-1$ //$NON-NLS-2$
     }
-    path = URLDecoder.decode( path, "UTF-8");
+    path = URLDecoder.decode( path, "UTF-8" );
 
     if ( requestParams != null && requestParams.getStringParameter( "renderMode", null ) != null ) {
       renderMode =
@@ -155,8 +155,8 @@ public class ReportContentGenerator extends ParameterContentGenerator {
       } else if ( pathParams != null && pathParams.getStringParameter( "path", null ) != null ) {
         path = pathParams.getStringParameter( "path", "" ); //$NON-NLS-1$ //$NON-NLS-2$
       }
-      path = idTopath( URLDecoder.decode(path, "UTF-8") );
-    } catch (UnsupportedEncodingException e) {
+      path = idTopath( URLDecoder.decode( path, "UTF-8" ) );
+    } catch ( UnsupportedEncodingException e ) {
       e.printStackTrace();
     }
 
