@@ -25,8 +25,10 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
+import org.pentaho.platform.engine.core.system.StandaloneSession;
 import org.pentaho.platform.engine.core.system.boot.PlatformInitializationException;
 import org.pentaho.platform.util.StringUtil;
 import org.pentaho.reporting.platform.plugin.JaxRsServerProvider;
@@ -79,6 +81,9 @@ public class AsyncIT {
     microPlatform.define( "ISchedulingDirectoryStrategy", new HomeSchedulingDirStrategy() );
     microPlatform.addLifecycleListener( new AsyncSystemListener() );
     microPlatform.start();
+
+    IPentahoSession session = new StandaloneSession();
+    PentahoSessionHolder.setSession( session );
   }
 
 
