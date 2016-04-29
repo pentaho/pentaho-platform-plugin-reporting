@@ -19,7 +19,9 @@
 package org.pentaho.reporting.platform.plugin.async;
 
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressEvent;
+import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
 
+import java.util.Collections;
 import java.util.UUID;
 
 public class TestListener extends AsyncReportStatusListener {
@@ -30,7 +32,7 @@ public class TestListener extends AsyncReportStatusListener {
   private boolean onFirstPage = false;
 
   public TestListener( final String path, final UUID uuid, final String mimeType ) {
-    super( path, uuid, mimeType );
+    super( path, uuid, mimeType, Collections.<ReportProgressListener>emptyList() );
   }
 
   @Override public synchronized void reportProcessingStarted( final ReportProgressEvent event ) {

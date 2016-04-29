@@ -80,6 +80,8 @@
   <bean id="IPentahoAsyncExecutor" class="org.pentaho.reporting.platform.plugin.async.PentahoAsyncExecutor" scope="singleton" >
     <!-- fixed thread pool capacity -->
     <constructor-arg type="int" value="10" />
+    <!-- configure maximum row threshold for automatic scheduling, 0 means no automatic scheduling-->
+    <constructor-arg type="int" value="0" />
   </bean>
 
   <bean id="api" class="org.pentaho.platform.web.servlet.JAXRSPluginServlet"/>
@@ -91,8 +93,6 @@
     <constructor-arg type="long" value="1000" />
     <!-- configure dialog showing threshold -->
     <constructor-arg type="long" value="1500" />
-    <!-- configure maximum row threshold for automatic scheduling, 0 means no automatic scheduling-->
-    <constructor-arg type="int" value="0" />
   </bean>
 
   <!--Scheduling-->

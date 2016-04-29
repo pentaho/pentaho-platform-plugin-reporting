@@ -18,10 +18,15 @@
 
 package org.pentaho.reporting.platform.plugin.async;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressEvent;
+import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
 import org.pentaho.reporting.libraries.base.config.ExtendedConfiguration;
+import org.pentaho.reporting.libraries.base.util.ArgumentNullException;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -38,6 +43,7 @@ public class AsyncReportStatusListener implements IAsyncReportListener {
   private final String path;
   private final UUID uuid;
   private final String mimeType;
+  private final List<? extends ReportProgressListener> callbackListeners;
   private String errorMessage = null;
   private AsyncExecutionStatus status = AsyncExecutionStatus.QUEUED;
   private int progress = 0;
@@ -52,11 +58,16 @@ public class AsyncReportStatusListener implements IAsyncReportListener {
 
 
   public AsyncReportStatusListener( final String path,
-                             final UUID uuid,
-                             final String mimeType ) {
+                                    final UUID uuid,
+                                    final String mimeType,
+                                    final List<? extends ReportProgressListener> callbackListeners ) {
+
+    ArgumentNullException.validate( "callbackListeners", callbackListeners );
+
     this.path = path;
     this.uuid = uuid;
     this.mimeType = mimeType;
+    this.callbackListeners = Collections.unmodifiableList( callbackListeners );
 
     final ExtendedConfiguration config = ClassicEngineBoot.getInstance().getExtendedConfig();
     firstPageMode = config.getBoolProperty( "org.pentaho.reporting.platform.plugin.output.FirstPageMode" );
@@ -106,16 +117,31 @@ public class AsyncReportStatusListener implements IAsyncReportListener {
   @Override
   public synchronized void reportProcessingStarted( final ReportProgressEvent event ) {
     setStatus( AsyncExecutionStatus.WORKING );
+    if ( CollectionUtils.isNotEmpty( callbackListeners ) ) {
+      for ( final ReportProgressListener listener : callbackListeners ) {
+        listener.reportProcessingStarted( event );
+      }
+    }
   }
 
   @Override
   public synchronized void reportProcessingUpdate( final ReportProgressEvent event ) {
     updateState( event );
+    if ( CollectionUtils.isNotEmpty( callbackListeners ) ) {
+      for ( final ReportProgressListener listener : callbackListeners ) {
+        listener.reportProcessingUpdate( event );
+      }
+    }
   }
 
   @Override
   public synchronized void reportProcessingFinished( final ReportProgressEvent event ) {
     //report is finished but still may be unavailable for client
+    if ( CollectionUtils.isNotEmpty( callbackListeners ) ) {
+      for ( final ReportProgressListener listener : callbackListeners ) {
+        listener.reportProcessingFinished( event );
+      }
+    }
   }
 
   @Override public String toString() {

@@ -19,7 +19,6 @@
 package org.pentaho.reporting.platform.plugin.async;
 
 import junit.framework.Assert;
-import org.apache.commons.io.input.NullInputStream;
 import org.apache.poi.util.IOUtils;
 import org.junit.After;
 import org.junit.Before;
@@ -31,6 +30,7 @@ import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
+import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
 import org.pentaho.reporting.libraries.base.config.ModifiableConfiguration;
 import org.pentaho.reporting.platform.plugin.AuditWrapper;
 import org.pentaho.reporting.platform.plugin.SimpleReportingComponent;
@@ -40,9 +40,9 @@ import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.Future;
@@ -82,6 +82,7 @@ public class PentahoAsyncReportExecutorTest {
   Random bytes = new Random();
 
   IFixedSizeStreamingContent input;
+  private int autoSchedulerThreshold = 0;
 
   @Before public void before() throws Exception {
     PentahoSystem.clearObjectFactory();
@@ -121,7 +122,8 @@ public class PentahoAsyncReportExecutorTest {
 
     PentahoAsyncReportExecution task1 = createMockCallable( session1 );
 
-    PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 10 );
+
+    PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 10, autoSchedulerThreshold );
     UUID id = exec.addTask( task1, session1 );
     Future<IFixedSizeStreamingContent> result = exec.getFuture( id, session1 );
     while ( result.isDone() ) {
@@ -135,7 +137,7 @@ public class PentahoAsyncReportExecutorTest {
   }
 
   @Test public void testCorrectFuturePerSessionRetrival() {
-    PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 1 );
+    PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 1, autoSchedulerThreshold );
 
     UUID id1 = exec.addTask( createMockCallable( session1 ), session1 );
     UUID id2 = exec.addTask( createMockCallable( session2 ), session2 );
@@ -160,7 +162,7 @@ public class PentahoAsyncReportExecutorTest {
   private PentahoAsyncReportExecution createMockCallable( IPentahoSession session ) {
     return new PentahoAsyncReportExecution( "junit-path", component, handler, session, null, AuditWrapper.NULL ) {
       @Override
-      protected AsyncReportStatusListener createListener( final UUID id ) {
+      protected AsyncReportStatusListener createListener( final UUID id, List<? extends ReportProgressListener> listenerList ) {
         final AsyncReportState state = new AsyncReportState( id, getReportPath() );
         final AsyncReportStatusListener retval = mock( AsyncReportStatusListener.class );
         when( retval.getState() ).thenReturn( state );
@@ -170,7 +172,7 @@ public class PentahoAsyncReportExecutorTest {
   }
 
   @Test public void testCorrectStatePerSessionRetrieval() {
-    PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 1 );
+    PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 1, autoSchedulerThreshold );
 
     // must have two separate instances, as callable holds unique ID and listener for each addTask(..)
     UUID id1 = exec.addTask( createMockCallable( session1 ), session1 );
@@ -212,7 +214,7 @@ public class PentahoAsyncReportExecutorTest {
 
   @Test
   public void onLogoutTest() throws IOException {
-    PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 1 );
+    PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 1, autoSchedulerThreshold );
     AsyncJobFileStagingHandler handler1 = new AsyncJobFileStagingHandler( session1 );
     AsyncJobFileStagingHandler handler2 = new AsyncJobFileStagingHandler( session2 );
 
@@ -245,7 +247,7 @@ public class PentahoAsyncReportExecutorTest {
 
 
   @Test public void testSchedule() {
-    final PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 1 );
+    final PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 1, autoSchedulerThreshold );
 
     final TestListener testListener = new TestListener( "1", UUID.randomUUID(), "" );
 
@@ -253,7 +255,7 @@ public class PentahoAsyncReportExecutorTest {
     final UUID id1 = exec.addTask(  new PentahoAsyncReportExecution( "junit-path",
             component, handler, PentahoSessionHolder.getSession(), null, AuditWrapper.NULL ) {
       @Override
-      protected AsyncReportStatusListener createListener(final UUID id) {
+      protected AsyncReportStatusListener createListener(final UUID id, List<? extends ReportProgressListener> listeners) {
         return testListener;
       }
     }, session1 );

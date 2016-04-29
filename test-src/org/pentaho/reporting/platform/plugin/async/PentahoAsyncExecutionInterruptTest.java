@@ -36,7 +36,6 @@ import org.pentaho.test.platform.engine.core.MicroPlatform;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.UUID;
 import java.util.concurrent.Future;
 
@@ -52,7 +51,8 @@ public class PentahoAsyncExecutionInterruptTest {
   @Rule public Timeout globalTimeout = new Timeout( 10000 );
 
   private MicroPlatform microPlatform;
-  private PentahoAsyncExecutor executor = new PentahoAsyncExecutor( 2 );
+  private int autoSchedulerThreshold = 0;
+  private PentahoAsyncExecutor executor = new PentahoAsyncExecutor( 2, autoSchedulerThreshold );
   private IPentahoSession session = mock( IPentahoSession.class );
 
   @Before public void before() throws PlatformInitializationException {
