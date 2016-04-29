@@ -17,6 +17,8 @@
 			<list>
 				<bean
 					class="org.pentaho.reporting.platform.plugin.ReportingSystemStartupListener" />
+				<bean
+						class="org.pentaho.reporting.platform.plugin.async.AsyncSystemListener" />
 			</list>
 		</constructor-arg>
 	</bean>

@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
@@ -36,6 +36,12 @@ import org.pentaho.platform.util.UUIDUtil;
 import org.pentaho.reporting.engine.classic.core.util.StagingMode;
 import org.pentaho.reporting.libraries.base.util.MemoryByteArrayOutputStream;
 
+/**
+ *
+ * @deprecated
+ * @use AbstractStagingHandler
+ */
+@Deprecated
 public class StagingHandler {
   private static final Log logger = LogFactory.getLog( StagingHandler.class );
 

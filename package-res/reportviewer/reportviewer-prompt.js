@@ -30,6 +30,11 @@ define([
     return logged({
       // The current prompt mode
       mode: 'INITIAL',
+      _isAsync: null,
+      _pollingInterval: 1000,
+      _dialogThreshold: 1500,
+      _autoScheduleRowThreshold: 0,
+      _isReportHtmlPagebleOutputFormat : null,
 
       /**
        * Gets the prompt api instance
@@ -72,20 +77,26 @@ define([
           var paramDefnCallback = function(xml) {
             var paramDefn = this.parseParameterDefinition(xml);
 
+            try {
+              var outputFormat = paramDefn.getParameter("output-target").getSelectedValuesValue();
+              this._isReportHtmlPagebleOutputFormat = outputFormat.indexOf('table/html;page-mode=page') !== -1;
+            } catch (ignored) {
+            }           
+
             // A first request is made with promptMode='INITIAL' and renderMode='PARAMETER'.
             //
             // The response will not have page count information (pagination was not performed), but simply information about the prompt parameters (paramDefn).
             //
             // When paramDefn.allowAutoSubmit() is true,
             // And no validation errors/required parameters exist to be specified, TODO: Don't think that this is being checked here!
-            // Then a second request is made with promptMode='MANUAL' and renderMode='XML' is performed.
+            // In case when asynchronous mode is off - then a second request is made with promptMode='MANUAL' and renderMode='XML' is performed.
             //
             // When the response to the second request arrives,
             // Then the prompt panel is rendered, including with page count information, and  the report content is loaded and shown.
             //
             // [PIR-1163] Used 'inSchedulerDialog' variable to make sure that the second request is not sent if it's scheduler dialog.
             // Because the scheduler needs only parameters without full XML.
-            if (!inSchedulerDialog && this.mode === 'INITIAL' && paramDefn.allowAutoSubmit()) {
+            if ( (typeof inSchedulerDialog === "undefined" || !inSchedulerDialog) && this.mode === 'INITIAL' && paramDefn.allowAutoSubmit() && !this._isAsync) {
               this.fetchParameterDefinition(paramDefnCallback.bind(this), 'MANUAL');
               return;
             }
@@ -247,6 +258,18 @@ define([
           me.hideGlassPane();
         }
 
+        var curUrl = window.location.href.split('?')[0];
+        if (this._isAsync === null) {
+          var asyncConf = pentahoGet(curUrl.substring(0, curUrl.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/config', "");
+          if (asyncConf) {
+            asyncConf = JSON.parse(asyncConf);
+            this._isAsync = asyncConf.supportAsync;
+            this._pollingInterval = asyncConf.pollingIntervalMilliseconds;
+            this._dialogThreshold = asyncConf.dialogThresholdMilliseconds;
+            this._autoScheduleRowThreshold = asyncConf.autoScheduleRowThreshold;
+          }
+        }        
+
         // Store mode so we can check if we need to refresh the report content or not in the view
         // As only the last request's response is processed, the last value of mode is actually the correct one.
         me.mode = promptMode;
@@ -295,7 +318,13 @@ define([
               return 'PARAMETER';
 
           case 'USERINPUT':
-            if (!this._getStateProperty('autoSubmit')) {
+            if (!this._getStateProperty('autoSubmit') || this._isAsync) {
+              return 'PARAMETER';
+            }
+            break;
+
+          case 'MANUAL':
+            if (this._isAsync) {
               return 'PARAMETER';
             }
             break;

@@ -53,14 +53,16 @@
       }
     };
 
-
-    try {
-      if(window.top.showLoadingIndicator) {
-        window.top.showLoadingIndicator();
-      } else if(window.parent.showLoadingIndicator) {
-        window.parent.showLoadingIndicator();
-      }
-    } catch(ex) { } // Ignore "Same-origin policy" violation in embedded IFrame
+    var inSchedulerDialog = window.location.pathname.toLowerCase().indexOf('parameterui') >= 0;
+    if (inSchedulerDialog) {
+      try {
+        if(window.top.showLoadingIndicator) {
+          window.top.showLoadingIndicator();
+        } else if(window.parent.showLoadingIndicator) {
+          window.parent.showLoadingIndicator();
+        }
+      } catch(ex) { } // Ignore "Same-origin policy" violation in embedded IFrame
+    }
   </script>
   <script type="text/javascript" src="../../../content/common-ui/resources/web/formatter/formatter.nocache.js"></script>
 
@@ -115,6 +117,15 @@
 </div>
 
 <div id="reportArea" class="pentaho-transparent">
+  <div id="notification-screen" class="hidden pentaho-notification">
+    <table>
+      <tr>
+        <td id="notification-indicator"></td>
+        <td id="notification-message"></td>
+      </tr>
+    </table>
+    <div id="notification-close" class="pentaho-closebutton pentaho-imagebutton-active"></div>
+  </div>
   <div id="reportPageOutline">
     <form id="hiddenReportContentForm" method="post" target="reportContentIframe">
       <input type="hidden" type="submit" value="Submit" />
@@ -124,6 +135,12 @@
 </div>
 
 <div id="messageBox" data-dojo-type="pentaho.common.MessageBox" title="" style="width:400px; display:none;">
+</div>
+<div id="feedbackScreen" data-dojo-type="pentaho.reportviewer.FeedbackScreen" title="" style="width:400px; display:none;">
+</div>
+<div id="scheduleScreen" data-dojo-type="pentaho.reportviewer.ScheduleScreen" title="" style="width:400px; display:none;">
+</div>
+<div id="reportGlassPane" data-dojo-type="pentaho.reportviewer.GlassPane" title="" style="width:400px; display:none;">
 </div>
 <div id="glassPane" data-dojo-type="pentaho.common.GlassPane">
 </div>

@@ -12,64 +12,77 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2015 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin.output;
 
-import junit.framework.TestCase;
+import org.apache.commons.io.output.ByteArrayOutputStream;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
+import org.pentaho.reporting.engine.classic.core.event.ReportProgressEvent;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.base.PageableReportProcessor;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.AllItemsHtmlPrinter;
+import org.pentaho.reporting.platform.plugin.async.IAsyncReportListener;
+import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.CALLS_REAL_METHODS;
+import static org.mockito.Mockito.*;
 
-public class PageableHTMLOutputTest extends TestCase {
+public class PageableHTMLOutputTest {
   PageableHTMLOutput pageableHTMLOutput;
+  private IAsyncReportListener listener;
 
-  protected void setUp() {
+  @Before public void setUp() {
     pageableHTMLOutput = new PageableHTMLOutput();
+    listener = mock( IAsyncReportListener.class );
+    ReportListenerThreadHolder.setListener( listener );
   }
 
-  public void testGetReportLock() throws Exception {
-    assertEquals( pageableHTMLOutput, pageableHTMLOutput.getReportLock() );
+  @After public void tearDown() {
+    ReportListenerThreadHolder.clear();
+    listener = null;
   }
 
-  public void testSetContentHandlerPattern() throws Exception {
-    assertNull( pageableHTMLOutput.getContentHandlerPattern() );
+  @Test public void testGetReportLock() throws Exception {
+    Assert.assertEquals( pageableHTMLOutput, pageableHTMLOutput.getReportLock() );
+  }
+
+  @Test public void testSetContentHandlerPattern() throws Exception {
+    Assert.assertNull( pageableHTMLOutput.getContentHandlerPattern() );
     pageableHTMLOutput.setContentHandlerPattern( "pattern" ); //$NON-NLS-1$
-    assertEquals( "pattern", pageableHTMLOutput.getContentHandlerPattern() ); //$NON-NLS-1$
+    Assert.assertEquals( "pattern", pageableHTMLOutput.getContentHandlerPattern() ); //$NON-NLS-1$
   }
 
-  public void testSetProxyOutputStream() throws Exception {
-    assertNull( pageableHTMLOutput.getProxyOutputStream() );
+  @Test public void testSetProxyOutputStream() throws Exception {
+    Assert.assertNull( pageableHTMLOutput.getProxyOutputStream() );
     ProxyOutputStream mockStream = mock( ProxyOutputStream.class );
     pageableHTMLOutput.setProxyOutputStream( mockStream );
-    assertEquals( mockStream, pageableHTMLOutput.getProxyOutputStream() );
+    Assert.assertEquals( mockStream, pageableHTMLOutput.getProxyOutputStream() );
   }
 
-  public void testSetPrinter() throws Exception {
-    assertNull( pageableHTMLOutput.getPrinter() );
+  @Test public void testSetPrinter() throws Exception {
+    Assert.assertNull( pageableHTMLOutput.getPrinter() );
     AllItemsHtmlPrinter mockPrinter = mock( AllItemsHtmlPrinter.class );
     pageableHTMLOutput.setPrinter( mockPrinter );
-    assertEquals( mockPrinter, pageableHTMLOutput.getPrinter() );
+    Assert.assertEquals( mockPrinter, pageableHTMLOutput.getPrinter() );
   }
 
-  public void testSetReportProcessor() throws Exception {
-    assertNull( pageableHTMLOutput.getReportProcessor() );
+  @Test public void testSetReportProcessor() throws Exception {
+    Assert.assertNull( pageableHTMLOutput.getReportProcessor() );
     PageableReportProcessor mockProcessor = mock( PageableReportProcessor.class );
     pageableHTMLOutput.setReportProcessor( mockProcessor );
-    assertEquals( mockProcessor, pageableHTMLOutput.getReportProcessor() );
+    Assert.assertEquals( mockProcessor, pageableHTMLOutput.getReportProcessor() );
   }
 
-  public void testSupportsPagination() throws Exception {
-    assertEquals( true, pageableHTMLOutput.supportsPagination() );
+  @Test public void testSupportsPagination() throws Exception {
+    Assert.assertEquals( true, pageableHTMLOutput.supportsPagination() );
   }
 
-  public void testPaginate() throws Exception {
+  @Test public void testPaginate() throws Exception {
     PageableHTMLOutput output = mock( PageableHTMLOutput.class, CALLS_REAL_METHODS );
     PageableReportProcessor processor = mock( PageableReportProcessor.class );
     doNothing().when( output ).reinitOutputTarget();
@@ -81,10 +94,31 @@ public class PageableHTMLOutputTest extends TestCase {
 
     output.setReportProcessor( processor );
     output.setPrinter( printer );
-    assertEquals( 0, output.paginate( report, 0 ) );
+    Assert.assertEquals( 0, output.paginate( report, 0 ) );
 
     doReturn( false ).when( processor ).isPaginated();
     output.setReportProcessor( processor );
-    assertEquals( 0, output.paginate( report, 0 ) );
+    Assert.assertEquals( 0, output.paginate( report, 0 ) );
+  }
+
+  @Test
+  public void testGenerateListener() throws Exception {
+    ClassicEngineBoot.getInstance().start();
+    pageableHTMLOutput.generate( new MasterReport(), 1, new ByteArrayOutputStream(), 1 );
+
+    verify( listener, times( 1 ) ).reportProcessingStarted( any( ReportProgressEvent.class ) );
+    verify( listener, times( 1 ) ).reportProcessingFinished( any( ReportProgressEvent.class ) );
+    verify( listener, atLeastOnce() ).reportProcessingUpdate( any( ReportProgressEvent.class ) );
+  }
+
+  @Test
+  public void testGenerate() throws Exception {
+    ClassicEngineBoot.getInstance().start();
+    ReportListenerThreadHolder.clear();
+    pageableHTMLOutput.generate( new MasterReport(), 1, new ByteArrayOutputStream(), 1 );
+
+    verify( listener, times( 0 ) ).reportProcessingStarted( any( ReportProgressEvent.class ) );
+    verify( listener, times( 0 ) ).reportProcessingFinished( any( ReportProgressEvent.class ) );
+    verify( listener, times( 0 ) ).reportProcessingUpdate( any( ReportProgressEvent.class ) );
   }
 }
