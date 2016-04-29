@@ -262,11 +262,15 @@ define([
         if (this._isAsync === null) {
           var asyncConf = pentahoGet(curUrl.substring(0, curUrl.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/config', "");
           if (asyncConf) {
-            asyncConf = JSON.parse(asyncConf);
-            this._isAsync = asyncConf.supportAsync;
-            this._pollingInterval = asyncConf.pollingIntervalMilliseconds;
-            this._dialogThreshold = asyncConf.dialogThresholdMilliseconds;
-            this._autoScheduleRowThreshold = asyncConf.autoScheduleRowThreshold;
+            try {
+              asyncConf = JSON.parse(asyncConf);
+              this._isAsync = asyncConf.supportAsync;
+              this._pollingInterval = asyncConf.pollingIntervalMilliseconds;
+              this._dialogThreshold = asyncConf.dialogThresholdMilliseconds;
+              this._autoScheduleRowThreshold = asyncConf.autoScheduleRowThreshold;
+            }catch (ignored){
+              //not async
+            }
           }
         }        
 
