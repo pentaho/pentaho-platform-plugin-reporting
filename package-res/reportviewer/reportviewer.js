@@ -1015,13 +1015,11 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           });
 
           //Navigation on report in progress section
-
-
           var reportUrl = url.substring(url.lastIndexOf("/report?")+"/report?".length, url.length);
-          if(this._currentReportStatus && this._currentReportStatus!='FINISHED' && this._currentReportStatus!='FAILED'
-              && this._currentReportStatus!='CANCELED' && this._currentReportStatus!='SCHEDULED'){
+          if(this.reportPrompt._isReportHtmlPagebleOutputFormat && this._currentReportStatus && this._currentReportStatus!='FINISHED' && this._currentReportStatus!='FAILED'
+              && this._currentReportStatus!='CANCELED' && this._currentReportStatus!='SCHEDULED') {
              //In progress
-            if(this._currentStoredPagesCount > this._requestedPage){
+            if(this._currentStoredPagesCount > this._requestedPage) {
               //Page available
               var current = reportUrl.match(/(^.*accepted-page=)(\d*?)(&.*$)/);
               var running = this._reportUrl.match(/(^.*accepted-page=)(\d*?)(&.*$)/);
