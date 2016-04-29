@@ -73,3 +73,4 @@ define(["dojo/_base/declare", "dijit/_WidgetBase", "dijit/_Templated", "dojo/on"
           }
       );
     });
+
