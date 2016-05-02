@@ -260,5 +260,10 @@ public class BackgroundJobContentGeneratorTest {
     @Override public void schedule( UUID uuid, IPentahoSession session ) {
 
     }
+
+    @Override
+    public void shutdown() {
+
+    }
   }
 }

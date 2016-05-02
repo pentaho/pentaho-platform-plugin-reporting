@@ -103,21 +103,19 @@ public class AsyncIT {
     client.path( config );
     final Response response = client.get();
     final String json = response.readEntity( String.class );
-    assertEquals( json, "{\"pollingIntervalMilliseconds\":500,\"dialogThresholdMilliseconds\":1500,"
-      + "\"autoScheduleRowThreshold\":0,\"supportAsync\":true}" );
+    assertEquals( json, "{\"pollingIntervalMilliseconds\":500,\"dialogThresholdMilliseconds\":1500,\"supportAsync\":true}" );
   }
 
   @Test
   public void testCustomConfig() throws Exception {
     provider.stopServer();
-    provider.startServer( new JobManager( false, 100L, 300L, 20000 ) );
+    provider.startServer( new JobManager( false, 100L, 300L ) );
     final String config = String.format( URL_FORMAT, "config", "" );
     final WebClient client = provider.getFreshClient();
     client.path( config );
     final Response response = client.get();
     final String json = response.readEntity( String.class );
-    assertEquals( json, "{\"pollingIntervalMilliseconds\":100,\"dialogThresholdMilliseconds\":300,"
-      + "\"autoScheduleRowThreshold\":20000,\"supportAsync\":false}" );
+    assertEquals( json, "{\"pollingIntervalMilliseconds\":100,\"dialogThresholdMilliseconds\":300,\"supportAsync\":false}" );
     provider.stopServer();
     provider.startServer( new JobManager() );
   }

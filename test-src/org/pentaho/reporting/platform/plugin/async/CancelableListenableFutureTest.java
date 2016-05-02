@@ -21,10 +21,12 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
 import org.pentaho.reporting.platform.plugin.SimpleReportingComponent;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
@@ -57,11 +59,11 @@ public class CancelableListenableFutureTest {
     final SimpleReportingComponent reportingComponent = mock( SimpleReportingComponent.class );
     when( reportingComponent.getMimeType() ).thenReturn( "text/html" );
     final PentahoAsyncReportExecution pentahoAsyncReportExecution =
-      new PentahoAsyncReportExecution( null, reportingComponent, null, null, null );
+      new PentahoAsyncReportExecution( null, reportingComponent, null, null, null, null);
     final ListenableFuture mock = mock( ListenableFuture.class );
     final ListenableFuture delegate = pentahoAsyncReportExecution.delegate( mock );
     assertTrue( delegate instanceof AbstractAsyncReportExecution.CancelableListenableFuture );
-    pentahoAsyncReportExecution.notifyTaskQueued( UUID.randomUUID() );
+    pentahoAsyncReportExecution.notifyTaskQueued( UUID.randomUUID(), Collections.<ReportProgressListener>emptyList() );
     final AsyncReportStatusListener listener = pentahoAsyncReportExecution.getListener();
     assertEquals( AsyncExecutionStatus.QUEUED, listener.getState().getStatus() );
     delegate.cancel( interruptable );

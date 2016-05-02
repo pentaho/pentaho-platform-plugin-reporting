@@ -195,13 +195,14 @@ public class PentahoAsyncExecutionTest {
   @Test
   public void testRequestedPage() throws Exception {
     final AsyncReportStatusListener listener = mock( AsyncReportStatusListener.class );
-    final PentahoAsyncReportExecution execution = new PentahoAsyncReportExecution( "junit-path", component, handler, userSession, null ) {
+    final PentahoAsyncReportExecution execution = new PentahoAsyncReportExecution( "junit-path", component, handler, userSession, "id", null ) {
+
       @Override
-      protected AsyncReportStatusListener createListener( final UUID id ) {
+      protected AsyncReportStatusListener createListener(UUID instanceId, List<? extends ReportProgressListener> callbackListeners) {
         return listener;
       }
     };
-    execution.notifyTaskQueued( UUID.randomUUID() );
+    execution.notifyTaskQueued( UUID.randomUUID(), Collections.<ReportProgressListener>emptyList() );
     execution.requestPage( 500 );
     verify( listener, times( 1 ) ).setRequestedPage( 500 );
   }
