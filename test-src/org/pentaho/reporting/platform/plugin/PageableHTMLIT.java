@@ -93,15 +93,17 @@ public class PageableHTMLIT {
     inputs.put( "accepted-page", "0" ); //$NON-NLS-1$ //$NON-NLS-2$
     rc.setInputs( inputs );
 
-    FileOutputStream outputStream =
-      new FileOutputStream( new File( tmp, System.currentTimeMillis() + ".html" ) ); //$NON-NLS-1$ //$NON-NLS-2$
-    rc.setOutputStream( outputStream );
+    try ( FileOutputStream outputStream =
+            new FileOutputStream(
+              new File( tmp, System.currentTimeMillis() + ".html" ) ) ) { //$NON-NLS-1$ //$NON-NLS-2$
+      rc.setOutputStream( outputStream );
 
-    // execute the component
-    assertTrue( rc.execute() );
+      // execute the component
+      assertTrue( rc.execute() );
 
-    // make sure this report has 8 pages (we know this report will produce 8 pages with sample data)
-    assertEquals( 8, rc.getPageCount() );
+      // make sure this report has 8 pages (we know this report will produce 8 pages with sample data)
+      assertEquals( 8, rc.getPageCount() );
+    }
   }
 
 
@@ -129,24 +131,62 @@ public class PageableHTMLIT {
     inputs.put( "accepted-page", "0" ); //$NON-NLS-1$ //$NON-NLS-2$
     rc.setInputs( inputs );
 
-    FileOutputStream outputStream =
-      new FileOutputStream( new File( tmp, System.currentTimeMillis() + ".html" ) ); //$NON-NLS-1$ //$NON-NLS-2$
-    rc.setOutputStream( outputStream );
+    try ( FileOutputStream outputStream =
+            new FileOutputStream(
+              new File( tmp, System.currentTimeMillis() + ".html" ) ) ) { //$NON-NLS-1$ //$NON-NLS-2$
+      rc.setOutputStream( outputStream );
 
-    // check the accepted page
-    assertEquals( 0, rc.getAcceptedPage() );
+      // check the accepted page
+      assertEquals( 0, rc.getAcceptedPage() );
 
-    // make sure pagination is really on
+      // make sure pagination is really on
+      assertTrue( rc.isPaginateOutput() );
+      // validate the component
+      assertTrue( rc.validate() );
+
+      // execute the component
+      assertTrue( rc.execute() );
+
+      // make sure this report has 8 pages (we know this report will produce 8 pages with sample data)
+      assertEquals( 8, rc.getPageCount() );
+    }
+
+  }
+
+
+  @Test
+  public void testStreamNotClosed() throws Exception {
+    // create an instance of the component
+    final SimpleReportingComponent rc = new SimpleReportingComponent();
+    // create/set the InputStream
+    final FileInputStream reportDefinition =
+      new FileInputStream( "resource/solution/test/reporting/report.prpt" ); //$NON-NLS-1$
+    rc.setReportDefinitionInputStream( reportDefinition );
+    rc.setOutputType( "text/html" ); //$NON-NLS-1$
+
+    // turn on pagination
+    rc.setPaginateOutput( true );
     assertTrue( rc.isPaginateOutput() );
-    // validate the component
-    assertTrue( rc.validate() );
 
-    // execute the component
-    assertTrue( rc.execute() );
+    // turn it back off
+    rc.setPaginateOutput( false );
+    assertFalse( rc.isPaginateOutput() );
 
-    // make sure this report has 8 pages (we know this report will produce 8 pages with sample data)
-    assertEquals( 8, rc.getPageCount() );
+    // turn on pagination, by way of input (typical mode for xaction)
+    final HashMap<String, Object> inputs = new HashMap<String, Object>();
+    inputs.put( "paginate", "true" ); //$NON-NLS-1$ //$NON-NLS-2$
+    inputs.put( "accepted-page", "0" ); //$NON-NLS-1$ //$NON-NLS-2$
+    rc.setInputs( inputs );
 
+    try ( final FileOutputStream outputStream =
+            new FileOutputStream(
+              new File( tmp, System.currentTimeMillis() + ".html" ) ) ) { //$NON-NLS-1$ //$NON-NLS-2$
+      rc.setOutputStream( outputStream );
+
+      assertTrue( rc.execute() );
+
+      outputStream.write( 1 );
+    }
   }
 
 }

@@ -20,6 +20,7 @@ package org.pentaho.reporting.platform.plugin.output;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.ByteArrayOutputStream;
 
 import org.pentaho.platform.api.engine.IApplicationContext;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
@@ -173,23 +174,29 @@ public class PageableHTMLOutput implements ReportOutputHandler {
     } else {
       outputProcessor.setFlowSelector( new DisplayAllFlowSelector() );
     }
-    proxyOutputStream.setParent( outputStream );
-    reinitOutputTarget();
-    final ReportProgressListener listener = ReportListenerThreadHolder.getListener();
-    //Add async job listener
-    if ( listener != null ) {
-      proc.addReportProgressListener( listener );
-    }
-    try {
-      proc.processReport();
-      return proc.getLogicalPageCount();
-    } finally {
+    //To ensure that no one will close our stream let's provide them staging one
+    try ( ByteArrayOutputStream stagingStream = new ByteArrayOutputStream() ) {
+      proxyOutputStream.setParent( stagingStream );
+      reinitOutputTarget();
+      final ReportProgressListener listener = ReportListenerThreadHolder.getListener();
+      //Add async job listener
       if ( listener != null ) {
-        proc.removeReportProgressListener( listener );
+        proc.addReportProgressListener( listener );
       }
-      outputStream.flush();
-      printer.setContentWriter( null, null );
-      printer.setDataWriter( null, null );
+      try {
+        proc.processReport();
+        return proc.getLogicalPageCount();
+      } finally {
+        if ( listener != null ) {
+          proc.removeReportProgressListener( listener );
+        }
+        stagingStream.flush();
+        //time to copy content to original stream
+        outputStream.write( stagingStream.toByteArray() );
+        outputStream.flush();
+        printer.setContentWriter( null, null );
+        printer.setDataWriter( null, null );
+      }
     }
   }
 
