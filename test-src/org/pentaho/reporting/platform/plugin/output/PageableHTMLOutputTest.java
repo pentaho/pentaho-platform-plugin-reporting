@@ -104,18 +104,23 @@ public class PageableHTMLOutputTest {
   @Test
   public void testGenerateListener() throws Exception {
     ClassicEngineBoot.getInstance().start();
-    pageableHTMLOutput.generate( new MasterReport(), 1, new ByteArrayOutputStream(), 1 );
-
+    try ( ByteArrayOutputStream stream = new ByteArrayOutputStream() ) {
+      pageableHTMLOutput.generate( new MasterReport(), 1, stream, 1 );
+    }
     verify( listener, times( 1 ) ).reportProcessingStarted( any( ReportProgressEvent.class ) );
     verify( listener, times( 1 ) ).reportProcessingFinished( any( ReportProgressEvent.class ) );
     verify( listener, atLeastOnce() ).reportProcessingUpdate( any( ReportProgressEvent.class ) );
+
+
   }
 
   @Test
   public void testGenerate() throws Exception {
     ClassicEngineBoot.getInstance().start();
     ReportListenerThreadHolder.clear();
-    pageableHTMLOutput.generate( new MasterReport(), 1, new ByteArrayOutputStream(), 1 );
+    try ( ByteArrayOutputStream stream = new ByteArrayOutputStream() ) {
+      pageableHTMLOutput.generate( new MasterReport(), 1, stream, 1 );
+    }
 
     verify( listener, times( 0 ) ).reportProcessingStarted( any( ReportProgressEvent.class ) );
     verify( listener, times( 0 ) ).reportProcessingFinished( any( ReportProgressEvent.class ) );
