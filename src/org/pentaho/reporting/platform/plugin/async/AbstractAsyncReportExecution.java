@@ -105,11 +105,13 @@ public abstract class AbstractAsyncReportExecution<TReportState extends IAsyncRe
 
   protected void fail() {
     // do not erase canceled status
+    String messageType = MessageTypes.CANCELLED;
     if ( listener != null && !listener.getState().getStatus().equals( AsyncExecutionStatus.CANCELED ) ) {
       listener.setStatus( AsyncExecutionStatus.FAILED );
+      messageType = MessageTypes.FAILED;
     }
     audit.audit( safeSession.getId(), safeSession.getName(), url, getClass().getName(), getClass().getName(),
-      MessageTypes.FAILED, auditId, "", 0, null );
+      messageType, auditId, "", 0, null );
   }
 
   protected AsyncReportStatusListener createListener( final UUID instanceId, final List<? extends ReportProgressListener> callbackListeners ) {
