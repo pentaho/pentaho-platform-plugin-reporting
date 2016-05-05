@@ -1057,7 +1057,13 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           } else {
             //Not started or finished
             this._reportUrl = reportUrl;
-            pentahoGet('reportjob', reportUrl, handleResultCallback, 'text/text');
+            var isValid = !this.reportPrompt._getStateProperty('promptNeeded');
+            if(isValid) {
+              pentahoGet('reportjob', reportUrl, handleResultCallback, 'text/text');
+            } else {
+              isFinished = true;
+              hideDlgAndPane();
+            }
           }
         } else {
           logger && logger.log("Will set iframe url to " + url.substr(0, 50) + "... ");
@@ -1090,7 +1096,9 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
       },
 
       _hideDialogAndPane: function(dlg) {
-        dlg.hide();
+        if(dlg) {
+          dlg.hide();
+        }
         if(this._updateReportTimeout >= 0) {
           clearTimeout(this._updateReportTimeout);
           this._updateReportTimeout = -1;
