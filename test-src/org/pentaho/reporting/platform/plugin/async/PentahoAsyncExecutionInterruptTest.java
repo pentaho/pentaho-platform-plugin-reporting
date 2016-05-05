@@ -20,9 +20,7 @@ package org.pentaho.reporting.platform.plugin.async;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.Timeout;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
@@ -35,7 +33,6 @@ import org.pentaho.test.platform.engine.core.MicroPlatform;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.UUID;
 import java.util.concurrent.Future;
 
@@ -47,8 +44,6 @@ import static org.mockito.Mockito.when;
  * Created by dima.prokopenko@gmail.com on 2/24/2016.
  */
 public class PentahoAsyncExecutionInterruptTest {
-
-  @Rule public Timeout globalTimeout = new Timeout( 10000 );
 
   private MicroPlatform microPlatform;
   private PentahoAsyncExecutor executor = new PentahoAsyncExecutor( 2 );
@@ -66,7 +61,7 @@ public class PentahoAsyncExecutionInterruptTest {
   }
 
   @After
-  public void after () {
+  public void after() {
     PentahoSystem.shutdown();
     PentahoSystem.clearObjectFactory();
     PentahoSessionHolder.removeSession();
@@ -75,12 +70,12 @@ public class PentahoAsyncExecutionInterruptTest {
   @Test public void testInterrupt() throws IOException, InterruptedException {
     SimpleReportingComponent reportComponent = new SimpleReportingComponent();
     // ...point to report
-    reportComponent.setReportFileId( "resource/solution/test/reporting/100000_rows.prpt" );
+    reportComponent.setReportFileId( "resource/solution/test/reporting/BigReport.prpt" );
     AsyncJobFileStagingHandler
-        handler =
-        new AsyncJobFileStagingHandler( session );
+      handler =
+      new AsyncJobFileStagingHandler( session );
     PentahoAsyncReportExecution
-        task = new PentahoAsyncReportExecution( "junit", reportComponent, handler, session, null );
+      task = new PentahoAsyncReportExecution( "junit", reportComponent, handler, session, null );
 
     UUID id = executor.addTask( task, session );
 
