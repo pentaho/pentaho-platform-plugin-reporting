@@ -21,9 +21,7 @@ package org.pentaho.reporting.platform.plugin.async;
 import org.apache.commons.io.output.NullOutputStream;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.Timeout;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
@@ -34,12 +32,10 @@ import static org.mockito.Mockito.mock;
 
 /**
  * See BACKLOG-7081 for additional details.
- *
+ * <p>
  * Created by dima.prokopenko@gmail.com on 3/15/2016.
  */
 public class TestInterruptionInterceptionTest {
-
-  @Rule public Timeout globalTimeout = new Timeout( 10000 );
 
   IPentahoSession userSession = mock( IPentahoSession.class );
 

@@ -890,6 +890,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                     $('#hiddenReportContentForm').submit();
                     $('#reportContent').attr("data-src", urlContent2);
                     this._updatedIFrameSrc = true;
+                    this.reportPrompt._isSubmitPromptPhaseActivated = true;
                     hideDlgAndPane();
                     isIframeContentSet = true;
                     $('#notification-message').html(_Messages.getString('LoadingPage'));
@@ -954,7 +955,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                     $('#hiddenReportContentForm').submit();
                     $('#reportContent').attr("data-src", urlContent);
                     this._updatedIFrameSrc = true;
-
+                    this.reportPrompt._isSubmitPromptPhaseActivated = true;
                     hideDlgAndPane();
                   }
                   if( (this._requestedPage > 0) && (this._currentStoredPagesCount > this._requestedPage)) {
