@@ -71,7 +71,7 @@ public class PentahoAsyncReportExecutorTest {
   UUID uuid1 = UUID.randomUUID();
   UUID uuid2 = UUID.randomUUID();
 
-  final static String MAGIC = "13";
+  static final String MAGIC = "13";
 
   SimpleReportingComponent component = mock( SimpleReportingComponent.class );
   AsyncJobFileStagingHandler handler = mock( AsyncJobFileStagingHandler.class );
@@ -160,7 +160,7 @@ public class PentahoAsyncReportExecutorTest {
   }
 
   private PentahoAsyncReportExecution createMockCallable( IPentahoSession session ) {
-    return new PentahoAsyncReportExecution( "junit-path", component, handler, session, null, AuditWrapper.NULL ) {
+    return new PentahoAsyncReportExecution( "junit-path", component, handler, session, "not null", AuditWrapper.NULL ) {
       @Override
       protected AsyncReportStatusListener createListener( final UUID id, List<? extends ReportProgressListener> listenerList ) {
         final AsyncReportState state = new AsyncReportState( id, getReportPath() );
@@ -253,9 +253,9 @@ public class PentahoAsyncReportExecutorTest {
 
     // must have two separate instances, as callable holds unique ID and listener for each addTask(..)
     final UUID id1 = exec.addTask(  new PentahoAsyncReportExecution( "junit-path",
-            component, handler, PentahoSessionHolder.getSession(), null, AuditWrapper.NULL ) {
+            component, handler, session1, "not null", AuditWrapper.NULL ) {
       @Override
-      protected AsyncReportStatusListener createListener(final UUID id, List<? extends ReportProgressListener> listeners) {
+      protected AsyncReportStatusListener createListener( final UUID id, List<? extends ReportProgressListener> listeners ) {
         return testListener;
       }
     }, session1 );

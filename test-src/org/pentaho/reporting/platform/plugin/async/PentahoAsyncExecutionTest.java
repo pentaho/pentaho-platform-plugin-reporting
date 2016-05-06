@@ -27,7 +27,6 @@ import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
-import org.pentaho.reporting.engine.classic.core.ReportPreProcessor;
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
 import org.pentaho.reporting.libraries.base.config.ModifiableConfiguration;
 import org.pentaho.reporting.platform.plugin.AuditWrapper;
@@ -107,7 +106,7 @@ public class PentahoAsyncExecutionTest {
   }
 
   private PentahoAsyncReportExecution createMockCallable() {
-    return new PentahoAsyncReportExecution( "junit-path", component, handler, userSession, null, AuditWrapper.NULL ) {
+    return new PentahoAsyncReportExecution( "junit-path", component, handler, userSession, "not null", AuditWrapper.NULL ) {
       @Override
       protected AsyncReportStatusListener createListener( UUID id, List<? extends ReportProgressListener> callbackListener  ) {
         return new AsyncReportStatusListener( "display_path", id, "text/html", callbackListener );
@@ -195,10 +194,10 @@ public class PentahoAsyncExecutionTest {
   @Test
   public void testRequestedPage() throws Exception {
     final AsyncReportStatusListener listener = mock( AsyncReportStatusListener.class );
-    final PentahoAsyncReportExecution execution = new PentahoAsyncReportExecution( "junit-path", component, handler, userSession, "id", null ) {
+    final PentahoAsyncReportExecution execution = new PentahoAsyncReportExecution( "junit-path", component, handler, userSession, "id", AuditWrapper.NULL ) {
 
       @Override
-      protected AsyncReportStatusListener createListener(UUID instanceId, List<? extends ReportProgressListener> callbackListeners) {
+      protected AsyncReportStatusListener createListener( UUID instanceId, List<? extends ReportProgressListener> callbackListeners ) {
         return listener;
       }
     };
