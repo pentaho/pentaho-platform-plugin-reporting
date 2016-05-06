@@ -20,9 +20,7 @@ package org.pentaho.reporting.platform.plugin.async;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.Timeout;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
@@ -48,8 +46,6 @@ import static org.mockito.Mockito.when;
  */
 public class PentahoAsyncExecutionInterruptTest {
 
-  @Rule public Timeout globalTimeout = new Timeout( 10000 );
-
   private MicroPlatform microPlatform;
   private int autoSchedulerThreshold = 0;
   private PentahoAsyncExecutor executor = new PentahoAsyncExecutor( 2, autoSchedulerThreshold );
@@ -67,7 +63,7 @@ public class PentahoAsyncExecutionInterruptTest {
   }
 
   @After
-  public void after () {
+  public void after() {
     PentahoSystem.shutdown();
     PentahoSystem.clearObjectFactory();
     PentahoSessionHolder.removeSession();
@@ -76,10 +72,10 @@ public class PentahoAsyncExecutionInterruptTest {
   @Test public void testInterrupt() throws IOException, InterruptedException {
     SimpleReportingComponent reportComponent = new SimpleReportingComponent();
     // ...point to report
-    reportComponent.setReportFileId( "resource/solution/test/reporting/100000_rows.prpt" );
+    reportComponent.setReportFileId( "resource/solution/test/reporting/BigReport.prpt" );
     AsyncJobFileStagingHandler
-        handler =
-        new AsyncJobFileStagingHandler( session );
+      handler =
+      new AsyncJobFileStagingHandler( session );
     PentahoAsyncReportExecution
         task = new PentahoAsyncReportExecution( "junit", reportComponent, handler, session, null, AuditWrapper.NULL );
 
