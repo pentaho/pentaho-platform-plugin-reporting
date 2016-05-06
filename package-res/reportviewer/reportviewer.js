@@ -943,7 +943,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                     this.reportPrompt._isSubmitPromptPhaseActivated = true;
                     hideDlgAndPane(registry.byId('feedbackScreen'));
                   }
-                  if( (this._requestedPage > 0) && (this._currentStoredPagesCount > this._requestedPage)) {
+                  if(this._requestedPage > 0) {
                     // main request finished before requested page was stored in cache
                     var newUrl = url.substring(url.lastIndexOf("/report?") + "/report?".length, url.length);
                     var match = newUrl.match(/(^.*accepted-page=)(\d*?)(&.*$)/);
