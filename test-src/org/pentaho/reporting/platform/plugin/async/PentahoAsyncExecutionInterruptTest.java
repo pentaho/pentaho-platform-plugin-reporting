@@ -77,7 +77,7 @@ public class PentahoAsyncExecutionInterruptTest {
       handler =
       new AsyncJobFileStagingHandler( session );
     PentahoAsyncReportExecution
-        task = new PentahoAsyncReportExecution( "junit", reportComponent, handler, session, null, AuditWrapper.NULL );
+        task = new PentahoAsyncReportExecution( "junit", reportComponent, handler, session, "not null", AuditWrapper.NULL );
 
     UUID id = executor.addTask( task, session );
 

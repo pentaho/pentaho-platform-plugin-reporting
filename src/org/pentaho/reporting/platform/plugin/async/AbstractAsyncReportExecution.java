@@ -54,12 +54,7 @@ public abstract class AbstractAsyncReportExecution<TReportState extends IAsyncRe
                                        final AsyncJobFileStagingHandler handler,
                                        final IPentahoSession safeSession,
                                        final String auditId ) {
-    this.reportComponent = reportComponent;
-    this.handler = handler;
-    this.url = url;
-    this.auditId = auditId;
-    this.safeSession = safeSession;
-    this.audit = AuditWrapper.NULL;
+    this( url, reportComponent, handler, safeSession, auditId, AuditWrapper.NULL );
   }
 
   /**
@@ -78,6 +73,12 @@ public abstract class AbstractAsyncReportExecution<TReportState extends IAsyncRe
                                        final IPentahoSession safeSession,
                                        final String auditId,
                                        final AuditWrapper audit ) {
+    ArgumentNullException.validate( "url", url );
+    ArgumentNullException.validate( "reportComponent", reportComponent );
+    ArgumentNullException.validate( "handler", handler );
+    ArgumentNullException.validate( "safeSession", safeSession );
+    ArgumentNullException.validate( "auditId", auditId );
+    ArgumentNullException.validate( "audit", audit );
     this.reportComponent = reportComponent;
     this.handler = handler;
     this.url = url;
