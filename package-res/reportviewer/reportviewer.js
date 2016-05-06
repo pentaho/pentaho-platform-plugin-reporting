@@ -920,8 +920,10 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                     }
 
                     //update page number
-                    var pageContr = registry.byId('pageControl');
-                    pageContr.setPageCount(resultJson.totalPages);
+                    if(this.reportPrompt._isReportHtmlPagebleOutputFormat){
+                      var pageContr = registry.byId('pageControl');
+                      pageContr.setPageCount(resultJson.totalPages);
+                    }
 
                     $('#notification-message').html(_Messages.getString('LoadingPage') + " " + resultJson.page + " " + _Messages.getString('Of') + " " + resultJson.totalPages);
                     registry.byId('reportGlassPane').setText(_Messages.getString('LoadingPage') + " " + resultJson.page + " " + _Messages.getString('Of') + " " + resultJson.totalPages);
