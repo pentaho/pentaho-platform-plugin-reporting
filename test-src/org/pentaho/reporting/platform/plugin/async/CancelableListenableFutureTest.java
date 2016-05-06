@@ -21,8 +21,11 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
+import org.pentaho.reporting.platform.plugin.AuditWrapper;
 import org.pentaho.reporting.platform.plugin.SimpleReportingComponent;
+import org.pentaho.reporting.platform.plugin.staging.AsyncJobFileStagingHandler;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -59,7 +62,8 @@ public class CancelableListenableFutureTest {
     final SimpleReportingComponent reportingComponent = mock( SimpleReportingComponent.class );
     when( reportingComponent.getMimeType() ).thenReturn( "text/html" );
     final PentahoAsyncReportExecution pentahoAsyncReportExecution =
-      new PentahoAsyncReportExecution( null, reportingComponent, null, null, null, null);
+      new PentahoAsyncReportExecution( "some url", reportingComponent, mock( AsyncJobFileStagingHandler.class ), mock(
+        IPentahoSession.class ), "not null", AuditWrapper.NULL );
     final ListenableFuture mock = mock( ListenableFuture.class );
     final ListenableFuture delegate = pentahoAsyncReportExecution.delegate( mock );
     assertTrue( delegate instanceof AbstractAsyncReportExecution.CancelableListenableFuture );
