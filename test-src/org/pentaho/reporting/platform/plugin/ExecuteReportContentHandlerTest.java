@@ -56,8 +56,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 
-import static junit.framework.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.*;
 

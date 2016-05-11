@@ -41,12 +41,9 @@ import java.util.UUID;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
-import static org.pentaho.di.core.util.Assert.assertFalse;
-import static org.pentaho.di.core.util.Assert.assertNull;
 
 /**
  * Created by dima.prokopenko@gmail.com on 2/17/2016.

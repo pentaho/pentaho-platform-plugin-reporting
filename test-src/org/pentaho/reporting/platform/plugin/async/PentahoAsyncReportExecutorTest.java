@@ -36,6 +36,7 @@ import org.pentaho.reporting.platform.plugin.AuditWrapper;
 import org.pentaho.reporting.platform.plugin.SimpleReportingComponent;
 import org.pentaho.reporting.platform.plugin.staging.AsyncJobFileStagingHandler;
 import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
+import org.pentaho.reporting.platform.plugin.async.PentahoAsyncExecutor.CompositeKey;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -47,13 +48,9 @@ import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.Future;
 
-import static junit.framework.Assert.assertNull;
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
-import static org.pentaho.di.core.util.Assert.assertFalse;
-import static org.pentaho.di.core.util.Assert.assertNotNull;
-import static org.pentaho.di.core.util.Assert.assertTrue;
-import static org.pentaho.reporting.platform.plugin.async.PentahoAsyncExecutor.CompositeKey;
+
 
 /**
  * Tests uses concurrency and potentially can hang. See test timeout rule (globalTimeout).

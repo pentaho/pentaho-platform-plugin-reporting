@@ -41,10 +41,7 @@ import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import static junit.framework.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.mockito.Matchers.anyFloat;
-import static org.mockito.Matchers.eq;
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
 public class PentahoAsyncExecutionAuditTest {
@@ -170,7 +167,7 @@ public class PentahoAsyncExecutionAuditTest {
 
     latch.await();
 
-    synchronized( latch ) {
+    synchronized ( latch ) {
       assertEquals( expected, wrapper.capturedId );
     }
   }
@@ -241,7 +238,7 @@ public class PentahoAsyncExecutionAuditTest {
       // if you have class cast here... will require additional code to
       // wait fot their completition, see code below...
       futures.add( (ListenableFuture<IFixedSizeStreamingContent>) executor.getFuture( tasksIds.peek(), session ) );
-      states.add( executor.getReportState( tasksIds.pop(), session ));
+      states.add( executor.getReportState( tasksIds.pop(), session ) );
     } while ( !tasksIds.isEmpty() );
 
     assertEquals( "we have 5: 4 running and one waiting future", NUMBER_OF_THREADS, futures.size() );
@@ -392,7 +389,7 @@ public class PentahoAsyncExecutionAuditTest {
       }
     }
     assertEquals( "scheduled is done:", 1, done );
-    assertEquals( "have cancelled all, BUT SCHEDULED!", NUMBER_OF_THREADS - 1 , cancelled );
+    assertEquals( "have cancelled all, BUT SCHEDULED!", NUMBER_OF_THREADS - 1, cancelled );
 
     finalBlock.await( 10, TimeUnit.SECONDS );
 

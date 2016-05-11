@@ -34,7 +34,7 @@ public class AsyncReportStatusListenerTest {
   public void isFirstPageMode() throws Exception {
     final ModifiableConfiguration edConf = ClassicEngineBoot.getInstance().getEditableConfig();
     edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.FirstPageMode", "true" );
-    final AsyncReportStatusListener listener = new AsyncReportStatusListener( "", UUID.randomUUID(), "", Collections.<ReportProgressListener>emptyList());
+    final AsyncReportStatusListener listener = new AsyncReportStatusListener( "", UUID.randomUUID(), "", Collections.<ReportProgressListener>emptyList() );
     assertTrue( listener.isFirstPageMode() );
     edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.FirstPageMode", "false" );
     final AsyncReportStatusListener listener2 = new AsyncReportStatusListener( "", UUID.randomUUID(), "", Collections.<ReportProgressListener>emptyList() );
