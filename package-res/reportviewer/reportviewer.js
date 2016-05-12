@@ -1037,7 +1037,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                 //nothing to do here
                 isFinished = true;
               }
-            } else {
+            } else if ( this.reportPrompt._isReportHtmlPagebleOutputFormat ) {
               //Need to wait for page
               var urlRequestPage = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + this._currentReportUuid
                   + '/requestPage/' + this._requestedPage ;
