@@ -17,15 +17,12 @@
 
 package org.pentaho.reporting.platform.plugin.output;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
-
+import mondrian.util.Pair;
+import org.apache.commons.io.IOUtils;
 import org.pentaho.platform.api.engine.IApplicationContext;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
-import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
 import org.pentaho.reporting.engine.classic.core.layout.output.DisplayAllFlowSelector;
 import org.pentaho.reporting.engine.classic.core.layout.output.YieldReportListener;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.base.PageableReportProcessor;
@@ -33,15 +30,30 @@ import org.pentaho.reporting.engine.classic.core.modules.output.pageable.base.Si
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.AllItemsHtmlPrinter;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlPrinter;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.PageableHtmlOutputProcessor;
+import org.pentaho.reporting.libraries.repository.ContentEntity;
 import org.pentaho.reporting.libraries.repository.ContentIOException;
+import org.pentaho.reporting.libraries.repository.ContentItem;
 import org.pentaho.reporting.libraries.repository.ContentLocation;
 import org.pentaho.reporting.libraries.repository.DefaultNameGenerator;
+import org.pentaho.reporting.libraries.repository.PageSequenceNameGenerator;
+import org.pentaho.reporting.libraries.repository.Repository;
 import org.pentaho.reporting.libraries.repository.file.FileRepository;
 import org.pentaho.reporting.libraries.repository.stream.StreamRepository;
+import org.pentaho.reporting.libraries.repository.zip.ZipRepository;
+import org.pentaho.reporting.platform.plugin.async.IAsyncReportListener;
 import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
+import org.pentaho.reporting.platform.plugin.cache.IReportContent;
+import org.pentaho.reporting.platform.plugin.cache.ReportContentImpl;
 import org.pentaho.reporting.platform.plugin.messages.Messages;
 import org.pentaho.reporting.platform.plugin.repository.PentahoNameGenerator;
 import org.pentaho.reporting.platform.plugin.repository.PentahoURLRewriter;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 public class PageableHTMLOutput implements ReportOutputHandler {
   private String contentHandlerPattern;
@@ -76,7 +88,7 @@ public class PageableHTMLOutput implements ReportOutputHandler {
     return printer;
   }
 
-  public void setPrinter( AllItemsHtmlPrinter printer ) {
+  public void setPrinter( final AllItemsHtmlPrinter printer ) {
     this.printer = printer;
   }
 
@@ -84,7 +96,7 @@ public class PageableHTMLOutput implements ReportOutputHandler {
     return proc;
   }
 
-  public void setReportProcessor( PageableReportProcessor proc ) {
+  public void setReportProcessor( final PageableReportProcessor proc ) {
     this.proc = proc;
   }
 
@@ -107,7 +119,22 @@ public class PageableHTMLOutput implements ReportOutputHandler {
     return proc;
   }
 
+
   protected void reinitOutputTarget() throws ReportProcessingException, ContentIOException {
+
+    final Pair<ContentLocation, PentahoNameGenerator> pair =
+      reinitLoactionAndNameGenerator();
+
+    final StreamRepository targetRepository = new StreamRepository( null, proxyOutputStream, "report" ); //$NON-NLS-1$
+    final ContentLocation targetRoot = targetRepository.getRoot();
+
+    printer.setContentWriter( targetRoot,
+      new DefaultNameGenerator( targetRoot, "index", "html" ) ); //$NON-NLS-1$ //$NON-NLS-2$
+    printer.setDataWriter( pair.getKey(), pair.getValue() );
+  }
+
+  private Pair<ContentLocation, PentahoNameGenerator> reinitLoactionAndNameGenerator()
+    throws ReportProcessingException, ContentIOException {
     final IApplicationContext ctx = PentahoSystem.getApplicationContext();
 
     final ContentLocation dataLocation;
@@ -135,13 +162,7 @@ public class PageableHTMLOutput implements ReportOutputHandler {
       dataLocation = null;
       dataNameGenerator = null;
     }
-
-    final StreamRepository targetRepository = new StreamRepository( null, proxyOutputStream, "report" ); //$NON-NLS-1$
-    final ContentLocation targetRoot = targetRepository.getRoot();
-
-    printer.setContentWriter( targetRoot,
-      new DefaultNameGenerator( targetRoot, "index", "html" ) ); //$NON-NLS-1$ //$NON-NLS-2$
-    printer.setDataWriter( dataLocation, dataNameGenerator );
+    return Pair.of( dataLocation, dataNameGenerator );
   }
 
   public int paginate( final MasterReport report, final int yieldRate ) throws ReportProcessingException, IOException,
@@ -167,24 +188,55 @@ public class PageableHTMLOutput implements ReportOutputHandler {
     if ( proc == null ) {
       proc = createReportProcessor( report, yieldRate );
     }
+
+    final boolean singlePageRequested = acceptedPage >= 0;
+
+    final IAsyncReportListener listener = ReportListenerThreadHolder.getListener();
+    final boolean asyncMode = listener != null;
+
+    //Add async job listener
+    if ( asyncMode ) {
+      proc.addReportProgressListener( listener );
+    }
+
     final PageableHtmlOutputProcessor outputProcessor = (PageableHtmlOutputProcessor) proc.getOutputProcessor();
-    if ( acceptedPage >= 0 ) {
+
+    //Async mode also needs all pages
+    if ( singlePageRequested && !asyncMode ) {
       outputProcessor.setFlowSelector( new SinglePageFlowSelector( acceptedPage ) );
     } else {
       outputProcessor.setFlowSelector( new DisplayAllFlowSelector() );
     }
-    proxyOutputStream.setParent( outputStream );
-    reinitOutputTarget();
-    final ReportProgressListener listener = ReportListenerThreadHolder.getListener();
-    //Add async job listener
-    if ( listener != null ) {
-      proc.addReportProgressListener( listener );
-    }
+
     try {
-      proc.processReport();
-      return proc.getLogicalPageCount();
+      //Not in async or in flow mode - fallback to old logic
+      if ( !asyncMode || !singlePageRequested ) {
+        proxyOutputStream.setParent( outputStream );
+        reinitOutputTarget();
+        proc.processReport();
+        return proc.getLogicalPageCount();
+      } else {
+        final Repository repository = reinitOutputTargetRepo();
+        proc.processReport();
+        //Get whole report and work with it
+        final IReportContent completeReport = produceReportContent( proc, repository );
+        if ( completeReport == null ) {
+          throw new ReportProcessingException( "Can't generate report" );
+        }
+
+        //Write all if scheduled
+        if ( listener.isScheduled() ) {
+          PaginationControlWrapper.write( outputStream, completeReport );
+        } else {
+          final byte[] pageData = completeReport.getPageData( acceptedPage );
+          if ( pageData != null ) {
+            outputStream.write( pageData );
+          }
+        }
+        return completeReport.getPageCount();
+      }
     } finally {
-      if ( listener != null ) {
+      if ( asyncMode ) {
         proc.removeReportProgressListener( listener );
       }
       outputStream.flush();
@@ -203,5 +255,63 @@ public class PageableHTMLOutput implements ReportOutputHandler {
       proxyOutputStream = null;
     }
 
+  }
+
+  protected Repository reinitOutputTargetRepo() throws ReportProcessingException, ContentIOException {
+
+    final Pair<ContentLocation, PentahoNameGenerator> pair =
+      reinitLoactionAndNameGenerator();
+
+    final ZipRepository targetRepository = new ZipRepository(); //$NON-NLS-1$
+    final ContentLocation targetRoot = targetRepository.getRoot();
+
+    final HtmlPrinter printer = getPrinter();
+    // generates predictable file names like "page-0.html", "page-1.html" and so on.
+    printer.setContentWriter( targetRoot,
+      new PageSequenceNameGenerator( targetRoot, "page", "html" ) ); //$NON-NLS-1$ //$NON-NLS-2$
+    printer.setDataWriter( pair.getKey(), pair.getValue() );
+
+    return targetRepository;
+  }
+
+  private int extractPageFromName( final String name ) {
+    if ( name.startsWith( "page-" ) && name.endsWith( ".html" ) ) {
+      try {
+        final String number = name.substring( "page-".length(), name.length() - ".html".length() );
+        return Integer.parseInt( number );
+      } catch ( final Exception e ) {
+        // ignore invalid names. Outside of a PoC it is probably a good idea to check errors properly.
+        return -1;
+      }
+    }
+    return -1;
+  }
+
+  protected IReportContent produceReportContent( final PageableReportProcessor proc,
+                                                 final Repository targetRepository )
+    throws ContentIOException, IOException {
+    final int pageCount = proc.getLogicalPageCount();
+    final ContentLocation root = targetRepository.getRoot();
+    final Map<Integer, byte[]> pages = new HashMap<>();
+
+    for ( final ContentEntity contentEntities : root.listContents() ) {
+      if ( contentEntities instanceof ContentItem ) {
+        final ContentItem ci = (ContentItem) contentEntities;
+        final String name = ci.getName();
+        final int pageNumber = extractPageFromName( name );
+        if ( pageNumber >= 0 ) {
+          pages.put( pageNumber, read( ci.getInputStream() ) );
+        }
+      }
+    }
+    return new ReportContentImpl( pageCount, pages );
+  }
+
+  private byte[] read( final InputStream in ) throws IOException {
+    try {
+      return IOUtils.toByteArray( in );
+    } finally {
+      in.close();
+    }
   }
 }
