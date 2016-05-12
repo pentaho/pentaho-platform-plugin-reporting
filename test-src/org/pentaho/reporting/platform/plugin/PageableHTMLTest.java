@@ -682,9 +682,13 @@ public class PageableHTMLTest {
 
   @Test
   public void testSchedule() throws Exception {
+    doTestSchedule( "true" );
+    doTestSchedule( "false" );
+  }
 
+  private void doTestSchedule( String cacheable ) throws Exception {
     final ModifiableConfiguration edConf = ClassicEngineBoot.getInstance().getEditableConfig();
-    edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.CachePageableHtmlContent", "true" );
+    edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.CachePageableHtmlContent", cacheable );
     edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.FirstPageMode", "true" );
     try {
 
@@ -724,7 +728,6 @@ public class PageableHTMLTest {
 
       assertFalse( -1 == listener.getState().getRow() );
       assertFalse( -1 == listener.getState().getTotalRows() );
-      assertEquals( 1, listener.getState().getGeneratedPage() );
 
       ReportListenerThreadHolder.clear();
 
