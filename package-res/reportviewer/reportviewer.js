@@ -302,11 +302,6 @@ define([ 'common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui/ut
             domClass.remove('promptPanel', 'pentaho-rounded-panel-bottom-lr');
             domClass.remove('reportControlPanel', 'pentaho-shadow');
             domClass.remove('reportControlPanel', 'pentaho-rounded-panel-bottom-lr');
-
-            if (typeof window.parameterValidityCallback !== 'undefined') {
-              var isValid = !promptPanel.paramDefn.promptNeeded;
-              window.parameterValidityCallback(isValid);
-            }
           }
         },
 
