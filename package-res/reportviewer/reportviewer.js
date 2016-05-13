@@ -61,6 +61,8 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         this.reportPrompt.api.event.submit(this.submitReport.bind(this));
         this.reportPrompt.api.event.beforeUpdate(this.beforeUpdateCallback.bind(this));
         this.reportPrompt.api.event.afterUpdate(this.afterUpdateCallback.bind(this));
+        this.reportPrompt.api.event.afterRender(this.view.afterRender.bind(this.view));
+
       },
 
       load: function() {
@@ -311,11 +313,14 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
             domClass.remove('promptPanel', 'pentaho-rounded-panel-bottom-lr');
             domClass.remove('reportControlPanel', 'pentaho-shadow');
             domClass.remove('reportControlPanel', 'pentaho-rounded-panel-bottom-lr');
+          
+          }
+        },
 
-            if (typeof window.parameterValidityCallback !== 'undefined') {
-              var isValid = !this.reportPrompt._getStateProperty('promptNeeded');
-              window.parameterValidityCallback(isValid);
-            }
+        afterRender: function() {
+          if (inSchedulerDialog && typeof window.parameterValidityCallback !== 'undefined') {
+            var isValid = !this.reportPrompt._getStateProperty('promptNeeded');
+            window.parameterValidityCallback(isValid);
           }
         },
 
