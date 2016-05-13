@@ -1119,7 +1119,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           clearTimeout(this._updateReportTimeout);
           this._updateReportTimeout = -1;
 
-          if(isTimeout) {
+          if(isTimeout && !this.reportPrompt._isReportHtmlPagebleOutputFormat) {
             // This happens, specifically, when the user selects a downloadable output format.
             // #_onReportContentLoaded callback might not have been called.
             this.view._showReportContent(false, /*preserveSource*/true);
