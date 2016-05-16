@@ -18,8 +18,10 @@
 
 package org.pentaho.reporting.platform.plugin.async;
 
+import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
 import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 
@@ -29,10 +31,11 @@ public interface IAsyncReportExecution<V extends IAsyncReportState> extends Call
    * Assigns the UUID and create task listener. This should be called before actual execution if we expect any state
    * from listener object.
    * This is called exclusively from the AsyncExecutor, which manages ids and guarantees the validity of them.
-   *
+   * You can provide you own listeners to monitor execution
    * @param id
+   *
    */
-  void notifyTaskQueued( UUID id );
+  void notifyTaskQueued( UUID id, List<? extends ReportProgressListener> callbackListeners );
 
   /**
    * Return the current state. Never null.

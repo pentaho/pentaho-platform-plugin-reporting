@@ -18,7 +18,7 @@
 
 package org.pentaho.reporting.platform.plugin.async;
 
-import org.apache.commons.io.input.NullInputStream;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -28,23 +28,23 @@ import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
+import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
 import org.pentaho.reporting.libraries.base.config.ModifiableConfiguration;
+import org.pentaho.reporting.platform.plugin.AuditWrapper;
 import org.pentaho.reporting.platform.plugin.SimpleReportingComponent;
 import org.pentaho.reporting.platform.plugin.staging.AsyncJobFileStagingHandler;
 import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
 
 import java.io.File;
-import java.io.InputStream;
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
-import static org.pentaho.di.core.util.Assert.assertFalse;
-import static org.pentaho.di.core.util.Assert.assertNull;
 
 /**
  * Created by dima.prokopenko@gmail.com on 2/17/2016.
@@ -60,6 +60,7 @@ public class PentahoAsyncExecutionTest {
 
   MasterReport report = mock( MasterReport.class );
   ModifiableConfiguration configuration = mock( ModifiableConfiguration.class );
+  private int autoSchedulerThreshold = 0;
 
   @Before
   public void before() throws Exception {
@@ -90,7 +91,7 @@ public class PentahoAsyncExecutionTest {
     PentahoAsyncReportExecution exec = createMockCallable();
 
     // simulates queuing
-    exec.notifyTaskQueued( UUID.randomUUID() );
+    exec.notifyTaskQueued( UUID.randomUUID(), Collections.<ReportProgressListener>emptyList() );
 
     assertEquals( AsyncExecutionStatus.QUEUED, exec.getState().getStatus() );
 
@@ -103,10 +104,12 @@ public class PentahoAsyncExecutionTest {
   }
 
   private PentahoAsyncReportExecution createMockCallable() {
-    return new PentahoAsyncReportExecution( "junit-path", component, handler, userSession, null ) {
+    return new PentahoAsyncReportExecution( "junit-path", component, handler, userSession, "not null",
+      AuditWrapper.NULL ) {
       @Override
-      protected AsyncReportStatusListener createListener( UUID id ) {
-        return new AsyncReportStatusListener( "display_path", id, "text/html" );
+      protected AsyncReportStatusListener createListener( UUID id,
+                                                          List<? extends ReportProgressListener> callbackListener ) {
+        return new AsyncReportStatusListener( "display_path", id, "text/html", callbackListener );
       }
     };
   }
@@ -117,7 +120,7 @@ public class PentahoAsyncExecutionTest {
 
     PentahoAsyncReportExecution exec = createMockCallable();
     // simulates queuing
-    exec.notifyTaskQueued( UUID.randomUUID() );
+    exec.notifyTaskQueued( UUID.randomUUID(), Collections.<ReportProgressListener>emptyList() );
 
     assertEquals( AsyncExecutionStatus.QUEUED, exec.getState().getStatus() );
 
@@ -135,7 +138,7 @@ public class PentahoAsyncExecutionTest {
 
     PentahoAsyncReportExecution spy = this.getSleepingSpy( run, this.userSession );
 
-    PentahoAsyncExecutor executor = new PentahoAsyncExecutor( 13 );
+    PentahoAsyncExecutor executor = new PentahoAsyncExecutor( 13, autoSchedulerThreshold );
     UUID id = executor.addTask( spy, this.userSession );
 
     Thread.sleep( 100 );
@@ -161,7 +164,7 @@ public class PentahoAsyncExecutionTest {
     when( session2.getId() ).thenReturn( sessionUid2.toString() );
 
     PentahoSessionHolder.setSession( session1 );
-    PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 10 );
+    PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 10, autoSchedulerThreshold );
 
     AtomicBoolean run = new AtomicBoolean( false );
     PentahoAsyncReportExecution napster = getSleepingSpy( run, session1 );
@@ -191,20 +194,72 @@ public class PentahoAsyncExecutionTest {
   @Test
   public void testRequestedPage() throws Exception {
     final AsyncReportStatusListener listener = mock( AsyncReportStatusListener.class );
-    final PentahoAsyncReportExecution execution = new PentahoAsyncReportExecution( "junit-path", component, handler, userSession, null ) {
-      @Override
-      protected AsyncReportStatusListener createListener( final UUID id ) {
-        return listener;
-      }
-    };
-    execution.notifyTaskQueued( UUID.randomUUID() );
+    final PentahoAsyncReportExecution execution =
+      new PentahoAsyncReportExecution( "junit-path", component, handler, userSession, "id", AuditWrapper.NULL ) {
+
+        @Override
+        protected AsyncReportStatusListener createListener( UUID instanceId,
+                                                            List<? extends ReportProgressListener> callbackListeners ) {
+          return listener;
+        }
+      };
+    execution.notifyTaskQueued( UUID.randomUUID(), Collections.<ReportProgressListener>emptyList() );
     execution.requestPage( 500 );
     verify( listener, times( 1 ) ).setRequestedPage( 500 );
   }
 
+  @Test
+  public void testDefaultWrapper() {
+    final AbstractAsyncReportExecution<IAsyncReportState> abstractAsyncReportExecution =
+      new AbstractAsyncReportExecution<IAsyncReportState>( "junit-path", component, handler, userSession, "id" ) {
+        @Override public IFixedSizeStreamingContent call() throws Exception {
+          return null;
+        }
+
+        @Override public IAsyncReportState getState() {
+          return null;
+        }
+      };
+    assertEquals( abstractAsyncReportExecution.getAudit(), AuditWrapper.NULL );
+  }
+
+  @Test( expected = IllegalStateException.class )
+  public void testAlreadyQueued() {
+    final AbstractAsyncReportExecution<IAsyncReportState> abstractAsyncReportExecution =
+      new AbstractAsyncReportExecution<IAsyncReportState>( "junit-path", component, handler, userSession, "id" ) {
+        @Override public IFixedSizeStreamingContent call() throws Exception {
+          return null;
+        }
+
+        @Override public IAsyncReportState getState() {
+          return null;
+        }
+      };
+    abstractAsyncReportExecution.notifyTaskQueued( UUID.randomUUID(), Collections.emptyList() );
+    abstractAsyncReportExecution.notifyTaskQueued( UUID.randomUUID(), Collections.emptyList() );
+  }
+
+  @Test
+  @SuppressWarnings( "unchecked" )
+  public void testCancelScheduled() {
+    final AbstractAsyncReportExecution<IAsyncReportState> abstractAsyncReportExecution =
+      new AbstractAsyncReportExecution<IAsyncReportState>( "junit-path", component, handler, userSession, "id" ) {
+        @Override public IFixedSizeStreamingContent call() throws Exception {
+          return null;
+        }
+
+        @Override public IAsyncReportState getState() {
+          return null;
+        }
+      };
+    abstractAsyncReportExecution.notifyTaskQueued( UUID.randomUUID(), Collections.emptyList() );
+    assertTrue( abstractAsyncReportExecution.schedule() );
+    assertFalse( abstractAsyncReportExecution.delegate( mock( ListenableFuture.class ) ).cancel( true ) );
+  }
+
   private PentahoAsyncReportExecution getSleepingSpy( final AtomicBoolean run, IPentahoSession session ) {
     PentahoAsyncReportExecution exec =
-      new PentahoAsyncReportExecution( "junit-path", component, handler, session, "junit" ) {
+      new PentahoAsyncReportExecution( "junit-path", component, handler, session, "junit", AuditWrapper.NULL ) {
         @Override
         public IFixedSizeStreamingContent call() throws Exception {
           while ( !run.get() && !Thread.currentThread().isInterrupted() ) {

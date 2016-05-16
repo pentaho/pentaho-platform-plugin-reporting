@@ -25,6 +25,7 @@ import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.engine.core.system.boot.PlatformInitializationException;
+import org.pentaho.reporting.platform.plugin.AuditWrapper;
 import org.pentaho.reporting.platform.plugin.MicroPlatformFactory;
 import org.pentaho.reporting.platform.plugin.SimpleReportingComponent;
 import org.pentaho.reporting.platform.plugin.staging.AsyncJobFileStagingHandler;
@@ -46,7 +47,8 @@ import static org.mockito.Mockito.when;
 public class PentahoAsyncExecutionInterruptTest {
 
   private MicroPlatform microPlatform;
-  private PentahoAsyncExecutor executor = new PentahoAsyncExecutor( 2 );
+  private int autoSchedulerThreshold = 0;
+  private PentahoAsyncExecutor executor = new PentahoAsyncExecutor( 2, autoSchedulerThreshold );
   private IPentahoSession session = mock( IPentahoSession.class );
 
   @Before public void before() throws PlatformInitializationException {
@@ -75,7 +77,7 @@ public class PentahoAsyncExecutionInterruptTest {
       handler =
       new AsyncJobFileStagingHandler( session );
     PentahoAsyncReportExecution
-      task = new PentahoAsyncReportExecution( "junit", reportComponent, handler, session, null );
+        task = new PentahoAsyncReportExecution( "junit", reportComponent, handler, session, "not null", AuditWrapper.NULL );
 
     UUID id = executor.addTask( task, session );
 
