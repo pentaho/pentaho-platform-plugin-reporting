@@ -31,12 +31,14 @@ import org.pentaho.reporting.platform.plugin.MicroPlatformFactory;
 import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
 import org.pentaho.test.platform.engine.core.MicroPlatform;
 
+import java.io.File;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 
-import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.matches;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -55,7 +57,7 @@ public class WriteToJcrTaskTest {
   public static Collection primeNumbers() {
     return Arrays.asList( new Object[][] {
       { "application/pdf", "report.prpt" },
-      { "toinfinitynadbeyond", ""}
+      { "toinfinitynadbeyond", "" }
     } );
   }
 
@@ -64,12 +66,13 @@ public class WriteToJcrTaskTest {
 
   @BeforeClass
   public static void setUp() throws PlatformInitializationException {
+    new File( "./resource/solution/system/tmp" ).mkdirs();
     microPlatform = MicroPlatformFactory.create();
     final IUnifiedRepository repository = mock( IUnifiedRepository.class );
-
     final ISchedulingDirectoryStrategy strategy = mock( ISchedulingDirectoryStrategy.class );
     final RepositoryFile file = mock( RepositoryFile.class );
     when( strategy.getSchedulingDir( repository ) ).thenReturn( file );
+    when( repository.getFile( matches( "^[a-z/\\\\]+\\.{1}[a-z]+$" ) ) ).thenReturn( file );
     microPlatform.defineInstance( "IUnifiedRepository", repository );
     microPlatform.defineInstance( "ISchedulingDirectoryStrategy", strategy );
     microPlatform.start();
@@ -92,6 +95,8 @@ public class WriteToJcrTaskTest {
     when( state.getMimeType() ).thenReturn( mime );
     when( state.getPath() ).thenReturn( file );
     when( reportExecution.getState() ).thenReturn( state );
+    final InputStream stream = mock( InputStream.class );
+    when( content.getStream() ).thenReturn( stream );
     final StandaloneSession session = new StandaloneSession( "test" );
     PentahoSessionHolder.setSession( session );
     final Callable writeTask =

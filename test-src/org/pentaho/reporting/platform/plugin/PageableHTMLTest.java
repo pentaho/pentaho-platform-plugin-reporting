@@ -733,11 +733,65 @@ public class PageableHTMLTest {
 
       assertNull( ReportListenerThreadHolder.getListener() );
 
+      //From cache
+      final TestListener listener2 = new TestListener( "1", UUID.randomUUID(), "" );
+      listener2.setStatus( AsyncExecutionStatus.SCHEDULED );
+      ReportListenerThreadHolder.setListener( listener2 );
+
+      final SimpleReportingComponent rc2 = new SimpleReportingComponent();
+      // create/set the InputStream
+      rc.setReport( r );
+      rc.setOutputType( "text/html" ); //$NON-NLS-1$
+
+      rc.setInputs( inputs );
+
+      try ( final ByteArrayOutputStream outputStream =
+              new ByteArrayOutputStream() ) { //$NON-NLS-1$ //$NON-NLS-2$
+        rc.setOutputStream( outputStream );
+        assertTrue( rc.execute() );
+        final byte[] bytes = outputStream.toByteArray();
+        assertNotNull( bytes );
+        final String content = new String( bytes, "UTF-8" );
+        assertTrue( content.contains( "Scheduled paginated HTML report" ) );
+      }
+
+      // execute the component
+      assertTrue( listener.isOnStart() );
+      assertTrue( listener.isOnUpdate() );
+      assertTrue( listener.isOnFinish() );
+
+      assertFalse( -1 == listener.getState().getRow() );
+      assertFalse( -1 == listener.getState().getTotalRows() );
+
+      ReportListenerThreadHolder.clear();
+
 
     } finally {
       edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.CachePageableHtmlContent", null );
       edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.FirstPageMode", null );
     }
+  }
+
+  @Test
+  public void testPaginate() throws Exception {
+    // create/set the InputStream
+    final FileInputStream reportDefinition =
+      new FileInputStream( "resource/solution/test/reporting/report.prpt" ); //$NON-NLS-1$
+    rc.setReportDefinitionInputStream( reportDefinition );
+    rc.setOutputType( "text/html" ); //$NON-NLS-1$
+
+    // turn on pagination, by way of input (typical mode for xaction)
+    final HashMap<String, Object> inputs = new HashMap<String, Object>();
+    inputs.put( "paginate", "true" ); //$NON-NLS-1$ //$NON-NLS-2$
+    inputs.put( "accepted-page", "-1" ); //$NON-NLS-1$ //$NON-NLS-2$
+    rc.setInputs( inputs );
+
+    final FileOutputStream outputStream =
+      new FileOutputStream( new File( tmp, System.currentTimeMillis() + ".html" ) ); //$NON-NLS-1$ //$NON-NLS-2$
+    rc.setOutputStream( outputStream );
+
+    assertEquals( 8, rc.paginate() );
+
   }
 
   private void execute( final MasterReport r ) throws Exception {
@@ -751,6 +805,7 @@ public class PageableHTMLTest {
     final HashMap<String, Object> inputs = new HashMap<String, Object>();
     inputs.put( "paginate", "true" ); //$NON-NLS-1$ //$NON-NLS-2$
     inputs.put( "accepted-page", "0" ); //$NON-NLS-1$ //$NON-NLS-2$
+    inputs.put( "content-handler-pattern", "test" );
     rc.setInputs( inputs );
 
     final FileOutputStream outputStream =

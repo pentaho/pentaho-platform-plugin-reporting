@@ -342,7 +342,7 @@ public class PentahoAsyncExecutor<TReportState extends IAsyncReportState>
         final String targetExt = extension != null ? extension : TXT;
         final String fullPath = state.getPath();
         String cleanFileName = utils.stripFileExtension( utils.getFileName( fullPath ) );
-        if ( cleanFileName == null || cleanFileName.isEmpty() ) {
+        if ( StringUtil.isEmpty( cleanFileName ) ) {
           cleanFileName = "content";
         }
 

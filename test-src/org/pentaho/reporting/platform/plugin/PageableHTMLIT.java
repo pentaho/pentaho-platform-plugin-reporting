@@ -26,6 +26,8 @@ import org.junit.Test;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.StandaloneSession;
+import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
+import org.pentaho.reporting.libraries.base.config.ModifiableConfiguration;
 import org.pentaho.reporting.platform.plugin.cache.FileSystemCacheBackend;
 import org.pentaho.reporting.platform.plugin.cache.IPluginCacheManager;
 import org.pentaho.reporting.platform.plugin.cache.PluginCacheManagerImpl;
@@ -107,46 +109,98 @@ public class PageableHTMLIT {
 
   @Test
   public void testPaginatedHTML() throws Exception {
-    // create an instance of the component
-    SimpleReportingComponent rc = new SimpleReportingComponent();
-    // create/set the InputStream
-    FileInputStream reportDefinition =
-      new FileInputStream( "resource/solution/test/reporting/report.prpt" ); //$NON-NLS-1$
-    rc.setReportDefinitionInputStream( reportDefinition );
-    rc.setOutputType( "text/html" ); //$NON-NLS-1$
+    doTestPaginatedHTML( "true" );
+    doTestPaginatedHTML( "false" );
+  }
 
-    // turn on pagination
-    rc.setPaginateOutput( true );
-    assertTrue( rc.isPaginateOutput() );
 
-    // turn it back off
-    rc.setPaginateOutput( false );
-    assertFalse( rc.isPaginateOutput() );
+  public void doTestPaginatedHTML( final String cache ) throws Exception {
+    final ModifiableConfiguration edConf = ClassicEngineBoot.getInstance().getEditableConfig();
+    edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.CachePageableHtmlContent", cache );
+    edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.FirstPageMode", "true" );
+    edConf.setConfigProperty( "org.pentaho.reporting.engine.classic.core.states.PerformanceMonitorContext",
+      "org.pentaho.reporting.platform.plugin.PluginPerfomanceMonitorContext" );
+    try {
+      // create an instance of the component
+      SimpleReportingComponent rc = new SimpleReportingComponent();
+      // create/set the InputStream
+      FileInputStream reportDefinition =
+        new FileInputStream( "resource/solution/test/reporting/report.prpt" ); //$NON-NLS-1$
+      rc.setReportDefinitionInputStream( reportDefinition );
+      rc.setOutputType( "text/html" ); //$NON-NLS-1$
 
-    // turn on pagination, by way of input (typical mode for xaction)
-    HashMap<String, Object> inputs = new HashMap<String, Object>();
-    inputs.put( "paginate", "true" ); //$NON-NLS-1$ //$NON-NLS-2$
-    inputs.put( "accepted-page", "0" ); //$NON-NLS-1$ //$NON-NLS-2$
-    rc.setInputs( inputs );
+      // turn on pagination
+      rc.setPaginateOutput( true );
+      assertTrue( rc.isPaginateOutput() );
 
-    FileOutputStream outputStream =
-      new FileOutputStream( new File( tmp, System.currentTimeMillis() + ".html" ) ); //$NON-NLS-1$ //$NON-NLS-2$
-    rc.setOutputStream( outputStream );
+      // turn it back off
+      rc.setPaginateOutput( false );
+      assertFalse( rc.isPaginateOutput() );
 
-    // check the accepted page
-    assertEquals( 0, rc.getAcceptedPage() );
+      // turn on pagination, by way of input (typical mode for xaction)
+      HashMap<String, Object> inputs = new HashMap<String, Object>();
+      inputs.put( "paginate", "true" ); //$NON-NLS-1$ //$NON-NLS-2$
+      inputs.put( "accepted-page", "0" ); //$NON-NLS-1$ //$NON-NLS-2$
+      rc.setInputs( inputs );
 
-    // make sure pagination is really on
-    assertTrue( rc.isPaginateOutput() );
-    // validate the component
-    assertTrue( rc.validate() );
+      FileOutputStream outputStream =
+        new FileOutputStream( new File( tmp, System.currentTimeMillis() + ".html" ) ); //$NON-NLS-1$ //$NON-NLS-2$
+      rc.setOutputStream( outputStream );
 
-    // execute the component
-    assertTrue( rc.execute() );
+      // check the accepted page
+      assertEquals( 0, rc.getAcceptedPage() );
 
-    // make sure this report has 8 pages (we know this report will produce 8 pages with sample data)
-    assertEquals( 8, rc.getPageCount() );
+      // make sure pagination is really on
+      assertTrue( rc.isPaginateOutput() );
+      // validate the component
+      assertTrue( rc.validate() );
 
+      // execute the component
+      assertTrue( rc.execute() );
+
+      // make sure this report has 8 pages (we know this report will produce 8 pages with sample data)
+      assertEquals( 8, rc.getPageCount() );
+    } finally {
+      edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.CachePageableHtmlContent", null );
+      edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.FirstPageMode", null );
+    }
+
+  }
+
+
+  @Test
+  public void testPaginate() throws Exception {
+    final ModifiableConfiguration edConf = ClassicEngineBoot.getInstance().getEditableConfig();
+    edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.CachePageableHtmlContent", "true" );
+    edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.FirstPageMode", "true" );
+    try {
+      // create an instance of the component
+      SimpleReportingComponent rc = new SimpleReportingComponent();
+      // create/set the InputStream
+      FileInputStream reportDefinition =
+        new FileInputStream( "resource/solution/test/reporting/report.prpt" ); //$NON-NLS-1$
+      rc.setReportDefinitionInputStream( reportDefinition );
+      rc.setOutputType( "text/html" ); //$NON-NLS-1$
+
+      // turn on pagination
+      rc.setPaginateOutput( true );
+      assertTrue( rc.isPaginateOutput() );
+
+      // turn it back off
+      rc.setPaginateOutput( false );
+      assertFalse( rc.isPaginateOutput() );
+
+      // turn on pagination, by way of input (typical mode for xaction)
+      HashMap<String, Object> inputs = new HashMap<String, Object>();
+      inputs.put( "paginate", "true" ); //$NON-NLS-1$ //$NON-NLS-2$
+      inputs.put( "accepted-page", "0" ); //$NON-NLS-1$ //$NON-NLS-2$
+      rc.setInputs( inputs );
+
+      assertEquals( 8, rc.paginate() );
+    } finally {
+      edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.CachePageableHtmlContent", null );
+      edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.FirstPageMode", null );
+    }
   }
 
 }
