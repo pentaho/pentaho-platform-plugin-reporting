@@ -28,22 +28,27 @@ import java.util.UUID;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 public class AsyncReportStatusListenerTest {
   @Test
   public void isFirstPageMode() throws Exception {
     final ModifiableConfiguration edConf = ClassicEngineBoot.getInstance().getEditableConfig();
     edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.FirstPageMode", "true" );
-    final AsyncReportStatusListener listener = new AsyncReportStatusListener( "", UUID.randomUUID(), "", Collections.<ReportProgressListener>emptyList() );
+    final AsyncReportStatusListener listener =
+      new AsyncReportStatusListener( "", UUID.randomUUID(), "", Collections.<ReportProgressListener>emptyList() );
     assertTrue( listener.isFirstPageMode() );
     edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.FirstPageMode", "false" );
-    final AsyncReportStatusListener listener2 = new AsyncReportStatusListener( "", UUID.randomUUID(), "", Collections.<ReportProgressListener>emptyList() );
+    final AsyncReportStatusListener listener2 =
+      new AsyncReportStatusListener( "", UUID.randomUUID(), "", Collections.<ReportProgressListener>emptyList() );
     assertFalse( listener2.isFirstPageMode() );
   }
 
   @Test
   public void isScheduled() throws Exception {
-    final AsyncReportStatusListener listener = new AsyncReportStatusListener( "", UUID.randomUUID(), "", Collections.<ReportProgressListener>emptyList() );
+    final AsyncReportStatusListener listener =
+      new AsyncReportStatusListener( "", UUID.randomUUID(), "", Collections.<ReportProgressListener>emptyList() );
     assertFalse( listener.isScheduled() );
     listener.setStatus( AsyncExecutionStatus.SCHEDULED );
     assertTrue( listener.isScheduled() );
@@ -51,28 +56,47 @@ public class AsyncReportStatusListenerTest {
 
   @Test
   public void reportProcessingFinished() throws Exception {
-    final AsyncReportStatusListener listener = new AsyncReportStatusListener( "", UUID.randomUUID(), "", Collections.<ReportProgressListener>emptyList() );
-    listener.reportProcessingFinished( mock( ReportProgressEvent.class ) );
+    final ReportProgressListener progressListener = mock( ReportProgressListener.class );
+    final AsyncReportStatusListener listener =
+      new AsyncReportStatusListener( "", UUID.randomUUID(), "",
+        Collections.singletonList( progressListener ) );
+    final ReportProgressEvent event = mock( ReportProgressEvent.class );
+    listener.reportProcessingFinished( event );
+    verify( progressListener, times( 1 ) ).reportProcessingFinished( event );
     //listener should not update status to finished
     assertFalse( AsyncExecutionStatus.FINISHED.equals( listener.getState().getStatus() ) );
   }
 
   @Test
   public void setStatus() throws Exception {
-    final AsyncReportStatusListener listener = new AsyncReportStatusListener( "", UUID.randomUUID(), "", Collections.<ReportProgressListener>emptyList() );
+    final AsyncReportStatusListener listener =
+      new AsyncReportStatusListener( "", UUID.randomUUID(), "", Collections.<ReportProgressListener>emptyList() );
+    listener.setStatus( null );
     listener.setStatus( AsyncExecutionStatus.QUEUED );
     assertEquals( AsyncExecutionStatus.QUEUED, listener.getState().getStatus() );
     listener.setStatus( AsyncExecutionStatus.CANCELED );
     assertEquals( AsyncExecutionStatus.CANCELED, listener.getState().getStatus() );
     listener.setStatus( AsyncExecutionStatus.FINISHED );
     assertEquals( AsyncExecutionStatus.CANCELED, listener.getState().getStatus() );
+
   }
 
   @Test
   public void updateGenerationStatus() throws Exception {
-    final AsyncReportStatusListener listener = new AsyncReportStatusListener( "", UUID.randomUUID(), "", Collections.<ReportProgressListener>emptyList() );
+    final AsyncReportStatusListener listener =
+      new AsyncReportStatusListener( "", UUID.randomUUID(), "", Collections.<ReportProgressListener>emptyList() );
     listener.setRequestedPage( 500 );
     listener.updateGenerationStatus( 500 );
     assertEquals( 0, listener.getRequestedPage() );
+  }
+
+  @Test
+  public void testErrorMessage() {
+    final AsyncReportStatusListener listener =
+      new AsyncReportStatusListener( "", UUID.randomUUID(), "", Collections.<ReportProgressListener>emptyList() );
+
+    final String errorMessage = UUID.randomUUID().toString();
+    listener.setErrorMessage( errorMessage );
+    assertEquals( errorMessage, listener.getState().getErrorMessage() );
   }
 }

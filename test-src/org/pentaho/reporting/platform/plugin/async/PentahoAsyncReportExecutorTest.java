@@ -159,7 +159,8 @@ public class PentahoAsyncReportExecutorTest {
   private PentahoAsyncReportExecution createMockCallable( IPentahoSession session ) {
     return new PentahoAsyncReportExecution( "junit-path", component, handler, session, "not null", AuditWrapper.NULL ) {
       @Override
-      protected AsyncReportStatusListener createListener( final UUID id, List<? extends ReportProgressListener> listenerList ) {
+      protected AsyncReportStatusListener createListener( final UUID id,
+                                                          List<? extends ReportProgressListener> listenerList ) {
         final AsyncReportState state = new AsyncReportState( id, getReportPath() );
         final AsyncReportStatusListener retval = mock( AsyncReportStatusListener.class );
         when( retval.getState() ).thenReturn( state );
@@ -249,10 +250,11 @@ public class PentahoAsyncReportExecutorTest {
     final TestListener testListener = new TestListener( "1", UUID.randomUUID(), "" );
 
     // must have two separate instances, as callable holds unique ID and listener for each addTask(..)
-    final UUID id1 = exec.addTask(  new PentahoAsyncReportExecution( "junit-path",
-            component, handler, session1, "not null", AuditWrapper.NULL ) {
+    final UUID id1 = exec.addTask( new PentahoAsyncReportExecution( "junit-path",
+      component, handler, session1, "not null", AuditWrapper.NULL ) {
       @Override
-      protected AsyncReportStatusListener createListener( final UUID id, List<? extends ReportProgressListener> listeners ) {
+      protected AsyncReportStatusListener createListener( final UUID id,
+                                                          List<? extends ReportProgressListener> listeners ) {
         return testListener;
       }
     }, session1 );
@@ -262,6 +264,72 @@ public class PentahoAsyncReportExecutorTest {
     final IAsyncReportState state = exec.getReportState( id1, session1 );
     assertNotNull( state );
     assertEquals( AsyncExecutionStatus.SCHEDULED, testListener.getState().getStatus() );
+
+  }
+
+  @Test public void testShutdown() throws Exception {
+    final PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 1, autoSchedulerThreshold );
+
+    final TestListener testListener = new TestListener( "1", UUID.randomUUID(), "" );
+
+    // must have two separate instances, as callable holds unique ID and listener for each addTask(..)
+    final UUID id1 = exec.addTask( new PentahoAsyncReportExecution( "junit-path",
+      component, handler, session1, "not null", AuditWrapper.NULL ) {
+      @Override
+      protected AsyncReportStatusListener createListener( final UUID id,
+                                                          List<? extends ReportProgressListener> listeners ) {
+        return testListener;
+      }
+    }, session1 );
+
+    exec.shutdown();
+
+    assertNull( exec.getFuture( id1, session1 ) );
+    assertNull( exec.getReportState( id1, session1 ) );
+  }
+
+  @Test public void testCleanFuture() throws Exception {
+    final PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 1, autoSchedulerThreshold );
+
+    final TestListener testListener = new TestListener( "1", UUID.randomUUID(), "" );
+
+    // must have two separate instances, as callable holds unique ID and listener for each addTask(..)
+    final UUID id1 = exec.addTask( new PentahoAsyncReportExecution( "junit-path",
+      component, handler, session1, "not null", AuditWrapper.NULL ) {
+      @Override
+      protected AsyncReportStatusListener createListener( final UUID id,
+                                                          List<? extends ReportProgressListener> listeners ) {
+        return testListener;
+      }
+    }, session1 );
+
+    exec.cleanFuture( id1, session1 );
+
+    assertNull( exec.getFuture( id1, session1 ) );
+    assertNull( exec.getReportState( id1, session1 ) );
+  }
+
+
+  @Test public void testRequestPage() {
+    final PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 1, autoSchedulerThreshold );
+
+    final TestListener testListener = new TestListener( "1", UUID.randomUUID(), "" );
+
+    // must have two separate instances, as callable holds unique ID and listener for each addTask(..)
+    final UUID id1 = exec.addTask( new PentahoAsyncReportExecution( "junit-path",
+      component, handler, session1, "not null", AuditWrapper.NULL ) {
+      @Override
+      protected AsyncReportStatusListener createListener( final UUID id,
+                                                          List<? extends ReportProgressListener> listeners ) {
+        return testListener;
+      }
+    }, session1 );
+
+    exec.requestPage( id1, session1, 100 );
+
+    final IAsyncReportState state = exec.getReportState( id1, session1 );
+    assertNotNull( state );
+    assertEquals( 100, testListener.getRequestedPage() );
 
   }
 }

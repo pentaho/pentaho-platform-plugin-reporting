@@ -108,6 +108,22 @@ public class JobManagerTest {
     assertEquals( 200, response.getStatus() );
   }
 
+  @Test
+  public void testInvalidUUID(){
+    WebClient client = provider.getFreshClient();
+    client.path( String.format( URL_FORMAT, null, "/requestPage/100" ) );
+    final Response response1 = client.get();
+    assertEquals( response1.getStatus(), 404 );
+    client = provider.getFreshClient();
+    client.path( String.format( URL_FORMAT, "", "/schedule" ) );
+    final Response response2 = client.get();
+    assertEquals( response2.getStatus(), 404 );
+    client = provider.getFreshClient();
+    client.path( String.format( URL_FORMAT, "not a uuid", "/status" ) );
+    final Response response3 = client.get();
+    assertEquals( response3.getStatus(), 404 );
+  }
+
   @BeforeClass public static void setUp() throws Exception {
     provider = new JaxRsServerProvider();
     provider.startServer( new JobManager(  ) );
