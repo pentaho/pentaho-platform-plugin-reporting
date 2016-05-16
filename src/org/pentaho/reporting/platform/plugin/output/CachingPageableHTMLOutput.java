@@ -16,32 +16,25 @@
  */
 package org.pentaho.reporting.platform.plugin.output;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.pentaho.platform.api.engine.IApplicationContext;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportDataFactoryException;
+import org.pentaho.reporting.engine.classic.core.ReportParameterValidationException;
 import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressEvent;
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
 import org.pentaho.reporting.engine.classic.core.layout.output.DisplayAllFlowSelector;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.base.PageableReportProcessor;
-import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlPrinter;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.PageableHtmlOutputProcessor;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterDefinitionEntry;
 import org.pentaho.reporting.engine.classic.core.parameters.ReportParameterDefinition;
 import org.pentaho.reporting.engine.classic.core.util.ReportParameterValues;
 import org.pentaho.reporting.engine.classic.core.util.beans.BeanException;
 import org.pentaho.reporting.engine.classic.core.util.beans.ConverterRegistry;
-import org.pentaho.reporting.libraries.repository.ContentEntity;
 import org.pentaho.reporting.libraries.repository.ContentIOException;
-import org.pentaho.reporting.libraries.repository.ContentItem;
-import org.pentaho.reporting.libraries.repository.ContentLocation;
-import org.pentaho.reporting.libraries.repository.PageSequenceNameGenerator;
-import org.pentaho.reporting.libraries.repository.file.FileRepository;
-import org.pentaho.reporting.libraries.repository.zip.ZipRepository;
+import org.pentaho.reporting.libraries.repository.Repository;
 import org.pentaho.reporting.libraries.resourceloader.ResourceData;
 import org.pentaho.reporting.libraries.resourceloader.ResourceKey;
 import org.pentaho.reporting.libraries.resourceloader.ResourceLoadingException;
@@ -53,14 +46,9 @@ import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
 import org.pentaho.reporting.platform.plugin.cache.IPluginCacheManager;
 import org.pentaho.reporting.platform.plugin.cache.IReportContent;
 import org.pentaho.reporting.platform.plugin.cache.IReportContentCache;
-import org.pentaho.reporting.platform.plugin.cache.ReportContentImpl;
-import org.pentaho.reporting.platform.plugin.messages.Messages;
-import org.pentaho.reporting.platform.plugin.repository.PentahoNameGenerator;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
@@ -68,7 +56,6 @@ import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class CachingPageableHTMLOutput extends PageableHTMLOutput {
 
@@ -76,10 +63,10 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
 
   private class CacheListener implements ReportProgressListener {
 
-    public CacheListener( final String key, final int acceptedPage,
-                          final PageableReportProcessor proc,
-                          final ZipRepository targetRepository,
-                          final IAsyncReportListener asyncReportListener ) {
+    private CacheListener( final String key, final int acceptedPage,
+                   final PageableReportProcessor proc,
+                   final Repository targetRepository,
+                   final IAsyncReportListener asyncReportListener ) {
       this.key = key;
       this.acceptedPage = acceptedPage;
       this.proc = proc;
@@ -90,7 +77,7 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
     private final String key;
     private final int acceptedPage;
     private final PageableReportProcessor proc;
-    private final ZipRepository targetRepository;
+    private final Repository targetRepository;
     private final IAsyncReportListener asyncReportListener;
 
     private int lastAcceptedPageWritten;
@@ -176,7 +163,16 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
       if ( cachedContent == null ) {
         logger.warn( "No cached content found for key: " + key );
         final IReportContent freshCache = regenerateCache( report, yieldRate, key, acceptedPage );
+
+        final IAsyncReportListener listener = ReportListenerThreadHolder.getListener();
+        //write all pages for scheduling case
+        if ( listener != null && listener.isScheduled() ) {
+          PaginationControlWrapper.write( outputStream, freshCache );
+          return freshCache.getPageCount();
+        }
+
         final byte[] pageData = freshCache.getPageData( acceptedPage );
+
         outputStream.write( pageData );
         outputStream.flush();
         return freshCache.getPageCount();
@@ -193,6 +189,12 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
               acceptedPage + 1, cachedContent.getPageCount(), 0, 0 );
           listener.reportProcessingUpdate( event );
           listener.reportProcessingFinished( event );
+
+          //write all pages for scheduling case
+          if ( listener.isScheduled() ) {
+            PaginationControlWrapper.write( outputStream, cachedContent );
+            return cachedContent.getPageCount();
+          }
         }
         outputStream.write( page );
         outputStream.flush();
@@ -207,19 +209,6 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
     } catch ( final CacheKeyException e ) {
       return generateNonCaching( report, acceptedPage, outputStream, yieldRate );
     }
-  }
-
-  private int extractPageFromName( final String name ) {
-    if ( name.startsWith( "page-" ) && name.endsWith( ".html" ) ) {
-      try {
-        final String number = name.substring( "page-".length(), name.length() - ".html".length() );
-        return Integer.parseInt( number );
-      } catch ( final Exception e ) {
-        // ignore invalid names. Outside of a PoC it is probably a good idea to check errors properly.
-        return -1;
-      }
-    }
-    return -1;
   }
 
   private IReportContent regenerateCache( final MasterReport report, final int yieldRate, final String key,
@@ -244,7 +233,7 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
     final IAsyncReportListener listener = ReportListenerThreadHolder.getListener();
     ReportProgressListener cacheListener = null;
     try {
-      final ZipRepository targetRepository = reinitOutputTargetForCaching();
+      final Repository targetRepository = reinitOutputTargetRepo();
       if ( listener != null ) {
         if ( listener.isFirstPageMode() ) {
           //Create cache listener to write first requested page when needed
@@ -256,8 +245,8 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
       proc.processReport();
 
       return produceReportContent( proc, targetRepository );
-    } catch ( final ContentIOException | IOException | ReportDataFactoryException e ) {
-      if ( e.getMessage() != null ) {
+    } catch ( final ContentIOException | IOException | ReportDataFactoryException | ReportParameterValidationException e ) {
+      if ( e.getMessage() != null && listener != null ) {
         listener.setErrorMessage( e.getMessage() );
       }
       return null;
@@ -271,75 +260,6 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
     }
   }
 
-
-  private IReportContent produceReportContent( final PageableReportProcessor proc,
-                                               final ZipRepository targetRepository )
-    throws ContentIOException, IOException {
-    final int pageCount = proc.getLogicalPageCount();
-    final ContentLocation root = targetRepository.getRoot();
-    final Map<Integer, byte[]> pages = new HashMap<>();
-
-    for ( final ContentEntity contentEntities : root.listContents() ) {
-      if ( contentEntities instanceof ContentItem ) {
-        final ContentItem ci = (ContentItem) contentEntities;
-        final String name = ci.getName();
-        final int pageNumber = extractPageFromName( name );
-        if ( pageNumber >= 0 ) {
-          pages.put( pageNumber, read( ci.getInputStream() ) );
-        }
-      }
-    }
-    return new ReportContentImpl( pageCount, pages );
-  }
-
-  private byte[] read( final InputStream in ) throws IOException {
-    try {
-      return IOUtils.toByteArray( in );
-    } finally {
-      in.close();
-    }
-  }
-
-  protected ZipRepository reinitOutputTargetForCaching() throws ReportProcessingException, ContentIOException {
-    final IApplicationContext ctx = PentahoSystem.getApplicationContext();
-
-    final ContentLocation dataLocation;
-    final PentahoNameGenerator dataNameGenerator;
-    if ( ctx != null ) {
-      File dataDirectory = new File( ctx.getFileOutputPath( "system/tmp/" ) ); //$NON-NLS-1$
-      if ( dataDirectory.exists() && ( dataDirectory.isDirectory() == false ) ) {
-        dataDirectory = dataDirectory.getParentFile();
-        if ( dataDirectory.isDirectory() == false ) {
-          throw new ReportProcessingException( "Dead " + dataDirectory.getPath() ); //$NON-NLS-1$
-        }
-      } else if ( dataDirectory.exists() == false ) {
-        dataDirectory.mkdirs();
-      }
-
-      final FileRepository dataRepository = new FileRepository( dataDirectory );
-      dataLocation = dataRepository.getRoot();
-      dataNameGenerator = PentahoSystem.get( PentahoNameGenerator.class );
-      if ( dataNameGenerator == null ) {
-        throw new IllegalStateException( Messages.getInstance().getString(
-          "ReportPlugin.errorNameGeneratorMissingConfiguration" ) );
-      }
-      dataNameGenerator.initialize( dataLocation, true );
-    } else {
-      dataLocation = null;
-      dataNameGenerator = null;
-    }
-
-    final ZipRepository targetRepository = new ZipRepository(); //$NON-NLS-1$
-    final ContentLocation targetRoot = targetRepository.getRoot();
-
-    final HtmlPrinter printer = getPrinter();
-    // generates predictable file names like "page-0.html", "page-1.html" and so on.
-    printer.setContentWriter( targetRoot,
-      new PageSequenceNameGenerator( targetRoot, "page", "html" ) ); //$NON-NLS-1$ //$NON-NLS-2$
-    printer.setDataWriter( dataLocation, dataNameGenerator );
-
-    return targetRepository;
-  }
 
   private int generateNonCaching( final MasterReport report, final int acceptedPage, final OutputStream outputStream,
                                   final int yieldRate )

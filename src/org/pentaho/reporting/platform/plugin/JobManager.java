@@ -60,16 +60,15 @@ public class JobManager {
   private final Config config;
 
   public JobManager() {
-    this( true, 500, 1500, 0 );
+    this( true, 500, 1500 );
   }
 
   public JobManager( final boolean isSupportAsync, final long pollingIntervalMilliseconds,
-                     final long dialogThresholdMillisecond, final int autoScheduleRowThreshold ) {
+                     final long dialogThresholdMillisecond ) {
     if ( !isSupportAsync ) {
       logger.info( ASYNC_DISABLED );
     }
-    this.config = new Config( isSupportAsync, pollingIntervalMilliseconds, dialogThresholdMillisecond,
-      autoScheduleRowThreshold );
+    this.config = new Config( isSupportAsync, pollingIntervalMilliseconds, dialogThresholdMillisecond );
   }
 
   @GET @Path( "config" ) public Response getConfig() {
@@ -96,7 +95,7 @@ public class JobManager {
   @POST @Path( "{job_id}/content" ) public Response getContent( @PathParam( "job_id" ) final String jobId )
     throws IOException {
 
-    final IPentahoAsyncExecutor executor = PentahoSystem.get( IPentahoAsyncExecutor.class );
+    final IPentahoAsyncExecutor executor = getExecutor();
     final IPentahoSession session = PentahoSessionHolder.getSession();
     final UUID uuid;
     try {
@@ -147,7 +146,7 @@ public class JobManager {
 
   @GET @Path( "{job_id}/status" ) @Produces( "application/json" )
   public Response getStatus( @PathParam( "job_id" ) final String jobId ) {
-    final IPentahoAsyncExecutor executor = PentahoSystem.get( IPentahoAsyncExecutor.class );
+    final IPentahoAsyncExecutor executor = getExecutor();
     final IPentahoSession session = PentahoSessionHolder.getSession();
     final UUID uuid;
     try {
@@ -173,9 +172,13 @@ public class JobManager {
     return Response.ok( json ).build();
   }
 
+  protected IPentahoAsyncExecutor getExecutor() {
+    return PentahoSystem.get( IPentahoAsyncExecutor.class );
+  }
+
   @SuppressWarnings( "unchecked" )
   @GET @Path( "{job_id}/cancel" ) public Response cancel( @PathParam( "job_id" ) final String jobId ) {
-    final IPentahoAsyncExecutor executor = PentahoSystem.get( IPentahoAsyncExecutor.class );
+    final IPentahoAsyncExecutor executor = getExecutor();
     final IPentahoSession session = PentahoSessionHolder.getSession();
     final UUID uuid;
     try {
@@ -202,7 +205,7 @@ public class JobManager {
 
   @GET @Path( "{job_id}/requestPage/{page}" ) @Produces( "text/text" )
   public Response requestPage( @PathParam( "job_id" ) final String jobId, @PathParam( "page" ) final int page ) {
-    final IPentahoAsyncExecutor executor = PentahoSystem.get( IPentahoAsyncExecutor.class );
+    final IPentahoAsyncExecutor executor = getExecutor();
     final IPentahoSession session = PentahoSessionHolder.getSession();
     final UUID uuid;
     try {
@@ -220,7 +223,7 @@ public class JobManager {
 
   @GET @Path( "{job_id}/schedule" ) @Produces( "text/text" )
   public Response schedule( @PathParam( "job_id" ) final String jobId ) {
-    final IPentahoAsyncExecutor executor = PentahoSystem.get( IPentahoAsyncExecutor.class );
+    final IPentahoAsyncExecutor executor = getExecutor();
     final IPentahoSession session = PentahoSessionHolder.getSession();
     final UUID uuid;
     try {
@@ -243,11 +246,11 @@ public class JobManager {
    * In-place implementation to support streaming responses. By default - even InputStream passed - streaming is not
    * occurs.
    */
-  private static final class StreamingOutputWrapper implements StreamingOutput {
+  protected static final class StreamingOutputWrapper implements StreamingOutput {
 
     private InputStream input;
 
-    StreamingOutputWrapper( final InputStream readFrom ) {
+    public StreamingOutputWrapper( final InputStream readFrom ) {
       this.input = readFrom;
     }
 
@@ -262,7 +265,7 @@ public class JobManager {
     }
   }
 
-  private static Response.ResponseBuilder noCache( final Response.ResponseBuilder response ) {
+  protected static Response.ResponseBuilder noCache( final Response.ResponseBuilder response ) {
     // no cache
     final CacheControl cacheControl = new CacheControl();
     cacheControl.setPrivate( true );
@@ -273,7 +276,7 @@ public class JobManager {
     return response;
   }
 
-  static Response.ResponseBuilder calculateContentDisposition( final Response.ResponseBuilder response,
+  protected static Response.ResponseBuilder calculateContentDisposition( final Response.ResponseBuilder response,
                                                                final IAsyncReportState state ) {
     final org.pentaho.reporting.libraries.base.util.IOUtils utils = org.pentaho.reporting.libraries
       .base.util.IOUtils.getInstance();
@@ -301,14 +304,13 @@ public class JobManager {
     private final boolean isSupportAsync;
     private final long pollingIntervalMilliseconds;
     private final long dialogThresholdMilliseconds;
-    private final int autoScheduleRowThreshold;
+
 
     private Config( final boolean isSupportAsync, final long pollingIntervalMilliseconds,
-                    final long dialogThresholdMilliseconds, final int autoScheduleRowThreshold ) {
+                    final long dialogThresholdMilliseconds ) {
       this.isSupportAsync = isSupportAsync;
       this.pollingIntervalMilliseconds = pollingIntervalMilliseconds;
       this.dialogThresholdMilliseconds = dialogThresholdMilliseconds;
-      this.autoScheduleRowThreshold = autoScheduleRowThreshold;
     }
 
 
@@ -324,8 +326,5 @@ public class JobManager {
       return dialogThresholdMilliseconds;
     }
 
-    public int getAutoScheduleRowThreshold() {
-      return autoScheduleRowThreshold;
-    }
   }
 }

@@ -22,18 +22,20 @@ import org.apache.commons.io.input.NullInputStream;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.pentaho.platform.api.engine.IPentahoSession;
-import org.pentaho.platform.engine.core.audit.AuditHelper;
 import org.pentaho.platform.engine.core.audit.MessageTypes;
+import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
 import org.pentaho.reporting.libraries.base.util.ArgumentNullException;
+import org.pentaho.reporting.platform.plugin.AuditWrapper;
 import org.pentaho.reporting.platform.plugin.SimpleReportingComponent;
 import org.pentaho.reporting.platform.plugin.staging.AsyncJobFileStagingHandler;
 import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
 
 import java.io.InputStream;
+import java.util.List;
 import java.util.UUID;
 
 public abstract class AbstractAsyncReportExecution<TReportState extends IAsyncReportState>
-  implements IAsyncReportExecution<TReportState>, IListenableFutureDelegator<IFixedSizeStreamingContent>  {
+  implements IAsyncReportExecution<TReportState>, IListenableFutureDelegator<IFixedSizeStreamingContent> {
 
   protected final SimpleReportingComponent reportComponent;
   protected final AsyncJobFileStagingHandler handler;
@@ -45,49 +47,76 @@ public abstract class AbstractAsyncReportExecution<TReportState extends IAsyncRe
 
   private static final Log log = LogFactory.getLog( AbstractAsyncReportExecution.class );
 
+  private AuditWrapper audit;
+
+  public AbstractAsyncReportExecution( final String url,
+                                       final SimpleReportingComponent reportComponent,
+                                       final AsyncJobFileStagingHandler handler,
+                                       final IPentahoSession safeSession,
+                                       final String auditId ) {
+    this( url, reportComponent, handler, safeSession, auditId, AuditWrapper.NULL );
+  }
+
   /**
    * Creates callable execuiton task.
    *
    * @param url             for audit purposes
    * @param reportComponent component responsible for gererating report
    * @param handler         content staging handler between requests
+   * @param safeSession     pentaho session used mostly for log/audit purposes
+   * @param auditId         audit id per execution. Typically nested from http controller that do create this task
+   * @param audit           audit record handler implementation
    */
   public AbstractAsyncReportExecution( final String url,
                                        final SimpleReportingComponent reportComponent,
                                        final AsyncJobFileStagingHandler handler,
                                        final IPentahoSession safeSession,
-                                       final String auditId ) {
+                                       final String auditId,
+                                       final AuditWrapper audit ) {
+    ArgumentNullException.validate( "url", url );
+    ArgumentNullException.validate( "reportComponent", reportComponent );
+    ArgumentNullException.validate( "handler", handler );
+    ArgumentNullException.validate( "safeSession", safeSession );
+    ArgumentNullException.validate( "auditId", auditId );
+    ArgumentNullException.validate( "audit", audit );
     this.reportComponent = reportComponent;
     this.handler = handler;
     this.url = url;
     this.auditId = auditId;
     this.safeSession = safeSession;
+    this.audit = audit;
   }
 
-  public void notifyTaskQueued( final UUID id ) {
+  public void notifyTaskQueued( final UUID id, final List<? extends ReportProgressListener> callbackListeners ) {
     ArgumentNullException.validate( "id", id );
 
     if ( listener != null ) {
       throw new IllegalStateException( "This instance has already been scheduled." );
     }
-    this.listener = createListener( id );
+    this.listener = createListener( id, callbackListeners );
   }
 
   protected AsyncReportStatusListener getListener() {
     return this.listener;
   }
 
-  protected void fail() {
-    // do not erase canceled status
-    if ( listener != null && !listener.getState().getStatus().equals( AsyncExecutionStatus.CANCELED ) ) {
-      listener.setStatus( AsyncExecutionStatus.FAILED );
-    }
-    AuditHelper.audit( safeSession.getId(), safeSession.getId(), url, getClass().getName(), getClass().getName(),
-      MessageTypes.FAILED, auditId, "", 0, null );
+  protected AuditWrapper getAudit() {
+    return this.audit;
   }
 
-  protected AsyncReportStatusListener createListener( final UUID instanceId ) {
-    return new AsyncReportStatusListener( getReportPath(), instanceId, getMimeType() );
+  protected void fail() {
+    // do not erase canceled status
+    String messageType = MessageTypes.CANCELLED;
+    if ( listener != null && !listener.getState().getStatus().equals( AsyncExecutionStatus.CANCELED ) ) {
+      listener.setStatus( AsyncExecutionStatus.FAILED );
+      messageType = MessageTypes.FAILED;
+    }
+    audit.audit( safeSession.getId(), safeSession.getName(), url, getClass().getName(), getClass().getName(),
+      messageType, auditId, "", 0, null );
+  }
+
+  protected AsyncReportStatusListener createListener( final UUID instanceId, final List<? extends ReportProgressListener> callbackListeners ) {
+    return new AsyncReportStatusListener( getReportPath(), instanceId, getMimeType(), callbackListeners );
   }
 
   // cancel can only be called from the future created by "newTask".

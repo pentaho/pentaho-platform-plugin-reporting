@@ -1,0 +1,118 @@
+<html>
+<head>
+  <style>
+    .page-control {
+      margin-top: 15px;
+      font-size: 13px;
+      font-weight: bold;
+      font-family: OpenSansRegular, sans-serif;
+    }
+
+    .page-control-nav {
+      padding: 3px 5px;
+      background-color: #F1F1F1;
+      color: #3D6480;
+    }
+
+    .page-control-content {
+      text-align: center;
+    }
+
+    #current {
+      font-size: 14px;
+      width: 50px;
+      border: solid 0.3px;
+    }
+
+    #pageframe {
+      margin-top: 30px;
+      border: 0px;
+    }
+  </style>
+</head>
+<body>
+<div>
+  <div class="page-control">
+    <div class="page-control-nav">
+      <span id="left" onclick="left()"><&nbsp;</span>
+      <span id="right" onclick="right()">>&nbsp;</span>
+      <span><input id="current" type="number"/></span>&nbsp;/&nbsp;<span id="overall">1</span>
+    </div>
+    <div id="pageview" class="page-control-content">
+      <iframe id="pageframe" src="about:blank">
+      </iframe>
+    </div>
+  </div>
+</div>
+
+<script>
+
+
+  document.addEventListener("DOMContentLoaded", function () {
+
+    var currentId = 1;
+
+    var iframe = document.getElementById('pageframe');
+
+    iframe.onload = function () {
+      autoResize(iframe);
+    };
+
+    ${pages}
+
+    var fill = function (base64) {
+      iframe.contentWindow.contents = atob(base64);
+      iframe.src = 'javascript:window["contents"]';
+    };
+
+    fill(pages[currentId - 1]);
+
+    var current = document.getElementById('current');
+    current.value = currentId;
+    current.min = 1;
+    current.max = pages.length;
+    var overall = document.getElementById('overall');
+    overall.innerHTML = pages.length;
+
+    current.onchange = function () {
+      if (!isNaN(this.value) && this.value > 0 && this.value <= pages.length) {
+        currentId = this.value;
+      }
+      current.value = currentId;
+      fill(pages[currentId - 1]);
+    };
+
+    var leftFun = function () {
+      if (currentId > 1) {
+        currentId--;
+        current.value = currentId;
+        fill(pages[currentId - 1]);
+      }
+    };
+
+    var rightFun = function () {
+      if (currentId < pages.length - 1) {
+        currentId++;
+        current.value = currentId;
+        fill(pages[currentId - 1]);
+      }
+    };
+
+    var left = document.getElementById('left');
+    left.onclick = leftFun;
+    var right = document.getElementById('right');
+    right.onclick = rightFun;
+
+  });
+
+  function autoResize(el) {
+    var newheight = el.contentWindow.document.body.scrollHeight;
+    var newwidth = el.contentWindow.document.body.scrollWidth;
+    el.height = (newheight) + "px";
+    el.width = (newwidth) + "px";
+  }
+
+
+</script>
+</body>
+</html>
