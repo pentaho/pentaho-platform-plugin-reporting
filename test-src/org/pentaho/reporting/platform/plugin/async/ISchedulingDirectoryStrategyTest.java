@@ -122,4 +122,12 @@ public class ISchedulingDirectoryStrategyTest {
     verify( mockRepo, atLeastOnce() ).getFile( "/home/unknown" );
     verify( mockRepo, times( 1 ) ).getFile( "/home/unknown/test" );
   }
+
+
+  @Test
+  public void testNoSession() {
+    PentahoSessionHolder.removeSession();
+    final ISchedulingDirectoryStrategy home = new HomeSchedulingDirStrategy();
+    assertNull( home.getSchedulingDir( mock( IUnifiedRepository.class ) ) );
+  }
 }

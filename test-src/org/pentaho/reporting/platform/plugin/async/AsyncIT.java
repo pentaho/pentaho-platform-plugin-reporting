@@ -31,20 +31,25 @@ import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.engine.core.system.StandaloneSession;
 import org.pentaho.platform.engine.core.system.boot.PlatformInitializationException;
 import org.pentaho.platform.util.StringUtil;
+import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
+import org.pentaho.reporting.platform.plugin.AuditWrapper;
 import org.pentaho.reporting.platform.plugin.JaxRsServerProvider;
 import org.pentaho.reporting.platform.plugin.JobManager;
 import org.pentaho.reporting.platform.plugin.MicroPlatformFactory;
+import org.pentaho.reporting.platform.plugin.SimpleReportingComponent;
 import org.pentaho.reporting.platform.plugin.cache.FileSystemCacheBackend;
 import org.pentaho.reporting.platform.plugin.cache.PluginCacheManagerImpl;
 import org.pentaho.reporting.platform.plugin.cache.PluginSessionCache;
 import org.pentaho.reporting.platform.plugin.output.FastExportReportOutputHandlerFactory;
 import org.pentaho.reporting.platform.plugin.output.ReportOutputHandlerFactory;
+import org.pentaho.reporting.platform.plugin.staging.AsyncJobFileStagingHandler;
 import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
 import org.pentaho.test.platform.engine.core.MicroPlatform;
 
 import javax.ws.rs.core.Response;
 import java.io.InputStream;
 import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
@@ -65,6 +70,9 @@ public class AsyncIT {
   private static FileSystemCacheBackend fileSystemCacheBackend;
 
   private static JaxRsServerProvider provider;
+  private static IPentahoSession session;
+  SimpleReportingComponent component = mock( SimpleReportingComponent.class );
+  AsyncJobFileStagingHandler handler = mock( AsyncJobFileStagingHandler.class );
 
   @BeforeClass
   public static void setUp() throws Exception {
@@ -82,7 +90,7 @@ public class AsyncIT {
     microPlatform.addLifecycleListener( new AsyncSystemListener() );
     microPlatform.start();
 
-    IPentahoSession session = new StandaloneSession();
+    session = new StandaloneSession();
     PentahoSessionHolder.setSession( session );
   }
 
@@ -103,21 +111,19 @@ public class AsyncIT {
     client.path( config );
     final Response response = client.get();
     final String json = response.readEntity( String.class );
-    assertEquals( json, "{\"pollingIntervalMilliseconds\":500,\"dialogThresholdMilliseconds\":1500,"
-      + "\"autoScheduleRowThreshold\":0,\"supportAsync\":true}" );
+    assertEquals( json, "{\"pollingIntervalMilliseconds\":500,\"dialogThresholdMilliseconds\":1500,\"supportAsync\":true}" );
   }
 
   @Test
   public void testCustomConfig() throws Exception {
     provider.stopServer();
-    provider.startServer( new JobManager( false, 100L, 300L, 20000 ) );
+    provider.startServer( new JobManager( false, 100L, 300L ) );
     final String config = String.format( URL_FORMAT, "config", "" );
     final WebClient client = provider.getFreshClient();
     client.path( config );
     final Response response = client.get();
     final String json = response.readEntity( String.class );
-    assertEquals( json, "{\"pollingIntervalMilliseconds\":100,\"dialogThresholdMilliseconds\":300,"
-      + "\"autoScheduleRowThreshold\":20000,\"supportAsync\":false}" );
+    assertEquals( json, "{\"pollingIntervalMilliseconds\":100,\"dialogThresholdMilliseconds\":300,\"supportAsync\":false}" );
     provider.stopServer();
     provider.startServer( new JobManager() );
   }
@@ -145,9 +151,7 @@ public class AsyncIT {
   @Test
   public void testQueueReport() {
     final IPentahoAsyncExecutor executor = PentahoSystem.get( IPentahoAsyncExecutor.class );
-    final IAsyncReportExecution mock = mock( IAsyncReportExecution.class );
-    final IAsyncReportState state = getState();
-    when( mock.getState() ).thenReturn( state );
+    final IAsyncReportExecution mock = mockExec();
 
     final UUID uuid = executor.addTask( mock, PentahoSessionHolder.getSession() );
     final WebClient client = provider.getFreshClient();
@@ -162,15 +166,8 @@ public class AsyncIT {
   @Test
   public void testScheduleReport() {
     final IPentahoAsyncExecutor executor = PentahoSystem.get( IPentahoAsyncExecutor.class );
-    final IAsyncReportExecution mock = mock( IAsyncReportExecution.class );
-    final IAsyncReportState state = getState();
-    when( mock.getState() ).thenReturn( state );
-    when( mock.schedule() ).thenAnswer( new Answer<Boolean>() {
-      @Override public Boolean answer( final InvocationOnMock invocation ) throws Throwable {
-        STATUS = AsyncExecutionStatus.SCHEDULED;
-        return true;
-      }
-    } );
+    final IAsyncReportExecution mock = mockExec();
+
 
     final UUID uuid = executor.addTask( mock, PentahoSessionHolder.getSession() );
     WebClient client = provider.getFreshClient();
@@ -192,7 +189,7 @@ public class AsyncIT {
   @Test
   public void testScheduleWrongID() {
     final IPentahoAsyncExecutor executor = PentahoSystem.get( IPentahoAsyncExecutor.class );
-    final IAsyncReportExecution mock = mock( IAsyncReportExecution.class );
+    final IAsyncReportExecution mock = mockExec();
 
     executor.addTask( mock, PentahoSessionHolder.getSession() );
     final WebClient client = provider.getFreshClient();
@@ -207,7 +204,7 @@ public class AsyncIT {
   @Test
   public void testScheduleInvalid() {
     final IPentahoAsyncExecutor executor = PentahoSystem.get( IPentahoAsyncExecutor.class );
-    final IAsyncReportExecution mock = mock( IAsyncReportExecution.class );
+    final IAsyncReportExecution mock = mockExec();
 
     executor.addTask( mock, PentahoSessionHolder.getSession() );
     final WebClient client = provider.getFreshClient();
@@ -391,6 +388,50 @@ public class AsyncIT {
 
   @SuppressWarnings( "unchecked" )
   @Test
+  public void testContentGet() throws ExecutionException, InterruptedException {
+    final IPentahoAsyncExecutor executor = PentahoSystem.get( IPentahoAsyncExecutor.class );
+    final AbstractAsyncReportExecution mock = mock( AbstractAsyncReportExecution.class );
+    final IAsyncReportState state = getState();
+    when( mock.getState() ).thenReturn( state );
+    final ListenableFuture listenableFuture = mock( ListenableFuture.class );
+    when( mock.delegate( any( ListenableFuture.class ) ) ).thenReturn( listenableFuture );
+    doAnswer( new Answer<IFixedSizeStreamingContent>() {
+      @Override public IFixedSizeStreamingContent answer( final InvocationOnMock invocation ) throws Throwable {
+        return new IFixedSizeStreamingContent() {
+
+          @Override public InputStream getStream() {
+            return NULL_INPUT_STREAM;
+          }
+
+          @Override public long getContentSize() {
+            return 0;
+          }
+
+          @Override public boolean cleanContent() {
+            return false;
+          }
+        };
+
+      }
+    } ).when( listenableFuture ).get();
+
+    final UUID uuid = executor.addTask( mock, PentahoSessionHolder.getSession() );
+    WebClient client = provider.getFreshClient();
+    final String config = String.format( URL_FORMAT, uuid, "/content" );
+    client.path( config );
+    Response response = client.get();
+    assertEquals( 202, response.getStatus() );
+    STATUS = AsyncExecutionStatus.FINISHED;
+    client = provider.getFreshClient();
+    client.path( String.format( URL_FORMAT, uuid, "/content" ) );
+    response = client.get();
+    assertEquals( 200, response.getStatus() );
+    STATUS = AsyncExecutionStatus.FAILED;
+  }
+
+
+  @SuppressWarnings( "unchecked" )
+  @Test
   public void testContentWrongID() {
     final IPentahoAsyncExecutor executor = PentahoSystem.get( IPentahoAsyncExecutor.class );
     final IAsyncReportExecution mock = mock( IAsyncReportExecution.class );
@@ -417,6 +458,26 @@ public class AsyncIT {
     final Response response = client.post( null );
     assertEquals( 404, response.getStatus() );
 
+  }
+
+  private PentahoAsyncReportExecution mockExec() {
+    return new PentahoAsyncReportExecution( "junit-path", component, handler, session, "not null",
+      AuditWrapper.NULL ) {
+      @Override
+      protected AsyncReportStatusListener createListener( UUID id,
+                                                          List<? extends ReportProgressListener> callbackListener ) {
+        return new AsyncReportStatusListener( "display_path", id, "text/html", callbackListener );
+      }
+
+      @Override public IAsyncReportState getState() {
+        return AsyncIT.this.getState();
+      }
+
+      @Override public boolean schedule() {
+        STATUS = AsyncExecutionStatus.SCHEDULED;
+        return true;
+      }
+    };
   }
 
   private static IAsyncReportState getState() {

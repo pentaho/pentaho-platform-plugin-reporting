@@ -22,6 +22,7 @@ public class ReportListenerThreadHolder {
 
   private static final ThreadLocal<IAsyncReportListener> listenerThreadLocal =
     new ThreadLocal<>();
+  private static final ThreadLocal<String> auditIdLocal = new ThreadLocal<>();
 
   public static IAsyncReportListener getListener() {
     return listenerThreadLocal.get();
@@ -31,8 +32,17 @@ public class ReportListenerThreadHolder {
     listenerThreadLocal.set( listener );
   }
 
+  public static void setRequestId( final String requestId ) {
+    auditIdLocal.set( requestId );
+  }
+
+  public static String getRequestId() {
+    return auditIdLocal.get();
+  }
+
   public static void clear() {
     listenerThreadLocal.remove();
+    auditIdLocal.remove();
   }
 
 }

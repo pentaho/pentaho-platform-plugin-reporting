@@ -33,6 +33,7 @@ import org.pentaho.platform.api.repository2.unified.RepositoryFile;
 import org.pentaho.platform.engine.core.solution.SimpleParameterProvider;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.engine.services.solution.SimpleContentGenerator;
+import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
 
 public class ParameterContentGenerator extends SimpleContentGenerator {
   /**
@@ -42,10 +43,13 @@ public class ParameterContentGenerator extends SimpleContentGenerator {
   private String path = null;
 
   @Override
-  public void createContent( OutputStream outputStream ) throws Exception {
+  public void createContent( final OutputStream outputStream ) throws Exception {
+    // set instance Id if debug is enabled.
+    ReportListenerThreadHolder.setRequestId( this.instanceId );
+
     final IParameterProvider requestParams = getRequestParameters();
 
-    RepositoryFile prptFile = resolvePrptFile( requestParams );
+    final RepositoryFile prptFile = resolvePrptFile( requestParams );
 
     final RenderType renderMode =
         RenderType
@@ -69,8 +73,8 @@ public class ParameterContentGenerator extends SimpleContentGenerator {
     }
   }
 
-  protected RepositoryFile resolvePrptFile( IParameterProvider requestParams ) throws UnsupportedEncodingException {
-    IUnifiedRepository unifiedRepository = PentahoSystem.get( IUnifiedRepository.class, null );
+  protected RepositoryFile resolvePrptFile( final IParameterProvider requestParams ) throws UnsupportedEncodingException {
+    final IUnifiedRepository unifiedRepository = PentahoSystem.get( IUnifiedRepository.class, null );
     final IParameterProvider pathParams = getPathParameters();
 
     if ( requestParams != null && requestParams.getStringParameter( "path", null ) != null ) {
@@ -81,9 +85,7 @@ public class ParameterContentGenerator extends SimpleContentGenerator {
 
     path = idTopath( URLDecoder.decode( path, "UTF-8" ) );
 
-    RepositoryFile prptFile = unifiedRepository.getFile( path );
-
-    return prptFile;
+    return unifiedRepository.getFile( path );
   }
 
   @Override
@@ -113,13 +115,11 @@ public class ParameterContentGenerator extends SimpleContentGenerator {
       return new SimpleParameterProvider();
     }
 
-    IParameterProvider requestParams = parameterProviders.get( IParameterProvider.SCOPE_REQUEST );
-    return requestParams;
+    return parameterProviders.get( IParameterProvider.SCOPE_REQUEST );
   }
 
   public IParameterProvider getPathParameters() {
-    IParameterProvider pathParams = parameterProviders.get( "path" );
-    return pathParams;
+    return parameterProviders.get( "path" );
   }
 
   public Map<String, Object> createInputs() {
@@ -127,7 +127,7 @@ public class ParameterContentGenerator extends SimpleContentGenerator {
   }
 
   protected static Map<String, Object> createInputs( final IParameterProvider requestParams ) {
-    final Map<String, Object> inputs = new HashMap<String, Object>();
+    final Map<String, Object> inputs = new HashMap<>();
     if ( requestParams == null ) {
       return inputs;
     }

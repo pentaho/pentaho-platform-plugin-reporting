@@ -34,4 +34,9 @@ public class NullSizeStreamingContentTest {
     assertEquals( 0L, new AbstractAsyncReportExecution.NullSizeStreamingContent().getContentSize() );
   }
 
+  @Test
+  public void clean() throws Exception {
+    assertTrue( new AbstractAsyncReportExecution.NullSizeStreamingContent().cleanContent() );
+  }
+
 }
