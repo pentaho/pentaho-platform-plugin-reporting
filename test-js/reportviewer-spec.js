@@ -78,12 +78,10 @@ define(["reportviewer/reportviewer", "reportviewer/reportviewer-logging", "repor
           expect(reportViewer.reportPrompt._getStateProperty).toHaveBeenCalledWith('promptNeeded');
         });
 
-        it("should get promtpNeeded on promptReady", function() {
+        it("should get promtpNeeded on afterRender", function() {
           window.parameterValidityCallback = function() {};
 
-          spyOn(reportViewer.view, 'showPromptPanel');
-
-          reportViewer.view.promptReady(function() {});
+          reportViewer.view.afterRender(function() {});
           expect(reportViewer.reportPrompt._getStateProperty).toHaveBeenCalledWith('promptNeeded');
         });
 
@@ -252,10 +250,15 @@ define(["reportviewer/reportviewer", "reportviewer/reportviewer-logging", "repor
           spyOn(reportViewer, "afterUpdateCallback");
           spyOn(reportViewer, "submitReport");
           spyOn(reportViewer.view, "promptReady");
+          spyOn(reportViewer.view, "afterRender");
           reportViewer._bindPromptEvents();
         });
 
-        it("should check subscription on prompt events (with autoSubmit = true)", function(done) {
+        it("should check subscription on prompt events (with autoSubmit = true)", function (done) {
+          $.ajax.and.callFake(function (params) {
+            var changedResult = parameterDefinition.replace("name=\"PROD_LINE\"", "name=\"test\"");
+            params.success(changedResult);
+          });
           reportViewer.reportPrompt.api.operation.refreshPrompt(true);
           setTimeout(function() {
             expect(reportViewer.afterUpdateCallback).toHaveBeenCalled();
@@ -263,6 +266,7 @@ define(["reportviewer/reportviewer", "reportviewer/reportviewer-logging", "repor
               isInit: true
             });
             expect(reportViewer.view.promptReady).toHaveBeenCalled();
+            expect(reportViewer.view.afterRender).toHaveBeenCalled();
             done();
           }, 500);
         });
@@ -276,6 +280,7 @@ define(["reportviewer/reportviewer", "reportviewer/reportviewer-logging", "repor
             expect(reportViewer.afterUpdateCallback).toHaveBeenCalled();
             expect(reportViewer.submitReport).not.toHaveBeenCalled();
             expect(reportViewer.view.promptReady).toHaveBeenCalled();
+            expect(reportViewer.view.afterRender).not.toHaveBeenCalled();
             done();
           }, 500);
         });
