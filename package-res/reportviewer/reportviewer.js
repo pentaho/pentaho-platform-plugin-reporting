@@ -101,6 +101,9 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
         window.onbeforeunload = function(e) {
           this.cancel(this._currentReportStatus, this._currentReportUuid);
+          if(window.top.mantle_removeHandler) {
+            window.top.mantle_removeHandler(this._handlerRegistration);
+          }
           return;
         }.bind(this);
 
@@ -108,6 +111,9 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           if($("#reportContent")[0].contentWindow._isFirstIframeUrlSet == true) {
             //user clicking a link in the report
             this.cancel(this._currentReportStatus, this._currentReportUuid);
+            if(window.top.mantle_removeHandler) {
+              window.top.mantle_removeHandler(this._handlerRegistration);
+            }
           } else {
             //content is writing in the reportContent iframe first time
             $("#reportContent")[0].contentWindow._isFirstIframeUrlSet = true;
@@ -607,16 +613,16 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         if(window.frameElement.src != null && window.frameElement.src.indexOf('dashboard-mode') !== -1 ){
           if (event.eventSubType == 'tabClosing' && event.stringParam == window.parent.frameElement.id) {
             this.cancel(this._currentReportStatus, this._currentReportUuid);
-            if(top.mantle_removeHandler) {
-              top.mantle_removeHandler(this._handlerRegistration);
+            if(window.top.mantle_removeHandler) {
+              window.top.mantle_removeHandler(this._handlerRegistration);
             }
           }
         }
         else {
           if (event.eventSubType == 'tabClosing' && event.stringParam == window.frameElement.id) {
             this.cancel(this._currentReportStatus, this._currentReportUuid);
-            if(top.mantle_removeHandler) {
-              top.mantle_removeHandler(this._handlerRegistration);
+            if(window.top.mantle_removeHandler) {
+              window.top.mantle_removeHandler(this._handlerRegistration);
             }
           }
         }
@@ -671,8 +677,8 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
         window.reportViewer_hide = this.hide.bind(this);
 
-        if(top.mantle_addHandler) {
-          this._handlerRegistration = top.mantle_addHandler("GenericEvent", this.onTabCloseEvent.bind(this));
+        if(window.top.mantle_addHandler) {
+          this._handlerRegistration = window.top.mantle_addHandler("GenericEvent", this.onTabCloseEvent.bind(this));
         }
 
         var localThis = this;
