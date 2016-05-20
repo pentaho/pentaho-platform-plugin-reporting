@@ -45,32 +45,29 @@ class PaginationControlWrapper {
   private static final String STAGING_PATH = "system/tmp/";
   private static final Pattern CSS = Pattern.compile( "(.*link.*\\/pentaho\\/getImage\\?image=)(.*)(\".*)" );
 
-
-  private static final StringBuilder builder = new StringBuilder();
-
-  private static String pagebleHtml;
-
+  private static String pageableHtml;
 
   public static void write( final OutputStream stream, final IReportContent content ) throws IOException {
 
-    if ( StringUtil.isEmpty( pagebleHtml ) ) {
-      pagebleHtml = getSolutionDirFileContent( TEMPLATE_PATH );
+    final StringBuilder builder = new StringBuilder();
+
+    synchronized ( TEMPLATE_PATH ) {
+      if ( StringUtil.isEmpty( pageableHtml ) ) {
+        pageableHtml = getSolutionDirFileContent( TEMPLATE_PATH );
+      }
     }
 
-    //get rid of old data
-    builder.setLength( 0 );
-
-    final String pages = getPageArray( content );
+    final String pages = getPageArray( content, builder );
 
     final StrSubstitutor substitutor = new StrSubstitutor( Collections.singletonMap( "pages", pages ) );
-    final String filledTemplate = substitutor.replace( pagebleHtml );
+    final String filledTemplate = substitutor.replace( pageableHtml );
 
     stream.write( filledTemplate.getBytes() );
     stream.flush();
 
   }
 
-  private static String getPageArray( final IReportContent content ) throws IOException {
+  private static String getPageArray( final IReportContent content, final StringBuilder builder ) throws IOException {
     builder.append( "var pages = [ " );
     int index = 0;
     byte[] page = content.getPageData( index );
