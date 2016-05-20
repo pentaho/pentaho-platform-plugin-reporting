@@ -29,7 +29,9 @@ import org.pentaho.platform.engine.core.system.StandaloneSession;
 import org.pentaho.platform.engine.services.actionsequence.ActionSequenceResource;
 import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
+import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
 import org.pentaho.reporting.libraries.base.config.ModifiableConfiguration;
+import org.pentaho.reporting.libraries.repository.ContentIOException;
 import org.pentaho.reporting.libraries.resourceloader.ResourceException;
 import org.pentaho.reporting.libraries.resourceloader.ResourceManager;
 import org.pentaho.reporting.platform.plugin.async.AsyncExecutionStatus;
@@ -50,11 +52,14 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.UUID;
 
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 
 public class PageableHTMLTest {
 
@@ -62,6 +67,7 @@ public class PageableHTMLTest {
   private MicroPlatform microPlatform;
   private File tmp;
   private static FileSystemCacheBackend fileSystemCacheBackend;
+  private IPluginCacheManager iPluginCacheManager;
 
   @BeforeClass
   public static void setUpClass() {
@@ -84,8 +90,8 @@ public class PageableHTMLTest {
 
     microPlatform = MicroPlatformFactory.create();
     microPlatform.define( ReportOutputHandlerFactory.class, FastExportReportOutputHandlerFactory.class );
-    IPluginCacheManager iPluginCacheManager =
-      new PluginCacheManagerImpl( new PluginSessionCache( fileSystemCacheBackend ) );
+    iPluginCacheManager =
+      spy( new PluginCacheManagerImpl( new PluginSessionCache( fileSystemCacheBackend ) ) );
     microPlatform.define( "IPluginCacheManager", iPluginCacheManager );
     microPlatform.start();
 
@@ -792,6 +798,51 @@ public class PageableHTMLTest {
 
     assertEquals( 8, rc.paginate() );
 
+  }
+
+  @Test
+  public void testEmpyReport() throws ContentIOException, ReportProcessingException, IOException {
+    final CachingPageableHTMLOutput cachingPageableHTMLOutput = spy( new CachingPageableHTMLOutput() );
+    cachingPageableHTMLOutput.generate( new MasterReport(), 1, mock( OutputStream.class ), 1 );
+    cachingPageableHTMLOutput.paginate( new MasterReport(), 1 );
+    //Non caching way
+    verify( iPluginCacheManager, never() ).getCache();
+  }
+
+
+  @Test
+  public void testAlreadyWithCacheKey() throws Exception {
+
+    final ModifiableConfiguration edConf = ClassicEngineBoot.getInstance().getEditableConfig();
+    edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.CachePageableHtmlContent", "true" );
+    edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.FirstPageMode", "true" );
+    try {
+
+      final TestListener listener = new TestListener( "1", UUID.randomUUID(), "" );
+      ReportListenerThreadHolder.setListener( listener );
+      final ResourceManager mgr = new ResourceManager();
+      final File src = new File( "resource/solution/test/reporting/report.prpt" );
+      final MasterReport r = (MasterReport) mgr.createDirectly( src, MasterReport.class ).getResource();
+      r.setContentCacheKey( "somekey" );
+
+      execute( r );
+
+      assertTrue( listener.isOnStart() );
+      assertTrue( listener.isOnUpdate() );
+      assertTrue( listener.isOnFinish() );
+      assertTrue( listener.isOnFirstPage() );
+      assertFalse( -1 == listener.getState().getRow() );
+      assertFalse( -1 == listener.getState().getTotalRows() );
+      assertEquals( 1, listener.getState().getGeneratedPage() );
+
+      ReportListenerThreadHolder.clear();
+
+      assertNull( ReportListenerThreadHolder.getListener() );
+
+    } finally {
+      edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.CachePageableHtmlContent", null );
+      edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.FirstPageMode", null );
+    }
   }
 
   private void execute( final MasterReport r ) throws Exception {

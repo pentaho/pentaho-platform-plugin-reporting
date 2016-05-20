@@ -34,8 +34,8 @@
 <div>
   <div class="page-control">
     <div class="page-control-nav">
-      <span id="left" onclick="left()"><&nbsp;</span>
-      <span id="right" onclick="right()">>&nbsp;</span>
+      <span id="left">&lt;&nbsp;</span>
+      <span id="right">&gt;&nbsp;</span>
       <span><input id="current" type="number"/></span>&nbsp;/&nbsp;<span id="overall">1</span>
     </div>
     <div id="pageview" class="page-control-content">
@@ -91,7 +91,7 @@
     };
 
     var rightFun = function () {
-      if (currentId < pages.length - 1) {
+      if (currentId < pages.length ) {
         currentId++;
         current.value = currentId;
         fill(pages[currentId - 1]);
