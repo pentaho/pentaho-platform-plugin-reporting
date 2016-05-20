@@ -364,24 +364,13 @@ div.prompt-panel {
 .feedbackscreen-content {
   /* fallback color */
   background: #f5f6f8;
-  padding-left: 7px;
-  padding-top: 7px;
-  padding-right: 7px;
   width: 100%;
-}
-
-.feedbackscreentitle {
-  padding-top: 0px;
-  color: #1973bc;
-  font-family: opensanslight, Helvetica, Arial, Sans serif;
-  font-size: 18px;
-  vertical-align: top;
-  heightx: 60px;
+  border-spacing: 0px;
 }
 
 .feedbackscreentextupper {
   color: #26363d;
-  padding: 10px 0 20px 0;
+  padding: 10px 0 20px 7px;
   vertical-align: top;
   line-height: 2em;
 }
@@ -396,6 +385,11 @@ div.prompt-panel {
 
 .upper-table {  
   width: 100%;
+  border-spacing: 0;
+}
+
+.feedbackscreencontentbody  {  
+  padding: 0 0 0 0;
 }
 
 .bottom-table {  
@@ -405,10 +399,6 @@ div.prompt-panel {
 
 #downloadProgress {
   width:98%;
-}
-
-.dijitDialog .dijitDialogPaneContent #downloadProgress .dijitProgressBarTile {
-  background: #dce7ed;
 }
 
 .pentaho-notification {
