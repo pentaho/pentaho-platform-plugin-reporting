@@ -1,0 +1,11 @@
+.dijitDialog .dijitDialogPaneContent #downloadProgress .dijitProgressBarTile {
+  background: #dce7ed; 
+}
+
+.feedbackscreentextmiddle {
+  padding: 0 0 0 7px;
+}
+
+.feedbackscreentitle {
+  padding-left: 7px !important;
+}
