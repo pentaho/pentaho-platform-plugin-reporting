@@ -29,9 +29,9 @@
 <body>
 <div>
   <div class="page-control">
-    <span id="left" onclick="left()"><&nbsp;</span>
+    <span id="left">&lt;&nbsp;</span>
     <span><input id="current" type="number"/></span>&nbsp;/&nbsp;<span id="overall">1</span>
-    <span id="right" onclick="right()">>&nbsp;</span>
+    <span id="right">&gt;&nbsp;</span>
     <div id="pageview">
       <iframe id="pageframe" src="about:blank">
       </iframe>
@@ -85,7 +85,7 @@
     };
 
     var rightFun = function () {
-      if (currentId < pages.length - 1) {
+      if (currentId < pages.length ) {
         currentId++;
         current.value = currentId;
         fill(pages[currentId - 1]);
