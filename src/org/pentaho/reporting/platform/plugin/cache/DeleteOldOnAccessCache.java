@@ -93,6 +93,13 @@ public class DeleteOldOnAccessCache extends AbstractReportContentCache {
     return super.get( key );
   }
 
+  /**
+   * Cleans old files
+   */
+  @Override public void cleanup() {
+    cleanUp();
+  }
+
   private void cleanUp() {
     logger.debug( "Starting periodical cache eviction" );
     final long currentTimeMillis = System.currentTimeMillis();

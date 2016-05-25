@@ -57,6 +57,13 @@ public class PluginSessionCache extends AbstractReportContentCache {
   }
 
   /**
+   * Cleans all session files
+   */
+  @Override public void cleanup() {
+    getBackend().purge( Collections.singletonList( SEGMENT ) );
+  }
+
+  /**
    * Logout listener that purges cache
    */
   private class LogoutHandler implements ILogoutListener {

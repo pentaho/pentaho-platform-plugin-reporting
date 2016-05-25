@@ -32,6 +32,13 @@ import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
 public class AsyncReportStatusListenerTest {
+
+  public static final String STUB =
+    "AsyncReportStatusListener{path='', uuid=370c1ff4-06de-4b32-b966-f7bd8c2da7b2, status=QUEUED, progress=0, page=0,"
+      + " totalPages=0, generatedPage=0, activity='null', row=0, firstPageMode=true, mimeType='', "
+      + "errorMessage='370c1ff4-06de-4b32-b966-f7bd8c2da7b2'}";
+  public static final String STUV_UUID = "370c1ff4-06de-4b32-b966-f7bd8c2da7b2";
+
   @Test
   public void isFirstPageMode() throws Exception {
     final ModifiableConfiguration edConf = ClassicEngineBoot.getInstance().getEditableConfig();
@@ -117,7 +124,32 @@ public class AsyncReportStatusListenerTest {
         new ReportProgressEvent( this, entry.getKey(), 0, 0, 0, 0, 0, 0 ) );
       assertEquals( entry.getValue(), listener.getState().getActivity() );
     }
+  }
 
+  @Test
+  public void testTostring() {
+    final ModifiableConfiguration edConf = ClassicEngineBoot.getInstance().getEditableConfig();
+    edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.FirstPageMode", "true" );
+    final AsyncReportStatusListener listener =
+      new AsyncReportStatusListener( "", UUID.fromString( STUV_UUID ), "",
+        Collections.<ReportProgressListener>emptyList() );
+    listener.setErrorMessage( STUV_UUID );
+    assertEquals( STUB, listener.toString() );
+    edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.FirstPageMode", "false" );
+  }
 
+  @Test
+  public void testCallbacks() {
+    final ReportProgressListener mock = mock( ReportProgressListener.class );
+    final AsyncReportStatusListener listener =
+      new AsyncReportStatusListener( "", UUID.fromString( STUV_UUID ), "",
+        Collections.singletonList( mock ) );
+    final ReportProgressEvent event = mock( ReportProgressEvent.class );
+    listener.reportProcessingStarted( event );
+    listener.reportProcessingUpdate( event );
+    listener.reportProcessingFinished( event );
+    verify( mock, times( 1 ) ).reportProcessingStarted( event );
+    verify( mock, times( 1 ) ).reportProcessingUpdate( event );
+    verify( mock, times( 1 ) ).reportProcessingFinished( event );
   }
 }

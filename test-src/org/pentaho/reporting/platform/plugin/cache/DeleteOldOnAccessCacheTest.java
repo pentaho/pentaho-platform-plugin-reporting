@@ -60,4 +60,14 @@ public class DeleteOldOnAccessCacheTest {
     assertNull( cache.get( SOME_KEY ) );
   }
 
+  @Test
+  public void testCleanup() throws Exception {
+    final DeleteOldOnAccessCache cache = new DeleteOldOnAccessCache( fileSystemCacheBackend );
+    cache.setMillisToLive( 1000 );
+    cache.put( SOME_KEY, SOME_VALUE );
+    assertNotNull( cache.get( SOME_KEY ) );
+    Thread.sleep( 2000 );
+    cache.cleanup();
+    assertNull( cache.get( SOME_KEY ) );
+  }
 }

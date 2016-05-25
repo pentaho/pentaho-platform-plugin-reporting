@@ -31,6 +31,7 @@ import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.engine.core.system.StandaloneSession;
 import org.pentaho.platform.engine.core.system.boot.PlatformInitializationException;
 import org.pentaho.platform.util.StringUtil;
+import org.pentaho.reporting.engine.classic.core.event.ReportProgressEvent;
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
 import org.pentaho.reporting.platform.plugin.AuditWrapper;
 import org.pentaho.reporting.platform.plugin.JaxRsServerProvider;
@@ -48,6 +49,7 @@ import org.pentaho.test.platform.engine.core.MicroPlatform;
 
 import javax.ws.rs.core.Response;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -111,7 +113,8 @@ public class AsyncIT {
     client.path( config );
     final Response response = client.get();
     final String json = response.readEntity( String.class );
-    assertEquals( json, "{\"pollingIntervalMilliseconds\":500,\"dialogThresholdMilliseconds\":1500,\"supportAsync\":true}" );
+    assertEquals( json,
+      "{\"pollingIntervalMilliseconds\":500,\"dialogThresholdMilliseconds\":1500,\"supportAsync\":true}" );
   }
 
   @Test
@@ -123,7 +126,8 @@ public class AsyncIT {
     client.path( config );
     final Response response = client.get();
     final String json = response.readEntity( String.class );
-    assertEquals( json, "{\"pollingIntervalMilliseconds\":100,\"dialogThresholdMilliseconds\":300,\"supportAsync\":false}" );
+    assertEquals( json,
+      "{\"pollingIntervalMilliseconds\":100,\"dialogThresholdMilliseconds\":300,\"supportAsync\":false}" );
     provider.stopServer();
     provider.startServer( new JobManager() );
   }
@@ -457,6 +461,56 @@ public class AsyncIT {
     client.path( config );
     final Response response = client.post( null );
     assertEquals( 404, response.getStatus() );
+
+  }
+
+  @Test public void testAutoScheduling() throws InterruptedException, ExecutionException {
+
+
+    final List<Integer[]> objects = Arrays.asList( new Integer[][] {
+      { 0, 0, 0 },
+      { 0, Integer.MAX_VALUE, 0 },
+      { 0, -1, 0 },
+      { 1, 0, 0 },
+      { 1, Integer.MAX_VALUE, 1 },
+      { 1, -1, 0 }
+    } );
+
+
+    for ( final Integer[] params : objects ) {
+
+      final PentahoAsyncExecutor exec = spy( new PentahoAsyncExecutor( 1, params[ 0 ] ) {
+        @Override public void schedule( final UUID id, final IPentahoSession session ) {
+        }
+      } );
+
+      ReportProgressEvent event = null;
+      if ( params[ 1 ] >= 0 ) {
+        event = mock( ReportProgressEvent.class );
+        when( event.getMaximumRow() ).thenReturn( params[ 1 ] );
+      }
+
+      final ReportProgressEvent finalEvent = event;
+
+      final UUID id =
+        exec.addTask( new PentahoAsyncReportExecution( "junit-path", component, handler, session, "not null",
+          AuditWrapper.NULL ) {
+          @Override
+          protected AsyncReportStatusListener createListener( final UUID id,
+                                                              final List<? extends ReportProgressListener>
+                                                                callbackListener ) {
+            return new AsyncReportStatusListener( "display_path", id, "text/html", callbackListener );
+          }
+
+          @Override public IFixedSizeStreamingContent call() throws Exception {
+            getListener().reportProcessingStarted( finalEvent );
+            getListener().reportProcessingUpdate( finalEvent );
+            getListener().reportProcessingFinished( finalEvent );
+            verify( exec, times( params[ 2 ] ) ).schedule( any(), any() );
+            return null;
+          }
+        }, session );
+    }
 
   }
 

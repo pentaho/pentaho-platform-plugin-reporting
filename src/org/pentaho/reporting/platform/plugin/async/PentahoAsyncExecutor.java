@@ -35,8 +35,6 @@ import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.engine.security.SecurityHelper;
 import org.pentaho.platform.util.StringUtil;
 import org.pentaho.platform.util.web.MimeHelper;
-import org.pentaho.reporting.engine.classic.core.event.ReportProgressEvent;
-import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
 import org.pentaho.reporting.libraries.base.util.ArgumentNullException;
 import org.pentaho.reporting.libraries.repository.ContentLocation;
 import org.pentaho.reporting.platform.plugin.repository.ReportContentRepository;
@@ -65,7 +63,8 @@ public class PentahoAsyncExecutor<TReportState extends IAsyncReportState>
   public static final String BEAN_NAME = "IPentahoAsyncExecutor";
 
   private static final Log log = LogFactory.getLog( PentahoAsyncExecutor.class );
-  private static final String UNABLE_DELETE_TEMP_FILES_ON_SESSION_LOGOUT = "Unable delete temp files on session logout.";
+  private static final String UNABLE_DELETE_TEMP_FILES_ON_SESSION_LOGOUT =
+    "Unable delete temp files on session logout.";
 
   private Map<CompositeKey, ListenableFuture<IFixedSizeStreamingContent>> futures = new ConcurrentHashMap<>();
   private Map<CompositeKey, IAsyncReportExecution<TReportState>> tasks = new ConcurrentHashMap<>();
@@ -131,7 +130,7 @@ public class PentahoAsyncExecutor<TReportState extends IAsyncReportState>
     final CompositeKey key = new CompositeKey( session, id );
 
     task.notifyTaskQueued( id,
-      Collections.singletonList( new AutoScheduleListener( id, session, autoSchedulerThreshold ) ) );
+      Collections.singletonList( new AutoScheduleListener( id, session, autoSchedulerThreshold, this ) ) );
 
     log.debug( "register async execution for task: " + task.toString() );
 
@@ -376,36 +375,5 @@ public class PentahoAsyncExecutor<TReportState extends IAsyncReportState>
 
   }
 
-  private class AutoScheduleListener implements ReportProgressListener {
 
-    private boolean scheduled = false;
-    private int threshold;
-    private UUID id;
-    private IPentahoSession session;
-
-    AutoScheduleListener( final UUID id, final IPentahoSession session, final int threshold ) {
-      this.id = id;
-      this.threshold = threshold;
-      this.session = session;
-    }
-
-    private synchronized void autoSchedule( final ReportProgressEvent reportProgressEvent ) {
-      if ( !scheduled && threshold > 0 && reportProgressEvent != null && reportProgressEvent.getMaximumRow() > threshold ) {
-        schedule( id, session );
-        scheduled = true;
-      }
-    }
-
-    @Override public void reportProcessingStarted( final ReportProgressEvent reportProgressEvent ) {
-      autoSchedule( reportProgressEvent );
-    }
-
-    @Override public void reportProcessingUpdate( final ReportProgressEvent reportProgressEvent ) {
-      autoSchedule( reportProgressEvent );
-    }
-
-    @Override public void reportProcessingFinished( final ReportProgressEvent reportProgressEvent ) {
-
-    }
-  }
 }
