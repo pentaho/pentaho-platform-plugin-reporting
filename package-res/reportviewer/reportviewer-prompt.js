@@ -45,6 +45,7 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
         panel.submit = this.submit.bind(this);
         panel.submitStart = this.submitStart.bind(this);
         panel.ready = this.ready.bind(this);
+        panel.onAfterRender = this.onAfterRender.bind(this);
 
         // User changes the value of a parameter:
         //
@@ -118,6 +119,13 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
        */
       submitStart: function(promptPanel) {
         alert('submit start fired for panel: ' + promptPanel);
+      },
+
+      onAfterRender: function() {
+        if (inSchedulerDialog && typeof window.parameterValidityCallback !== 'undefined') {
+          var isValid = !this.panel.paramDefn.promptNeeded;
+          window.parameterValidityCallback(isValid);
+        }
       },
 
       parameterParser: new ParameterXmlParser(),
