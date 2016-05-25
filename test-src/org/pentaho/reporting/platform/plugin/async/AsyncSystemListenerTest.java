@@ -20,11 +20,10 @@ package org.pentaho.reporting.platform.plugin.async;
 import org.junit.Test;
 import org.pentaho.platform.engine.core.system.StandaloneSession;
 import org.pentaho.reporting.platform.plugin.MicroPlatformFactory;
+import org.pentaho.reporting.platform.plugin.cache.IReportContentCache;
 import org.pentaho.test.platform.engine.core.MicroPlatform;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 public class AsyncSystemListenerTest {
 
@@ -39,12 +38,25 @@ public class AsyncSystemListenerTest {
 
     final MicroPlatform microPlatform = MicroPlatformFactory.create();
     final IPentahoAsyncExecutor asyncExecutor = mock( IPentahoAsyncExecutor.class );
+    final IReportContentCache cache = mock( IReportContentCache.class );
     final AsyncSystemListener asyncSystemListener = new AsyncSystemListener();
     microPlatform.define( "IPentahoAsyncExecutor", asyncExecutor );
+    microPlatform.define( "IReportContentCache", cache );
     microPlatform.addLifecycleListener( asyncSystemListener );
     microPlatform.start();
     microPlatform.stop();
     verify( asyncExecutor, times( 1 ) ).shutdown();
+    verify( cache, times( 1 ) ).cleanup();
+  }
+
+
+  @Test
+  public void dontFailIfNoBeans() throws Exception {
+    final MicroPlatform microPlatform = MicroPlatformFactory.create();
+    final AsyncSystemListener asyncSystemListener = new AsyncSystemListener();
+    microPlatform.addLifecycleListener( asyncSystemListener );
+    microPlatform.start();
+    microPlatform.stop();
   }
 
 }

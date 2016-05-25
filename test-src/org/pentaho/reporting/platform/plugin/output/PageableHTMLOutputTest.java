@@ -22,13 +22,31 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.pentaho.platform.api.engine.IPentahoSession;
+import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
+import org.pentaho.platform.engine.core.system.StandaloneSession;
+import org.pentaho.platform.engine.core.system.boot.PlatformInitializationException;
 import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
+import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressEvent;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.base.PageableReportProcessor;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.AllItemsHtmlPrinter;
+import org.pentaho.reporting.libraries.repository.ContentIOException;
+import org.pentaho.reporting.libraries.resourceloader.ResourceException;
+import org.pentaho.reporting.libraries.resourceloader.ResourceManager;
+import org.pentaho.reporting.platform.plugin.MicroPlatformFactory;
 import org.pentaho.reporting.platform.plugin.async.IAsyncReportListener;
 import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
+import org.pentaho.reporting.platform.plugin.cache.IPluginCacheManager;
+import org.pentaho.reporting.platform.plugin.cache.IReportContent;
+import org.pentaho.reporting.platform.plugin.cache.IReportContentCache;
+import org.pentaho.reporting.platform.plugin.cache.PluginCacheManagerImpl;
+import org.pentaho.test.platform.engine.core.MicroPlatform;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
 
 import static org.mockito.Mockito.*;
 
@@ -141,5 +159,44 @@ public class PageableHTMLOutputTest {
     verify( listener, times( 0 ) ).reportProcessingStarted( any( ReportProgressEvent.class ) );
     verify( listener, times( 0 ) ).reportProcessingFinished( any( ReportProgressEvent.class ) );
     verify( listener, times( 0 ) ).reportProcessingUpdate( any( ReportProgressEvent.class ) );
+  }
+
+  @Test
+  public void testPageNotInCache() throws PlatformInitializationException, ContentIOException,
+    ReportProcessingException, IOException,
+    ResourceException {
+    ClassicEngineBoot.getInstance().start();
+
+    final MicroPlatform microPlatform = MicroPlatformFactory.create();
+
+    try {
+      microPlatform.define( ReportOutputHandlerFactory.class, FastExportReportOutputHandlerFactory.class );
+      final IReportContentCache mockCache = mock( IReportContentCache.class );
+      final IReportContent iReportContent = mock( IReportContent.class );
+      when( iReportContent.getPageData( 3 ) ).thenReturn( null );
+
+      final String key = "test";
+      when( mockCache.get( key ) ).thenReturn( iReportContent );
+      final IPluginCacheManager iPluginCacheManager =
+        new PluginCacheManagerImpl( mockCache );
+      microPlatform.define( "IPluginCacheManager", iPluginCacheManager );
+      microPlatform.start();
+
+      final IPentahoSession session = new StandaloneSession();
+      PentahoSessionHolder.setSession( session );
+
+
+      final CachingPageableHTMLOutput cachingPageableHTMLOutput = spy( new CachingPageableHTMLOutput() );
+      final ResourceManager mgr = new ResourceManager();
+      final File src = new File( "resource/solution/test/reporting/report.prpt" );
+      final MasterReport r = (MasterReport) mgr.createDirectly( src, MasterReport.class ).getResource();
+      r.setContentCacheKey( key );
+
+      cachingPageableHTMLOutput.generate( r, 3, mock( OutputStream.class ), 1 );
+
+      verify( cachingPageableHTMLOutput, times( 1 ) ).regenerateCache( r, 1, key, 3 );
+    } finally {
+      microPlatform.stop();
+    }
   }
 }
