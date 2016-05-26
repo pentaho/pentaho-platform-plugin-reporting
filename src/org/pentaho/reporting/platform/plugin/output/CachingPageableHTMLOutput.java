@@ -211,7 +211,7 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
     }
   }
 
-  private IReportContent regenerateCache( final MasterReport report, final int yieldRate, final String key,
+  IReportContent regenerateCache( final MasterReport report, final int yieldRate, final String key,
                                           final int acceptedPage )
     throws ReportProcessingException {
     logger.warn( "Regenerating report data for " + key );
