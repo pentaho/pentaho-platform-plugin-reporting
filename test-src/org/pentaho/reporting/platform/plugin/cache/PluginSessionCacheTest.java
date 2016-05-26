@@ -29,9 +29,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * Test Session cache
@@ -83,19 +81,31 @@ public class PluginSessionCacheTest {
   }
 
 
-
   @Test
   public void testPutGetOrder() throws Exception {
     PentahoSessionHolder.setSession( new StandaloneSession( "test", "100500" ) );
     final IReportContentCache cache = new PluginSessionCache( fileSystemCacheBackend );
-    final Map<Integer, byte[]> map = new HashMap<>(  );
-    map.put( 0, new byte[] {1} );
-    map.put( 1, new byte[] {1, 2} );
-    cache.put( SOME_KEY,  new ReportContentImpl( 100, map ) );
+    final Map<Integer, byte[]> map = new HashMap<>();
+    map.put( 0, new byte[] { 1 } );
+    map.put( 1, new byte[] { 1, 2 } );
+    cache.put( SOME_KEY, new ReportContentImpl( 100, map ) );
     final IReportContent iReportContent = cache.get( SOME_KEY );
     assertNotNull( iReportContent );
     assertTrue( iReportContent.getPageData( 0 ).length == 1 );
     assertTrue( iReportContent.getPageData( 1 ).length == 2 );
+  }
+
+
+  @Test
+  public void testCleanup() throws Exception {
+    final StandaloneSession session = new StandaloneSession( "test", "100500" );
+    PentahoSessionHolder.setSession( session );
+
+    final IReportContentCache cache = new PluginSessionCache( fileSystemCacheBackend );
+    cache.put( SOME_KEY, SOME_VALUE );
+    assertNotNull( cache.get( SOME_KEY ) );
+    cache.cleanup();
+    assertNull( cache.get( SOME_KEY ) );
   }
 
 

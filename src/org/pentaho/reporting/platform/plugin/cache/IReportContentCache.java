@@ -21,4 +21,6 @@ public interface IReportContentCache {
   boolean put( String key, IReportContent value );
 
   IReportContent get( String key );
+
+  void cleanup();
 }
