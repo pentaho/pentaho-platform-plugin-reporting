@@ -30,12 +30,14 @@ import org.pentaho.platform.util.web.MimeHelper;
 import org.pentaho.reporting.libraries.repository.ContentLocation;
 import org.pentaho.reporting.platform.plugin.repository.ReportContentRepository;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.concurrent.Callable;
 
 class PersistReportToJcrTask implements Callable<Boolean> {
 
+  private static final String CANT_CREATE_FILE_IN_JCR = "Can't create file in JCR";
   private static Log log = LogFactory.getLog( PersistReportToJcrTask.class );
 
 
@@ -89,14 +91,25 @@ class PersistReportToJcrTask implements Callable<Boolean> {
 
       int copy = 1;
 
-      while ( dataLocation.exists( targetName ) ) {
-        targetName = String.format( FORMAT, cleanFileName, copy, targetExt );
-        copy++;
+      final OutputStream outputStream;
+
+      synchronized ( FORMAT ) {
+        while ( dataLocation.exists( targetName ) ) {
+          targetName = String.format( FORMAT, cleanFileName, copy, targetExt );
+          copy++;
+        }
+        outputStream = dataLocation.createItem( targetName ).getOutputStream();
       }
 
-      try ( final OutputStream outputStream = dataLocation.createItem( targetName ).getOutputStream() ) {
-        IOUtils.copy( inputStream, outputStream );
-        outputStream.flush();
+      if ( outputStream != null ) {
+        try {
+          IOUtils.copy( inputStream, outputStream );
+          outputStream.flush();
+        } finally {
+          IOUtils.closeQuietly( outputStream );
+        }
+      } else {
+        throw new IOException( CANT_CREATE_FILE_IN_JCR );
       }
 
     } catch ( final Exception e ) {

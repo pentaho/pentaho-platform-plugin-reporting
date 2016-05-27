@@ -18,15 +18,14 @@
 package org.pentaho.reporting.platform.plugin;
 
 import junit.framework.Assert;
-import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.engine.core.system.StandaloneSession;
+import org.pentaho.platform.engine.core.system.boot.PlatformInitializationException;
 import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.libraries.base.config.ModifiableConfiguration;
@@ -53,23 +52,14 @@ import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
 public class PageableHTMLIT {
-  private MicroPlatform microPlatform;
-  private File tmp;
+  private static MicroPlatform microPlatform;
+  private static File tmp;
   private static FileSystemCacheBackend fileSystemCacheBackend;
 
   @BeforeClass
-  public static void setUpClass() {
+  public static void setUpClass() throws PlatformInitializationException {
     fileSystemCacheBackend = new FileSystemCacheBackend();
     fileSystemCacheBackend.setCachePath( "/test-cache/" );
-  }
-
-  @AfterClass
-  public static void tearDownClass() {
-    Assert.assertTrue( fileSystemCacheBackend.purge( Collections.singletonList( "" ) ) );
-  }
-
-  @Before
-  public void setUp() throws Exception {
     tmp = new File( "./resource/solution/system/tmp" );
     tmp.mkdirs();
 
@@ -89,10 +79,13 @@ public class PageableHTMLIT {
   }
 
 
-  @After
-  public void tearDown() throws Exception {
+  @AfterClass
+  public static void tearDownClass() {
+    Assert.assertTrue( fileSystemCacheBackend.purge( Collections.singletonList( "" ) ) );
     microPlatform.stop();
+    microPlatform = null;
   }
+
 
   @Test
   public void testPageCount() throws Exception {

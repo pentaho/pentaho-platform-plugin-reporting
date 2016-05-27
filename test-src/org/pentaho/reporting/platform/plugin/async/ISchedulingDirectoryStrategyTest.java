@@ -18,14 +18,16 @@
 
 package org.pentaho.reporting.platform.plugin.async;
 
-import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
 import org.pentaho.platform.api.repository2.unified.RepositoryFile;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.StandaloneSession;
+import org.pentaho.platform.engine.core.system.boot.PlatformInitializationException;
 import org.pentaho.reporting.platform.plugin.MicroPlatformFactory;
 import org.pentaho.test.platform.engine.core.MicroPlatform;
 
@@ -37,22 +39,27 @@ import static org.mockito.Mockito.*;
 
 public class ISchedulingDirectoryStrategyTest {
 
-  private MicroPlatform microPlatform;
+  private static MicroPlatform microPlatform;
 
   @Before
   public void setUp() throws Exception {
+
+    final IPentahoSession session = new StandaloneSession();
+    PentahoSessionHolder.setSession( session );
+  }
+
+  @BeforeClass
+  public static void init() throws PlatformInitializationException {
     new File( "./resource/solution/system/tmp" ).mkdirs();
 
     microPlatform = MicroPlatformFactory.create();
     microPlatform.start();
-
-    IPentahoSession session = new StandaloneSession();
-    PentahoSessionHolder.setSession( session );
   }
 
-  @After
-  public void tearDown() throws Exception {
+  @AfterClass
+  public static void tearDown() throws Exception {
     microPlatform.stop();
+    microPlatform = null;
   }
 
   @Test

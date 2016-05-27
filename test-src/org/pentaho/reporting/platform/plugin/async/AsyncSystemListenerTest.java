@@ -36,7 +36,7 @@ public class AsyncSystemListenerTest {
   @Test
   public void shutdown() throws Exception {
 
-    final MicroPlatform microPlatform = MicroPlatformFactory.create();
+    MicroPlatform microPlatform = MicroPlatformFactory.create();
     final IPentahoAsyncExecutor asyncExecutor = mock( IPentahoAsyncExecutor.class );
     final IReportContentCache cache = mock( IReportContentCache.class );
     final AsyncSystemListener asyncSystemListener = new AsyncSystemListener();
@@ -47,16 +47,18 @@ public class AsyncSystemListenerTest {
     microPlatform.stop();
     verify( asyncExecutor, times( 1 ) ).shutdown();
     verify( cache, times( 1 ) ).cleanup();
+    microPlatform = null;
   }
 
 
   @Test
   public void dontFailIfNoBeans() throws Exception {
-    final MicroPlatform microPlatform = MicroPlatformFactory.create();
+    MicroPlatform microPlatform = MicroPlatformFactory.create();
     final AsyncSystemListener asyncSystemListener = new AsyncSystemListener();
     microPlatform.addLifecycleListener( asyncSystemListener );
     microPlatform.start();
     microPlatform.stop();
+    microPlatform = null;
   }
 
 }

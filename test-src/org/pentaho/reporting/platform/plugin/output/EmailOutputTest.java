@@ -62,7 +62,7 @@ public class EmailOutputTest {
 
   @Test
   public void testGenerateListener() throws Exception {
-    final MicroPlatform microPlatform = MicroPlatformFactory.create();
+    MicroPlatform microPlatform = MicroPlatformFactory.create();
     microPlatform.start();
     ClassicEngineBoot.getInstance().start();
     try {
@@ -73,13 +73,14 @@ public class EmailOutputTest {
       verify( listener, atLeastOnce() ).reportProcessingUpdate( any( ReportProgressEvent.class ) );
     } finally {
       microPlatform.stop();
+      microPlatform = null;
     }
 
   }
 
   @Test
   public void testGenerate() throws Exception {
-    final MicroPlatform microPlatform = MicroPlatformFactory.create();
+    MicroPlatform microPlatform = MicroPlatformFactory.create();
     microPlatform.start();
     ClassicEngineBoot.getInstance().start();
     ReportListenerThreadHolder.clear();
@@ -91,6 +92,7 @@ public class EmailOutputTest {
       verify( listener, times( 0 ) ).reportProcessingUpdate( any( ReportProgressEvent.class ) );
     } finally {
       microPlatform.stop();
+      microPlatform = null;
     }
   }
 }

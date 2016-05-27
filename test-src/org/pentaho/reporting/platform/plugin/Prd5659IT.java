@@ -18,9 +18,8 @@
 package org.pentaho.reporting.platform.plugin;
 
 import org.apache.commons.io.FileUtils;
-import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.pentaho.reporting.platform.plugin.output.FastStreamHtmlOutput;
 import org.pentaho.test.platform.engine.core.MicroPlatform;
@@ -37,26 +36,25 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.stub;
 
 public class Prd5659IT {
-  private MicroPlatform microPlatform;
-  private File tmp;
+  private static MicroPlatform microPlatform;
+
+  private static File tmp;
 
   @AfterClass
   public static void tearDownClass() throws IOException {
     FileUtils.deleteDirectory( new File( "./resource/solution/system/tmp/async" ) );
+    microPlatform.stop();
+    microPlatform = null;
   }
 
-  @Before
-  public void setUp() throws Exception {
+  @BeforeClass
+  public static void setUp() throws Exception {
     tmp = new File( "./resource/solution/system/tmp/async" );
     tmp.mkdirs();
     microPlatform = MicroPlatformFactory.create();
     microPlatform.start();
   }
 
-  @After
-  public void tearDown() throws Exception {
-    microPlatform.stop();
-  }
 
   @Test
   public void testHtmlSinglePageModeFailExecution() throws Exception {

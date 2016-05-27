@@ -29,7 +29,7 @@ import static org.junit.Assert.assertTrue;
 public class AbstractStagingHandlerTest {
   @Test
   public void getStagingHandlerImpl() throws Exception {
-    final MicroPlatform microPlatform = MicroPlatformFactory.create();
+    MicroPlatform microPlatform = MicroPlatformFactory.create();
     microPlatform.start();
     try {
       final StagingHandler handler1 =
@@ -45,6 +45,7 @@ public class AbstractStagingHandlerTest {
 
     } finally {
       microPlatform.stop();
+      microPlatform = null;
     }
   }
 }
