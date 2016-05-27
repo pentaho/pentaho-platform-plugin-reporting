@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
@@ -63,6 +63,7 @@ public class ReportingActionIT {
   public static void tearDown() throws Exception {
     microPlatform.stop();
     tempFile.delete();
+    microPlatform = null;
   }
 
   @Test

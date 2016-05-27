@@ -83,7 +83,7 @@ public class AsyncSystemListenerIT {
    */
   @Test
   public void lifecycle() throws Exception {
-    final MicroPlatform microPlatform = MicroPlatformFactory.create();
+    MicroPlatform microPlatform = MicroPlatformFactory.create();
     microPlatform.define( "IPentahoAsyncExecutor", new PentahoAsyncExecutor( 10, 0 ) );
 
 
@@ -97,6 +97,7 @@ public class AsyncSystemListenerIT {
     cache.put( "test", SOME_VALUE );
     assertNotNull( cache.get( "test" ) );
     microPlatform.stop();
+    microPlatform = null;
 
     assertEquals( cache.get( "test" ) == null, isNull );
   }

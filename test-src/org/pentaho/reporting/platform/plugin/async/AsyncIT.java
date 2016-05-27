@@ -104,6 +104,7 @@ public class AsyncIT {
     microPlatform.stop();
     microPlatform = null;
     provider.stopServer();
+    provider = null;
   }
 
   @Test
