@@ -36,8 +36,10 @@ import org.pentaho.reporting.libraries.repository.ContentIOException;
 import org.pentaho.reporting.libraries.resourceloader.ResourceException;
 import org.pentaho.reporting.libraries.resourceloader.ResourceManager;
 import org.pentaho.reporting.platform.plugin.MicroPlatformFactory;
+import org.pentaho.reporting.platform.plugin.async.AsyncExecutionStatus;
 import org.pentaho.reporting.platform.plugin.async.IAsyncReportListener;
 import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
+import org.pentaho.reporting.platform.plugin.async.TestListener;
 import org.pentaho.reporting.platform.plugin.cache.IPluginCacheManager;
 import org.pentaho.reporting.platform.plugin.cache.IReportContent;
 import org.pentaho.reporting.platform.plugin.cache.IReportContentCache;
@@ -47,7 +49,9 @@ import org.pentaho.test.platform.engine.core.MicroPlatform;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.UUID;
 
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
 
 public class PageableHTMLOutputTest {
@@ -162,12 +166,67 @@ public class PageableHTMLOutputTest {
   }
 
   @Test
+  public void testPageNotInCacheSchedule() throws PlatformInitializationException, ContentIOException,
+    ReportProcessingException, IOException,
+    ResourceException {
+    ClassicEngineBoot.getInstance().start();
+
+    MicroPlatform microPlatform = MicroPlatformFactory.create();
+
+    try {
+      microPlatform.define( ReportOutputHandlerFactory.class, FastExportReportOutputHandlerFactory.class );
+      final IReportContentCache mockCache = mock( IReportContentCache.class );
+      final IReportContent iReportContent = mock( IReportContent.class );
+      when( iReportContent.getPageData( 3 ) ).thenReturn( null );
+
+      final String key = "test";
+      when( mockCache.get( key ) ).thenReturn( iReportContent );
+      final IPluginCacheManager iPluginCacheManager =
+        new PluginCacheManagerImpl( mockCache );
+      microPlatform.define( "IPluginCacheManager", iPluginCacheManager );
+      microPlatform.start();
+
+      final IPentahoSession session = new StandaloneSession();
+      PentahoSessionHolder.setSession( session );
+
+
+      final CachingPageableHTMLOutput cachingPageableHTMLOutput = spy( new CachingPageableHTMLOutput() );
+      final ResourceManager mgr = new ResourceManager();
+      final File src = new File( "resource/solution/test/reporting/report.prpt" );
+      final MasterReport r = (MasterReport) mgr.createDirectly( src, MasterReport.class ).getResource();
+      r.setContentCacheKey( key );
+
+      final TestListener listener = new TestListener( "1", UUID.randomUUID(), "" );
+      listener.setStatus( AsyncExecutionStatus.SCHEDULED );
+      ReportListenerThreadHolder.setListener( listener );
+
+
+      try ( final java.io.ByteArrayOutputStream outputStream =
+              new java.io.ByteArrayOutputStream() ) { //$NON-NLS-1$ //$NON-NLS-2$
+        cachingPageableHTMLOutput.generate( r, 3, outputStream, 1 );
+        final String content = new String( outputStream.toByteArray(), "UTF-8" );
+        assertTrue( content.contains( "Scheduled paginated HTML report" ) );
+      }
+
+
+      verify( cachingPageableHTMLOutput, times( 1 ) ).regenerateCache( r, 1, key, 3 );
+
+
+    } finally {
+      ReportListenerThreadHolder.clear();
+      microPlatform.stop();
+      microPlatform = null;
+    }
+  }
+
+
+  @Test
   public void testPageNotInCache() throws PlatformInitializationException, ContentIOException,
     ReportProcessingException, IOException,
     ResourceException {
     ClassicEngineBoot.getInstance().start();
 
-    final MicroPlatform microPlatform = MicroPlatformFactory.create();
+    MicroPlatform microPlatform = MicroPlatformFactory.create();
 
     try {
       microPlatform.define( ReportOutputHandlerFactory.class, FastExportReportOutputHandlerFactory.class );
@@ -197,6 +256,7 @@ public class PageableHTMLOutputTest {
       verify( cachingPageableHTMLOutput, times( 1 ) ).regenerateCache( r, 1, key, 3 );
     } finally {
       microPlatform.stop();
+      microPlatform = null;
     }
   }
 }
