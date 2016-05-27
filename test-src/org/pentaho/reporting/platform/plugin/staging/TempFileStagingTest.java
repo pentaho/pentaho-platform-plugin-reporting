@@ -127,12 +127,13 @@ public class TempFileStagingTest {
 
   @Test
   public void testLongSessionId() throws Exception {
-    final MicroPlatform microPlatform = MicroPlatformFactory.create();
+    MicroPlatform microPlatform = MicroPlatformFactory.create();
     microPlatform.start();
     try ( final ByteArrayOutputStream baos = new ByteArrayOutputStream() ) {
       new TempFileStagingHandler( baos, new StandaloneSession( "verylongsessionname" ) );
     } finally {
       microPlatform.stop();
+      microPlatform = null;
     }
   }
 }

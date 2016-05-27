@@ -167,7 +167,7 @@ public class PageableHTMLOutputTest {
     ResourceException {
     ClassicEngineBoot.getInstance().start();
 
-    final MicroPlatform microPlatform = MicroPlatformFactory.create();
+    MicroPlatform microPlatform = MicroPlatformFactory.create();
 
     try {
       microPlatform.define( ReportOutputHandlerFactory.class, FastExportReportOutputHandlerFactory.class );
@@ -197,6 +197,7 @@ public class PageableHTMLOutputTest {
       verify( cachingPageableHTMLOutput, times( 1 ) ).regenerateCache( r, 1, key, 3 );
     } finally {
       microPlatform.stop();
+      microPlatform = null;
     }
   }
 }

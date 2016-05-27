@@ -67,6 +67,8 @@ public class PentahoAsyncExecutionInterruptTest {
     PentahoSystem.shutdown();
     PentahoSystem.clearObjectFactory();
     PentahoSessionHolder.removeSession();
+    microPlatform.stop();
+    microPlatform = null;
   }
 
   @Test public void testInterrupt() throws IOException, InterruptedException {
@@ -77,7 +79,8 @@ public class PentahoAsyncExecutionInterruptTest {
       handler =
       new AsyncJobFileStagingHandler( session );
     PentahoAsyncReportExecution
-        task = new PentahoAsyncReportExecution( "junit", reportComponent, handler, session, "not null", AuditWrapper.NULL );
+      task =
+      new PentahoAsyncReportExecution( "junit", reportComponent, handler, session, "not null", AuditWrapper.NULL );
 
     UUID id = executor.addTask( task, session );
 
@@ -91,9 +94,5 @@ public class PentahoAsyncExecutionInterruptTest {
     IAsyncReportState state = executor.getReportState( id, session );
 
     assertEquals( AsyncExecutionStatus.CANCELED, state.getStatus() );
-  }
-
-  @After public void tearDown() throws Exception {
-    microPlatform.stop();
   }
 }
