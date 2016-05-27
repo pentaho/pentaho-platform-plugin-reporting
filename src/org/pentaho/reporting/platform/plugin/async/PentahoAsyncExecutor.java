@@ -57,6 +57,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+//TEST WINGNMAN NOTHING MORE
 public class PentahoAsyncExecutor<TReportState extends IAsyncReportState>
   implements ILogoutListener, IPentahoAsyncExecutor<TReportState> {
 
