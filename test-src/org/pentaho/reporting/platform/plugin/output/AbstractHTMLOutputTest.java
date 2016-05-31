@@ -24,6 +24,7 @@ import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
 import org.pentaho.reporting.libraries.repository.ContentIOException;
+import org.pentaho.reporting.platform.plugin.async.IAsyncReportListener;
 import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
 
 import java.io.IOException;
@@ -31,7 +32,8 @@ import java.io.OutputStream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.*;
 
 public class AbstractHTMLOutputTest {
 
@@ -65,6 +67,32 @@ public class AbstractHTMLOutputTest {
     ClassicEngineBoot.getInstance().start();
     final StreamHtmlOutput streamHtmlOutput = new StreamHtmlOutput();
     streamHtmlOutput.generate( new MasterReport(), 1, mock( OutputStream.class ), 1 );
+  }
+
+  @Test
+  public void testStreamListener() throws ContentIOException, ReportProcessingException, IOException {
+    ClassicEngineBoot.getInstance().start();
+    final StreamHtmlOutput streamHtmlOutput = new StreamHtmlOutput();
+
+    final IAsyncReportListener listener = mock( IAsyncReportListener.class );
+
+
+    streamHtmlOutput.generate( new MasterReport(), 1, mock( OutputStream.class ), 1 );
+
+    verify( listener, times( 0 ) ).reportProcessingStarted( any() );
+    verify( listener, times( 0 ) ).reportProcessingUpdate( any() );
+    verify( listener, times( 0 ) ).reportProcessingFinished( any() );
+
+    ReportListenerThreadHolder.setListener( listener );
+
+    streamHtmlOutput.generate( new MasterReport(), 1, mock( OutputStream.class ), 1 );
+
+    verify( listener, times( 1 ) ).reportProcessingStarted( any() );
+    verify( listener, atLeast( 1 ) ).reportProcessingUpdate( any() );
+    verify( listener, times( 1 ) ).reportProcessingFinished( any() );
+
+
+    ReportListenerThreadHolder.clear();
   }
 
 }
