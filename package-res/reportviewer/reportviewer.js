@@ -680,7 +680,8 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
         window.reportViewer_hide = this.hide.bind(this);
 
-        if(window.top.mantle_addHandler) {
+        if(window.location.href.indexOf("/parameterUi") == -1 && window.top.mantle_addHandler) {
+          // only in case when report is opened in tab('/viewer')
           this._handlerRegistration = window.top.mantle_addHandler("GenericEvent", this.onTabCloseEvent.bind(this));
         }
 
