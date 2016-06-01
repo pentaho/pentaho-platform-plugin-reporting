@@ -202,10 +202,18 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
       }
 
 
-      final IReportContent data = regenerateCache( report, yieldRate, key, acceptedPage );
-      outputStream.write( data.getPageData( acceptedPage ) );
+      final IReportContent fullReportCache = regenerateCache( report, yieldRate, key, acceptedPage );
+      final IAsyncReportListener listener = ReportListenerThreadHolder.getListener();
+
+      //BACKLOG-8579
+      if ( listener != null && listener.isScheduled() ) {
+        PaginationControlWrapper.write( outputStream, fullReportCache );
+        return fullReportCache.getPageCount();
+      }
+
+      outputStream.write( fullReportCache.getPageData( acceptedPage ) );
       outputStream.flush();
-      return data.getPageCount();
+      return fullReportCache.getPageCount();
     } catch ( final CacheKeyException e ) {
       return generateNonCaching( report, acceptedPage, outputStream, yieldRate );
     }

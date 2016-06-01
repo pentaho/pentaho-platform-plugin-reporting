@@ -45,17 +45,22 @@ import java.nio.file.Paths;
  */
 public class AsyncJobFileStagingHandler {
 
-  public static final String POSTFIX = ".tmp";
-  public static final String STAGING_DIR_ATTR = "asyncstaging";
+  private static final String POSTFIX = ".tmp";
+  static final String STAGING_DIR_ATTR = "asyncstaging";
 
   private static final Log logger = LogFactory.getLog( AsyncJobFileStagingHandler.class );
+  private static final String SYSTEM_TMP = "system/tmp";
+  private static final String UNABLE_TO_DELETE_STAGING_DIR =
+    "Unable to delete async staging content. Directory: ";
+  private static final String UNABLE_TO_DELETE_SESSION_DIR = "Unable delete temp  session files.";
+  private static final String STAGING_MODE_SET = "Staging mode set - TEMP_FILE, async report generation";
 
   private String sessionId;
 
   private OutputStream fileTrackingStream;
 
   // package private for testing purpose
-  File tmpFile;
+  private File tmpFile;
 
   private String stringParentDir = null;
 
@@ -63,13 +68,13 @@ public class AsyncJobFileStagingHandler {
     this.sessionId = userSession.getId();
 
     final IApplicationContext context = PentahoSystem.getApplicationContext();
-    stringParentDir = context == null ? null : context.getSolutionPath( "system/tmp" );
+    stringParentDir = context == null ? null : context.getSolutionPath( SYSTEM_TMP );
 
     this.initialize();
   }
 
   protected void initialize() throws IOException {
-    logger.trace( "Staging mode set - TEMP_FILE, async report generation" );
+    logger.trace( STAGING_MODE_SET );
 
     if ( stringParentDir == null ) {
       throw new IOException( "can't find system/tmp dir, asycn staging not possible." );
@@ -95,8 +100,8 @@ public class AsyncJobFileStagingHandler {
 
   public static Path getStagingDirPath() {
     final IApplicationContext context = PentahoSystem.getApplicationContext();
-    final String solutionTempFolder = context == null ? null : context.getSolutionPath( "system/tmp" );
-    return solutionTempFolder == null ? null : Paths.get( solutionTempFolder ).resolve( STAGING_DIR_ATTR );
+    final String solutionTempFolder = context == null ? null : context.getSolutionPath( SYSTEM_TMP );
+    return solutionTempFolder == null ? Paths.get( FileUtils.getTempDirectoryPath() ) : Paths.get( solutionTempFolder ).resolve( STAGING_DIR_ATTR );
   }
 
   public OutputStream getStagingOutputStream() {
@@ -119,9 +124,12 @@ public class AsyncJobFileStagingHandler {
 
     // some lib can do it for me?
     try {
-      FileUtils.deleteDirectory( sessionStagingContent );
+      if ( sessionStagingContent != null && sessionStagingContent.isDirectory()
+        && sessionStagingContent.list().length == 0 ) {
+        FileUtils.deleteDirectory( sessionStagingContent );
+      }
     } catch ( final IOException e ) {
-      logger.debug( "Unable delete temp files on session logout." );
+      logger.debug( UNABLE_TO_DELETE_SESSION_DIR );
     }
   }
 
@@ -134,18 +142,19 @@ public class AsyncJobFileStagingHandler {
       try {
         FileUtils.deleteDirectory( stagingDirFile );
       } catch ( final IOException e ) {
-        logger.debug( "Unable to delete async staging content on shutdown. Directory: " + stagingDirFile.getName(), e );
+        logger.debug( UNABLE_TO_DELETE_STAGING_DIR + stagingDirFile.getName(), e );
       }
     }
   }
 
   public static final class FixedSizeStagingContent implements IFixedSizeStreamingContent {
 
-    private InputStream in;
+
+    static final String STAGING_FILE_NOT_FOUND = "staging file not found: ";
     private long size;
     File tmpFile;
 
-    public FixedSizeStagingContent( File tmpFile ) {
+    public FixedSizeStagingContent( final File tmpFile ) {
       this.size = tmpFile.length();
       this.tmpFile = tmpFile;
     }
@@ -154,8 +163,8 @@ public class AsyncJobFileStagingHandler {
       FileInputStream stagingInputStream = null;
       try {
         stagingInputStream = new FileInputStream( tmpFile );
-      } catch ( FileNotFoundException e ) {
-        logger.error( "staging file not found: " + tmpFile.toPath().toString() );
+      } catch ( final FileNotFoundException e ) {
+        logger.error( STAGING_FILE_NOT_FOUND + tmpFile.toPath().toString() );
       }
       return stagingInputStream;
     }

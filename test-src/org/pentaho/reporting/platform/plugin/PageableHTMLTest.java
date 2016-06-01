@@ -26,6 +26,7 @@ import org.junit.Test;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.StandaloneSession;
+import org.pentaho.platform.engine.core.system.boot.PlatformInitializationException;
 import org.pentaho.platform.engine.services.actionsequence.ActionSequenceResource;
 import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
@@ -64,20 +65,30 @@ import static org.mockito.Mockito.*;
 public class PageableHTMLTest {
 
   SimpleReportingComponent rc;
-  private MicroPlatform microPlatform;
+  private static MicroPlatform microPlatform;
   private File tmp;
   private static FileSystemCacheBackend fileSystemCacheBackend;
-  private IPluginCacheManager iPluginCacheManager;
+  private static IPluginCacheManager iPluginCacheManager;
 
   @BeforeClass
-  public static void setUpClass() {
+  public static void setUpClass() throws PlatformInitializationException {
     fileSystemCacheBackend = new FileSystemCacheBackend();
     fileSystemCacheBackend.setCachePath( "/test-cache/" );
+    microPlatform = MicroPlatformFactory.create();
+    microPlatform.define( ReportOutputHandlerFactory.class, FastExportReportOutputHandlerFactory.class );
+    iPluginCacheManager =
+      spy( new PluginCacheManagerImpl( new PluginSessionCache( fileSystemCacheBackend ) ) );
+    microPlatform.define( "IPluginCacheManager", iPluginCacheManager );
+    microPlatform.start();
+
   }
 
   @AfterClass
   public static void tearDownClass() {
     Assert.assertTrue( fileSystemCacheBackend.purge( Collections.singletonList( "" ) ) );
+
+    microPlatform.stop();
+    microPlatform = null;
   }
 
   @Before
@@ -88,14 +99,8 @@ public class PageableHTMLTest {
     tmp = new File( "./resource/solution/system/tmp" );
     tmp.mkdirs();
 
-    microPlatform = MicroPlatformFactory.create();
-    microPlatform.define( ReportOutputHandlerFactory.class, FastExportReportOutputHandlerFactory.class );
-    iPluginCacheManager =
-      spy( new PluginCacheManagerImpl( new PluginSessionCache( fileSystemCacheBackend ) ) );
-    microPlatform.define( "IPluginCacheManager", iPluginCacheManager );
-    microPlatform.start();
 
-    IPentahoSession session = new StandaloneSession();
+    final IPentahoSession session = new StandaloneSession();
     PentahoSessionHolder.setSession( session );
 
     fileSystemCacheBackend.purge( Collections.singletonList( "" ) );
@@ -104,7 +109,7 @@ public class PageableHTMLTest {
 
   @After
   public void tearDown() throws Exception {
-    microPlatform.stop();
+    reset( iPluginCacheManager );
   }
 
   @Test
