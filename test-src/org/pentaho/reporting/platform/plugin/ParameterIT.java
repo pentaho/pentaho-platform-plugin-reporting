@@ -121,6 +121,7 @@ public class ParameterIT {
   @AfterClass
   public static void tearDown() throws Exception {
     microPlatform.stop();
+    microPlatform = null;
   }
 
   @Test

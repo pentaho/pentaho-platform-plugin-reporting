@@ -18,24 +18,29 @@
 package org.pentaho.reporting.platform.plugin;
 
 import junit.framework.Assert;
-import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
+import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.engine.core.system.StandaloneSession;
+import org.pentaho.platform.engine.core.system.boot.PlatformInitializationException;
 import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
+import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.libraries.base.config.ModifiableConfiguration;
+import org.pentaho.reporting.libraries.resourceloader.ResourceManager;
+import org.pentaho.reporting.platform.plugin.async.AsyncExecutionStatus;
 import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
 import org.pentaho.reporting.platform.plugin.async.TestListener;
 import org.pentaho.reporting.platform.plugin.cache.FileSystemCacheBackend;
 import org.pentaho.reporting.platform.plugin.cache.IPluginCacheManager;
+import org.pentaho.reporting.platform.plugin.cache.IReportContent;
 import org.pentaho.reporting.platform.plugin.cache.PluginCacheManagerImpl;
 import org.pentaho.reporting.platform.plugin.cache.PluginSessionCache;
 import org.pentaho.test.platform.engine.core.MicroPlatform;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -44,42 +49,43 @@ import java.util.HashMap;
 import java.util.UUID;
 
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 
 public class PageableHTMLIT {
-  private MicroPlatform microPlatform;
-  private File tmp;
+  private static MicroPlatform microPlatform;
+  private static File tmp;
   private static FileSystemCacheBackend fileSystemCacheBackend;
 
   @BeforeClass
-  public static void setUpClass() {
+  public static void setUpClass() throws PlatformInitializationException {
     fileSystemCacheBackend = new FileSystemCacheBackend();
     fileSystemCacheBackend.setCachePath( "/test-cache/" );
-  }
-
-  @AfterClass
-  public static void tearDownClass() {
-    Assert.assertTrue( fileSystemCacheBackend.purge( Collections.singletonList( "" ) ) );
-  }
-
-  @Before
-  public void setUp() throws Exception {
     tmp = new File( "./resource/solution/system/tmp" );
     tmp.mkdirs();
 
     microPlatform = MicroPlatformFactory.create();
+    final PluginSessionCache pluginSessionCache = spy( new PluginSessionCache( fileSystemCacheBackend ) );
+    final IReportContent content = mock( IReportContent.class );
+    when( content.getPageData( 3 ) ).thenReturn( null );
+
     IPluginCacheManager iPluginCacheManager =
-      new PluginCacheManagerImpl( new PluginSessionCache( fileSystemCacheBackend ) );
+      new PluginCacheManagerImpl( pluginSessionCache );
     microPlatform.define( "IPluginCacheManager", iPluginCacheManager );
     microPlatform.start();
 
     IPentahoSession session = new StandaloneSession();
     PentahoSessionHolder.setSession( session );
+    when( pluginSessionCache.get( "test" ) ).thenReturn( content );
   }
 
-  @After
-  public void tearDown() throws Exception {
+
+  @AfterClass
+  public static void tearDownClass() {
+    Assert.assertTrue( fileSystemCacheBackend.purge( Collections.singletonList( "" ) ) );
     microPlatform.stop();
+    microPlatform = null;
   }
+
 
   @Test
   public void testPageCount() throws Exception {
@@ -215,6 +221,65 @@ public class PageableHTMLIT {
 
       assertEquals( 8, rc.paginate() );
     } finally {
+      edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.CachePageableHtmlContent", null );
+      edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.FirstPageMode", null );
+    }
+  }
+
+  @Test
+  public void testSchedulePartialCache() throws Exception {
+    ClassicEngineBoot.getInstance().start();
+    final ModifiableConfiguration edConf = ClassicEngineBoot.getInstance().getEditableConfig();
+    edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.CachePageableHtmlContent", "true" );
+    edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.FirstPageMode", "true" );
+    try {
+
+      final TestListener listener = new TestListener( "1", UUID.randomUUID(), "" );
+      listener.setStatus( AsyncExecutionStatus.SCHEDULED );
+      ReportListenerThreadHolder.setListener( listener );
+
+
+      final IPluginCacheManager iCacheManager = PentahoSystem.get( IPluginCacheManager.class );
+
+      // create an instance of the component
+      final SimpleReportingComponent rc = new SimpleReportingComponent();
+
+      final File src = new File( "resource/solution/test/reporting/report.prpt" );
+      final ResourceManager mgr = new ResourceManager();
+      final MasterReport r = (MasterReport) mgr.createDirectly( src, MasterReport.class ).getResource();
+      r.setContentCacheKey( "test" );
+
+      rc.setReport( r );
+
+      rc.setOutputType( "text/html" ); //$NON-NLS-1$
+
+      // turn on pagination, by way of input (typical mode for xaction)
+      final HashMap<String, Object> inputs = new HashMap<String, Object>();
+      inputs.put( "paginate", "true" ); //$NON-NLS-1$ //$NON-NLS-2$
+      inputs.put( "accepted-page", "3" ); //$NON-NLS-1$ //$NON-NLS-2$
+      rc.setInputs( inputs );
+
+      try ( final ByteArrayOutputStream outputStream =
+              new ByteArrayOutputStream() ) { //$NON-NLS-1$ //$NON-NLS-2$
+        rc.setOutputStream( outputStream );
+        assertTrue( rc.execute() );
+        final byte[] bytes = outputStream.toByteArray();
+        assertNotNull( bytes );
+        final String content = new String( bytes, "UTF-8" );
+        assertTrue( content.contains( "Scheduled paginated HTML report" ) );
+      }
+
+      // execute the component
+      assertTrue( listener.isOnStart() );
+      assertTrue( listener.isOnUpdate() );
+      assertTrue( listener.isOnFinish() );
+
+      assertFalse( -1 == listener.getState().getRow() );
+      assertFalse( -1 == listener.getState().getTotalRows() );
+
+
+    } finally {
+      ReportListenerThreadHolder.clear();
       edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.CachePageableHtmlContent", null );
       edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.FirstPageMode", null );
     }
