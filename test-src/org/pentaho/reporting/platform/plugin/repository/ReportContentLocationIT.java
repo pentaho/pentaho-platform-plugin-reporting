@@ -12,36 +12,44 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2015 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin.repository;
 
-import junit.framework.TestCase;
-import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.api.repository2.unified.RepositoryFile;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.StandaloneSession;
+import org.pentaho.platform.engine.core.system.boot.PlatformInitializationException;
 import org.pentaho.reporting.libraries.repository.ContentEntity;
 import org.pentaho.reporting.libraries.repository.ContentIOException;
 import org.pentaho.reporting.libraries.repository.ContentItem;
 import org.pentaho.reporting.platform.plugin.MicroPlatformFactory;
 import org.pentaho.test.platform.engine.core.MicroPlatform;
 
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
-public class ReportContentLocationIT extends TestCase {
+public class ReportContentLocationIT {
   ReportContentRepository reportContentRepository;
   RepositoryFile repositoryFile;
   ReportContentLocation reportContentLocation;
-  private MicroPlatform microPlatform;
+  private static MicroPlatform microPlatform;
+
+  @BeforeClass
+  public static void init() throws PlatformInitializationException {
+    microPlatform = MicroPlatformFactory.create();
+    microPlatform.start();
+  }
 
   @Before
-  protected void setUp() throws Exception {
+  public void setUp() throws Exception {
     repositoryFile = mock( RepositoryFile.class );
     doReturn( "test" ).when( repositoryFile ).getId();
     doReturn( "" ).when( repositoryFile ).getId();
@@ -50,16 +58,15 @@ public class ReportContentLocationIT extends TestCase {
     reportContentRepository = mock( ReportContentRepository.class );
     reportContentLocation = new ReportContentLocation( repositoryFile, reportContentRepository );
 
-    microPlatform = MicroPlatformFactory.create();
-    microPlatform.start();
 
     IPentahoSession session = new StandaloneSession();
     PentahoSessionHolder.setSession( session );
   }
 
-  @After
-  public void tearDown() throws Exception {
+  @AfterClass
+  public static void tearDown() throws Exception {
     microPlatform.stop();
+    microPlatform = null;
   }
 
   @Test
@@ -74,6 +81,7 @@ public class ReportContentLocationIT extends TestCase {
     assertNotNull( entity );
     assertEquals( "text/html", ( (ReportContentItem) entity ).getMimeType() );
   }
+
 
   @Test
   public void testCreateItem() throws Exception {

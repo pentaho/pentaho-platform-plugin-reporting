@@ -69,6 +69,7 @@ public class ReportingComponentIntegrationIT extends TestCase {
   @Override
   protected void tearDown() throws Exception {
     microPlatform.stop();
+    microPlatform = null;
   }
 
   @Test

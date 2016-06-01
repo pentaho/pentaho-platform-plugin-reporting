@@ -47,6 +47,7 @@ public final class JaxRsServerProvider {
     if ( client != null ) {
       try {
         client.close();
+        client = null;
       } catch ( final Exception ignored ) {
 
       }

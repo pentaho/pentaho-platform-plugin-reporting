@@ -34,13 +34,14 @@ import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
 import org.pentaho.reporting.libraries.base.config.ModifiableConfiguration;
 import org.pentaho.reporting.platform.plugin.AuditWrapper;
 import org.pentaho.reporting.platform.plugin.SimpleReportingComponent;
+import org.pentaho.reporting.platform.plugin.async.PentahoAsyncExecutor.CompositeKey;
 import org.pentaho.reporting.platform.plugin.staging.AsyncJobFileStagingHandler;
 import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
-import org.pentaho.reporting.platform.plugin.async.PentahoAsyncExecutor.CompositeKey;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -212,22 +213,27 @@ public class PentahoAsyncReportExecutorTest {
 
   @Test
   public void onLogoutTest() throws IOException {
-    PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 1, autoSchedulerThreshold );
-    AsyncJobFileStagingHandler handler1 = new AsyncJobFileStagingHandler( session1 );
-    AsyncJobFileStagingHandler handler2 = new AsyncJobFileStagingHandler( session2 );
+    final PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 1, autoSchedulerThreshold );
+    final AsyncJobFileStagingHandler handler1 = new AsyncJobFileStagingHandler( session1 );
+    final AsyncJobFileStagingHandler handler2 = new AsyncJobFileStagingHandler( session2 );
 
-    Path stagingFolder = AsyncJobFileStagingHandler.getStagingDirPath();
+    final Path stagingFolder = AsyncJobFileStagingHandler.getStagingDirPath();
     // folders created on async file staging constructor call:
     assertTrue( stagingFolder.toFile().list().length == 2 );
 
 
-    byte[] anyByte = new byte[ 1024 ];
+    final byte[] anyByte = new byte[ 1024 ];
     bytes.nextBytes( anyByte );
-    handler1.getStagingOutputStream().write( anyByte );
-    handler1.getStagingOutputStream().close();
+    try ( final OutputStream stagingOutputStream = handler1.getStagingOutputStream() ) {
+      stagingOutputStream.write( anyByte );
+    } finally {
+      handler1.getStagingContent().cleanContent();
+    }
+
     bytes.nextBytes( anyByte );
-    handler2.getStagingOutputStream().write( anyByte );
-    handler2.getStagingOutputStream().close();
+    try ( final OutputStream stagingOutputStream = handler2.getStagingOutputStream() ) {
+      stagingOutputStream.write( anyByte );
+    }
 
     String[] folders = stagingFolder.toFile().list();
     assertTrue( folders.length == 2 );

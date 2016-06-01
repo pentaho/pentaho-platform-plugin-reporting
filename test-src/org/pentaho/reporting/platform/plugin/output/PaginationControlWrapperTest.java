@@ -17,8 +17,8 @@
 
 package org.pentaho.reporting.platform.plugin.output;
 
-import org.junit.After;
-import org.junit.Before;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.engine.core.system.boot.PlatformInitializationException;
@@ -44,17 +44,18 @@ import static org.junit.Assert.assertTrue;
 public class PaginationControlWrapperTest {
 
 
-  private MicroPlatform microPlatform;
+  private static MicroPlatform microPlatform;
 
-  @Before
-  public void setUp() throws IOException, PlatformInitializationException {
+  @BeforeClass
+  public static void setUp() throws IOException, PlatformInitializationException {
     microPlatform = MicroPlatformFactory.create();
     microPlatform.start();
   }
 
-  @After
-  public void tearDown() {
+  @AfterClass
+  public static void tearDown() {
     microPlatform.stop();
+    microPlatform = null;
   }
 
   @Test
