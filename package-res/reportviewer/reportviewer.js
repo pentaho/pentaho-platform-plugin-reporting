@@ -100,10 +100,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         }));
 
         window.onbeforeunload = function(e) {
-          // In dashboard mode if Edit capability is not loaded yet the page is reloaded in order to enter edit mode, no cancel request should be sent(no report changes were made)
-          if((window.frameElement.src.indexOf('dashboard-mode') !== -1 && parent.pho.dashboards.editMode) || window.frameElement.src.indexOf('dashboard-mode') == -1) {
-            this.cancel(this._currentReportStatus, this._currentReportUuid);
-          }
+          this.cancel(this._currentReportStatus, this._currentReportUuid);
           if(window.top.mantle_removeHandler) {
             window.top.mantle_removeHandler(this._handlerRegistration);
           }
