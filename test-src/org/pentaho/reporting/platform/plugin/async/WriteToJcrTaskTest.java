@@ -38,6 +38,10 @@ import org.pentaho.test.platform.engine.core.MicroPlatform;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.concurrent.CompletionService;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -78,7 +82,7 @@ public class WriteToJcrTaskTest {
     when( content.getStream() ).thenReturn( inputStream );
     final ReportContentRepository contentRepository = mock( ReportContentRepository.class );
     when( contentRepository.getRoot() ).thenReturn( fakeLocation );
-    final PentahoAsyncExecutor.WriteToJcrTask toJcrTask = new PentahoAsyncExecutor.WriteToJcrTask( reportExecution, inputStream ) {
+    final WriteToJcrTask toJcrTask = new WriteToJcrTask( reportExecution, inputStream ) {
       @Override protected ReportContentRepository getReportContentRepository( final RepositoryFile outputFolder ) {
         return contentRepository;
       }
@@ -100,7 +104,7 @@ public class WriteToJcrTaskTest {
     when( content.getStream() ).thenReturn( inputStream );
     final ReportContentRepository contentRepository = mock( ReportContentRepository.class );
     when( contentRepository.getRoot() ).thenReturn( fakeLocation );
-    final PentahoAsyncExecutor.WriteToJcrTask toJcrTask = new PentahoAsyncExecutor.WriteToJcrTask( reportExecution, inputStream ) {
+    final WriteToJcrTask toJcrTask = new WriteToJcrTask( reportExecution, inputStream ) {
       @Override protected ReportContentRepository getReportContentRepository( final RepositoryFile outputFolder ) {
         return contentRepository;
       }
@@ -122,7 +126,7 @@ public class WriteToJcrTaskTest {
     when( content.getStream() ).thenReturn( inputStream );
     final ReportContentRepository contentRepository = mock( ReportContentRepository.class );
     when( contentRepository.getRoot() ).thenReturn( fakeLocation );
-    final PentahoAsyncExecutor.WriteToJcrTask toJcrTask = new PentahoAsyncExecutor.WriteToJcrTask( reportExecution, inputStream ) {
+    final WriteToJcrTask toJcrTask = new WriteToJcrTask( reportExecution, inputStream ) {
       @Override protected ReportContentRepository getReportContentRepository( final RepositoryFile outputFolder ) {
         return contentRepository;
       }
@@ -148,13 +152,76 @@ public class WriteToJcrTaskTest {
     when( content.getStream() ).thenReturn( inputStream );
     final ReportContentRepository contentRepository = mock( ReportContentRepository.class );
     when( contentRepository.getRoot() ).thenReturn( fakeLocation );
-    final PentahoAsyncExecutor.WriteToJcrTask toJcrTask = new PentahoAsyncExecutor.WriteToJcrTask( reportExecution, inputStream ) {
+    final WriteToJcrTask toJcrTask = new WriteToJcrTask( reportExecution, inputStream ) {
       @Override protected ReportContentRepository getReportContentRepository( final RepositoryFile outputFolder ) {
         return contentRepository;
       }
     };
     assertFalse( toJcrTask.call() );
   }
+
+
+  @Test
+  public void testConcurrentSave() throws Exception {
+
+    final FakeLocation fakeLocation = new FakeLocation();
+
+    final IFixedSizeStreamingContent content = mock( IFixedSizeStreamingContent.class );
+    final IAsyncReportExecution reportExecution = mock( IAsyncReportExecution.class );
+    final IAsyncReportState state = mock( IAsyncReportState.class );
+    when( state.getMimeType() ).thenReturn( "application/pdf" );
+    when( state.getPath() ).thenReturn( "report.prpt" );
+    when( reportExecution.getState() ).thenReturn( state );
+    final NullInputStream inputStream = new NullInputStream( 100 );
+    when( content.getStream() ).thenReturn( inputStream );
+
+    final ReportContentRepository contentRepository = mock( ReportContentRepository.class );
+
+    when( contentRepository.getRoot() ).thenReturn( fakeLocation );
+
+    final WriteToJcrTask toJcrTask = new WriteToJcrTask( reportExecution, inputStream ) {
+      @Override protected ReportContentRepository getReportContentRepository( final RepositoryFile outputFolder ) {
+        return contentRepository;
+      }
+    };
+
+
+    CompletionService<Boolean> completionService =
+      new ExecutorCompletionService<>( Executors.newFixedThreadPool( 10 ) );
+    int received = 0;
+    boolean errors = false;
+    for ( int i = 0; i < 10; i++ ) {
+      completionService.submit( toJcrTask );
+    }
+
+    while ( received < 10 && !errors ) {
+      final Future<Boolean> take = completionService.take();
+      try {
+        final Boolean res = take.get();
+        if ( res ) {
+          received++;
+        } else {
+          errors = true;
+        }
+      } catch ( final Exception e ) {
+        errors = true;
+      }
+    }
+
+    assertFalse( errors );
+    assertTrue( received == 10 );
+
+    assertTrue( fakeLocation.exists( "report.pdf" ) );
+
+    for ( int i = 1; i < 10; i++ ) {
+      assertTrue( fakeLocation.exists( "report(" + i + ").pdf" ) );
+    }
+
+    completionService = null;
+
+
+  }
+
 
   private class FakeLocation implements ContentLocation {
     private ConcurrentHashSet<String> files = new ConcurrentHashSet<>();
