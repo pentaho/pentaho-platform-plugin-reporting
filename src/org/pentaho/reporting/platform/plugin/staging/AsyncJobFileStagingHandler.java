@@ -119,7 +119,10 @@ public class AsyncJobFileStagingHandler {
 
     // some lib can do it for me?
     try {
-      FileUtils.deleteDirectory( sessionStagingContent );
+      if ( sessionStagingContent != null && sessionStagingContent.isDirectory()
+        && sessionStagingContent.list().length == 0 ) {
+        FileUtils.deleteDirectory( sessionStagingContent );
+      }
     } catch ( final IOException e ) {
       logger.debug( "Unable delete temp files on session logout." );
     }
