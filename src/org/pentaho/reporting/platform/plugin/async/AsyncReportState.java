@@ -33,6 +33,7 @@ public class AsyncReportState implements IAsyncReportState {
   private final String mimeType;
   private final String errorMessage;
   private final int generatedPage;
+  private final boolean isQueryLimitReached;
 
   public AsyncReportState( final UUID id, final String path ) {
     this.status = AsyncExecutionStatus.QUEUED;
@@ -47,6 +48,7 @@ public class AsyncReportState implements IAsyncReportState {
     this.activity = null;
     this.mimeType = null;
     this.errorMessage = null;
+    this.isQueryLimitReached = false;
   }
 
   public AsyncReportState( final UUID uuid,
@@ -60,7 +62,8 @@ public class AsyncReportState implements IAsyncReportState {
                            final int generatedPage,
                            final String activity,
                            final String mimeType,
-                           final String errorMessage ) {
+                           final String errorMessage,
+                           final boolean isQueryLimitReached ) {
     this.uuid = uuid;
     this.path = path;
     this.status = status;
@@ -73,6 +76,7 @@ public class AsyncReportState implements IAsyncReportState {
     this.activity = activity;
     this.mimeType = mimeType;
     this.errorMessage = errorMessage;
+    this.isQueryLimitReached = isQueryLimitReached;
   }
 
   @Override
@@ -134,4 +138,7 @@ public class AsyncReportState implements IAsyncReportState {
     return errorMessage;
   }
 
+  public boolean getIsQueryLimitReached() {
+    return isQueryLimitReached;
+  }
 }
