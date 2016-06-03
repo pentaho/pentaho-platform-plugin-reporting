@@ -2,10 +2,31 @@
   background: #dce7ed; 
 }
 
+.feedbackscreentextupper {
+  padding: 10px 0 20px 7px;
+  line-height: 2em;
+}
+
 .feedbackscreentextmiddle {
   padding: 0 0 0 7px;
 }
 
+.feedbackscreentextbottom {
+  padding: 10px 0 0 0;
+  line-height: 2em;
+  width: 50%;
+  text-align: center;
+}
+
 .feedbackscreentitle {
   padding-left: 7px !important;
+}
+
+#downloadProgress {
+  width:98%;
+}
+
+.bottom-table {  
+  width: 100%;
+  padding-bottom: 8px;
 }

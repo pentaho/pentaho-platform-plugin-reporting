@@ -368,21 +368,6 @@ div.prompt-panel {
   border-spacing: 0px;
 }
 
-.feedbackscreentextupper {
-  color: #26363d;
-  padding: 10px 0 20px 7px;
-  vertical-align: top;
-  line-height: 2em;
-}
-
-.feedbackscreentextbottom {
-  color: #26363d;
-  padding: 10px 0 0 0;
-  vertical-align: top;
-  line-height: 2em;
-  width: 50%;
-}
-
 .upper-table {  
   width: 100%;
   border-spacing: 0;
@@ -390,15 +375,6 @@ div.prompt-panel {
 
 .feedbackscreencontentbody  {  
   padding: 0 0 0 0;
-}
-
-.bottom-table {  
-  width: 100%;
-  padding-bottom: 8px;
-}
-
-#downloadProgress {
-  width:98%;
 }
 
 .pentaho-notification {
