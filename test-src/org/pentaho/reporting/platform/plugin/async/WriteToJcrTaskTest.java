@@ -17,94 +17,273 @@
 
 package org.pentaho.reporting.platform.plugin.async;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.apache.commons.io.input.NullInputStream;
+import org.eclipse.jetty.util.ConcurrentHashSet;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
 import org.pentaho.platform.api.repository2.unified.RepositoryFile;
-import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
-import org.pentaho.platform.engine.core.system.StandaloneSession;
 import org.pentaho.platform.engine.core.system.boot.PlatformInitializationException;
+import org.pentaho.reporting.libraries.repository.ContentCreationException;
+import org.pentaho.reporting.libraries.repository.ContentEntity;
+import org.pentaho.reporting.libraries.repository.ContentIOException;
+import org.pentaho.reporting.libraries.repository.ContentItem;
+import org.pentaho.reporting.libraries.repository.ContentLocation;
+import org.pentaho.reporting.libraries.repository.Repository;
 import org.pentaho.reporting.platform.plugin.MicroPlatformFactory;
+import org.pentaho.reporting.platform.plugin.repository.ReportContentRepository;
 import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
 import org.pentaho.test.platform.engine.core.MicroPlatform;
 
-import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.UUID;
-import java.util.concurrent.Callable;
+import java.util.concurrent.CompletionService;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
-import static org.mockito.Matchers.matches;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@RunWith( Parameterized.class )
+
 public class WriteToJcrTaskTest {
-
-  private String mime;
-  private String file;
-
-  public WriteToJcrTaskTest( final String mime, final String file ) {
-    this.mime = mime;
-    this.file = file;
-  }
-
-  @Parameterized.Parameters
-  public static Collection primeNumbers() {
-    return Arrays.asList( new Object[][] {
-      { "application/pdf", "report.prpt" },
-      { "toinfinitynadbeyond", "" }
-    } );
-  }
-
 
   private static MicroPlatform microPlatform;
 
-  @BeforeClass
-  public static void setUp() throws PlatformInitializationException {
-    new File( "./resource/solution/system/tmp" ).mkdirs();
+  @Before
+  public void setUp() throws PlatformInitializationException {
     microPlatform = MicroPlatformFactory.create();
     final IUnifiedRepository repository = mock( IUnifiedRepository.class );
     final ISchedulingDirectoryStrategy strategy = mock( ISchedulingDirectoryStrategy.class );
-    final RepositoryFile file = mock( RepositoryFile.class );
-    when( strategy.getSchedulingDir( repository ) ).thenReturn( file );
-    when( repository.getFile( matches( "^[a-z/\\\\]+\\.{1}[a-z]+$" ) ) ).thenReturn( file );
     microPlatform.defineInstance( "IUnifiedRepository", repository );
     microPlatform.defineInstance( "ISchedulingDirectoryStrategy", strategy );
     microPlatform.start();
   }
 
-  @AfterClass
-  public static void tearDown() {
+  @After
+  public void tearDown() {
     microPlatform.stop();
+  }
+
+  @Test
+  public void testPositiveScenario() throws Exception {
+    final FakeLocation fakeLocation = new FakeLocation();
+    final IFixedSizeStreamingContent content = mock( IFixedSizeStreamingContent.class );
+    final IAsyncReportExecution reportExecution = mock( IAsyncReportExecution.class );
+    final IAsyncReportState state = mock( IAsyncReportState.class );
+    when( state.getMimeType() ).thenReturn( "application/pdf" );
+    when( state.getPath() ).thenReturn( "report.prpt" );
+    when( reportExecution.getState() ).thenReturn( state );
+    final NullInputStream inputStream = new NullInputStream( 100 );
+    when( content.getStream() ).thenReturn( inputStream );
+    final ReportContentRepository contentRepository = mock( ReportContentRepository.class );
+    when( contentRepository.getRoot() ).thenReturn( fakeLocation );
+    final WriteToJcrTask toJcrTask = new WriteToJcrTask( reportExecution, inputStream ) {
+      @Override protected ReportContentRepository getReportContentRepository( final RepositoryFile outputFolder ) {
+        return contentRepository;
+      }
+    };
+    assertTrue( toJcrTask.call() );
+    assertTrue( fakeLocation.exists( "report.pdf" ) );
+  }
+
+  @Test
+  public void testNoNames() throws Exception {
+    final FakeLocation fakeLocation = new FakeLocation();
+    final IFixedSizeStreamingContent content = mock( IFixedSizeStreamingContent.class );
+    final IAsyncReportExecution reportExecution = mock( IAsyncReportExecution.class );
+    final IAsyncReportState state = mock( IAsyncReportState.class );
+    when( state.getMimeType() ).thenReturn( null );
+    when( state.getPath() ).thenReturn( "/" );
+    when( reportExecution.getState() ).thenReturn( state );
+    final NullInputStream inputStream = new NullInputStream( 100 );
+    when( content.getStream() ).thenReturn( inputStream );
+    final ReportContentRepository contentRepository = mock( ReportContentRepository.class );
+    when( contentRepository.getRoot() ).thenReturn( fakeLocation );
+    final WriteToJcrTask toJcrTask = new WriteToJcrTask( reportExecution, inputStream ) {
+      @Override protected ReportContentRepository getReportContentRepository( final RepositoryFile outputFolder ) {
+        return contentRepository;
+      }
+    };
+    assertTrue( toJcrTask.call() );
+    assertTrue( fakeLocation.exists( "content.txt" ) );
+  }
+
+  @Test
+  public void testAlreadyExists() throws Exception {
+    final FakeLocation fakeLocation = new FakeLocation();
+    final IFixedSizeStreamingContent content = mock( IFixedSizeStreamingContent.class );
+    final IAsyncReportExecution reportExecution = mock( IAsyncReportExecution.class );
+    final IAsyncReportState state = mock( IAsyncReportState.class );
+    when( state.getMimeType() ).thenReturn( "application/pdf" );
+    when( state.getPath() ).thenReturn( "report.prpt" );
+    when( reportExecution.getState() ).thenReturn( state );
+    final NullInputStream inputStream = new NullInputStream( 100 );
+    when( content.getStream() ).thenReturn( inputStream );
+    final ReportContentRepository contentRepository = mock( ReportContentRepository.class );
+    when( contentRepository.getRoot() ).thenReturn( fakeLocation );
+    final WriteToJcrTask toJcrTask = new WriteToJcrTask( reportExecution, inputStream ) {
+      @Override protected ReportContentRepository getReportContentRepository( final RepositoryFile outputFolder ) {
+        return contentRepository;
+      }
+    };
+    assertTrue( toJcrTask.call() );
+    assertTrue( fakeLocation.exists( "report.pdf" ) );
+    assertTrue( toJcrTask.call() );
+    assertTrue( fakeLocation.exists( "report.pdf" ) );
+    assertTrue( fakeLocation.exists( "report(1).pdf" ) );
+  }
+
+  @Test
+  public void testFail() throws Exception {
+    final FakeLocation fakeLocation = new FakeLocation();
+    final IFixedSizeStreamingContent content = mock( IFixedSizeStreamingContent.class );
+    final IAsyncReportExecution reportExecution = mock( IAsyncReportExecution.class );
+    final IAsyncReportState state = mock( IAsyncReportState.class );
+    when( state.getMimeType() ).thenReturn( "application/pdf" );
+    when( state.getPath() ).thenReturn( "report.prpt" );
+    when( reportExecution.getState() ).thenReturn( state );
+    final InputStream inputStream = mock( InputStream.class );
+    when( inputStream.read( any() ) ).thenThrow( new IOException( "Test" ) );
+    when( content.getStream() ).thenReturn( inputStream );
+    final ReportContentRepository contentRepository = mock( ReportContentRepository.class );
+    when( contentRepository.getRoot() ).thenReturn( fakeLocation );
+    final WriteToJcrTask toJcrTask = new WriteToJcrTask( reportExecution, inputStream ) {
+      @Override protected ReportContentRepository getReportContentRepository( final RepositoryFile outputFolder ) {
+        return contentRepository;
+      }
+    };
+    assertFalse( toJcrTask.call() );
   }
 
 
   @Test
-  public void call() throws Exception {
+  public void testConcurrentSave() throws Exception {
 
+    final FakeLocation fakeLocation = new FakeLocation();
 
-    final PentahoAsyncExecutor pentahoAsyncExecutor = new PentahoAsyncExecutor( 10 );
     final IFixedSizeStreamingContent content = mock( IFixedSizeStreamingContent.class );
     final IAsyncReportExecution reportExecution = mock( IAsyncReportExecution.class );
     final IAsyncReportState state = mock( IAsyncReportState.class );
-    when( state.getMimeType() ).thenReturn( mime );
-    when( state.getPath() ).thenReturn( file );
+    when( state.getMimeType() ).thenReturn( "application/pdf" );
+    when( state.getPath() ).thenReturn( "report.prpt" );
     when( reportExecution.getState() ).thenReturn( state );
-    final InputStream stream = mock( InputStream.class );
-    when( content.getStream() ).thenReturn( stream );
-    final StandaloneSession session = new StandaloneSession( "test" );
-    PentahoSessionHolder.setSession( session );
-    final Callable writeTask =
-      pentahoAsyncExecutor.getWriteTask( content, UUID.randomUUID(), session, reportExecution );
-    writeTask.call();
+    final NullInputStream inputStream = new NullInputStream( 100 );
+    when( content.getStream() ).thenReturn( inputStream );
+
+    final ReportContentRepository contentRepository = mock( ReportContentRepository.class );
+
+    when( contentRepository.getRoot() ).thenReturn( fakeLocation );
+
+    final WriteToJcrTask toJcrTask = new WriteToJcrTask( reportExecution, inputStream ) {
+      @Override protected ReportContentRepository getReportContentRepository( final RepositoryFile outputFolder ) {
+        return contentRepository;
+      }
+    };
+
+
+    CompletionService<Boolean> completionService =
+      new ExecutorCompletionService<>( Executors.newFixedThreadPool( 10 ) );
+    int received = 0;
+    boolean errors = false;
+    for ( int i = 0; i < 10; i++ ) {
+      completionService.submit( toJcrTask );
+    }
+
+    while ( received < 10 && !errors ) {
+      final Future<Boolean> take = completionService.take();
+      try {
+        final Boolean res = take.get();
+        if ( res ) {
+          received++;
+        } else {
+          errors = true;
+        }
+      } catch ( final Exception e ) {
+        errors = true;
+      }
+    }
+
+    assertFalse( errors );
+    assertTrue( received == 10 );
+
+    assertTrue( fakeLocation.exists( "report.pdf" ) );
+
+    for ( int i = 1; i < 10; i++ ) {
+      assertTrue( fakeLocation.exists( "report(" + i + ").pdf" ) );
+    }
+
+    completionService = null;
 
 
   }
 
+
+  private class FakeLocation implements ContentLocation {
+    private ConcurrentHashSet<String> files = new ConcurrentHashSet<>();
+
+    @Override public ContentEntity[] listContents() throws ContentIOException {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override public ContentEntity getEntry( final String s ) throws ContentIOException {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override public ContentItem createItem( final String s ) throws ContentCreationException {
+      if ( exists( s ) ) {
+        throw new ContentCreationException();
+      } else {
+        files.add( s );
+      }
+      final ContentItem mock = mock( ContentItem.class );
+      try {
+        when( mock.getOutputStream() ).thenReturn( new org.apache.commons.io.output.NullOutputStream() );
+      } catch ( ContentIOException | IOException e ) {
+        e.printStackTrace();
+      }
+      return mock;
+    }
+
+    @Override public ContentLocation createLocation( final String s ) throws ContentCreationException {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override public boolean exists( final String s ) {
+      return files.contains( s );
+    }
+
+    @Override public String getName() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override public Object getContentId() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override public Object getAttribute( final String s, final String s1 ) {
+      return null;
+    }
+
+    @Override public boolean setAttribute( final String s, final String s1, final Object o ) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override public ContentLocation getParent() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override public Repository getRepository() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override public boolean delete() {
+      throw new UnsupportedOperationException();
+    }
+  }
 
 }

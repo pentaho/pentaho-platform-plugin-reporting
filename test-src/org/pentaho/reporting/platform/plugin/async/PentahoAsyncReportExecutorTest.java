@@ -246,6 +246,12 @@ public class PentahoAsyncReportExecutorTest {
 
     exec.onLogout( session2 );
     folders = stagingFolder.toFile().list();
+    assertTrue( folders.length == 1 );
+
+    handler2.getStagingContent().cleanContent();
+
+    exec.onLogout( session2 );
+    folders = stagingFolder.toFile().list();
     assertTrue( folders.length == 0 );
   }
 

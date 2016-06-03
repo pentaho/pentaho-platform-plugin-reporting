@@ -22,35 +22,22 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.pentaho.platform.api.engine.ILogoutListener;
 import org.pentaho.platform.api.engine.IPentahoSession;
-import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
-import org.pentaho.platform.api.repository2.unified.RepositoryFile;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.engine.security.SecurityHelper;
 import org.pentaho.platform.util.StringUtil;
-import org.pentaho.platform.util.web.MimeHelper;
 import org.pentaho.reporting.libraries.base.util.ArgumentNullException;
-import org.pentaho.reporting.libraries.repository.ContentLocation;
-import org.pentaho.reporting.platform.plugin.repository.ReportContentRepository;
 import org.pentaho.reporting.platform.plugin.staging.AsyncJobFileStagingHandler;
 import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -63,8 +50,6 @@ public class PentahoAsyncExecutor<TReportState extends IAsyncReportState>
   public static final String BEAN_NAME = "IPentahoAsyncExecutor";
 
   private static final Log log = LogFactory.getLog( PentahoAsyncExecutor.class );
-  private static final String UNABLE_DELETE_TEMP_FILES_ON_SESSION_LOGOUT =
-    "Unable delete temp files on session logout.";
 
   private Map<CompositeKey, ListenableFuture<IFixedSizeStreamingContent>> futures = new ConcurrentHashMap<>();
   private Map<CompositeKey, IAsyncReportExecution<TReportState>> tasks = new ConcurrentHashMap<>();
@@ -77,7 +62,7 @@ public class PentahoAsyncExecutor<TReportState extends IAsyncReportState>
    * @param capacity
    * @param autoSchedulerThreshold
    */
-  public PentahoAsyncExecutor( final int capacity, int autoSchedulerThreshold ) {
+  public PentahoAsyncExecutor( final int capacity, final int autoSchedulerThreshold ) {
     this.autoSchedulerThreshold = autoSchedulerThreshold;
     log.info( "Initialized reporting  async execution fixed thread pool with capacity: " + capacity );
     executorService =
@@ -173,26 +158,28 @@ public class PentahoAsyncExecutor<TReportState extends IAsyncReportState>
             try {
               if ( session != null && !StringUtil.isEmpty( session.getName() ) ) {
                 SecurityHelper.getInstance().runAsUser( session.getName(),
-                  new WriteToJcrTask( id, session, runningTask, result.getStream() ) );
+                  new WriteToJcrTask( runningTask, result.getStream() ) );
               }
 
             } catch ( final Exception e ) {
               log.error( "Can't execute callback. : ", e );
+            } finally {
+              //Time to remove future - nobody will ask for content at this moment
+              //We need to keep task because status polling may still occur ( or it already has been removed on logout )
+              //Also we can try to remove directory
+              futures.remove( compositeKey );
+              AsyncJobFileStagingHandler.cleanSession( session );
             }
           }
 
           @Override public void onFailure( final Throwable t ) {
             log.error( "Can't execute callback. Parent task failed: ", t );
+            futures.remove( compositeKey );
+            AsyncJobFileStagingHandler.cleanSession( session );
           }
         } );
       }
     }
-  }
-
-  Callable<Object> getWriteTask( final IFixedSizeStreamingContent result,
-                                 final UUID id, final IPentahoSession session,
-                                 final IAsyncReportExecution<TReportState> runningTask ) {
-    return new WriteToJcrTask( id, session, runningTask, result.getStream() );
   }
 
   @Override public TReportState getReportState( final UUID id, final IPentahoSession session ) {
@@ -213,8 +200,6 @@ public class PentahoAsyncExecutor<TReportState extends IAsyncReportState>
       log.debug( "killing async report execution cache for user: " + session.getName() );
     }
 
-    boolean hasScheduled = false;
-
     for ( final Map.Entry<CompositeKey, ListenableFuture<IFixedSizeStreamingContent>> entry : futures.entrySet() ) {
       if ( ObjectUtils.equals( entry.getKey().getSessionId(), session.getId() ) ) {
 
@@ -224,8 +209,8 @@ public class PentahoAsyncExecutor<TReportState extends IAsyncReportState>
 
         if ( task != null && task.getState() != null && AsyncExecutionStatus.SCHEDULED
           .equals( task.getState().getStatus() ) ) {
-          hasScheduled = true;
           //After the session end nobody can poll status, we can remove task
+          //Keep future to have content in place
           tasks.remove( entry.getKey() );
           continue;
         }
@@ -252,35 +237,10 @@ public class PentahoAsyncExecutor<TReportState extends IAsyncReportState>
       }
     }
 
-    //Don't try to remove directory if you have scheduled jobs, try to take care of it when jobs finishs
-    if ( !hasScheduled ) {
-      AsyncJobFileStagingHandler.cleanSession( session );
-    }
+    //If some files are still open directory won't be removed
+    AsyncJobFileStagingHandler.cleanSession( session );
+
   }
-
-  private void tryCleanStagingDir( final IPentahoSession iPentahoSession ) {
-    final File sessionDir = getStagingDir( iPentahoSession );
-    if ( sessionDir != null && sessionDir.isDirectory() && sessionDir.list().length == 0 ) {
-      try {
-        FileUtils.deleteDirectory( sessionDir );
-      } catch ( final IOException e ) {
-        log.debug( UNABLE_DELETE_TEMP_FILES_ON_SESSION_LOGOUT );
-      }
-    }
-  }
-
-  private File getStagingDir( final IPentahoSession iPentahoSession ) {
-
-    // do it generic way according to staging handler was used?
-    Path stagingSessionDir = AsyncJobFileStagingHandler.getStagingDirPath();
-    if ( stagingSessionDir == null ) {
-      //never been initialized
-      return null;
-    }
-    stagingSessionDir = stagingSessionDir.resolve( iPentahoSession.getId() );
-    return stagingSessionDir.toFile();
-  }
-
 
   @Override
   public void shutdown() {
@@ -293,86 +253,6 @@ public class PentahoAsyncExecutor<TReportState extends IAsyncReportState>
     this.tasks.clear();
 
     AsyncJobFileStagingHandler.cleanStagingDir();
-  }
-
-
-  private class WriteToJcrTask implements Callable<Object> {
-
-    static final String FORMAT = "%s(%d)%s";
-    private static final String TXT = ".txt";
-    private final UUID id;
-    private final IPentahoSession safeSession;
-    private final IAsyncReportExecution<TReportState> parentTask;
-    private final InputStream inputStream;
-
-    WriteToJcrTask( final UUID id, final IPentahoSession session,
-                    final IAsyncReportExecution<TReportState> parentTask,
-                    final InputStream inputStream ) {
-      this.id = id;
-      this.safeSession = session;
-      this.parentTask = parentTask;
-
-      this.inputStream = inputStream;
-    }
-
-
-    @Override public Object call() throws Exception {
-
-      try {
-
-        final IUnifiedRepository repo = PentahoSystem.get( IUnifiedRepository.class );
-
-
-        final org.pentaho.reporting.libraries.base.util.IOUtils utils = org.pentaho.reporting.libraries
-          .base.util.IOUtils.getInstance();
-
-
-        final ISchedulingDirectoryStrategy directoryStrategy = PentahoSystem.get( ISchedulingDirectoryStrategy.class );
-
-        final RepositoryFile outputFolder = directoryStrategy.getSchedulingDir( repo );
-
-        final ReportContentRepository repository = new ReportContentRepository( outputFolder );
-        final ContentLocation dataLocation = repository.getRoot();
-
-
-        final IAsyncReportState state = parentTask.getState();
-
-        final String extension = MimeHelper.getExtension( state.getMimeType() );
-        final String targetExt = extension != null ? extension : TXT;
-        final String fullPath = state.getPath();
-        String cleanFileName = utils.stripFileExtension( utils.getFileName( fullPath ) );
-        if ( StringUtil.isEmpty( cleanFileName ) ) {
-          cleanFileName = "content";
-        }
-
-        String targetName = cleanFileName + targetExt;
-
-        int copy = 1;
-
-        while ( dataLocation.exists( targetName ) ) {
-          targetName = String.format( FORMAT, cleanFileName, copy, targetExt );
-          copy++;
-        }
-
-        try ( final OutputStream outputStream = dataLocation.createItem( targetName ).getOutputStream() ) {
-          IOUtils.copy( inputStream, outputStream );
-          outputStream.flush();
-        }
-
-      } catch ( final Exception e ) {
-        log.error( "Cant't persist report: ", e );
-      } finally {
-        IOUtils.closeQuietly( inputStream );
-        //Time to remove future - nobody will ask for content at this moment
-        //We need to keep task because status polling may still occur ( or it already has been removed on logout )
-        final CompositeKey key = new CompositeKey( safeSession, id );
-        futures.remove( key );
-        tryCleanStagingDir( safeSession );
-      }
-
-      return null;
-    }
-
   }
 
 
