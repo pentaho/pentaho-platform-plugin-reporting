@@ -20,9 +20,12 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
+import org.pentaho.reporting.engine.classic.core.QueryLimitProcessor;
 import org.pentaho.reporting.engine.classic.core.ReportDataFactoryException;
 import org.pentaho.reporting.engine.classic.core.ReportParameterValidationException;
+import org.pentaho.reporting.engine.classic.core.ReportPreProcessor;
 import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
+import org.pentaho.reporting.engine.classic.core.ReportQueryLimitListener;
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressEvent;
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
 import org.pentaho.reporting.engine.classic.core.layout.output.DisplayAllFlowSelector;
@@ -56,12 +59,16 @@ import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class CachingPageableHTMLOutput extends PageableHTMLOutput {
 
   private static Log logger = LogFactory.getLog( CachingPageableHTMLOutput.class );
+  public static final String IS_QUERY_LIMIT_REACHED = "IsQueryLimitReached";
+  private QueryLimitProcessor queryLimitProcessor;
+  private MasterReport masterReport;
 
-  private class CacheListener implements ReportProgressListener {
+  private class CacheListener implements ReportProgressListener, ReportQueryLimitListener {
 
     private CacheListener( final String key, final int acceptedPage,
                    final PageableReportProcessor proc,
@@ -81,6 +88,7 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
     private final IAsyncReportListener asyncReportListener;
 
     private int lastAcceptedPageWritten;
+    private String rowLimitReached;
 
     @Override public void reportProcessingStarted( final ReportProgressEvent reportProgressEvent ) {
       //ignore
@@ -106,8 +114,10 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
         && needToStorePages ) {
         // we finished pagination, and thus have the page numbers ready.
         // we also have pages in repository
+        Map<String, Serializable> metaData = new HashMap<>();
+        metaData.put( IS_QUERY_LIMIT_REACHED, getLimitReached() );
         try {
-          persistContent( key, produceReportContent( proc, targetRepository ) );
+          persistContent( key, produceReportContent( proc, targetRepository ), metaData );
           lastAcceptedPageWritten = page;
           //Update after pages are in cache
           asyncReportListener.updateGenerationStatus( page - 1 );
@@ -120,6 +130,14 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
 
     @Override public void reportProcessingFinished( final ReportProgressEvent reportProgressEvent ) {
       //ignore
+    }
+
+    @Override public void setLimitReached( String reachedBy ) {
+      this.rowLimitReached = reachedBy;
+    }
+
+    @Override public String getLimitReached() {
+      return rowLimitReached;
     }
   }
 
@@ -147,6 +165,9 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
   public synchronized int generate( final MasterReport report, final int acceptedPage,
                                     final OutputStream outputStream, final int yieldRate )
     throws ReportProcessingException, IOException, ContentIOException {
+
+    queryLimitProcessor = getQueryLimitProcessor( report.getPreProcessors() );
+    masterReport = report;
 
     if ( acceptedPage < 0 ) {
       return generateNonCaching( report, acceptedPage, outputStream, yieldRate );
@@ -177,6 +198,10 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
         outputStream.flush();
         return freshCache.getPageCount();
       }
+
+      Map<String, Serializable> metaData = getCachedMetaData( key );
+      String isQueryLimitReached = (String) metaData.get( IS_QUERY_LIMIT_REACHED );
+      setReportQueryLimitReached( isQueryLimitReached, report.getPreProcessors() );
 
       final byte[] page = cachedContent.getPageData( acceptedPage );
       if ( page != null && page.length > 0 ) {
@@ -224,7 +249,8 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
     throws ReportProcessingException {
     logger.warn( "Regenerating report data for " + key );
     final IReportContent result = produceCacheablePages( report, yieldRate, key, acceptedPage );
-    persistContent( key, result );
+
+    persistContent( key, result, getCachedMetaData( key ) );
     return result;
   }
 
@@ -247,11 +273,11 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
           //Create cache listener to write first requested page when needed
           cacheListener = new CacheListener( key, acceptedPage, proc, targetRepository, listener );
           proc.addReportProgressListener( cacheListener );
+          queryLimitProcessor.addReportQueryLimitListener( (ReportQueryLimitListener) cacheListener );
         }
         proc.addReportProgressListener( listener );
       }
       proc.processReport();
-
       return produceReportContent( proc, targetRepository );
     } catch ( final ContentIOException | IOException | ReportDataFactoryException | ReportParameterValidationException e ) {
       if ( e.getMessage() != null && listener != null ) {
@@ -264,6 +290,7 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
       }
       if ( cacheListener != null ) {
         proc.removeReportProgressListener( cacheListener );
+        queryLimitProcessor.removeReportQueryLimitListener( (ReportQueryLimitListener) cacheListener );
       }
     }
   }
@@ -282,11 +309,27 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
     return cache.get( key );
   }
 
+  public Map<String, Serializable> getCachedMetaData( final String key ) {
+    final IPluginCacheManager cacheManager = PentahoSystem.get( IPluginCacheManager.class );
+    final IReportContentCache cache = cacheManager.getCache();
+    return cache.getMetaData( key );
+  }
+
   private synchronized void persistContent( final String key, final IReportContent data ) {
     final IPluginCacheManager cacheManager = PentahoSystem.get( IPluginCacheManager.class );
     final IReportContentCache cache = cacheManager.getCache();
     if ( cache != null ) {
       cache.put( key, data );
+    } else {
+      logger.error( "Plugin session cache is not available." );
+    }
+  }
+
+  private synchronized void persistContent( final String key, final IReportContent data, Map<String, Serializable> metaData ) {
+    final IPluginCacheManager cacheManager = PentahoSystem.get( IPluginCacheManager.class );
+    final IReportContentCache cache = cacheManager.getCache();
+    if ( cache != null ) {
+      cache.put( key, data, metaData );
     } else {
       logger.error( "Plugin session cache is not available." );
     }
@@ -382,5 +425,24 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
     private CacheKeyException( final Throwable cause ) {
       super( cause );
     }
+  }
+
+  private void setReportQueryLimitReached( String isQueryLimitReached, ReportPreProcessor[] preProcessors ) {
+    for ( int i = 0; i < preProcessors.length; i++ ) {
+      final ReportPreProcessor preProcessor = preProcessors[ i ];
+      if ( preProcessor instanceof QueryLimitProcessor ) {
+        ( (QueryLimitProcessor) preProcessor ).setLimitReached( isQueryLimitReached );
+      }
+    }
+  }
+
+  private QueryLimitProcessor getQueryLimitProcessor( ReportPreProcessor[] preProcessors ) {
+    for ( int i = 0; i < preProcessors.length; i++ ) {
+      final ReportPreProcessor preProcessor = preProcessors[ i ];
+      if ( preProcessor instanceof QueryLimitProcessor ) {
+        return (QueryLimitProcessor) preProcessor;
+      }
+    }
+    return null;
   }
 }

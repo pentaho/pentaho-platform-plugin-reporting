@@ -16,11 +16,18 @@
  */
 package org.pentaho.reporting.platform.plugin.cache;
 
+import java.io.Serializable;
+import java.util.Map;
+
 public interface IReportContentCache {
 
   boolean put( String key, IReportContent value );
 
+  boolean put( String key, IReportContent value, Map<String, Serializable> metaData );
+
   IReportContent get( String key );
+
+  Map<String, Serializable> getMetaData ( String key );
 
   void cleanup();
 }
