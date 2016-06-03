@@ -3,7 +3,7 @@
 }
 
 .feedbackscreentextupper {  
-  padding: 10px 0 20px 6px;
+  padding: 10px 0 10px 10px;
   line-height: 2em;
   border-left: 1px solid black;
   border-right: 1px solid black;
@@ -12,13 +12,26 @@
 .feedbackscreentextmiddle {
   border-left: 1px solid black;
   border-right: 1px solid black;
-  padding: 0 0 0 6px;
+  padding: 0 10px 10px 10px;
+}
+
+.feedbackscreentextbottom {
+  width: 50%;
+  text-align: center;
 }
 
 .bottom-table {  
   width: 100%;
-  padding-bottom: 9px;
+  padding-bottom: 36px;
   border-left: 1px solid black;
   border-right: 1px solid black;
   border-bottom: 1px solid black;
+}
+
+#downloadProgress {
+  width:99%;
+}
+
+.feedbackscreentitle {
+  padding-left: 10px !important;
 }
