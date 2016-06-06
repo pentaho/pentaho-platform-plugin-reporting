@@ -166,20 +166,27 @@ public class WriteToJcrTaskTest {
 
     final FakeLocation fakeLocation = new FakeLocation();
 
-    final IFixedSizeStreamingContent content = mock( IFixedSizeStreamingContent.class );
+
     final IAsyncReportExecution reportExecution = mock( IAsyncReportExecution.class );
     final IAsyncReportState state = mock( IAsyncReportState.class );
     when( state.getMimeType() ).thenReturn( "application/pdf" );
     when( state.getPath() ).thenReturn( "report.prpt" );
     when( reportExecution.getState() ).thenReturn( state );
-    final NullInputStream inputStream = new NullInputStream( 100 );
-    when( content.getStream() ).thenReturn( inputStream );
 
     final ReportContentRepository contentRepository = mock( ReportContentRepository.class );
 
     when( contentRepository.getRoot() ).thenReturn( fakeLocation );
 
-    final WriteToJcrTask toJcrTask = new WriteToJcrTask( reportExecution, inputStream ) {
+    final WriteToJcrTask toJcrTask = new WriteToJcrTask( reportExecution, new InputStream() {
+      @Override public int read() throws IOException {
+        try {
+          Thread.sleep( 100 );
+        } catch ( InterruptedException e ) {
+          e.printStackTrace();
+        }
+        return -1;
+      }
+    } ) {
       @Override protected ReportContentRepository getReportContentRepository( final RepositoryFile outputFolder ) {
         return contentRepository;
       }
@@ -187,14 +194,14 @@ public class WriteToJcrTaskTest {
 
 
     CompletionService<Boolean> completionService =
-      new ExecutorCompletionService<>( Executors.newFixedThreadPool( 10 ) );
+      new ExecutorCompletionService<>( Executors.newFixedThreadPool( 100 ) );
     int received = 0;
     boolean errors = false;
-    for ( int i = 0; i < 10; i++ ) {
+    for ( int i = 0; i < 100; i++ ) {
       completionService.submit( toJcrTask );
     }
 
-    while ( received < 10 && !errors ) {
+    while ( received < 100 && !errors ) {
       final Future<Boolean> take = completionService.take();
       try {
         final Boolean res = take.get();
@@ -209,11 +216,11 @@ public class WriteToJcrTaskTest {
     }
 
     assertFalse( errors );
-    assertTrue( received == 10 );
+    assertTrue( received == 100 );
 
     assertTrue( fakeLocation.exists( "report.pdf" ) );
 
-    for ( int i = 1; i < 10; i++ ) {
+    for ( int i = 1; i < 100; i++ ) {
       assertTrue( fakeLocation.exists( "report(" + i + ").pdf" ) );
     }
 
