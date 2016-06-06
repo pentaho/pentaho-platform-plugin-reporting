@@ -20,6 +20,7 @@ package org.pentaho.reporting.platform.plugin.cache;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Abstract implementation of caching policy
@@ -41,8 +42,17 @@ public abstract class AbstractReportContentCache implements IReportContentCache 
   }
 
   @Override
+  public boolean put( final String key, final IReportContent value, Map<String, Serializable> metaData ) {
+    return getBackend().write( computeKey( key ), value, metaData );
+  }
+
+  @Override
   public IReportContent get( final String key ) {
     return (IReportContent) getBackend().read( computeKey( key ) );
+  }
+
+  @Override public Map<String, Serializable> getMetaData( String key ) {
+    return getBackend().readMetaData( computeKey( key ) );
   }
 
   public ICacheBackend getBackend() {

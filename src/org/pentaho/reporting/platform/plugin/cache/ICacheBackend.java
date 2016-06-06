@@ -42,6 +42,8 @@ public interface ICacheBackend {
    */
   Serializable read( List<String> key );
 
+  Map<String, Serializable> readMetaData( final List<String> key );
+
   /**
    * Remove object from storage
    *
