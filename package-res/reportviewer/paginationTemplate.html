@@ -1,42 +1,140 @@
 <html>
 <head>
   <style>
-    .page-control {
-      margin-top: 15px;
-      font-size: 13px;
-      font-weight: bold;
+    html, body {
+      margin: 0px;
+      padding: 0px;
       font-family: OpenSansRegular, sans-serif;
+      font-size: 14px !important;
+      background: transparent;
+      color: #26363d;
+    }
+
+    .page-control {
+      padding: 0 0 1px 0;
+    }
+
+    .page-control-outer {
+      padding: 0 4px 0 0;
     }
 
     .page-control-nav {
-      padding: 3px 5px;
+      padding: 4px;
+    }
+
+    .page-control-nav-inner {
       background-color: #F1F1F1;
-      color: #3D6480;
+      height: 30px;
+    }
+
+    .page-control-container {
+      padding: 0px 1px 0px 1px;
+      height: auto;
+      vertical-align: middle;
     }
 
     .page-control-content {
       text-align: center;
     }
 
+    .toolbarSeparator {
+      border-left: thin solid #848680;
+      float: left;
+      height: 60%;
+      margin: 5px 0px;
+    }
+
     #current {
-      font-size: 14px;
-      width: 50px;
-      border: solid 0.3px;
+      padding: 6px 2px 5px 1px;
+      float: left;
+      overflow: hidden;
+      border: none;
+    }
+
+    .pagePrev {
+      background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAWCAYAAADEtGw7AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAHZJREFUeNpiYBgFgxLYpjQoEFLDRIahCUDqPpSmjsFQw+YTo5aRTEMTD89pWECxwaQaSpTB5BhK0GByDSUrVRALmPFJPjp34IK8kcNDIDMAhEFskBjFBlNiODMxtpNjODOxYUaq4SRFHjRVJA5oITQKaA8AAgwAOuhHjDjuYEcAAAAASUVORK5CYII=) no-repeat !important;
+      background-position: 1px 3px !important;
+      height: 22px;
+      width: 22px;
+      float: left;
+      padding: 0px 2px 0px 1px;
+    }
+
+    .pagePrev-disabled {
+      background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAWAgMAAAC52oSoAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAAxQTFRFAAAAzNznzNznzNznFn6b+gAAAAN0Uk5TACBgIkCBJAAAAC5JREFUCNdjYMAPBCDUDjDJ9ANMcT8AU/oNYGofshSUggrClEA1wCR3oBiNCwAADacKKXTHIMcAAAAASUVORK5CYII=) no-repeat !important;
+      background-position: 1px 3px !important;
+      height: 22px;
+      width: 22px;
+      float: left;
+      padding: 0px 2px 0px 1px;
+    }
+
+    .pageNext {
+      background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAWCAYAAADEtGw7AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAGJJREFUeNpiYBgFAw5sUxoUyNHHRMDQBCB1H0pTz2AkMJ9UwxmJCAqQgfOh3MTDcxoWUMVgcg1nJCESSTKckcQUQrThTLRKpgMbFDSJPJokN3INJSXySDKUpoXQKKA9AAgwANl4M3QvG0y3AAAAAElFTkSuQmCC) no-repeat !important;
+      background-position: 1px 3px !important;
+      height: 22px;
+      width: 22px;
+      float: left;
+      padding: 0px 1px 0px 2px;
+    }
+
+    .pageNext-disabled {
+      background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAWAgMAAAC52oSoAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAAxQTFRFAAAAzNznzNznzNznFn6b+gAAAAN0Uk5TACBgIkCBJAAAACxJREFUCNdjYMALHMAk0wMI9QMiuA9C6TeAKW4USSgFFYQq2Yei4gGy0bgBAEW5Ct0sJkjAAAAAAElFTkSuQmCC) no-repeat !important;
+      background-position: 1px 3px !important;
+      height: 22px;
+      width: 22px;
+      float: left;
+      padding: 0px 1px 0px 2px;
+    }
+
+    .pageNumberInput {
+      background-color: white;
+      border: 1px solid #b3b3b3;
+      margin: 0 0.1em;
+      float: left;
+      width: 2.1em;
+    }
+
+    .pageNumberInputContainer {
+      float: none !important;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .pageTotal {
+      padding: 6px 0px 0px 2px;
+      float: left;
+      min-width: 1.7em;
+      margin: 0px 6px 0px 0px;
     }
 
     #pageframe {
       margin-top: 30px;
       border: 0px;
+      border: 1px solid rgb(224, 224, 224);
     }
+
   </style>
 </head>
 <body>
 <div>
   <div class="page-control">
-    <div class="page-control-nav">
-      <span id="left">&lt;&nbsp;</span>
-      <span id="right">&gt;&nbsp;</span>
-      <span><input id="current" type="number"/></span>&nbsp;/&nbsp;<span id="overall">1</span>
+    <div class="page-control-outer">
+      <div class="page-control-nav">
+        <div class="page-control-nav-inner">
+          <div class="page-control-container">
+            <div id="left" class="pagePrev pagePrev-disabled"></div>
+            <div id="right" class="pageNext"></div>
+            <div class="pageNumberInput">
+              <div class="pageNumberInputContainer">
+                <input id="current" type="number"/>
+              </div>
+            </div>
+            <div id="overall" class="pageTotal">/ 1</div>
+            <div class="toolbarSeparator"></div>
+          </div>
+        </div>
+      </div>
     </div>
     <div id="pageview" class="page-control-content">
       <iframe id="pageframe" src="about:blank">
@@ -72,7 +170,7 @@
     current.min = 1;
     current.max = pages.length;
     var overall = document.getElementById('overall');
-    overall.innerHTML = pages.length;
+    overall.innerHTML = "/ " + pages.length;
 
     current.onchange = function () {
       if (!isNaN(this.value) && this.value > 0 && this.value <= pages.length) {
@@ -80,6 +178,7 @@
       }
       current.value = currentId;
       fill(pages[currentId - 1]);
+      updatePageButtonState();
     };
 
     var leftFun = function () {
@@ -87,14 +186,16 @@
         currentId--;
         current.value = currentId;
         fill(pages[currentId - 1]);
+        updatePageButtonState();
       }
     };
 
     var rightFun = function () {
-      if (currentId < pages.length ) {
+      if (currentId < pages.length) {
         currentId++;
         current.value = currentId;
         fill(pages[currentId - 1]);
+        updatePageButtonState();
       }
     };
 
@@ -103,15 +204,39 @@
     var right = document.getElementById('right');
     right.onclick = rightFun;
 
+    var updatePageButtonState = function() {
+      pagePrevDisabled = current.value == 1;
+      pageNextDisabled = pages.length == current.value;
+      if (pagePrevDisabled) {
+        left.classList.add("pagePrev-disabled");
+      } else {
+        left.classList.remove("pagePrev-disabled");
+      }
+      if (pageNextDisabled) {
+        right.classList.add("pageNext-disabled");
+      } else {
+        right.classList.remove("pageNext-disabled");
+      }
+    }
+
   });
 
   function autoResize(el) {
-    var newheight = el.contentWindow.document.body.scrollHeight;
-    var newwidth = el.contentWindow.document.body.scrollWidth;
-    el.height = (newheight) + "px";
-    el.width = (newwidth) + "px";
+    el.height = (getDocHeight(el)) + "px";
+    el.width = (getDocWidth(el)) + "px";
   }
 
+  function getDocHeight(el) {
+    return Math.max(
+        el.contentWindow.document.body.scrollHeight, el.contentWindow.document.documentElement.scrollHeight
+    );
+  }
+
+  function getDocWidth(el) {
+    return Math.max(
+        el.contentWindow.document.body.scrollWidth, el.contentWindow.document.documentElement.scrollWidth
+    );
+  }
 
 </script>
 </body>
