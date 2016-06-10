@@ -20,12 +20,16 @@ package org.pentaho.reporting.platform.plugin.async;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.commons.io.input.NullInputStream;
 import org.apache.cxf.jaxrs.client.WebClient;
+import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.pentaho.platform.api.engine.IPentahoSession;
+import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
+import org.pentaho.platform.api.repository2.unified.RepositoryFile;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.engine.core.system.StandaloneSession;
@@ -33,6 +37,7 @@ import org.pentaho.platform.engine.core.system.boot.PlatformInitializationExcept
 import org.pentaho.platform.util.StringUtil;
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressEvent;
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
+import org.pentaho.reporting.libraries.repository.ContentIOException;
 import org.pentaho.reporting.platform.plugin.AuditWrapper;
 import org.pentaho.reporting.platform.plugin.JaxRsServerProvider;
 import org.pentaho.reporting.platform.plugin.JobManager;
@@ -43,16 +48,20 @@ import org.pentaho.reporting.platform.plugin.cache.PluginCacheManagerImpl;
 import org.pentaho.reporting.platform.plugin.cache.PluginSessionCache;
 import org.pentaho.reporting.platform.plugin.output.FastExportReportOutputHandlerFactory;
 import org.pentaho.reporting.platform.plugin.output.ReportOutputHandlerFactory;
+import org.pentaho.reporting.platform.plugin.repository.ReportContentRepository;
 import org.pentaho.reporting.platform.plugin.staging.AsyncJobFileStagingHandler;
 import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
 import org.pentaho.test.platform.engine.core.MicroPlatform;
 
 import javax.ws.rs.core.Response;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 
 import static org.junit.Assert.*;
@@ -73,8 +82,10 @@ public class AsyncIT {
 
   private static JaxRsServerProvider provider;
   private static IPentahoSession session;
+  private static IUnifiedRepository repository;
   SimpleReportingComponent component = mock( SimpleReportingComponent.class );
   AsyncJobFileStagingHandler handler = mock( AsyncJobFileStagingHandler.class );
+
 
   @BeforeClass
   public static void setUp() throws Exception {
@@ -86,14 +97,19 @@ public class AsyncIT {
     microPlatform.define( ReportOutputHandlerFactory.class, FastExportReportOutputHandlerFactory.class );
     microPlatform
       .define( "IPluginCacheManager", new PluginCacheManagerImpl( new PluginSessionCache( fileSystemCacheBackend ) ) );
-    final PentahoAsyncExecutor<AsyncReportState> executor = new PentahoAsyncExecutor<>( 2 );
+    final PentahoAsyncExecutor<AsyncReportState> executor = spy( new TestExecutor( 2, 100 ) );
     microPlatform.define( "IPentahoAsyncExecutor", executor );
     microPlatform.define( "ISchedulingDirectoryStrategy", new HomeSchedulingDirStrategy() );
     microPlatform.addLifecycleListener( new AsyncSystemListener() );
+
+    repository = mock( IUnifiedRepository.class );
+
+    microPlatform.define( "IUnifiedRepository", repository );
+
     microPlatform.start();
 
     session = new StandaloneSession();
-    PentahoSessionHolder.setSession( session );
+
   }
 
 
@@ -107,6 +123,16 @@ public class AsyncIT {
     provider = null;
   }
 
+  @After
+  public void after() {
+    reset( PentahoSystem.get( IPentahoAsyncExecutor.class ) );
+  }
+
+  @Before
+  public void before() {
+    PentahoSessionHolder.setSession( session );
+  }
+
   @Test
   public void testDefaultConfig() {
     final WebClient client = provider.getFreshClient();
@@ -115,20 +141,22 @@ public class AsyncIT {
     final Response response = client.get();
     final String json = response.readEntity( String.class );
     assertEquals( json,
-      "{\"pollingIntervalMilliseconds\":500,\"dialogThresholdMilliseconds\":1500,\"supportAsync\":true}" );
+      "{\"pollingIntervalMilliseconds\":500,\"dialogThresholdMilliseconds\":1500,\"promptForLocation\":false,"
+        + "\"supportAsync\":true}" );
   }
 
   @Test
   public void testCustomConfig() throws Exception {
     provider.stopServer();
-    provider.startServer( new JobManager( false, 100L, 300L ) );
+    provider.startServer( new JobManager( false, 100L, 300L, true ) );
     final String config = String.format( URL_FORMAT, "config", "" );
     final WebClient client = provider.getFreshClient();
     client.path( config );
     final Response response = client.get();
     final String json = response.readEntity( String.class );
     assertEquals( json,
-      "{\"pollingIntervalMilliseconds\":100,\"dialogThresholdMilliseconds\":300,\"supportAsync\":false}" );
+      "{\"pollingIntervalMilliseconds\":100,\"dialogThresholdMilliseconds\":300,\"promptForLocation\":true,"
+        + "\"supportAsync\":false}" );
     provider.stopServer();
     provider.startServer( new JobManager() );
   }
@@ -201,7 +229,7 @@ public class AsyncIT {
     final String config = String.format( URL_FORMAT, UUID.randomUUID(), "/schedule" );
     client.path( config );
     final Response response = client.get();
-    assertEquals( 200, response.getStatus() );
+    assertEquals( 404, response.getStatus() );
 
   }
 
@@ -218,6 +246,35 @@ public class AsyncIT {
     final Response response = client.get();
     assertEquals( 404, response.getStatus() );
 
+  }
+
+
+  @SuppressWarnings( "unchecked" )
+  @Test
+  public void testScheduleTwice() {
+    final IPentahoAsyncExecutor executor = PentahoSystem.get( IPentahoAsyncExecutor.class );
+    final IAsyncReportExecution mock = mockExec();
+
+
+    final UUID uuid = executor.addTask( mock, PentahoSessionHolder.getSession() );
+    WebClient client = provider.getFreshClient();
+    final String config = String.format( URL_FORMAT, uuid, "/schedule" );
+    client.path( config );
+    Response response = client.get();
+    assertEquals( 200, response.getStatus() );
+    WebClient client1 = provider.getFreshClient();
+    client1.path( String.format( URL_FORMAT, uuid, "/status" ) );
+    Response response1 = client1.get();
+    final String json = response1.readEntity( String.class );
+    assertTrue( json.contains( "SCHEDULED" ) );
+
+    WebClient client2 = provider.getFreshClient();
+    final String config2 = String.format( URL_FORMAT, uuid, "/schedule" );
+    client2.path( config2 );
+    Response response2 = client2.get();
+    assertEquals( 404, response2.getStatus() );
+
+    STATUS = AsyncExecutionStatus.FAILED;
   }
 
 
@@ -287,30 +344,19 @@ public class AsyncIT {
   @Test
   public void testRequestPage() {
     final IPentahoAsyncExecutor executor = PentahoSystem.get( IPentahoAsyncExecutor.class );
-    final IAsyncReportExecution mock = mock( IAsyncReportExecution.class );
-    final IAsyncReportState state = getState();
-    when( mock.getState() ).thenReturn( state );
-    doAnswer( new Answer() {
-      @Override public Object answer( final InvocationOnMock invocation ) throws Throwable {
-        final Object o = invocation.getArguments()[ 0 ];
-        PAGE = (int) o;
-        return o;
-      }
-    } ).when( mock ).requestPage( anyInt() );
 
-    final UUID uuid = executor.addTask( mock, PentahoSessionHolder.getSession() );
+
+    final PentahoAsyncReportExecution execution = mockExec();
+
+
+    final UUID uuid = executor.addTask( execution, PentahoSessionHolder.getSession() );
     WebClient client = provider.getFreshClient();
     final String config = String.format( URL_FORMAT, uuid, "/requestPage/100" );
     client.path( config );
     Response response = client.get();
     assertEquals( 200, response.getStatus() );
     assertEquals( "100", response.readEntity( String.class ) );
-    client = provider.getFreshClient();
-    client.path( String.format( URL_FORMAT, uuid, "/status" ) );
-    response = client.get();
-    final String json = response.readEntity( String.class );
-    assertTrue( json.contains( "\"page\":100" ) );
-    STATUS = AsyncExecutionStatus.FAILED;
+
     PAGE = 0;
   }
 
@@ -326,9 +372,7 @@ public class AsyncIT {
     final String config = String.format( URL_FORMAT, UUID.randomUUID(), "/requestPage/100" );
     client.path( config );
     final Response response = client.get();
-    assertEquals( 200, response.getStatus() );
-    assertEquals( "100", response.readEntity( String.class ) );
-
+    assertEquals( 404, response.getStatus() );
   }
 
   @SuppressWarnings( "unchecked" )
@@ -465,6 +509,27 @@ public class AsyncIT {
 
   }
 
+
+  @SuppressWarnings( "unchecked" )
+  @Test
+  public void testContentFutureFailed() throws ExecutionException, InterruptedException {
+    final IPentahoAsyncExecutor executor = PentahoSystem.get( IPentahoAsyncExecutor.class );
+    final AbstractAsyncReportExecution mock = mock( AbstractAsyncReportExecution.class );
+    final IAsyncReportState state = getState();
+    when( mock.getState() ).thenReturn( state );
+    final ListenableFuture listenableFuture = mock( ListenableFuture.class );
+    when( mock.delegate( any( ListenableFuture.class ) ) ).thenReturn( listenableFuture );
+    when( listenableFuture.get() ).thenThrow( new RuntimeException() );
+    STATUS = AsyncExecutionStatus.FINISHED;
+    final UUID uuid = executor.addTask( mock, PentahoSessionHolder.getSession() );
+    WebClient client = provider.getFreshClient();
+    final String config = String.format( URL_FORMAT, uuid, "/content" );
+    client.path( config );
+    Response response = client.get();
+    assertEquals( 500, response.getStatus() );
+    STATUS = AsyncExecutionStatus.FAILED;
+  }
+
   @Test public void testAutoScheduling() throws InterruptedException, ExecutionException {
 
 
@@ -481,7 +546,8 @@ public class AsyncIT {
     for ( final Integer[] params : objects ) {
 
       final PentahoAsyncExecutor exec = spy( new PentahoAsyncExecutor( 1, params[ 0 ] ) {
-        @Override public void schedule( final UUID id, final IPentahoSession session ) {
+        @Override public boolean schedule( final UUID id, final IPentahoSession session ) {
+          return true;
         }
       } );
 
@@ -500,7 +566,7 @@ public class AsyncIT {
           protected AsyncReportStatusListener createListener( final UUID id,
                                                               final List<? extends ReportProgressListener>
                                                                 callbackListener ) {
-            return new AsyncReportStatusListener( "display_path", id, "text/html", callbackListener );
+            return new AsyncReportStatusListener( getReportPath(), id, getMimeType(), callbackListener );
           }
 
           @Override public IFixedSizeStreamingContent call() throws Exception {
@@ -515,17 +581,187 @@ public class AsyncIT {
 
   }
 
+
+  @SuppressWarnings( "unchecked" )
+  @Test
+  public void testUpdateScheduleLocation() throws Exception {
+    try {
+
+
+      provider.stopServer();
+      provider.startServer( new JobManager( true, 1000, 1000, true ) );
+
+      final IPentahoAsyncExecutor executor = PentahoSystem.get( IPentahoAsyncExecutor.class );
+      final IAsyncReportExecution mock = mockExec();
+
+      final UUID uuid = executor.addTask( mock, PentahoSessionHolder.getSession() );
+
+      WebClient client2 = provider.getFreshClient();
+      final String config2 = String.format( URL_FORMAT, uuid, "/schedule" );
+      client2.path( config2 );
+      Response response2 = client2.get();
+      assertEquals( 200, response2.getStatus() );
+
+      WebClient client = provider.getFreshClient();
+      final UUID folderId = UUID.randomUUID();
+      final String config = String.format( URL_FORMAT, uuid, "/schedule/location" );
+      client.path( config );
+      client.query( "folderId", folderId );
+      client.query( "newName", "test" );
+
+      Response response = client.post( null );
+      assertEquals( 200, response.getStatus() );
+      verify( executor, times( 1 ) )
+        .updateSchedulingLocation( any(), any(), any(), any() );
+
+      STATUS = AsyncExecutionStatus.FAILED;
+    } finally {
+      provider.stopServer();
+      provider.startServer( new JobManager() );
+    }
+  }
+
+
+  @SuppressWarnings( "unchecked" )
+  @Test
+  public void testUpdateScheduleLocationNotScheduled() throws Exception {
+    try {
+
+
+      provider.stopServer();
+      provider.startServer( new JobManager( true, 1000, 1000, true ) );
+
+      final IPentahoAsyncExecutor executor = PentahoSystem.get( IPentahoAsyncExecutor.class );
+      final IAsyncReportExecution mock = mockExec();
+
+      final UUID uuid = executor.addTask( mock, PentahoSessionHolder.getSession() );
+
+      WebClient client = provider.getFreshClient();
+      final UUID folderId = UUID.randomUUID();
+      final String config = String.format( URL_FORMAT, uuid, "/schedule/location" );
+      client.path( config );
+      client.query( "folderId", folderId );
+
+      Response response = client.post( null );
+      assertEquals( 404, response.getStatus() );
+
+
+      STATUS = AsyncExecutionStatus.FAILED;
+    } finally {
+      provider.stopServer();
+      provider.startServer( new JobManager() );
+    }
+  }
+
+  @SuppressWarnings( "unchecked" )
+  @Test
+  public void testUpdateScheduleLocationDisabledPrompting() throws Exception {
+
+    final IPentahoAsyncExecutor executor = PentahoSystem.get( IPentahoAsyncExecutor.class );
+    final IAsyncReportExecution mock = mockExec();
+
+
+    final UUID uuid = executor.addTask( mock, PentahoSessionHolder.getSession() );
+    WebClient client = provider.getFreshClient();
+    final UUID folderId = UUID.randomUUID();
+    final String config = String.format( URL_FORMAT, uuid, "/schedule/location" );
+    client.path( config );
+    client.query( "folderId", folderId );
+
+    Response response = client.post( null );
+    assertEquals( 404, response.getStatus() );
+
+    STATUS = AsyncExecutionStatus.FAILED;
+  }
+
+  @SuppressWarnings( "unchecked" )
+  @Test
+  public void testUpdateScheduleLocationWrongID() {
+
+    final UUID folderId = UUID.randomUUID();
+    WebClient client = provider.getFreshClient();
+    final String config = String.format( URL_FORMAT, UUID.randomUUID(), "/sheduling/location?targetId=" + folderId );
+    client.path( config );
+    client.query( "folderId", folderId );
+
+    Response response = client.post( null );
+    assertEquals( 404, response.getStatus() );
+
+    STATUS = AsyncExecutionStatus.FAILED;
+  }
+
+
+  @SuppressWarnings( "unchecked" )
+  @Test
+  public void testLogout() {
+
+    final IPentahoAsyncExecutor executor = PentahoSystem.get( IPentahoAsyncExecutor.class );
+    final IAsyncReportExecution mock = mockExec();
+
+    final UUID uuid = executor.addTask( mock, PentahoSessionHolder.getSession() );
+    PentahoSystem.invokeLogoutListeners( PentahoSessionHolder.getSession() );
+    final WebClient client = provider.getFreshClient();
+    final String config = String.format( URL_FORMAT, uuid, "/status" );
+    client.path( config );
+    final Response response = client.get();
+    assertEquals( 404, response.getStatus() );
+  }
+
+
+  @SuppressWarnings( "unchecked" )
+  @Test
+  public void testScheduleTwiceNoJobManager() {
+
+    final CountDownLatch countDownLatch = new CountDownLatch( 1 );
+    final IPentahoAsyncExecutor executor = PentahoSystem.get( IPentahoAsyncExecutor.class );
+    final IAsyncReportExecution mock =
+      new PentahoAsyncReportExecution( "junit-path", component, handler, session, "not null", AuditWrapper.NULL ) {
+
+        @Override public IFixedSizeStreamingContent call() throws Exception {
+          countDownLatch.await();
+          return new NullSizeStreamingContent();
+        }
+      };
+
+
+    final UUID uuid = executor.addTask( mock, session );
+    assertTrue( executor.schedule( uuid, session ) );
+    assertFalse( executor.schedule( uuid, session ) );
+    countDownLatch.countDown();
+
+  }
+
+
+  @SuppressWarnings( "unchecked" )
+  @Test
+  public void testScheduleNoSession() throws Exception {
+    final boolean[] flag = { false };
+    PentahoSessionHolder.removeSession();
+    new WriteToJcrTask( mockExec(), mock( InputStream.class ) ) {
+      @Override protected ReportContentRepository getReportContentRepository( RepositoryFile outputFolder ) {
+        if ( outputFolder == null ) {
+          flag[ 0 ] = true;
+        }
+        return null;
+      }
+    }.call();
+    assertTrue( flag[0] );
+    PentahoSessionHolder.setSession( session );
+
+  }
+
   private PentahoAsyncReportExecution mockExec() {
     return new PentahoAsyncReportExecution( "junit-path", component, handler, session, "not null",
       AuditWrapper.NULL ) {
       @Override
-      protected AsyncReportStatusListener createListener( UUID id,
-                                                          List<? extends ReportProgressListener> callbackListener ) {
-        return new AsyncReportStatusListener( "display_path", id, "text/html", callbackListener );
+      protected AsyncReportStatusListener createListener( final UUID id,
+                                                          final List<? extends ReportProgressListener>
+                                                            callbackListener ) {
+        return new AsyncReportStatusListener( getReportPath(), id, getMimeType(), callbackListener );
       }
 
       @Override public IAsyncReportState getState() {
-        return AsyncIT.this.getState();
+        return AsyncIT.getState();
       }
 
       @Override public boolean schedule() {
@@ -587,6 +823,32 @@ public class AsyncIT {
       }
 
     };
+  }
+
+  public static class TestExecutor extends PentahoAsyncExecutor<AsyncReportState> {
+
+    public TestExecutor( final int capacity, final int autoSchedulerThreshold ) {
+      super( capacity, autoSchedulerThreshold );
+    }
+
+    @Override protected Callable<Serializable> getWriteToJcrTask( final IFixedSizeStreamingContent result,
+                                                                  final IAsyncReportExecution<? extends
+                                                                    IAsyncReportState> runningTask ) {
+
+      final FakeLocation fakeLocation = new FakeLocation();
+      final ReportContentRepository contentRepository = mock( ReportContentRepository.class );
+      try {
+        when( contentRepository.getRoot() ).thenReturn( fakeLocation );
+      } catch ( final ContentIOException e ) {
+        e.printStackTrace();
+      }
+      return new WriteToJcrTask( runningTask, result.getStream() ) {
+        @Override protected ReportContentRepository getReportContentRepository( final RepositoryFile outputFolder ) {
+          return contentRepository;
+        }
+      };
+
+    }
   }
 
 }

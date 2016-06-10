@@ -22,19 +22,27 @@ import junit.framework.Assert;
 import org.apache.poi.util.IOUtils;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.Timeout;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+import org.pentaho.commons.util.repository.exception.RuntimeException;
 import org.pentaho.platform.api.engine.IApplicationContext;
 import org.pentaho.platform.api.engine.IPentahoSession;
+import org.pentaho.platform.api.engine.ISecurityHelper;
+import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
+import org.pentaho.platform.api.repository2.unified.RepositoryFile;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
+import org.pentaho.platform.engine.core.system.StandaloneSession;
+import org.pentaho.platform.engine.security.SecurityHelper;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
 import org.pentaho.reporting.libraries.base.config.ModifiableConfiguration;
+import org.pentaho.reporting.libraries.repository.ContentIOException;
 import org.pentaho.reporting.platform.plugin.AuditWrapper;
 import org.pentaho.reporting.platform.plugin.SimpleReportingComponent;
 import org.pentaho.reporting.platform.plugin.async.PentahoAsyncExecutor.CompositeKey;
+import org.pentaho.reporting.platform.plugin.repository.ReportContentRepository;
 import org.pentaho.reporting.platform.plugin.staging.AsyncJobFileStagingHandler;
 import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
 
@@ -42,11 +50,14 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.Serializable;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 
 import static org.junit.Assert.*;
@@ -60,7 +71,7 @@ import static org.mockito.Mockito.*;
  */
 public class PentahoAsyncReportExecutorTest {
 
-  @Rule public Timeout globalTimeout = new Timeout( 10000 );
+  public static final int MILLIS = 150;
 
   IPentahoSession session1 = mock( IPentahoSession.class );
   IPentahoSession session2 = mock( IPentahoSession.class );
@@ -81,6 +92,8 @@ public class PentahoAsyncReportExecutorTest {
 
   IFixedSizeStreamingContent input;
   private int autoSchedulerThreshold = 0;
+  private IUnifiedRepository repository;
+
 
   @Before public void before() throws Exception {
     PentahoSystem.clearObjectFactory();
@@ -100,13 +113,38 @@ public class PentahoAsyncReportExecutorTest {
 
     when( session1.getId() ).thenReturn( sessionUid1.toString() );
     when( session2.getId() ).thenReturn( sessionUid2.toString() );
+    when( session1.getName() ).thenReturn( "test" );
+    when( session2.getName() ).thenReturn( "test" );
 
     String tempFolder = System.getProperty( "java.io.tmpdir" );
     Path junitPrivate = Paths.get( tempFolder ).resolve( "JUNIT_" + UUID.randomUUID().toString() );
     junitPrivate.toFile().deleteOnExit();
 
     when( context.getSolutionPath( anyString() ) ).thenReturn( junitPrivate.toString() );
+
     PentahoSystem.setApplicationContext( context );
+    final ISecurityHelper iSecurityHelper = mock( ISecurityHelper.class );
+    when( iSecurityHelper.runAsUser( any(), any() ) ).thenAnswer( new Answer<Object>() {
+      @Override public Object answer( InvocationOnMock invocation ) throws Throwable {
+        ( (Callable) invocation.getArguments()[ 1 ] ).call();
+        return null;
+      }
+    } );
+
+    SecurityHelper.setMockInstance( iSecurityHelper );
+
+    repository = mock( IUnifiedRepository.class );
+    final ISchedulingDirectoryStrategy strategy = mock( ISchedulingDirectoryStrategy.class );
+    final RepositoryFile targetDir = mock( RepositoryFile.class );
+    when( strategy.getSchedulingDir( repository ) ).thenReturn( targetDir );
+    when( targetDir.getPath() ).thenReturn( "/test" );
+    final RepositoryFile file = mock( RepositoryFile.class );
+    when( repository.getFile( startsWith( "/test" ) ) ).thenReturn( file );
+    when( file.getId() ).thenReturn( "test_id" );
+
+    PentahoSystem.registerObject( repository, IUnifiedRepository.class );
+    PentahoSystem.registerObject( strategy, ISchedulingDirectoryStrategy.class );
+
   }
 
   @After
@@ -125,7 +163,7 @@ public class PentahoAsyncReportExecutorTest {
     UUID id = exec.addTask( task1, session1 );
     Future<IFixedSizeStreamingContent> result = exec.getFuture( id, session1 );
     while ( result.isDone() ) {
-      Thread.sleep( 150 );
+      Thread.sleep( MILLIS );
     }
     IFixedSizeStreamingContent resultInput = result.get();
 
@@ -257,6 +295,8 @@ public class PentahoAsyncReportExecutorTest {
 
 
   @Test public void testSchedule() {
+
+    final CountDownLatch countDownLatch = new CountDownLatch( 1 );
     final PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 1, autoSchedulerThreshold );
 
     final TestListener testListener = new TestListener( "1", UUID.randomUUID(), "" );
@@ -269,9 +309,15 @@ public class PentahoAsyncReportExecutorTest {
                                                           List<? extends ReportProgressListener> listeners ) {
         return testListener;
       }
+
+      @Override public IFixedSizeStreamingContent call() throws Exception {
+        countDownLatch.await();
+        return new NullSizeStreamingContent();
+      }
     }, session1 );
 
-    exec.schedule( id1, session1 );
+    assertTrue( exec.schedule( id1, session1 ) );
+    countDownLatch.countDown();
 
     final IAsyncReportState state = exec.getReportState( id1, session1 );
     assertNotNull( state );
@@ -344,4 +390,371 @@ public class PentahoAsyncReportExecutorTest {
     assertEquals( 100, testListener.getRequestedPage() );
 
   }
+
+  @Test public void testRequestPageNoTask() {
+    final PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 1, autoSchedulerThreshold );
+
+    final TestListener testListener = new TestListener( "1", UUID.randomUUID(), "" );
+
+    // must have two separate instances, as callable holds unique ID and listener for each addTask(..)
+    final UUID id1 = exec.addTask( new PentahoAsyncReportExecution( "junit-path",
+      component, handler, session1, "not null", AuditWrapper.NULL ) {
+      @Override
+      protected AsyncReportStatusListener createListener( final UUID id,
+                                                          List<? extends ReportProgressListener> listeners ) {
+        return testListener;
+      }
+    }, session1 );
+
+    exec.requestPage( UUID.randomUUID(), session1, 100 );
+
+    final IAsyncReportState state = exec.getReportState( id1, session1 );
+    assertNotNull( state );
+    assertEquals( 0, testListener.getRequestedPage() );
+
+  }
+
+
+  @Test( expected = IllegalStateException.class ) public void testScheduleAfterCallback() throws InterruptedException {
+    final CountDownLatch latch = new CountDownLatch( 1 );
+    final PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 1, autoSchedulerThreshold ) {
+
+
+      @Override protected Callable<Serializable> getWriteToJcrTask( final IFixedSizeStreamingContent result,
+                                                                    final IAsyncReportExecution runningTask ) {
+        final FakeLocation fakeLocation = new FakeLocation();
+        final ReportContentRepository contentRepository = mock( ReportContentRepository.class );
+        try {
+          when( contentRepository.getRoot() ).thenReturn( fakeLocation );
+        } catch ( final ContentIOException e ) {
+          e.printStackTrace();
+        }
+        return new WriteToJcrTask( runningTask, result.getStream() ) {
+          @Override protected ReportContentRepository getReportContentRepository( final RepositoryFile outputFolder ) {
+            latch.countDown();
+            return contentRepository;
+          }
+        };
+      }
+    };
+
+    final TestListener testListener = new TestListener( "1", UUID.randomUUID(), "" );
+
+    // must have two separate instances, as callable holds unique ID and listener for each addTask(..)
+    final UUID id1 = exec.addTask( new PentahoAsyncReportExecution( "junit-path",
+      component, handler, session1, "not null", AuditWrapper.NULL ) {
+      @Override public IFixedSizeStreamingContent call() throws Exception {
+        final IFixedSizeStreamingContent call = super.call();
+
+        return call;
+      }
+
+      @Override
+      protected AsyncReportStatusListener createListener( final UUID id,
+                                                          List<? extends ReportProgressListener> listeners ) {
+        return testListener;
+      }
+    }, session1 );
+
+    assertTrue( exec.schedule( id1, session1 ) );
+
+
+    final IAsyncReportState state = exec.getReportState( id1, session1 );
+    assertNotNull( state );
+    assertEquals( AsyncExecutionStatus.SCHEDULED, testListener.getState().getStatus() );
+
+
+    latch.await();
+    Thread.sleep( MILLIS );
+
+    exec.schedule( id1, session1 );
+  }
+
+  @Test public void testScheduleBeforeCallback() throws InterruptedException {
+    final CountDownLatch latch = new CountDownLatch( 1 );
+
+    final PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 1, autoSchedulerThreshold );
+
+    final TestListener testListener = new TestListener( "1", UUID.randomUUID(), "" );
+
+    // must have two separate instances, as callable holds unique ID and listener for each addTask(..)
+    final PentahoAsyncReportExecution task = spy( new PentahoAsyncReportExecution( "junit-path",
+      component, handler, session1, "not null", AuditWrapper.NULL ) {
+      @Override public IFixedSizeStreamingContent call() throws Exception {
+        final IFixedSizeStreamingContent call = super.call();
+        latch.await();
+        return call;
+      }
+
+      @Override
+      protected AsyncReportStatusListener createListener( final UUID id,
+                                                          final List<? extends ReportProgressListener> listeners ) {
+        return testListener;
+      }
+    } );
+
+    final UUID id1 = exec.addTask( task, session1 );
+
+    assertTrue( exec.schedule( id1, session1 ) );
+
+    latch.countDown();
+
+    assertFalse( exec.schedule( id1, session1 ) );
+
+  }
+
+
+  @Test public void testScheduleEmptySessionName() {
+    final PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 1, autoSchedulerThreshold );
+
+    final TestListener testListener = new TestListener( "1", UUID.randomUUID(), "" );
+
+    // must have two separate instances, as callable holds unique ID and listener for each addTask(..)
+    final StandaloneSession namelessSession = new StandaloneSession( "" );
+
+    final PentahoAsyncReportExecution task = spy( new PentahoAsyncReportExecution( "junit-path",
+      component, handler, namelessSession, "not null", AuditWrapper.NULL ) {
+      @Override
+      protected AsyncReportStatusListener createListener( final UUID id,
+                                                          List<? extends ReportProgressListener> listeners ) {
+        return testListener;
+      }
+    } );
+    final UUID id1 = exec.addTask( task, namelessSession );
+
+    assertFalse( exec.schedule( id1, namelessSession ) );
+
+  }
+
+  @Test( expected = IllegalStateException.class ) public void testScheduleNoTask() {
+    final PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 1, autoSchedulerThreshold );
+
+    final TestListener testListener = new TestListener( "1", UUID.randomUUID(), "" );
+
+    // must have two separate instances, as callable holds unique ID and listener for each addTask(..)
+
+    final PentahoAsyncReportExecution task = new PentahoAsyncReportExecution( "junit-path",
+      component, handler, session1, "not null", AuditWrapper.NULL ) {
+      @Override
+      protected AsyncReportStatusListener createListener( final UUID id,
+                                                          List<? extends ReportProgressListener> listeners ) {
+        return testListener;
+      }
+    };
+    final UUID id1 = exec.addTask( task, session1 );
+
+    exec.schedule( UUID.randomUUID(), session1 );
+
+  }
+
+
+  @Test public void testUpdateSchedulingLocation() {
+
+    final PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 1, autoSchedulerThreshold );
+
+    final TestListener testListener = new TestListener( "1", UUID.randomUUID(), "" );
+
+    // must have two separate instances, as callable holds unique ID and listener for each addTask(..)
+    final UUID id1 = exec.addTask( new PentahoAsyncReportExecution( "junit-path",
+      component, handler, session1, "not null", AuditWrapper.NULL ) {
+      @Override
+      protected AsyncReportStatusListener createListener( final UUID id,
+                                                          List<? extends ReportProgressListener> listeners ) {
+        return testListener;
+      }
+    }, session1 );
+
+    assertTrue( exec.schedule( id1, session1 ) );
+
+    final IAsyncReportState state = exec.getReportState( id1, session1 );
+    assertNotNull( state );
+    assertEquals( AsyncExecutionStatus.SCHEDULED, testListener.getState().getStatus() );
+    exec.updateSchedulingLocation( id1, session1, "/target", "test" );
+
+  }
+
+  @Test( expected = IllegalStateException.class ) public void testUpdateSchedulingLocationNoTask() {
+
+    final PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 1, autoSchedulerThreshold );
+
+    final TestListener testListener = new TestListener( "1", UUID.randomUUID(), "" );
+
+    // must have two separate instances, as callable holds unique ID and listener for each addTask(..)
+    final UUID id1 = exec.addTask( new PentahoAsyncReportExecution( "junit-path",
+      component, handler, session1, "not null", AuditWrapper.NULL ) {
+      @Override
+      protected AsyncReportStatusListener createListener( final UUID id,
+                                                          List<? extends ReportProgressListener> listeners ) {
+        return testListener;
+      }
+    }, session1 );
+
+    exec.updateSchedulingLocation( UUID.randomUUID(), session1, "/target", "test" );
+
+  }
+
+
+  @Test public void testUpdateSchedulingLocationRaceCondition() throws InterruptedException {
+
+    final CountDownLatch latch = new CountDownLatch( 2 );
+
+    final PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 1, autoSchedulerThreshold );
+
+    final TestListener testListener = new TestListener( "1", UUID.randomUUID(), "" );
+
+    // must have two separate instances, as callable holds unique ID and listener for each addTask(..)
+    final PentahoAsyncReportExecution task = spy( new PentahoAsyncReportExecution( "junit-path",
+      component, handler, session1, "not null", AuditWrapper.NULL ) {
+      @Override
+      protected AsyncReportStatusListener createListener( final UUID id,
+                                                          List<? extends ReportProgressListener> listeners ) {
+        return testListener;
+      }
+
+      @Override public IFixedSizeStreamingContent call() throws Exception {
+        latch.countDown();
+        return super.call();
+      }
+    } );
+    final UUID id1 = exec.addTask( task, session1 );
+
+
+    exec.updateSchedulingLocation( id1, session1, "/target", "test" );
+
+
+  }
+
+
+  @Test public void testNotifyListeners() throws InterruptedException {
+    final CountDownLatch latch = new CountDownLatch( 1 );
+
+    final UUID uuid = UUID.randomUUID();
+
+    final PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 1, autoSchedulerThreshold ) {
+      @Override protected Callable<Serializable> getWriteToJcrTask( final IFixedSizeStreamingContent result,
+                                                                    final IAsyncReportExecution runningTask ) {
+        return () -> {
+          latch.countDown();
+          return uuid;
+        };
+      }
+    };
+
+    final TestListener testListener = new TestListener( "1", UUID.randomUUID(), "" );
+
+    // must have two separate instances, as callable holds unique ID and listener for each addTask(..)
+    final UUID id1 = exec.addTask( new PentahoAsyncReportExecution( "junit-path",
+      component, handler, session1, "not null", AuditWrapper.NULL ) {
+      @Override
+      protected AsyncReportStatusListener createListener( final UUID id,
+                                                          List<? extends ReportProgressListener> listeners ) {
+        return testListener;
+      }
+    }, session1 );
+
+    assertTrue( exec.schedule( id1, session1 ) );
+
+    final IAsyncReportState state = exec.getReportState( id1, session1 );
+    assertNotNull( state );
+    assertEquals( AsyncExecutionStatus.SCHEDULED, testListener.getState().getStatus() );
+    exec.updateSchedulingLocation( id1, session1, "/target", "test" );
+
+    latch.await();
+
+    Thread.sleep( MILLIS );
+
+    verify( repository, times( 1 ) ).getFileById( uuid );
+
+  }
+
+  @Test public void testRequestLocationAfterCallback() throws InterruptedException {
+    final CountDownLatch latch = new CountDownLatch( 1 );
+    final PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 1, autoSchedulerThreshold ) {
+
+
+      @Override protected Callable<Serializable> getWriteToJcrTask( final IFixedSizeStreamingContent result,
+                                                                    final IAsyncReportExecution runningTask ) {
+        final FakeLocation fakeLocation = new FakeLocation();
+        final ReportContentRepository contentRepository = mock( ReportContentRepository.class );
+        try {
+          when( contentRepository.getRoot() ).thenReturn( fakeLocation );
+        } catch ( final ContentIOException e ) {
+          e.printStackTrace();
+        }
+        return new WriteToJcrTask( runningTask, result.getStream() ) {
+          @Override protected ReportContentRepository getReportContentRepository( final RepositoryFile outputFolder ) {
+            return contentRepository;
+          }
+        };
+      }
+    };
+
+    final TestListener testListener = new TestListener( "1", UUID.randomUUID(), "" );
+
+    // must have two separate instances, as callable holds unique ID and listener for each addTask(..)
+    final UUID id1 = exec.addTask( new PentahoAsyncReportExecution( "junit-path",
+      component, handler, session1, "not null", AuditWrapper.NULL ) {
+      @Override public IFixedSizeStreamingContent call() throws Exception {
+        final IFixedSizeStreamingContent call = super.call();
+        latch.countDown();
+        return call;
+      }
+
+      @Override
+      protected AsyncReportStatusListener createListener( final UUID id,
+                                                          List<? extends ReportProgressListener> listeners ) {
+        return testListener;
+      }
+    }, session1 );
+
+    assertTrue( exec.schedule( id1, session1 ) );
+
+
+    final IAsyncReportState state = exec.getReportState( id1, session1 );
+    assertNotNull( state );
+    assertEquals( AsyncExecutionStatus.SCHEDULED, testListener.getState().getStatus() );
+
+
+    latch.await();
+    Thread.sleep( MILLIS );
+
+    exec.updateSchedulingLocation( id1, session1, "test", "test" );
+
+    verify( repository, times( 1 ) ).getFileById( "test_id" );
+  }
+
+  @Test
+  public void testOnFailure() throws InterruptedException {
+
+
+    final CountDownLatch latch = new CountDownLatch( 1 );
+    final PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 1 );
+    final TestListener testListener = new TestListener( "1", UUID.randomUUID(), "" );
+
+    final UUID id1 = exec.addTask( new PentahoAsyncReportExecution( "junit-path",
+      component, handler, session1, "not null", AuditWrapper.NULL ) {
+      @Override public IFixedSizeStreamingContent call() throws Exception {
+
+        latch.await();
+        throw new RuntimeException();
+      }
+
+      @Override
+      protected AsyncReportStatusListener createListener( final UUID id,
+                                                          final List<? extends ReportProgressListener> listeners ) {
+        return testListener;
+      }
+    }, session1 );
+
+    exec.schedule( id1, session1 );
+    assertNotNull( exec.getFuture( id1, session1 ) );
+    latch.countDown();
+    Thread.sleep( MILLIS );
+    assertNull( exec.getFuture( id1, session1 ) );
+
+
+  }
+
+
 }
+

@@ -115,7 +115,8 @@ public abstract class AbstractAsyncReportExecution<TReportState extends IAsyncRe
       messageType, auditId, "", 0, null );
   }
 
-  protected AsyncReportStatusListener createListener( final UUID instanceId, final List<? extends ReportProgressListener> callbackListeners ) {
+  protected AsyncReportStatusListener createListener( final UUID instanceId,
+                                                      final List<? extends ReportProgressListener> callbackListeners ) {
     return new AsyncReportStatusListener( getReportPath(), instanceId, getMimeType(), callbackListeners );
   }
 
@@ -145,9 +146,13 @@ public abstract class AbstractAsyncReportExecution<TReportState extends IAsyncRe
     return this.url;
   }
 
-  @Override public boolean schedule() {
-    listener.setStatus( AsyncExecutionStatus.SCHEDULED );
-    return listener.isScheduled();
+  @Override public synchronized boolean schedule() {
+    if ( listener.isScheduled() ) {
+      return false;
+    } else {
+      listener.setStatus( AsyncExecutionStatus.SCHEDULED );
+      return listener.isScheduled();
+    }
   }
 
   public static final IFixedSizeStreamingContent NULL = new NullSizeStreamingContent();
@@ -169,9 +174,11 @@ public abstract class AbstractAsyncReportExecution<TReportState extends IAsyncRe
 
 
   @Override
-  public ListenableFuture<IFixedSizeStreamingContent> delegate( final ListenableFuture<IFixedSizeStreamingContent> delegate ) {
+  public ListenableFuture<IFixedSizeStreamingContent> delegate(
+    final ListenableFuture<IFixedSizeStreamingContent> delegate ) {
     return new CancelableListenableFuture( delegate );
   }
+
   /**
    * Implements cancel functionality
    */

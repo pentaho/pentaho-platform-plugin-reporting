@@ -104,6 +104,7 @@
       2) Status polling interval (ms) - how often browser asks server for running report status
       3) Dialog showing threshold (ms) - minimum execution time to show progress dialog
        If report was generated faster -  dialog would not be shown. Proposed minimum ratio is 3:1 to polling interval.
+      4) Whether to prompt for location when scheduling the report
       -->
   <bean class="org.pentaho.reporting.platform.plugin.JobManager">
     <!-- async execution enabled/disabled -->
@@ -112,6 +113,8 @@
     <constructor-arg type="long" value="500" />
     <!-- dialog threshold -->
     <constructor-arg type="long" value="1500" />
+    <!-- prompt for scheduling location -->
+    <constructor-arg type="boolean" value="true" />
   </bean>
 
   <!--Default scheduling from user console will save reports to user's home directory-->
