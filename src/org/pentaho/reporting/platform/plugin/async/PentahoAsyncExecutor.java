@@ -31,13 +31,16 @@ import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.engine.security.SecurityHelper;
 import org.pentaho.platform.util.StringUtil;
 import org.pentaho.reporting.libraries.base.util.ArgumentNullException;
+import org.pentaho.reporting.libraries.base.util.StringUtils;
 import org.pentaho.reporting.platform.plugin.staging.AsyncJobFileStagingHandler;
 import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -57,18 +60,22 @@ public class PentahoAsyncExecutor<TReportState extends IAsyncReportState>
   private ListeningExecutorService executorService;
 
   private final int autoSchedulerThreshold;
+  private final MemorizeSchedulingLocationListener schedulingLocationListener;
+  private Map<CompositeKey, ISchedulingListener> writeToJcrListeners;
 
   /**
-   * @param capacity
-   * @param autoSchedulerThreshold
+   * @param capacity               thread pool capacity
+   * @param autoSchedulerThreshold quantity of rows after which reports are automatically scheduled
    */
   public PentahoAsyncExecutor( final int capacity, final int autoSchedulerThreshold ) {
     this.autoSchedulerThreshold = autoSchedulerThreshold;
-    log.info( "Initialized reporting  async execution fixed thread pool with capacity: " + capacity );
+    log.info( "Initialized reporting async execution fixed thread pool with capacity: " + capacity );
     executorService =
       new DelegatedListenableExecutor( new ThreadPoolExecutor( capacity, capacity, 0L, TimeUnit.MILLISECONDS,
-        new LinkedBlockingQueue<Runnable>() ) );
+        new LinkedBlockingQueue<>() ) );
     PentahoSystem.addLogoutListener( this );
+    this.writeToJcrListeners = new ConcurrentHashMap<>();
+    this.schedulingLocationListener = new MemorizeSchedulingLocationListener();
   }
 
 
@@ -77,15 +84,24 @@ public class PentahoAsyncExecutor<TReportState extends IAsyncReportState>
     this( capacity, 0 );
   }
 
-  // default visibility for testing purpose
-  protected static class CompositeKey {
+  /**
+   * This executor stores jobs (identified by their id) in a separate partition for each user (identified by the
+   * session-id). We don't let others access our session or job-id, but need to match against the session-id for
+   * onLogout clean-ups.
+   */
+  public static class CompositeKey {
 
     private String sessionId;
     private String uuid;
 
+    // default visibility for testing purpose
     CompositeKey( final IPentahoSession session, final UUID id ) {
       this.uuid = id.toString();
       this.sessionId = session.getId();
+    }
+
+    public boolean isSameSession( final String sessionId ) {
+      return StringUtils.equals( sessionId, this.sessionId );
     }
 
     private String getSessionId() {
@@ -145,41 +161,62 @@ public class PentahoAsyncExecutor<TReportState extends IAsyncReportState>
   }
 
   @Override
-  public void schedule( final UUID id, final IPentahoSession session ) {
+  public boolean schedule( final UUID id, final IPentahoSession session ) {
     validateParams( id, session );
     final CompositeKey compositeKey = new CompositeKey( session, id );
     final IAsyncReportExecution<TReportState> runningTask = tasks.get( compositeKey );
-    if ( runningTask != null ) {
+    final ListenableFuture<IFixedSizeStreamingContent> future = futures.get( compositeKey );
+
+    if ( runningTask == null || future == null ) {
+      // As long as we have a task, we should have a future-object, but checking both does not hurt.
+      throw new IllegalStateException( "We must have a task and a future at this point." );
+    }
+
+    final String userId = session.getName();
+    final String sessionId = session.getId();
+
+    if ( !StringUtils.isEmpty( userId ) ) {
       if ( runningTask.schedule() ) {
-        final ListenableFuture<IFixedSizeStreamingContent> future = futures.get( compositeKey );
-        Futures.addCallback( future, new FutureCallback<IFixedSizeStreamingContent>() {
-          @Override
-          public void onSuccess( final IFixedSizeStreamingContent result ) {
-            try {
-              if ( session != null && !StringUtil.isEmpty( session.getName() ) ) {
-                SecurityHelper.getInstance().runAsUser( session.getName(),
-                  new WriteToJcrTask( runningTask, result.getStream() ) );
-              }
-
-            } catch ( final Exception e ) {
-              log.error( "Can't execute callback. : ", e );
-            } finally {
-              //Time to remove future - nobody will ask for content at this moment
-              //We need to keep task because status polling may still occur ( or it already has been removed on logout )
-              //Also we can try to remove directory
-              futures.remove( compositeKey );
-              AsyncJobFileStagingHandler.cleanSession( session );
-            }
-          }
-
-          @Override public void onFailure( final Throwable t ) {
-            log.error( "Can't execute callback. Parent task failed: ", t );
-            futures.remove( compositeKey );
-            AsyncJobFileStagingHandler.cleanSession( session );
-          }
-        } );
+        Futures.addCallback( future,
+          new TriggerScheduledContentWritingHandler( userId, sessionId, runningTask, compositeKey ) );
+        return true;
       }
     }
+    return false;
+  }
+
+  @Override
+  public void updateSchedulingLocation( final UUID id, final IPentahoSession session, final Serializable folderId,
+                                        final String newName ) {
+    validateParams( id, session );
+    final CompositeKey key = new CompositeKey( session, id );
+
+    final IAsyncReportExecution<TReportState> runningTask = tasks.get( key );
+
+    if ( runningTask == null ) {
+      throw new IllegalStateException( "We must have a task at this point." );
+    }
+
+    final UpdateSchedulingLocationListener listener = new UpdateSchedulingLocationListener( folderId, newName );
+
+
+    try {
+      this.schedulingLocationListener.lock();
+      final Serializable fileId = schedulingLocationListener.lookupOutputFile( key );
+      if ( fileId != null ) {
+        //Report is already finished and saved to default scheduling directory.
+        // move it to a new location. This operation may move the file multiple times, as the file-id is independent
+        // of the location.
+        listener.onSchedulingCompleted( fileId );
+      } else {
+        //Report is not finished yet. Update the listener list within this synchronized block so that
+        writeToJcrListeners.put( key, listener );
+      }
+    } finally {
+      this.schedulingLocationListener.unlock();
+    }
+
+
   }
 
   @Override public TReportState getReportState( final UUID id, final IPentahoSession session ) {
@@ -194,7 +231,8 @@ public class PentahoAsyncExecutor<TReportState extends IAsyncReportState>
     ArgumentNullException.validate( "session", session );
   }
 
-  @Override public void onLogout( final IPentahoSession session ) {
+  @Override
+  public void onLogout( final IPentahoSession session ) {
     if ( log.isDebugEnabled() ) {
       // don't expose full session id.
       log.debug( "killing async report execution cache for user: " + session.getName() );
@@ -215,19 +253,6 @@ public class PentahoAsyncExecutor<TReportState extends IAsyncReportState>
           continue;
         }
 
-        //Close tmp files for completed futures
-        Futures.addCallback( value, new FutureCallback<IFixedSizeStreamingContent>() {
-          @Override public void onSuccess( final IFixedSizeStreamingContent result ) {
-            if ( result != null ) {
-              result.cleanContent();
-            }
-          }
-
-          @Override public void onFailure( final Throwable ignored ) {
-            //we don't care here anymore
-          }
-        } );
-
         // attempt to cancel running task
         value.cancel( true );
 
@@ -235,6 +260,14 @@ public class PentahoAsyncExecutor<TReportState extends IAsyncReportState>
         futures.remove( entry.getKey() );
         tasks.remove( entry.getKey() );
       }
+    }
+
+    //User can't update scheduling directory after logout, so we can clean location locationMap
+    try {
+      this.schedulingLocationListener.lock();
+      this.schedulingLocationListener.onLogout( session.getId() );
+    } finally {
+      this.schedulingLocationListener.unlock();
     }
 
     //If some files are still open directory won't be removed
@@ -251,9 +284,93 @@ public class PentahoAsyncExecutor<TReportState extends IAsyncReportState>
     // forget all
     this.futures.clear();
     this.tasks.clear();
+    this.writeToJcrListeners.clear();
+    this.executorService.shutdown();
+    try {
+      this.schedulingLocationListener.lock();
+      this.schedulingLocationListener.shutdown();
+    } finally {
+      this.schedulingLocationListener.unlock();
+    }
 
     AsyncJobFileStagingHandler.cleanStagingDir();
   }
 
+  protected Callable<Serializable> getWriteToJcrTask( final IFixedSizeStreamingContent result,
+                                                      final IAsyncReportExecution<? extends IAsyncReportState>
+                                                        runningTask ) {
+    return new WriteToJcrTask( runningTask, result.getStream() );
+  }
 
+  /**
+   * This class is responsible for writing the content first to a pre-computed location (as specified by the
+   * ISchedulingDirectoryStrategy implementation, and then optionally moves the content to a location specified by the
+   * user (via the UI).
+   */
+  private class TriggerScheduledContentWritingHandler implements FutureCallback<IFixedSizeStreamingContent> {
+    private final IAsyncReportExecution<TReportState> runningTask;
+    private final CompositeKey compositeKey;
+    private final String user;
+    private final String sessionId;
+
+    TriggerScheduledContentWritingHandler( final String user, final String sessionId,
+                                           final IAsyncReportExecution<TReportState> runningTask,
+                                           final CompositeKey compositeKey ) {
+      this.user = user;
+      this.sessionId = sessionId;
+      this.runningTask = runningTask;
+      this.compositeKey = compositeKey;
+    }
+
+    private IFixedSizeStreamingContent notifyListeners( final IFixedSizeStreamingContent result ) throws Exception {
+      final Serializable writtenTo = getWriteToJcrTask( result, runningTask ).call();
+      if ( writtenTo == null ) {
+        log.debug( "Unable to move scheduled content, due to error while creating content in default location." );
+        return null;
+      }
+      try {
+        PentahoAsyncExecutor.this.schedulingLocationListener.lock();
+        PentahoAsyncExecutor.this.schedulingLocationListener.recordOutputFile( compositeKey, writtenTo );
+        notifyListeners( writtenTo );
+      } finally {
+        PentahoAsyncExecutor.this.schedulingLocationListener.unlock();
+      }
+
+      return null;
+    }
+
+    protected void notifyListeners( final Serializable writtenTo ) {
+      //We can be sure it succeed here and are ready to notify writeToJcrListeners
+      final ISchedulingListener iSchedulingListener = writeToJcrListeners.get( compositeKey );
+
+      if ( iSchedulingListener != null ) {
+        iSchedulingListener.onSchedulingCompleted( writtenTo );
+        writeToJcrListeners.remove( compositeKey );
+      }
+    }
+
+    @Override
+    public void onSuccess( final IFixedSizeStreamingContent result ) {
+      try {
+        if ( user != null && !StringUtil.isEmpty( user ) ) {
+          SecurityHelper.getInstance().runAsUser( user, () -> notifyListeners( result ) );
+        }
+      } catch ( final Exception e ) {
+        log.error( "Can't execute callback. : ", e );
+      } finally {
+        //Time to remove future - nobody will ask for content at this moment
+        //We need to keep task because status polling may still occur ( or it already has been removed on logout )
+        //Also we can try to remove directory
+        futures.remove( compositeKey );
+        result.cleanContent();
+        AsyncJobFileStagingHandler.cleanSession( sessionId );
+      }
+    }
+
+    @Override public void onFailure( final Throwable t ) {
+      log.error( "Can't execute callback. Parent task failed: ", t );
+      futures.remove( compositeKey );
+      AsyncJobFileStagingHandler.cleanSession( sessionId );
+    }
+  }
 }

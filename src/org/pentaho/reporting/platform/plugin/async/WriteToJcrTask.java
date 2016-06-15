@@ -31,9 +31,10 @@ import org.pentaho.reporting.platform.plugin.repository.ReportContentRepository;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.Serializable;
 import java.util.concurrent.Callable;
 
-public class WriteToJcrTask implements Callable<Boolean> {
+public class WriteToJcrTask implements Callable<Serializable> {
   private static final String CANT_CREATE_FILE_IN_JCR = "Can't create file in JCR";
   private static Log log = LogFactory.getLog( WriteToJcrTask.class );
 
@@ -55,7 +56,7 @@ public class WriteToJcrTask implements Callable<Boolean> {
   }
 
 
-  @Override public Boolean call() throws Exception {
+  @Override public Serializable call() throws Exception {
 
     try {
 
@@ -102,6 +103,8 @@ public class WriteToJcrTask implements Callable<Boolean> {
         try {
           IOUtils.copy( inputStream, outputStream );
           outputStream.flush();
+          final RepositoryFile targetFile = repo.getFile( outputFolder.getPath() + "/" + targetName );
+          return targetFile.getId();
         } finally {
           IOUtils.closeQuietly( outputStream );
         }
@@ -111,12 +114,11 @@ public class WriteToJcrTask implements Callable<Boolean> {
 
     } catch ( final Exception e ) {
       log.error( CANT_PERSIST_MSG, e );
-      return false;
     } finally {
       IOUtils.closeQuietly( inputStream );
     }
 
-    return true;
+    return null;
   }
 
   protected ReportContentRepository getReportContentRepository( final RepositoryFile outputFolder ) {

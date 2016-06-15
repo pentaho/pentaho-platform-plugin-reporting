@@ -239,6 +239,15 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           }
 
           return false;
+
+        },
+
+        _isDashboardEditMode : function(){
+          try {
+            return window.frameElement.src.indexOf('dashboard-mode') !== -1 && parent.pho.dashboards.editMode;
+          } catch (e) {
+            return false;
+          }
         },
 
         _hasReportContent: function() {
@@ -773,7 +782,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         }
       },
 
-      _getFeedbackScreen: function (sheduleScreenBtnCallbacks) {
+      _getFeedbackScreen: function (scheduleScreenBtnCallbacks) {
         var dlg = registry.byId('feedbackScreen');
         dlg.setTitle(_Messages.getString('ScreenTitle'));
         dlg.setText(_Messages.getString('FeedbackScreenActivity'));
@@ -781,9 +790,13 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         dlg.setText3(_Messages.getString('FeedbackScreenRow'));
         dlg.setCancelText(_Messages.getString('ScreenCancel'));
 
+        if(!this.view._isDashboardEditMode()){
+          dlg.showBackgroundBtn(_Messages.getString('FeedbackScreenBackground'));
+        }else {
+          scheduleScreenBtnCallbacks.shift();
+        }
 
-        dlg.showBackgroundBtn(_Messages.getString('FeedbackScreenBackground'));
-        dlg.callbacks = sheduleScreenBtnCallbacks;
+        dlg.callbacks = scheduleScreenBtnCallbacks;
         return dlg;
       },
 
@@ -903,13 +916,20 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           //Asunc execution manages this flag in it's own way
           me.reportPrompt._isSubmitPromptPhaseActivated = false;
 
-          var sheduleScreenBtnCallbacks = [
+          var scheduleScreenBtnCallbacks = [
             //Schedule button callback
             function scheduleReport() {
               var urlSchedule = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + me._currentReportUuid + '/schedule';
               pentahoGet(urlSchedule, "");
               manuallyScheduled = true;
               hideDlgAndPane(registry.byId('feedbackScreen'));
+
+              if (me.reportPrompt._promptForLocation) {
+                //Open location dialog here - see the example of location update below
+             /*   var urlUpdateLocation = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + me._currentReportUuid + "/schedule/location?folderId=5a8ba6eb-3d98-4a5c-9357-4a17848925a9&newName=hello_there";
+                pentahoPost(urlUpdateLocation);*/
+              }              
+              
             }.bind(me),
             //Cancel report
             function feedbackscreenDone() {
@@ -918,7 +938,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
             }.bind(me)
           ];
 
-          var feedbackDialog = me._getFeedbackScreen(sheduleScreenBtnCallbacks);
+          var feedbackDialog = me._getFeedbackScreen(scheduleScreenBtnCallbacks);
 
           //Don't show dialog if report is ready faster than threshold
           setTimeout(function () {

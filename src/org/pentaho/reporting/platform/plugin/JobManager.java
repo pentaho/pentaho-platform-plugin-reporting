@@ -26,6 +26,7 @@ import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.util.RepositoryPathEncoder;
+import org.pentaho.platform.util.StringUtil;
 import org.pentaho.platform.util.web.MimeHelper;
 import org.pentaho.reporting.platform.plugin.async.AsyncExecutionStatus;
 import org.pentaho.reporting.platform.plugin.async.IAsyncReportState;
@@ -37,6 +38,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.MediaType;
@@ -52,7 +54,6 @@ import java.util.concurrent.Future;
 public class JobManager {
 
   private static final Log logger = LogFactory.getLog( JobManager.class );
-  private static final String INVALID_UUID = "Invalid UUID: ";
   private static final String ASYNC_DISABLED = "JobManager initialization: async mode marked as disabled.";
   private static final String ERROR_GENERATING_REPORT = "Error generating report";
   private static final String UNABLE_TO_SERIALIZE_TO_JSON = "Unable to serialize to json : ";
@@ -60,16 +61,23 @@ public class JobManager {
   private final Config config;
 
   public JobManager() {
-    this( true, 500, 1500 );
+    this( true, 500, 1500, false );
   }
 
   public JobManager( final boolean isSupportAsync, final long pollingIntervalMilliseconds,
                      final long dialogThresholdMillisecond ) {
+    this( isSupportAsync, pollingIntervalMilliseconds, dialogThresholdMillisecond, false );
+  }
+
+  public JobManager( final boolean isSupportAsync, final long pollingIntervalMilliseconds,
+                     final long dialogThresholdMillisecond, final boolean promptForLocation ) {
     if ( !isSupportAsync ) {
       logger.info( ASYNC_DISABLED );
     }
-    this.config = new Config( isSupportAsync, pollingIntervalMilliseconds, dialogThresholdMillisecond );
+    this.config = new Config( isSupportAsync, pollingIntervalMilliseconds, dialogThresholdMillisecond,
+      promptForLocation );
   }
+
 
   @GET @Path( "config" ) public Response getConfig() {
     final ObjectMapper mapper = new ObjectMapper();
@@ -95,81 +103,67 @@ public class JobManager {
   @POST @Path( "{job_id}/content" ) public Response getContent( @PathParam( "job_id" ) final String jobId )
     throws IOException {
 
-    final IPentahoAsyncExecutor executor = getExecutor();
-    final IPentahoSession session = PentahoSessionHolder.getSession();
-    final UUID uuid;
     try {
-      uuid = UUID.fromString( jobId );
-    } catch ( final Exception e ) {
-      logger.error( INVALID_UUID + jobId );
+      final ExecutionContext context = getContext( jobId );
+      final Future<IFixedSizeStreamingContent> future = context.getFuture();
+      final IAsyncReportState state = context.getReportState();
+
+      if ( !AsyncExecutionStatus.FINISHED.equals( state.getStatus() ) ) {
+        return Response.status( Response.Status.ACCEPTED ).build();
+      }
+
+      final IFixedSizeStreamingContent input;
+      try {
+        input = future.get();
+      } catch ( final Exception e ) {
+        logger.error( ERROR_GENERATING_REPORT, e );
+        return Response.serverError().build();
+      }
+
+      final StreamingOutput stream = new StreamingOutputWrapper( input.getStream() );
+
+      final MediaType mediaType;
+      Response.ResponseBuilder response;
+      try {
+        mediaType = MediaType.valueOf( state.getMimeType() );
+        response = Response.ok( stream, mediaType );
+      } catch ( final Exception e ) {
+        logger.error( UNCKNOWN_MEDIA_TYPE + state.getMimeType() );
+        response = Response.ok( stream, state.getMimeType() );
+      }
+
+      response = noCache( response );
+      response = calculateContentDisposition( response, state );
+
+      return response.build();
+
+    } catch ( final ContextFailedException e ) {
       return get404();
     }
-
-
-    final Future<IFixedSizeStreamingContent> future = executor.getFuture( uuid, session );
-
-    final IAsyncReportState state = executor.getReportState( uuid, session );
-    if ( state == null ) {
-      return get404();
-    }
-
-    if ( !AsyncExecutionStatus.FINISHED.equals( state.getStatus() ) ) {
-      return Response.status( Response.Status.ACCEPTED ).build();
-    }
-
-    final IFixedSizeStreamingContent input;
-    try {
-      input = future.get();
-    } catch ( final Exception e ) {
-      logger.error( ERROR_GENERATING_REPORT, e );
-      return Response.serverError().build();
-    }
-
-    final StreamingOutput stream = new StreamingOutputWrapper( input.getStream() );
-
-    final MediaType mediaType;
-    Response.ResponseBuilder response;
-    try {
-      mediaType = MediaType.valueOf( state.getMimeType() );
-      response = Response.ok( stream, mediaType );
-    } catch ( final Exception e ) {
-      logger.error( UNCKNOWN_MEDIA_TYPE + state.getMimeType() );
-      response = Response.ok( stream, state.getMimeType() );
-    }
-
-    response = noCache( response );
-    response = calculateContentDisposition( response, state );
-
-    return response.build();
   }
 
 
   @GET @Path( "{job_id}/status" ) @Produces( "application/json" )
   public Response getStatus( @PathParam( "job_id" ) final String jobId ) {
-    final IPentahoAsyncExecutor executor = getExecutor();
-    final IPentahoSession session = PentahoSessionHolder.getSession();
-    final UUID uuid;
+
     try {
-      uuid = UUID.fromString( jobId );
-    } catch ( final Exception e ) {
-      logger.error( INVALID_UUID + jobId );
+
+      final ExecutionContext context = getContext( jobId );
+
+      final IAsyncReportState responseJson = context.getReportState();
+
+      final ObjectMapper mapper = new ObjectMapper();
+      String json = null;
+      try {
+        json = mapper.writeValueAsString( responseJson );
+      } catch ( final Exception e ) {
+        logger.error( UNABLE_TO_SERIALIZE_TO_JSON + responseJson.toString() );
+        Response.serverError().build();
+      }
+      return Response.ok( json ).build();
+    } catch ( final ContextFailedException e ) {
       return get404();
     }
-
-    final IAsyncReportState responseJson = executor.getReportState( uuid, session );
-    if ( responseJson == null ) {
-      return get404();
-    }
-
-    final ObjectMapper mapper = new ObjectMapper();
-    String json = null;
-    try {
-      json = mapper.writeValueAsString( responseJson );
-    } catch ( final Exception e ) {
-      logger.error( UNABLE_TO_SERIALIZE_TO_JSON + responseJson.toString() );
-      Response.serverError().build();
-    }
-    return Response.ok( json ).build();
   }
 
   protected IPentahoAsyncExecutor getExecutor() {
@@ -178,63 +172,74 @@ public class JobManager {
 
   @SuppressWarnings( "unchecked" )
   @GET @Path( "{job_id}/cancel" ) public Response cancel( @PathParam( "job_id" ) final String jobId ) {
-    final IPentahoAsyncExecutor executor = getExecutor();
-    final IPentahoSession session = PentahoSessionHolder.getSession();
-    final UUID uuid;
     try {
-      uuid = UUID.fromString( jobId );
-    } catch ( final Exception e ) {
-      logger.error( INVALID_UUID + jobId );
+
+      final ExecutionContext context = getContext( jobId );
+
+      final Future<InputStream> future = context.getFuture();
+      final IAsyncReportState state = context.getReportState();
+
+      logger.debug( "Cancellation of report: " + state.getPath() + ", requested by : " + context.getSession() );
+
+      future.cancel( true );
+
+      return Response.ok().build();
+    } catch ( final ContextFailedException e ) {
       return get404();
     }
-
-    final Future<InputStream> future = executor.getFuture( uuid, session );
-    final IAsyncReportState state = executor.getReportState( uuid, session );
-
-    if ( state == null ) {
-      return get404();
-    }
-
-    logger.debug( "Cancellation of report: " + state.getPath() + ", requested by : " + session.getName() );
-
-    future.cancel( true );
-
-    return Response.ok().build();
   }
 
 
   @GET @Path( "{job_id}/requestPage/{page}" ) @Produces( "text/text" )
   public Response requestPage( @PathParam( "job_id" ) final String jobId, @PathParam( "page" ) final int page ) {
-    final IPentahoAsyncExecutor executor = getExecutor();
-    final IPentahoSession session = PentahoSessionHolder.getSession();
-    final UUID uuid;
     try {
-      uuid = UUID.fromString( jobId );
-    } catch ( final Exception e ) {
-      logger.error( INVALID_UUID + jobId );
+
+      final ExecutionContext context = getContext( jobId );
+
+      context.requestPage( page );
+
+      return Response.ok( String.valueOf( page ) ).build();
+    } catch ( final ContextFailedException e ) {
       return get404();
     }
-
-    executor.requestPage( uuid, session, page );
-
-    return Response.ok( String.valueOf( page ) ).build();
   }
 
 
   @GET @Path( "{job_id}/schedule" ) @Produces( "text/text" )
   public Response schedule( @PathParam( "job_id" ) final String jobId ) {
-    final IPentahoAsyncExecutor executor = getExecutor();
-    final IPentahoSession session = PentahoSessionHolder.getSession();
-    final UUID uuid;
     try {
-      uuid = UUID.fromString( jobId );
-    } catch ( final Exception e ) {
-      logger.error( INVALID_UUID + jobId );
+
+      final ExecutionContext context = getContext( jobId );
+
+      context.schedule();
+
+      return Response.ok().build();
+    } catch ( final ContextFailedException e ) {
+      return get404();
+    }
+  }
+
+  @POST @Path( "{job_id}/schedule/location" ) @Produces( "text/text" )
+  public Response updateLocation( @PathParam( "job_id" ) final String jobId,
+                                  @QueryParam( "folderId" ) final String folderId,
+                                  @QueryParam( "newName" ) final String newName ) {
+    try {
+
+      final ExecutionContext context = getContext( jobId );
+
+      context.updateSchedulingLocation( folderId, newName );
+
+      return Response.ok().build();
+    } catch ( final ContextFailedException e ) {
       return get404();
     }
 
-    executor.schedule( uuid, session );
-    return Response.ok().build();
+  }
+
+  public ExecutionContext getContext( final String jobId ) throws ContextFailedException {
+    final ExecutionContext executionContext = new ExecutionContext( jobId );
+    executionContext.evaluate();
+    return executionContext;
   }
 
   protected final Response get404() {
@@ -277,7 +282,7 @@ public class JobManager {
   }
 
   protected static Response.ResponseBuilder calculateContentDisposition( final Response.ResponseBuilder response,
-                                                               final IAsyncReportState state ) {
+                                                                         final IAsyncReportState state ) {
     final org.pentaho.reporting.libraries.base.util.IOUtils utils = org.pentaho.reporting.libraries
       .base.util.IOUtils.getInstance();
 
@@ -285,7 +290,7 @@ public class JobManager {
     final String fullPath = state.getPath();
     final String sourceExt = utils.getFileExtension( fullPath );
     String cleanFileName = utils.stripFileExtension( utils.getFileName( fullPath ) );
-    if ( cleanFileName == null || cleanFileName.isEmpty() ) {
+    if ( StringUtil.isEmpty( cleanFileName ) ) {
       cleanFileName = "content";
     }
 
@@ -304,13 +309,15 @@ public class JobManager {
     private final boolean isSupportAsync;
     private final long pollingIntervalMilliseconds;
     private final long dialogThresholdMilliseconds;
+    private final boolean promptForLocation;
 
 
     private Config( final boolean isSupportAsync, final long pollingIntervalMilliseconds,
-                    final long dialogThresholdMilliseconds ) {
+                    final long dialogThresholdMilliseconds, final boolean promptForLocation ) {
       this.isSupportAsync = isSupportAsync;
       this.pollingIntervalMilliseconds = pollingIntervalMilliseconds;
       this.dialogThresholdMilliseconds = dialogThresholdMilliseconds;
+      this.promptForLocation = promptForLocation;
     }
 
 
@@ -326,5 +333,95 @@ public class JobManager {
       return dialogThresholdMilliseconds;
     }
 
+    public boolean isPromptForLocation() {
+      return promptForLocation;
+    }
+  }
+
+  /**
+   * Used to get context for operation execution and validate it
+   */
+  protected class ExecutionContext {
+    private IPentahoAsyncExecutor executor;
+    private IPentahoSession session;
+    private final String jobId;
+    private UUID uuid = null;
+
+    private ExecutionContext( final String jobId ) {
+      this.jobId = jobId;
+    }
+
+
+    private void evaluate() throws ContextFailedException {
+      try {
+        this.executor = PentahoSystem.get( IPentahoAsyncExecutor.class );
+        this.session = PentahoSessionHolder.getSession();
+        this.uuid = UUID.fromString( jobId );
+      } catch ( final Exception e ) {
+        logger.error( e );
+        throw new ContextFailedException( e );
+      }
+    }
+
+
+    public IPentahoSession getSession() {
+      return session;
+    }
+
+
+    public Future getFuture() throws ContextFailedException {
+      final Future future = executor.getFuture( uuid, session );
+      if ( future == null ) {
+        throw new ContextFailedException( "Can't get future" );
+      }
+      return future;
+    }
+
+    public IAsyncReportState getReportState() throws ContextFailedException {
+      final IAsyncReportState reportState = executor.getReportState( uuid, session );
+      if ( reportState == null ) {
+        throw new ContextFailedException( "Can't get state" );
+      }
+      return reportState;
+    }
+
+    public void requestPage( final int page ) throws ContextFailedException {
+      //Check if there is a task
+      getReportState();
+      executor.requestPage( uuid, session, page );
+    }
+
+    public void schedule() throws ContextFailedException {
+      //Check if there is a task
+      final IAsyncReportState reportState = getReportState();
+      if ( reportState.getStatus().equals( AsyncExecutionStatus.SCHEDULED ) ) {
+        throw new ContextFailedException( "Report is already scheduled." );
+      }
+      executor.schedule( uuid, session );
+    }
+
+    public void updateSchedulingLocation( final String folderId, final String newName ) throws ContextFailedException {
+      if ( !config.isPromptForLocation() ) {
+        throw new ContextFailedException( "Location update is disabled" );
+      }
+      //Check if there is a task
+      final IAsyncReportState reportState = getReportState();
+      if ( reportState.getStatus().equals( AsyncExecutionStatus.SCHEDULED ) ) {
+        executor.updateSchedulingLocation( uuid, session, folderId, newName );
+      } else {
+        throw new ContextFailedException( "Can't update the location of not scheduled report." );
+      }
+    }
+  }
+
+  protected static class ContextFailedException extends Exception {
+
+    public ContextFailedException( final String message ) {
+      super( message );
+    }
+
+    ContextFailedException( final Throwable cause ) {
+      super( cause );
+    }
   }
 }

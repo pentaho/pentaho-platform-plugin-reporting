@@ -25,6 +25,7 @@ import org.pentaho.platform.api.engine.IApplicationContext;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.util.UUIDUtil;
+import org.pentaho.reporting.libraries.base.util.ArgumentNullException;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -107,14 +108,19 @@ public class AsyncJobFileStagingHandler {
     return new FixedSizeStagingContent( tmpFile );
   }
 
-  public static void cleanSession( final IPentahoSession iPentahoSession ) {
+  public static void cleanSession( final IPentahoSession session ) {
+    ArgumentNullException.validate( "session", session );  //NON-NLS
+    cleanSession( session.getId() );
+  }
+
+  public static void cleanSession( final String sessionId ) {
     // do it generic way according to staging handler was used?
     Path stagingSessionDir = AsyncJobFileStagingHandler.getStagingDirPath();
     if ( stagingSessionDir == null ) {
       //never been initialized
       return;
     }
-    stagingSessionDir = stagingSessionDir.resolve( iPentahoSession.getId() );
+    stagingSessionDir = stagingSessionDir.resolve( sessionId );
     final File sessionStagingContent = stagingSessionDir.toFile();
 
     // some lib can do it for me?

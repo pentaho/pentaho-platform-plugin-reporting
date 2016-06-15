@@ -32,7 +32,8 @@ define([
       mode: 'INITIAL',
       _isAsync: null,
       _pollingInterval: 1000,
-      _dialogThreshold: 1500,    
+      _dialogThreshold: 1500,
+      _promptForLocation: null,
       _isReportHtmlPagebleOutputFormat : null,
 
       /**
@@ -265,7 +266,8 @@ define([
               asyncConf = JSON.parse(asyncConf);
               this._isAsync = asyncConf.supportAsync;
               this._pollingInterval = asyncConf.pollingIntervalMilliseconds;
-              this._dialogThreshold = asyncConf.dialogThresholdMilliseconds;             
+              this._dialogThreshold = asyncConf.dialogThresholdMilliseconds;
+              this._promptForLocation = asyncConf.promptForLocation;
             } catch (ignored){
               //not async
             }

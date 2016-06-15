@@ -32,6 +32,7 @@ import org.pentaho.reporting.platform.plugin.SimpleReportingComponent;
 import org.pentaho.reporting.platform.plugin.staging.AsyncJobFileStagingHandler;
 import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
 
+import java.io.FileNotFoundException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -41,7 +42,8 @@ import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.*;
 
 public class PentahoAsyncExecutionAuditTest {
@@ -55,15 +57,17 @@ public class PentahoAsyncExecutionAuditTest {
 
   private SimpleReportingComponent component = mock( SimpleReportingComponent.class );
   private AsyncJobFileStagingHandler handler = mock( AsyncJobFileStagingHandler.class );
+
   private IPentahoSession session = mock( IPentahoSession.class );
   private AuditWrapper wrapper = mock( AuditWrapper.class );
 
   private OutputStream outputStream = mock( OutputStream.class );
 
   @Before
-  public void before() {
+  public void before() throws FileNotFoundException {
     when( session.getId() ).thenReturn( sessionId );
     when( session.getName() ).thenReturn( sessionName );
+    when( handler.getStagingContent() ).thenReturn( new AbstractAsyncReportExecution.NullSizeStreamingContent() );
   }
 
   @Test
@@ -300,7 +304,6 @@ public class PentahoAsyncExecutionAuditTest {
 
   /**
    * This is almost a copy of #testCancellationStatusTest above, but now we have one 'scheduled' execution.
-   *
    */
   @Test
   public void testScheduledExecutionsNotGetCancelled() throws Exception {

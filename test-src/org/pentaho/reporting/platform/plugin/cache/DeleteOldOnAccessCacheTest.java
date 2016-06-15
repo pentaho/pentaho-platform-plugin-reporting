@@ -53,10 +53,10 @@ public class DeleteOldOnAccessCacheTest {
   public void testPutGet() throws Exception {
 
     final DeleteOldOnAccessCache cache = new DeleteOldOnAccessCache( fileSystemCacheBackend );
-    cache.setMillisToLive( 1000 );
+    cache.setMillisToLive( 2000 );
     cache.put( SOME_KEY, SOME_VALUE );
     assertNotNull( cache.get( SOME_KEY ) );
-    Thread.sleep( 2000 );
+    Thread.sleep( 3000 );
     assertNull( cache.get( SOME_KEY ) );
   }
 

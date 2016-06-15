@@ -109,7 +109,7 @@ public class AsyncReportStatusListener implements IAsyncReportListener {
     this.requestedPage = 0;
   }
 
-  @Override public boolean isScheduled() {
+  @Override public synchronized boolean isScheduled() {
     return AsyncExecutionStatus.SCHEDULED.equals( this.status );
   }
 

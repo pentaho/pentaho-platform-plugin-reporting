@@ -16,31 +16,20 @@
  * Copyright 2006 - 2016 Pentaho Corporation.  All rights reserved.
  */
 
-
 package org.pentaho.reporting.platform.plugin.async;
 
-import org.pentaho.platform.api.engine.IPentahoSession;
-import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
-
 import java.io.Serializable;
-import java.util.UUID;
-import java.util.concurrent.Future;
 
-public interface IPentahoAsyncExecutor<TReportState extends IAsyncReportState> {
+/**
+ * Listener for report scheduling
+ */
+public interface ISchedulingListener {
 
-  Future<IFixedSizeStreamingContent> getFuture( UUID id, IPentahoSession session );
+  /**
+   * Is executed when report is successfully scheduled
+   *
+   * @param fileId report file id
+   */
+  void onSchedulingCompleted( Serializable fileId );
 
-  void cleanFuture( UUID id, IPentahoSession session );
-
-  UUID addTask( IAsyncReportExecution<TReportState> task, IPentahoSession session );
-
-  TReportState getReportState( UUID id, IPentahoSession session );
-
-  void requestPage( UUID id, IPentahoSession session, int page );
-
-  boolean schedule( UUID uuid, IPentahoSession session );
-
-  void updateSchedulingLocation( UUID uuid, IPentahoSession session, Serializable folderId, String newName );
-
-  void shutdown();
 }
