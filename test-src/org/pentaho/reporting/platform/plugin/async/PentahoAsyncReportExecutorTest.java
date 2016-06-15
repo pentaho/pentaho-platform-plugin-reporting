@@ -93,13 +93,14 @@ public class PentahoAsyncReportExecutorTest {
   IFixedSizeStreamingContent input;
   private int autoSchedulerThreshold = 0;
   private IUnifiedRepository repository;
+  File temp;
 
 
   @Before public void before() throws Exception {
     PentahoSystem.clearObjectFactory();
     PentahoSessionHolder.removeSession();
 
-    File temp = File.createTempFile( "junit", "tmp" );
+    temp = File.createTempFile( "junit", "tmp" );
     FileOutputStream fout = new FileOutputStream( temp );
     fout.write( MAGIC.getBytes() );
     fout.flush();
@@ -751,6 +752,128 @@ public class PentahoAsyncReportExecutorTest {
     latch.countDown();
     Thread.sleep( MILLIS );
     assertNull( exec.getFuture( id1, session1 ) );
+
+
+  }
+
+
+  @Test
+  public void testCleanupOnFailure() throws InterruptedException {
+
+    assertTrue( temp.exists() );
+    final CountDownLatch latch = new CountDownLatch( 1 );
+    final PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 1 );
+    final TestListener testListener = new TestListener( "1", UUID.randomUUID(), "" );
+
+    final UUID id1 = exec.addTask( new PentahoAsyncReportExecution( "junit-path",
+      component, handler, session1, "not null", AuditWrapper.NULL ) {
+      @Override public IFixedSizeStreamingContent call() throws Exception {
+
+        assertNotNull( handler.getStagingContent() );
+
+        fail();
+        latch.countDown();
+        return null;
+      }
+
+      @Override
+      protected AsyncReportStatusListener createListener( final UUID id,
+                                                          final List<? extends ReportProgressListener> listeners ) {
+        return testListener;
+      }
+    }, session1 );
+
+    latch.await();
+
+    assertFalse( temp.exists() );
+
+
+  }
+
+
+  @Test
+  public void testCleanupOnLogout() throws InterruptedException {
+
+    assertTrue( temp.exists() );
+    final CountDownLatch latch = new CountDownLatch( 1 );
+    final PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 1 );
+    PentahoSystem.addLogoutListener( exec );
+    final TestListener testListener = new TestListener( "1", UUID.randomUUID(), "" );
+
+    final UUID id1 = exec.addTask( new PentahoAsyncReportExecution( "junit-path",
+      component, handler, session1, "not null", AuditWrapper.NULL ) {
+      @Override public IFixedSizeStreamingContent call() throws Exception {
+        latch.await();
+        return null;
+      }
+
+      @Override
+      protected AsyncReportStatusListener createListener( final UUID id,
+                                                          final List<? extends ReportProgressListener> listeners ) {
+        return testListener;
+      }
+    }, session1 );
+
+
+    PentahoSystem.invokeLogoutListeners( session1 );
+    latch.countDown();
+
+    assertFalse( temp.exists() );
+
+
+  }
+
+
+  @Test
+  public void testCleanupScheduled() throws InterruptedException {
+
+    assertTrue( temp.exists() );
+    final CountDownLatch latch1 = new CountDownLatch( 2 );
+    final CountDownLatch latch2 = new CountDownLatch( 1 );
+    final PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 1 ) {
+      @Override protected Callable<Serializable> getWriteToJcrTask( IFixedSizeStreamingContent result,
+                                                                    IAsyncReportExecution runningTask ) {
+        return () -> "test";
+      }
+    };
+    PentahoSystem.addLogoutListener( exec );
+    final TestListener testListener = new TestListener( "1", UUID.randomUUID(), "" );
+
+    final UUID id1 = exec.addTask( new PentahoAsyncReportExecution( "junit-path",
+      component, handler, session1, "not null", AuditWrapper.NULL ) {
+      @Override public IFixedSizeStreamingContent call() throws Exception {
+        latch1.await();
+        latch1.await();
+        final IFixedSizeStreamingContent mock = mock( IFixedSizeStreamingContent.class );
+        when( mock.cleanContent() ).thenAnswer( invocation -> {
+          handler.getStagingContent().cleanContent();
+          latch2.countDown();
+          return null;
+        } );
+        return mock;
+      }
+
+      @Override
+      protected AsyncReportStatusListener createListener( final UUID id,
+                                                          final List<? extends ReportProgressListener> listeners ) {
+        return testListener;
+      }
+    }, session1 );
+
+    exec.schedule( id1, session1 );
+
+    PentahoSystem.invokeLogoutListeners( session1 );
+
+    latch1.countDown();
+
+    assertTrue( temp.exists() );
+
+    latch1.countDown();
+
+    //Wait for callback
+    latch2.await();
+
+    assertFalse( temp.exists() );
 
 
   }

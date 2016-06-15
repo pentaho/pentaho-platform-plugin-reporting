@@ -42,7 +42,6 @@ import java.util.UUID;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
@@ -61,6 +60,7 @@ public class PentahoAsyncExecutionTest {
   MasterReport report = mock( MasterReport.class );
   ModifiableConfiguration configuration = mock( ModifiableConfiguration.class );
   private int autoSchedulerThreshold = 0;
+  File temp;
 
   @Before
   public void before() throws Exception {
@@ -69,7 +69,7 @@ public class PentahoAsyncExecutionTest {
 
     PentahoSessionHolder.setSession( userSession );
 
-    File temp = File.createTempFile( "junit", "tmp" );
+    temp = File.createTempFile( "junit", "tmp" );
     input = new AsyncJobFileStagingHandler.FixedSizeStagingContent( temp );
 
     when( handler.getStagingContent() ).thenReturn( input );
@@ -129,7 +129,9 @@ public class PentahoAsyncExecutionTest {
     assertEquals( AsyncExecutionStatus.FAILED, exec.getState().getStatus() );
     assertFalse( returnStream.equals( input ) );
 
-    verify( handler, times( 0 ) ).getStagingContent();
+    //For cleanup
+    verify( handler, times( 1 ) ).getStagingContent();
+    assertFalse( temp.exists() );
   }
 
   @Test

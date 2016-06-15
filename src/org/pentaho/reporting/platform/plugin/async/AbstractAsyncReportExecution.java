@@ -30,6 +30,7 @@ import org.pentaho.reporting.platform.plugin.SimpleReportingComponent;
 import org.pentaho.reporting.platform.plugin.staging.AsyncJobFileStagingHandler;
 import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
 
+
 import java.io.InputStream;
 import java.util.List;
 import java.util.UUID;
@@ -113,6 +114,15 @@ public abstract class AbstractAsyncReportExecution<TReportState extends IAsyncRe
     }
     audit.audit( safeSession.getId(), safeSession.getName(), url, getClass().getName(), getClass().getName(),
       messageType, auditId, "", 0, null );
+    closeFile();
+  }
+
+  private void closeFile() {
+    try {
+      handler.getStagingContent().cleanContent();
+    } catch ( final Exception e  ) {
+      log.debug( "No content was created for this task" );
+    }
   }
 
   protected AsyncReportStatusListener createListener( final UUID instanceId,
@@ -124,6 +134,7 @@ public abstract class AbstractAsyncReportExecution<TReportState extends IAsyncRe
   protected void cancel() {
     String userName = safeSession == null ? "Unknown" : safeSession.getName();
     log.info( "Report execution canceled: " + url + " , requested by : " + userName );
+    closeFile();
     this.listener.setStatus( AsyncExecutionStatus.CANCELED );
   }
 

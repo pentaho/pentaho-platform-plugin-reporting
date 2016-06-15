@@ -253,19 +253,6 @@ public class PentahoAsyncExecutor<TReportState extends IAsyncReportState>
           continue;
         }
 
-        //Close tmp files for completed futures
-        Futures.addCallback( value, new FutureCallback<IFixedSizeStreamingContent>() {
-          @Override public void onSuccess( final IFixedSizeStreamingContent result ) {
-            if ( result != null ) {
-              result.cleanContent();
-            }
-          }
-
-          @Override public void onFailure( final Throwable ignored ) {
-            //we don't care here anymore
-          }
-        } );
-
         // attempt to cancel running task
         value.cancel( true );
 
@@ -310,7 +297,8 @@ public class PentahoAsyncExecutor<TReportState extends IAsyncReportState>
   }
 
   protected Callable<Serializable> getWriteToJcrTask( final IFixedSizeStreamingContent result,
-                                        final IAsyncReportExecution<? extends IAsyncReportState> runningTask ) {
+                                                      final IAsyncReportExecution<? extends IAsyncReportState>
+                                                        runningTask ) {
     return new WriteToJcrTask( runningTask, result.getStream() );
   }
 
@@ -374,6 +362,7 @@ public class PentahoAsyncExecutor<TReportState extends IAsyncReportState>
         //We need to keep task because status polling may still occur ( or it already has been removed on logout )
         //Also we can try to remove directory
         futures.remove( compositeKey );
+        result.cleanContent();
         AsyncJobFileStagingHandler.cleanSession( sessionId );
       }
     }
