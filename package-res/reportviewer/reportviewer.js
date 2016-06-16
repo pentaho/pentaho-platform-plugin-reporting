@@ -861,7 +861,8 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
         // PRD-3962 - remove glass pane after 5 seconds in case iframe onload/onreadystatechange was not detected
         me._updateReportTimeout = setTimeout(logged('updateReportTimeout', function() {
-          me._submitReportEnded(/*isTimeout*/true);
+          //BACKLOG-8070 don't show empty content in async mode
+          me._submitReportEnded( !me.reportPrompt._isAsync );
         }), 5000);
 
         // PRD-3962 - show glass pane on submit, hide when iframe is loaded.
