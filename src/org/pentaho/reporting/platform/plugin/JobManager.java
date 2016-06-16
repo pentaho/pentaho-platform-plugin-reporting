@@ -342,7 +342,6 @@ public class JobManager {
    * Used to get context for operation execution and validate it
    */
   protected class ExecutionContext {
-    private IPentahoAsyncExecutor executor;
     private IPentahoSession session;
     private final String jobId;
     private UUID uuid = null;
@@ -354,7 +353,6 @@ public class JobManager {
 
     private void evaluate() throws ContextFailedException {
       try {
-        this.executor = PentahoSystem.get( IPentahoAsyncExecutor.class );
         this.session = PentahoSessionHolder.getSession();
         this.uuid = UUID.fromString( jobId );
       } catch ( final Exception e ) {
@@ -368,9 +366,14 @@ public class JobManager {
       return session;
     }
 
+    //Be sure to get it from context each time to make it work for PIR too
+    private IPentahoAsyncExecutor getReportExecutor() {
+      return getExecutor();
+    }
+
 
     public Future getFuture() throws ContextFailedException {
-      final Future future = executor.getFuture( uuid, session );
+      final Future future = getReportExecutor().getFuture( uuid, session );
       if ( future == null ) {
         throw new ContextFailedException( "Can't get future" );
       }
@@ -378,7 +381,7 @@ public class JobManager {
     }
 
     public IAsyncReportState getReportState() throws ContextFailedException {
-      final IAsyncReportState reportState = executor.getReportState( uuid, session );
+      final IAsyncReportState reportState = getReportExecutor().getReportState( uuid, session );
       if ( reportState == null ) {
         throw new ContextFailedException( "Can't get state" );
       }
@@ -388,7 +391,7 @@ public class JobManager {
     public void requestPage( final int page ) throws ContextFailedException {
       //Check if there is a task
       getReportState();
-      executor.requestPage( uuid, session, page );
+      getReportExecutor().requestPage( uuid, session, page );
     }
 
     public void schedule() throws ContextFailedException {
@@ -397,7 +400,7 @@ public class JobManager {
       if ( reportState.getStatus().equals( AsyncExecutionStatus.SCHEDULED ) ) {
         throw new ContextFailedException( "Report is already scheduled." );
       }
-      executor.schedule( uuid, session );
+      getReportExecutor().schedule( uuid, session );
     }
 
     public void updateSchedulingLocation( final String folderId, final String newName ) throws ContextFailedException {
@@ -407,7 +410,7 @@ public class JobManager {
       //Check if there is a task
       final IAsyncReportState reportState = getReportState();
       if ( reportState.getStatus().equals( AsyncExecutionStatus.SCHEDULED ) ) {
-        executor.updateSchedulingLocation( uuid, session, folderId, newName );
+        getReportExecutor().updateSchedulingLocation( uuid, session, folderId, newName );
       } else {
         throw new ContextFailedException( "Can't update the location of not scheduled report." );
       }
