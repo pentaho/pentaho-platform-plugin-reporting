@@ -22,7 +22,9 @@ import junit.framework.Assert;
 import org.apache.poi.util.IOUtils;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.pentaho.commons.util.repository.exception.RuntimeException;
@@ -71,7 +73,9 @@ import static org.mockito.Mockito.*;
  */
 public class PentahoAsyncReportExecutorTest {
 
-  public static final int MILLIS = 150;
+  @Rule public Timeout globalTimeout = new Timeout( 10000 );
+
+  public static final int MILLIS = 1500;
 
   IPentahoSession session1 = mock( IPentahoSession.class );
   IPentahoSession session2 = mock( IPentahoSession.class );
@@ -498,6 +502,8 @@ public class PentahoAsyncReportExecutorTest {
 
     assertTrue( exec.schedule( id1, session1 ) );
 
+    Thread.sleep( MILLIS );
+
     latch.countDown();
 
     assertFalse( exec.schedule( id1, session1 ) );
@@ -658,11 +664,13 @@ public class PentahoAsyncReportExecutorTest {
     final IAsyncReportState state = exec.getReportState( id1, session1 );
     assertNotNull( state );
     assertEquals( AsyncExecutionStatus.SCHEDULED, testListener.getState().getStatus() );
-    exec.updateSchedulingLocation( id1, session1, "/target", "test" );
+
 
     latch.await();
 
     Thread.sleep( MILLIS );
+
+    exec.updateSchedulingLocation( id1, session1, "/target", "test" );
 
     verify( repository, times( 1 ) ).getFileById( uuid );
 

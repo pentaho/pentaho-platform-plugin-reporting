@@ -303,4 +303,12 @@ public class PageableHTMLOutputTest {
       microPlatform = null;
     }
   }
+
+  @Test
+  public void testNotCaching() throws ContentIOException, ReportProcessingException, IOException {
+    final CachingPageableHTMLOutput mock = mock( CachingPageableHTMLOutput.class );
+    when( mock.generate( null, -1, null, 1 ) ).thenCallRealMethod();
+    mock.generate( null, -1, null, 1 );
+    verify( mock, times( 1 ) ).generateNonCaching( null, -1, null, 1 );
+  }
 }

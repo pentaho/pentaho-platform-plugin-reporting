@@ -25,6 +25,8 @@ import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
 import org.pentaho.platform.api.repository2.unified.RepositoryFile;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.engine.core.system.boot.PlatformInitializationException;
+import org.pentaho.reporting.libraries.repository.ContentItem;
+import org.pentaho.reporting.libraries.repository.ContentLocation;
 import org.pentaho.reporting.platform.plugin.MicroPlatformFactory;
 import org.pentaho.reporting.platform.plugin.repository.ReportContentRepository;
 import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
@@ -236,6 +238,32 @@ public class WriteToJcrTaskTest {
     }
 
 
+  }
+
+  @Test
+  public void testNullStream() throws Exception {
+
+    final IFixedSizeStreamingContent content = mock( IFixedSizeStreamingContent.class );
+    final IAsyncReportExecution reportExecution = mock( IAsyncReportExecution.class );
+    final IAsyncReportState state = mock( IAsyncReportState.class );
+    when( state.getMimeType() ).thenReturn( "application/pdf" );
+    when( state.getPath() ).thenReturn( "report.prpt" );
+    when( reportExecution.getState() ).thenReturn( state );
+    final InputStream inputStream = mock( InputStream.class );
+    when( inputStream.read( any() ) ).thenThrow( new IOException( "Test" ) );
+    when( content.getStream() ).thenReturn( inputStream );
+    final ReportContentRepository contentRepository = mock( ReportContentRepository.class );
+    final ContentLocation contentLocation = mock( ContentLocation.class );
+    final ContentItem contentItem = mock( ContentItem.class );
+    when( contentItem.getOutputStream() ).thenReturn( null );
+    when( contentLocation.createItem( any() ) ).thenReturn( contentItem );
+    when( contentRepository.getRoot() ).thenReturn( contentLocation );
+    final WriteToJcrTask toJcrTask = new WriteToJcrTask( reportExecution, inputStream ) {
+      @Override protected ReportContentRepository getReportContentRepository( final RepositoryFile outputFolder ) {
+        return contentRepository;
+      }
+    };
+    assertNull( toJcrTask.call() );
   }
 
 

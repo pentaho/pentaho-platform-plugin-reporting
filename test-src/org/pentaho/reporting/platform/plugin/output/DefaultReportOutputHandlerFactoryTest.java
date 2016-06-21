@@ -19,6 +19,8 @@ package org.pentaho.reporting.platform.plugin.output;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.pentaho.reporting.platform.plugin.SimpleReportingAction;
+import org.pentaho.reporting.platform.plugin.messages.Messages;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -322,5 +324,34 @@ public class DefaultReportOutputHandlerFactoryTest {
     roh.setHtmlStreamAvailable( false );
     assertNull( roh.createHtmlPageOutput( null ) );
     assertNull( roh.createHtmlStreamOutput( null ) );
+  }
+
+  @Test
+  public void emailNotAvailable() {
+    roh.setMailAvailable( false );
+    roh.setMailVisible( false );
+    final Messages m = Messages.getInstance();
+    final Map.Entry<String, String> o = new Map.Entry<String, String>() {
+      @Override public String getKey() {
+        return SimpleReportingAction.MIME_TYPE_EMAIL;
+      }
+
+      @Override public String getValue() {
+        return m.getString( "ReportPlugin.outputEmail" );
+      }
+
+      @Override public String setValue( String value ) {
+        return null;
+      }
+    };
+    assertFalse( roh.getSupportedOutputTypes().contains( o ) );
+    roh.setMailAvailable( true );
+    assertFalse( roh.getSupportedOutputTypes().contains( o ) );
+    roh.setMailAvailable( false );
+    roh.setMailVisible( true );
+    assertFalse( roh.getSupportedOutputTypes().contains( o ) );
+    roh.setMailAvailable( true );
+    roh.setMailVisible( true );
+    assertTrue( roh.getSupportedOutputTypes().contains( o ) );
   }
 }

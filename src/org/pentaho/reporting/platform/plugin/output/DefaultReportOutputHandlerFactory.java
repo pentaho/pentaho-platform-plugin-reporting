@@ -16,13 +16,6 @@
  */
 package org.pentaho.reporting.platform.plugin.output;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
-
 import org.pentaho.platform.engine.core.system.PentahoRequestContextHolder;
 import org.pentaho.reporting.engine.classic.core.AttributeNames;
 import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
@@ -40,6 +33,13 @@ import org.pentaho.reporting.libraries.base.config.ExtendedConfiguration;
 import org.pentaho.reporting.platform.plugin.SimpleReportingAction;
 import org.pentaho.reporting.platform.plugin.SimpleReportingComponent;
 import org.pentaho.reporting.platform.plugin.messages.Messages;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
 
 public class DefaultReportOutputHandlerFactory implements ReportOutputHandlerFactory {
   private boolean htmlStreamVisible;
@@ -338,6 +338,9 @@ public class DefaultReportOutputHandlerFactory implements ReportOutputHandlerFac
     if ( isHtmlStreamVisible() && isHtmlStreamAvailable() ) {
       outputTypes.put( HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE, m.getString( "ReportPlugin.outputHTMLStream" ) );
     }
+    if ( isMailVisible() && isMailAvailable() ) {
+      outputTypes.put( SimpleReportingAction.MIME_TYPE_EMAIL, m.getString( "ReportPlugin.outputEmail" ) );
+    }
     if ( isPdfVisible() && isPdfAvailable() ) {
       outputTypes.put( PdfPageableModule.PDF_EXPORT_TYPE, m.getString( "ReportPlugin.outputPDF" ) );
     }
@@ -356,6 +359,7 @@ public class DefaultReportOutputHandlerFactory implements ReportOutputHandlerFac
     if ( isTextVisible() && isTextAvailable() ) {
       outputTypes.put( PlainTextPageableModule.PLAINTEXT_EXPORT_TYPE, m.getString( "ReportPlugin.outputTXT" ) );
     }
+
     //noinspection unchecked
     return Collections.unmodifiableSet( outputTypes.entrySet() );
 
