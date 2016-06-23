@@ -30,3 +30,7 @@
   width: 100%;
   padding-bottom: 8px;
 }
+
+.pentaho-reportviewer-errordialogmessage {
+  margin-left: -8px;
+}

@@ -35,3 +35,13 @@
 .feedbackscreentitle {
   padding-left: 10px !important;
 }
+
+.pentaho-reportviewer-errordialogmessage {
+  height:85px;
+  margin-left: -4px;
+  margin-top: 3px;
+}
+
+.pentaho-reportviewer-errordialogtitle {
+  margin-left: 4px;
+}
