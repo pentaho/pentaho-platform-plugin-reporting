@@ -49,6 +49,7 @@
       float: left;
       overflow: hidden;
       border: none;
+      width: inherit;
     }
 
     .pagePrev {
@@ -92,13 +93,14 @@
       border: 1px solid #b3b3b3;
       margin: 0 0.1em;
       float: left;
-      width: 2.1em;
+      width: 2.6em;
     }
 
     .pageNumberInputContainer {
       float: none !important;
       position: relative;
       overflow: hidden;
+      width: inherit;
     }
 
     .pageTotal {
@@ -127,7 +129,7 @@
             <div id="right" class="pageNext"></div>
             <div class="pageNumberInput">
               <div class="pageNumberInputContainer">
-                <input id="current" type="number"/>
+                <input id="current" type="text" pattern="[0-9]*"/>
               </div>
             </div>
             <div id="overall" class="pageTotal">/ 1</div>
@@ -174,28 +176,28 @@
 
     current.onchange = function () {
       if (!isNaN(this.value) && this.value > 0 && this.value <= pages.length) {
-        currentId = this.value;
+        currentId = parseInt(this.value);
       }
-      current.value = currentId;
+      current.value = getLocalizedValue(currentId);
       fill(pages[currentId - 1]);
-      updatePageButtonState();
+      updatePageButtonState(currentId);
     };
 
     var leftFun = function () {
       if (currentId > 1) {
         currentId--;
-        current.value = currentId;
+        current.value = getLocalizedValue(currentId);
         fill(pages[currentId - 1]);
-        updatePageButtonState();
+        updatePageButtonState(currentId);
       }
     };
 
     var rightFun = function () {
       if (currentId < pages.length) {
         currentId++;
-        current.value = currentId;
+        current.value = getLocalizedValue(currentId);
         fill(pages[currentId - 1]);
-        updatePageButtonState();
+        updatePageButtonState(currentId);
       }
     };
 
@@ -204,9 +206,9 @@
     var right = document.getElementById('right');
     right.onclick = rightFun;
 
-    var updatePageButtonState = function() {
-      pagePrevDisabled = current.value == 1;
-      pageNextDisabled = pages.length == current.value;
+    var updatePageButtonState = function(currentId) {
+      pagePrevDisabled = currentId == 1;
+      pageNextDisabled = pages.length == currentId;
       if (pagePrevDisabled) {
         left.classList.add("pagePrev-disabled");
       } else {
@@ -237,6 +239,15 @@
         el.contentWindow.document.body.scrollWidth, el.contentWindow.document.documentElement.scrollWidth
     );
   }
+
+  function getLocalizedValue(value) {
+   try {
+    return value.toLocaleString();
+   } catch (e) {
+    return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+   }
+  }
+
 
 </script>
 </body>
