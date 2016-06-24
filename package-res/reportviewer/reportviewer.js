@@ -1127,7 +1127,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                   me.reportPrompt.showMessageBox(
                       errorMsg,
                       _Messages.getString('ErrorPromptTitle'));
-                  hideDlgAndPane(registry.byId('feedbackScreen'));
+                  registry.byId('feedbackScreen').hide();
                   me._hideAsyncScreens();
 
                   logger && logger.log("ERROR: Request status - FAILED");

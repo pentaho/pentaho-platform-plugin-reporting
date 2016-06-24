@@ -21,8 +21,9 @@ define([
   "dijit/registry",
   "common-ui/prompting/api/PromptingAPI",
   "common-ui/jquery-clean",
-  "common-ui/underscore"
-], function(util, Messages, registry, PromptingAPI, $, _) {
+  "common-ui/underscore",
+  "cdf/dashboard/Utils"
+], function(util, Messages, registry, PromptingAPI, $, _, Utils) {
 
   var _api =  new PromptingAPI('promptPanel');
 
@@ -349,14 +350,18 @@ define([
       showMessageBox: function( message, dialogTitle, button1Text, button1Callback, button2Text, button2Callback, blocker ) {
         var messageBox = registry.byId('messageBox');
 
-        messageBox.setTitle(dialogTitle);
-        messageBox.setMessage(message);
+        messageBox.setTitle('<div class="pentaho-reportviewer-errordialogtitle">' + Utils.escapeHtml(dialogTitle) + '</div>');
+        messageBox.setMessage('<div class="pentaho-reportviewer-errordialogmessage">' + Utils.escapeHtml(message) + '</div>');
 
         if (blocker) {
           messageBox.setButtons([]);
         } else {
           var closeFunc = (function() {
-            this.api.ui.hideProgressIndicator();
+            if(!this._isAsync) {
+              this.api.ui.hideProgressIndicator();
+            } else {
+              this.hideGlassPane();
+            }
             messageBox.hide.call(messageBox);
           }).bind(this);
 
@@ -383,7 +388,9 @@ define([
           }
         }
 
-        this.api.ui.showProgressIndicator();
+        if(!this._isAsync) {
+          this.api.ui.showProgressIndicator();
+        }
         messageBox.show();
       },
 
