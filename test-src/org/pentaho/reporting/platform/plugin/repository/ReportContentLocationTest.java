@@ -19,26 +19,38 @@ package org.pentaho.reporting.platform.plugin.repository;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
 import org.pentaho.platform.api.repository2.unified.RepositoryFile;
+import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.libraries.repository.ContentCreationException;
+import org.pentaho.reporting.libraries.repository.ContentEntity;
+import org.pentaho.reporting.libraries.repository.ContentIOException;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.UUID;
 
 import static org.junit.Assert.*;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.*;
 
 public class ReportContentLocationTest {
   ReportContentRepository reportContentRepository;
   RepositoryFile repositoryFile;
   ReportContentLocation reportContentLocation;
+  IUnifiedRepository repository;
 
   @Before
   public void setUp() throws Exception {
+    PentahoSystem.shutdown();
     repositoryFile = mock( RepositoryFile.class );
     doReturn( "contentId" ).when( repositoryFile ).getId();
     doReturn( "contentName" ).when( repositoryFile ).getName();
     doReturn( "version" ).when( repositoryFile ).getVersionId();
     reportContentRepository = mock( ReportContentRepository.class );
     reportContentLocation = new ReportContentLocation( repositoryFile, reportContentRepository );
+    repository = mock( IUnifiedRepository.class );
+    PentahoSystem.registerObject( repository, IUnifiedRepository.class );
   }
 
   @Test
@@ -107,5 +119,58 @@ public class ReportContentLocationTest {
   public void testNullLocation() {
     new ReportContentLocation( null, mock( ReportContentRepository.class ) );
   }
+
+
+  @Test
+  public void testList() throws ContentIOException {
+
+
+    final ArrayList<RepositoryFile> repositoryFiles = new ArrayList<>();
+    final RepositoryFile repositoryFile = mock( RepositoryFile.class );
+    final String value = UUID.randomUUID().toString();
+    when( repositoryFile.getName() ).thenReturn( value );
+    repositoryFiles.add( repositoryFile );
+    when( repository.getChildren( any( Serializable.class ) ) ).thenReturn( repositoryFiles );
+
+    final ReportContentLocation reportContentLocation =
+      new ReportContentLocation( this.repositoryFile, reportContentRepository );
+
+    final ContentEntity[] contentEntities = reportContentLocation.listContents();
+
+    assertNotNull( contentEntities );
+    assertEquals( 1, contentEntities.length );
+    assertEquals( value, contentEntities[ 0 ].getName() );
+  }
+
+
+  @Test( expected = ContentIOException.class )
+  public void testGetEntryNotExist() throws ContentIOException {
+
+    final ReportContentLocation reportContentLocation =
+      new ReportContentLocation( this.repositoryFile, reportContentRepository );
+
+    reportContentLocation.getEntry( "test" );
+  }
+
+  @Test
+  public void testGetEntry() throws ContentIOException {
+
+
+    final RepositoryFile repositoryFile = mock( RepositoryFile.class );
+    final String value = UUID.randomUUID().toString();
+    when( repositoryFile.getName() ).thenReturn( value );
+
+    when( repository.getFile( "null/test" ) ).thenReturn( repositoryFile );
+
+    final ReportContentLocation reportContentLocation =
+      new ReportContentLocation( this.repositoryFile, reportContentRepository );
+
+    final ContentEntity test = reportContentLocation.getEntry( "test" );
+
+    assertNotNull( test );
+    assertEquals( value, test.getName() );
+
+  }
+
 }
 

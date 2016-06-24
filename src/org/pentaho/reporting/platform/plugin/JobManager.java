@@ -122,15 +122,18 @@ public class JobManager {
 
       final StreamingOutput stream = new StreamingOutputWrapper( input.getStream() );
 
-      final MediaType mediaType;
+      MediaType mediaType;
       Response.ResponseBuilder response;
+
       try {
         mediaType = MediaType.valueOf( state.getMimeType() );
-        response = Response.ok( stream, mediaType );
       } catch ( final Exception e ) {
-        logger.error( UNCKNOWN_MEDIA_TYPE + state.getMimeType() );
-        response = Response.ok( stream, state.getMimeType() );
+        logger.warn( UNCKNOWN_MEDIA_TYPE + state.getMimeType(), e );
+        //Downloadable type
+        mediaType = MediaType.APPLICATION_OCTET_STREAM_TYPE;
       }
+
+      response = Response.ok( stream, mediaType );
 
       response = noCache( response );
       response = calculateContentDisposition( response, state );

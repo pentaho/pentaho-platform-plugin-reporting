@@ -269,7 +269,7 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
   }
 
 
-  private int generateNonCaching( final MasterReport report, final int acceptedPage, final OutputStream outputStream,
+  int generateNonCaching( final MasterReport report, final int acceptedPage, final OutputStream outputStream,
                                   final int yieldRate )
     throws ReportProcessingException, IOException, ContentIOException {
     return super.generate( report, acceptedPage, outputStream, yieldRate );

@@ -1385,7 +1385,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
       },
 
       _isDownloadableFormat: function (mime) {
-        var mimes = ["application/rtf", "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "text/csv"];
+        var mimes = ["application/rtf", "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "text/csv", "mime-message/text/html"];
         return mimes.indexOf(mime) > -1;
       }
 

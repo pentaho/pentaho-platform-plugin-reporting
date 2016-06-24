@@ -307,7 +307,7 @@ public class PentahoAsyncExecutor<TReportState extends IAsyncReportState>
    * ISchedulingDirectoryStrategy implementation, and then optionally moves the content to a location specified by the
    * user (via the UI).
    */
-  private class TriggerScheduledContentWritingHandler implements FutureCallback<IFixedSizeStreamingContent> {
+  class TriggerScheduledContentWritingHandler implements FutureCallback<IFixedSizeStreamingContent> {
     private final IAsyncReportExecution<TReportState> runningTask;
     private final CompositeKey compositeKey;
     private final String user;
@@ -322,7 +322,7 @@ public class PentahoAsyncExecutor<TReportState extends IAsyncReportState>
       this.compositeKey = compositeKey;
     }
 
-    private IFixedSizeStreamingContent notifyListeners( final IFixedSizeStreamingContent result ) throws Exception {
+    protected IFixedSizeStreamingContent notifyListeners( final IFixedSizeStreamingContent result ) throws Exception {
       final Serializable writtenTo = getWriteToJcrTask( result, runningTask ).call();
       if ( writtenTo == null ) {
         log.debug( "Unable to move scheduled content, due to error while creating content in default location." );
