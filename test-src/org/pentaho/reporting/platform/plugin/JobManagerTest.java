@@ -105,7 +105,7 @@ public class JobManagerTest {
   public void calculateContentDisposition() throws Exception {
     final IAsyncReportState state =
       new AsyncReportState( UUID.randomUUID(), "/somepath/anotherlevel/file.prpt", AsyncExecutionStatus.FINISHED, 0, 0,
-        0, 0, 0, 0, "", "text/csv", "" );
+        0, 0, 0, 0, "", "text/csv", "", false );
 
     final Response.ResponseBuilder builder = new ResponseBuilderImpl();
 
@@ -333,6 +333,10 @@ public class JobManagerTest {
 
       @Override public String getErrorMessage() {
         return null;
+      }
+
+      @Override public boolean getIsQueryLimitReached() {
+        return false;
       }
 
     };

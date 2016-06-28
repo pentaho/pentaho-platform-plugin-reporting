@@ -152,4 +152,12 @@ public class AsyncReportStatusListenerTest {
     verify( mock, times( 1 ) ).reportProcessingUpdate( event );
     verify( mock, times( 1 ) ).reportProcessingFinished( event );
   }
+
+  @Test
+  public void testIsQueryLimitReached() throws Exception {
+    final AsyncReportStatusListener listener =
+            new AsyncReportStatusListener( "", UUID.randomUUID(), "", Collections.<ReportProgressListener>emptyList() );
+    listener.setIsQueryLimitReached( true );
+    assertTrue( listener.getState().getIsQueryLimitReached() );
+  }
 }

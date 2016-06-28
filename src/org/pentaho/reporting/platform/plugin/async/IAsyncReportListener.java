@@ -33,4 +33,8 @@ public interface IAsyncReportListener extends ReportProgressListener {
   void setErrorMessage( String errorMessage );
 
   boolean isScheduled();
+
+  boolean isQueryLimitReached();
+
+  void setIsQueryLimitReached( boolean isQueryLimitReached );
 }

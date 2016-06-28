@@ -83,4 +83,9 @@ public interface IAsyncReportState extends Serializable {
    */
   String getErrorMessage();
 
+  /**
+   * @return flag saying that Query limit is reached
+   */
+  boolean getIsQueryLimitReached();
+
 }

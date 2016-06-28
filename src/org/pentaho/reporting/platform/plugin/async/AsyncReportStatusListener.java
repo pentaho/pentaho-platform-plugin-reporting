@@ -55,6 +55,7 @@ public class AsyncReportStatusListener implements IAsyncReportListener {
   private boolean firstPageMode = false;
   private int requestedPage = 0;
   private int generatedPage = 0;
+  private boolean isQueryLimitReached;
 
 
   public AsyncReportStatusListener( final String path,
@@ -196,6 +197,15 @@ public class AsyncReportStatusListener implements IAsyncReportListener {
   }
 
   public synchronized IAsyncReportState getState() {
-    return new AsyncReportState( uuid, path, status, progress, row, totalRows, page, totalPages, generatedPage, activity, mimeType, errorMessage );
+    return new AsyncReportState( uuid, path, status, progress, row, totalRows, page, totalPages, generatedPage, activity, mimeType, errorMessage, isQueryLimitReached );
   }
+
+  public boolean isQueryLimitReached() {
+    return isQueryLimitReached;
+  }
+
+  @Override public void setIsQueryLimitReached( boolean isQueryLimitReached ) {
+    this.isQueryLimitReached = isQueryLimitReached;
+  }
+
 }

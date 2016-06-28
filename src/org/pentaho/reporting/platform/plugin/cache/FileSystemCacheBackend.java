@@ -132,7 +132,7 @@ public class FileSystemCacheBackend implements ICacheBackend {
     }
   }
 
-  private Map<String, Serializable> readMetaData( final List<String> key ) {
+  public Map<String, Serializable> readMetaData( final List<String> key ) {
     Object result = null;
     final List<String> cleanKey = sanitizeKeySegments( key );
     final List<String> noExtCleanKey = new ArrayList<>( cleanKey.size() );

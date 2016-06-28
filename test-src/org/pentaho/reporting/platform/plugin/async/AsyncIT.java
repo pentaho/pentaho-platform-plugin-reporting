@@ -822,6 +822,10 @@ public class AsyncIT {
         return null;
       }
 
+      @Override public boolean getIsQueryLimitReached() {
+        return false;
+      }
+
     };
   }
 

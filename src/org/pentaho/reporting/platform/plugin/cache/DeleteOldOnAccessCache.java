@@ -75,11 +75,22 @@ public class DeleteOldOnAccessCache extends AbstractReportContentCache {
    * @return success
    */
   @Override public boolean put( final String key, final IReportContent value ) {
+    return put( key, value, new HashMap<>() );
+  }
+
+  /**
+   * Cleans old entries Saves value with timestamp
+   *
+   * @param key   key
+   * @param value value
+   * @param metaData metaData
+   * @return success
+   */
+  @Override public boolean put( final String key, final IReportContent value,  Map<String, Serializable> metaData ) {
     cleanUp();
 
-    final HashMap<String, Serializable> metadata = new HashMap<>();
-    metadata.put( TIMESTAMP, System.currentTimeMillis() );
-    getBackend().write( computeKey( key ), value, metadata );
+    metaData.put( TIMESTAMP, System.currentTimeMillis() );
+    getBackend().write( computeKey( key ), value, metaData );
     return false;
   }
 
@@ -91,6 +102,15 @@ public class DeleteOldOnAccessCache extends AbstractReportContentCache {
   @Override public IReportContent get( final String key ) {
     cleanUp();
     return super.get( key );
+  }
+
+  /**
+   * @param key key
+   * @return Map<String, Serializable>
+   */
+  @Override public Map<String, Serializable> getMetaData( String key ) {
+    cleanUp();
+    return super.getMetaData( key );
   }
 
   /**
