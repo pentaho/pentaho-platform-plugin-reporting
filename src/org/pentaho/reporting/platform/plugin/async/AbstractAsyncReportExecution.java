@@ -112,7 +112,7 @@ public abstract class AbstractAsyncReportExecution<TReportState extends IAsyncRe
       listener.setStatus( AsyncExecutionStatus.FAILED );
       messageType = MessageTypes.FAILED;
     }
-    audit.audit( safeSession.getId(), safeSession.getName(), url, getClass().getName(), getClass().getName(),
+    audit.audit( safeSession.getId(), safeSession.getName(), getAuditActionName(), getClass().getName(), getClass().getName(),
       messageType, auditId, "", 0, null );
     closeFile();
   }
@@ -123,6 +123,10 @@ public abstract class AbstractAsyncReportExecution<TReportState extends IAsyncRe
     } catch ( final Exception e  ) {
       log.debug( "No content was created for this task" );
     }
+  }
+
+  protected String getAuditActionName() {
+    return url;
   }
 
   protected AsyncReportStatusListener createListener( final UUID instanceId,
