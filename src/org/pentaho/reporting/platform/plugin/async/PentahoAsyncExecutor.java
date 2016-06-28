@@ -178,7 +178,7 @@ public class PentahoAsyncExecutor<TReportState extends IAsyncReportState>
     if ( !StringUtils.isEmpty( userId ) ) {
       if ( runningTask.schedule() ) {
         Futures.addCallback( future,
-          new TriggerScheduledContentWritingHandler( userId, sessionId, runningTask, compositeKey ) );
+          new TriggerScheduledContentWritingHandler( userId, sessionId, runningTask, compositeKey ), executorService );
         return true;
       }
     }
