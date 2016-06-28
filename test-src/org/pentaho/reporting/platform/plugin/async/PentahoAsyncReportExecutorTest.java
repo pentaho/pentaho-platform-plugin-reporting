@@ -557,7 +557,7 @@ public class PentahoAsyncReportExecutorTest {
 
   @Test public void testUpdateSchedulingLocation() {
 
-    final PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 1, autoSchedulerThreshold );
+    final PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 10, autoSchedulerThreshold );
 
     final TestListener testListener = new TestListener( "1", UUID.randomUUID(), "" );
 
@@ -569,6 +569,12 @@ public class PentahoAsyncReportExecutorTest {
                                                           List<? extends ReportProgressListener> listeners ) {
         return testListener;
       }
+
+      @Override public synchronized boolean schedule() {
+        super.schedule();
+        return true;
+      }
+
     }, session1 );
 
     assertTrue( exec.schedule( id1, session1 ) );
@@ -656,6 +662,11 @@ public class PentahoAsyncReportExecutorTest {
       protected AsyncReportStatusListener createListener( final UUID id,
                                                           List<? extends ReportProgressListener> listeners ) {
         return testListener;
+      }
+
+      @Override public synchronized boolean schedule() {
+        super.schedule();
+        return true;
       }
     }, session1 );
 

@@ -24,11 +24,8 @@ import org.junit.Test;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.StandaloneSession;
 
-import java.io.Serializable;
 import java.util.Collections;
-import java.util.HashMap;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
@@ -36,7 +33,6 @@ import static org.junit.Assert.assertNull;
 public class DeleteOldOnAccessCacheTest {
 
   private static final String SOME_KEY = "some_key";
-  private static final String SOME_METADATA_KEY = "some_metadata_key";
   private static final IReportContent SOME_VALUE =
     new ReportContentImpl( 100, Collections.singletonMap( 1, new byte[] { 1, 3, 4, 5 } ) );
   private static FileSystemCacheBackend fileSystemCacheBackend;
@@ -57,36 +53,21 @@ public class DeleteOldOnAccessCacheTest {
   public void testPutGet() throws Exception {
 
     final DeleteOldOnAccessCache cache = new DeleteOldOnAccessCache( fileSystemCacheBackend );
-    cache.setMillisToLive( 1000 );
+    cache.setDaysToLive( 1L );
     cache.put( SOME_KEY, SOME_VALUE );
     assertNotNull( cache.get( SOME_KEY ) );
-    Thread.sleep( 2500 );
+    cache.setMillisToLive( 0 );
     assertNull( cache.get( SOME_KEY ) );
   }
 
   @Test
   public void testCleanup() throws Exception {
     final DeleteOldOnAccessCache cache = new DeleteOldOnAccessCache( fileSystemCacheBackend );
-    cache.setMillisToLive( 1000 );
+    cache.setDaysToLive( 1L );
     cache.put( SOME_KEY, SOME_VALUE );
     assertNotNull( cache.get( SOME_KEY ) );
-    Thread.sleep( 2500 );
+    cache.setMillisToLive( 0 );
     cache.cleanup();
     assertNull( cache.get( SOME_KEY ) );
-  }
-
-  @Test
-  public void testPutGetWithMetaData() throws Exception {
-
-    final DeleteOldOnAccessCache cache = new DeleteOldOnAccessCache( fileSystemCacheBackend );
-    cache.setMillisToLive( 1000 );
-    final HashMap<String, Serializable> metadata = new HashMap<>();
-    metadata.put( SOME_METADATA_KEY, "test value" );
-    cache.put( SOME_KEY, SOME_VALUE, metadata );
-    assertNotNull( cache.get( SOME_KEY ) );
-    assertEquals( cache.getMetaData( SOME_KEY ).get( SOME_METADATA_KEY ), "test value" );
-    Thread.sleep( 2500 );
-    assertNull( cache.get( SOME_KEY ) );
-    assertNull( cache.getMetaData( SOME_KEY ) );
   }
 }
