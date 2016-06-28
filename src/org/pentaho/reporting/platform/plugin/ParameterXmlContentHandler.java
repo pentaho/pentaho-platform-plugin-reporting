@@ -27,6 +27,7 @@ import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -45,14 +46,21 @@ import org.pentaho.platform.api.engine.IParameterProvider;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.util.UUIDUtil;
 import org.pentaho.reporting.engine.classic.core.AttributeNames;
+import org.pentaho.reporting.engine.classic.core.CompoundDataFactory;
+import org.pentaho.reporting.engine.classic.core.DataFactory;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportDataFactoryException;
 import org.pentaho.reporting.engine.classic.core.ReportElement;
 import org.pentaho.reporting.engine.classic.core.Section;
+import org.pentaho.reporting.engine.classic.core.designtime.datafactory.DesignTimeDataFactoryContext;
 import org.pentaho.reporting.engine.classic.core.function.Expression;
 import org.pentaho.reporting.engine.classic.core.function.FormulaExpression;
+import org.pentaho.reporting.engine.classic.core.metadata.ExpressionMetaData;
+import org.pentaho.reporting.engine.classic.core.metadata.ExpressionPropertyMetaData;
+import org.pentaho.reporting.engine.classic.core.metadata.ExpressionRegistry;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlTableModule;
 import org.pentaho.reporting.engine.classic.core.parameters.AbstractParameter;
+import org.pentaho.reporting.engine.classic.core.parameters.DefaultListParameter;
 import org.pentaho.reporting.engine.classic.core.parameters.DefaultParameterContext;
 import org.pentaho.reporting.engine.classic.core.parameters.ListParameter;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterAttributeNames;
@@ -72,6 +80,7 @@ import org.pentaho.reporting.engine.classic.core.util.beans.ConverterRegistry;
 import org.pentaho.reporting.engine.classic.core.util.beans.ValueConverter;
 import org.pentaho.reporting.engine.classic.extensions.drilldown.DrillDownProfile;
 import org.pentaho.reporting.engine.classic.extensions.drilldown.DrillDownProfileMetaData;
+import org.pentaho.reporting.libraries.base.util.HashNMap;
 import org.pentaho.reporting.libraries.base.util.NullOutputStream;
 import org.pentaho.reporting.libraries.base.util.StringUtils;
 import org.pentaho.reporting.libraries.formula.DefaultFormulaContext;
@@ -354,6 +363,14 @@ public class ParameterXmlContentHandler {
         reportParameterDefinition.getValidator().validate( validationResult, reportParameterDefinition,
           parameterContext );
 
+      // determine dependent parameters
+      HashNMap<String, String> dependencies = null;
+      try {
+        dependencies = getDependentParameters( vr.getParameterValues(), parameterContext, report );
+      } catch ( ReportDataFactoryException e ) {
+        logger.debug( "unable to determine dependent parameters", e );
+      }
+
       parameters = document.createElement( GROUP_PARAMETERS ); //$NON-NLS-1$
       parameters
         .setAttribute( "is-prompt-needed", String.valueOf( vr.isEmpty() == false ) ); //$NON-NLS-1$ //$NON-NLS-2$
@@ -434,7 +451,9 @@ public class ParameterXmlContentHandler {
         final Object selections = inputs.get( parameter.getName() );
         final ParameterContextWrapper wrapper =
           new ParameterContextWrapper( parameterContext, vr.getParameterValues() );
-        parameters.appendChild( createParameterElement( parameter, wrapper, selections ) );
+        Element el = createParameterElement( parameter, wrapper, selections );
+        createParameterDependencies( el, parameter, dependencies );
+        parameters.appendChild( el );
       }
 
       if ( vr.isEmpty() == false ) {
@@ -468,6 +487,92 @@ public class ParameterXmlContentHandler {
       parameterContext.close();
     }
   }
+
+  HashNMap<String, String> getDependentParameters( ReportParameterValues computedParameterValues,
+                                                           ParameterContext parameterContext, MasterReport report )
+    throws ReportDataFactoryException {
+    HashNMap<String, String> downstreamParams = new HashNMap<>();
+
+    final ReportParameterDefinition reportParameterDefinition = report.getParameterDefinition();
+
+    final String ignore = "::org.pentaho.reporting::";
+
+    DesignTimeDataFactoryContext factoryContext = new DesignTimeDataFactoryContext( report );
+
+    for ( ParameterDefinitionEntry entry : reportParameterDefinition.getParameterDefinitions() ) {
+      // default list parameter is only dynamic values provider now.
+      if ( entry instanceof DefaultListParameter ) {
+
+        DefaultListParameter listParameter = (DefaultListParameter) entry;
+
+        // inspect for dependent fields
+        final String queryName = listParameter.getQueryName();
+        if ( queryName != null ) {
+          CompoundDataFactory cdf = CompoundDataFactory.normalize( report.getDataFactory() );
+          final DataFactory dataFactoryForQuery = cdf.getDataFactoryForQuery( queryName );
+
+          dataFactoryForQuery.initialize( factoryContext );
+
+          if ( dataFactoryForQuery != null ) {
+            String[] fields = dataFactoryForQuery.getMetaData()
+              .getReferencedFields( dataFactoryForQuery, queryName, computedParameterValues );
+
+            if ( fields != null ) {
+              for ( String field : fields ) {
+                if ( !field.startsWith( ignore ) ) {
+                  downstreamParams.add( entry.getName(), field );
+                }
+              }
+            }
+          }
+        }
+
+        // inspect post proc formulas, def values, etc.
+        computeNormalLineage( parameterContext, listParameter, downstreamParams );
+      }
+    }
+
+    return downstreamParams;
+  }
+
+  void computeNormalLineage( ParameterContext pc, ParameterDefinitionEntry pe, HashNMap<String, String> m ) {
+    String name = pe.getName();
+    String defValue =
+      pe.getParameterAttribute( ParameterAttributeNames.Core.NAMESPACE,
+        ParameterAttributeNames.Core.DEFAULT_VALUE_FORMULA, pc );
+    String postProc =
+      pe.getParameterAttribute( ParameterAttributeNames.Core.NAMESPACE,
+        ParameterAttributeNames.Core.POST_PROCESSOR_FORMULA, pc );
+    final String formula =
+      pe.getParameterAttribute( ParameterAttributeNames.Core.NAMESPACE,
+        ParameterAttributeNames.Core.DISPLAY_VALUE_FORMULA, pc );
+
+    for ( String field : analyzeFormula( defValue ) ) {
+      m.add( name, field );
+    }
+    for ( String field : analyzeFormula( formula ) ) {
+      m.add( name, field );
+    }
+    for ( String field : analyzeFormula( postProc ) ) {
+      m.add( name, field );
+    }
+  }
+
+  private String[] analyzeFormula( String formula ) {
+    if ( formula == null ) {
+      return new String[ 0 ];
+    }
+    FormulaExpression fe = new FormulaExpression();
+    fe.setFormula( formula );
+
+    final ExpressionMetaData md =
+      ExpressionRegistry.getInstance().getExpressionMetaData( fe.getClass().getName() );
+
+    final ExpressionPropertyMetaData pd = md.getPropertyDescription( "formula" );
+
+    return pd.getReferencedFields( fe, fe.getFormula() );
+  }
+
 
   private Map<String, Object> computeRealInput( final ParameterContext parameterContext,
                                                 final LinkedHashMap<String, ParameterDefinitionEntry> reportParameters,
@@ -530,6 +635,27 @@ public class ParameterXmlContentHandler {
       parameter.setHidden( lockOutputType );
       parameter.setMandatory( !lockOutputType );
     }
+  }
+
+  private void createParameterDependencies( final Element element, final ParameterDefinitionEntry parameter,
+                                               final HashNMap dependencies ) {
+    if ( element == null || parameter == null ) {
+      throw new NullPointerException();
+    }
+    if ( dependencies == null || dependencies.isEmpty() || !dependencies.containsKey( parameter.getName() ) ) {
+      return;
+    }
+    final Element valuesElement = document.createElement( "dependencies" );
+    Iterator it = dependencies.getAll( parameter.getName() );
+    while ( it.hasNext() ) {
+      Object rName = it.next();
+      String dependency =  String.valueOf( rName );
+      Element name = document.createElement( "name" );
+      name.setTextContent( dependency );
+      valuesElement.appendChild( name );
+    }
+
+    element.appendChild( valuesElement );
   }
 
   private Element createParameterElement( final ParameterDefinitionEntry parameter,
@@ -751,7 +877,8 @@ public class ParameterXmlContentHandler {
                                       final ParameterContext parameterContext,
                                       final LinkedHashSet<Object> selectionSet ) {
     // add a timezone hint ..
-    final String timezoneSpec = parameter.getParameterAttribute( ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TIMEZONE,
+    final String timezoneSpec =
+      parameter.getParameterAttribute( ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TIMEZONE,
         parameterContext );
     if ( "client".equals( timezoneSpec ) ) { //$NON-NLS-1$
       return ( "" );
