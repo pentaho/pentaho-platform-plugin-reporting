@@ -224,6 +224,8 @@ public class PageableHTMLOutput implements ReportOutputHandler {
           throw new ReportProcessingException( "Can't generate report" );
         }
 
+        listener.setIsQueryLimitReached( proc.isQueryLimitReached() );
+
         //Write all if scheduled
         if ( listener.isScheduled() ) {
           PaginationControlWrapper.write( outputStream, completeReport );
