@@ -180,7 +180,38 @@ public class CachingPageableHTMLOutputIT {
       final IReportContentCache cache = iPluginCacheManager.getCache();
 
       Map<String, Serializable> metaData = cache.getMetaData( report.getContentCacheKey() );
-      assertFalse( (Boolean) metaData.get( "IsQueryLimitReached" ) );
+      assertNull( metaData.get( "IsQueryLimitReached" ) );
+
+      ReportListenerThreadHolder.clear();
+      assertNull( ReportListenerThreadHolder.getListener() );
+    } finally {
+      edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.CachePageableHtmlContent", null );
+      edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.FirstPageMode", null );
+    }
+  }
+
+  @Test
+  public void testIsQueryLimitReachedForFirstPageModeDisabled() throws Exception {
+    ReportListenerThreadHolder.clear();
+    final ModifiableConfiguration edConf = ClassicEngineBoot.getInstance().getEditableConfig();
+    edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.CachePageableHtmlContent", "true" );
+    edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.FirstPageMode", "false" );
+    try {
+
+      final TestListener listener = new TestListener( "1", UUID.randomUUID(), "" );
+      ReportListenerThreadHolder.setListener( listener );
+      final ResourceManager mgr = new ResourceManager();
+      final File src = new File( "resource/solution/test/reporting/report.prpt" );
+      final MasterReport report = (MasterReport) mgr.createDirectly( src, MasterReport.class ).getResource();
+      report.setContentCacheKey( "some_key" );
+      // set row limit for report
+      report.setQueryLimit( 20 );
+      execute( report );
+
+      assertTrue( listener.isQueryLimitReached() );
+      final IReportContentCache cache = iPluginCacheManager.getCache();
+      Map<String, Serializable> metaData = cache.getMetaData( report.getContentCacheKey() );
+      assertEquals( metaData.get( "IsQueryLimitReached" ), true );
 
       ReportListenerThreadHolder.clear();
       assertNull( ReportListenerThreadHolder.getListener() );
