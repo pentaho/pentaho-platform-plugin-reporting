@@ -311,4 +311,45 @@ public class PageableHTMLOutputTest {
     mock.generate( null, -1, null, 1 );
     verify( mock, times( 1 ) ).generateNonCaching( null, -1, null, 1 );
   }
+
+  @Test
+  public void testIsQueryLimitReached() throws Exception {
+
+    ClassicEngineBoot.getInstance().start();
+
+    MicroPlatform microPlatform = MicroPlatformFactory.create();
+
+    try {
+      microPlatform.define( ReportOutputHandlerFactory.class, FastExportReportOutputHandlerFactory.class );
+      final IReportContentCache mockCache = mock( IReportContentCache.class );
+      final IReportContent iReportContent = mock( IReportContent.class );
+      final int value = new Random().nextInt();
+      when( iReportContent.getPageCount() ).thenReturn( value );
+
+      final String key = "test";
+      when( mockCache.get( key ) ).thenReturn( iReportContent );
+      final IPluginCacheManager iPluginCacheManager =
+              new PluginCacheManagerImpl( mockCache );
+      microPlatform.define( "IPluginCacheManager", iPluginCacheManager );
+      microPlatform.start();
+
+      final IPentahoSession session = new StandaloneSession();
+      PentahoSessionHolder.setSession( session );
+
+      final TestListener listener = new TestListener( "1", UUID.randomUUID(), "" );
+      ReportListenerThreadHolder.setListener( listener );
+
+      final ResourceManager mgr = new ResourceManager();
+      final File src = new File( "resource/solution/test/reporting/report.prpt" );
+      final MasterReport masterReport = (MasterReport) mgr.createDirectly( src, MasterReport.class ).getResource();
+      masterReport.setQueryLimit( 50 );
+      pageableHTMLOutput.generate( masterReport, 1, new ByteArrayOutputStream(), 1 );
+
+      assertEquals( listener.isQueryLimitReached(), true );
+
+    } finally {
+      microPlatform.stop();
+      microPlatform = null;
+    }
+  }
 }
