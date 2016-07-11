@@ -328,16 +328,6 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
     return metaData;
   }
 
-  private synchronized void persistContent( final String key, final IReportContent data, Map<String, Serializable> metaData ) {
-    final IPluginCacheManager cacheManager = PentahoSystem.get( IPluginCacheManager.class );
-    final IReportContentCache cache = cacheManager.getCache();
-    if ( cache != null ) {
-      cache.put( key, data, metaData );
-    } else {
-      logger.error( "Plugin session cache is not available." );
-    }
-  }
-
   private Serializable computeCacheKey( final MasterReport report ) throws BeanException {
     final ResourceKey definitionSource = report.getDefinitionSource();
 
