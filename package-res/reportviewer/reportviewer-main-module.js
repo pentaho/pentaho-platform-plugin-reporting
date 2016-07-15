@@ -26,7 +26,8 @@ define([
   'pentaho/common/Menu',
   'pentaho/common/MenuItem',
   'pentaho/common/PageControl', 'dijit/Toolbar', 'dijit/ToolbarSeparator',
-  'dijit/form/ToggleButton', 'pentaho/common/GlassPane', 'pentaho/reportviewer/FeedbackScreen', 'pentaho/reportviewer/GlassPane', 'pentaho/reportviewer/ScheduleScreen'],
+  'dijit/form/ToggleButton', 'pentaho/common/GlassPane', 'pentaho/reportviewer/FeedbackScreen', 'pentaho/reportviewer/GlassPane', 'pentaho/reportviewer/ScheduleScreen',
+  'pentaho/reportviewer/SuccessScheduleScreen'],
     function (_pentaho_ajax, _reportViewer, Prompt, logging, formatter, parser, _Messages, _MessageBox, _Menu, _MenuItem, _PageControl) {
 
     });

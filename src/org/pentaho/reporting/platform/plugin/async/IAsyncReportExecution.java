@@ -56,4 +56,6 @@ public interface IAsyncReportExecution<V extends IAsyncReportState> extends Call
   void requestPage( int page );
 
   boolean schedule();
+
+  boolean preSchedule();
 }

@@ -46,6 +46,12 @@ public class PentahoAsyncReportExecution extends AbstractAsyncReportExecution<IA
   }
 
 
+  PentahoAsyncReportExecution( final PentahoAsyncReportExecution old,
+                                      final AsyncJobFileStagingHandler handler ) {
+    super( old.url, old.reportComponent, handler, old.safeSession, old.auditId, old.getAudit() );
+    old.reportComponent.setOutputStream( handler.getStagingOutputStream() );
+  }
+
   /**
    * Generate report and return input stream to a generated report from server.
    * <p>
