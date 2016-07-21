@@ -12,26 +12,10 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
-
-import java.io.IOException;
-import java.lang.reflect.Array;
-import java.sql.Time;
-import java.sql.Timestamp;
-import java.text.DateFormatSymbols;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Map;
-import java.util.TimeZone;
-
-import javax.swing.table.TableModel;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -54,26 +38,38 @@ import org.pentaho.reporting.libraries.base.util.StringUtils;
 import org.pentaho.reporting.libraries.resourceloader.ResourceException;
 import org.pentaho.reporting.platform.plugin.messages.Messages;
 
+import javax.swing.table.TableModel;
+import java.io.IOException;
+import java.lang.reflect.Array;
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.text.DateFormatSymbols;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Map;
+import java.util.TimeZone;
+
 public class ReportContentUtil {
 
   /**
    * Apply inputs (if any) to corresponding report parameters, care is taken when checking parameter types to perform
    * any necessary casting and conversion.
-   * 
-   * @param report
-   *          The report to retrieve parameter definitions and values from.
-   * @param context
-   *          a ParameterContext for which the parameters will be under
-   * @param validationResult
-   *          the validation result that will hold the warnings. If null, a new one will be created.
+   *
+   * @param report           The report to retrieve parameter definitions and values from.
+   * @param context          a ParameterContext for which the parameters will be under
+   * @param validationResult the validation result that will hold the warnings. If null, a new one will be created.
    * @return the validation result containing any parameter validation errors.
-   * @throws java.io.IOException
-   *           if the report of this component could not be parsed.
-   * @throws ResourceException
-   *           if the report of this component could not be parsed.
+   * @throws java.io.IOException if the report of this component could not be parsed.
+   * @throws ResourceException   if the report of this component could not be parsed.
    */
   public static ValidationResult applyInputsToReportParameters( final MasterReport report,
-      final ParameterContext context, final Map<String, Object> inputs, ValidationResult validationResult )
+                                                                final ParameterContext context,
+                                                                final Map<String, Object> inputs,
+                                                                ValidationResult validationResult )
     throws IOException, ResourceException {
     if ( validationResult == null ) {
       validationResult = new ValidationResult();
@@ -87,13 +83,13 @@ public class ReportContentUtil {
         final String paramName = param.getName();
         try {
           final Object computedParameter =
-              ReportContentUtil.computeParameterValue( context, param, inputs.get( paramName ) );
+            ReportContentUtil.computeParameterValue( context, param, inputs.get( paramName ) );
           parameterValues.put( param.getName(), computedParameter );
           if ( log.isInfoEnabled() ) {
             log.info( Messages.getInstance().getString( "ReportPlugin.infoParameterValues", //$NON-NLS-1$
-                paramName, String.valueOf( inputs.get( paramName ) ), String.valueOf( computedParameter ) ) );
+              paramName, String.valueOf( inputs.get( paramName ) ), String.valueOf( computedParameter ) ) );
           }
-        } catch ( Exception e ) {
+        } catch ( final Exception e ) {
           if ( log.isWarnEnabled() ) {
             log.warn( Messages.getInstance().getString( "ReportPlugin.logErrorParametrization" ), e ); //$NON-NLS-1$
           }
@@ -105,7 +101,8 @@ public class ReportContentUtil {
   }
 
   public static Object computeParameterValue( final ParameterContext parameterContext,
-      final ParameterDefinitionEntry parameterDefinition, final Object value ) throws ReportProcessingException {
+                                              final ParameterDefinitionEntry parameterDefinition, final Object value )
+    throws ReportProcessingException {
     if ( value == null ) {
       // there are still buggy report definitions out there ...
       return null;
@@ -126,7 +123,7 @@ public class ReportContentUtil {
       final Object[] sourceArray = c.toArray();
       final Object array = Array.newInstance( componentType, length );
       for ( int i = 0; i < length; i++ ) {
-        Array.set( array, i, convert( parameterContext, parameterDefinition, componentType, sourceArray[i] ) );
+        Array.set( array, i, convert( parameterContext, parameterDefinition, componentType, sourceArray[ i ] ) );
       }
       return array;
     } else if ( value.getClass().isArray() ) {
@@ -146,8 +143,8 @@ public class ReportContentUtil {
     } else if ( allowMultiSelect ) {
       // if the parameter allows multi selections, wrap this single input in an array
       // and re-call addParameter with it
-      final Object[] array = new Object[1];
-      array[0] = value;
+      final Object[] array = new Object[ 1 ];
+      array[ 0 ] = value;
       return computeParameterValue( parameterContext, parameterDefinition, array );
     } else {
       return convert( parameterContext, parameterDefinition, parameterDefinition.getValueType(), value );
@@ -163,7 +160,7 @@ public class ReportContentUtil {
   }
 
   private static Object convert( final ParameterContext context, final ParameterDefinitionEntry parameter,
-      final Class targetType, final Object rawValue ) throws ReportProcessingException {
+                                 final Class targetType, final Object rawValue ) throws ReportProcessingException {
     if ( targetType == null ) {
       throw new NullPointerException();
     }
@@ -176,7 +173,7 @@ public class ReportContentUtil {
     }
 
     if ( targetType.isAssignableFrom( TableModel.class )
-        && IPentahoResultSet.class.isAssignableFrom( rawValue.getClass() ) ) {
+      && IPentahoResultSet.class.isAssignableFrom( rawValue.getClass() ) ) {
       // wrap IPentahoResultSet to simulate TableModel
       return new PentahoTableModel( (IPentahoResultSet) rawValue );
     }
@@ -222,20 +219,20 @@ public class ReportContentUtil {
     }
 
     final String dataFormat =
-        parameter.getParameterAttribute( ParameterAttributeNames.Core.NAMESPACE,
-            ParameterAttributeNames.Core.DATA_FORMAT, context );
+      parameter.getParameterAttribute( ParameterAttributeNames.Core.NAMESPACE,
+        ParameterAttributeNames.Core.DATA_FORMAT, context );
     if ( dataFormat != null ) {
       try {
         if ( Number.class.isAssignableFrom( targetType ) ) {
           final DecimalFormat format =
-              new DecimalFormat( dataFormat, new DecimalFormatSymbols( LocaleHelper.getLocale() ) );
+            new DecimalFormat( dataFormat, new DecimalFormatSymbols( LocaleHelper.getLocale() ) );
           format.setParseBigDecimal( true );
           final Number number = format.parse( valueAsString );
           final String asText = ConverterRegistry.toAttributeValue( number );
           return ConverterRegistry.toPropertyValue( asText, targetType );
         } else if ( Date.class.isAssignableFrom( targetType ) ) {
           final SimpleDateFormat format =
-              new SimpleDateFormat( dataFormat, new DateFormatSymbols( LocaleHelper.getLocale() ) );
+            new SimpleDateFormat( dataFormat, new DateFormatSymbols( LocaleHelper.getLocale() ) );
           format.setLenient( false );
           final Date number = format.parse( valueAsString );
           final String asText = ConverterRegistry.toAttributeValue( number );
@@ -253,14 +250,14 @@ public class ReportContentUtil {
         return valueConverter.toPropertyValue( valueAsString );
       } catch ( BeanException e ) {
         throw new ReportProcessingException( Messages.getInstance().getString(
-            "ReportPlugin.unableToConvertParameter", parameter.getName(), valueAsString ) ); //$NON-NLS-1$
+          "ReportPlugin.unableToConvertParameter", parameter.getName(), valueAsString ) ); //$NON-NLS-1$
       }
     }
     return rawValue;
   }
 
   private static Date parseDate( final ParameterDefinitionEntry parameterEntry, final ParameterContext context,
-      final String value ) throws ParseException {
+                                 final String value ) throws ParseException {
     try {
       return parseDateStrict( parameterEntry, context, value );
     } catch ( ParseException pe ) {
@@ -286,10 +283,10 @@ public class ReportContentUtil {
   }
 
   private static Date parseDateStrict( final ParameterDefinitionEntry parameterEntry, final ParameterContext context,
-      final String value ) throws ParseException {
+                                       final String value ) throws ParseException {
     final String timezoneSpec =
-        parameterEntry.getParameterAttribute( ParameterAttributeNames.Core.NAMESPACE,
-            ParameterAttributeNames.Core.TIMEZONE, context );
+      parameterEntry.getParameterAttribute( ParameterAttributeNames.Core.NAMESPACE,
+        ParameterAttributeNames.Core.TIMEZONE, context );
     if ( timezoneSpec == null || "server".equals( timezoneSpec ) ) { // NON-NLS
       final SimpleDateFormat simpleDateFormat = new SimpleDateFormat( "yyyy-MM-dd'T'HH:mm:ss.SSS" ); // NON-NLS
       return simpleDateFormat.parse( value );

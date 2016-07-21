@@ -17,28 +17,7 @@
 
 package org.pentaho.reporting.platform.plugin;
 
-import java.io.OutputStream;
-import java.io.Serializable;
-import java.lang.reflect.Array;
-import java.math.BigDecimal;
-import java.sql.Timestamp;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.TimeZone;
-
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-
+import com.google.common.collect.Lists;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -96,157 +75,138 @@ import org.springframework.web.util.HtmlUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import java.io.OutputStream;
+import java.io.Serializable;
+import java.lang.reflect.Array;
+import java.math.BigDecimal;
+import java.sql.Timestamp;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.TimeZone;
+
 public class ParameterXmlContentHandler {
-  private static class OutputParameterCollector {
-    private OutputParameterCollector() {
-    }
-
-    public String[] collectParameter( final MasterReport reportDefinition ) {
-      final LinkedHashSet<String> parameter = new LinkedHashSet<String>();
-
-      inspectElement( reportDefinition, parameter );
-      traverseSection( reportDefinition, parameter );
-
-      return parameter.toArray( new String[ parameter.size() ] );
-    }
-
-    private void traverseSection( final Section section, final LinkedHashSet<String> parameter ) {
-      final int count = section.getElementCount();
-      for ( int i = 0; i < count; i++ ) {
-        final ReportElement element = section.getElement( i );
-        inspectElement( element, parameter );
-        if ( element instanceof Section ) {
-          traverseSection( (Section) element, parameter );
-        }
-      }
-    }
-
-    private void inspectElement( final ReportElement element, final LinkedHashSet<String> parameter ) {
-      try {
-        final Expression expression = element.getStyleExpression( ElementStyleKeys.HREF_TARGET );
-        if ( expression instanceof FormulaExpression == false ) {
-          // DrillDown only works with the formula function of the same name
-          return;
-        }
-
-        final FormulaExpression fe = (FormulaExpression) expression;
-        final String formulaText = fe.getFormulaExpression();
-        if ( StringUtils.isEmpty( formulaText ) ) {
-          // DrillDown only works with the formula function of the same name
-          return;
-        }
-
-        if ( formulaText.startsWith( "DRILLDOWN" ) == false ) { // NON-NLS
-          // DrillDown only works if the function is the only element. Everything else is beyond our control.
-          return;
-        }
-        final FormulaParser formulaParser = new FormulaParser();
-        final LValue value = formulaParser.parse( formulaText );
-        if ( value instanceof FormulaFunction == false ) {
-          // Not a valid formula or a complex term - we do not handle that
-          return;
-        }
-        final DefaultFormulaContext context = new DefaultFormulaContext();
-        value.initialize( context );
-
-        final FormulaFunction fn = (FormulaFunction) value;
-        final LValue[] params = fn.getChildValues();
-        if ( params.length != 3 ) {
-          // Malformed formula: Need 3 parameter
-          return;
-        }
-        final String config = extractText( params[ 0 ] );
-        if ( config == null ) {
-          // Malformed formula: No statically defined config profile
-          return;
-        }
-
-        final DrillDownProfile profile = DrillDownProfileMetaData.getInstance().getDrillDownProfile( config );
-        if ( profile == null ) {
-          // Malformed formula: Unknown drilldown profile
-          return;
-        }
-
-        if ( StringUtils.isEmpty( profile.getAttribute( "group" ) ) || !profile.getAttribute( "group" ).startsWith( "pentaho" ) ) { // NON-NLS
-          // Only 'pentaho' and 'pentaho-sugar' drill-down profiles can be used. Filters out all other third party
-          // drilldowns
-          return;
-        }
-
-        if ( params[ 2 ] instanceof DataTable == false ) {
-          // Malformed formula: Not a parameter table
-          return;
-        }
-        final DataTable dataTable = (DataTable) params[ 2 ];
-        final int rowCount = dataTable.getRowCount();
-        final int colCount = dataTable.getColumnCount();
-        if ( colCount != 2 ) {
-          // Malformed formula: Parameter table is invalid. Must be two cols, many rows ..
-          return;
-        }
-
-        for ( int i = 0; i < rowCount; i++ ) {
-          final LValue valueAt = dataTable.getValueAt( i, 0 );
-          final String name = extractText( valueAt );
-          if ( name == null ) {
-            continue;
-          }
-          parameter.add( name );
-        }
-      } catch ( Exception e ) {
-        // ignore ..
-        CommonUtil.checkStyleIgnore();
-      }
-    }
-
-    private String extractText( final LValue value ) {
-      if ( value == null ) {
-        return null;
-      }
-      if ( value.isConstant() ) {
-        if ( value instanceof StaticValue ) {
-          final StaticValue staticValue = (StaticValue) value;
-          final Object o = staticValue.getValue();
-          if ( o == null ) {
-            return null; // NON-NLS
-          }
-          return String.valueOf( o );
-        }
-      }
-      return null; // NON-NLS
-
-    }
-
-  }
-
-  private static final Log logger = LogFactory.getLog( ParameterXmlContentHandler.class );
   public static final String SYS_PARAM_ACCEPTED_PAGE = "accepted-page";
-
-  private Map<String, ParameterDefinitionEntry> systemParameter;
-
-  private boolean paginate;
-  private Document document;
-  private IParameterProvider requestParameters;
-  private Map<String, Object> inputs;
-
   public static final String SYS_PARAM_RENDER_MODE = "renderMode";
-  private static final String SYS_PARAM_OUTPUT_TARGET = SimpleReportingComponent.OUTPUT_TARGET;
-  private static final String SYS_PARAM_DESTINATION = "destination";
   public static final String SYS_PARAM_CONTENT_LINK = "::cl";
   public static final String SYS_PARAM_SESSION_ID = "::session";
+  public static final String SYS_SERVER_NAMESPACE =
+    "http://reporting.pentaho.org/namespaces/engine/parameter-attributes/server";
+  private static final Log logger = LogFactory.getLog( ParameterXmlContentHandler.class );
+  private static final String SYS_PARAM_OUTPUT_TARGET = SimpleReportingComponent.OUTPUT_TARGET;
+  private static final String SYS_PARAM_DESTINATION = "destination";
   private static final String GROUP_SYSTEM = "system";
   private static final String GROUP_PARAMETERS = "parameters";
   private static final String SYS_PARAM_TAB_NAME = "::TabName";
   private static final String SYS_PARAM_TAB_ACTIVE = "::TabActive";
-
+  private static final String SYS_IGNORE_PARAM = "::org.pentaho.reporting";
   private static final String SYS_PARAM_HTML_PROPORTIONAL_WIDTH = "htmlProportionalWidth";
   private static final String CONFIG_PARAM_HTML_PROPORTIONAL_WIDTH =
     "org.pentaho.reporting.engine.classic.core.modules.output.table.html.ProportionalColumnWidths";
+  // default visibility for testing purposes
+  Document document;
+  private Map<String, ParameterDefinitionEntry> systemParameter;
+  private boolean paginate;
+  private IParameterProvider requestParameters;
+  private Map<String, Object> inputs;
 
   public ParameterXmlContentHandler( final ParameterContentGenerator contentGenerator, final boolean paginate ) {
     this.paginate = paginate;
     this.inputs = contentGenerator.createInputs();
     this.requestParameters = contentGenerator.getRequestParameters();
+  }
+
+  public static String convertParameterValueToString( final ParameterDefinitionEntry parameter,
+                                                      final ParameterContext context, final Object value,
+                                                      final Class<?> type ) throws BeanException {
+    if ( value == null ) {
+      return null;
+    }
+
+    // PIR-652
+    if ( value instanceof Object[] ) {
+      Object[] o = (Object[]) value;
+      if ( o.length == 1 ) {
+        return String.valueOf( o[ 0 ] );
+      }
+    }
+
+    // PIR-724 - Convert String arrays to a single string with values separated by '|'
+    if ( value instanceof String[] ) {
+      String[] o = (String[]) value;
+      return org.apache.commons.lang.StringUtils.join( o, '|' );
+    }
+
+    final ValueConverter valueConverter = ConverterRegistry.getInstance().getValueConverter( type );
+    if ( valueConverter == null ) {
+      return String.valueOf( value );
+    }
+    if ( Date.class.isAssignableFrom( type ) ) {
+      if ( value instanceof Date == false ) {
+        throw new BeanException( Messages.getInstance().getString( "ReportPlugin.errorNonDateParameterValue" ) );
+      }
+
+      final String timezone =
+        parameter.getParameterAttribute( ParameterAttributeNames.Core.NAMESPACE,
+          ParameterAttributeNames.Core.TIMEZONE, context );
+      final DateFormat dateFormat;
+      if ( timezone == null || "server".equals( timezone ) || //$NON-NLS-1$
+        "client".equals( timezone ) ) { //$NON-NLS-1$
+        // nothing needed ..
+        // for server: Just print it as it is, including the server timezone.
+        dateFormat = new SimpleDateFormat( "yyyy-MM-dd'T'HH:mm:ss.SSSZ" ); //$NON-NLS-1$
+      } else {
+        // for convinience for the clients we send the date in the correct timezone.
+        final TimeZone timeZoneObject;
+        if ( "utc".equals( timezone ) ) { //$NON-NLS-1$
+          timeZoneObject = TimeZone.getTimeZone( "UTC" ); //$NON-NLS-1$
+        } else {
+          timeZoneObject = TimeZone.getTimeZone( timezone );
+        }
+        dateFormat = new SimpleDateFormat( "yyyy-MM-dd'T'HH:mm:ss.SSSZ" ); //$NON-NLS-1$
+        dateFormat.setTimeZone( timeZoneObject );
+      }
+      final Date d = (Date) value;
+      return dateFormat.format( d );
+    }
+    if ( Number.class.isAssignableFrom( type ) ) {
+      final ValueConverter numConverter = ConverterRegistry.getInstance().getValueConverter( BigDecimal.class );
+      return numConverter.toAttributeValue( new BigDecimal( String.valueOf( value ) ) );
+    }
+    return valueConverter.toAttributeValue( value );
+  }
+
+  private static void appendPageCount( final SimpleReportingComponent reportComponent, final Element parameters )
+    throws Exception {
+    reportComponent.setOutputStream( new NullOutputStream() );
+
+    // so that we don't actually produce anything, we'll accept no pages in this mode
+    final int acceptedPage = reportComponent.getAcceptedPage();
+    reportComponent.setAcceptedPage( -1 );
+
+    // we can ONLY get the # of pages by asking the report to run
+    if ( reportComponent.validate() ) {
+      if ( !reportComponent.outputSupportsPagination() ) {
+        return;
+      }
+      final int totalPageCount = reportComponent.paginate();
+      parameters.setAttribute( SimpleReportingComponent.PAGINATE_OUTPUT, "true" ); //$NON-NLS-1$
+      parameters.setAttribute( "page-count", String.valueOf( totalPageCount ) ); //$NON-NLS-1$ //$NON-NLS-2$
+      // use the saved value (we changed it to -1 for performance)
+      parameters.setAttribute( SimpleReportingComponent.ACCEPTED_PAGE, String.valueOf( acceptedPage ) ); //$NON-NLS-1$
+    }
   }
 
   private IParameterProvider getRequestParameters() {
@@ -451,7 +411,7 @@ public class ParameterXmlContentHandler {
         final Object selections = inputs.get( parameter.getName() );
         final ParameterContextWrapper wrapper =
           new ParameterContextWrapper( parameterContext, vr.getParameterValues() );
-        Element el = createParameterElement( parameter, wrapper, selections );
+        Element el = createParameterElement( parameter, wrapper, selections, dependencies );
         createParameterDependencies( el, parameter, dependencies );
         parameters.appendChild( el );
       }
@@ -489,13 +449,11 @@ public class ParameterXmlContentHandler {
   }
 
   HashNMap<String, String> getDependentParameters( ReportParameterValues computedParameterValues,
-                                                           ParameterContext parameterContext, MasterReport report )
+                                                   ParameterContext parameterContext, MasterReport report )
     throws ReportDataFactoryException {
     HashNMap<String, String> downstreamParams = new HashNMap<>();
 
     final ReportParameterDefinition reportParameterDefinition = report.getParameterDefinition();
-
-    final String ignore = "::org.pentaho.reporting::";
 
     DesignTimeDataFactoryContext factoryContext = new DesignTimeDataFactoryContext( report );
 
@@ -511,16 +469,16 @@ public class ParameterXmlContentHandler {
           CompoundDataFactory cdf = CompoundDataFactory.normalize( report.getDataFactory() );
           final DataFactory dataFactoryForQuery = cdf.getDataFactoryForQuery( queryName );
 
-          dataFactoryForQuery.initialize( factoryContext );
-
           if ( dataFactoryForQuery != null ) {
+            dataFactoryForQuery.initialize( factoryContext );
+
             String[] fields = dataFactoryForQuery.getMetaData()
               .getReferencedFields( dataFactoryForQuery, queryName, computedParameterValues );
 
             if ( fields != null ) {
               for ( String field : fields ) {
-                if ( !field.startsWith( ignore ) ) {
-                  downstreamParams.add( entry.getName(), field );
+                if ( !field.startsWith( SYS_IGNORE_PARAM ) ) {
+                  downstreamParams.add( field, entry.getName() );
                 }
               }
             }
@@ -548,13 +506,13 @@ public class ParameterXmlContentHandler {
         ParameterAttributeNames.Core.DISPLAY_VALUE_FORMULA, pc );
 
     for ( String field : analyzeFormula( defValue ) ) {
-      m.add( name, field );
+      m.add( field, name );
     }
     for ( String field : analyzeFormula( formula ) ) {
-      m.add( name, field );
+      m.add( field, name );
     }
     for ( String field : analyzeFormula( postProc ) ) {
-      m.add( name, field );
+      m.add( field, name );
     }
   }
 
@@ -572,7 +530,6 @@ public class ParameterXmlContentHandler {
 
     return pd.getReferencedFields( fe, fe.getFormula() );
   }
-
 
   private Map<String, Object> computeRealInput( final ParameterContext parameterContext,
                                                 final LinkedHashMap<String, ParameterDefinitionEntry> reportParameters,
@@ -637,8 +594,9 @@ public class ParameterXmlContentHandler {
     }
   }
 
-  private void createParameterDependencies( final Element element, final ParameterDefinitionEntry parameter,
-                                               final HashNMap dependencies ) {
+  // default visibility for testing purposes
+  void createParameterDependencies( final Element element, final ParameterDefinitionEntry parameter,
+                                            final HashNMap dependencies ) {
     if ( element == null || parameter == null ) {
       throw new NullPointerException();
     }
@@ -649,7 +607,7 @@ public class ParameterXmlContentHandler {
     Iterator it = dependencies.getAll( parameter.getName() );
     while ( it.hasNext() ) {
       Object rName = it.next();
-      String dependency =  String.valueOf( rName );
+      String dependency = String.valueOf( rName );
       Element name = document.createElement( "name" );
       name.setTextContent( dependency );
       valuesElement.appendChild( name );
@@ -658,8 +616,9 @@ public class ParameterXmlContentHandler {
     element.appendChild( valuesElement );
   }
 
-  private Element createParameterElement( final ParameterDefinitionEntry parameter,
-                                          final ParameterContext parameterContext, final Object selections )
+  Element createParameterElement( final ParameterDefinitionEntry parameter,
+                                  final ParameterContext parameterContext, final Object selections,
+                                  HashNMap<String, String> dependencies )
     throws BeanException,
     ReportDataFactoryException {
     try {
@@ -684,6 +643,27 @@ public class ParameterXmlContentHandler {
           attributeElement.setAttribute( "value", attributeValue ); // NON-NLS
 
           parameterElement.appendChild( attributeElement );
+        }
+      }
+
+      //parameter dependencies: see backlog-7980
+      if ( dependencies != null && !dependencies.isEmpty() && dependencies.getAll( parameter.getName() ).hasNext() ) {
+        List<String> deps = Lists.newArrayList( dependencies.getAll( parameter.getName() ) );
+
+        if ( !deps.isEmpty() ) {
+          // must validate on server
+          final Element attributeElement = document.createElement( "attribute" );
+          attributeElement.setAttribute( "namespace", SYS_SERVER_NAMESPACE );
+          attributeElement.setAttribute( "name", "must-validate-on-server" );
+          attributeElement.setAttribute( "value", Boolean.TRUE.toString() );
+          parameterElement.appendChild( attributeElement );
+
+          // and it is also has a dependencies
+          final Element oneMoreAttribute = document.createElement( "attribute" );
+          oneMoreAttribute.setAttribute( "namespace", SYS_SERVER_NAMESPACE );
+          oneMoreAttribute.setAttribute( "name", "has-downstream-dependent-parameter" );
+          oneMoreAttribute.setAttribute( "value", Boolean.TRUE.toString() );
+          parameterElement.appendChild( oneMoreAttribute );
         }
       }
 
@@ -923,67 +903,8 @@ public class ParameterXmlContentHandler {
     }
   }
 
-  public static String convertParameterValueToString( final ParameterDefinitionEntry parameter,
-                                                      final ParameterContext context, final Object value,
-                                                      final Class<?> type ) throws BeanException {
-    if ( value == null ) {
-      return null;
-    }
-
-    // PIR-652
-    if ( value instanceof Object[] ) {
-      Object[] o = (Object[]) value;
-      if ( o.length == 1 ) {
-        return String.valueOf( o[ 0 ] );
-      }
-    }
-
-    // PIR-724 - Convert String arrays to a single string with values separated by '|'
-    if ( value instanceof String[] ) {
-      String[] o = (String[]) value;
-      return org.apache.commons.lang.StringUtils.join( o, '|' );
-    }
-
-    final ValueConverter valueConverter = ConverterRegistry.getInstance().getValueConverter( type );
-    if ( valueConverter == null ) {
-      return String.valueOf( value );
-    }
-    if ( Date.class.isAssignableFrom( type ) ) {
-      if ( value instanceof Date == false ) {
-        throw new BeanException( Messages.getInstance().getString( "ReportPlugin.errorNonDateParameterValue" ) );
-      }
-
-      final String timezone =
-        parameter.getParameterAttribute( ParameterAttributeNames.Core.NAMESPACE,
-          ParameterAttributeNames.Core.TIMEZONE, context );
-      final DateFormat dateFormat;
-      if ( timezone == null || "server".equals( timezone ) || //$NON-NLS-1$
-        "client".equals( timezone ) ) { //$NON-NLS-1$
-        // nothing needed ..
-        // for server: Just print it as it is, including the server timezone.
-        dateFormat = new SimpleDateFormat( "yyyy-MM-dd'T'HH:mm:ss.SSSZ" ); //$NON-NLS-1$
-      } else {
-        // for convinience for the clients we send the date in the correct timezone.
-        final TimeZone timeZoneObject;
-        if ( "utc".equals( timezone ) ) { //$NON-NLS-1$
-          timeZoneObject = TimeZone.getTimeZone( "UTC" ); //$NON-NLS-1$
-        } else {
-          timeZoneObject = TimeZone.getTimeZone( timezone );
-        }
-        dateFormat = new SimpleDateFormat( "yyyy-MM-dd'T'HH:mm:ss.SSSZ" ); //$NON-NLS-1$
-        dateFormat.setTimeZone( timeZoneObject );
-      }
-      final Date d = (Date) value;
-      return dateFormat.format( d );
-    }
-    if ( Number.class.isAssignableFrom( type ) ) {
-      final ValueConverter numConverter = ConverterRegistry.getInstance().getValueConverter( BigDecimal.class );
-      return numConverter.toAttributeValue( new BigDecimal( String.valueOf( value ) ) );
-    }
-    return valueConverter.toAttributeValue( value );
-  }
-
-  private Element createErrorElements( final ValidationResult vr ) {
+  // default visibility for testing purposes
+  Element createErrorElements( final ValidationResult vr ) {
     final Element errors = document.createElement( "errors" ); //$NON-NLS-1$
     for ( final String property : vr.getProperties() ) {
       for ( final ValidationMessage message : vr.getErrors( property ) ) {
@@ -1001,27 +922,6 @@ public class ParameterXmlContentHandler {
       errors.appendChild( error );
     }
     return errors;
-  }
-
-  private static void appendPageCount( final SimpleReportingComponent reportComponent, final Element parameters )
-    throws Exception {
-    reportComponent.setOutputStream( new NullOutputStream() );
-
-    // so that we don't actually produce anything, we'll accept no pages in this mode
-    final int acceptedPage = reportComponent.getAcceptedPage();
-    reportComponent.setAcceptedPage( -1 );
-
-    // we can ONLY get the # of pages by asking the report to run
-    if ( reportComponent.validate() ) {
-      if ( !reportComponent.outputSupportsPagination() ) {
-        return;
-      }
-      final int totalPageCount = reportComponent.paginate();
-      parameters.setAttribute( SimpleReportingComponent.PAGINATE_OUTPUT, "true" ); //$NON-NLS-1$
-      parameters.setAttribute( "page-count", String.valueOf( totalPageCount ) ); //$NON-NLS-1$ //$NON-NLS-2$
-      // use the saved value (we changed it to -1 for performance)
-      parameters.setAttribute( SimpleReportingComponent.ACCEPTED_PAGE, String.valueOf( acceptedPage ) ); //$NON-NLS-1$
-    }
   }
 
   private PlainParameter createGenericSystemParameter( final String parameterName, final boolean deprecated,
@@ -1197,5 +1097,128 @@ public class ParameterXmlContentHandler {
       }
     }
     return null;
+  }
+
+  private static class OutputParameterCollector {
+    private OutputParameterCollector() {
+    }
+
+    public String[] collectParameter( final MasterReport reportDefinition ) {
+      final LinkedHashSet<String> parameter = new LinkedHashSet<String>();
+
+      inspectElement( reportDefinition, parameter );
+      traverseSection( reportDefinition, parameter );
+
+      return parameter.toArray( new String[ parameter.size() ] );
+    }
+
+    private void traverseSection( final Section section, final LinkedHashSet<String> parameter ) {
+      final int count = section.getElementCount();
+      for ( int i = 0; i < count; i++ ) {
+        final ReportElement element = section.getElement( i );
+        inspectElement( element, parameter );
+        if ( element instanceof Section ) {
+          traverseSection( (Section) element, parameter );
+        }
+      }
+    }
+
+    private void inspectElement( final ReportElement element, final LinkedHashSet<String> parameter ) {
+      try {
+        final Expression expression = element.getStyleExpression( ElementStyleKeys.HREF_TARGET );
+        if ( expression instanceof FormulaExpression == false ) {
+          // DrillDown only works with the formula function of the same name
+          return;
+        }
+
+        final FormulaExpression fe = (FormulaExpression) expression;
+        final String formulaText = fe.getFormulaExpression();
+        if ( StringUtils.isEmpty( formulaText ) ) {
+          // DrillDown only works with the formula function of the same name
+          return;
+        }
+
+        if ( formulaText.startsWith( "DRILLDOWN" ) == false ) { // NON-NLS
+          // DrillDown only works if the function is the only element. Everything else is beyond our control.
+          return;
+        }
+        final FormulaParser formulaParser = new FormulaParser();
+        final LValue value = formulaParser.parse( formulaText );
+        if ( value instanceof FormulaFunction == false ) {
+          // Not a valid formula or a complex term - we do not handle that
+          return;
+        }
+        final DefaultFormulaContext context = new DefaultFormulaContext();
+        value.initialize( context );
+
+        final FormulaFunction fn = (FormulaFunction) value;
+        final LValue[] params = fn.getChildValues();
+        if ( params.length != 3 ) {
+          // Malformed formula: Need 3 parameter
+          return;
+        }
+        final String config = extractText( params[ 0 ] );
+        if ( config == null ) {
+          // Malformed formula: No statically defined config profile
+          return;
+        }
+
+        final DrillDownProfile profile = DrillDownProfileMetaData.getInstance().getDrillDownProfile( config );
+        if ( profile == null ) {
+          // Malformed formula: Unknown drilldown profile
+          return;
+        }
+
+        if ( StringUtils.isEmpty( profile.getAttribute( "group" ) ) || !profile.getAttribute( "group" )
+          .startsWith( "pentaho" ) ) { // NON-NLS
+          // Only 'pentaho' and 'pentaho-sugar' drill-down profiles can be used. Filters out all other third party
+          // drilldowns
+          return;
+        }
+
+        if ( params[ 2 ] instanceof DataTable == false ) {
+          // Malformed formula: Not a parameter table
+          return;
+        }
+        final DataTable dataTable = (DataTable) params[ 2 ];
+        final int rowCount = dataTable.getRowCount();
+        final int colCount = dataTable.getColumnCount();
+        if ( colCount != 2 ) {
+          // Malformed formula: Parameter table is invalid. Must be two cols, many rows ..
+          return;
+        }
+
+        for ( int i = 0; i < rowCount; i++ ) {
+          final LValue valueAt = dataTable.getValueAt( i, 0 );
+          final String name = extractText( valueAt );
+          if ( name == null ) {
+            continue;
+          }
+          parameter.add( name );
+        }
+      } catch ( Exception e ) {
+        // ignore ..
+        CommonUtil.checkStyleIgnore();
+      }
+    }
+
+    private String extractText( final LValue value ) {
+      if ( value == null ) {
+        return null;
+      }
+      if ( value.isConstant() ) {
+        if ( value instanceof StaticValue ) {
+          final StaticValue staticValue = (StaticValue) value;
+          final Object o = staticValue.getValue();
+          if ( o == null ) {
+            return null; // NON-NLS
+          }
+          return String.valueOf( o );
+        }
+      }
+      return null; // NON-NLS
+
+    }
+
   }
 }
