@@ -323,7 +323,7 @@ public class AsyncIT {
     final String config = String.format( URL_FORMAT, UUID.randomUUID(), "/cancel" );
     client.path( config );
     final Response response = client.get();
-    assertEquals( 404, response.getStatus() );
+    assertEquals( 200, response.getStatus() );
 
   }
 

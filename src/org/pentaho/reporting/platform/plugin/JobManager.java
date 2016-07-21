@@ -140,7 +140,7 @@ public class JobManager {
 
       return response.build();
 
-    } catch ( final ContextFailedException e ) {
+    } catch ( final ContextFailedException | FutureNotFoundException e ) {
       return get404();
     }
   }
@@ -189,6 +189,8 @@ public class JobManager {
       return Response.ok().build();
     } catch ( final ContextFailedException e ) {
       return get404();
+    } catch ( final FutureNotFoundException e ) {
+      return Response.ok().build();
     }
   }
 
@@ -375,10 +377,10 @@ public class JobManager {
     }
 
 
-    public Future getFuture() throws ContextFailedException {
+    public Future getFuture() throws FutureNotFoundException {
       final Future future = getReportExecutor().getFuture( uuid, session );
       if ( future == null ) {
-        throw new ContextFailedException( "Can't get future" );
+        throw new FutureNotFoundException( "Can't get future" );
       }
       return future;
     }
@@ -430,4 +432,11 @@ public class JobManager {
       super( cause );
     }
   }
+
+  private static class FutureNotFoundException extends Exception {
+    public FutureNotFoundException( final String message ) {
+      super( message );
+    }
+  }
+
 }
