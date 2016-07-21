@@ -23,14 +23,16 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
-import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.engine.core.system.StandaloneSession;
 import org.pentaho.platform.engine.core.system.boot.PlatformInitializationException;
 import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
+import org.pentaho.reporting.engine.classic.core.event.ReportProgressEvent;
+import org.pentaho.reporting.engine.classic.core.layout.output.ReportProcessorThreadHolder;
 import org.pentaho.reporting.libraries.base.config.ModifiableConfiguration;
 import org.pentaho.reporting.libraries.resourceloader.ResourceManager;
 import org.pentaho.reporting.platform.plugin.async.AsyncExecutionStatus;
+import org.pentaho.reporting.platform.plugin.async.AsyncReportStatusListener;
 import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
 import org.pentaho.reporting.platform.plugin.async.TestListener;
 import org.pentaho.reporting.platform.plugin.cache.FileSystemCacheBackend;
@@ -238,9 +240,6 @@ public class PageableHTMLIT {
       listener.setStatus( AsyncExecutionStatus.SCHEDULED );
       ReportListenerThreadHolder.setListener( listener );
 
-
-      final IPluginCacheManager iCacheManager = PentahoSystem.get( IPluginCacheManager.class );
-
       // create an instance of the component
       final SimpleReportingComponent rc = new SimpleReportingComponent();
 
@@ -276,6 +275,103 @@ public class PageableHTMLIT {
 
       assertFalse( -1 == listener.getState().getRow() );
       assertFalse( -1 == listener.getState().getTotalRows() );
+
+
+    } finally {
+      ReportListenerThreadHolder.clear();
+      edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.CachePageableHtmlContent", null );
+      edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.FirstPageMode", null );
+    }
+  }
+
+
+  @Test
+  public void testCancel() throws Exception {
+    ClassicEngineBoot.getInstance().start();
+    final ModifiableConfiguration edConf = ClassicEngineBoot.getInstance().getEditableConfig();
+    edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.CachePageableHtmlContent", "true" );
+    edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.FirstPageMode", "true" );
+    try {
+
+      final AsyncReportStatusListener listener =
+        spy( new AsyncReportStatusListener( "report.prpt", UUID.randomUUID(), "text/html", Collections.emptyList() ) );
+      listener.setStatus( AsyncExecutionStatus.SCHEDULED );
+      ReportListenerThreadHolder.setListener( listener );
+
+      // create an instance of the component
+      SimpleReportingComponent rc = new SimpleReportingComponent();
+      // create/set the InputStream
+      FileInputStream reportDefinition =
+        new FileInputStream( "resource/solution/test/reporting/BigReport.prpt" ); //$NON-NLS-1$
+      rc.setReportDefinitionInputStream( reportDefinition );
+      rc.setOutputType( "text/html" ); //$NON-NLS-1$
+
+      // turn on pagination, by way of input (typical mode for xaction)
+      HashMap<String, Object> inputs = new HashMap<String, Object>();
+      inputs.put( "paginate", "true" ); //$NON-NLS-1$ //$NON-NLS-2$
+      inputs.put( "accepted-page", "0" ); //$NON-NLS-1$ //$NON-NLS-2$
+      rc.setInputs( inputs );
+
+      FileOutputStream outputStream =
+        new FileOutputStream( new File( tmp, System.currentTimeMillis() + ".html" ) ); //$NON-NLS-1$ //$NON-NLS-2$
+      rc.setOutputStream( outputStream );
+
+      listener.cancel();
+
+      // execute the component
+      assertFalse( rc.execute() );
+
+
+    } finally {
+      ReportListenerThreadHolder.clear();
+      edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.CachePageableHtmlContent", null );
+      edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.FirstPageMode", null );
+    }
+  }
+
+  /**
+   * What if somebody cleaned up ThreadLocal?
+   */
+  @Test
+  public void testCancelBroken() throws Exception {
+    ClassicEngineBoot.getInstance().start();
+    final ModifiableConfiguration edConf = ClassicEngineBoot.getInstance().getEditableConfig();
+    edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.CachePageableHtmlContent", "true" );
+    edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.FirstPageMode", "true" );
+    try {
+
+      final AsyncReportStatusListener listener =
+        spy( new AsyncReportStatusListener( "report.prpt", UUID.randomUUID(), "text/html", Collections.emptyList() ) {
+          @Override public synchronized void reportProcessingUpdate( final ReportProgressEvent event ) {
+            ReportProcessorThreadHolder.clear();
+            super.reportProcessingUpdate( event );
+          }
+        } );
+      listener.setStatus( AsyncExecutionStatus.SCHEDULED );
+      ReportListenerThreadHolder.setListener( listener );
+
+      // create an instance of the component
+      SimpleReportingComponent rc = new SimpleReportingComponent();
+      // create/set the InputStream
+      FileInputStream reportDefinition =
+        new FileInputStream( "resource/solution/test/reporting/report.prpt" ); //$NON-NLS-1$
+      rc.setReportDefinitionInputStream( reportDefinition );
+      rc.setOutputType( "text/html" ); //$NON-NLS-1$
+
+      // turn on pagination, by way of input (typical mode for xaction)
+      HashMap<String, Object> inputs = new HashMap<String, Object>();
+      inputs.put( "paginate", "true" ); //$NON-NLS-1$ //$NON-NLS-2$
+      inputs.put( "accepted-page", "0" ); //$NON-NLS-1$ //$NON-NLS-2$
+      rc.setInputs( inputs );
+
+      FileOutputStream outputStream =
+        new FileOutputStream( new File( tmp, System.currentTimeMillis() + ".html" ) ); //$NON-NLS-1$ //$NON-NLS-2$
+      rc.setOutputStream( outputStream );
+
+      listener.cancel();
+
+      // execute the component
+      assertTrue( rc.execute() );
 
 
     } finally {

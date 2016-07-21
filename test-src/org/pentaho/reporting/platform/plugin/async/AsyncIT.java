@@ -37,6 +37,8 @@ import org.pentaho.platform.engine.core.system.boot.PlatformInitializationExcept
 import org.pentaho.platform.util.StringUtil;
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressEvent;
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
+import org.pentaho.reporting.engine.classic.core.layout.output.AbstractReportProcessor;
+import org.pentaho.reporting.engine.classic.core.layout.output.ReportProcessorThreadHolder;
 import org.pentaho.reporting.libraries.repository.ContentIOException;
 import org.pentaho.reporting.platform.plugin.AuditWrapper;
 import org.pentaho.reporting.platform.plugin.JaxRsServerProvider;
@@ -63,6 +65,7 @@ import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -745,10 +748,66 @@ public class AsyncIT {
         return null;
       }
     }.call();
-    assertTrue( flag[0] );
+    assertTrue( flag[ 0 ] );
     PentahoSessionHolder.setSession( session );
 
   }
+
+  @Test public void testCancelNoListener() {
+
+    final PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 10, 0 );
+    final PentahoAsyncReportExecution pentahoAsyncReportExecution = new PentahoAsyncReportExecution( "junit-path",
+      component, handler, session, "not null", AuditWrapper.NULL ) {
+      @Override
+      public void notifyTaskQueued( final UUID id, final List<? extends ReportProgressListener> callbackListeners ) {
+
+      }
+    };
+
+    exec.addTask( pentahoAsyncReportExecution, session );
+    //Works ok without listener
+    pentahoAsyncReportExecution.cancel();
+  }
+
+
+  @Test public void testCancelNotInterruptable() {
+
+    try {
+
+      final CountDownLatch latch = new CountDownLatch( 1 );
+
+      final PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 10, 0 );
+      final PentahoAsyncReportExecution pentahoAsyncReportExecution = new PentahoAsyncReportExecution( "junit-path",
+        component, handler, session, "not null", AuditWrapper.NULL ) {
+
+        @Override public IFixedSizeStreamingContent call() throws Exception {
+          latch.await();
+          return new NullSizeStreamingContent();
+        }
+      };
+
+
+      final UUID uuid = exec.addTask( pentahoAsyncReportExecution, session );
+
+      final Future future = exec.getFuture( uuid, session );
+
+      final AbstractReportProcessor processor = mock( AbstractReportProcessor.class );
+
+      ReportProcessorThreadHolder.setProcessor( processor );
+
+      future.cancel( false );
+
+      pentahoAsyncReportExecution.getListener()
+        .reportProcessingUpdate( new ReportProgressEvent( this, ReportProgressEvent.PAGINATING, 0, 0, 0, 0, 0, 0 ) );
+
+      verify( processor, never() ).cancel();
+
+      latch.countDown();
+    } finally {
+      ReportProcessorThreadHolder.clear();
+    }
+  }
+
 
   private PentahoAsyncReportExecution mockExec() {
     return new PentahoAsyncReportExecution( "junit-path", component, handler, session, "not null",

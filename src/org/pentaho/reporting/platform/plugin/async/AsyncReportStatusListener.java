@@ -22,6 +22,8 @@ import org.apache.commons.collections.CollectionUtils;
 import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressEvent;
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
+import org.pentaho.reporting.engine.classic.core.layout.output.AbstractReportProcessor;
+import org.pentaho.reporting.engine.classic.core.layout.output.ReportProcessorThreadHolder;
 import org.pentaho.reporting.libraries.base.config.ExtendedConfiguration;
 import org.pentaho.reporting.libraries.base.util.ArgumentNullException;
 
@@ -56,6 +58,7 @@ public class AsyncReportStatusListener implements IAsyncReportListener {
   private int requestedPage = 0;
   private int generatedPage = 0;
   private boolean isQueryLimitReached;
+  private boolean manuallyInterrupted;
 
 
   public AsyncReportStatusListener( final String path,
@@ -127,6 +130,13 @@ public class AsyncReportStatusListener implements IAsyncReportListener {
 
   @Override
   public synchronized void reportProcessingUpdate( final ReportProgressEvent event ) {
+    if ( manuallyInterrupted ) {
+      final AbstractReportProcessor processor = ReportProcessorThreadHolder.getProcessor();
+      if ( processor != null ) {
+        processor.cancel();
+      }
+    }
+
     updateState( event );
     if ( CollectionUtils.isNotEmpty( callbackListeners ) ) {
       for ( final ReportProgressListener listener : callbackListeners ) {
@@ -206,6 +216,11 @@ public class AsyncReportStatusListener implements IAsyncReportListener {
 
   @Override public void setIsQueryLimitReached( boolean isQueryLimitReached ) {
     this.isQueryLimitReached = isQueryLimitReached;
+  }
+
+  public synchronized void cancel() {
+    manuallyInterrupted = true;
+    this.setStatus( AsyncExecutionStatus.CANCELED );
   }
 
 }

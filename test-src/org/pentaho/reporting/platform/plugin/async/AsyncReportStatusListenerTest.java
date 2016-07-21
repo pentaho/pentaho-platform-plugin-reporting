@@ -21,6 +21,7 @@ import org.junit.Test;
 import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressEvent;
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
+import org.pentaho.reporting.engine.classic.core.layout.output.ReportProcessorThreadHolder;
 import org.pentaho.reporting.libraries.base.config.ModifiableConfiguration;
 
 import java.util.Collections;
@@ -159,5 +160,16 @@ public class AsyncReportStatusListenerTest {
             new AsyncReportStatusListener( "", UUID.randomUUID(), "", Collections.<ReportProgressListener>emptyList() );
     listener.setIsQueryLimitReached( true );
     assertTrue( listener.getState().getIsQueryLimitReached() );
+  }
+
+
+  @Test
+  public void testUpdateNoProcessor() throws Exception {
+    assertNull( ReportProcessorThreadHolder.getProcessor() );
+    final AsyncReportStatusListener listener =
+      new AsyncReportStatusListener( "", UUID.randomUUID(), "", Collections.<ReportProgressListener>emptyList() );
+    listener.cancel();
+    listener.reportProcessingUpdate( new ReportProgressEvent( this, ReportProgressEvent.PAGINATING, 0, 0, 0, 0, 0, 0 ) );
+    assertEquals( "AsyncPaginatingTitle", listener.getState().getActivity() );
   }
 }

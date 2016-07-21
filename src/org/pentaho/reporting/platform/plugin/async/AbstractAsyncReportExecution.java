@@ -139,7 +139,9 @@ public abstract class AbstractAsyncReportExecution<TReportState extends IAsyncRe
     String userName = safeSession == null ? "Unknown" : safeSession.getName();
     log.info( "Report execution canceled: " + url + " , requested by : " + userName );
     closeFile();
-    this.listener.setStatus( AsyncExecutionStatus.CANCELED );
+    if ( listener != null ) {
+      listener.cancel();
+    }
   }
 
   @Override

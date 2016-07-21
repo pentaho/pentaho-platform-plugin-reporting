@@ -57,6 +57,7 @@ public class DeleteOldOnAccessCacheTest {
     cache.put( SOME_KEY, SOME_VALUE );
     assertNotNull( cache.get( SOME_KEY ) );
     cache.setMillisToLive( 0 );
+    Thread.sleep( 10 );
     assertNull( cache.get( SOME_KEY ) );
   }
 
@@ -68,6 +69,7 @@ public class DeleteOldOnAccessCacheTest {
     assertNotNull( cache.get( SOME_KEY ) );
     cache.setMillisToLive( 0 );
     cache.cleanup();
+    Thread.sleep( 10 );
     assertNull( cache.get( SOME_KEY ) );
   }
 }

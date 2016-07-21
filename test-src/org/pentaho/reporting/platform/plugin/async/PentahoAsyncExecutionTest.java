@@ -259,6 +259,21 @@ public class PentahoAsyncExecutionTest {
     assertFalse( abstractAsyncReportExecution.delegate( mock( ListenableFuture.class ) ).cancel( true ) );
   }
 
+  @Test
+  public void testCancelNoListener() {
+    final AbstractAsyncReportExecution<IAsyncReportState> abstractAsyncReportExecution =
+      new AbstractAsyncReportExecution<IAsyncReportState>( "junit-path", component, handler, userSession, "id" ) {
+        @Override public IFixedSizeStreamingContent call() throws Exception {
+          return null;
+        }
+
+        @Override public IAsyncReportState getState() {
+          return null;
+        }
+      };
+    abstractAsyncReportExecution.cancel();
+  }
+
   private PentahoAsyncReportExecution getSleepingSpy( final AtomicBoolean run, IPentahoSession session ) {
     PentahoAsyncReportExecution exec =
       new PentahoAsyncReportExecution( "junit-path", component, handler, session, "junit", AuditWrapper.NULL ) {
