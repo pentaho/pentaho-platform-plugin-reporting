@@ -25,6 +25,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Just delegates the work. Is intended to be extended.
@@ -35,17 +36,19 @@ public abstract class SimpleDelegatedListenableFuture<T> implements ListenableFu
 
   private ListenableFuture<T> delegate;
 
+  private AtomicBoolean canceled = new AtomicBoolean( false );
+
   public SimpleDelegatedListenableFuture( final ListenableFuture<T> delegate ) {
     ArgumentNullException.validate( "delegate", delegate );
     this.delegate = delegate;
   }
 
   @Override public boolean cancel( final boolean mayInterruptIfRunning ) {
-    return delegate.cancel( mayInterruptIfRunning );
+    return canceled.compareAndSet( false, true );
   }
 
   @Override public boolean isCancelled() {
-    return delegate.isCancelled();
+    return canceled.get();
   }
 
   @Override public boolean isDone() {

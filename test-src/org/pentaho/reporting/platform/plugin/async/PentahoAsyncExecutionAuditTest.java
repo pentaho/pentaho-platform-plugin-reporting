@@ -26,7 +26,10 @@ import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
 import org.pentaho.platform.api.engine.ILogger;
 import org.pentaho.platform.api.engine.IPentahoSession;
+import org.pentaho.platform.api.engine.ISecurityHelper;
 import org.pentaho.platform.engine.core.audit.MessageTypes;
+import org.pentaho.platform.engine.security.SecurityHelper;
+import org.pentaho.reporting.engine.classic.core.ReportInterruptedException;
 import org.pentaho.reporting.platform.plugin.AuditWrapper;
 import org.pentaho.reporting.platform.plugin.SimpleReportingComponent;
 import org.pentaho.reporting.platform.plugin.staging.AsyncJobFileStagingHandler;
@@ -34,11 +37,13 @@ import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
 
 import java.io.FileNotFoundException;
 import java.io.OutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Stack;
 import java.util.UUID;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -204,7 +209,7 @@ public class PentahoAsyncExecutionAuditTest {
     final Answer answer = invocation -> {
       waitSubmitted.countDown();
       startLatch.await( 10, TimeUnit.SECONDS );
-      return true;
+      throw new ReportInterruptedException( "Bang" );
     };
 
     final Stack<UUID> tasksIds = new Stack<>();
@@ -307,6 +312,7 @@ public class PentahoAsyncExecutionAuditTest {
    */
   @Test
   public void testScheduledExecutionsNotGetCancelled() throws Exception {
+    SecurityHelper.setMockInstance( mock( ISecurityHelper.class ) );
     // we still have 4 threads capacity
     final int CAPACITY = 4;
     // but now one of the threads is scheduled
@@ -323,15 +329,31 @@ public class PentahoAsyncExecutionAuditTest {
     };
     when( handler.getStagingOutputStream() ).thenAnswer( handlerAnswer );
 
+    final int[] doThrow = { 0 };
+
     // hello java 8!
     final Answer answer = invocation -> {
+
       waitSubmitted.countDown();
       startLatch.await( 10, TimeUnit.SECONDS );
-      return true;
+      synchronized ( this ) {
+        if ( doThrow[ 0 ] < NUMBER_OF_THREADS - 1 ) {
+          doThrow[ 0 ]++;
+          throw new ReportInterruptedException( "Bang" );
+        } else {
+          return true;
+        }
+      }
+
     };
 
     final Stack<UUID> tasksIds = new Stack<>();
-    final PentahoAsyncExecutor<IAsyncReportState> executor = new PentahoAsyncExecutor<>( CAPACITY, 0 );
+    final PentahoAsyncExecutor<IAsyncReportState> executor = new PentahoAsyncExecutor<IAsyncReportState>( CAPACITY, 0 ) {
+      @Override protected Callable<Serializable> getWriteToJcrTask( final IFixedSizeStreamingContent result,
+                                                                    final IAsyncReportExecution runningTask ) {
+        return () -> null;
+      }
+    };
 
     UUID id;
     for ( int i = 0; i < NUMBER_OF_THREADS; i++ ) {
@@ -396,6 +418,20 @@ public class PentahoAsyncExecutionAuditTest {
 
     finalBlock.await( 10, TimeUnit.SECONDS );
 
+    //All started
+    verify( wrapper, times( 6 ) ).audit(
+      eq( sessionId ),
+      eq( sessionName ),
+      eq( url ),
+      eq( PentahoAsyncReportExecution.class.getName() ),
+      eq( PentahoAsyncReportExecution.class.getName() ),
+      eq( MessageTypes.INSTANCE_START ),
+      eq( auditId ),
+      eq( "" ),
+      anyFloat(),
+      any( ILogger.class )
+    );
+
     verify( wrapper, atLeast( CAPACITY ) ).audit(
       eq( sessionId ),
       eq( sessionName ),
@@ -409,8 +445,8 @@ public class PentahoAsyncExecutionAuditTest {
       any( ILogger.class )
     );
 
-    // this is ONE sucesfull execution fot scheduled task since it was not cancelled!!!
-    verify( wrapper, Mockito.times( 1 ) ).audit(
+    // this is ONE sucesfull execution for scheduled task since it was not cancelled!!!
+    verify( wrapper, times( 1 ) ).audit(
       eq( sessionId ),
       eq( sessionName ),
       eq( url ),

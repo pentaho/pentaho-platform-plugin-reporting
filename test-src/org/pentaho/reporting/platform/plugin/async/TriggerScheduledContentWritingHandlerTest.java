@@ -18,6 +18,7 @@
 package org.pentaho.reporting.platform.plugin.async;
 
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.api.engine.ISecurityHelper;
@@ -40,8 +41,16 @@ public class TriggerScheduledContentWritingHandlerTest {
 
   private PentahoAsyncExecutor<IAsyncReportState> pentahoAsyncExecutor;
   private IPentahoSession session;
-  private IUnifiedRepository repository;
+  private static final IUnifiedRepository repository = mock( IUnifiedRepository.class );
   private ISecurityHelper iSecurityHelper;
+
+
+  @BeforeClass
+  public static void setUpClass() throws Exception {
+
+    PentahoSystem.registerObject( repository, IUnifiedRepository.class );
+
+  }
 
 
   @Before
@@ -49,10 +58,10 @@ public class TriggerScheduledContentWritingHandlerTest {
     session = new StandaloneSession( "test" );
     PentahoSessionHolder.setSession( session );
     pentahoAsyncExecutor = new PentahoAsyncExecutor<IAsyncReportState>( 1 );
-    repository = mock( IUnifiedRepository.class );
     PentahoSystem.registerObject( repository, IUnifiedRepository.class );
     iSecurityHelper = mock( ISecurityHelper.class );
     SecurityHelper.setMockInstance( iSecurityHelper );
+    reset( repository );
   }
 
 
@@ -111,6 +120,21 @@ public class TriggerScheduledContentWritingHandlerTest {
     verify( iSecurityHelper, never() ).runAsUser( any(), any() );
     handler3.onSuccess( iFixedSizeStreamingContent );
     verify( iSecurityHelper, times( 1 ) ).runAsUser( any(), any() );
+  }
+
+
+  @Test
+  public void onSuccessError() throws Exception {
+    final ISecurityHelper instanceValue = mock( ISecurityHelper.class );
+    doThrow( new Exception(  ) ).when( instanceValue ).runAsUser( any(), any() );
+    SecurityHelper.setMockInstance( instanceValue );
+    final PentahoAsyncExecutor<IAsyncReportState>.TriggerScheduledContentWritingHandler
+      handler3 =
+      pentahoAsyncExecutor.new TriggerScheduledContentWritingHandler( "test", "test",
+        mock( IAsyncReportExecution.class ), mock( PentahoAsyncExecutor.CompositeKey.class ) );
+    final IFixedSizeStreamingContent iFixedSizeStreamingContent = mock( IFixedSizeStreamingContent.class );
+    handler3.onSuccess( iFixedSizeStreamingContent );
+    verify( iSecurityHelper, times( 0 ) ).runAsUser( any(), any() );
   }
 
 }
