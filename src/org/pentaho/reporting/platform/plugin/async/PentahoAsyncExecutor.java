@@ -160,6 +160,41 @@ public class PentahoAsyncExecutor<TReportState extends IAsyncReportState>
     }
   }
 
+  @Override public boolean preSchedule( final UUID uuid, final IPentahoSession session ) {
+    validateParams( uuid, session );
+    final CompositeKey compositeKey = new CompositeKey( session, uuid );
+    final IAsyncReportExecution<? extends TReportState> runningTask = tasks.get( compositeKey );
+    if ( runningTask != null ) {
+      return runningTask.preSchedule();
+    }
+    return false;
+  }
+
+  @SuppressWarnings( "unchecked" )
+  @Override public UUID recalculate( final UUID uuid, final IPentahoSession session ) {
+    validateParams( uuid, session );
+    final CompositeKey compositeKey = new CompositeKey( session, uuid );
+    final IAsyncReportExecution<? extends TReportState> runningTask = tasks.get( compositeKey );
+
+    if ( runningTask == null ) {
+      throw new IllegalStateException( "We must have a task at this point." );
+    }
+
+    try {
+      final IAsyncReportExecution<TReportState> recalcTask =
+        (IAsyncReportExecution<TReportState>) new PentahoAsyncReportExecution( (PentahoAsyncReportExecution) runningTask,
+          new AsyncJobFileStagingHandler( session ) );
+
+      return addTask( recalcTask, session );
+
+    } catch ( final Exception e ) {
+      log.error( "Can't recalculate task: ", e );
+    }
+
+    return null;
+
+  }
+
   @Override
   public boolean schedule( final UUID id, final IPentahoSession session ) {
     validateParams( id, session );

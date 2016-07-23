@@ -22,6 +22,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
+import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.engine.core.system.StandaloneSession;
 import org.pentaho.reporting.platform.plugin.MockTableModel;
 import org.pentaho.reporting.platform.plugin.output.ReportOutputHandler;
@@ -31,6 +32,7 @@ import java.util.Map;
 
 import static junit.framework.Assert.assertNotSame;
 import static junit.framework.Assert.assertSame;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.mock;
 
@@ -73,6 +75,18 @@ public class DefaultReportCacheIT {
 
     setupDataCacheKey( "" );
     assertNotSame( report, dataCache.put( dataCacheKey, report ) );
+  }
+
+  @Test
+  public void testCleanup() throws Exception {
+    final StandaloneSession session = new StandaloneSession( "test", "100500" );
+    PentahoSessionHolder.setSession( session );
+
+    final IReportContentCache cache = new PluginSessionCache( new FileSystemCacheBackend() );
+    cache.put( "test", mock( IReportContent.class ) );
+    assertNotNull( cache.get( "test" ) );
+    PentahoSystem.invokeLogoutListeners( session );
+    assertNull( cache.get( "test" ) );
   }
 
   private void createPentahoSession() {

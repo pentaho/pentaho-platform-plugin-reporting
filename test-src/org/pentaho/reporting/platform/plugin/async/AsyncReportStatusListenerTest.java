@@ -58,6 +58,8 @@ public class AsyncReportStatusListenerTest {
     final AsyncReportStatusListener listener =
       new AsyncReportStatusListener( "", UUID.randomUUID(), "", Collections.<ReportProgressListener>emptyList() );
     assertFalse( listener.isScheduled() );
+    listener.setStatus( AsyncExecutionStatus.PRE_SCHEDULED );
+    assertFalse( listener.isScheduled() );
     listener.setStatus( AsyncExecutionStatus.SCHEDULED );
     assertTrue( listener.isScheduled() );
   }
@@ -82,11 +84,12 @@ public class AsyncReportStatusListenerTest {
     listener.setStatus( null );
     listener.setStatus( AsyncExecutionStatus.QUEUED );
     assertEquals( AsyncExecutionStatus.QUEUED, listener.getState().getStatus() );
+    listener.setStatus( AsyncExecutionStatus.FINISHED );
+    assertEquals( AsyncExecutionStatus.FINISHED, listener.getState().getStatus() );
     listener.setStatus( AsyncExecutionStatus.CANCELED );
     assertEquals( AsyncExecutionStatus.CANCELED, listener.getState().getStatus() );
     listener.setStatus( AsyncExecutionStatus.FINISHED );
     assertEquals( AsyncExecutionStatus.CANCELED, listener.getState().getStatus() );
-
   }
 
   @Test

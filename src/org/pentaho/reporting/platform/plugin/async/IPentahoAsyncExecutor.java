@@ -40,6 +40,10 @@ public interface IPentahoAsyncExecutor<TReportState extends IAsyncReportState> {
 
   boolean schedule( UUID uuid, IPentahoSession session );
 
+  boolean preSchedule( UUID uuid, IPentahoSession session );
+
+  UUID recalculate( UUID uuid, IPentahoSession session );
+
   void updateSchedulingLocation( UUID uuid, IPentahoSession session, Serializable folderId, String newName );
 
   void shutdown();

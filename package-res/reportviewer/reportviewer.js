@@ -50,6 +50,13 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
       _previousPage: 0,
       _reportUrl : null,
       _handlerRegistration : null,
+      _locationPromptCancelHandlerRegistration: null,
+      _locationPromptOkHandlerRegistration: null,
+      _locationPromptFinishHandlerRegistration: null,
+      _locationPromptAttachHandlerRegistration: null,
+      _locationPromptFinished: null,
+      _locationOutputPath: null,
+      _manuallyScheduled: null,
 
       _bindPromptEvents: function() {
         var baseShowGlassPane = this.reportPrompt.showGlassPane.bind(this.reportPrompt);
@@ -99,10 +106,35 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           domClass.add('notification-screen', 'hidden');
         }));
 
+        if(window.top.mantle_addHandler){
+          //When slow connection there is a gap between tab glass pane and prompt glass pane
+          //So, let's hide tab glass pane only after widget is attached
+          var onAttach = function(event){
+            if(event.eventSubType == 'locationPromptAttached'){
+              this._forceHideGlassPane();
+            }
+          };
+          this._locationPromptAttachHandlerRegistration = window.top.mantle_addHandler('GenericEvent', onAttach.bind(this) );
+        }
+
         window.onbeforeunload = function(e) {
           this.cancel(this._currentReportStatus, this._currentReportUuid);
           if(window.top.mantle_removeHandler) {
-            window.top.mantle_removeHandler(this._handlerRegistration);
+            if(this._handlerRegistration) {
+              window.top.mantle_removeHandler(this._handlerRegistration);
+            }
+            if(this._locationPromptAttachHandlerRegistration) {
+              window.top.mantle_removeHandler(this._locationPromptAttachHandlerRegistration);
+            }
+            if(this._locationPromptCancelHandlerRegistration) {
+              window.top.mantle_removeHandler(this._locationPromptCancelHandlerRegistration);
+            }
+            if(this._locationPromptOkHandlerRegistration) {
+              window.top.mantle_removeHandler(this._locationPromptOkHandlerRegistration);
+            }
+            if(this._locationPromptFinishHandlerRegistration) {
+              window.top.mantle_removeHandler(this._locationPromptFinishHandlerRegistration);
+            }
           }
           return;
         }.bind(this);
@@ -639,7 +671,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
       cancel: function(status, uuid) {
         var url = window.location.href.split('?')[0];
-        if(status == 'WORKING' || status == 'QUEUED' || status == 'CONTENT_AVAILABLE') {
+        if(status == 'WORKING' || status == 'QUEUED' || status == 'CONTENT_AVAILABLE' || status == 'PRE_SCHEDULED' ) {
           pentahoGet(url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + uuid + '/cancel', "");
         }
       },
@@ -827,23 +859,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
         var pageLoadingDialog = this._getPageLoadingDialog(loadingDialogCallbacks);
         pageLoadingDialog.show();
-      },
-
-      _getRunInBackgroundDialog: function (manuallyScheduled, manualScheduleDialogCallbacks, autoScheduleDialogCallbacks) {
-        var dlgBackground = registry.byId('scheduleScreen');
-        dlgBackground.setTitle(_Messages.getString('ScheduleTitle'));
-        dlgBackground.setOkBtnText(_Messages.getString('OK'));
-        if (manuallyScheduled) {
-          dlgBackground.setText(_Messages.getString('ScheduleText'));
-          dlgBackground.showSkipBtn(_Messages.getString('ScheduleSkipAlert'));
-          dlgBackground.callbacks = manualScheduleDialogCallbacks;
-        } else {
-          dlgBackground.setText(_Messages.getString('AutoScheduleText'));
-          dlgBackground.hideSkipBtn();
-          dlgBackground.callbacks = autoScheduleDialogCallbacks;
-        }
-        return dlgBackground;
-      },
+      },      
 
       _hideAsyncScreens: function(){
         registry.byId('reportGlassPane').hide();
@@ -906,98 +922,24 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         //Hides feedback screen and glasspane
         var hideDlgAndPane = this._hideDialogAndPane.bind(me);
         //Tells us if report was manually scheduled from the feedback screen
-        var manuallyScheduled = false;
+        me._manuallyScheduled = false;
         //Current requested page - is updated if user navigates after 1st page is shown
         me._requestedPage = me.view._getAcceptedPage();
+        me._locationPromptFinished = false;
+        me._locationOutputPath = me.reportPrompt._defaultOutputPath;
 
 
         //We are in async mode
         if (me.reportPrompt._isAsync) {
 
-          //Asunc execution manages this flag in it's own way
-          me.reportPrompt._isSubmitPromptPhaseActivated = false;
-
-          var scheduleScreenBtnCallbacks = [
-            //Schedule button callback
-            function scheduleReport() {
-              var urlSchedule = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + me._currentReportUuid + '/schedule';
-              pentahoGet(urlSchedule, "");
-              manuallyScheduled = true;
-              hideDlgAndPane(registry.byId('feedbackScreen'));
-
-              if (me.reportPrompt._promptForLocation) {
-                //Open location dialog here - see the example of location update below
-             /*   var urlUpdateLocation = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + me._currentReportUuid + "/schedule/location?folderId=5a8ba6eb-3d98-4a5c-9357-4a17848925a9&newName=hello_there";
-                pentahoPost(urlUpdateLocation);*/
-              }              
-              
-            }.bind(me),
-            //Cancel report
-            function feedbackscreenDone() {
-              me.cancel(me._currentReportStatus, me._currentReportUuid);
-              hideDlgAndPane(registry.byId('feedbackScreen'));
-            }.bind(me)
-          ];
-
-          var feedbackDialog = me._getFeedbackScreen(scheduleScreenBtnCallbacks);
-
-          //Don't show dialog if report is ready faster than threshold
-          setTimeout(function () {
-            if (!isFinished) {
-              feedbackDialog.show();
-            }
-          }, me.reportPrompt._dialogThreshold);
-
           /*Async callbacks code START*/
           var mainReportGeneration = dojo.hitch(me, function (result) {
-            var mainJobStatus;
-            try {
-              mainJobStatus = JSON.parse(result);
-            } catch (e) {
-              var errorMessage = _Messages.getString('DefaultErrorMessage');
-              this.reportPrompt.showMessageBox(
-                  errorMessage,
-                  _Messages.getString('ErrorPromptTitle'));
-              hideDlgAndPane(registry.byId('feedbackScreen'));
-              me._hideAsyncScreens();
-              logger && logger.log("ERROR" + String(e));
-              return;
-            }
 
-            function keepPolling(uuid, callback) {
-              setTimeout(function () {
-                pentahoGet(url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + uuid + '/status', "", callback);
-              }, me.reportPrompt._pollingInterval);
-            }
-
-            function getContent(uuid) {
-              var urlContent = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + uuid + '/content';
-              logger && logger.log("Will set iframe url to " + urlContent.substr(0, 50) + "... ");
-
-              $('#hiddenReportContentForm').attr("action", urlContent);
-              $('#hiddenReportContentForm').submit();
-              $('#reportContent').attr("data-src", urlContent);
-              me._updatedIFrameSrc = true;
-              me.reportPrompt._isSubmitPromptPhaseActivated = true;
-              isIframeContentSet = true;
-            }
+            var mainJobStatus = me._getAsyncJobStatus(result, hideDlgAndPane);
 
             if (mainJobStatus.status != null) {
 
-              //Update current values
-              me._currentReportStatus = mainJobStatus.status;
-              me._currentReportUuid = mainJobStatus.uuid;
-              me._currentStoredPagesCount = mainJobStatus.generatedPage;
-
-              //Update feedback screen ui
-              if (mainJobStatus.activity != null) {
-                feedbackDialog.setText(_Messages.getString(mainJobStatus.activity) + '...');
-              }
-              feedbackDialog.setText2(_Messages.getString('FeedbackScreenPage') + ': ' + mainJobStatus.page);
-              feedbackDialog.setText3(_Messages.getString('FeedbackScreenRow') + ': ' + mainJobStatus.row + ' / ' + mainJobStatus.totalRows);
-
-              //Set progress bar %
-              progressBar.set({value: mainJobStatus.progress});
+              me._updateFeedbackScreen(mainJobStatus, feedbackDialog);
 
               //Configure callback for first page
               var firtsPageReadyCallback = dojo.hitch(me, function (result2) {
@@ -1012,13 +954,15 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                 switch (firstPageJobStatus.status) {
                   case "QUEUED":
                   case "WORKING":
-                    keepPolling(firstPageJobStatus.uuid, firtsPageReadyCallback);
+                    me._keepPolling(firstPageJobStatus.uuid, url, firtsPageReadyCallback);
                     break;
                   case  "FINISHED" :
                     isFinished = true;
                     me._hideAsyncScreens();
                     //Let's get first page
-                    getContent(firstPageJobStatus.uuid);
+                    me._getContent(firstPageJobStatus.uuid, url, function () {
+                      isIframeContentSet = true;
+                    });
 
                     me._previousPage = firstPageJobStatus.page;
 
@@ -1045,7 +989,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                       pentahoGet('reportjob', url.substring(url.lastIndexOf("/report?") + "/report?".length, url.length), firtsPageReadyCallback, 'text/text');
                     }
 
-                    keepPolling(mainJobStatus.uuid, mainReportGeneration);
+                    me._keepPolling(mainJobStatus.uuid, url, mainReportGeneration);
                   } else {
 
                     if ((me._cachedReportCanceled && me._requestedPage == 0) || ((me._requestedPage > 0) && (me._currentStoredPagesCount > me._requestedPage))) {
@@ -1067,14 +1011,14 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                     $('#notification-message').html(_Messages.getString('LoadingPage') + " " + mainJobStatus.page + " " + _Messages.getString('Of') + " " + mainJobStatus.totalPages);
                     registry.byId('reportGlassPane').setText(_Messages.getString('LoadingPage') + " " + mainJobStatus.page + " " + _Messages.getString('Of') + " " + mainJobStatus.totalPages);
 
-                    keepPolling(mainJobStatus.uuid, mainReportGeneration);
+                    me._keepPolling(mainJobStatus.uuid, url, mainReportGeneration);
                   }
                   break;
                   //note - no break here - w e need to poll
                 case "QUEUED":
                 case "WORKING":
                   me._hideAsyncScreens();
-                  keepPolling(mainJobStatus.uuid, mainReportGeneration);
+                  me._keepPolling(mainJobStatus.uuid, url, mainReportGeneration);
                   break;
                 case "FINISHED":
 
@@ -1085,7 +1029,9 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
                   //Show report
                   if (!isIframeContentSet) {
-                    getContent(mainJobStatus.uuid);
+                    me._getContent(mainJobStatus.uuid, url, function () {
+                      isIframeContentSet = true;
+                    });
 
                     //Callback for downloadable types because they don't have iframe callback
                     if (me._isDownloadableFormat(mainJobStatus.mimeType)) {
@@ -1133,35 +1079,36 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                   logger && logger.log("ERROR: Request status - FAILED");
 
                   break;
+                case "PRE_SCHEDULED":
+                   //Could occur when auto scheduling or manual scheduling + location prompt
+                  if(me._locationPromptFinished){
+                    me._keepPolling(mainJobStatus.uuid, url, mainReportGeneration);
+                  } else if (!me._manuallyScheduled){
+                    isFinished = true;
+                    var autoScheduleDlg = registry.byId('scheduleScreen');
+                    autoScheduleDlg.setTitle(_Messages.getString('AutoScheduleTitle'));
+                    autoScheduleDlg.setText(_Messages.getString('AutoScheduleText'));
+                    autoScheduleDlg.setOkBtnText(_Messages.getString('FeedbackScreenBackground'));
+                    autoScheduleDlg.setCancelBtnText(_Messages.getString('ScreenCancel'));
+
+                    autoScheduleDlg.callbacks = me._getAutoScheduleScreenBtnCallbacks(mainReportGeneration, url);
+
+                    registry.byId('feedbackScreen').hide();
+                    autoScheduleDlg.show();                    
+                  }
+                  break;
                 case "SCHEDULED":
+                  
+                  //Scheduling is confirmed, the task is not cancelable anymore
+                    
                   isFinished = true;
                   me._submitReportEnded();
                   me._hideAsyncScreens();
 
-                  var manualScheduleDialogCallbacks = [
-                    function skipAndHide() {
-                      dlgBackground.skip();
-                      dlgBackground.hide();
-                    }.bind(me),
-                    function hide() {
-                      dlgBackground.hide();
-                    }.bind(me)
-                  ];
-
-                  var autoScheduleDialogCallbacks = [
-                    function hide() {
-                      hideDlgAndPane(dlgBackground);
-                    }.bind(me)
-                  ];
-
-                  var dlgBackground = me._getRunInBackgroundDialog(manuallyScheduled, manualScheduleDialogCallbacks, autoScheduleDialogCallbacks);
-
-                  if (!manuallyScheduled || !dlgBackground.isSkipped()) {
-                    registry.byId('feedbackScreen').hide(); // glasspane is still needed
-                    dlgBackground.show();
-                  } else {
-                    hideDlgAndPane(registry.byId('feedbackScreen'));
-                  }
+                  var successDlg = me._getSuccessSchedulingDlg();
+               
+                  registry.byId('feedbackScreen').hide(); // glasspane is still needed
+                  successDlg.show();
 
                   break;
                 case "CANCELED":
@@ -1172,6 +1119,20 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
             }
             return mainJobStatus;
           });
+
+          //Async execution manages this flag in it's own way
+          me.reportPrompt._isSubmitPromptPhaseActivated = false;
+
+          var scheduleScreenBtnCallbacks = me._getScheduleScreenBtnCallbacks(mainReportGeneration, url, hideDlgAndPane);
+
+          var feedbackDialog = me._getFeedbackScreen(scheduleScreenBtnCallbacks);
+
+          //Don't show dialog if report is ready faster than threshold
+          setTimeout(function () {
+            if (!isFinished) {
+              feedbackDialog.show();
+            }
+          }, me.reportPrompt._dialogThreshold);
 
           /*Async callbacks code END*/
 
@@ -1252,6 +1213,323 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         });
       },
 
+      _buildParameter: function (pathArray, id) {
+        var path;
+        for (var i = 0; i < pathArray.length; i++) {
+          if (pathArray[i].indexOf(".prpt") !== -1) {
+            path = decodeURIComponent(pathArray[i]).replace(/:/g, "/");
+          }
+        }
+        return {
+          solutionPath: (path == null ? "/" : path ),
+          jobId: id,
+          recalculateFinished: true == this.reportPrompt._isReportHtmlPagebleOutputFormat
+        };
+      },
+
+      _getSuccessSchedulingDlg: function () {
+
+        var me = this;
+        var successDlg = registry.byId('successScheduleScreen');
+        successDlg.setTitle(_Messages.getString('SuccessScheduleTitle'));
+        successDlg.setText(_Messages.getString('SuccessScheduleText', '<b><i>' + me._locationOutputPath +'</i></b>'));
+        successDlg.setOkBtnText(_Messages.getString('OK'));
+
+        var successScheduleDialogCallbacks = [
+          function hide() {
+            me._forceHideGlassPane();
+            successDlg.hide();
+          }.bind(me)
+        ];
+
+        successDlg.callbacks = successScheduleDialogCallbacks;
+        return  successDlg;
+      },
+      
+      _forceHideGlassPane: function (){
+        $("#glasspane").css("background", "transparent");
+        $("#glasspane").css("display", "none");
+      },
+
+      _forceShowGlassPane: function (){
+        $("#glasspane").css("background", "");
+        $("#glasspane").css("display", "block");
+      },
+
+      _onLocationPromptCancel : function (mainReportGeneration, url) {
+        var me = this;
+        return function (event) {
+          if (event.eventSubType == 'locationPromptCanceled') {
+            me._locationPromptFinished = true;
+            //Show glass pane and feedback screen
+            me._forceShowGlassPane();
+            registry.byId('feedbackScreen').show();
+            var specialCaseProxy = dojo.hitch(me, function (result) {
+
+              if (me.reportPrompt._isReportHtmlPagebleOutputFormat) {
+                var mainJobStatus;
+                try {
+                  /*If pre scheduled paginated HTML report is finished it will contain all the pages
+                   but we need only one. So we spawn a new job and get results from cache.
+                   */
+                  mainJobStatus = JSON.parse(result);
+                  if (mainJobStatus.status == 'FINISHED') {
+                    pentahoGet('reportjob', me._reportUrl, mainReportGeneration, 'text/text');
+                  } else {
+                    mainReportGeneration(result);
+                  }
+                } catch (e) {
+                  mainReportGeneration(result);
+                }
+              } else {
+                mainReportGeneration(result);
+              }
+            });
+            //Keep polling
+            setTimeout(function () {
+              pentahoGet(url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + me._currentReportUuid + '/status', "", specialCaseProxy);
+            }, me.reportPrompt._pollingInterval);
+            me._removeLocationPromptHandlers();
+          }
+        };
+      },
+
+      _onLocationPromptOk : function (mainReportGeneration, url) {
+        var me = this;
+        return function (event) {
+          if (event.eventSubType == 'locationPromptOk') {
+            try {
+              me._locationOutputPath = event.stringParam;
+            } catch (e) {
+              logger && logger.log("ERROR" + String(e));
+            }
+            me._locationPromptFinished = true;
+            me._forceShowGlassPane();
+            var waitForScheduled = dojo.hitch(me, function (result) {
+              try {
+                mainJobStatus = JSON.parse(result);
+                if (mainJobStatus.status == 'SCHEDULED' || mainJobStatus.status == 'FAILED') {
+                  mainReportGeneration(result);
+                } else {
+                  setTimeout(function () {
+                    pentahoGet(url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + me._currentReportUuid + '/status', "", waitForScheduled);
+                  }, me.reportPrompt._pollingInterval);
+                }
+              } catch (e) {
+                mainReportGeneration(result);
+              }
+            });
+            //Keep polling
+            setTimeout(function () {
+              pentahoGet(url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + me._currentReportUuid + '/status', "", waitForScheduled);
+            }, me.reportPrompt._pollingInterval);
+            me._removeLocationPromptHandlers();
+          }
+        };
+    },
+
+      _onLocationPromptFinish : function(){
+      var me = this;
+      return function (event) {
+        if (event.eventSubType == 'locationPromptFinish') {
+          me._currentReportUuid = event.stringParam;
+          if (window.top.mantle_removeHandler) {
+            if (me._locationPromptFinishHandlerRegistration) {
+              window.top.mantle_removeHandler(me._locationPromptFinishHandlerRegistration);
+            }
+          }
+        }
+      };
+      },
+
+      _onLocationPromptCancelAuto : function() {
+        var me = this;
+        return function (event) {
+          if (event.eventSubType == 'locationPromptCanceled') {
+            me._forceHideGlassPane();
+            me.cancel(me._currentReportStatus, me._currentReportUuid);
+            me._removeLocationPromptHandlers();
+          }
+        };
+      },
+
+      _onLocationPromptOkAuto : function(mainReportGeneration, url) {
+        var me = this;
+        return function (event) {
+          if (event.eventSubType == 'locationPromptOk') {
+            me._locationOutputPath = event.stringParam;
+            me._locationPromptFinished = true;
+            me._forceShowGlassPane();
+            var waitForScheduled = dojo.hitch(me, function (result) {
+              try {
+                mainJobStatus = JSON.parse(result);
+                if (mainJobStatus.status == 'SCHEDULED' || mainJobStatus.status == 'FAILED') {
+                  mainReportGeneration(result);
+                } else {
+                  setTimeout(function () {
+                    pentahoGet(url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + me._currentReportUuid + '/status', "", waitForScheduled);
+                  }, me.reportPrompt._pollingInterval);
+                }
+              } catch (e) {
+                mainReportGeneration(result);
+              }
+            });
+            setTimeout(function () {
+              pentahoGet(url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + me._currentReportUuid + '/status', "", waitForScheduled);
+            }, me.reportPrompt._pollingInterval);
+
+            me._removeLocationPromptHandlers();
+          }
+        };
+      },
+
+      _removeLocationPromptHandlers: function(){
+        if (window.top.mantle_removeHandler) {
+          if(this._locationPromptCancelHandlerRegistration) {
+            window.top.mantle_removeHandler(this._locationPromptCancelHandlerRegistration);
+          }
+          if(this._locationPromptOkHandlerRegistration) {
+            window.top.mantle_removeHandler(this._locationPromptOkHandlerRegistration);
+          }
+        }
+      },
+
+      _getScheduleScreenBtnCallbacks : function (mainReportGeneration, url, hideDlgAndPane) {
+        var me = this;
+        return [
+        //Schedule button callback
+        function scheduleReport() {
+          var urlSchedule = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + me._currentReportUuid + '/schedule';
+          pentahoGet(urlSchedule, "confirm=" + !me.reportPrompt._promptForLocation);
+          me._manuallyScheduled = true;
+
+          registry.byId('feedbackScreen').hide();
+          if (me.reportPrompt._promptForLocation) {
+
+            if(window.top.mantle_addHandler) {
+              me._locationPromptCancelHandlerRegistration = window.top.mantle_addHandler("GenericEvent",
+                  this._onLocationPromptCancel(mainReportGeneration, url).bind(this) );
+              me._locationPromptOkHandlerRegistration = window.top.mantle_addHandler("GenericEvent", this._onLocationPromptOk(mainReportGeneration, url).bind(this) );
+              me._locationPromptFinishHandlerRegistration = window.top.mantle_addHandler("GenericEvent", this._onLocationPromptFinish().bind(this));
+            }
+            //Open location prompt
+            me._locationPromptFinished = false;
+            window.top.executeCommand("AdhocRunInBackgroundCommand", me._buildParameter(pathArray, me._currentReportUuid));
+          }
+        }.bind(me),
+        //Cancel report
+        function feedbackscreenDone() {
+          me.cancel(me._currentReportStatus, me._currentReportUuid);
+          hideDlgAndPane(registry.byId('feedbackScreen'));
+        }.bind(me)
+      ]
+      },
+
+      _getAutoScheduleScreenBtnCallbacks : function (mainReportGeneration, url){
+
+        var me = this;
+
+        var autoScheduleDialogCallbacks;
+
+        var  autoScheduleDlg = registry.byId('scheduleScreen');
+
+        if(me.reportPrompt._promptForLocation) {
+
+          autoScheduleDialogCallbacks = [
+            function openPrompt() {
+              autoScheduleDlg.hide();
+              me._locationPromptCancelHandlerRegistration = window.top.mantle_addHandler("GenericEvent", this._onLocationPromptCancelAuto().bind(this) );
+              me._locationPromptOkHandlerRegistration = window.top.mantle_addHandler("GenericEvent", this._onLocationPromptOkAuto(mainReportGeneration, url).bind(this) );
+              me._locationPromptFinishHandlerRegistration = window.top.mantle_addHandler("GenericEvent", this._onLocationPromptFinish().bind(this));
+
+              //Open location prompt
+              me._locationPromptFinished = false;
+              window.top.executeCommand("AdhocRunInBackgroundCommand", me._buildParameter(pathArray, me._currentReportUuid));
+            }.bind(me),
+            function cancel() {
+              autoScheduleDlg.hide();
+              me._forceHideGlassPane();
+              me.cancel(me._currentReportStatus, me._currentReportUuid);
+            }.bind(me)
+          ];
+        }else{
+          autoScheduleDialogCallbacks = [
+            function confirm() {
+              autoScheduleDlg.hide();
+              var urlSchedule = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + me._currentReportUuid + '/schedule';
+              pentahoGet(urlSchedule, "confirm=true");
+              me._locationPromptFinished = true;
+              me._keepPolling(me._currentReportUuid, url, mainReportGeneration);
+            }.bind(me),
+            function cancel() {
+              autoScheduleDlg.hide();
+              me._forceHideGlassPane();
+              me.cancel(me._currentReportStatus, me._currentReportUuid);
+            }.bind(me)
+          ];
+        }
+
+        return autoScheduleDialogCallbacks;
+      },
+
+      _keepPolling : function (uuid, url, callback){
+        var me = this;
+        setTimeout(function () {
+          pentahoGet(url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + uuid + '/status', "", callback);
+        }, me.reportPrompt._pollingInterval);
+      },
+
+      _getContent : function (uuid, url, callback) {
+        var me = this;
+        var urlContent = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + uuid + '/content';
+        logger && logger.log("Will set iframe url to " + urlContent.substr(0, 50) + "... ");
+
+        $('#hiddenReportContentForm').attr("action", urlContent);
+        $('#hiddenReportContentForm').submit();
+        $('#reportContent').attr("data-src", urlContent);
+        me._updatedIFrameSrc = true;
+        me.reportPrompt._isSubmitPromptPhaseActivated = true;
+        if(callback){
+          callback();
+        }
+      },
+
+      _getAsyncJobStatus : function(result, hideDlgAndPane){
+        var me = this;
+        var mainJobStatus;
+        try {
+          mainJobStatus = JSON.parse(result);
+          return mainJobStatus;
+        } catch (e) {
+          var errorMessage = _Messages.getString('DefaultErrorMessage');
+          this.reportPrompt.showMessageBox(
+              errorMessage,
+              _Messages.getString('ErrorPromptTitle'));
+          hideDlgAndPane(registry.byId('feedbackScreen'));
+          me._hideAsyncScreens();
+          logger && logger.log("ERROR" + String(e));
+          return;
+        }
+      },
+
+      _updateFeedbackScreen: function (mainJobStatus, feedbackDialog) {
+        var me = this;
+        //Update current values
+        me._currentReportStatus = mainJobStatus.status;
+        me._currentReportUuid = mainJobStatus.uuid;
+        me._currentStoredPagesCount = mainJobStatus.generatedPage;
+
+        //Update feedback screen ui
+        if (mainJobStatus.activity != null) {
+          feedbackDialog.setText(_Messages.getString(mainJobStatus.activity) + '...');
+        }
+        feedbackDialog.setText2(_Messages.getString('FeedbackScreenPage') + ': ' + mainJobStatus.page);
+        feedbackDialog.setText3(_Messages.getString('FeedbackScreenRow') + ': ' + mainJobStatus.row + ' / ' + mainJobStatus.totalRows);
+
+        //Set progress bar %
+        progressBar.set({value: mainJobStatus.progress});
+      },
+
       _hideDialogAndPane: function(dlg) {
         if(dlg) {
           dlg.hide();
@@ -1260,7 +1538,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           clearTimeout(this._updateReportTimeout);
           this._updateReportTimeout = -1;
         }
-        this.reportPrompt.hideGlassPane();
+        this._forceHideGlassPane();
       },
 
       _submitReportEnded: function(isTimeout) {

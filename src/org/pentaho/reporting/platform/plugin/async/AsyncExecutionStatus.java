@@ -27,9 +27,11 @@ public enum AsyncExecutionStatus {
   QUEUED( Boolean.FALSE ),
   WORKING( Boolean.FALSE ),
   CONTENT_AVAILABLE( Boolean.FALSE ),
-  FINISHED( Boolean.TRUE ),
+  //Can be overriden by SCHEDULED status
+  FINISHED( Boolean.FALSE ),
   FAILED( Boolean.TRUE ),
   CANCELED( Boolean.TRUE ),
+  PRE_SCHEDULED( Boolean.FALSE ),
   SCHEDULED( Boolean.TRUE );
 
   private final boolean isFinal;

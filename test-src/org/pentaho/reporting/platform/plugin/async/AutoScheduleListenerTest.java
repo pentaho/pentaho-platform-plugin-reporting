@@ -71,7 +71,7 @@ public class AutoScheduleListenerTest {
     listener.reportProcessingStarted( event );
     listener.reportProcessingUpdate( event );
     listener.reportProcessingFinished( event );
-    verify( executor, times( times ) ).schedule( id, session );
+    verify( executor, times( times ) ).preSchedule( id, session );
 
   }
 

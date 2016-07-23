@@ -41,6 +41,7 @@ import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
 import org.pentaho.reporting.libraries.base.config.ModifiableConfiguration;
 import org.pentaho.reporting.libraries.repository.ContentIOException;
+import org.pentaho.reporting.libraries.resourceloader.ResourceException;
 import org.pentaho.reporting.platform.plugin.AuditWrapper;
 import org.pentaho.reporting.platform.plugin.SimpleReportingComponent;
 import org.pentaho.reporting.platform.plugin.async.PentahoAsyncExecutor.CompositeKey;
@@ -894,6 +895,136 @@ public class PentahoAsyncReportExecutorTest {
 
     assertFalse( temp.exists() );
 
+
+  }
+
+
+  @Test public void testPreSchedule() {
+
+    final PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 10, autoSchedulerThreshold );
+
+    final TestListener testListener = new TestListener( "1", UUID.randomUUID(), "" );
+
+    // must have two separate instances, as callable holds unique ID and listener for each addTask(..)
+    final IAsyncReportExecution execution = mock( IAsyncReportExecution.class );
+    when( execution.preSchedule() ).thenAnswer( new Answer<Boolean>() {
+      @Override public Boolean answer( final InvocationOnMock invocation ) throws Throwable {
+        testListener.setStatus( AsyncExecutionStatus.PRE_SCHEDULED );
+        return true;
+      }
+    } );
+
+    when( execution.getState() ).thenReturn( testListener.getState() );
+
+    final UUID id1 = exec.addTask( execution, session1 );
+
+    assertTrue( exec.preSchedule( id1, session1 ) );
+
+    final IAsyncReportState state = exec.getReportState( id1, session1 );
+    assertNotNull( state );
+    assertEquals( AsyncExecutionStatus.PRE_SCHEDULED, testListener.getState().getStatus() );
+  }
+
+  @Test public void testPreScheduleNoTask() {
+
+    final PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 10, autoSchedulerThreshold );
+
+    final UUID id1  = UUID.randomUUID();
+
+    assertFalse( exec.preSchedule( id1, session1 ) );
+  }
+
+
+  @Test public synchronized void testRecalculate() {
+
+    final PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 10, autoSchedulerThreshold );
+
+    final TestListener testListener = new TestListener( "1", UUID.randomUUID(), "" );
+
+    // must have two separate instances, as callable holds unique ID and listener for each addTask(..)
+    final UUID id1 = exec.addTask( new PentahoAsyncReportExecution( "junit-path",
+      component, handler, session1, "not null", AuditWrapper.NULL ) {
+
+
+
+      @Override
+      protected AsyncReportStatusListener createListener( final UUID id,
+                                                          List<? extends ReportProgressListener> listeners ) {
+        return testListener;
+      }
+
+      @Override public synchronized boolean schedule() {
+        super.schedule();
+        return true;
+      }
+
+      @Override public IFixedSizeStreamingContent call() throws Exception {
+        return new NullSizeStreamingContent();
+      }
+
+
+    }, session1 );
+
+    assertTrue( exec.schedule( id1, session1 ) );
+
+    final IAsyncReportState state = exec.getReportState( id1, session1 );
+    assertNotNull( state );
+    assertEquals( AsyncExecutionStatus.SCHEDULED, testListener.getState().getStatus() );
+    final UUID recalculate = exec.recalculate( id1, session1 );
+    assertNotNull( session1.getName() );
+    assertTrue( exec.schedule( recalculate, session1 ) );
+    final IAsyncReportState recalculateState = exec.getReportState( recalculate, session1 );
+    assertNotNull( recalculateState );
+    assertEquals( AsyncExecutionStatus.SCHEDULED, recalculateState.getStatus() );
+
+  }
+
+  @Test( expected = IllegalStateException.class ) public void testRecalculateNoTask() {
+
+    final PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 10, autoSchedulerThreshold );
+
+    final TestListener testListener = new TestListener( "1", UUID.randomUUID(), "" );
+
+    // must have two separate instances, as callable holds unique ID and listener for each addTask(..)
+    final UUID id1 = UUID.randomUUID();
+
+    exec.recalculate( id1, session1 );
+
+  }
+
+  @Test public void testRecalculateJobFails() throws ResourceException, IOException {
+
+    final PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 10, autoSchedulerThreshold );
+
+    final TestListener testListener = new TestListener( "1", UUID.randomUUID(), "" );
+
+
+    final SimpleReportingComponent reportComponent = mock( SimpleReportingComponent.class );
+    when( reportComponent.getReport() ).thenReturn( report );
+
+    final UUID id1 = exec.addTask( new PentahoAsyncReportExecution( "junit-path",
+      reportComponent, handler, session1, "not null", AuditWrapper.NULL ) {
+      @Override
+      protected AsyncReportStatusListener createListener( final UUID id,
+                                                          List<? extends ReportProgressListener> listeners ) {
+        return testListener;
+      }
+
+      @Override public synchronized boolean schedule() {
+        super.schedule();
+        return true;
+      }
+
+      @Override public IFixedSizeStreamingContent call() throws Exception {
+        return new NullSizeStreamingContent();
+      }
+    }, session1 );
+
+    doAnswer( invocation -> {
+      throw new Exception( "Oops!" );
+    } ).when( reportComponent ).setOutputStream( any() );
+
+    assertNull( exec.recalculate( id1, session1 ) );
 
   }
 

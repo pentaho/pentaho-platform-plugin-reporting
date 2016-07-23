@@ -17,9 +17,9 @@
 define(["dojo/_base/declare", "dijit/_WidgetBase", "dijit/_Templated", "dojo/on", "dojo/query",
 "pentaho/common/button", "pentaho/common/Dialog", "dojo/text!pentaho/reportviewer/ScheduleScreen.html"],
     function(declare, _WidgetBase, _Templated, on, query, button, Dialog, templateStr){
-      return declare("pentaho.reportviewer.ScheduleScreen", [Dialog],
+      return declare("pentaho.reportviewer.SuccessScheduleScreen", [Dialog],
       {
-        buttons: ['ok', 'cancel'],
+        buttons: ['ok'],
 
         imagePath: '',
 
@@ -31,15 +31,8 @@ define(["dojo/_base/declare", "dijit/_WidgetBase", "dijit/_Templated", "dojo/on"
           this.glasspanemessage.innerHTML = text;
         },
 
-        setOkBtnText: function(text){
-          this._setBtnText(text, 0);
-        },
-
-        setCancelBtnText: function(text){
-          this._setBtnText(text, 1);
-        },
-
-        _setBtnText: function(text, i) {
+        setOkBtnText: function(text) {
+          var i = 0;
           this.buttons[i] = text;
           query("#button"+i, this.domNode).forEach(function(node, index, arr){
             node.innerHTML = text;
@@ -53,4 +46,3 @@ define(["dojo/_base/declare", "dijit/_WidgetBase", "dijit/_Templated", "dojo/on"
        }
       });
     });
-

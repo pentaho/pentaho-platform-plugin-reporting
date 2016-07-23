@@ -35,6 +35,7 @@ define([
       _pollingInterval: 1000,
       _dialogThreshold: 1500,
       _promptForLocation: null,
+      _defaultOutputPath: null,
       _isReportHtmlPagebleOutputFormat : null,
 
       /**
@@ -270,6 +271,7 @@ define([
               this._pollingInterval = asyncConf.pollingIntervalMilliseconds;
               this._dialogThreshold = asyncConf.dialogThresholdMilliseconds;
               this._promptForLocation = asyncConf.promptForLocation;
+              this._defaultOutputPath = asyncConf.defaultOutputPath;
             } catch (ignored){
               //not async
             }

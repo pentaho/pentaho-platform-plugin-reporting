@@ -196,6 +196,11 @@ public abstract class AbstractAsyncReportExecution<TReportState extends IAsyncRe
     return new CancelableListenableFuture( delegate );
   }
 
+  @Override public boolean preSchedule() {
+    listener.setStatus( AsyncExecutionStatus.PRE_SCHEDULED );
+    return AsyncExecutionStatus.PRE_SCHEDULED.equals( listener.getState().getStatus() );
+  }
+
   /**
    * Implements cancel functionality
    */

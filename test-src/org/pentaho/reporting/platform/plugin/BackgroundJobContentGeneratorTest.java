@@ -262,6 +262,14 @@ public class BackgroundJobContentGeneratorTest {
       return true;
     }
 
+    @Override public boolean preSchedule( UUID uuid, IPentahoSession session ) {
+      return false;
+    }
+
+    @Override public UUID recalculate( UUID uuid, IPentahoSession session ) {
+      return null;
+    }
+
     @Override public void updateSchedulingLocation( UUID uuid, IPentahoSession session, Serializable location,
                                                     String newName ) {
 

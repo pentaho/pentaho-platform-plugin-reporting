@@ -114,7 +114,7 @@
     <!-- dialog threshold -->
     <constructor-arg type="long" value="1500" />
     <!-- prompt for scheduling location -->
-    <constructor-arg type="boolean" value="true" />
+    <constructor-arg type="boolean" value="false" />
   </bean>
 
   <!--Default scheduling from user console will save reports to user's home directory-->

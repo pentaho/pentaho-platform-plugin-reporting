@@ -24,6 +24,7 @@ import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
 import org.pentaho.platform.api.repository2.unified.RepositoryFile;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.util.StringUtil;
+import org.pentaho.platform.util.UUIDUtil;
 import org.pentaho.reporting.libraries.base.util.ArgumentNullException;
 
 import java.io.Serializable;
@@ -75,6 +76,15 @@ class UpdateSchedulingLocationListener implements ISchedulingListener {
         int count = 1;
 
         synchronized ( FORMAT ) {
+          /* Let's move file to temp location to handle situation
+          when the name is not changed */
+          String uuidAsString = getUuidAsString();
+          while ( null != repo.getFile( newPath + uuidAsString ) ) {
+            uuidAsString = getUuidAsString();
+          }
+
+          repo.moveFile( savedFile.getId(), newPath + uuidAsString, MOVE_MSG );
+
           while ( null != repo.getFile( newPath ) ) {
             newPath = String
               .format( FORMAT, folderPath + newName, count, fileExtension );
@@ -90,6 +100,10 @@ class UpdateSchedulingLocationListener implements ISchedulingListener {
     }
 
 
+  }
+
+  protected String getUuidAsString() {
+    return UUIDUtil.getUUIDAsString();
   }
 }
 

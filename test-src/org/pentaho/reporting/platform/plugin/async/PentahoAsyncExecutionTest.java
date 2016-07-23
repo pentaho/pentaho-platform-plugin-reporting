@@ -260,6 +260,19 @@ public class PentahoAsyncExecutionTest {
   }
 
   @Test
+  public void testPreSchedule() {
+    final PentahoAsyncReportExecution execution =
+      new PentahoAsyncReportExecution( "junit-path", component, handler, userSession, "id", AuditWrapper.NULL );
+    execution.notifyTaskQueued( UUID.randomUUID(), Collections.emptyList() );
+    assertEquals( AsyncExecutionStatus.QUEUED, execution.getState().getStatus() );
+    assertTrue( execution.preSchedule() );
+    assertEquals( AsyncExecutionStatus.PRE_SCHEDULED, execution.getState().getStatus() );
+    assertTrue( execution.schedule() );
+    assertEquals( AsyncExecutionStatus.SCHEDULED, execution.getState().getStatus() );
+    assertFalse( execution.preSchedule() );
+  }
+
+  @Test
   public void testCancelNoListener() {
     final AbstractAsyncReportExecution<IAsyncReportState> abstractAsyncReportExecution =
       new AbstractAsyncReportExecution<IAsyncReportState>( "junit-path", component, handler, userSession, "id" ) {

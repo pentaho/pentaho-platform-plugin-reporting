@@ -21,8 +21,11 @@ package org.pentaho.reporting.platform.plugin;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.codehaus.jackson.annotate.JsonPropertyOrder;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.pentaho.platform.api.engine.IPentahoSession;
+import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
+import org.pentaho.platform.api.repository2.unified.RepositoryFile;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.util.RepositoryPathEncoder;
@@ -31,8 +34,10 @@ import org.pentaho.platform.util.web.MimeHelper;
 import org.pentaho.reporting.platform.plugin.async.AsyncExecutionStatus;
 import org.pentaho.reporting.platform.plugin.async.IAsyncReportState;
 import org.pentaho.reporting.platform.plugin.async.IPentahoAsyncExecutor;
+import org.pentaho.reporting.platform.plugin.async.ISchedulingDirectoryStrategy;
 import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
 
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -47,6 +52,7 @@ import javax.ws.rs.core.StreamingOutput;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Collections;
 import java.util.UUID;
 import java.util.concurrent.Future;
 
@@ -80,15 +86,7 @@ public class JobManager {
 
 
   @GET @Path( "config" ) public Response getConfig() {
-    final ObjectMapper mapper = new ObjectMapper();
-    try {
-      return Response
-        .ok( mapper.writeValueAsString( config ),
-          MediaType.APPLICATION_JSON ).build();
-    } catch ( final IOException e ) {
-      e.printStackTrace();
-    }
-    return null;
+    return getJson( config );
   }
 
 
@@ -155,18 +153,22 @@ public class JobManager {
 
       final IAsyncReportState responseJson = context.getReportState();
 
-      final ObjectMapper mapper = new ObjectMapper();
-      String json = null;
-      try {
-        json = mapper.writeValueAsString( responseJson );
-      } catch ( final Exception e ) {
-        logger.error( UNABLE_TO_SERIALIZE_TO_JSON + responseJson.toString() );
-        Response.serverError().build();
-      }
-      return Response.ok( json ).build();
+      return getJson( responseJson );
     } catch ( final ContextFailedException e ) {
       return get404();
     }
+  }
+
+  private Response getJson( final Object responseJson ) {
+    final ObjectMapper mapper = new ObjectMapper();
+    String json = null;
+    try {
+      json = mapper.writeValueAsString( responseJson );
+    } catch ( final Exception e ) {
+      logger.error( UNABLE_TO_SERIALIZE_TO_JSON + responseJson.toString() );
+      Response.serverError().build();
+    }
+    return Response.ok( json ).build();
   }
 
   protected IPentahoAsyncExecutor getExecutor() {
@@ -211,12 +213,17 @@ public class JobManager {
 
 
   @GET @Path( "{job_id}/schedule" ) @Produces( "text/text" )
-  public Response schedule( @PathParam( "job_id" ) final String jobId ) {
+  public Response schedule( @PathParam( "job_id" ) final String jobId,
+                            @DefaultValue( "true" )
+                            @QueryParam( "confirm" ) final boolean confirm ) {
     try {
-
       final ExecutionContext context = getContext( jobId );
 
-      context.schedule();
+      if ( confirm ) {
+        context.schedule();
+      } else {
+        context.preSchedule();
+      }
 
       return Response.ok().build();
     } catch ( final ContextFailedException e ) {
@@ -224,21 +231,44 @@ public class JobManager {
     }
   }
 
-  @POST @Path( "{job_id}/schedule/location" ) @Produces( "text/text" )
-  public Response updateLocation( @PathParam( "job_id" ) final String jobId,
-                                  @QueryParam( "folderId" ) final String folderId,
-                                  @QueryParam( "newName" ) final String newName ) {
+
+  @POST @Path( "{job_id}/schedule" ) @Produces( "application/json" )
+  public Response confirmSchedule( @PathParam( "job_id" ) final String jobId,
+                                   @DefaultValue( "true" )
+                                   @QueryParam( "confirm" ) final boolean confirm,
+                                   @DefaultValue( "false" )
+                                   @QueryParam( "recalculateFinished" ) final boolean recalculateFinished,
+                                   @QueryParam( "folderId" ) final String folderId,
+                                   @QueryParam( "newName" ) final String newName ) {
     try {
 
-      final ExecutionContext context = getContext( jobId );
+      //We can't go further without folder id and file name
+      if ( StringUtil.isEmpty( folderId ) || StringUtil.isEmpty( newName ) ) {
+        return get404();
+      }
 
+      ExecutionContext context = getContext( jobId );
+
+
+      //The report can be already scheduled but we still may want to update the location
+      if ( confirm ) {
+        if ( AsyncExecutionStatus.FINISHED.equals( context.getReportState().getStatus() ) && recalculateFinished ) {
+          //Get new job id
+          final UUID recalculate = context.recalculate();
+          if ( null != recalculate ) {
+            context = getContext( recalculate.toString() );
+          }
+        }
+        context.schedule();
+      }
+
+      //Update the location
       context.updateSchedulingLocation( folderId, newName );
 
-      return Response.ok().build();
+      return getJson( Collections.singletonMap( "uuid", context.jobId ) );
     } catch ( final ContextFailedException e ) {
       return get404();
     }
-
   }
 
   public ExecutionContext getContext( final String jobId ) throws ContextFailedException {
@@ -310,6 +340,7 @@ public class JobManager {
     return response;
   }
 
+  @JsonPropertyOrder( alphabetic = true ) //stable response structure
   private class Config {
     private final boolean isSupportAsync;
     private final long pollingIntervalMilliseconds;
@@ -341,6 +372,22 @@ public class JobManager {
     public boolean isPromptForLocation() {
       return promptForLocation;
     }
+
+    //Location can be changed at any time depending on ISchedulingDirectoryStrategy implementation
+    public String getDefaultOutputPath() {
+      return getLocation();
+    }
+  }
+
+  private String getLocation() {
+    final ISchedulingDirectoryStrategy directoryStrategy = PentahoSystem.get( ISchedulingDirectoryStrategy.class );
+    final IUnifiedRepository repository = PentahoSystem.get( IUnifiedRepository.class );
+    if ( directoryStrategy != null && repository != null ) {
+      //We may consider caching in strategy implementation
+      final RepositoryFile outputFolder = directoryStrategy.getSchedulingDir( repository );
+      return outputFolder.getPath();
+    }
+    return "/";
   }
 
   /**
@@ -419,6 +466,18 @@ public class JobManager {
       } else {
         throw new ContextFailedException( "Can't update the location of not scheduled report." );
       }
+    }
+
+    public void preSchedule() throws ContextFailedException {
+      //Check if there is a task
+      getReportState();
+      getReportExecutor().preSchedule( uuid, session );
+    }
+
+    public UUID recalculate() throws ContextFailedException {
+      //Check if there is a task
+      getReportState();
+      return getReportExecutor().recalculate( uuid, session );
     }
   }
 

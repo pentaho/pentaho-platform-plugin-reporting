@@ -44,7 +44,8 @@ class AutoScheduleListener implements ReportProgressListener {
   private synchronized void autoSchedule( final ReportProgressEvent reportProgressEvent ) {
     if ( !scheduled && threshold > 0 && reportProgressEvent != null
       && reportProgressEvent.getMaximumRow() > threshold ) {
-      pentahoAsyncExecutor.schedule( id, session );
+      //Auto scheduling always needs confirmation
+      pentahoAsyncExecutor.preSchedule( id, session );
       scheduled = true;
     }
   }
