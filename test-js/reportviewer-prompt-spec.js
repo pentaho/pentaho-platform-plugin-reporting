@@ -140,6 +140,92 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
         });
       });
 
+      describe("canSkipParameterChange", function() {
+        var parameterValues = {
+          'output-target': 'table/html;page-mode=page',
+          'showParameters': 'false'
+        };
+        var _oldParameterSet = {
+          'output-target': { 
+            'value': 'table/html;page-mode=page',
+            'group': 'parameters',
+            'name': 'output-target'
+          },
+          'showParameters': { 
+            'value': 'true',
+            'group': 'system',
+            'name': 'showParameters'
+          }
+        };
+        beforeEach(function() {
+          spyOn(reportPrompt.api.operation, "getParameterValues").and.returnValue(parameterValues);
+          reportPrompt._oldParameterSet = _oldParameterSet;
+        });
+
+        it("should verify the system parameter value changes, output target changes and dependent parameter changes trigger server call", function() {
+          expect(reportPrompt.canSkipParameterChange(["showParameters"])).toBeFalsy(); // system parameter changes always trigger a server call
+          expect(reportPrompt.api.operation.getParameterValues).toHaveBeenCalled();
+
+          reportPrompt._oldParameterSet = {
+            'output-target': { 
+              'value': 'table/excel;page-mode=flow',
+              'group': 'parameters',
+              'name': 'output-target'
+            },
+            'showParameters': { 
+              'value': 'false',
+              'group': 'system',
+              'name': 'showParameters'
+            }
+          };
+          expect(reportPrompt.canSkipParameterChange(["output-target"])).toBeFalsy(); // output target changes always trigger a server call
+
+          reportPrompt._oldParameterSet = {
+            'output-target': { 
+              'value': 'table/html;page-mode=page',
+              'group': 'parameters',
+              'name': 'output-target'
+            },
+            'showParameters': { 
+              'value': 'false',
+              'group': 'system',
+              'name': 'showParameters'
+            }
+          };
+          var realParseParameterDefinition = reportPrompt.parseParameterDefinition.bind(reportPrompt);
+          var paramDefn = realParseParameterDefinition(parameterDefinition);
+          reportPrompt._oldParameterDefinition = paramDefn;
+
+          spyOn(reportPrompt._oldParameterDefinition, "getParameter").and.callFake(function(myParam) {
+            return {'attributes':{'has-downstream-dependent-parameter':'true'}};
+          });
+          expect(reportPrompt.canSkipParameterChange(["output-target"])).toBeFalsy(); // changes in a parameter with dependent other parameters triggers a server call
+        });
+
+        it("should verify the parameter marked as 'always-validate' value changes trigger server call", function() {
+          reportPrompt._oldParameterSet = {
+            'output-target': { 
+              'value': 'table/html;page-mode=page',
+              'group': 'parameters',
+              'name': 'output-target'
+            },
+            'showParameters': { 
+              'value': 'false',
+              'group': 'system',
+              'name': 'showParameters'
+            }
+          };  
+          var realParseParameterDefinition = reportPrompt.parseParameterDefinition.bind(reportPrompt);
+          var paramDefn = realParseParameterDefinition(parameterDefinition);
+          reportPrompt._oldParameterDefinition = paramDefn;
+
+          spyOn(reportPrompt._oldParameterDefinition, "getParameter").and.callFake(function(myParam) {
+            return {'attributes':{'must-validate-on-server':'true'}};
+          });
+          expect(reportPrompt.canSkipParameterChange(["output-target"])).toBeFalsy(); // parameter marked as "always-validate" always trigger a server call
+        });
+      });
+
       describe("showMessageBox", function() {
         var messageBox;
         beforeEach(function() {

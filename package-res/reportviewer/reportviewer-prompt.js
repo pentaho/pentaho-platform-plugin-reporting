@@ -37,6 +37,8 @@ define([
       _promptForLocation: null,
       _defaultOutputPath: null,
       _isReportHtmlPagebleOutputFormat : null,
+      _oldParameterDefinition : null,
+      _oldParameterSet : null,
 
       /**
        * Gets the prompt api instance
@@ -74,10 +76,119 @@ define([
         return this.api.operation.state()[prop];
       },
 
+      isParameterUpdateCall: function() {
+        // never had an old definition, so we cant optimize anything.
+        if (this._oldParameterDefinition == null) {
+          return false;
+        }
+        return true;
+      },
+
+      compareParameters: function(oldParameterSet, currentParameterSet) {
+        var changedParameters = [];
+
+        $.each(oldParameterSet, function (i, parameter) {
+          if (currentParameterSet.hasOwnProperty(parameter.name)) {
+            if(JSON.stringify(parameter.value.toString()) !== JSON.stringify(currentParameterSet[parameter.name].toString())) {
+              // add to changed
+              changedParameters.push(parameter.name);
+            }
+          } else {
+            // add to changed
+            changedParameters.push(parameter.name);
+          }
+        });
+
+        for (var parameter in currentParameterSet) {
+          if (!oldParameterSet.hasOwnProperty(parameter)) {
+            changedParameters.push(parameter);
+          }
+        }
+
+        return changedParameters;
+      },
+
+      extractParameterValues: function(paramDefn) {
+        var extractedParameters = {};
+        $.each(paramDefn.parameterGroups, function (i, group) {
+          var parameters = group.parameters;
+          for(var i=0; i<parameters.length; i++) {
+            if(parameters[i].multiSelect && parameters[i].getSelectedValuesValue().length > 0) {
+              extractedParameters[parameters[i].name] = { 
+                value: parameters[i].getSelectedValuesValue(),
+                group: group.name,
+                name: parameters[i].name
+              };
+            } else {
+              if(parameters[i].getSelectedValuesValue().length > 0) {
+                extractedParameters[parameters[i].name] = {
+                  value: parameters[i].getSelectedValuesValue()[0],
+                  group: group.name,
+                  name: parameters[i].name
+                };
+              }
+            }
+          }
+        });
+
+        return extractedParameters;
+      },
+
+      findChangedParameters: function() {
+        var currentParameterSet = this.api.operation.getParameterValues();
+
+        // compare currentParameterSet with oldParmaeterSet. Return an array of changed parameters. (More than one can change if we use the API).
+        var changedParameters = this.compareParameters(this._oldParameterSet, currentParameterSet);
+        return changedParameters;
+      },
+
+      canSkipParameterChange: function(names) {
+        if(this._oldParameterSet["output-target"].value != this.api.operation.getParameterValues()["output-target"]) {
+          // this has to be validated on the server.
+          return false;
+        }
+
+        for(var i=0; i<names.length; i++) {
+          if(this._oldParameterSet.hasOwnProperty(names[i]) && "system" == this._oldParameterSet[names[i]].group && "::session" != names[i]) {
+            return false; // must be validated on the server if system parameter changed.
+          }
+          var param = this._oldParameterDefinition.getParameter(names[i]);
+          if (param.attributes["has-downstream-dependent-parameter"] == "true") {
+            return false; // must be validated on the server if at least one other parameter is dependent on this changed value.
+          }
+          if (param.attributes["must-validate-on-server"] == "true") {
+            return false; // must be validated on the server if requested by some complex validation rules.
+          }
+        }
+        // finally, if all params pass the test, allow to skip.
+        return true;
+      },
+
+      updateParameterDefinitionWithNewValues: function(callback, names) {
+        var paramDefn = $.extend(true, {}, this._oldParameterDefinition); // clone previous(old) paramDefn
+        for(var i=0; i<names.length; i++) {
+          this.api.util.validateSingleParameter(paramDefn, names[i], this.api.operation.getParameterValues()[names[i]]);
+        }
+        try {
+          this.api.util.checkParametersErrors(paramDefn); // if no errors set promptNeeded to false(show report)
+          callback(undefined, paramDefn);
+        } catch (e) {
+          me.onFatalError(e);
+        }
+      },
+
       createPromptPanel: function() {
         this.api.operation.render(function(api, callback) {
-          var paramDefnCallback = function(xml) {
-            var paramDefn = this.parseParameterDefinition(xml);
+
+          var paramDefnCallback = function(xml, parameterDefinition) {
+            var paramDefn;
+            if(!parameterDefinition) {
+              // parse parameter definition from XML-response(server validation)
+              paramDefn = this.parseParameterDefinition(xml);
+            } else {
+              // use updated parameter definition(client validation)
+              paramDefn = parameterDefinition;
+            }
 
             try {
               var outputFormat = paramDefn.getParameter("output-target").getSelectedValuesValue();
@@ -110,11 +221,25 @@ define([
             if (autoSubmit != null) {
               paramDefn.autoSubmitUI = autoSubmit;
             }
+
+            this._oldParameterDefinition = paramDefn;
+            this._oldParameterSet = this.extractParameterValues(paramDefn);
+
             callback(paramDefn);
 
             this._createPromptPanelFetchCallback(paramDefn);
             this.hideGlassPane();
           };
+
+          if (this._isAsync && this.isParameterUpdateCall()) {
+            var names = this.findChangedParameters();
+            if (this.canSkipParameterChange(names)) {
+              this.updateParameterDefinitionWithNewValues(paramDefnCallback.bind(this), names);
+              // we did not contact the server.
+              return;
+            }
+          }
+
           this.fetchParameterDefinition(paramDefnCallback.bind(this), this.mode);
         }.bind(this));
        },
@@ -276,7 +401,7 @@ define([
               //not async
             }
           }
-        }        
+        }
 
         // Store mode so we can check if we need to refresh the report content or not in the view
         // As only the last request's response is processed, the last value of mode is actually the correct one.
