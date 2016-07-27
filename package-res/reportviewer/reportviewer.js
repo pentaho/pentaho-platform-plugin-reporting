@@ -57,6 +57,8 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
       _locationPromptFinished: null,
       _locationOutputPath: null,
       _manuallyScheduled: null,
+      _scheduleScreenBtnCallbacks: null,
+      _editModeToggledHandler: null,
 
       _bindPromptEvents: function() {
         var baseShowGlassPane = this.reportPrompt.showGlassPane.bind(this.reportPrompt);
@@ -70,6 +72,10 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         this.reportPrompt.api.event.afterUpdate(this.afterUpdateCallback.bind(this));
         this.reportPrompt.api.event.afterRender(this.view.afterRender.bind(this.view));
 
+        if (typeof parent.pho !== 'undefined' && typeof parent.pho.dashboards !== 'undefined') {
+          this._editModeToggledHandler = this.editModeToggledHandler.bind(this);
+          parent.pho.dashboards.addEditContentToggledListener(this._editModeToggledHandler);
+        }
       },
 
       load: function() {
@@ -826,11 +832,36 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           dlg.showBackgroundBtn(_Messages.getString('FeedbackScreenBackground'));
         }else {
           scheduleScreenBtnCallbacks.shift();
+          dlg.hideBackgroundBtn();
         }
 
         dlg.callbacks = scheduleScreenBtnCallbacks;
         return dlg;
       },
+
+      editModeToggledHandler: function (editMode) {
+        var feedbackScreen = registry.byId('feedbackScreen');
+        var scheduleScreenBtnCallbacks = _scheduleScreenBtnCallbacks;
+        var feedbackScreenHideStatuses = 'CANCELED|FINISHED|SCHEDULED|CONTENT_AVAILABLE';
+        if (feedbackScreen) {
+          if (editMode) {
+            feedbackScreen.hide();
+            feedbackScreen.callbacks = [scheduleScreenBtnCallbacks[1]];
+            feedbackScreen.hideBackgroundBtn();
+            if (feedbackScreenHideStatuses.indexOf(this._currentReportStatus) == -1) {
+              feedbackScreen.show();
+            }
+          } else {
+            feedbackScreen.hide();
+            feedbackScreen.showBackgroundBtn(_Messages.getString('FeedbackScreenBackground'));
+            if (feedbackScreenHideStatuses.indexOf(this._currentReportStatus) == -1) {
+              feedbackScreen.show();
+            }
+            feedbackScreen.callbacks = scheduleScreenBtnCallbacks;
+          }
+        }
+      },
+
 
       _getPageLoadingDialog: function (loadingDialogCallbacks) {
         var pageIsloadingDialog = registry.byId('reportGlassPane');
@@ -859,7 +890,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
         var pageLoadingDialog = this._getPageLoadingDialog(loadingDialogCallbacks);
         pageLoadingDialog.show();
-      },      
+      },
 
       _hideAsyncScreens: function(){
         registry.byId('reportGlassPane').hide();
@@ -1094,19 +1125,17 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                     autoScheduleDlg.callbacks = me._getAutoScheduleScreenBtnCallbacks(mainReportGeneration, url);
 
                     registry.byId('feedbackScreen').hide();
-                    autoScheduleDlg.show();                    
+                    autoScheduleDlg.show();
                   }
                   break;
                 case "SCHEDULED":
-                  
                   //Scheduling is confirmed, the task is not cancelable anymore
-                    
                   isFinished = true;
                   me._submitReportEnded();
                   me._hideAsyncScreens();
 
                   var successDlg = me._getSuccessSchedulingDlg();
-               
+
                   registry.byId('feedbackScreen').hide(); // glasspane is still needed
                   successDlg.show();
 
@@ -1124,6 +1153,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           me.reportPrompt._isSubmitPromptPhaseActivated = false;
 
           var scheduleScreenBtnCallbacks = me._getScheduleScreenBtnCallbacks(mainReportGeneration, url, hideDlgAndPane);
+          _scheduleScreenBtnCallbacks = scheduleScreenBtnCallbacks.slice();
 
           var feedbackDialog = me._getFeedbackScreen(scheduleScreenBtnCallbacks);
 
@@ -1245,7 +1275,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         successDlg.callbacks = successScheduleDialogCallbacks;
         return  successDlg;
       },
-      
+
       _forceHideGlassPane: function (){
         $("#glasspane").css("background", "transparent");
         $("#glasspane").css("display", "none");
