@@ -20,6 +20,7 @@ package org.pentaho.reporting.platform.plugin;
 
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.apache.cxf.jaxrs.impl.ResponseBuilderImpl;
+import org.apache.cxf.jaxrs.impl.ResponseImpl;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.AfterClass;
@@ -122,7 +123,7 @@ public class JobManagerTest {
   @Test public void testGetStatus() throws IOException {
     final WebClient client = provider.getFreshClient();
     client.path( String.format( URL_FORMAT, UUID.randomUUID().toString(), "/status" ) );
-    final Response response = client.get();
+    final ResponseImpl response = (ResponseImpl) client.get();
     assertNotNull( response );
     assertTrue( response.hasEntity() );
 
@@ -142,7 +143,7 @@ public class JobManagerTest {
     final Response.ResponseBuilder builder = new ResponseBuilderImpl();
 
     JobManager.calculateContentDisposition( builder, state );
-    final Response resp = builder.build();
+    final ResponseImpl resp = (ResponseImpl) builder.build();
     final MultivaluedMap<String, String> stringHeaders = resp.getStringHeaders();
     assertTrue( stringHeaders.get( "Content-Description" ).contains( "file.prpt" ) );
     assertTrue( stringHeaders.get( "Content-Disposition" ).contains( "inline; filename*=UTF-8''file.csv" ) );
@@ -154,7 +155,7 @@ public class JobManagerTest {
     final WebClient client = provider.getFreshClient();
     client.path( String.format( URL_FORMAT, UUID.randomUUID().toString(), "/requestPage/100" ) );
 
-    final Response response = client.get();
+    final ResponseImpl response = (ResponseImpl) client.get();
     assertNotNull( response );
     assertTrue( response.hasEntity() );
 

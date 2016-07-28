@@ -19,6 +19,7 @@
 package org.pentaho.reporting.platform.plugin;
 
 import org.apache.cxf.jaxrs.client.WebClient;
+import org.apache.cxf.jaxrs.impl.ResponseImpl;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -50,7 +51,7 @@ public class JobManagerResponseCodeTest  {
   @Test public void testEchoStatusCode() throws Exception {
     final WebClient client = provider.getFreshClient();
     client.path( String.format( URL_FORMAT, "config", "" ) );
-    final Response response = client.get();
+    final ResponseImpl response = (ResponseImpl) client.get();
 
     assertNotNull( response );
     assertEquals( 200, response.getStatus() );
