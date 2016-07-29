@@ -485,9 +485,9 @@ public class ParameterXmlContentHandler {
           }
         }
 
-        // inspect post proc formulas, def values, etc.
-        computeNormalLineage( parameterContext, listParameter, downstreamParams );
       }
+      // inspect post proc formulas, def values, etc.
+      computeNormalLineage( parameterContext, entry, downstreamParams );
     }
 
     return downstreamParams;
