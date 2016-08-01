@@ -20,6 +20,7 @@ package org.pentaho.reporting.platform.plugin.async;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.commons.io.input.NullInputStream;
 import org.apache.cxf.jaxrs.client.WebClient;
+import org.apache.cxf.jaxrs.impl.ResponseImpl;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -135,7 +136,7 @@ public class AsyncIT {
     final WebClient client = provider.getFreshClient();
     final String config = String.format( URL_FORMAT, "config", "" );
     client.path( config );
-    final Response response = client.get();
+    final ResponseImpl response = (ResponseImpl) client.get();
     final String json = response.readEntity( String.class );
     assertEquals( json,
       "{\"defaultOutputPath\":\"/home/unknown\",\"dialogThresholdMilliseconds\":1500,"
@@ -149,7 +150,7 @@ public class AsyncIT {
     final String config = String.format( URL_FORMAT, "config", "" );
     final WebClient client = provider.getFreshClient();
     client.path( config );
-    final Response response = client.get();
+    final ResponseImpl response = (ResponseImpl) client.get();
     final String json = response.readEntity( String.class );
     assertEquals( json,
       "{\"defaultOutputPath\":\"/home/unknown\",\"dialogThresholdMilliseconds\":300,"
@@ -187,7 +188,7 @@ public class AsyncIT {
     final WebClient client = provider.getFreshClient();
     final String config = String.format( URL_FORMAT, uuid, "/status" );
     client.path( config );
-    final Response response = client.get();
+    final ResponseImpl response = (ResponseImpl) client.get();
     final String json = response.readEntity( String.class );
     assertFalse( StringUtil.isEmpty( json ) );
   }
@@ -207,7 +208,7 @@ public class AsyncIT {
     assertEquals( 200, response.getStatus() );
     WebClient client1 = provider.getFreshClient();
     client1.path( String.format( URL_FORMAT, uuid, "/status" ) );
-    Response response1 = client1.get();
+    final ResponseImpl response1 = (ResponseImpl) client1.get();
     final String json = response1.readEntity( String.class );
     assertTrue( json.contains( "SCHEDULED" ) );
 
@@ -261,7 +262,7 @@ public class AsyncIT {
     assertEquals( 200, response.getStatus() );
     WebClient client1 = provider.getFreshClient();
     client1.path( String.format( URL_FORMAT, uuid, "/status" ) );
-    Response response1 = client1.get();
+    final ResponseImpl response1 = (ResponseImpl) client1.get();
     final String json = response1.readEntity( String.class );
     assertTrue( json.contains( "SCHEDULED" ) );
 
@@ -295,11 +296,11 @@ public class AsyncIT {
     WebClient client = provider.getFreshClient();
     final String config = String.format( URL_FORMAT, uuid, "/cancel" );
     client.path( config );
-    Response response = client.get();
+    ResponseImpl response = (ResponseImpl) client.get();
     assertEquals( 200, response.getStatus() );
     client = provider.getFreshClient();
     client.path( String.format( URL_FORMAT, uuid, "/status" ) );
-    response = client.get();
+    response = (ResponseImpl) client.get();
     final String json = response.readEntity( String.class );
     assertTrue( json.contains( "CANCELED" ) );
     STATUS = AsyncExecutionStatus.FAILED;
@@ -350,7 +351,7 @@ public class AsyncIT {
     WebClient client = provider.getFreshClient();
     final String config = String.format( URL_FORMAT, uuid, "/requestPage/100" );
     client.path( config );
-    Response response = client.get();
+    ResponseImpl response = (ResponseImpl) client.get();
     assertEquals( 200, response.getStatus() );
     assertEquals( "100", response.readEntity( String.class ) );
 
