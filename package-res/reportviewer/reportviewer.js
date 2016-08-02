@@ -304,7 +304,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           }
 
           // The following call is important for clearing the report content when autoSubmit=false and the user has changed a value.
-          if(!this._calcReportContentVisibility()) {
+          if(!this._calcReportContentVisibility() || this.reportPrompt._isAsync) {
             this._showReportContent(false);
           }
 
