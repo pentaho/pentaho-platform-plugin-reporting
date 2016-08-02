@@ -41,7 +41,7 @@
       <dependency org="commons-collections" name="commons-collections" rev="3.2.2"  changing="true" />
 
 		<dependency org="javax.servlet" name="servlet-api" rev="2.4"/>
-		<dependency org="javax.ws.rs" name="javax.ws.rs-api" rev="2.0.1"/>
+		<dependency org="javax.ws.rs" name="javax.ws.rs-api" rev="2.0.1" conf="runtime->default"/>
 		<dependency org="org.codehaus.jackson" name="jackson-mapper-asl" rev="1.9.13"/>
 		
     <dependency org="org.springframework.security" name="spring-security-core" rev="${dependency.spring.security.revision}" transitive="false"/>
@@ -69,8 +69,7 @@
         <dependency org="pentaho" name="simple-jndi" rev="${dependency.pentaho-simple-jndi.revision}" transitive="false" conf="test->default"/>
         <dependency org="org.apache.commons" name="commons-lang3" rev="3.0" transitive="false" conf="test->default"/>
         <dependency org="org.mockito" name="mockito-all" rev="1.8.4" conf="test->default"/>
-
-        <dependency org="org.apache.cxf" name="cxf-rt-transports-http-jetty" rev="2.7.18" conf="test->default" />
+        
         <dependency org="org.apache.cxf" name="cxf-rt-transports-local" rev="2.7.18" conf="test->default" />
         <dependency org="org.apache.cxf" name="cxf-bundle-jaxrs" rev="2.7.18" conf="test->default" />
 
