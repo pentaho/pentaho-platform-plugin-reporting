@@ -19,6 +19,7 @@ package org.pentaho.reporting.platform.plugin.output;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.text.StrSubstitutor;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -79,7 +80,9 @@ class PaginationControlWrapper {
         //Can't embed, let's not fail and at least make it usable inside the platform
         logger.error( "Can't embed styles and images into scheduled HTML file: ", e );
       }
-      builder.append( '\'' ).append( Base64.encodeBase64String( pageContent.getBytes() ) ).append( '\'' )
+      builder.append( '\'' )
+        .append( Base64.encodeBase64String( StringEscapeUtils.escapeHtml( pageContent ).getBytes( "UTF-8" ) ) )
+        .append( '\'' )
         .append( ", \n" );
       index++;
       page = content.getPageData( index );
