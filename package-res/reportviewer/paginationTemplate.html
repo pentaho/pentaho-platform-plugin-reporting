@@ -164,7 +164,7 @@
     ${pages}
 
     var fill = function (base64) {
-      iframe.contentWindow.contents = atob(base64);
+      iframe.contentWindow.contents = htmlDecode(atob(base64));
       iframe.src = 'javascript:window["contents"]';
     };
 
@@ -251,6 +251,10 @@
    }
   }
 
+  function htmlDecode(input) {
+    var doc = new DOMParser().parseFromString(input, "text/html");
+    return doc.documentElement.textContent;
+  }
 
 </script>
 </body>
