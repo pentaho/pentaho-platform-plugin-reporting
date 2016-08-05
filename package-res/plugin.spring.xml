@@ -126,4 +126,6 @@
     <constructor-arg value="/public"/>
   </bean>-->
 
+  <bean id="IJobIdGenerator" class="org.pentaho.reporting.platform.plugin.async.JobIdGenerator"/>
+
 </beans>

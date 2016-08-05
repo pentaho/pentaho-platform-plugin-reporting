@@ -25,6 +25,7 @@ import org.pentaho.platform.api.repository2.unified.RepositoryFile;
 import org.pentaho.platform.engine.core.audit.MessageTypes;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlTableModule;
+import org.pentaho.reporting.platform.plugin.async.IJobIdGenerator;
 import org.pentaho.reporting.platform.plugin.async.IPentahoAsyncExecutor;
 import org.pentaho.reporting.platform.plugin.async.PentahoAsyncExecutor;
 import org.pentaho.reporting.platform.plugin.async.PentahoAsyncReportExecution;
@@ -46,19 +47,23 @@ import java.util.UUID;
 public class BackgroundJobReportContentGenerator extends ParameterContentGenerator {
 
   private static final Log logger = LogFactory.getLog( BackgroundJobReportContentGenerator.class );
+  private static final String PRPTI = ".prpti";
+  private static final String RESERVED_ID = "reservedId";
+  private static final String PATH = "path";
+  private static final String HTTPRESPONSE = "httpresponse";
 
   interface HttpServletResponse102 extends HttpServletResponse {
     // Processing (WebDAV; RFC 2518)
     int SC_PROCESSING = 102;
   }
 
-  public static final String REDIRECT_PREFIX = "/pentaho/plugin/reporting/api/jobs/";
-  public static final String REDIRECT_POSTFIX = "/status";
+  static final String REDIRECT_PREFIX = "/pentaho/plugin/reporting/api/jobs/";
+  static final String REDIRECT_POSTFIX = "/status";
 
   @Override
-  public void createContent( OutputStream outputStream ) throws Exception {
+  public void createContent( final OutputStream outputStream ) throws Exception {
     final IParameterProvider requestParams = getRequestParameters();
-    RepositoryFile prptFile = resolvePrptFile( requestParams );
+    final RepositoryFile prptFile = resolvePrptFile( requestParams );
     // we don't write directly for servlet output stream for async mode
     // typically we send redirect or error using HttpServletResponse mechanism
     this.createReportContent( prptFile.getId(), prptFile.getPath() );
@@ -70,8 +75,8 @@ public class BackgroundJobReportContentGenerator extends ParameterContentGenerat
   }
 
   public void createReportContent( final Serializable fileId, final String path,
-                            final SimpleReportingComponent reportComponent,
-                            AuditWrapper audit )
+                                   final SimpleReportingComponent reportComponent,
+                                   final AuditWrapper audit )
     throws Exception {
     final Map<String, Object> inputs = this.createInputs();
 
@@ -87,23 +92,25 @@ public class BackgroundJobReportContentGenerator extends ParameterContentGenerat
     reportComponent.setPaginateOutput( true );
     reportComponent.setForceDefaultOutputTarget( false );
     reportComponent.setDefaultOutputTarget( HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE );
-    if ( path.endsWith( ".prpti" ) ) {
+    if ( path.endsWith( PRPTI ) ) {
       reportComponent.setForceUnlockPreferredOutput( true );
     }
     reportComponent.setInputs( inputs );
 
-    AsyncJobFileStagingHandler handler = new AsyncJobFileStagingHandler( userSession );
+    final AsyncJobFileStagingHandler handler = new AsyncJobFileStagingHandler( userSession );
     // will write to async stage target
     reportComponent.setOutputStream( handler.getStagingOutputStream() );
 
-    PentahoAsyncReportExecution
+    final PentahoAsyncReportExecution
       asyncExec = new PentahoAsyncReportExecution( path, reportComponent, handler, userSession, instanceId, audit );
 
-    IPentahoAsyncExecutor executor =
+    final IPentahoAsyncExecutor executor =
       PentahoSystem.get( PentahoAsyncExecutor.class, PentahoAsyncExecutor.BEAN_NAME, null );
     // delegation
     if ( reportComponent.validate() ) {
-      UUID uuid = executor.addTask( asyncExec, userSession );
+      final UUID reservedId = getReservedId();
+
+      final UUID uuid = executor.addTask( asyncExec, userSession, reservedId );
       sendSuccessRedirect( uuid );
     } else {
       // register failed parameters execution attempt
@@ -113,22 +120,43 @@ public class BackgroundJobReportContentGenerator extends ParameterContentGenerat
     }
   }
 
+  private UUID getReservedId() throws IllegalStateException {
+
+    final IJobIdGenerator iJobIdGenerator = PentahoSystem.get( IJobIdGenerator.class );
+    final UUID failover = UUID.randomUUID();
+    final String precomputedId =
+      getRequestParameters().getStringParameter( RESERVED_ID, failover.toString() );
+
+    final UUID uuid;
+    try {
+      uuid = UUID.fromString( precomputedId );
+    } catch ( final IllegalArgumentException e ) {
+      logger.warn( "Wrong uuid came from client side: ", e );
+      return failover;
+    }
+
+    if ( iJobIdGenerator != null && iJobIdGenerator.acquire( userSession, uuid ) ) {
+      return uuid;
+    }
+
+    return failover;
+  }
+
   protected void sendErrorResponse() throws IOException {
-    HttpServletResponse httpResponse = getServletResponse();
+    final HttpServletResponse httpResponse = getServletResponse();
     httpResponse.setStatus( HttpServletResponse.SC_INTERNAL_SERVER_ERROR );
   }
 
-  protected void sendSuccessRedirect( UUID uuid ) throws IOException {
-    HttpServletResponse httpResponse = getServletResponse();
+  protected void sendSuccessRedirect( final UUID uuid ) throws IOException {
+    final HttpServletResponse httpResponse = getServletResponse();
     httpResponse.setStatus( HttpServletResponse102.SC_PROCESSING );
     httpResponse.sendRedirect( REDIRECT_PREFIX + uuid.toString() + REDIRECT_POSTFIX );
   }
 
   protected HttpServletResponse getServletResponse() {
-    final IParameterProvider pathProviders = parameterProviders.get( "path" );
-    final Object httpResponseObj = pathProviders.getParameter( "httpresponse" );
-    HttpServletResponse httpResponse = HttpServletResponse.class.cast( httpResponseObj );
-    return httpResponse;
+    final IParameterProvider pathProviders = parameterProviders.get( PATH );
+    final Object httpResponseObj = pathProviders.getParameter( HTTPRESPONSE );
+    return HttpServletResponse.class.cast( httpResponseObj );
   }
 
   @Override

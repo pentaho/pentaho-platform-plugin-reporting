@@ -1029,5 +1029,17 @@ public class PentahoAsyncReportExecutorTest {
   }
 
 
+  @Test
+  public void testProvidedUuid() {
+
+    final PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 1, autoSchedulerThreshold );
+
+    final UUID uuid = UUID.randomUUID();
+
+    final UUID task = exec.addTask( mock( IAsyncReportExecution.class ), session1, uuid );
+
+    assertEquals( uuid, task );
+  }
+
 }
 

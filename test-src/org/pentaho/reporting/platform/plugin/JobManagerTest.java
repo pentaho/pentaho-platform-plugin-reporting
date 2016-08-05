@@ -26,6 +26,8 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.pentaho.platform.api.engine.IPentahoObjectFactory;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
@@ -36,6 +38,7 @@ import org.pentaho.reporting.platform.plugin.async.AsyncExecutionStatus;
 import org.pentaho.reporting.platform.plugin.async.AsyncReportState;
 import org.pentaho.reporting.platform.plugin.async.IAsyncReportState;
 import org.pentaho.reporting.platform.plugin.async.ISchedulingDirectoryStrategy;
+import org.pentaho.reporting.platform.plugin.async.JobIdGenerator;
 import org.pentaho.reporting.platform.plugin.async.PentahoAsyncExecutor;
 import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
 
@@ -51,22 +54,26 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.*;
+import static org.powermock.api.mockito.PowerMockito.when;
 
 public class JobManagerTest {
 
   private static final String URL_FORMAT = "/reporting/api/jobs/%1$s%2$s";
+
+  private static final IPentahoSession session = mock( IPentahoSession.class );
 
   private static JaxRsServerProvider provider;
   private static PentahoAsyncExecutor executor = null;
   private static final UUID uuid = UUID.randomUUID();
 
   private static final String MIME = "junit_mime";
-  public static final String PATH = "junit_path";
+  private static final String PATH = "junit_path";
   private static int PROGRESS = -113;
   private static AsyncExecutionStatus STATUS = AsyncExecutionStatus.FAILED;
   private static ISchedulingDirectoryStrategy schedulingDirectoryStrategy;
 
   private static volatile IAsyncReportState STATE;
+  private static IPentahoObjectFactory objFactory;
 
   @BeforeClass public static void setUp() throws Exception {
     provider = new JaxRsServerProvider();
@@ -77,7 +84,7 @@ public class JobManagerTest {
 
 
     PentahoSystem.init();
-    final IPentahoObjectFactory objFactory = mock( IPentahoObjectFactory.class );
+    objFactory = mock( IPentahoObjectFactory.class );
 
     // return mock executor for any call to it's bean name.
     when( objFactory.objectDefined( anyString() ) ).thenReturn( true );
@@ -92,11 +99,15 @@ public class JobManagerTest {
     when( objFactory.get( any( Class.class ), eq( "IUnifiedRepository" ), any( IPentahoSession.class ) ) )
       .thenReturn( repository );
 
+    when( objFactory.get( any( Class.class ), eq( "IJobIdGenerator" ), any( IPentahoSession.class ) ) )
+      .thenReturn( new JobIdGenerator() );
+
     PentahoSystem.registerObjectFactory( objFactory );
   }
 
   @AfterClass
   public static void tearDown() throws Exception {
+    PentahoSessionHolder.removeSession();
     PentahoSystem.shutdown();
     provider.stopServer();
   }
@@ -105,18 +116,23 @@ public class JobManagerTest {
   public void before() {
     reset( executor );
     when( executor.getReportState( any( UUID.class ), any( IPentahoSession.class ) ) ).thenReturn( STATE );
-    when( executor.schedule( any(), any() ) ).thenAnswer( ( i ) -> {
-      STATUS = AsyncExecutionStatus.SCHEDULED;
-      return true;
+    when( executor.schedule( any(), any() ) ).thenAnswer( new Answer<Object>() {
+      @Override public Object answer( final InvocationOnMock i ) throws Throwable {
+        STATUS = AsyncExecutionStatus.SCHEDULED;
+        return true;
+      }
     } );
-    when( executor.preSchedule( any(), any() ) ).thenAnswer( ( i ) -> {
-      STATUS = AsyncExecutionStatus.PRE_SCHEDULED;
-      return true;
+    when( executor.preSchedule( any(), any() ) ).thenAnswer( new Answer<Object>() {
+      @Override public Object answer( final InvocationOnMock i ) throws Throwable {
+        STATUS = AsyncExecutionStatus.PRE_SCHEDULED;
+        return true;
+      }
     } );
     final RepositoryFile file = mock( RepositoryFile.class );
     when( file.getPath() ).thenReturn( "/" );
     when( schedulingDirectoryStrategy.getSchedulingDir( any() ) ).thenReturn( file );
     STATUS = AsyncExecutionStatus.FAILED;
+    PentahoSessionHolder.setSession( session );
   }
 
   @Test public void testGetStatus() throws IOException {
@@ -273,12 +289,11 @@ public class JobManagerTest {
   }
 
   @Test public void testCancel() throws IOException {
-
     final UUID uuid = UUID.randomUUID();
     final WebClient client = provider.getFreshClient();
 
     final Future future = mock( Future.class );
-    when( executor.getFuture( uuid, PentahoSessionHolder.getSession() ) ).thenReturn( future );
+    when( executor.getFuture( uuid, session ) ).thenReturn( future );
     final String config = String.format( URL_FORMAT, uuid, "/cancel" );
 
 
@@ -300,7 +315,7 @@ public class JobManagerTest {
     final Future future = mock( Future.class );
     final IFixedSizeStreamingContent content = mock( IFixedSizeStreamingContent.class );
     when( future.get() ).thenReturn( content );
-    when( executor.getFuture( uuid, PentahoSessionHolder.getSession() ) ).thenReturn( future );
+    when( executor.getFuture( uuid, session ) ).thenReturn( future );
     final String config = String.format( URL_FORMAT, uuid, "/content" );
 
 
@@ -327,7 +342,7 @@ public class JobManagerTest {
     final Future future = mock( Future.class );
     final IFixedSizeStreamingContent content = mock( IFixedSizeStreamingContent.class );
     when( future.get() ).thenReturn( content );
-    when( executor.getFuture( uuid, PentahoSessionHolder.getSession() ) ).thenReturn( future );
+    when( executor.getFuture( uuid, session ) ).thenReturn( future );
     final String config = String.format( URL_FORMAT, uuid, "/content" );
 
     client.path( config );
@@ -392,7 +407,7 @@ public class JobManagerTest {
       provider.startServer( new JobManager( true, 1000, 1000, true ) );
 
       WebClient client = provider.getFreshClient();
-      final UUID folderId = UUID.randomUUID();
+
       final String config = String.format( URL_FORMAT, uuid, "/schedule" );
       client.path( config );
       client.query( "confirm", false );
@@ -445,8 +460,6 @@ public class JobManagerTest {
   @Test
   public void testRecalcFinishedExecutorFailed() throws Exception {
     try {
-
-
       provider.stopServer();
       provider.startServer( new JobManager( true, 1000, 1000, true ) );
 
@@ -464,7 +477,7 @@ public class JobManagerTest {
       final Response response = client.post( null );
       assertEquals( 200, response.getStatus() );
       verify( executor, times( 1 ) ).recalculate( any(), any() );
-      verify( executor, times( 1 ) ).schedule( uuid, PentahoSessionHolder.getSession() );
+      verify( executor, times( 1 ) ).schedule( uuid, session );
       verify( executor, times( 1 ) )
         .updateSchedulingLocation( any(), any(), any(), any() );
 
@@ -478,8 +491,6 @@ public class JobManagerTest {
   @Test
   public void testRecalcFinished() throws Exception {
     try {
-
-
       provider.stopServer();
       provider.startServer( new JobManager( true, 1000, 1000, true ) );
 
@@ -500,9 +511,9 @@ public class JobManagerTest {
       final Response response = client.post( null );
       assertEquals( 200, response.getStatus() );
       verify( executor, times( 1 ) ).recalculate( any(), any() );
-      verify( executor, times( 1 ) ).schedule( reclcId, PentahoSessionHolder.getSession() );
+      verify( executor, times( 1 ) ).schedule( reclcId, session );
       verify( executor, times( 1 ) )
-        .updateSchedulingLocation(  reclcId, PentahoSessionHolder.getSession(), folderId.toString(), "test" );
+        .updateSchedulingLocation( reclcId, session, folderId.toString(), "test" );
 
       STATUS = AsyncExecutionStatus.FAILED;
     } finally {
@@ -522,6 +533,42 @@ public class JobManagerTest {
     final JsonNode jsonNode = mapper.readTree( (String) config.getEntity() );
     assertNotNull( jsonNode );
     assertFalse( jsonNode.get( "supportAsync" ).asBoolean() );
+  }
+
+  @Test
+  public void testReserveId() throws Exception {
+    final JobManager jobManager = new JobManager( false, 1000, 1000 );
+    final Response response = jobManager.reserveId();
+    assertEquals( 200, response.getStatus() );
+    final ObjectMapper mapper = new ObjectMapper();
+    final JsonNode jsonNode = mapper.readTree( (String) response.getEntity() );
+    assertNotNull( jsonNode );
+    assertNotNull( jsonNode.get( "reservedId" ).asText() );
+  }
+
+
+  @Test
+  public void testReserveIdNoSession() throws Exception {
+    PentahoSessionHolder.removeSession();
+    assertNull( PentahoSessionHolder.getSession() );
+    final JobManager jobManager = new JobManager( false, 1000, 1000 );
+    final Response response = jobManager.reserveId();
+    assertEquals( 404, response.getStatus() );
+  }
+
+
+  @Test
+  public void testReserveIdNoGenerator() throws Exception {
+    try {
+      when( objFactory.get( any( Class.class ), eq( "IJobIdGenerator" ), any( IPentahoSession.class ) ) )
+        .thenReturn( null );
+      final JobManager jobManager = new JobManager( false, 1000, 1000 );
+      final Response response = jobManager.reserveId();
+      assertEquals( 404, response.getStatus() );
+    } finally {
+      when( objFactory.get( any( Class.class ), eq( "IJobIdGenerator" ), any( IPentahoSession.class ) ) )
+        .thenReturn( new JobIdGenerator() );
+    }
   }
 
   public static IAsyncReportState getState() {

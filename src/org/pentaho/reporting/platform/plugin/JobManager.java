@@ -33,6 +33,7 @@ import org.pentaho.platform.util.StringUtil;
 import org.pentaho.platform.util.web.MimeHelper;
 import org.pentaho.reporting.platform.plugin.async.AsyncExecutionStatus;
 import org.pentaho.reporting.platform.plugin.async.IAsyncReportState;
+import org.pentaho.reporting.platform.plugin.async.IJobIdGenerator;
 import org.pentaho.reporting.platform.plugin.async.IPentahoAsyncExecutor;
 import org.pentaho.reporting.platform.plugin.async.ISchedulingDirectoryStrategy;
 import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
@@ -276,6 +277,19 @@ public class JobManager {
     executionContext.evaluate();
     return executionContext;
   }
+
+  @POST @Path( "reserveId" ) @Produces( "application/json" )
+  public Response reserveId() {
+    final IPentahoSession session = PentahoSessionHolder.getSession();
+    final IJobIdGenerator iJobIdGenerator = PentahoSystem.get( IJobIdGenerator.class );
+    if ( session != null && iJobIdGenerator != null ) {
+      final UUID reservedId = iJobIdGenerator.generateId( session );
+      return getJson( Collections.singletonMap( "reservedId", reservedId.toString() ) );
+    } else {
+      return get404();
+    }
+  }
+
 
   protected final Response get404() {
     return Response.status( Response.Status.NOT_FOUND ).build();
