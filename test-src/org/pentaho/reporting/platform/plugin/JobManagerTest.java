@@ -26,8 +26,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
+import org.junit.runner.RunWith;
 import org.pentaho.platform.api.engine.IPentahoObjectFactory;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
@@ -41,6 +40,9 @@ import org.pentaho.reporting.platform.plugin.async.ISchedulingDirectoryStrategy;
 import org.pentaho.reporting.platform.plugin.async.JobIdGenerator;
 import org.pentaho.reporting.platform.plugin.async.PentahoAsyncExecutor;
 import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
@@ -56,6 +58,8 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.*;
 import static org.powermock.api.mockito.PowerMockito.when;
 
+@RunWith( PowerMockRunner.class )
+@PrepareForTest( PentahoSessionHolder.class )
 public class JobManagerTest {
 
   private static final String URL_FORMAT = "/reporting/api/jobs/%1$s%2$s";
@@ -107,7 +111,6 @@ public class JobManagerTest {
 
   @AfterClass
   public static void tearDown() throws Exception {
-    PentahoSessionHolder.removeSession();
     PentahoSystem.shutdown();
     provider.stopServer();
   }
@@ -116,23 +119,18 @@ public class JobManagerTest {
   public void before() {
     reset( executor );
     when( executor.getReportState( any( UUID.class ), any( IPentahoSession.class ) ) ).thenReturn( STATE );
-    when( executor.schedule( any(), any() ) ).thenAnswer( new Answer<Object>() {
-      @Override public Object answer( final InvocationOnMock i ) throws Throwable {
-        STATUS = AsyncExecutionStatus.SCHEDULED;
-        return true;
-      }
+    when( executor.schedule( any(), any() ) ).thenAnswer( i -> {
+      STATUS = AsyncExecutionStatus.SCHEDULED;
+      return true;
     } );
-    when( executor.preSchedule( any(), any() ) ).thenAnswer( new Answer<Object>() {
-      @Override public Object answer( final InvocationOnMock i ) throws Throwable {
-        STATUS = AsyncExecutionStatus.PRE_SCHEDULED;
-        return true;
-      }
+    when( executor.preSchedule( any(), any() ) ).thenAnswer( i -> {
+      STATUS = AsyncExecutionStatus.PRE_SCHEDULED;
+      return true;
     } );
     final RepositoryFile file = mock( RepositoryFile.class );
     when( file.getPath() ).thenReturn( "/" );
     when( schedulingDirectoryStrategy.getSchedulingDir( any() ) ).thenReturn( file );
     STATUS = AsyncExecutionStatus.FAILED;
-    PentahoSessionHolder.setSession( session );
   }
 
   @Test public void testGetStatus() throws IOException {
@@ -289,6 +287,8 @@ public class JobManagerTest {
   }
 
   @Test public void testCancel() throws IOException {
+    setSession();
+
     final UUID uuid = UUID.randomUUID();
     final WebClient client = provider.getFreshClient();
 
@@ -309,6 +309,8 @@ public class JobManagerTest {
 
 
   @Test public void testContent() throws IOException, ExecutionException, InterruptedException {
+    setSession();
+
     final UUID uuid = UUID.randomUUID();
     final WebClient client = provider.getFreshClient();
 
@@ -336,6 +338,8 @@ public class JobManagerTest {
 
 
   @Test public void testFlowNoPropting() throws IOException, ExecutionException, InterruptedException {
+    setSession();
+
     final UUID uuid = UUID.randomUUID();
     final WebClient client = provider.getFreshClient();
 
@@ -360,6 +364,7 @@ public class JobManagerTest {
     assertEquals( 200, response1.getStatus() );
 
   }
+
 
   @Test public void testPreSchedule() throws IOException {
     final WebClient client = provider.getFreshClient();
@@ -460,6 +465,8 @@ public class JobManagerTest {
   @Test
   public void testRecalcFinishedExecutorFailed() throws Exception {
     try {
+      setSession();
+
       provider.stopServer();
       provider.startServer( new JobManager( true, 1000, 1000, true ) );
 
@@ -491,6 +498,8 @@ public class JobManagerTest {
   @Test
   public void testRecalcFinished() throws Exception {
     try {
+      setSession();
+
       provider.stopServer();
       provider.startServer( new JobManager( true, 1000, 1000, true ) );
 
@@ -537,6 +546,8 @@ public class JobManagerTest {
 
   @Test
   public void testReserveId() throws Exception {
+    setSession();
+
     final JobManager jobManager = new JobManager( false, 1000, 1000 );
     final Response response = jobManager.reserveId();
     assertEquals( 200, response.getStatus() );
@@ -549,7 +560,9 @@ public class JobManagerTest {
 
   @Test
   public void testReserveIdNoSession() throws Exception {
-    PentahoSessionHolder.removeSession();
+    PowerMockito.mockStatic( PentahoSessionHolder.class );
+    when( PentahoSessionHolder.getSession() ).thenReturn( null );
+
     assertNull( PentahoSessionHolder.getSession() );
     final JobManager jobManager = new JobManager( false, 1000, 1000 );
     final Response response = jobManager.reserveId();
@@ -562,6 +575,7 @@ public class JobManagerTest {
     try {
       when( objFactory.get( any( Class.class ), eq( "IJobIdGenerator" ), any( IPentahoSession.class ) ) )
         .thenReturn( null );
+      setSession();
       final JobManager jobManager = new JobManager( false, 1000, 1000 );
       final Response response = jobManager.reserveId();
       assertEquals( 404, response.getStatus() );
@@ -569,6 +583,12 @@ public class JobManagerTest {
       when( objFactory.get( any( Class.class ), eq( "IJobIdGenerator" ), any( IPentahoSession.class ) ) )
         .thenReturn( new JobIdGenerator() );
     }
+  }
+
+  private void setSession() {
+    PowerMockito.mockStatic( PentahoSessionHolder.class );
+    when( PentahoSessionHolder.getSession() ).thenReturn( session );
+    assertEquals( session, PentahoSessionHolder.getSession() );
   }
 
   public static IAsyncReportState getState() {

@@ -86,5 +86,6 @@
 
       <!-- this file is bogus! -->
       <exclude org="xml-apis" module="xml-apis"/>
+      <exclude org="javassist" module="javassist"/>
     </dependencies>
 </ivy-module>
