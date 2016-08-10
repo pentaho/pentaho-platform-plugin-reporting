@@ -948,6 +948,8 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         var isFirstContAvStatus = true;
         //This flags is changed when report is finished and iframe is updated/ conent is downloaded
         var isIframeContentSet = false;
+        //This flag is switched to true after we get total page count and updated page control
+        var isPageCountUpdated = false;
         //Report generation finished ( also includes canceled and failed cases)
         var isFinished = false;
         //Hides feedback screen and glasspane
@@ -1034,9 +1036,10 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                     }
 
                     //update page number
-                    if (me.reportPrompt._isReportHtmlPagebleOutputFormat) {
+                    if (me.reportPrompt._isReportHtmlPagebleOutputFormat && !isPageCountUpdated) {
                       var pageContr = registry.byId('pageControl');
                       pageContr.setPageCount(mainJobStatus.totalPages);
+                      isPageCountUpdated = true;
                     }
 
                     $('#notification-message').html(_Messages.getString('LoadingPage') + " " + mainJobStatus.page + " " + _Messages.getString('Of') + " " + mainJobStatus.totalPages);
@@ -1086,9 +1089,10 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                   }
 
                   //Set total number of pages for paginated HTML
-                  if (me.reportPrompt._isReportHtmlPagebleOutputFormat) {
+                  if (me.reportPrompt._isReportHtmlPagebleOutputFormat && !isPageCountUpdated) {
                     var pageContr = registry.byId('pageControl');
                     pageContr.setPageCount(mainJobStatus.totalPages);
+                    isPageCountUpdated = true;
                   }
 
                   break;
