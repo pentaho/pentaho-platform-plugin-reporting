@@ -17,12 +17,6 @@
 
 package org.pentaho.reporting.platform.plugin.output;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.Properties;
-import javax.mail.MessagingException;
-import javax.mail.Session;
-
 import org.pentaho.platform.api.engine.IApplicationContext;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
@@ -35,13 +29,27 @@ import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlO
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlPrinter;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.StreamHtmlOutputProcessor;
 import org.pentaho.reporting.engine.classic.extensions.modules.mailer.MailURLRewriter;
+import org.pentaho.reporting.libraries.base.config.Configuration;
+import org.pentaho.reporting.libraries.base.config.ModifiableConfiguration;
 import org.pentaho.reporting.libraries.repository.ContentIOException;
 import org.pentaho.reporting.libraries.repository.ContentLocation;
 import org.pentaho.reporting.libraries.repository.DefaultNameGenerator;
 import org.pentaho.reporting.libraries.repository.email.EmailRepository;
 import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
 
+import javax.mail.MessagingException;
+import javax.mail.Session;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Properties;
+
 public class EmailOutput implements ReportOutputHandler {
+
+  private static final String INLINE_STYLES =
+    "org.pentaho.reporting.engine.classic.core.modules.output.table.html.InlineStyles";
+  private static final String EXTERNAL_STYLES =
+    "org.pentaho.reporting.engine.classic.core.modules.output.table.html.ExternalStyle";
+
   public EmailOutput() {
   }
 
@@ -49,7 +57,7 @@ public class EmailOutput implements ReportOutputHandler {
     return this;
   }
 
-  public int paginate( MasterReport report, int yieldRate ) throws ReportProcessingException, IOException,
+  public int paginate( final MasterReport report, final int yieldRate ) throws ReportProcessingException, IOException,
     ContentIOException {
     return 0;
   }
@@ -64,12 +72,20 @@ public class EmailOutput implements ReportOutputHandler {
 
 
     try {
+
+      final Configuration configuration = report.getConfiguration();
+
+      if ( configuration instanceof ModifiableConfiguration ) {
+        ( (ModifiableConfiguration) configuration ).setConfigProperty( INLINE_STYLES, "true" );
+        ( (ModifiableConfiguration) configuration ).setConfigProperty( EXTERNAL_STYLES, "false" );
+      }
+
       final Properties props = new Properties();
       final Session session = Session.getInstance( props );
       final EmailRepository dataRepository = new EmailRepository( session );
       final ContentLocation dataLocation = dataRepository.getRoot();
 
-      final HtmlOutputProcessor outputProcessor = new StreamHtmlOutputProcessor( report.getConfiguration() );
+      final HtmlOutputProcessor outputProcessor = new StreamHtmlOutputProcessor( configuration );
       final HtmlPrinter printer = new AllItemsHtmlPrinter( report.getResourceManager() );
       printer.setContentWriter( dataLocation,
         new DefaultNameGenerator( dataLocation, "index", "html" ) ); //$NON-NLS-1$ //$NON-NLS-2$
@@ -99,7 +115,7 @@ public class EmailOutput implements ReportOutputHandler {
         }
         sp.close();
       }
-    } catch ( MessagingException e ) {
+    } catch ( final MessagingException e ) {
       throw new ReportProcessingException( "Error", e );
     }
 
