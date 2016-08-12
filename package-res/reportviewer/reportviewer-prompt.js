@@ -39,6 +39,7 @@ define([
       _isReportHtmlPagebleOutputFormat : null,
       _oldParameterDefinition : null,
       _oldParameterSet : null,
+      _defaultValuesMap : null,
 
       /**
        * Gets the prompt api instance
@@ -93,7 +94,7 @@ define([
               // add to changed
               changedParameters.push(parameter.name);
             }
-          } else {
+          } else if("" != parameter.value) {
             // add to changed
             changedParameters.push(parameter.name);
           }
@@ -134,6 +135,24 @@ define([
         return extractedParameters;
       },
 
+      extractDefaultValues: function(paramDefn) {
+        var extractedDefaultValues = {};
+        $.each(paramDefn.parameterGroups, function (i, group) {
+          if("system" != group.name) {
+            var parameters = group.parameters;
+            for(var i=0; i<parameters.length; i++) {
+              if(parameters[i].getSelectedValuesValue().length > 0) {
+                extractedDefaultValues[parameters[i].name] = {
+                  value: parameters[i].getSelectedValuesValue()
+                };
+              }
+            }
+          }
+        });
+
+        return extractedDefaultValues;
+      },
+
       findChangedParameters: function() {
         var currentParameterSet = this.api.operation.getParameterValues();
 
@@ -167,7 +186,7 @@ define([
       updateParameterDefinitionWithNewValues: function(callback, names) {
         var paramDefn = $.extend(true, {}, this._oldParameterDefinition); // clone previous(old) paramDefn
         for(var i=0; i<names.length; i++) {
-          this.api.util.validateSingleParameter(paramDefn, names[i], this.api.operation.getParameterValues()[names[i]]);
+          this.api.util.validateSingleParameter(paramDefn, names[i], this.api.operation.getParameterValues()[names[i]], this._defaultValuesMap);
         }
         try {
           this.api.util.checkParametersErrors(paramDefn); // if no errors set promptNeeded to false(show report)
@@ -222,6 +241,9 @@ define([
               paramDefn.autoSubmitUI = autoSubmit;
             }
 
+            if (this._oldParameterDefinition == null) {
+              this._defaultValuesMap = this.extractDefaultValues(paramDefn);
+            }
             this._oldParameterDefinition = paramDefn;
             this._oldParameterSet = this.extractParameterValues(paramDefn);
 
