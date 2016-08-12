@@ -19,17 +19,22 @@ package org.pentaho.reporting.platform.plugin.output;
 
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.pentaho.platform.engine.core.system.boot.PlatformInitializationException;
 import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressEvent;
+import org.pentaho.reporting.libraries.base.config.ModifiableConfiguration;
 import org.pentaho.reporting.platform.plugin.MicroPlatformFactory;
 import org.pentaho.reporting.platform.plugin.async.IAsyncReportListener;
 import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
 import org.pentaho.test.platform.engine.core.MicroPlatform;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
@@ -49,15 +54,15 @@ public class EmailOutputTest {
   }
 
   @Test public void testPaginate() throws Exception {
-    Assert.assertEquals( 0, emailOutput.paginate( null, 0 ) );
+    assertEquals( 0, emailOutput.paginate( null, 0 ) );
   }
 
   @Test public void testSupportsPagination() throws Exception {
-    Assert.assertEquals( false, emailOutput.supportsPagination() );
+    assertEquals( false, emailOutput.supportsPagination() );
   }
 
   @Test public void testGetReportLock() throws Exception {
-    Assert.assertEquals( emailOutput, emailOutput.getReportLock() );
+    assertEquals( emailOutput, emailOutput.getReportLock() );
   }
 
   @Test
@@ -94,6 +99,34 @@ public class EmailOutputTest {
       microPlatform.stop();
       microPlatform = null;
     }
+  }
+
+  @Test
+  public void testInlineStyles() throws PlatformInitializationException {
+    final Map<Object, Object> configMap = new HashMap<>();
+    final MasterReport report = mock( MasterReport.class );
+    final ModifiableConfiguration configuration = mock( ModifiableConfiguration.class );
+
+    doAnswer( i -> configMap.put( i.getArguments()[0], i.getArguments()[1] ) ).when( configuration ).setConfigProperty( any(), any() );
+
+    when( report.getConfiguration() ).thenReturn( configuration );
+
+    MicroPlatform microPlatform = MicroPlatformFactory.create();
+    microPlatform.start();
+    ClassicEngineBoot.getInstance().start();
+    ReportListenerThreadHolder.clear();
+    try {
+      emailOutput.generate( report, 1, new ByteArrayOutputStream(), 1 );
+    } catch ( final Exception ignored ) {
+    } finally {
+      assertEquals( configMap.get( "org.pentaho.reporting.engine.classic.core.modules.output.table.html.InlineStyles" ),
+        "true" );
+      assertEquals(
+        configMap.get( "org.pentaho.reporting.engine.classic.core.modules.output.table.html.ExternalStyle" ), "false" );
+      microPlatform.stop();
+      microPlatform = null;
+    }
+
   }
 }
 
