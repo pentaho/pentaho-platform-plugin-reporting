@@ -630,6 +630,7 @@ public class ParameterXmlContentHandler {
         .setAttribute( "is-mandatory", String.valueOf( parameter.isMandatory() ) ); //$NON-NLS-1$ //$NON-NLS-2$
 
       final String[] namespaces = parameter.getParameterAttributeNamespaces();
+      boolean isMustValidateOnServerSet = false;
       for ( int i = 0; i < namespaces.length; i++ ) {
         final String namespace = namespaces[ i ];
         final String[] attributeNames = parameter.getParameterAttributeNames( namespace );
@@ -643,6 +644,16 @@ public class ParameterXmlContentHandler {
           attributeElement.setAttribute( "value", attributeValue ); // NON-NLS
 
           parameterElement.appendChild( attributeElement );
+
+          if ( ( "re-evaluate-on-failed-values".equals( attributeName ) || "autofill-selection".equals( attributeName ) ) && "true".equals( attributeValue ) ) {
+            // must validate on server
+            final Element attrElement = document.createElement( "attribute" );
+            attrElement.setAttribute( "namespace", SYS_SERVER_NAMESPACE );
+            attrElement.setAttribute( "name", "must-validate-on-server" );
+            attrElement.setAttribute( "value", Boolean.TRUE.toString() );
+            parameterElement.appendChild( attrElement );
+            isMustValidateOnServerSet = true;
+          }
         }
       }
 
@@ -651,12 +662,14 @@ public class ParameterXmlContentHandler {
         List<String> deps = Lists.newArrayList( dependencies.getAll( parameter.getName() ) );
 
         if ( !deps.isEmpty() ) {
-          // must validate on server
-          final Element attributeElement = document.createElement( "attribute" );
-          attributeElement.setAttribute( "namespace", SYS_SERVER_NAMESPACE );
-          attributeElement.setAttribute( "name", "must-validate-on-server" );
-          attributeElement.setAttribute( "value", Boolean.TRUE.toString() );
-          parameterElement.appendChild( attributeElement );
+          if ( !isMustValidateOnServerSet ) {
+            // must validate on server
+            final Element attributeElement = document.createElement( "attribute" );
+            attributeElement.setAttribute( "namespace", SYS_SERVER_NAMESPACE );
+            attributeElement.setAttribute( "name", "must-validate-on-server" );
+            attributeElement.setAttribute( "value", Boolean.TRUE.toString() );
+            parameterElement.appendChild( attributeElement );
+          }
 
           // and it is also has a dependencies
           final Element oneMoreAttribute = document.createElement( "attribute" );
