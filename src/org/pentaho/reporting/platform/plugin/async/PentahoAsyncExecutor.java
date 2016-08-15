@@ -125,9 +125,11 @@ public class PentahoAsyncExecutor<TReportState extends IAsyncReportState>
   }
 
   @Override public UUID addTask( final IAsyncReportExecution<TReportState> task, final IPentahoSession session ) {
+    return addTask( task, session, UUID.randomUUID() );
+  }
 
-    final UUID id = UUID.randomUUID();
-
+  @Override
+  public UUID addTask( final IAsyncReportExecution<TReportState> task, final IPentahoSession session, final UUID id ) {
     final CompositeKey key = new CompositeKey( session, id );
 
     task.notifyTaskQueued( id,

@@ -677,7 +677,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
       cancel: function(status, uuid) {
         var url = window.location.href.split('?')[0];
-        if(status == 'WORKING' || status == 'QUEUED' || status == 'CONTENT_AVAILABLE' || status == 'PRE_SCHEDULED' ) {
+        if( uuid && (!status || status == 'WORKING' || status == 'QUEUED' || status == 'CONTENT_AVAILABLE' || status == 'PRE_SCHEDULED') ) {
           pentahoGet(url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + uuid + '/cancel', "");
         }
       },
@@ -970,7 +970,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
             var mainJobStatus = me._getAsyncJobStatus(result, hideDlgAndPane);
 
-            if (mainJobStatus.status != null) {
+            if (mainJobStatus && mainJobStatus.status != null) {
 
               me._updateFeedbackScreen(mainJobStatus, feedbackDialog);
 
@@ -1206,7 +1206,15 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
               this._reportUrl = reportUrl;
               var isValid = !me.reportPrompt._getStateProperty('promptNeeded');
               if (isValid) {
-                pentahoGet('reportjob', reportUrl, mainReportGeneration, 'text/text');
+                pentahoPost(url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/reserveId', "", function (data) {
+                  try {
+                    me._currentReportUuid = JSON.parse(data).reservedId;
+                    pentahoGet('reportjob', reportUrl + "&reservedId=" + me._currentReportUuid, mainReportGeneration, 'text/text');
+                  } catch (e) {
+                    logger && logger.log("Can't reserve id");
+                    pentahoGet('reportjob', reportUrl, mainReportGeneration, 'text/text');
+                  }
+                });
               } else {
                 isFinished = true;
                 hideDlgAndPane();

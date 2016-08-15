@@ -100,6 +100,7 @@ public class AsyncIT {
     final PentahoAsyncExecutor<AsyncReportState> executor = spy( new TestExecutor( 2, 100 ) );
     microPlatform.define( "IPentahoAsyncExecutor", executor );
     microPlatform.define( "ISchedulingDirectoryStrategy", new HomeSchedulingDirStrategy() );
+    microPlatform.define( "IJobIdGenerator", new JobIdGenerator() );
     microPlatform.addLifecycleListener( new AsyncSystemListener() );
 
     IUnifiedRepository repository = mock( IUnifiedRepository.class );
@@ -696,7 +697,7 @@ public class AsyncIT {
   @Test
   public void testLogout() {
 
-    final TestExecutor executor =  (TestExecutor) PentahoSystem.get( IPentahoAsyncExecutor.class );
+    final TestExecutor executor = (TestExecutor) PentahoSystem.get( IPentahoAsyncExecutor.class );
     final IAsyncReportExecution mock = mockExec();
 
     final UUID uuid = executor.addTask( mock, PentahoSessionHolder.getSession() );
@@ -713,7 +714,7 @@ public class AsyncIT {
   @Test
   public void testLogoutAnotherSession() {
 
-    final TestExecutor executor =  (TestExecutor) PentahoSystem.get( IPentahoAsyncExecutor.class );
+    final TestExecutor executor = (TestExecutor) PentahoSystem.get( IPentahoAsyncExecutor.class );
     final IAsyncReportExecution mock = mockExec();
 
     final UUID uuid = executor.addTask( mock, PentahoSessionHolder.getSession() );
@@ -764,8 +765,6 @@ public class AsyncIT {
       }
     }.call();
     assertTrue( flag[ 0 ] );
-    PentahoSessionHolder.setSession( session );
-
   }
 
   @Test
@@ -839,8 +838,9 @@ public class AsyncIT {
         }
       };
 
+      final UUID uuid = UUID.randomUUID();
 
-      final UUID uuid = exec.addTask( pentahoAsyncReportExecution, session );
+      exec.addTask( pentahoAsyncReportExecution, session, uuid );
 
       final Future future = exec.getFuture( uuid, session );
 

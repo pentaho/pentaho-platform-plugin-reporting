@@ -26,10 +26,12 @@ import org.pentaho.platform.api.engine.IParameterProvider;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.api.engine.ObjectFactoryException;
 import org.pentaho.platform.engine.core.audit.MessageTypes;
+import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlTableModule;
 import org.pentaho.reporting.platform.plugin.async.IAsyncReportExecution;
 import org.pentaho.reporting.platform.plugin.async.IAsyncReportState;
+import org.pentaho.reporting.platform.plugin.async.IJobIdGenerator;
 import org.pentaho.reporting.platform.plugin.async.IPentahoAsyncExecutor;
 import org.pentaho.reporting.platform.plugin.async.PentahoAsyncExecutor;
 import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
@@ -41,6 +43,7 @@ import java.io.InputStream;
 import java.io.Serializable;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -75,6 +78,7 @@ public class BackgroundJobContentGeneratorTest {
   HttpServletResponse httpResponse = mock( HttpServletResponse.class );
 
   Map<String, IParameterProvider> parameterProviders;
+  private IJobIdGenerator jobIdGenerator;
 
   @Before
   public void before() throws ObjectFactoryException {
@@ -89,12 +93,28 @@ public class BackgroundJobContentGeneratorTest {
     PentahoSystem.setApplicationContext( appContext );
     PentahoSystem.registerPrimaryObjectFactory( factory );
 
+    jobIdGenerator = mock( IJobIdGenerator.class );
+    when( jobIdGenerator.acquire( any(), any() ) ).thenReturn( true );
+    PentahoSystem.registerObject( jobIdGenerator, IJobIdGenerator.class );
+
     when( session.getId() ).thenReturn( sessionId );
     when( session.getName() ).thenReturn( sessionName );
 
     parameterProviders = new HashMap<>();
     parameterProviders.put( "path", paramProvider );
+    parameterProviders.put( IParameterProvider.SCOPE_REQUEST, paramProvider );
     when( paramProvider.getParameter( "httpresponse" ) ).thenReturn( httpResponse );
+    when( paramProvider.getStringParameter( anyString(), anyString() ) )
+      .thenAnswer( ( i ) -> {
+        if ( !"reservedId".equals( i.getArguments()[ 0 ] ) ) {
+          return i.getArguments()[ 1 ];
+        } else {
+          return uuid.toString();
+        }
+      } );
+    when( paramProvider.getParameterNames() ).thenReturn( Collections.emptyIterator() );
+
+    PentahoSessionHolder.setSession( session );
   }
 
   @Test
@@ -227,8 +247,73 @@ public class BackgroundJobContentGeneratorTest {
     verify( component, times( 1 ) ).setForceUnlockPreferredOutput( eq( true ) );
   }
 
+
+  @Test
+  public void testProvidedUuid() throws Exception {
+    final BackgroundJobReportContentGenerator generator = spy( new BackgroundJobReportContentGenerator() );
+    generator.setParameterProviders( parameterProviders );
+    generator.setSession( session );
+    generator.setInstanceId( instanceId );
+    when( component.validate() ).thenReturn( true );
+    final AuditWrapper wrapper = mock( AuditWrapper.class );
+
+    generator.createReportContent( fieldId, path, component, wrapper );
+
+    verify( generator ).sendSuccessRedirect( uuid );
+  }
+
+
+  @Test
+  public void testWrongProvidedUuid() throws Exception {
+    final Map<String, IParameterProvider> customParameterProviders = new HashMap<>();
+    final IParameterProvider customParamProvider = mock( IParameterProvider.class );
+    customParameterProviders.put( "path", customParamProvider );
+    customParameterProviders.put( IParameterProvider.SCOPE_REQUEST, customParamProvider );
+    when( customParamProvider.getParameter( "httpresponse" ) ).thenReturn( httpResponse );
+    when( customParamProvider.getStringParameter( anyString(), anyString() ) )
+      .thenAnswer( ( i ) -> {
+        if ( !"reservedId".equals( i.getArguments()[ 0 ] ) ) {
+          return i.getArguments()[ 1 ];
+        } else {
+          return "not a uuid";
+        }
+      } );
+    when( customParamProvider.getParameterNames() ).thenReturn( Collections.emptyIterator() );
+    when( jobIdGenerator.acquire( any(), eq( null ) ) ).thenReturn( false );
+    final BackgroundJobReportContentGenerator generator = spy( new BackgroundJobReportContentGenerator() );
+    generator.setParameterProviders( customParameterProviders );
+    generator.setSession( session );
+    generator.setInstanceId( instanceId );
+    when( component.validate() ).thenReturn( true );
+    final AuditWrapper wrapper = mock( AuditWrapper.class );
+
+    generator.createReportContent( fieldId, path, component, wrapper );
+    verify( generator, times( 1 ) ).sendSuccessRedirect( any() );
+    verify( generator, never() ).sendSuccessRedirect( uuid );
+  }
+
+
+  @Test
+  public void testNullGenerator() throws Exception {
+    PentahoSystem.shutdown();
+    PentahoSystem.setApplicationContext( appContext );
+    PentahoSystem.registerPrimaryObjectFactory( factory );
+
+    final BackgroundJobReportContentGenerator generator = spy( new BackgroundJobReportContentGenerator() );
+    generator.setParameterProviders( parameterProviders );
+    generator.setSession( session );
+    generator.setInstanceId( instanceId );
+    when( component.validate() ).thenReturn( true );
+    final AuditWrapper wrapper = mock( AuditWrapper.class );
+
+    generator.createReportContent( fieldId, path, component, wrapper );
+    verify( generator, times( 1 ) ).sendSuccessRedirect( any() );
+    verify( generator, never() ).sendSuccessRedirect( uuid );
+  }
+
   @AfterClass
   public static void afterClass() {
+    PentahoSessionHolder.removeSession();
     PentahoSystem.shutdown();
   }
 
@@ -248,6 +333,10 @@ public class BackgroundJobContentGeneratorTest {
 
     @Override public UUID addTask( IAsyncReportExecution task, IPentahoSession session ) {
       return uuid;
+    }
+
+    @Override public UUID addTask( IAsyncReportExecution task, IPentahoSession session, UUID uuid1 ) {
+      return uuid1;
     }
 
     @Override public IAsyncReportState getReportState( UUID id, IPentahoSession session ) {
