@@ -126,6 +126,10 @@
     <constructor-arg value="/public"/>
   </bean>-->
 
+  <!--Used to pregenerate and validate async jobs ids -->
   <bean id="IJobIdGenerator" class="org.pentaho.reporting.platform.plugin.async.JobIdGenerator"/>
+
+  <!--Rest API to manage cache in plugin -->
+  <bean class="org.pentaho.reporting.platform.plugin.CacheManagerEndpoint" />
 
 </beans>

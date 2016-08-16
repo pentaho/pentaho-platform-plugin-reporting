@@ -112,6 +112,10 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           domClass.add('notification-screen', 'hidden');
         }));
 
+        on(registry.byId('toolbar-clearCache'),  "click", lang.hitch( this,  function() {
+          this.clearReportCache( this.submitReport.bind(this) );
+        }));
+
         if(window.top.mantle_addHandler){
           //When slow connection there is a gap between tab glass pane and prompt glass pane
           //So, let's hide tab glass pane only after widget is attached
@@ -804,6 +808,16 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         } catch(ex) {
           this._submitReportEnded();
           throw ex;
+        }
+      },
+
+      clearReportCache: function (callback) {
+        try {
+          var url = window.location.href.split('?')[0];
+          pentahoPost(url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/cache/clear', '', callback, 'text/text');
+        } catch (e) {
+          logger && logger.log("Can't clear cache.");
+          callback();
         }
       },
 
