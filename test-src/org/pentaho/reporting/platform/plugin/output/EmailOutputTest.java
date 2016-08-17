@@ -123,6 +123,8 @@ public class EmailOutputTest {
         "true" );
       assertEquals(
         configMap.get( "org.pentaho.reporting.engine.classic.core.modules.output.table.html.ExternalStyle" ), "false" );
+      assertEquals(
+        configMap.get( "org.pentaho.reporting.engine.classic.core.modules.output.table.html.RotatedTextAsImages" ), "true" );
       microPlatform.stop();
       microPlatform = null;
     }

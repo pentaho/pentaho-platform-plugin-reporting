@@ -17,9 +17,6 @@
 
 package org.pentaho.reporting.platform.plugin.async;
 
-import org.apache.cxf.jaxrs.client.WebClient;
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -29,7 +26,6 @@ import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.engine.core.system.boot.PlatformInitializationException;
-import org.pentaho.reporting.platform.plugin.JaxRsServerProvider;
 import org.pentaho.reporting.platform.plugin.JobManager;
 import org.pentaho.reporting.platform.plugin.MicroPlatformFactory;
 import org.pentaho.test.platform.engine.core.MicroPlatform;
@@ -38,7 +34,6 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import javax.ws.rs.core.Response;
-import java.io.InputStream;
 
 import static org.junit.Assert.*;
 import static org.powermock.api.mockito.PowerMockito.when;
@@ -47,15 +42,13 @@ import static org.powermock.api.mockito.PowerMockito.when;
 @PrepareForTest( PentahoSessionHolder.class )
 public class ReservedIdIT {
 
-  private JaxRsServerProvider provider;
+
   private MicroPlatform microPlatform;
   private static final IPentahoSession session = Mockito.mock( IPentahoSession.class );
 
 
   @Before
   public synchronized void setUp() throws Exception {
-    provider = new JaxRsServerProvider();
-    provider.startServer( new JobManager() );
     microPlatform = MicroPlatformFactory.create();
     microPlatform.define( "IJobIdGenerator", new JobIdGenerator() );
     microPlatform.start();
@@ -66,8 +59,6 @@ public class ReservedIdIT {
     PentahoSystem.shutdown();
     microPlatform.stop();
     microPlatform = null;
-    provider.stopServer();
-    provider = null;
   }
 
   @Test
@@ -79,17 +70,14 @@ public class ReservedIdIT {
 
     assertEquals( session, PentahoSessionHolder.getSession() );
 
-    final WebClient client = provider.getFreshClient();
+    final JobManager jobManager = new JobManager();
 
 
-    client.path( "/reporting/api/jobs/reserveId" );
-    final Response response = client.post( null );
+    final Response response = jobManager.reserveId();
 
     assertEquals( 200, response.getStatus() );
-    final ObjectMapper mapper = new ObjectMapper();
-    final JsonNode jsonNode = mapper.readTree( (InputStream) response.getEntity() );
-    assertNotNull( jsonNode );
-    assertNotNull( jsonNode.get( "reservedId" ).asText() );
+
+    assertNotNull( String.valueOf( response.getEntity() ).contains( "reservedId" ) );
 
   }
 
@@ -100,11 +88,10 @@ public class ReservedIdIT {
     PowerMockito.mockStatic( PentahoSessionHolder.class );
 
     when( PentahoSessionHolder.getSession() ).thenReturn( null );
-
+    final JobManager jobManager = new JobManager();
     assertNull( PentahoSessionHolder.getSession() );
-    final WebClient client = provider.getFreshClient();
-    client.path( "/reporting/api/jobs/reserveId" );
-    final Response response = client.post( null );
+
+    final Response response = jobManager.reserveId();
     assertEquals( 404, response.getStatus() );
   }
 
@@ -113,9 +100,6 @@ public class ReservedIdIT {
   public void testReserveIdNoGenerator() throws Exception {
 
     tearDown();
-
-    provider = new JaxRsServerProvider();
-    provider.startServer( new JobManager() );
 
     microPlatform = MicroPlatformFactory.create();
 
@@ -127,10 +111,10 @@ public class ReservedIdIT {
 
     assertEquals( session, PentahoSessionHolder.getSession() );
 
-    final WebClient client = provider.getFreshClient();
+    final JobManager jobManager = new JobManager();
 
-    client.path( "/reporting/api/jobs/reserveId" );
-    final Response response = client.post( null );
+
+    final Response response = jobManager.reserveId();
 
     assertEquals( 404, response.getStatus() );
   }

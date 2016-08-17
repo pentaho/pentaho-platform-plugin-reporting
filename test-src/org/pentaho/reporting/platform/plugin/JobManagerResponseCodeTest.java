@@ -18,39 +18,21 @@
 
 package org.pentaho.reporting.platform.plugin;
 
-import org.apache.cxf.jaxrs.client.WebClient;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import javax.ws.rs.core.Response;
+import java.io.IOException;
 import java.util.Map;
 
 import static org.junit.Assert.*;
 
-public class JobManagerResponseCodeTest  {
-
-  private static final String URL_FORMAT = "/reporting/api/jobs/%1$s%2$s";
-
-  private static JaxRsServerProvider provider;
-
-  @BeforeClass
-  public static void init() throws Exception {
-    provider = new JaxRsServerProvider();
-    provider.startServer( new JobManager(  ) );
-  }
-
-  @AfterClass
-  public static void destroy() throws Exception {
-    provider.stopServer();
-  }
+public class JobManagerResponseCodeTest {
 
 
   @Test public void testEchoStatusCode() throws Exception {
-    final WebClient client = provider.getFreshClient();
-    client.path( String.format( URL_FORMAT, "config", "" ) );
-    final Response response = client.get();
+    final JobManager jobManager = new JobManager();
+    final Response response = jobManager.getConfig();
 
     assertNotNull( response );
     assertEquals( 200, response.getStatus() );
@@ -62,10 +44,9 @@ public class JobManagerResponseCodeTest  {
     assertTrue( 500 == (int) config.get( "pollingIntervalMilliseconds" ) );
   }
 
-  @Test public void testAddJobIncorrectContentUUID() {
-    final WebClient client = provider.getFreshClient();
-    client.path( String.format( URL_FORMAT, "123", "/content" ) );
-    final Response response = client.post( null );
+  @Test public void testAddJobIncorrectContentUUID() throws IOException {
+    final JobManager jobManager = new JobManager();
+    final Response response = jobManager.getContent( "notauuid" );
     assertNotNull( response );
     assertEquals( 404, response.getStatus() );
   }
