@@ -70,7 +70,7 @@ import static org.mockito.Mockito.*;
 
 public class AsyncIT {
 
-  private static final String URL_FORMAT = "/reporting/api/jobs/%1$s%2$s";
+  static final String URL_FORMAT = "/reporting/api/jobs/%1$s%2$s";
   private static final String MIME = "junit_mime";
   private static final String PATH = "junit_path";
   private static final NullInputStream NULL_INPUT_STREAM = new NullInputStream( 100 );
@@ -765,44 +765,6 @@ public class AsyncIT {
       }
     }.call();
     assertTrue( flag[ 0 ] );
-  }
-
-  @Test
-  public void testRecalcFinished() throws Exception {
-    try {
-
-      provider.stopServer();
-      provider.startServer( new JobManager( true, 1000, 1000, true ) );
-
-      final IPentahoAsyncExecutor executor = PentahoSystem.get( IPentahoAsyncExecutor.class );
-      final IAsyncReportExecution mock = mockExec();
-
-      final UUID uuid = executor.addTask( mock, PentahoSessionHolder.getSession() );
-
-      final WebClient client = provider.getFreshClient();
-      final UUID folderId = UUID.randomUUID();
-      final String config = String.format( URL_FORMAT, uuid, "/schedule" );
-      client.path( config );
-      client.query( "confirm", true );
-      client.query( "folderId", folderId );
-      client.query( "newName", "test" );
-      client.query( "recalculateFinished", "true" );
-
-      STATUS = AsyncExecutionStatus.FINISHED;
-
-
-      final Response response = client.post( null );
-      assertEquals( 200, response.getStatus() );
-      verify( executor, times( 1 ) ).recalculate( any(), any() );
-      verify( executor, times( 1 ) ).schedule( any(), any() );
-      verify( executor, times( 1 ) )
-        .updateSchedulingLocation( any(), any(), any(), any() );
-
-      STATUS = AsyncExecutionStatus.FAILED;
-    } finally {
-      provider.stopServer();
-      provider.startServer( new JobManager() );
-    }
   }
 
   @Test public void testCancelNoListener() {
