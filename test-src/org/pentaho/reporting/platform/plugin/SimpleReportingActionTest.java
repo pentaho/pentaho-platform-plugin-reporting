@@ -12,12 +12,11 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2015 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
 
-import junit.framework.TestCase;
 import org.junit.Before;
 import org.junit.Test;
 import org.pentaho.platform.api.engine.IActionSequenceResource;
@@ -35,16 +34,17 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import static junit.framework.TestCase.assertNull;
+import static junit.framework.TestCase.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 
-public class SimpleReportingActionTest extends TestCase {
+public class SimpleReportingActionTest {
   SimpleReportingAction sra, sraMock;
 
   @Before
@@ -141,9 +141,11 @@ public class SimpleReportingActionTest extends TestCase {
     sra.setVarArgs( null );
     assertTrue( sra.getInputs().size() == 0 );
 
-    Map<String, Object> inputs = new HashMap<String, Object>() {{
+    Map<String, Object> inputs = new HashMap<String, Object>() {
+      {
         put( "key", "value" );
-    }};
+      }
+    };
     sra.setVarArgs( inputs );
     assertEquals( inputs, sra.getInputs() );
 
@@ -161,13 +163,17 @@ public class SimpleReportingActionTest extends TestCase {
     assertEquals( -1, sra.getPageCount() );
     assertEquals( report, sra.getReport() );
 
-    final ArrayList<String> list = new ArrayList<String>() {{
+    final ArrayList<String> list = new ArrayList<String>() {
+      {
         add( "value1" );
         add( "value2" );
-    }};
-    Map<String, Object> inputs = new HashMap<String, Object>() {{
+      }
+    };
+    Map<String, Object> inputs = new HashMap<String, Object>() {
+      {
         put( "::cl", list );
-    }};
+      }
+    };
     sra.setVarArgs( inputs );
     sra.setReport( report );
     assertEquals( report, sra.getReport() );
@@ -175,16 +181,20 @@ public class SimpleReportingActionTest extends TestCase {
     final String[] array = new String[ 3 ];
     array[ 0 ] = "value1";
     array[ 1 ] = "value2";
-    inputs = new HashMap<String, Object>() {{
+    inputs = new HashMap<String, Object>() {
+      {
         put( "::cl", array );
-    }};
+      }
+    };
     sra.setVarArgs( inputs );
     sra.setReport( report );
     assertEquals( report, sra.getReport() );
 
-    inputs = new HashMap<String, Object>() {{
+    inputs = new HashMap<String, Object>() {
+      {
         put( "::cl", 1 );
-    }};
+      }
+    };
     sra.setVarArgs( inputs );
     sra.setReport( report );
     assertEquals( report, sra.getReport() );
@@ -213,15 +223,19 @@ public class SimpleReportingActionTest extends TestCase {
   public void testGetViewerSessionId() throws Exception {
     assertNull( sra.getViewerSessionId() );
 
-    Map<String, Object> inputs = new HashMap<String, Object>() {{
+    Map<String, Object> inputs = new HashMap<String, Object>() {
+      {
         put( "::session", 1 );
-    }};
+      }
+    };
     sra.setVarArgs( inputs );
     assertNull( sra.getViewerSessionId() );
 
-    inputs = new HashMap<String, Object>() {{
+    inputs = new HashMap<String, Object>() {
+      {
         put( "::session", "1" );
-    }};
+      }
+    };
     sra.setVarArgs( inputs );
     assertEquals( "1", sra.getViewerSessionId() );
   }
@@ -250,7 +264,8 @@ public class SimpleReportingActionTest extends TestCase {
     mimeType = sra.getMimeType();
     assertEquals( "image/png", mimeType );
 
-    Map<String, String> map = new HashMap<String, String>() {{
+    Map<String, String> map = new HashMap<String, String>() {
+      {
         put( "text/csv", "text/csv" );
         put( "text/html", "text/html" );
         put( "application/xml", "application/xml" );
@@ -258,7 +273,7 @@ public class SimpleReportingActionTest extends TestCase {
         put( "application/rtf", "application/rtf" );
         put( "application/vnd.ms-excel", "application/vnd.ms-excel" );
         put( "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" );
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" );
         put( "mime-message/text/html", "mime-message/text/html" );
         put( "text/plain", "text/plain" );
         put( "pdf", "application/pdf" );
@@ -267,7 +282,8 @@ public class SimpleReportingActionTest extends TestCase {
         put( "rtf", "application/rtf" );
         put( "xls", "application/vnd.ms-excel" );
         put( "txt", "text/plain" );
-    }};
+      }
+    };
 
     for ( int i = 0; i < map.size(); i++ ) {
       String key = map.keySet().toArray()[ i ].toString();
@@ -287,16 +303,20 @@ public class SimpleReportingActionTest extends TestCase {
   public void testGetYieldRate() throws Exception {
     assertEquals( 0, sra.getYieldRate() );
 
-    Map<String, Object> inputs = new HashMap<String, Object>() {{
+    Map<String, Object> inputs = new HashMap<String, Object>() {
+      {
         put( "yield-rate", 0.5 );
-    }};
+      }
+    };
     sra.setVarArgs( inputs );
 
     assertEquals( 0, sra.getYieldRate() );
 
-    inputs = new HashMap<String, Object>() {{
+    inputs = new HashMap<String, Object>() {
+      {
         put( "yield-rate", 3 );
-    }};
+      }
+    };
     sra.setVarArgs( inputs );
 
     assertEquals( 3, sra.getYieldRate() );
@@ -312,17 +332,19 @@ public class SimpleReportingActionTest extends TestCase {
     doReturn( modifiableConfiguration ).when( report ).getReportConfiguration();
     doNothing().when( modifiableConfiguration ).setConfigProperty( anyString(), anyString() );
 
-    Map<String, Object> inputs = new HashMap<String, Object>() {{
+    Map<String, Object> inputs = new HashMap<String, Object>() {
+      {
         put( "_SCH_EMAIL_TO", "value" );
         put( "yield-rate", 3 );
-    }};
+      }
+    };
     sra.setVarArgs( inputs );
     sra.setOutputTarget( "table/html;page-mode=page" );
 
     sra.setReport( report );
     assertFalse( sra._execute() );
     assertEquals( 3, sra.getYieldRate() );
-    assertEquals( "table/html;page-mode=stream", sra.getInput( "output-target", "" ) );
+    assertEquals( "table/html;page-mode=page", sra.getInput( "output-target", "" ) );
   }
 
   @Test

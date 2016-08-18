@@ -167,13 +167,13 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
 
       final IAsyncReportListener listener = ReportListenerThreadHolder.getListener();
       final IReportContent cachedContent = getCachedContent( key );
-
+      final boolean forcePaginated = isForceAllPages( report );
       if ( cachedContent == null ) {
         logger.warn( "No cached content found for key: " + key );
         final IReportContent freshCache = regenerateCache( report, yieldRate, key, acceptedPage );
 
         //write all pages for scheduling case
-        if ( listener != null && listener.isScheduled() ) {
+        if ( forcePaginated || ( listener != null && listener.isScheduled() ) ) {
           PaginationControlWrapper.write( outputStream, freshCache );
           return freshCache.getPageCount();
         }
@@ -198,12 +198,12 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
               acceptedPage + 1, cachedContent.getPageCount(), 0, 0 );
           listener.reportProcessingUpdate( event );
           listener.reportProcessingFinished( event );
+        }
 
-          //write all pages for scheduling case
-          if ( listener.isScheduled() ) {
-            PaginationControlWrapper.write( outputStream, cachedContent );
-            return cachedContent.getPageCount();
-          }
+        //write all pages for scheduling case
+        if ( forcePaginated || ( listener != null && listener.isScheduled() ) ) {
+          PaginationControlWrapper.write( outputStream, cachedContent );
+          return cachedContent.getPageCount();
         }
         outputStream.write( page );
         outputStream.flush();
@@ -213,7 +213,7 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
       final IReportContent fullReportCache = regenerateCache( report, yieldRate, key, acceptedPage );
 
       //BACKLOG-8579
-      if ( listener != null && listener.isScheduled() ) {
+      if ( forcePaginated || ( listener != null && listener.isScheduled() ) ) {
         PaginationControlWrapper.write( outputStream, fullReportCache );
         return fullReportCache.getPageCount();
       }
@@ -237,7 +237,7 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
   }
 
   IReportContent regenerateCache( final MasterReport report, final int yieldRate, final String key,
-                                          final int acceptedPage )
+                                  final int acceptedPage )
     throws ReportProcessingException {
     logger.warn( "Regenerating report data for " + key );
     final IReportContent result = produceCacheablePages( report, yieldRate, key, acceptedPage );

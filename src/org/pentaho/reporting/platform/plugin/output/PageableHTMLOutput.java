@@ -40,6 +40,7 @@ import org.pentaho.reporting.libraries.repository.Repository;
 import org.pentaho.reporting.libraries.repository.file.FileRepository;
 import org.pentaho.reporting.libraries.repository.stream.StreamRepository;
 import org.pentaho.reporting.libraries.repository.zip.ZipRepository;
+import org.pentaho.reporting.platform.plugin.PentahoPlatformModule;
 import org.pentaho.reporting.platform.plugin.async.IAsyncReportListener;
 import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
 import org.pentaho.reporting.platform.plugin.cache.IReportContent;
@@ -56,6 +57,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class PageableHTMLOutput implements ReportOutputHandler {
+
   private String contentHandlerPattern;
   private ProxyOutputStream proxyOutputStream;
   private PageableReportProcessor proc;
@@ -227,7 +229,8 @@ public class PageableHTMLOutput implements ReportOutputHandler {
         listener.setIsQueryLimitReached( proc.isQueryLimitReached() );
 
         //Write all if scheduled
-        if ( listener.isScheduled() ) {
+        final boolean forceAllPages = isForceAllPages( report );
+        if ( forceAllPages || listener.isScheduled() ) {
           PaginationControlWrapper.write( outputStream, completeReport );
         } else {
           final byte[] pageData = completeReport.getPageData( acceptedPage );
@@ -245,6 +248,10 @@ public class PageableHTMLOutput implements ReportOutputHandler {
       printer.setContentWriter( null, null );
       printer.setDataWriter( null, null );
     }
+  }
+
+  protected boolean isForceAllPages( final MasterReport report ) {
+    return "true".equals( report.getConfiguration().getConfigProperty( PentahoPlatformModule.FORCE_ALL_PAGES ) );
   }
 
   public boolean supportsPagination() {

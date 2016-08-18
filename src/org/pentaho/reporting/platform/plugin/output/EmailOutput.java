@@ -27,6 +27,7 @@ import org.pentaho.reporting.engine.classic.core.modules.output.table.base.Strea
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.AllItemsHtmlPrinter;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlOutputProcessor;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlPrinter;
+import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlTableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.StreamHtmlOutputProcessor;
 import org.pentaho.reporting.engine.classic.extensions.modules.mailer.MailURLRewriter;
 import org.pentaho.reporting.libraries.base.config.Configuration;
@@ -45,10 +46,6 @@ import java.util.Properties;
 
 public class EmailOutput implements ReportOutputHandler {
 
-  private static final String INLINE_STYLES =
-    "org.pentaho.reporting.engine.classic.core.modules.output.table.html.InlineStyles";
-  private static final String EXTERNAL_STYLES =
-    "org.pentaho.reporting.engine.classic.core.modules.output.table.html.ExternalStyle";
   private static final String ROTATED_TEXT_AS_IMAGES =
     "org.pentaho.reporting.engine.classic.core.modules.output.table.html.RotatedTextAsImages";
 
@@ -78,9 +75,10 @@ public class EmailOutput implements ReportOutputHandler {
       final Configuration configuration = report.getConfiguration();
 
       if ( configuration instanceof ModifiableConfiguration ) {
-        ( (ModifiableConfiguration) configuration ).setConfigProperty( INLINE_STYLES, "true" );
-        ( (ModifiableConfiguration) configuration ).setConfigProperty( EXTERNAL_STYLES, "false" );
-        ( (ModifiableConfiguration) configuration ).setConfigProperty( ROTATED_TEXT_AS_IMAGES, "true" );
+        final ModifiableConfiguration modifiableConfiguration = (ModifiableConfiguration) configuration;
+        modifiableConfiguration.setConfigProperty( HtmlTableModule.INLINE_STYLE, "true" );
+        modifiableConfiguration.setConfigProperty( HtmlTableModule.EXTERNALIZE_STYLE, "false" );
+        modifiableConfiguration.setConfigProperty( ROTATED_TEXT_AS_IMAGES, "true" );
       }
 
       final Properties props = new Properties();
