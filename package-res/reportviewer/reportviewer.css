@@ -1,3 +1,5 @@
+@import url("RowLimitControl.css");
+
 * {
 	overflow: hidden;
 }
@@ -457,6 +459,18 @@ div.prompt-panel {
 
 #reportControlPanel select {
   overflow-y: auto;
+}
+
+#queryLimitReachedArea {
+  background-color: #fefde7;
+  border: 1px solid #cccccc;
+  margin: 0px 10px;
+  padding: 10px;
+}
+
+.rl_exceededDialogContent {
+  width: 500px;
+  height: 30px;
 }
 
 .dijitToolbar span.pentaho-button, .tabpanel span.pentaho-button {

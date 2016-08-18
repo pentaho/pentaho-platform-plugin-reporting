@@ -16,8 +16,8 @@
 */
 
 define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/formatting', 'pentaho/common/Messages', "dojo/dom", "dojo/on", "dojo/_base/lang",
-"dijit/registry", "dojo/has", "dojo/sniff", "dojo/dom-class", 'pentaho/reportviewer/ReportDialog', "dojo/dom-style", "dojo/query", "dojo/dom-geometry", "dojo/parser", "dojo/window", "dojo/_base/window", 'cdf/lib/jquery', 'amd!cdf/lib/jquery.ui', "common-repo/pentaho-ajax", "dijit/ProgressBar", "common-data/xhr"],
-    function(util, _timeutil, _formatting, _Messages, dom, on, lang, registry, has, sniff, domClass, ReportDialog, domStyle, query, geometry, parser, win, win2, $) {
+"dijit/registry", "dojo/has", "dojo/sniff", "dojo/dom-class", 'pentaho/reportviewer/ReportDialog', "dojo/dom-style", "dojo/query", "dojo/dom-geometry", "dojo/parser", "dojo/window", "dojo/_base/window", 'cdf/lib/jquery', 'amd!cdf/lib/jquery.ui', "common-repo/pentaho-ajax", "dijit/ProgressBar", "common-data/xhr", "pentaho/reportviewer/RowLimitControl", "pentaho/reportviewer/RowLimitExceededDialog"],
+    function(util, _timeutil, _formatting, _Messages, dom, on, lang, registry, has, sniff, domClass, ReportDialog, domStyle, query, geometry, parser, win, win2, $, RowLimitControl, RowLimitExceededDialog) {
   return function(reportPrompt) {
     if (!reportPrompt) {
       alert("report prompt is required");
@@ -59,6 +59,8 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
       _manuallyScheduled: null,
       _scheduleScreenBtnCallbacks: null,
       _editModeToggledHandler: null,
+      _defaultRowLimit : null,
+      _rowLimitExceededDialog : null,
 
       _bindPromptEvents: function() {
         var baseShowGlassPane = this.reportPrompt.showGlassPane.bind(this.reportPrompt);
@@ -210,6 +212,12 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         localize: function() {
           $('#toolbar-parameterToggle').attr('title', _Messages.getString('parameterToolbarItem_title'));
           registry.byId('pageControl').registerLocalizationLookup(_Messages.getString);
+          registry.byId('rowLimitControl').registerLocalizationLookup(_Messages.getString);
+          if (this._rowLimitExceededDialog == null) {
+            this._rowLimitExceededDialog = new pentaho.reportviewer.RowLimitExceededDialog();
+            this._rowLimitExceededDialog.registerLocalizationLookup(_Messages.getString);
+          }
+
         },
 
         /**
@@ -550,7 +558,9 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           var vp = win.getBox();
           var tp = geometry.getMarginBox('toppanel');
 
-          var mb = {h: vp.h - tp.h - 2};
+          var rcpHeight = document.getElementById("reportControlPanel").offsetHeight;
+
+          var mb = {h: vp.h - tp.h - rcpHeight - 2};
 
           logger && logger.log("viewport=(" + vp.w + ","  + vp.h + ") " + " toppanel=(" + tp.w + ","  + tp.h + ") ");
 
@@ -914,6 +924,49 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         domClass.add('notification-screen', 'hidden');
       },
 
+      _submitRowLimitUpdate: function (rowLimit) {
+        if (this.reportPrompt._isSubmitPromptPhaseActivated || this.reportPrompt._getStateProperty("autoSubmit")) {
+          var me = this;
+          this.cancel(this._currentReportStatus, this._currentReportUuid);
+          if (window.top.mantle_removeHandler) {
+            window.top.mantle_removeHandler(this._handlerRegistration);
+          }
+          this.reportPrompt.api.operation.setParameterValue("query-limit", rowLimit);
+          this.view.updatePageControl();
+          this._forceHideGlassPane();
+          setTimeout(function () {
+            me.reportPrompt.api.operation.submit();
+          }, me.reportPrompt._pollingInterval);
+
+        }
+      },
+
+      _initRowLimitControlValues: function (reportRows, currentRowLimit, maximumRowLimit) {
+        var rowLimitControl = registry.byId('rowLimitControl');
+        var queryLimitReachedMessage = dom.byId("queryLimitReachedMessage");
+
+        if (this._defaultRowLimit == null) {
+          this._defaultRowLimit = reportRows;
+          rowLimitControl.setDefaultRowLimit(this._defaultRowLimit);
+        }
+
+        if (currentRowLimit == -1) {
+          currentRowLimit = Math.min(reportRows, maximumRowLimit);
+        }
+
+        if (currentRowLimit < maximumRowLimit) {
+          rowLimitControl.setRowLimit(currentRowLimit);
+          rowLimitControl.setRowsNumberInputDisabled(false);
+          queryLimitReachedMessage.innerHTML = _Messages.getString('UserRowLimitReachedMessage');
+        } else {
+          rowLimitControl.setRowLimit(maximumRowLimit);
+          rowLimitControl.setRowLimitRestrictions('MAXIMUM');
+          rowLimitControl.setRowsNumberInputDisabled(true);
+          queryLimitReachedMessage.innerHTML = _Messages.getString('SystemRowLimitReachedMessage', '' + maximumRowLimit);
+        }
+
+      },
+
       _updateReportContentCore: function() {
 
         //no report generation in scheduling dialog ever!
@@ -943,6 +996,47 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         var isHtml = outputFormat.indexOf('html') != -1;
         var isProportionalWidth = isHtml && options['htmlProportionalWidth'] == "true";
         var isReportAlone = domClass.contains('toppanel', 'hidden');
+
+        var isQueryLimitControlEnabled = me.reportPrompt._isAsync && options['query-limit-ui-enabled'] == "true";
+        var maximumRowLimit = parseInt(options['maximum-query-limit'], 10);
+        var currentRowLimit = parseInt(options['query-limit'], 10);
+
+        if (isQueryLimitControlEnabled) {
+          domClass.remove(dom.byId("toolbar-parameter-separator-row-limit"), "hidden");
+          domClass.remove(dom.byId("rowLimitControl"), "hidden");
+          var rowLimitControl = registry.byId('rowLimitControl');
+          if (this._defaultRowLimit !== null) {
+            this._initRowLimitControlValues(this._defaultRowLimit, currentRowLimit, maximumRowLimit);
+          }
+
+          rowLimitControl.registerOnSelectCallback(lang.hitch(this, function (event) {
+            if (event === 'MAXIMUM') {
+              rowLimitControl.setRowLimit(maximumRowLimit);
+            } else {
+              rowLimitControl.setRowLimit(this._defaultRowLimit);
+            }
+            this._submitRowLimitUpdate(rowLimitControl.getRowLimit());
+          }));
+
+          rowLimitControl.registerOnRowLimitSubmitCallback(lang.hitch(this, function (event) {
+            if (rowLimitControl.getRowLimit() > maximumRowLimit) {
+              var rowLimitExceededDialogCallbacks = [
+                lang.hitch(this, function (event) {
+                  this.reportPrompt.api.operation.setParameterValue("query-limit", maximumRowLimit);
+                  rowLimitControl.setRowLimitRestrictions('MAXIMUM');
+                  this.view._rowLimitExceededDialog.hide();
+                })];
+              this.view._rowLimitExceededDialog.callbacks = rowLimitExceededDialogCallbacks;
+              this.view._rowLimitExceededDialog.setSystemRowLimit(maximumRowLimit);
+              this.view._rowLimitExceededDialog._localize();
+              this._forceShowGlassPane();
+              this.view._rowLimitExceededDialog.showDialog();
+            } else {
+              this._submitRowLimitUpdate(rowLimitControl.getRowLimit());
+            }
+          }));
+
+        }
 
         var styled = _isTopReportViewer && !isReportAlone &&
             isHtml && !isProportionalWidth &&
@@ -990,6 +1084,16 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
             var mainJobStatus = me._getAsyncJobStatus(result, hideDlgAndPane);
 
             if (mainJobStatus && mainJobStatus.status != null) {
+
+              if (this._defaultRowLimit === null && mainJobStatus.totalRows > 0) {
+                this._initRowLimitControlValues(mainJobStatus.totalRows, currentRowLimit, maximumRowLimit);
+              }
+
+              if (mainJobStatus.isQueryLimitReached) {
+                domClass.remove(dom.byId("queryLimitReachedArea"), "hidden");
+              } else {
+                domClass.add(dom.byId("queryLimitReachedArea"), "hidden");
+              }
 
               me._updateFeedbackScreen(mainJobStatus, feedbackDialog);
 

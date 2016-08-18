@@ -17,17 +17,17 @@
 
 package org.pentaho.reporting.platform.plugin.output;
 
-import java.io.IOException;
-import java.io.OutputStream;
-
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
-import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
 import org.pentaho.reporting.engine.classic.core.layout.output.YieldReportListener;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.base.StreamReportProcessor;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.xml.XmlTableOutputProcessor;
 import org.pentaho.reporting.libraries.repository.ContentIOException;
+import org.pentaho.reporting.platform.plugin.async.IAsyncReportListener;
 import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
+
+import java.io.IOException;
+import java.io.OutputStream;
 
 public class XmlTableOutput implements ReportOutputHandler {
   private StreamReportProcessor proc;
@@ -64,7 +64,7 @@ public class XmlTableOutput implements ReportOutputHandler {
       proc = createProcessor( report, yieldRate );
     }
 
-    final ReportProgressListener listener = ReportListenerThreadHolder.getListener();
+    final IAsyncReportListener listener = ReportListenerThreadHolder.getListener();
     //Add async job listener
     if ( listener != null ) {
       proc.addReportProgressListener( listener );
@@ -72,6 +72,9 @@ public class XmlTableOutput implements ReportOutputHandler {
     try {
       proxyOutputStream.setParent( outputStream );
       proc.processReport();
+      if ( listener != null ) {
+        listener.setIsQueryLimitReached( proc.isQueryLimitReached() );
+      }
       return 0;
     } finally {
       if ( listener != null ) {
