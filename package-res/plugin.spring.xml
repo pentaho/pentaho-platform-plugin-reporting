@@ -132,4 +132,7 @@
   <!--Rest API to manage cache in plugin -->
   <bean class="org.pentaho.reporting.platform.plugin.CacheManagerEndpoint" />
 
+  <!-- A way to clear cache from other modules without dependency on reporting plugin -->
+  <bean id="_ClearCacheAction" class="org.pentaho.reporting.platform.plugin.async.ClearCacheAction"/>
+
 </beans>
