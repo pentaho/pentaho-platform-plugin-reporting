@@ -18,7 +18,6 @@
 
 package org.pentaho.reporting.platform.plugin;
 
-import org.apache.cxf.jaxrs.client.WebClient;
 import org.apache.cxf.jaxrs.impl.ResponseBuilderImpl;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -62,11 +61,8 @@ import static org.powermock.api.mockito.PowerMockito.when;
 @PrepareForTest( PentahoSessionHolder.class )
 public class JobManagerTest {
 
-  private static final String URL_FORMAT = "/reporting/api/jobs/%1$s%2$s";
-
   private static final IPentahoSession session = mock( IPentahoSession.class );
 
-  private static JaxRsServerProvider provider;
   private static PentahoAsyncExecutor executor = null;
   private static final UUID uuid = UUID.randomUUID();
 
@@ -80,8 +76,6 @@ public class JobManagerTest {
   private static IPentahoObjectFactory objFactory;
 
   @BeforeClass public static void setUp() throws Exception {
-    provider = new JaxRsServerProvider();
-    provider.startServer( new JobManager() );
     STATE = getState();
     executor = mock( PentahoAsyncExecutor.class );
     schedulingDirectoryStrategy = mock( ISchedulingDirectoryStrategy.class );
@@ -112,7 +106,6 @@ public class JobManagerTest {
   @AfterClass
   public static void tearDown() throws Exception {
     PentahoSystem.shutdown();
-    provider.stopServer();
   }
 
   @Before
@@ -134,9 +127,8 @@ public class JobManagerTest {
   }
 
   @Test public void testGetStatus() throws IOException {
-    final WebClient client = provider.getFreshClient();
-    client.path( String.format( URL_FORMAT, UUID.randomUUID().toString(), "/status" ) );
-    final Response response = client.get();
+    final JobManager jobManager = new JobManager();
+    final Response response = jobManager.getStatus( uuid.toString() );
     assertNotNull( response );
     assertTrue( response.hasEntity() );
 
@@ -165,10 +157,8 @@ public class JobManagerTest {
 
 
   @Test public void testRequestPage() throws IOException {
-    final WebClient client = provider.getFreshClient();
-    client.path( String.format( URL_FORMAT, UUID.randomUUID().toString(), "/requestPage/100" ) );
-
-    final Response response = client.get();
+    final JobManager jobManager = new JobManager();
+    final Response response = jobManager.requestPage( uuid.toString(), 100 );
     assertNotNull( response );
     assertTrue( response.hasEntity() );
 
@@ -178,26 +168,22 @@ public class JobManagerTest {
   }
 
   @Test public void testSchedule() throws IOException {
-    final WebClient client = provider.getFreshClient();
-    client.path( String.format( URL_FORMAT, UUID.randomUUID().toString(), "/schedule" ) );
-    final Response response = client.get();
+    final JobManager jobManager = new JobManager();
+    final Response response = jobManager.schedule( uuid.toString(), true );
     assertNotNull( response );
     assertEquals( 200, response.getStatus() );
   }
 
   @Test
   public void testInvalidUUID() {
-    WebClient client = provider.getFreshClient();
-    client.path( String.format( URL_FORMAT, null, "/requestPage/100" ) );
-    final Response response1 = client.get();
+    final JobManager jobManager = new JobManager();
+    final Response response1 = jobManager.requestPage( "notauuid", 100 );
     assertEquals( response1.getStatus(), 404 );
-    client = provider.getFreshClient();
-    client.path( String.format( URL_FORMAT, "", "/schedule" ) );
-    final Response response2 = client.get();
+
+    final Response response2 = jobManager.schedule( "notauuid", true );
     assertEquals( response2.getStatus(), 404 );
-    client = provider.getFreshClient();
-    client.path( String.format( URL_FORMAT, "not a uuid", "/status" ) );
-    final Response response3 = client.get();
+
+    final Response response3 = jobManager.getStatus( "notauuid" );
     assertEquals( response3.getStatus(), 404 );
   }
 
@@ -205,76 +191,49 @@ public class JobManagerTest {
   @SuppressWarnings( "unchecked" )
   @Test
   public void testConfirmScheduling() throws Exception {
-    try {
+    final JobManager jobManager = new JobManager( true, 1000, 1000, true );
+
+    STATUS = AsyncExecutionStatus.QUEUED;
 
 
-      provider.stopServer();
-      provider.startServer( new JobManager( true, 1000, 1000, true ) );
+    final UUID folderId = UUID.randomUUID();
 
-      STATUS = AsyncExecutionStatus.QUEUED;
 
-      WebClient client = provider.getFreshClient();
-      final UUID folderId = UUID.randomUUID();
-      final String config = String.format( URL_FORMAT, uuid, "/schedule" );
-      client.path( config );
-      client.query( "confirm", true );
-      client.query( "folderId", folderId );
-      client.query( "newName", "test" );
+    final Response response = jobManager.confirmSchedule( uuid.toString(), true, false, folderId.toString(), "test" );
+    assertEquals( 200, response.getStatus() );
+    verify( executor, times( 1 ) ).schedule( any(), any() );
+    verify( executor, times( 1 ) )
+      .updateSchedulingLocation( any(), any(), any(), any() );
 
-      final Response response = client.post( null );
-      assertEquals( 200, response.getStatus() );
-      verify( executor, times( 1 ) ).schedule( any(), any() );
-      verify( executor, times( 1 ) )
-        .updateSchedulingLocation( any(), any(), any(), any() );
+    STATUS = AsyncExecutionStatus.FAILED;
 
-      STATUS = AsyncExecutionStatus.FAILED;
-    } finally {
-      provider.stopServer();
-      provider.startServer( new JobManager() );
-    }
   }
 
 
   @SuppressWarnings( "unchecked" )
   @Test
   public void testUpdateLocationotScheduled() throws Exception {
-    try {
+    final JobManager jobManager = new JobManager( true, 1000, 1000, true );
+
+    final UUID folderId = UUID.randomUUID();
+
+    final Response response =
+      jobManager.confirmSchedule( UUID.randomUUID().toString(), false, false, folderId.toString(), "test" );
+    assertEquals( 404, response.getStatus() );
 
 
-      provider.stopServer();
-      provider.startServer( new JobManager( true, 1000, 1000, true ) );
+    STATUS = AsyncExecutionStatus.FAILED;
 
-      WebClient client = provider.getFreshClient();
-      final UUID folderId = UUID.randomUUID();
-      final String config = String.format( URL_FORMAT, uuid, "/schedule" );
-      client.path( config );
-      client.query( "confirm", false );
-      client.query( "folderId", folderId );
-      client.query( "newName", "blabla" );
-
-      Response response = client.post( null );
-      assertEquals( 404, response.getStatus() );
-
-
-      STATUS = AsyncExecutionStatus.FAILED;
-    } finally {
-      provider.stopServer();
-      provider.startServer( new JobManager() );
-    }
   }
 
   @SuppressWarnings( "unchecked" )
   @Test
   public void testUpdateScheduleLocationDisabledPrompting() throws Exception {
 
-    WebClient client = provider.getFreshClient();
+    final JobManager jobManager = new JobManager();
     final UUID folderId = UUID.randomUUID();
-    final String config = String.format( URL_FORMAT, uuid, "/schedule" );
-    client.path( config );
-    client.query( "newName", folderId );
-    client.query( "folderId", folderId );
 
-    Response response = client.post( null );
+    final Response response = jobManager.confirmSchedule( uuid.toString(), true, false, folderId.toString(), "test" );
     assertEquals( 404, response.getStatus() );
 
     STATUS = AsyncExecutionStatus.FAILED;
@@ -290,16 +249,13 @@ public class JobManagerTest {
     setSession();
 
     final UUID uuid = UUID.randomUUID();
-    final WebClient client = provider.getFreshClient();
+    final JobManager jobManager = new JobManager();
 
     final Future future = mock( Future.class );
     when( executor.getFuture( uuid, session ) ).thenReturn( future );
-    final String config = String.format( URL_FORMAT, uuid, "/cancel" );
 
 
-    client.path( config );
-
-    final Response response = client.get();
+    final Response response = jobManager.cancel( uuid.toString() );
     assertNotNull( response );
     assertEquals( 200, response.getStatus() );
 
@@ -312,24 +268,21 @@ public class JobManagerTest {
     setSession();
 
     final UUID uuid = UUID.randomUUID();
-    final WebClient client = provider.getFreshClient();
+    final JobManager jobManager = new JobManager();
 
     final Future future = mock( Future.class );
     final IFixedSizeStreamingContent content = mock( IFixedSizeStreamingContent.class );
     when( future.get() ).thenReturn( content );
     when( executor.getFuture( uuid, session ) ).thenReturn( future );
-    final String config = String.format( URL_FORMAT, uuid, "/content" );
 
 
-    client.path( config );
-
-    final Response response = client.get();
+    final Response response = jobManager.getContent( uuid.toString() );
     assertNotNull( response );
     assertEquals( 202, response.getStatus() );
 
     STATUS = AsyncExecutionStatus.FINISHED;
 
-    final Response response1 = client.get();
+    final Response response1 = jobManager.getContent( uuid.toString() );
 
     assertNotNull( response1 );
     assertEquals( 200, response1.getStatus() );
@@ -341,24 +294,22 @@ public class JobManagerTest {
     setSession();
 
     final UUID uuid = UUID.randomUUID();
-    final WebClient client = provider.getFreshClient();
+    final JobManager jobManager = new JobManager();
 
     final Future future = mock( Future.class );
     final IFixedSizeStreamingContent content = mock( IFixedSizeStreamingContent.class );
     when( future.get() ).thenReturn( content );
     when( executor.getFuture( uuid, session ) ).thenReturn( future );
-    final String config = String.format( URL_FORMAT, uuid, "/content" );
 
-    client.path( config );
 
-    final Response response = client.get();
+    final Response response = jobManager.getContent( uuid.toString() );
     assertNotNull( response );
 
     assertEquals( 202, response.getStatus() );
 
     STATUS = AsyncExecutionStatus.FINISHED;
 
-    final Response response1 = client.get();
+    final Response response1 = jobManager.getContent( uuid.toString() );
 
     assertNotNull( response1 );
     assertEquals( 200, response1.getStatus() );
@@ -367,10 +318,9 @@ public class JobManagerTest {
 
 
   @Test public void testPreSchedule() throws IOException {
-    final WebClient client = provider.getFreshClient();
-    client.path( String.format( URL_FORMAT, UUID.randomUUID().toString(), "/schedule" ) );
-    client.query( "confirm", false );
-    final Response response = client.get();
+    final JobManager jobManager = new JobManager();
+
+    final Response response = jobManager.schedule( UUID.randomUUID().toString(), false );
     assertNotNull( response );
     assertEquals( 200, response.getStatus() );
     assertEquals( STATUS, AsyncExecutionStatus.PRE_SCHEDULED );
@@ -380,155 +330,97 @@ public class JobManagerTest {
   @SuppressWarnings( "unchecked" )
   @Test
   public void testConfirmSchedulingNoFolderId() throws Exception {
-    try {
+    final JobManager jobManager = new JobManager( true, 1000, 1000, true );
 
-      provider.stopServer();
-      provider.startServer( new JobManager( true, 1000, 1000, true ) );
 
-      WebClient client = provider.getFreshClient();
-      final UUID folderId = UUID.randomUUID();
-      final String config = String.format( URL_FORMAT, uuid, "/schedule" );
-      client.path( config );
-      client.query( "confirm", false );
+    Response response = jobManager.confirmSchedule( UUID.randomUUID().toString(), true, true, null, "test" );
+    assertEquals( 404, response.getStatus() );
 
-      client.query( "newName", "blabla" );
+    STATUS = AsyncExecutionStatus.FAILED;
 
-      Response response = client.post( null );
-      assertEquals( 404, response.getStatus() );
-
-      STATUS = AsyncExecutionStatus.FAILED;
-    } finally {
-      provider.stopServer();
-      provider.startServer( new JobManager() );
-    }
   }
 
   @SuppressWarnings( "unchecked" )
   @Test
   public void testConfirmSchedulingNoNewName() throws Exception {
-    try {
+    final JobManager jobManager = new JobManager( true, 1000, 1000, true );
 
-      provider.stopServer();
-      provider.startServer( new JobManager( true, 1000, 1000, true ) );
 
-      WebClient client = provider.getFreshClient();
+    final Response response =
+      jobManager.confirmSchedule( UUID.randomUUID().toString(), true, true, UUID.randomUUID().toString(), null );
+    assertEquals( 404, response.getStatus() );
 
-      final String config = String.format( URL_FORMAT, uuid, "/schedule" );
-      client.path( config );
-      client.query( "confirm", false );
-      client.query( "folderId", "blabla" );
+    STATUS = AsyncExecutionStatus.FAILED;
 
-      Response response = client.post( null );
-      assertEquals( 404, response.getStatus() );
-
-      STATUS = AsyncExecutionStatus.FAILED;
-    } finally {
-      provider.stopServer();
-      provider.startServer( new JobManager() );
-    }
   }
 
   @Test
   public void testRecalcNotFinished() throws Exception {
-    try {
+    final JobManager jobManager = new JobManager( true, 1000, 1000, true );
+
+    STATUS = AsyncExecutionStatus.QUEUED;
 
 
-      provider.stopServer();
-      provider.startServer( new JobManager( true, 1000, 1000, true ) );
+    final UUID folderId = UUID.randomUUID();
 
-      STATUS = AsyncExecutionStatus.QUEUED;
 
-      WebClient client = provider.getFreshClient();
-      final UUID folderId = UUID.randomUUID();
-      final String config = String.format( URL_FORMAT, uuid, "/schedule" );
-      client.path( config );
-      client.query( "confirm", true );
-      client.query( "folderId", folderId );
-      client.query( "newName", "test" );
-      client.query( "recalculateFinished", "true" );
+    final Response response = jobManager.confirmSchedule( uuid.toString(), true, true, folderId.toString(), "test" );
+    assertEquals( 200, response.getStatus() );
+    verify( executor, times( 0 ) ).recalculate( any(), any() );
+    verify( executor, times( 1 ) ).schedule( any(), any() );
+    verify( executor, times( 1 ) )
+      .updateSchedulingLocation( any(), any(), any(), any() );
 
-      final Response response = client.post( null );
-      assertEquals( 200, response.getStatus() );
-      verify( executor, times( 0 ) ).recalculate( any(), any() );
-      verify( executor, times( 1 ) ).schedule( any(), any() );
-      verify( executor, times( 1 ) )
-        .updateSchedulingLocation( any(), any(), any(), any() );
+    STATUS = AsyncExecutionStatus.FAILED;
 
-      STATUS = AsyncExecutionStatus.FAILED;
-    } finally {
-      provider.stopServer();
-      provider.startServer( new JobManager() );
-    }
   }
 
 
   @Test
   public void testRecalcFinishedExecutorFailed() throws Exception {
-    try {
-      setSession();
 
-      provider.stopServer();
-      provider.startServer( new JobManager( true, 1000, 1000, true ) );
+    setSession();
 
-      STATUS = AsyncExecutionStatus.FINISHED;
+    final JobManager jobManager = new JobManager( true, 1000, 1000, true );
 
-      WebClient client = provider.getFreshClient();
-      final UUID folderId = UUID.randomUUID();
-      final String config = String.format( URL_FORMAT, uuid, "/schedule" );
-      client.path( config );
-      client.query( "confirm", true );
-      client.query( "folderId", folderId );
-      client.query( "newName", "test" );
-      client.query( "recalculateFinished", "true" );
+    STATUS = AsyncExecutionStatus.FINISHED;
 
-      final Response response = client.post( null );
-      assertEquals( 200, response.getStatus() );
-      verify( executor, times( 1 ) ).recalculate( any(), any() );
-      verify( executor, times( 1 ) ).schedule( uuid, session );
-      verify( executor, times( 1 ) )
-        .updateSchedulingLocation( any(), any(), any(), any() );
 
-      STATUS = AsyncExecutionStatus.FAILED;
-    } finally {
-      provider.stopServer();
-      provider.startServer( new JobManager() );
-    }
+    final UUID folderId = UUID.randomUUID();
+    final Response response = jobManager.confirmSchedule( uuid.toString(), true, true, folderId.toString(), "test" );
+    assertEquals( 200, response.getStatus() );
+    verify( executor, times( 1 ) ).recalculate( any(), any() );
+    verify( executor, times( 1 ) ).schedule( uuid, session );
+    verify( executor, times( 1 ) )
+      .updateSchedulingLocation( any(), any(), any(), any() );
+
+    STATUS = AsyncExecutionStatus.FAILED;
+
   }
 
   @Test
   public void testRecalcFinished() throws Exception {
-    try {
-      setSession();
 
-      provider.stopServer();
-      provider.startServer( new JobManager( true, 1000, 1000, true ) );
+    setSession();
 
-      STATUS = AsyncExecutionStatus.FINISHED;
+    final JobManager jobManager = new JobManager( true, 1000, 1000, true );
 
-      final UUID reclcId = UUID.randomUUID();
-      when( executor.recalculate( any(), any() ) ).thenReturn( reclcId );
+    STATUS = AsyncExecutionStatus.FINISHED;
 
-      WebClient client = provider.getFreshClient();
-      final UUID folderId = UUID.randomUUID();
-      final String config = String.format( URL_FORMAT, uuid, "/schedule" );
-      client.path( config );
-      client.query( "confirm", true );
-      client.query( "folderId", folderId );
-      client.query( "newName", "test" );
-      client.query( "recalculateFinished", "true" );
+    final UUID reclcId = UUID.randomUUID();
+    when( executor.recalculate( any(), any() ) ).thenReturn( reclcId );
 
-      final Response response = client.post( null );
-      assertEquals( 200, response.getStatus() );
-      verify( executor, times( 1 ) ).recalculate( any(), any() );
-      verify( executor, times( 1 ) ).schedule( reclcId, session );
-      verify( executor, times( 1 ) )
-        .updateSchedulingLocation( reclcId, session, folderId.toString(), "test" );
 
-      STATUS = AsyncExecutionStatus.FAILED;
-    } finally {
-      provider.stopServer();
-      provider.startServer( new JobManager() );
-    }
+    final UUID folderId = UUID.randomUUID();
+    final Response response = jobManager.confirmSchedule( uuid.toString(), true, true, folderId.toString(), "test" );
+    assertEquals( 200, response.getStatus() );
+    verify( executor, times( 1 ) ).recalculate( any(), any() );
+    verify( executor, times( 1 ) ).schedule( reclcId, session );
+    verify( executor, times( 1 ) )
+      .updateSchedulingLocation( reclcId, session, folderId.toString(), "test" );
+
+    STATUS = AsyncExecutionStatus.FAILED;
+
   }
 
   @Test

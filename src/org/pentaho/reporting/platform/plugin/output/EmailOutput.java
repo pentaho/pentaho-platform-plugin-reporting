@@ -49,6 +49,8 @@ public class EmailOutput implements ReportOutputHandler {
     "org.pentaho.reporting.engine.classic.core.modules.output.table.html.InlineStyles";
   private static final String EXTERNAL_STYLES =
     "org.pentaho.reporting.engine.classic.core.modules.output.table.html.ExternalStyle";
+  private static final String ROTATED_TEXT_AS_IMAGES =
+    "org.pentaho.reporting.engine.classic.core.modules.output.table.html.RotatedTextAsImages";
 
   public EmailOutput() {
   }
@@ -78,6 +80,7 @@ public class EmailOutput implements ReportOutputHandler {
       if ( configuration instanceof ModifiableConfiguration ) {
         ( (ModifiableConfiguration) configuration ).setConfigProperty( INLINE_STYLES, "true" );
         ( (ModifiableConfiguration) configuration ).setConfigProperty( EXTERNAL_STYLES, "false" );
+        ( (ModifiableConfiguration) configuration ).setConfigProperty( ROTATED_TEXT_AS_IMAGES, "true" );
       }
 
       final Properties props = new Properties();
