@@ -25,6 +25,7 @@ import org.pentaho.platform.engine.core.system.boot.PlatformInitializationExcept
 import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressEvent;
+import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlTableModule;
 import org.pentaho.reporting.libraries.base.config.ModifiableConfiguration;
 import org.pentaho.reporting.platform.plugin.MicroPlatformFactory;
 import org.pentaho.reporting.platform.plugin.async.IAsyncReportListener;
@@ -119,10 +120,10 @@ public class EmailOutputTest {
       emailOutput.generate( report, 1, new ByteArrayOutputStream(), 1 );
     } catch ( final Exception ignored ) {
     } finally {
-      assertEquals( configMap.get( "org.pentaho.reporting.engine.classic.core.modules.output.table.html.InlineStyles" ),
+      assertEquals( configMap.get( HtmlTableModule.INLINE_STYLE ),
         "true" );
       assertEquals(
-        configMap.get( "org.pentaho.reporting.engine.classic.core.modules.output.table.html.ExternalStyle" ), "false" );
+        configMap.get( HtmlTableModule.EXTERNALIZE_STYLE ), "false" );
       assertEquals(
         configMap.get( "org.pentaho.reporting.engine.classic.core.modules.output.table.html.RotatedTextAsImages" ), "true" );
       microPlatform.stop();

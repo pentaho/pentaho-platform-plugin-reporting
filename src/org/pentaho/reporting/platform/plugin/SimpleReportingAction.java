@@ -12,23 +12,10 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.Serializable;
-import java.lang.reflect.Array;
-import java.net.URL;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import javax.print.DocFlavor;
-import javax.print.PrintService;
-import javax.print.PrintServiceLookup;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -38,8 +25,8 @@ import org.pentaho.platform.api.action.IVarArgsAction;
 import org.pentaho.platform.api.engine.IActionSequenceResource;
 import org.pentaho.platform.api.engine.IPluginManager;
 import org.pentaho.platform.api.repository2.unified.RepositoryFile;
-import org.pentaho.platform.repository2.unified.fileio.RepositoryFileInputStream;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
+import org.pentaho.platform.repository2.unified.fileio.RepositoryFileInputStream;
 import org.pentaho.reporting.engine.classic.core.AttributeNames;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.metadata.ReportProcessTaskRegistry;
@@ -58,6 +45,8 @@ import org.pentaho.reporting.engine.classic.core.parameters.ValidationMessage;
 import org.pentaho.reporting.engine.classic.core.parameters.ValidationResult;
 import org.pentaho.reporting.engine.classic.core.util.ReportParameterValues;
 import org.pentaho.reporting.engine.classic.extensions.modules.java14print.Java14PrintUtil;
+import org.pentaho.reporting.libraries.base.config.Configuration;
+import org.pentaho.reporting.libraries.base.config.ModifiableConfiguration;
 import org.pentaho.reporting.libraries.base.util.CSVQuoter;
 import org.pentaho.reporting.libraries.base.util.StringUtils;
 import org.pentaho.reporting.libraries.resourceloader.ResourceException;
@@ -70,6 +59,19 @@ import org.pentaho.reporting.platform.plugin.output.FastExportReportOutputHandle
 import org.pentaho.reporting.platform.plugin.output.ReportOutputHandler;
 import org.pentaho.reporting.platform.plugin.output.ReportOutputHandlerFactory;
 import org.pentaho.reporting.platform.plugin.output.ReportOutputHandlerSelector;
+
+import javax.print.DocFlavor;
+import javax.print.PrintService;
+import javax.print.PrintServiceLookup;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.Serializable;
+import java.lang.reflect.Array;
+import java.net.URL;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
 
 public class SimpleReportingAction implements IStreamProcessingAction, IStreamingAction, IVarArgsAction {
 
@@ -864,26 +866,17 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
    * @throws Exception
    */
   public boolean _execute() throws Exception {
-    // SP-307, BISERVER-9688 - When running a report in background (or via a schedule), automatically convert the output
-    // format to Streaming HTML if the default
-    // is Paginated HTML
-    // SimpleReportingAction is not used by the ReportViewer, so this is a catch-all change. If we're trying to do
-    // paginated HTML, change it to streaming HTML
-    // because
-    // it is not possible for the user to actually do paging when they view the report (only 1 page exists). We may have
-    // to tweak this to check specifically if
-    // we are running
-    // within the context of the scheduler, but for now, this seems to hit all the cases.
     if ( inputs != null ) {
       if ( StringUtils.isEmpty( outputTarget ) == false && outputTarget.equals( "table/html;page-mode=page" ) ) {
-        setOutputTarget( "table/html;page-mode=stream" );
-        setPaginateOutput( false );
+        setPaginateOutput( true );
         inputs.put( "output-target", getOutputTarget() );
-      }
-
-      // Embed styles if report will be emailed
-      if ( inputs.get( "_SCH_EMAIL_TO" ) != null ) {
-        report.getReportConfiguration().setConfigProperty( HtmlTableModule.EXTERNALIZE_STYLE, "false" );
+        final Configuration configuration = report.getConfiguration();
+        if ( configuration instanceof ModifiableConfiguration ) {
+          final ModifiableConfiguration modifiableConfiguration = (ModifiableConfiguration) configuration;
+          //use tmp folder to store images and styles
+          setUseJcr( false );
+          modifiableConfiguration.setConfigProperty( PentahoPlatformModule.FORCE_ALL_PAGES, "true" );
+        }
       }
     }
     // SP-307, BISERVER-9688
