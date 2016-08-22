@@ -1033,7 +1033,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                     isFirstContAvStatus = false;
                     //1st page is ready - need to spawn another job to get it
                     if (me._currentStoredPagesCount > me._requestedPage) {
-                      pentahoGet('reportjob', url.substring(url.lastIndexOf("/report?") + "/report?".length, url.length), firtsPageReadyCallback, 'text/text');
+                      pentahoPost('reportjob', url.substring(url.lastIndexOf("/report?") + "/report?".length, url.length), firtsPageReadyCallback, 'text/text');
                     }
 
                     me._keepPolling(mainJobStatus.uuid, url, mainReportGeneration);
@@ -1045,7 +1045,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                       newUrl = newUrl.replace(/(accepted-page=)\d*?(&)/, '$1' + me._requestedPage + '$2');
                       me._requestedPage = 0;
                       me._cachedReportCanceled = false;
-                      pentahoGet('reportjob', newUrl, firtsPageReadyCallback, 'text/text');
+                      pentahoPost('reportjob', newUrl, firtsPageReadyCallback, 'text/text');
                       registry.byId('reportGlassPane').hide();
                     }
 
@@ -1098,7 +1098,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                     if (match[2] != me._requestedPage) {
                       newUrl = match[1] + me._requestedPage + match[3];
                       me._requestedPage = 0;
-                      pentahoGet('reportjob', newUrl, firtsPageReadyCallback, 'text/text');
+                      pentahoPost('reportjob', newUrl, firtsPageReadyCallback, 'text/text');
                     }
                   }
 
@@ -1202,7 +1202,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                   //Actually user changed not the page but prompts/output target - we need a new job to get it
                   me._reportUrl = reportUrl;
                   me.cancel(me._currentReportStatus, me._currentReportUuid);
-                  pentahoGet('reportjob', reportUrl, mainReportGeneration, 'text/text');
+                  pentahoPost('reportjob', reportUrl, mainReportGeneration, 'text/text');
                   me._hideAsyncScreens();
                 } else {
                   //Page navigation occurred  - callbacks will do the job
@@ -1223,10 +1223,11 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                 pentahoPost(url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/reserveId', "", function (data) {
                   try {
                     me._currentReportUuid = JSON.parse(data).reservedId;
-                    pentahoGet('reportjob', reportUrl + "&reservedId=" + me._currentReportUuid, mainReportGeneration, 'text/text');
+                    // backlog-10041 do not send GET request with overloaded parameters passed via url
+                    pentahoPost('reportjob', reportUrl + "&reservedId=" + me._currentReportUuid, mainReportGeneration, 'text/text');
                   } catch (e) {
                     logger && logger.log("Can't reserve id");
-                    pentahoGet('reportjob', reportUrl, mainReportGeneration, 'text/text');
+                    pentahoPost('reportjob', reportUrl, mainReportGeneration, 'text/text');
                   }
                 });
               } else {
@@ -1330,7 +1331,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                    */
                   mainJobStatus = JSON.parse(result);
                   if (mainJobStatus.status == 'FINISHED') {
-                    pentahoGet('reportjob', me._reportUrl, mainReportGeneration, 'text/text');
+                    pentahoPost('reportjob', me._reportUrl, mainReportGeneration, 'text/text');
                   } else {
                     mainReportGeneration(result);
                   }
