@@ -112,9 +112,12 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           domClass.add('notification-screen', 'hidden');
         }));
 
-        on(registry.byId('toolbar-clearCache'),  "click", lang.hitch( this,  function() {
-          this.clearReportCache( this.submitReport.bind(this) );
-        }));
+        var clearCache = registry.byId('toolbar-clearCache');
+        if(clearCache) {
+          on(clearCache, "click", lang.hitch(this, function () {
+            this.clearReportCache(this.submitReport.bind(this));
+          }));
+        }
 
         if(window.top.mantle_addHandler){
           //When slow connection there is a gap between tab glass pane and prompt glass pane
