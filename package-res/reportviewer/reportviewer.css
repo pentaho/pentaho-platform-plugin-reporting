@@ -199,6 +199,10 @@ div.prompt-panel {
   background: url("../../common-ui/resources/themes/images/options.png") 1px 1px no-repeat !important;
 }
 
+.dijitEditorIconRefresh {
+  background: url("../../common-ui/resources/themes/images/refresh_report.png") 1px 1px no-repeat !important;
+}
+
 .dijitTooltipBelow {
 	/* leave room for arrow above content */
 	padding-top: 25px;
