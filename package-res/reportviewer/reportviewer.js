@@ -1036,17 +1036,20 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                     isFirstContAvStatus = false;
                     //1st page is ready - need to spawn another job to get it
                     if (me._currentStoredPagesCount > me._requestedPage) {
+                      //Prevent double content update on 1st page
+                      me._requestedPage = -1;
                       pentahoPost('reportjob', url.substring(url.lastIndexOf("/report?") + "/report?".length, url.length), firtsPageReadyCallback, 'text/text');
                     }
 
                     me._keepPolling(mainJobStatus.uuid, url, mainReportGeneration);
                   } else {
 
-                    if ((me._cachedReportCanceled && me._requestedPage == 0) || ((me._requestedPage > 0) && (me._currentStoredPagesCount > me._requestedPage))) {
+                    if ((me._cachedReportCanceled && me._requestedPage == 0) || ((me._requestedPage >= 0) && (me._currentStoredPagesCount > me._requestedPage))) {
                       //adjust accepted page in url
                       var newUrl = url.substring(url.lastIndexOf("/report?") + "/report?".length, url.length);
                       newUrl = newUrl.replace(/(accepted-page=)\d*?(&)/, '$1' + me._requestedPage + '$2');
-                      me._requestedPage = 0;
+                      //BACKLOG-9814 distinguish initial 1st page from going back to the 1st page
+                      me._requestedPage = -1;
                       me._cachedReportCanceled = false;
                       pentahoPost('reportjob', newUrl, firtsPageReadyCallback, 'text/text');
                       registry.byId('reportGlassPane').hide();
