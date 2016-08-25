@@ -934,6 +934,8 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         // that the report content is being updated.
         me.reportPrompt.showGlassPane();
 
+        me._updateParametersDisabledState(true);
+
         var options = me._buildReportContentOptions();
         var url = me._buildReportContentUrl(options);
 
@@ -1602,6 +1604,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           this._updateReportTimeout = -1;
         }
         this._forceHideGlassPane();
+        this._updateParametersDisabledState(false);
       },
 
       _submitReportEnded: function(isTimeout) {
@@ -1723,6 +1726,23 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         });
 
         return url + params.join("&");
+      },
+
+      _updateParametersDisabledState: function(disable) {
+        var testElements = document.getElementsByClassName('parameter');
+        for(var i=0; i<testElements.length; i++) {
+          if(testElements[i].getElementsByTagName('select').length > 0) {
+            testElements[i].getElementsByTagName('select')[0].disabled = disable;
+          } else if(testElements[i].getElementsByTagName('input').length > 0) {
+            for(var j=0; j<testElements[i].getElementsByTagName('input').length; j++) {
+              testElements[i].getElementsByTagName('input')[0].disabled = disable;
+            }
+          } else if(testElements[i].getElementsByTagName('button').length > 0) {
+            for(var j=0; j<testElements[i].getElementsByTagName('button').length; j++) {
+              testElements[i].getElementsByTagName('button')[j].disabled = disable;
+            }
+          }
+        }
       },
 
       _isDownloadableFormat: function (mime) {
