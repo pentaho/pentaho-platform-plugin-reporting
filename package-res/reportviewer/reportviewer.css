@@ -458,3 +458,8 @@ div.prompt-panel {
 #reportControlPanel select {
   overflow-y: auto;
 }
+
+.dijitToolbar span.pentaho-button, .tabpanel span.pentaho-button {
+  -moz-box-shadow: none;
+  box-shadow: none;
+}
