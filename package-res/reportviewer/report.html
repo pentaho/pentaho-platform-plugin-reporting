@@ -84,7 +84,7 @@
         <span id="toolbar-parameter-separator" data-dojo-type="dijit.ToolbarSeparator"></span>
         <div id="toolbar-parameterToggle" data-dojo-type="dijit.form.ToggleButton" iconClass="dijitEditorIcon dijitEditorIconParameters" showLabel="false">Parameters</div>
         <span id="toolbar-parameter-separator-refresh" data-dojo-type="dijit.ToolbarSeparator"></span>
-        <div id="toolbar-clearCache" data-dojo-type="dijit.form.ToggleButton" iconClass="dijitEditorIcon dijitEditorIconRefresh" showLabel="false">Refresh report data</div>
+        <div id="toolbar-clearCache" data-dojo-type="dijit.form.Button" iconClass="dijitEditorIcon dijitEditorIconRefresh" showLabel="false">Refresh report data</div>
       </div>
     </div>
     <script type="text/javascript">
@@ -118,6 +118,9 @@
   </div>
 </div>
 
+<div id="queryLimitReachedArea" class="hidden">
+  <div id="queryLimitReachedMessage"></div>
+</div>
 <div id="reportArea" class="pentaho-transparent">
   <div id="notification-screen" class="hidden pentaho-notification">
     <table>
