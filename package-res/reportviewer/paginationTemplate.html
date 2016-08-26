@@ -161,8 +161,6 @@
       autoResize(iframe);
     };
 
-    ${pages}
-
     var fill = function (base64) {
       iframe.contentWindow.contents = htmlDecode(atob(base64));
       iframe.src = 'javascript:window["contents"]';
@@ -228,19 +226,39 @@
 
   function autoResize(el) {
     el.height = (getDocHeight(el)) + "px";
+    //clarify 2 times
+    el.height = (getDocHeight(el)) + "px";
+
+    el.width = (getDocWidth(el)) + "px";
     el.width = (getDocWidth(el)) + "px";
   }
 
   function getDocHeight(el) {
-    return Math.max(
-        el.contentWindow.document.body.scrollHeight, el.contentWindow.document.documentElement.scrollHeight
-    );
+    var doc = el.contentWindow.document;
+    var max = 0;
+
+    max = Math.max( max, doc.body.scrollHeight );
+    max = Math.max( max, doc.documentElement.scrollHeight );
+    max = Math.max( max, doc.body.offsetHeight );
+    max = Math.max( max, doc.documentElement.offsetHeight );
+    max = Math.max( max, el.scrollHeight );
+    max = Math.max( max, el.offsetHeight );
+
+    return max;
   }
 
   function getDocWidth(el) {
-    return Math.max(
-        el.contentWindow.document.body.scrollWidth, el.contentWindow.document.documentElement.scrollWidth
-    );
+    var doc = el.contentWindow.document;
+    var max = 0;
+
+    max = Math.max( max, doc.body.scrollWidth );
+    max = Math.max( max, doc.documentElement.scrollWidth );
+    max = Math.max( max, doc.body.scrollWidth );
+    max = Math.max( max, doc.documentElement.scrollWidth );
+    max = Math.max( max, el.scrollWidth );
+    max = Math.max( max, el.offsetWidth );
+
+    return max;
   }
 
   function getLocalizedValue(value) {
@@ -255,6 +273,8 @@
     var doc = new DOMParser().parseFromString(input, "text/html");
     return doc.documentElement.textContent;
   }
+
+  ${pages}
 
 </script>
 </body>
