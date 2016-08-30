@@ -171,6 +171,13 @@
     fill(pages[currentId - 1]);
 
     var current = document.getElementById('current');
+
+    current.onkeypress = function(e) {
+        if ( e.keyCode == 13 ) {
+            current.onchange();
+        }
+    };
+
     current.value = currentId;
     current.min = 1;
     current.max = pages.length;
