@@ -101,7 +101,7 @@ define([
         });
 
         for (var parameter in currentParameterSet) {
-          if (!oldParameterSet.hasOwnProperty(parameter)) {
+          if (oldParameterSet && !oldParameterSet.hasOwnProperty(parameter)) {
             changedParameters.push(parameter);
           }
         }
@@ -186,7 +186,16 @@ define([
       updateParameterDefinitionWithNewValues: function(callback, names) {
         var paramDefn = $.extend(true, {}, this._oldParameterDefinition); // clone previous(old) paramDefn
         for(var i=0; i<names.length; i++) {
-          this.api.util.validateSingleParameter(paramDefn, names[i], this.api.operation.getParameterValues()[names[i]], this._defaultValuesMap);
+          /*As far as we don't recieve all parameters from server we can loose
+            calculated formula results. Let's handle this case. */
+          var untrusted = this.api.operation.getParameterValues()[names[i]];
+          if(undefined === untrusted ){
+            var p = paramDefn.getParameter(names[i]);
+            if(p && p.attributes && p.attributes['must-validate-on-server']){
+              untrusted = p.getSelectedValuesValue();
+            }
+          }
+          this.api.util.validateSingleParameter(paramDefn, names[i], untrusted, this._defaultValuesMap);
         }
         try {
           this.api.util.checkParametersErrors(paramDefn); // if no errors set promptNeeded to false(show report)
@@ -207,6 +216,29 @@ define([
             } else {
               // use updated parameter definition(client validation)
               paramDefn = parameterDefinition;
+            }
+
+            if(paramDefn.minimized && this._oldParameterDefinition){
+
+              //Work with clone in order not to affect old definition
+              var oldParams = $.extend(true, {}, this._oldParameterDefinition);
+
+              //Replace all changed parameters values
+              paramDefn.mapParameters( function (p) {
+                oldParams.updateParameterValue(p);
+              });
+
+              //Replace root attributes
+              oldParams.errors = paramDefn.errors;
+              for (var key in paramDefn) {
+                var prop = paramDefn[key];
+                if(typeof prop == 'string' || typeof prop == 'number' || typeof prop == 'boolean' ) {
+                  oldParams[key] = prop;
+                }
+              }
+              oldParams.minimized = false;
+              //Assign updated definition
+              paramDefn = oldParams;
             }
 
             try {
@@ -253,16 +285,34 @@ define([
             this.hideGlassPane();
           };
 
+          var names = this.findChangedParameters();
+
           if (this._isAsync && this.isParameterUpdateCall()) {
-            var names = this.findChangedParameters();
             if (this.canSkipParameterChange(names)) {
               this.updateParameterDefinitionWithNewValues(paramDefnCallback.bind(this), names);
               // we did not contact the server.
               return;
             }
           }
+          var needToUpdate = [];
+          var oldParams = this._oldParameterDefinition;
+          if(oldParams){
+            oldParams.mapParameters( function (p) {
+              if(names && names.indexOf(p.name) >= 0){
+                //Don't need to request formulas
+                if(p && (!p.attributes || (p.attributes && !p.attributes['post-processor-formula']))){
+                  needToUpdate.push(p.name);
+                }
+              } else {
+                //Request update for invalid auto-fill parameters
+                if(p.attributes && oldParams.errors[p.name] && "true" === p.attributes['autofill-selection']){
+                  needToUpdate.push(p.name);
+                }
+              }
+            });
+          }
 
-          this.fetchParameterDefinition(paramDefnCallback.bind(this), this.mode);
+          this.fetchParameterDefinition(paramDefnCallback.bind(this), this.mode, needToUpdate);
         }.bind(this));
        },
 
@@ -393,8 +443,9 @@ define([
        *  x USERINPUT - due to a change + auto-submit
        *
        * If not provided, 'MANUAL' will be used.
+       * @param changedParams - list of changed parameters names
        */
-      fetchParameterDefinition: function(callback, promptMode) {
+      fetchParameterDefinition: function(callback, promptMode, changedParams ) {
         var me = this;
 
         var fetchParamDefId = ++me._fetchParamDefId;
@@ -453,6 +504,10 @@ define([
             me.onFatalError(e);
           }
         };
+
+        if(changedParams){
+          options['changedParameters'] = changedParams;
+        }
 
         $.ajax({
           async:   true,

@@ -19,6 +19,7 @@
 package org.pentaho.reporting.platform.plugin;
 
 import com.google.common.collect.Lists;
+import org.apache.commons.collections.map.HashedMap;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -70,6 +71,7 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -343,7 +345,7 @@ public class ParameterXmlContentHandlerTest {
     dependencies.add( "name", "dep1" );
     dependencies.add( "name", "dep2" );
 
-    Element element = handler.createParameterElement( parameter, context, null, dependencies );
+    Element element = handler.createParameterElement( parameter, context, null, dependencies, false );
     assertNotNull( element );
     handler.document.appendChild( element );
     handler.createParameterDependencies( element, parameter, new HashNMap() );
@@ -351,6 +353,7 @@ public class ParameterXmlContentHandlerTest {
     String xml = toString( handler.document );
 
     examineStandardXml( handler.document );
+    assertTrue( isThereAttributes( handler.document ) );
   }
 
   /**
@@ -398,12 +401,13 @@ public class ParameterXmlContentHandlerTest {
     dependencies.add( "name", "dep0" );
     dependencies.add( "name", "dep1" );
 
-    Element element = handler.createParameterElement( parameter, context, null, dependencies );
+    Element element = handler.createParameterElement( parameter, context, null, dependencies, false );
     assertNotNull( element );
     handler.document.appendChild( element );
     handler.createParameterDependencies( element, parameter, dependencies );
 
     examineStandardXml( handler.document );
+    assertTrue( isThereAttributes( handler.document ) );
 
     String xml = toString( handler.document );
 
@@ -455,7 +459,7 @@ public class ParameterXmlContentHandlerTest {
    * @return
    * @throws ReportDataFactoryException
    */
-  private ParameterContext getTestParameterContext() throws ReportDataFactoryException {
+  private DefaultParameterContext getTestParameterContext() throws ReportDataFactoryException {
     GeneratorTableModel model =
       new GeneratorTableModel( new String[] { "c1", "c2" }, new Class[] { String.class, String.class }, 2 );
     DataFactory df = new TableDataFactory( "query", model );
@@ -465,7 +469,202 @@ public class ParameterXmlContentHandlerTest {
     ResourceManager manager = new ResourceManager();
     ResourceKey key = new ResourceKey( "", "", Collections.emptyMap() );
     ReportEnvironment env = new DefaultReportEnvironment( conf );
-    ParameterContext context = new DefaultParameterContext( df, dr, conf, factory, manager, key, env );
-    return context;
+    return new DefaultParameterContext( df, dr, conf, factory, manager, key, env );
+  }
+
+  @Test
+  public void createParameterElementNoAttributesTest()
+    throws BeanException, ReportDataFactoryException, ParserConfigurationException, XPathExpressionException {
+    final DefaultListParameter parameter =
+      new DefaultListParameter( "query", "c1", "c2", "name", true, true, String.class );
+
+    final ParameterContext context = getTestParameterContext();
+
+    handler.document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+
+    final HashNMap<String, String> dependencies = new HashNMap<>();
+    dependencies.add( "name", "dep1" );
+    dependencies.add( "name", "dep2" );
+
+    final Element element = handler.createParameterElement( parameter, context, null, dependencies, Boolean.TRUE );
+    assertNotNull( element );
+    handler.document.appendChild( element );
+    handler.createParameterDependencies( element, parameter, new HashNMap() );
+
+    examineStandardXml( handler.document );
+    assertFalse( isThereAttributes( handler.document ) );
+  }
+
+  @Test
+  public void appendInitialParametersList()
+    throws BeanException, ReportDataFactoryException, ParserConfigurationException, XPathExpressionException,
+    CloneNotSupportedException {
+
+    final LinkedHashMap<String, ParameterDefinitionEntry> parameterDefinitions = getParametersMap();
+
+    final DefaultParameterContext context = getTestParameterContext();
+    final ValidationResult vr = new ValidationResult();
+    vr.setParameterValues( new ReportParameterValues(  ) );
+
+    handler.document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+
+    final HashNMap<String, String> dependencies = new HashNMap<>();
+    dependencies.add( "first", "second" );
+    dependencies.add( "second", "third" );
+
+    Element parameters = handler.document.createElement( "parameters" );
+    handler.document.appendChild( parameters );
+
+    handler.appendParametersList( context, vr, parameters, dependencies, parameterDefinitions, new HashMap(  ), null  );
+    examineInitialParameters( handler.document );
+  }
+
+  @Test
+  public void appendChangedParametersList()
+    throws BeanException, ReportDataFactoryException, ParserConfigurationException, XPathExpressionException,
+    CloneNotSupportedException {
+
+    final LinkedHashMap<String, ParameterDefinitionEntry> parameterDefinitions = getParametersMap();
+
+    final DefaultParameterContext context = getTestParameterContext();
+    final ValidationResult vr = new ValidationResult();
+    vr.setParameterValues( new ReportParameterValues(  ) );
+
+    handler.document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+
+    final HashNMap<String, String> dependencies = new HashNMap<>();
+    dependencies.add( "first", "second" );
+    dependencies.add( "second", "third" );
+
+    Element parameters = handler.document.createElement( "parameters" );
+    handler.document.appendChild( parameters );
+
+    handler.appendParametersList( context, vr, parameters, dependencies, parameterDefinitions, new HashMap(  ), new String[]{"first"} );
+    examineChangedDependentParameters( handler.document );
+  }
+
+  @Test
+  public void appendChangedIndependentParametersList()
+    throws BeanException, ReportDataFactoryException, ParserConfigurationException, XPathExpressionException,
+    CloneNotSupportedException {
+
+    final LinkedHashMap<String, ParameterDefinitionEntry> parameterDefinitions = getParametersMap();
+
+    final DefaultParameterContext context = getTestParameterContext();
+    final ValidationResult vr = new ValidationResult();
+    vr.setParameterValues( new ReportParameterValues(  ) );
+
+    handler.document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+
+    final HashNMap<String, String> dependencies = new HashNMap<>();
+    dependencies.add( "first", "second" );
+    dependencies.add( "second", "third" );
+
+    Element parameters = handler.document.createElement( "parameters" );
+    handler.document.appendChild( parameters );
+
+    handler.appendParametersList( context, vr, parameters, dependencies, parameterDefinitions, new HashedMap(  ), new String[]{"fourth"} );
+    examineChangedIndependentParameters( handler.document );
+  }
+
+  private LinkedHashMap<String, ParameterDefinitionEntry> getParametersMap() {
+    final LinkedHashMap<String, ParameterDefinitionEntry> parameterDefinitions = new LinkedHashMap<>(  );
+    final DefaultListParameter parameter =
+      new DefaultListParameter( "query", "c1", "c2", "first", true, true, String.class );
+    final DefaultListParameter parameter1 =
+      new DefaultListParameter( "query", "c1", "c2", "second", true, true, String.class );
+    final DefaultListParameter parameter2 =
+      new DefaultListParameter( "query", "c1", "c2", "third", true, true, String.class );
+    final DefaultListParameter parameter3 =
+      new DefaultListParameter( "query", "c1", "c2", "fourth", true, true, String.class );
+    parameterDefinitions.put( "first", parameter );
+    parameterDefinitions.put( "second", parameter1 );
+    parameterDefinitions.put( "third", parameter2 );
+    parameterDefinitions.put( "fourth", parameter3 );
+    return parameterDefinitions;
+  }
+
+  private void examineInitialParameters( final Document doc ) throws XPathExpressionException {
+    final XPath xpath = xpathFactory.newXPath();
+    final NodeList root = (NodeList) xpath.evaluate( "/parameters", doc, XPathConstants.NODESET );
+    assertEquals( 1, root.getLength() );
+    final Node minimized = root.item( 0 ).getAttributes().getNamedItem( "minimized" );
+    assertNull( minimized );
+    final NodeList nodeList = (NodeList) xpath.evaluate( "/parameters/parameter", doc, XPathConstants.NODESET );
+    assertEquals( 4, nodeList.getLength() );
+    final NodeList first =
+      (NodeList) xpath.evaluate( "/parameters/parameter[@name='first']", doc, XPathConstants.NODESET );
+    assertEquals( 1, first.getLength() );
+    final NodeList second =
+      (NodeList) xpath.evaluate( "/parameters/parameter[@name='second']", doc, XPathConstants.NODESET );
+    assertEquals( 1, second.getLength() );
+    final NodeList third =
+      (NodeList) xpath.evaluate( "/parameters/parameter[@name='third']", doc, XPathConstants.NODESET );
+    assertEquals( 1, third.getLength() );
+    final NodeList fourth =
+      (NodeList) xpath.evaluate( "/parameters/parameter[@name='fourth']", doc, XPathConstants.NODESET );
+    assertEquals( 1, fourth.getLength() );
+    final NodeList attributes = (NodeList) xpath.evaluate( "/parameters/parameter/attribute", doc, XPathConstants.NODESET );
+    assertTrue( attributes.getLength() != 0 );
+    final NodeList dependencies = (NodeList) xpath.evaluate( "/parameters/parameter/dependencies", doc, XPathConstants.NODESET );
+    assertTrue( dependencies.getLength() != 0 );
+  }
+
+  private void examineChangedDependentParameters( final Document doc ) throws XPathExpressionException {
+    final XPath xpath = xpathFactory.newXPath();
+    final NodeList root = (NodeList) xpath.evaluate( "/parameters", doc, XPathConstants.NODESET );
+    assertEquals( 1, root.getLength() );
+    final Node minimized = root.item( 0 ).getAttributes().getNamedItem( "minimized" );
+    assertNotNull( minimized );
+    final NodeList nodeList = (NodeList) xpath.evaluate( "/parameters/parameter", doc, XPathConstants.NODESET );
+    assertEquals( 3, nodeList.getLength() );
+    final NodeList first =
+      (NodeList) xpath.evaluate( "/parameters/parameter[@name='first']", doc, XPathConstants.NODESET );
+    assertEquals( 1, first.getLength() );
+    final NodeList second =
+      (NodeList) xpath.evaluate( "/parameters/parameter[@name='second']", doc, XPathConstants.NODESET );
+    assertEquals( 1, second.getLength() );
+    final NodeList third =
+      (NodeList) xpath.evaluate( "/parameters/parameter[@name='third']", doc, XPathConstants.NODESET );
+    assertEquals( 1, third.getLength() );
+    final NodeList fourth =
+      (NodeList) xpath.evaluate( "/parameters/parameter[@name='fourth']", doc, XPathConstants.NODESET );
+    assertEquals( 0, fourth.getLength() );
+    final NodeList attributes = (NodeList) xpath.evaluate( "/parameters/parameter/attribute", doc, XPathConstants.NODESET );
+    assertFalse( attributes.getLength() != 0 );
+    final NodeList dependencies = (NodeList) xpath.evaluate( "/parameters/parameter/dependencies", doc, XPathConstants.NODESET );
+    assertFalse( dependencies.getLength() != 0 );
+  }
+
+  private void examineChangedIndependentParameters( final Document doc ) throws XPathExpressionException {
+    final XPath xpath = xpathFactory.newXPath();
+    final NodeList root = (NodeList) xpath.evaluate( "/parameters", doc, XPathConstants.NODESET );
+    assertEquals( 1, root.getLength() );
+    final Node minimized = root.item( 0 ).getAttributes().getNamedItem( "minimized" );
+    assertNotNull( minimized );
+    final NodeList nodeList = (NodeList) xpath.evaluate( "/parameters/parameter", doc, XPathConstants.NODESET );
+    assertEquals( 1, nodeList.getLength() );
+    final NodeList first =
+      (NodeList) xpath.evaluate( "/parameters/parameter[@name='first']", doc, XPathConstants.NODESET );
+    assertEquals( 0, first.getLength() );
+    final NodeList second =
+      (NodeList) xpath.evaluate( "/parameters/parameter[@name='second']", doc, XPathConstants.NODESET );
+    assertEquals( 0, second.getLength() );
+    final NodeList third =
+      (NodeList) xpath.evaluate( "/parameters/parameter[@name='third']", doc, XPathConstants.NODESET );
+    assertEquals( 0, third.getLength() );
+    final NodeList fourth =
+      (NodeList) xpath.evaluate( "/parameters/parameter[@name='fourth']", doc, XPathConstants.NODESET );
+    assertEquals( 1, fourth.getLength() );
+    final NodeList attributes = (NodeList) xpath.evaluate( "/parameters/parameter/attribute", doc, XPathConstants.NODESET );
+    assertFalse( attributes.getLength() != 0 );
+    final NodeList dependencies = (NodeList) xpath.evaluate( "/parameters/parameter/dependencies", doc, XPathConstants.NODESET );
+    assertFalse( dependencies.getLength() != 0 );
+  }
+
+  private boolean isThereAttributes( final Document doc ) throws XPathExpressionException {
+    final XPath xpath = xpathFactory.newXPath();
+    final NodeList nodeList = (NodeList) xpath.evaluate( "/parameter/attribute", doc, XPathConstants.NODESET );
+    return nodeList.getLength() != 0;
   }
 }
