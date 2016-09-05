@@ -87,15 +87,20 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TimeZone;
+import java.util.stream.Collectors;
 
 public class ParameterXmlContentHandler {
   public static final String SYS_PARAM_ACCEPTED_PAGE = "accepted-page";
@@ -407,14 +412,11 @@ public class ParameterXmlContentHandler {
         report.getReportConfiguration().getConfigProperty( CONFIG_PARAM_HTML_PROPORTIONAL_WIDTH );
       inputs.put( SYS_PARAM_HTML_PROPORTIONAL_WIDTH, Boolean.valueOf( proportionalWidth ) );
 
-      for ( final ParameterDefinitionEntry parameter : reportParameters.values() ) {
-        final Object selections = inputs.get( parameter.getName() );
-        final ParameterContextWrapper wrapper =
-          new ParameterContextWrapper( parameterContext, vr.getParameterValues() );
-        Element el = createParameterElement( parameter, wrapper, selections, dependencies );
-        createParameterDependencies( el, parameter, dependencies );
-        parameters.appendChild( el );
-      }
+      //get changed parameters from request
+      final String[] changedParamsQuery = requestParams.getStringArrayParameter( "changedParameters", null );
+
+      appendParametersList( parameterContext, vr, parameters, dependencies, reportParameters, inputs,
+        changedParamsQuery );
 
       if ( vr.isEmpty() == false ) {
         parameters.appendChild( createErrorElements( vr ) );
@@ -445,6 +447,58 @@ public class ParameterXmlContentHandler {
       // close parameter context
     } finally {
       parameterContext.close();
+    }
+  }
+
+  protected void appendParametersList( final DefaultParameterContext parameterContext,
+                                    final ValidationResult vr,
+                                    final Element parameters,
+                                    final HashNMap<String, String> dependencies,
+                                    final LinkedHashMap<String, ParameterDefinitionEntry> reportParameters,
+                                    final Map<String, Object> inputs,
+                                    final String[] changedParamsQuery )
+    throws CloneNotSupportedException, BeanException, ReportDataFactoryException {
+    if ( changedParamsQuery != null && changedParamsQuery.length > 0 ) {
+      final Set<Object> changedParameters = new HashSet<>( Arrays.asList( changedParamsQuery ) );
+
+      //Changed parameters and their dependencies
+      final Set<Object> changedWithDependencies = addAllDependencies( dependencies, changedParameters );
+
+      //Filter definitions
+      final List<ParameterDefinitionEntry> changedParamDefinitions =
+        reportParameters.values().stream().filter( p -> changedWithDependencies.contains( p.getName() ) ).collect( Collectors
+
+          .toList() );
+
+      //Filtered list without attributes
+      renderParameters( parameterContext, vr, parameters, new HashNMap<>(), changedParamDefinitions, inputs, Boolean.TRUE );
+
+      //Specify that the result was cut
+      final Element parameterElement = document.createElement( "parameter" );
+      parameterElement.setAttribute( "name", "changedOnly" );
+      parameterElement.setAttribute( "value", "true" );
+      parameterElement.setAttribute( "type", String.class.getName() );
+      parameters.appendChild( parameterElement );
+    } else {
+      //Initial parameter call or not async mode
+      renderParameters( parameterContext, vr, parameters, dependencies, reportParameters.values(), inputs, Boolean.FALSE );
+    }
+  }
+
+  private void renderParameters( final DefaultParameterContext parameterContext,
+                                 final ValidationResult vr,
+                                 final Element parameters,
+                                 final HashNMap<String, String> dependencies,
+                                 final Collection<ParameterDefinitionEntry> reportParameters,
+                                 final Map<String, Object> inputs,
+                                 final boolean  ignoreAttributes ) throws BeanException, ReportDataFactoryException {
+    for ( final ParameterDefinitionEntry parameter : reportParameters ) {
+      final Object selections = inputs.get( parameter.getName() );
+      final ParameterContextWrapper wrapper =
+        new ParameterContextWrapper( parameterContext, vr.getParameterValues() );
+      final Element el = createParameterElement( parameter, wrapper, selections, dependencies, ignoreAttributes  );
+      createParameterDependencies( el, parameter, dependencies );
+      parameters.appendChild( el );
     }
   }
 
@@ -491,6 +545,34 @@ public class ParameterXmlContentHandler {
     }
 
     return downstreamParams;
+  }
+
+  private Set<Object> addAllDependencies( final HashNMap<String, String> dependencies, final Set<Object> changedNames )
+    throws CloneNotSupportedException {
+
+    if ( dependencies != null && !dependencies.isEmpty() ) {
+      final Set<Object> destination = new HashSet<>( changedNames );
+      final Iterator<Object> changedIterator = changedNames.iterator();
+      while ( changedIterator.hasNext() ) {
+        final String nextName = String.valueOf( changedIterator.next() );
+        fillParams( destination, dependencies, nextName );
+      }
+      return destination;
+    }
+
+    return changedNames;
+  }
+
+  private void fillParams( final Set<Object> destination, final HashNMap<String, String> dependencies,
+                           final String paramName ) {
+    final Iterator<String> all = dependencies.getAll( paramName );
+    if ( all != null && all.hasNext() ) {
+      while ( all.hasNext() ) {
+        final String nextName = all.next();
+        destination.add( nextName );
+        fillParams( destination, dependencies, nextName );
+      }
+    }
   }
 
   void computeNormalLineage( ParameterContext pc, ParameterDefinitionEntry pe, HashNMap<String, String> m ) {
@@ -618,7 +700,8 @@ public class ParameterXmlContentHandler {
 
   Element createParameterElement( final ParameterDefinitionEntry parameter,
                                   final ParameterContext parameterContext, final Object selections,
-                                  HashNMap<String, String> dependencies )
+                                  final HashNMap<String, String> dependencies,
+                                  final boolean ignoreAttributes )
     throws BeanException,
     ReportDataFactoryException {
     try {
@@ -631,34 +714,36 @@ public class ParameterXmlContentHandler {
 
       final String[] namespaces = parameter.getParameterAttributeNamespaces();
       boolean isMustValidateOnServerSet = false;
-      for ( int i = 0; i < namespaces.length; i++ ) {
-        final String namespace = namespaces[ i ];
-        final String[] attributeNames = parameter.getParameterAttributeNames( namespace );
-        for ( final String attributeName : attributeNames ) {
-          final String attributeValue = parameter.getParameterAttribute( namespace, attributeName, parameterContext );
-          // expecting: label, parameter-render-type, parameter-layout
-          // but others possible as well, so we set them all
-          final Element attributeElement = document.createElement( "attribute" ); // NON-NLS
-          attributeElement.setAttribute( "namespace", namespace ); // NON-NLS
-          attributeElement.setAttribute( "name", attributeName ); // NON-NLS
-          attributeElement.setAttribute( "value", attributeValue ); // NON-NLS
+      if ( !ignoreAttributes ) {
+        for ( int i = 0; i < namespaces.length; i++ ) {
+          final String namespace = namespaces[ i ];
+          final String[] attributeNames = parameter.getParameterAttributeNames( namespace );
+          for ( final String attributeName : attributeNames ) {
+            final String attributeValue = parameter.getParameterAttribute( namespace, attributeName, parameterContext );
+            // expecting: label, parameter-render-type, parameter-layout
+            // but others possible as well, so we set them all
+            final Element attributeElement = document.createElement( "attribute" ); // NON-NLS
+            attributeElement.setAttribute( "namespace", namespace ); // NON-NLS
+            attributeElement.setAttribute( "name", attributeName ); // NON-NLS
+            attributeElement.setAttribute( "value", attributeValue ); // NON-NLS
 
-          parameterElement.appendChild( attributeElement );
+            parameterElement.appendChild( attributeElement );
 
-          if ( ( "re-evaluate-on-failed-values".equals( attributeName ) || "autofill-selection".equals( attributeName ) ) && "true".equals( attributeValue ) ) {
-            // must validate on server
-            final Element attrElement = document.createElement( "attribute" );
-            attrElement.setAttribute( "namespace", SYS_SERVER_NAMESPACE );
-            attrElement.setAttribute( "name", "must-validate-on-server" );
-            attrElement.setAttribute( "value", Boolean.TRUE.toString() );
-            parameterElement.appendChild( attrElement );
-            isMustValidateOnServerSet = true;
+            if ( ( "re-evaluate-on-failed-values".equals( attributeName ) || "autofill-selection".equals( attributeName ) ) && "true".equals( attributeValue ) ) {
+              // must validate on server
+              final Element attrElement = document.createElement( "attribute" );
+              attrElement.setAttribute( "namespace", SYS_SERVER_NAMESPACE );
+              attrElement.setAttribute( "name", "must-validate-on-server" );
+              attrElement.setAttribute( "value", Boolean.TRUE.toString() );
+              parameterElement.appendChild( attrElement );
+              isMustValidateOnServerSet = true;
+            }
           }
         }
       }
 
       //parameter dependencies: see backlog-7980
-      if ( dependencies != null && !dependencies.isEmpty() && dependencies.getAll( parameter.getName() ).hasNext() ) {
+      if ( dependencies != null && !dependencies.isEmpty() && dependencies.getAll( parameter.getName() ).hasNext() && !ignoreAttributes ) {
         List<String> deps = Lists.newArrayList( dependencies.getAll( parameter.getName() ) );
 
         if ( !deps.isEmpty() ) {
