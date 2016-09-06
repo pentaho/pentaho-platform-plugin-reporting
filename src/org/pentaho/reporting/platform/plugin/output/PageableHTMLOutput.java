@@ -216,6 +216,9 @@ public class PageableHTMLOutput implements ReportOutputHandler {
         proxyOutputStream.setParent( outputStream );
         reinitOutputTarget();
         proc.processReport();
+        if ( listener != null ) {
+          listener.setIsQueryLimitReached( proc.isQueryLimitReached() );
+        }
         return proc.getLogicalPageCount();
       } else {
         final Repository repository = reinitOutputTargetRepo();
@@ -226,7 +229,9 @@ public class PageableHTMLOutput implements ReportOutputHandler {
           throw new ReportProcessingException( "Can't generate report" );
         }
 
-        listener.setIsQueryLimitReached( proc.isQueryLimitReached() );
+        if ( listener != null ) {
+          listener.setIsQueryLimitReached( proc.isQueryLimitReached() );
+        }
 
         //Write all if scheduled
         final boolean forceAllPages = isForceAllPages( report );

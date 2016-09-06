@@ -17,19 +17,7 @@
 
 package org.pentaho.reporting.platform.plugin;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.Serializable;
-import java.lang.reflect.Array;
-import java.net.URL;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import javax.print.DocFlavor;
-import javax.print.PrintService;
-import javax.print.PrintServiceLookup;
-
+import org.apache.commons.lang.math.NumberUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.pentaho.platform.api.engine.IAcceptsRuntimeInputs;
@@ -67,6 +55,19 @@ import org.pentaho.reporting.platform.plugin.output.FastExportReportOutputHandle
 import org.pentaho.reporting.platform.plugin.output.ReportOutputHandler;
 import org.pentaho.reporting.platform.plugin.output.ReportOutputHandlerFactory;
 import org.pentaho.reporting.platform.plugin.output.ReportOutputHandlerSelector;
+
+import javax.print.DocFlavor;
+import javax.print.PrintService;
+import javax.print.PrintServiceLookup;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.Serializable;
+import java.lang.reflect.Array;
+import java.net.URL;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
 
 public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntimeInputs {
 
@@ -451,6 +452,15 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     }
     if ( inputs.containsKey( DASHBOARD_MODE ) ) {
       dashboardMode = "true".equals( String.valueOf( inputs.get( DASHBOARD_MODE ) ) ); //$NON-NLS-1$
+    }
+    if ( inputs.containsKey( ParameterXmlContentHandler.SYS_PARAM_QUERY_LIMIT ) ) {
+      try {
+        if ( inputs.get( ParameterXmlContentHandler.SYS_PARAM_QUERY_LIMIT ) != null ) {
+          this.getReport().setQueryLimit( checkAndGetUserInputQueryLimit( inputs.get( ParameterXmlContentHandler.SYS_PARAM_QUERY_LIMIT ), this.getReport().getQueryLimit() ) );
+        }
+      } catch ( Exception e ) {
+        log.warn( e.getMessage(), e );
+      }
     }
   }
 
@@ -1009,7 +1019,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
         log.warn( Messages.getInstance().getString( "ReportPlugin.warnUnprocessableRequest", outputType ) );
         return 0;
       }
-      synchronized( reportOutputHandler.getReportLock() ) {
+      synchronized ( reportOutputHandler.getReportLock() ) {
         try {
           return reportOutputHandler.paginate( report, getYieldRate() );
         } finally {
@@ -1063,6 +1073,26 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
         input = defaultValue;
       }
       return idx.cast( input );
+    }
+  }
+
+  protected int checkAndGetUserInputQueryLimit( Object userInputQueryLimit, int reportQueryLimit ) {
+    int systemQueryLimit = -1;
+
+    IPluginManager pm = PentahoSystem.get( IPluginManager.class );
+    if ( pm != null ) {
+      systemQueryLimit = NumberUtils.toInt( (String) pm.getPluginSetting( "reporting", "settings/query-limit", "-1" ), -1 );
+    }
+
+    int userQueryLimit = NumberUtils.toInt( (String) userInputQueryLimit, -1 );
+
+    if ( userQueryLimit > 0 ) {
+      return systemQueryLimit > 0 ? Math.min( userQueryLimit, systemQueryLimit ) : userQueryLimit;
+    } else {
+      if ( systemQueryLimit > 0 ) {
+        return reportQueryLimit > 0 ? Math.min( reportQueryLimit, systemQueryLimit ) : systemQueryLimit;
+      }
+      return -1;
     }
   }
 

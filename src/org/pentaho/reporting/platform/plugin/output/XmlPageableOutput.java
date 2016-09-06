@@ -17,18 +17,18 @@
 
 package org.pentaho.reporting.platform.plugin.output;
 
-import java.io.IOException;
-import java.io.OutputStream;
-
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
-import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
 import org.pentaho.reporting.engine.classic.core.layout.output.YieldReportListener;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.base.AllPageFlowSelector;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.base.PageableReportProcessor;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.base.SinglePageFlowSelector;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.xml.XmlPageOutputProcessor;
+import org.pentaho.reporting.platform.plugin.async.IAsyncReportListener;
 import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
+
+import java.io.IOException;
+import java.io.OutputStream;
 
 public class XmlPageableOutput implements ReportOutputHandler {
   private PageableReportProcessor proc;
@@ -68,7 +68,7 @@ public class XmlPageableOutput implements ReportOutputHandler {
       proc = createProcessor( report, yieldRate );
     }
 
-    final ReportProgressListener listener = ReportListenerThreadHolder.getListener();
+    final IAsyncReportListener listener = ReportListenerThreadHolder.getListener();
     //Add async job listener
     if ( listener != null ) {
       proc.addReportProgressListener( listener );
@@ -80,6 +80,9 @@ public class XmlPageableOutput implements ReportOutputHandler {
       }
       proxyOutputStream.setParent( outputStream );
       proc.processReport();
+      if ( listener != null ) {
+        listener.setIsQueryLimitReached( proc.isQueryLimitReached() );
+      }
       return proc.getPhysicalPageCount();
     } finally {
       if ( listener != null ) {

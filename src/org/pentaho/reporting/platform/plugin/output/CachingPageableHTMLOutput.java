@@ -62,6 +62,7 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
 
   private static Log logger = LogFactory.getLog( CachingPageableHTMLOutput.class );
   public static final String IS_QUERY_LIMIT_REACHED = "IsQueryLimitReached";
+  public static final String REPORT_ROWS = "ReportRows";
   private MasterReport masterReport;
   private PageableReportProcessor processor;
 
@@ -112,7 +113,7 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
         // we finished pagination, and thus have the page numbers ready.
         // we also have pages in repository
         try {
-          persistContent( key, produceReportContent( proc, targetRepository ) );
+          persistContent( key, produceReportContent( proc, targetRepository ), reportProgressEvent.getMaximumRow() );
           lastAcceptedPageWritten = page;
           //Update after pages are in cache
           asyncReportListener.updateGenerationStatus( page - 1 );
@@ -194,7 +195,7 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
         if ( listener != null ) {
           listener.updateGenerationStatus( cachedContent.getStoredPageCount() );
           final ReportProgressEvent event =
-            new ReportProgressEvent( this, ReportProgressEvent.GENERATING_CONTENT, 0, 0,
+            new ReportProgressEvent( this, ReportProgressEvent.GENERATING_CONTENT, 0, getReportTotalRows( key ),
               acceptedPage + 1, cachedContent.getPageCount(), 0, 0 );
           listener.reportProcessingUpdate( event );
           listener.reportProcessingFinished( event );
@@ -241,7 +242,8 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
     throws ReportProcessingException {
     logger.warn( "Regenerating report data for " + key );
     final IReportContent result = produceCacheablePages( report, yieldRate, key, acceptedPage );
-    persistContent( key, result );
+    final IAsyncReportListener listener = ReportListenerThreadHolder.getListener();
+    persistContent( key, result, listener.getTotalRows() );
     return result;
   }
 
@@ -305,15 +307,21 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
     return cache.getMetaData( key );
   }
 
-  private synchronized void persistContent( final String key, final IReportContent data ) {
+  private synchronized void persistContent( final String key, final IReportContent data, final int reportTotalRows ) {
     final IPluginCacheManager cacheManager = PentahoSystem.get( IPluginCacheManager.class );
     final IReportContentCache cache = cacheManager.getCache();
     if ( cache != null ) {
-      if ( processor.isQueryLimitReached() ) {
-        cache.put( key, data, updateQueryLimitReachedFlag( cache.getMetaData( key ) ) );
-      } else {
-        cache.put( key, data );
+      Map<String, Serializable> metaData = cache.getMetaData( key );
+      if ( metaData == null ) {
+        metaData = new HashMap<>();
       }
+      metaData.put( REPORT_ROWS, reportTotalRows );
+
+      if ( processor.isQueryLimitReached() ) {
+        updateQueryLimitReachedFlag( metaData );
+      }
+
+      cache.put( key, data, metaData );
     } else {
       logger.error( "Plugin session cache is not available." );
     }
@@ -340,6 +348,7 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
       sourceKey = computeDefSourceKey( report, definitionSource );
     }
     final HashMap<String, String> params = new HashMap<>();
+    params.put( "query-limit", String.valueOf( report.getQueryLimit() ) );
     final ReportParameterDefinition parameterDefinition = report.getParameterDefinition();
     final ReportParameterValues parameterValues = report.getParameterValues();
     for ( final ParameterDefinitionEntry p : parameterDefinition.getParameterDefinitions() ) {
@@ -419,4 +428,16 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
       super( cause );
     }
   }
+
+  private int getReportTotalRows( String key ) {
+    Map<String, Serializable> metaData = getCachedMetaData( key );
+    if ( metaData != null ) {
+      Object reportTotalRows = metaData.get( REPORT_ROWS );
+      if ( reportTotalRows != null ) {
+        return (int) reportTotalRows;
+      }
+    }
+    return 0;
+  }
+
 }

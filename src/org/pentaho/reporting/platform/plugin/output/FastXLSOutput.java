@@ -16,15 +16,19 @@
  */
 package org.pentaho.reporting.platform.plugin.output;
 
-import java.io.IOException;
-import java.io.OutputStream;
-
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
-import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
-import org.pentaho.reporting.engine.classic.core.modules.output.fast.xls.FastExcelReportUtil;
+import org.pentaho.reporting.engine.classic.core.layout.output.AbstractReportProcessor;
+import org.pentaho.reporting.engine.classic.core.modules.output.fast.validator.ReportStructureValidator;
+import org.pentaho.reporting.engine.classic.core.modules.output.fast.xls.FastExcelExportProcessor;
+import org.pentaho.reporting.engine.classic.core.modules.output.table.base.FlowReportProcessor;
+import org.pentaho.reporting.engine.classic.core.modules.output.table.xls.FlowExcelOutputProcessor;
 import org.pentaho.reporting.libraries.repository.ContentIOException;
+import org.pentaho.reporting.platform.plugin.async.IAsyncReportListener;
 import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
+
+import java.io.IOException;
+import java.io.OutputStream;
 
 public class FastXLSOutput implements ReportOutputHandler {
   private ProxyOutputStream proxyOutputStream;
@@ -38,8 +42,21 @@ public class FastXLSOutput implements ReportOutputHandler {
                        final OutputStream outputStream,
                        final int yieldRate ) throws ReportProcessingException, IOException, ContentIOException {
     proxyOutputStream.setParent( outputStream );
-    final ReportProgressListener listener = ReportListenerThreadHolder.getListener();
-    FastExcelReportUtil.processXls( report, outputStream, listener );
+    final IAsyncReportListener listener = ReportListenerThreadHolder.getListener();
+    ReportStructureValidator validator = new ReportStructureValidator();
+    if ( validator.isValidForFastProcessing( report ) == false ) {
+      createXLS( report, outputStream, listener );
+      return 0;
+    }
+
+    final FastExcelExportProcessor reportProcessor = new FastExcelExportProcessor( report, outputStream, false );
+    if ( listener != null ) {
+      reportProcessor.addReportProgressListener( listener );
+    }
+
+    doProcess( listener, reportProcessor );
+    outputStream.flush();
+
     return 0;
   }
 
@@ -59,4 +76,41 @@ public class FastXLSOutput implements ReportOutputHandler {
   public Object getReportLock() {
     return this;
   }
+
+  public static void createXLS( final MasterReport report, final OutputStream outputStream,
+                                final IAsyncReportListener listener )
+          throws ReportProcessingException, IOException {
+    if ( report == null ) {
+      throw new NullPointerException();
+    }
+    if ( outputStream == null ) {
+      throw new NullPointerException();
+    }
+
+    final FlowExcelOutputProcessor target =
+            new FlowExcelOutputProcessor( report.getConfiguration(), outputStream, report.getResourceManager() );
+    target.setUseXlsxFormat( false );
+    final FlowReportProcessor reportProcessor = new FlowReportProcessor( report, target );
+    if ( listener != null ) {
+      reportProcessor.addReportProgressListener( listener );
+    }
+    doProcess( listener, reportProcessor );
+    outputStream.flush();
+  }
+
+  private static void doProcess( final IAsyncReportListener listener, final AbstractReportProcessor reportProcessor )
+          throws ReportProcessingException {
+    try {
+      reportProcessor.processReport();
+      if ( listener != null ) {
+        listener.setIsQueryLimitReached( reportProcessor.isQueryLimitReached() );
+      }
+    } finally {
+      if ( listener != null ) {
+        reportProcessor.removeReportProgressListener( listener );
+      }
+      reportProcessor.close();
+    }
+  }
+
 }

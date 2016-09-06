@@ -12,5 +12,10 @@
     <auto-submit>false</auto-submit>
     <auto-submit-default>false</auto-submit-default>
 	-->
+
+    <!-- Enabled or disabled row limit control on UI. No value means disabled.-->
+    <query-limit-ui-enabled>false</query-limit-ui-enabled>
+    <!-- The maximum number of rows that will be rendered in a report viewer. -->
+    <query-limit>100000</query-limit>
     
 </settings>
