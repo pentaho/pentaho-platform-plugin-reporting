@@ -21,10 +21,6 @@
       padding: 0 4px 0 0;
     }
 
-    .page-control-nav {
-      padding: 4px;
-    }
-
     .page-control-nav-inner {
       background-color: #F1F1F1;
       height: 30px;
@@ -152,6 +148,7 @@
 
 <script>
 
+  var caclSizeOnce = true;
 
   document.addEventListener("DOMContentLoaded", function () {
 
@@ -234,12 +231,16 @@
   });
 
   function autoResize(el) {
-    el.height = (getDocHeight(el)) + "px";
-    //clarify 2 times
-    el.height = (getDocHeight(el)) + "px";
+    if ( caclSizeOnce ) {
+        caclSizeOnce = false;
+  
+        el.height = (getDocHeight(el)) + "px";
+        //clarify 2 times
+        el.height = (getDocHeight(el)) + "px";
 
-    el.width = (getDocWidth(el)) + "px";
-    el.width = (getDocWidth(el)) + "px";
+        el.width = (getDocWidth(el)) + "px";
+        el.width = (getDocWidth(el)) + "px";
+    }
   }
 
   function getDocHeight(el) {
