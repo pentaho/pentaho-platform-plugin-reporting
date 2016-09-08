@@ -140,7 +140,7 @@
       </div>
     </div>
     <div id="pageview" class="page-control-content">
-      <iframe id="pageframe" src="about:blank">
+      <iframe id="pageframe" src="about:blank"  scrolling="no">
       </iframe>
     </div>
   </div>
@@ -233,7 +233,7 @@
   function autoResize(el) {
     if ( caclSizeOnce ) {
         caclSizeOnce = false;
-  
+
         el.height = (getDocHeight(el)) + "px";
         //clarify 2 times
         el.height = (getDocHeight(el)) + "px";
