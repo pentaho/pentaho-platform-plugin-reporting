@@ -19,6 +19,7 @@ package org.pentaho.reporting.platform.plugin.async;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.pentaho.platform.api.engine.IPluginManager;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
@@ -45,6 +46,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+@Ignore
 public class ExecutorIT extends SpringIT {
 
   @Autowired

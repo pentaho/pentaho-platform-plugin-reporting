@@ -45,7 +45,8 @@
 		<dependency org="org.codehaus.jackson" name="jackson-mapper-asl" rev="1.9.13"/>
 
     <dependency org="org.springframework.security" name="spring-security-core" rev="${dependency.spring.security.revision}" transitive="false"/>
-		<dependency org="org.springframework" name="spring-web" rev="${dependency.spring.framework.revision}" transitive="false"/>		        
+		<dependency org="org.springframework" name="spring-web" rev="${dependency.spring.framework.revision}" transitive="false"/>		 
+    <dependency org="org.jvnet.jax-ws-commons.spring" name="jaxws-spring" rev="${dependency.jaxws-spring.revision}"/>       
         <!--  Codegen dependencies -->
         <dependency org="com.google.gwt" name="gwt-user" rev="2.4.0" conf="codegen->default"/>
         <!-- it doesn't matter what platform of gwt-dev we use here. GWT compile only cares about the API part of the jar -->

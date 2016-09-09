@@ -12,16 +12,19 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
 
 import org.springframework.dao.DataAccessException;
-import org.springframework.security.GrantedAuthority;
-import org.springframework.security.userdetails.UserDetails;
-import org.springframework.security.userdetails.UserDetailsService;
-import org.springframework.security.userdetails.UsernameNotFoundException;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+
+import java.util.ArrayList;
+import java.util.Collection;
 
 public class MockUserDetailsService implements UserDetailsService {
   private static class DummyUserDetails implements UserDetails {
@@ -31,8 +34,8 @@ public class MockUserDetailsService implements UserDetailsService {
       this.userName = userName;
     }
 
-    public GrantedAuthority[] getAuthorities() {
-      return new GrantedAuthority[0];
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+      return new ArrayList<GrantedAuthority>();
     }
 
     public String getPassword() {
