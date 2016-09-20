@@ -633,32 +633,37 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           var outerDoc = document;
 
           // It's surely HTML content, so the following is valid
-          win2.withDoc(t.contentWindow.document, function(){
-            // add overflow hidden to prevent scrollbars on ie9 inside the report
-            domStyle.set(win2.doc.getElementsByTagName("html")[0], {'overflow': 'hidden'});
+          win2.withDoc(t.contentWindow.document, function() {
+            setTimeout(function() {
+              // add overflow hidden to prevent scrollbars on ie9 inside the report
+              domStyle.set(win2.doc.getElementsByTagName("html")[0], {'overflow': 'hidden'});
 
-            var dimensions = geometry.getMarginBox(win2.doc.getElementsByTagName("body")[0]);
+              var dimensions = geometry.getMarginBox(win2.doc.getElementsByTagName("body")[0]);
 
-            // changing width to jquery due to problems with dojo getting the width correcty
-            // although, dojo is used to get the height due to issues on ie8 and 9
-            dimensions.w = $('#reportContent').contents().width();
+              // changing width to jquery due to problems with dojo getting the width correcty
+              // although, dojo is used to get the height due to issues on ie8 and 9
+              dimensions.w = $('#reportContent').contents().width();
 
-            logger && logger.log("Styled page - polled dimensions = (" + dimensions.w + ", " + dimensions.h + ")");
+              logger && logger.log("Styled page - polled dimensions = (" + dimensions.w + ", " + dimensions.h + ")");
 
-            // In case the styled report content is too small, assume 2/3 of the width.
-            // This may happen when there are no results.
-            if(dimensions.w <= POLL_SIZE) {
-              // Most certainly this indicates that the loaded report content
-              // does not have a fixed width, and, instead, adapts to the imposed size (like width: 100%).
+              // In case the styled report content is too small, assume 2/3 of the width.
+              // This may happen when there are no results.
+              if(dimensions.w <= POLL_SIZE) {
+                // Most certainly this indicates that the loaded report content
+                // does not have a fixed width, and, instead, adapts to the imposed size (like width: 100%).
 
-              var vp;
-              win2.withDoc(outerDoc, function() { vp = win.getBox(); });
+                var vp;
+                win2.withDoc(outerDoc, function() {
+                  vp = win.getBox();
+                });
 
-              dimensions.w = Math.round(2 * vp.w / 3);
-              logger && logger.log("Width is too small - assuming a default width of " + dimensions.w);
-            }
+                dimensions.w = Math.round(2 * vp.w / 3);
+                logger && logger.log("Width is too small - assuming a default width of " + dimensions.w);
+              }
 
-            geometry.setContentSize(t, {w: dimensions.w, h: dimensions.h});
+              geometry.setContentSize(t, {w: dimensions.w, h: dimensions.h});
+              $('#reportContent').hide().fadeIn('fast');
+            }, 10);
           });
         }
       }), // end view
