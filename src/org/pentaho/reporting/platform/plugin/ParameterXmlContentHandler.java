@@ -723,7 +723,8 @@ public class ParameterXmlContentHandler {
 
             parameterElement.appendChild( attributeElement );
 
-            if ( ( "re-evaluate-on-failed-values".equals( attributeName ) || "autofill-selection".equals( attributeName ) ) && "true".equals( attributeValue ) ) {
+            if ( ParameterAttributeNames.Core.POST_PROCESSOR_FORMULA.equals( attributeName )
+                    || ( ( ParameterAttributeNames.Core.RE_EVALUATE_ON_FAILED_VALUES.equals( attributeName ) || ParameterAttributeNames.Core.AUTOFILL_SELECTION.equals( attributeName ) ) && "true".equals( attributeValue ) ) ) {
               // must validate on server
               final Element attrElement = document.createElement( "attribute" );
               attrElement.setAttribute( "namespace", SYS_SERVER_NAMESPACE );
