@@ -1137,6 +1137,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                       _Messages.getString('ErrorPromptTitle'));
                   registry.byId('feedbackScreen').hide();
                   me._hideAsyncScreens();
+                  me._updateParametersDisabledState(false);
 
                   logger && logger.log("ERROR: Request status - FAILED");
 
@@ -1631,6 +1632,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         // PRD-3962 - show glass pane on submit, hide when iframe is loaded
         // Hide glass-pane, if it is visible
         if(!this.reportPrompt._isAsync) {
+          this._updateParametersDisabledState(false);
           this.reportPrompt.hideGlassPane();
         }
       },
