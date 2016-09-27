@@ -164,11 +164,13 @@ public abstract class AbstractAsyncReportExecution<TReportState extends IAsyncRe
   }
 
   @Override public synchronized boolean schedule() {
-    if ( listener.isScheduled() ) {
-      return false;
-    } else {
-      listener.setStatus( AsyncExecutionStatus.SCHEDULED );
-      return listener.isScheduled();
+    synchronized( listener ) {
+      if ( listener.isScheduled() ) {
+        return false;
+      } else {
+        listener.setStatus( AsyncExecutionStatus.SCHEDULED );
+        return listener.isScheduled();
+      }
     }
   }
 
