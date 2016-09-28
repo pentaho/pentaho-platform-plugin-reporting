@@ -25,11 +25,15 @@ import org.apache.commons.logging.LogFactory;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.audit.MessageTypes;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
+import org.pentaho.reporting.engine.classic.core.MasterReport;
+import org.pentaho.reporting.libraries.resourceloader.ResourceException;
 import org.pentaho.reporting.platform.plugin.AuditWrapper;
+import org.pentaho.reporting.platform.plugin.ReportCreator;
 import org.pentaho.reporting.platform.plugin.SimpleReportingComponent;
 import org.pentaho.reporting.platform.plugin.staging.AsyncJobFileStagingHandler;
 import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
 
+import java.io.IOException;
 import java.io.OutputStream;
 
 public class PentahoAsyncReportExecution extends AbstractAsyncReportExecution<IAsyncReportState> {
@@ -46,10 +50,23 @@ public class PentahoAsyncReportExecution extends AbstractAsyncReportExecution<IA
   }
 
 
-  PentahoAsyncReportExecution( final PentahoAsyncReportExecution old,
-                                      final AsyncJobFileStagingHandler handler ) {
+  PentahoAsyncReportExecution( final PentahoAsyncReportExecution old, final AsyncJobFileStagingHandler handler ) {
     super( old.url, old.reportComponent, handler, old.safeSession, old.auditId, old.getAudit() );
     old.reportComponent.setOutputStream( handler.getStagingOutputStream() );
+    final MasterReport report = getReport( old );
+    if ( report != null ) {
+      old.reportComponent.setReport( report );
+    }
+  }
+
+  private MasterReport getReport( PentahoAsyncReportExecution old ) {
+    final String path = old.getState().getPath();
+    try {
+      return ReportCreator.createReportByName( path );
+    } catch ( ResourceException | IOException e ) {
+      log.error( "No report was found on provided path", e );
+    }
+    return null;
   }
 
   /**

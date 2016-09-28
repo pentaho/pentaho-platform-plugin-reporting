@@ -17,17 +17,16 @@
 
 package org.pentaho.reporting.platform.plugin.output;
 
-import java.io.IOException;
-import java.io.OutputStream;
-
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
-import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
-import org.pentaho.reporting.engine.classic.core.layout.output.YieldReportListener;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.base.PageableReportProcessor;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.pdf.PdfOutputProcessor;
 import org.pentaho.reporting.libraries.repository.ContentIOException;
+import org.pentaho.reporting.platform.plugin.async.IAsyncReportListener;
 import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
+
+import java.io.IOException;
+import java.io.OutputStream;
 
 public class PDFOutput implements ReportOutputHandler {
   public PDFOutput() {
@@ -42,7 +41,7 @@ public class PDFOutput implements ReportOutputHandler {
     final PdfOutputProcessor outputProcessor = new PdfOutputProcessor( report.getConfiguration(), outputStream );
     final PageableReportProcessor proc = new PageableReportProcessor( report, outputProcessor );
     if ( yieldRate > 0 ) {
-      proc.addReportProgressListener( new YieldReportListener( yieldRate ) );
+      proc.addReportProgressListener( getYieldListener( yieldRate ) );
     }
     return proc;
   }
@@ -55,20 +54,9 @@ public class PDFOutput implements ReportOutputHandler {
   public int generate( final MasterReport report, final int acceptedPage, final OutputStream outputStream,
                        final int yieldRate ) throws ReportProcessingException, IOException {
     final PageableReportProcessor proc = createProcessor( report, yieldRate, outputStream );
-    final ReportProgressListener listener = ReportListenerThreadHolder.getListener();
-    //Add async job listener
-    if ( listener != null ) {
-      proc.addReportProgressListener( listener );
-    }
-    try {
-      proc.processReport();
-      return 0;
-    } finally {
-      if ( listener != null ) {
-        proc.removeReportProgressListener( listener );
-      }
-      proc.close();
-    }
+    final IAsyncReportListener listener = ReportListenerThreadHolder.getListener();
+    doProcess( listener, proc );
+    return 0;
   }
 
   public boolean supportsPagination() {

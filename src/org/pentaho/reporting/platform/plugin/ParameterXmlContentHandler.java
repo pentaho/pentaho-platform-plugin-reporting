@@ -19,9 +19,11 @@ package org.pentaho.reporting.platform.plugin;
 
 import com.google.common.collect.Lists;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang.math.NumberUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.pentaho.platform.api.engine.IParameterProvider;
+import org.pentaho.platform.api.engine.IPluginManager;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.util.UUIDUtil;
 import org.pentaho.reporting.engine.classic.core.AttributeNames;
@@ -120,6 +122,10 @@ public class ParameterXmlContentHandler {
   private static final String SYS_PARAM_HTML_PROPORTIONAL_WIDTH = "htmlProportionalWidth";
   private static final String CONFIG_PARAM_HTML_PROPORTIONAL_WIDTH =
     "org.pentaho.reporting.engine.classic.core.modules.output.table.html.ProportionalColumnWidths";
+  private static final String SYS_PARAM_IS_QUERY_CONTROL_ENABLED = "query-limit-ui-enabled";
+  private static final String SYS_PARAM_REPORT_QUERY_LIMIT = "report-query-limit";
+  static final String SYS_PARAM_QUERY_LIMIT = "query-limit";
+  private static final String SYS_PARAM_MAX_QUERY_LIMIT = "maximum-query-limit";
   // default visibility for testing purposes
   Document document;
   private Map<String, ParameterDefinitionEntry> systemParameter;
@@ -253,6 +259,9 @@ public class ParameterXmlContentHandler {
       parameter.put( SYS_PARAM_RENDER_MODE, createRenderModeSystemParameter() ); // NON-NLS
       parameter.put( SYS_PARAM_HTML_PROPORTIONAL_WIDTH, createGenericBooleanSystemParameter(
         SYS_PARAM_HTML_PROPORTIONAL_WIDTH, false, true ) );
+      parameter.put( SYS_PARAM_IS_QUERY_CONTROL_ENABLED, createGenericBooleanSystemParameter( SYS_PARAM_IS_QUERY_CONTROL_ENABLED, false, false ) );
+      parameter.put( SYS_PARAM_QUERY_LIMIT, createGenericIntSystemParameter( SYS_PARAM_QUERY_LIMIT, false, false ) );
+      parameter.put( SYS_PARAM_MAX_QUERY_LIMIT, createGenericIntSystemParameter( SYS_PARAM_MAX_QUERY_LIMIT, false, false ) );
 
       systemParameter = Collections.unmodifiableMap( parameter );
     }
@@ -411,6 +420,22 @@ public class ParameterXmlContentHandler {
       String proportionalWidth =
         report.getReportConfiguration().getConfigProperty( CONFIG_PARAM_HTML_PROPORTIONAL_WIDTH );
       inputs.put( SYS_PARAM_HTML_PROPORTIONAL_WIDTH, Boolean.valueOf( proportionalWidth ) );
+
+      // Adding row limit config parameters
+      Boolean isQueryLimitControlEnabled = false;
+      Integer maxQueryLimit = null;
+      final IPluginManager pm = PentahoSystem.get( IPluginManager.class );
+      if ( pm != null ) {
+        isQueryLimitControlEnabled = Boolean.parseBoolean(
+          (String) pm.getPluginSetting( "reporting", "settings/query-limit-ui-enabled", "false" ) );
+        maxQueryLimit =
+          NumberUtils.toInt( (String) pm.getPluginSetting( "reporting", "settings/query-limit", "0" ), 0 );
+      }
+      inputs.put( SYS_PARAM_IS_QUERY_CONTROL_ENABLED, isQueryLimitControlEnabled );
+      inputs.put( SYS_PARAM_REPORT_QUERY_LIMIT, report.getQueryLimit() );
+      inputs.put( SYS_PARAM_QUERY_LIMIT, report.getQueryLimit() );
+      inputs.put( SYS_PARAM_MAX_QUERY_LIMIT, maxQueryLimit );
+
 
       //get changed parameters from request
       final String[] changedParamsQuery = requestParams.getStringArrayParameter( "changedParameters", null );

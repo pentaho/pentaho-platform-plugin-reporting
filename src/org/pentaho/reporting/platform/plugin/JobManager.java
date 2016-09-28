@@ -31,6 +31,8 @@ import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.util.RepositoryPathEncoder;
 import org.pentaho.platform.util.StringUtil;
 import org.pentaho.platform.util.web.MimeHelper;
+import org.pentaho.reporting.engine.classic.core.MasterReport;
+import org.pentaho.reporting.libraries.resourceloader.ResourceException;
 import org.pentaho.reporting.platform.plugin.async.AsyncExecutionStatus;
 import org.pentaho.reporting.platform.plugin.async.IAsyncReportState;
 import org.pentaho.reporting.platform.plugin.async.IJobIdGenerator;
@@ -218,9 +220,16 @@ public class JobManager {
                             @DefaultValue( "true" )
                             @QueryParam( "confirm" ) final boolean confirm ) {
     try {
-      final ExecutionContext context = getContext( jobId );
+      ExecutionContext context = getContext( jobId );
 
       if ( confirm ) {
+        if ( context.needRecalculation( Boolean.FALSE ) ) {
+          //Get new job id
+          final UUID recalculate = context.recalculate();
+          if ( null != recalculate ) {
+            context = getContext( recalculate.toString() );
+          }
+        }
         context.schedule();
       } else {
         context.preSchedule();
@@ -253,7 +262,7 @@ public class JobManager {
 
       //The report can be already scheduled but we still may want to update the location
       if ( confirm ) {
-        if ( AsyncExecutionStatus.FINISHED.equals( context.getReportState().getStatus() ) && recalculateFinished ) {
+        if ( context.needRecalculation( recalculateFinished ) ) {
           //Get new job id
           final UUID recalculate = context.recalculate();
           if ( null != recalculate ) {
@@ -407,7 +416,7 @@ public class JobManager {
   /**
    * Used to get context for operation execution and validate it
    */
-  protected class ExecutionContext {
+  public class ExecutionContext {
     private IPentahoSession session;
     private final String jobId;
     private UUID uuid = null;
@@ -493,9 +502,33 @@ public class JobManager {
       getReportState();
       return getReportExecutor().recalculate( uuid, session );
     }
+
+    public boolean needRecalculation( final boolean recalculateFinished ) throws ContextFailedException {
+      return ( AsyncExecutionStatus.FINISHED.equals( getReportState().getStatus() ) && recalculateFinished )
+        || isRowLimitRecalculationNeeded();
+    }
+
+    private boolean isRowLimitRecalculationNeeded() throws ContextFailedException {
+      try {
+        final IAsyncReportState state = this.getReportState();
+        final String path = state.getPath();
+        final MasterReport report = ReportCreator.createReportByName( path );
+        final int queryLimit = report.getQueryLimit();
+        if ( queryLimit > 0 ) {
+          return Boolean.TRUE;
+        } else {
+          if ( state.getIsQueryLimitReached() ) {
+            return Boolean.TRUE;
+          }
+        }
+        return Boolean.FALSE;
+      } catch ( ResourceException | IOException e ) {
+        return Boolean.FALSE;
+      }
+    }
   }
 
-  protected static class ContextFailedException extends Exception {
+  public static class ContextFailedException extends Exception {
 
     public ContextFailedException( final String message ) {
       super( message );

@@ -24,7 +24,6 @@ import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
 import org.pentaho.reporting.engine.classic.core.layout.output.DisplayAllFlowSelector;
-import org.pentaho.reporting.engine.classic.core.layout.output.YieldReportListener;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.base.PageableReportProcessor;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.base.SinglePageFlowSelector;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.AllItemsHtmlPrinter;
@@ -115,7 +114,7 @@ public class PageableHTMLOutput implements ReportOutputHandler {
     proc = new PageableReportProcessor( report, outputProcessor );
 
     if ( yieldRate > 0 ) {
-      proc.addReportProgressListener( new YieldReportListener( yieldRate ) );
+      proc.addReportProgressListener( getYieldListener( yieldRate ) );
     }
 
     return proc;
@@ -216,6 +215,9 @@ public class PageableHTMLOutput implements ReportOutputHandler {
         proxyOutputStream.setParent( outputStream );
         reinitOutputTarget();
         proc.processReport();
+        if ( listener != null ) {
+          listener.setIsQueryLimitReached( proc.isQueryLimitReached() );
+        }
         return proc.getLogicalPageCount();
       } else {
         final Repository repository = reinitOutputTargetRepo();
@@ -226,7 +228,9 @@ public class PageableHTMLOutput implements ReportOutputHandler {
           throw new ReportProcessingException( "Can't generate report" );
         }
 
-        listener.setIsQueryLimitReached( proc.isQueryLimitReached() );
+        if ( listener != null ) {
+          listener.setIsQueryLimitReached( proc.isQueryLimitReached() );
+        }
 
         //Write all if scheduled
         final boolean forceAllPages = isForceAllPages( report );
