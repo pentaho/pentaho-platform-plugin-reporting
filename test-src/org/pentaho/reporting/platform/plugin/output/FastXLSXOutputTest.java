@@ -22,19 +22,16 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
-import org.pentaho.platform.engine.core.system.StandaloneSession;
 import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressEvent;
-import org.pentaho.reporting.libraries.resourceloader.ResourceManager;
 import org.pentaho.reporting.platform.plugin.async.IAsyncReportListener;
 import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
 
-import java.io.File;
-
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 public class FastXLSXOutputTest {
   FastXLSXOutput fastXLSXOutput;
@@ -82,26 +79,6 @@ public class FastXLSXOutputTest {
     verify( listener, times( 0 ) ).reportProcessingStarted( any( ReportProgressEvent.class ) );
     verify( listener, times( 0 ) ).reportProcessingFinished( any( ReportProgressEvent.class ) );
     verify( listener, times( 0 ) ).reportProcessingUpdate( any( ReportProgressEvent.class ) );
-  }
-
-  @Test
-  public void testGenerateNotFast() throws Exception {
-    try {
-      ClassicEngineBoot.getInstance().start();
-      ReportListenerThreadHolder.clear();
-      PentahoSessionHolder.setSession( new StandaloneSession() );
-
-      final File file = new File( "resource/solution/test/reporting/report.prpt" );
-      final MasterReport report =
-        (MasterReport) new ResourceManager().createDirectly( file.getPath(), MasterReport.class ).getResource();
-      fastXLSXOutput.generate( report, 1, new ByteArrayOutputStream(), 1 );
-
-      verify( listener, times( 0 ) ).reportProcessingStarted( any( ReportProgressEvent.class ) );
-      verify( listener, times( 0 ) ).reportProcessingFinished( any( ReportProgressEvent.class ) );
-      verify( listener, times( 0 ) ).reportProcessingUpdate( any( ReportProgressEvent.class ) );
-    } finally {
-      PentahoSessionHolder.removeSession();
-    }
   }
 }
 

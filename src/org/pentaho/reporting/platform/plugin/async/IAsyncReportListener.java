@@ -37,6 +37,4 @@ public interface IAsyncReportListener extends ReportProgressListener {
   boolean isQueryLimitReached();
 
   void setIsQueryLimitReached( boolean isQueryLimitReached );
-
-  int getTotalRows();
 }

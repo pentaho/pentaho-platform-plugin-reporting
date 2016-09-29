@@ -218,11 +218,6 @@ public class AsyncReportStatusListener implements IAsyncReportListener {
     this.isQueryLimitReached = isQueryLimitReached;
   }
 
-  @Override
-  public int getTotalRows() {
-    return totalRows;
-  }
-
   public synchronized void cancel() {
     manuallyInterrupted = true;
     this.setStatus( AsyncExecutionStatus.CANCELED );

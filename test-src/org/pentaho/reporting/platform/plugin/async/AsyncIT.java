@@ -689,14 +689,20 @@ public class AsyncIT {
 
     final UUID uuid = executor.addTask( mock, PentahoSessionHolder.getSession() );
 
+    final UUID folderId = UUID.randomUUID();
 
     STATUS = AsyncExecutionStatus.FINISHED;
 
-    final JobManager.ExecutionContext context = jobManager.getContext( uuid.toString() );
-    assertTrue( context.needRecalculation( true ) );
 
+    final Response response = jobManager.confirmSchedule( uuid.toString(), true, true, folderId.toString(), "tset" );
+    assertEquals( 200, response.getStatus() );
+    verify( executor, times( 1 ) ).recalculate( any(), any() );
+    verify( executor, times( 1 ) ).schedule( any(), any() );
+    verify( executor, times( 1 ) )
+      .updateSchedulingLocation( any(), any(), any(), any() );
 
     STATUS = AsyncExecutionStatus.FAILED;
+
   }
 
   @Test public void testCancelNoListener() {

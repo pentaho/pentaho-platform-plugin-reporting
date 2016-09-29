@@ -16,17 +16,17 @@
  */
 package org.pentaho.reporting.platform.plugin.output;
 
+import java.io.IOException;
+import java.io.OutputStream;
+
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
+import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
 import org.pentaho.reporting.engine.classic.core.modules.output.fast.html.FastHtmlContentItems;
 import org.pentaho.reporting.engine.classic.core.modules.output.fast.html.FastHtmlExportProcessor;
 import org.pentaho.reporting.engine.classic.core.modules.output.fast.validator.ReportStructureValidator;
 import org.pentaho.reporting.libraries.repository.ContentIOException;
-import org.pentaho.reporting.platform.plugin.async.IAsyncReportListener;
 import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
-
-import java.io.IOException;
-import java.io.OutputStream;
 
 public class FastStreamJcrHtmlOutput extends StreamJcrHtmlOutput {
   public FastStreamJcrHtmlOutput( final String contentHandlerPattern, final String jcrOutputPath ) {
@@ -44,8 +44,19 @@ public class FastStreamJcrHtmlOutput extends StreamJcrHtmlOutput {
 
     FastHtmlContentItems contentItems = computeContentItems( outputStream );
     final FastHtmlExportProcessor reportProcessor = new FastHtmlExportProcessor( report, contentItems );
-    final IAsyncReportListener listener = ReportListenerThreadHolder.getListener();
-    doProcess( listener, reportProcessor );
+    final ReportProgressListener listener = ReportListenerThreadHolder.getListener();
+    //Add async job listener
+    if ( listener != null ) {
+      reportProcessor.addReportProgressListener( listener );
+    }
+    try {
+      reportProcessor.processReport();
+    } finally {
+      if ( listener != null ) {
+        reportProcessor.removeReportProgressListener( listener );
+      }
+      reportProcessor.close();
+    }
     outputStream.flush();
     return 1;
   }

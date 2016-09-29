@@ -15,9 +15,6 @@
 
   <link rel="stylesheet" type="text/css" href="../../../content/common-ui/resources/web/dojo/dijit/themes/pentaho/pentaho.css"/>
   <link rel="stylesheet" href="../../../content/common-ui/resources/web/prompting/pentaho-prompting.css" type="text/css" />
-  <link rel="stylesheet" href="../../../content/common-ui/resources/web/prompting/pentaho-prompting.css" type="text/css" />
-  <link href="../../../api/repos/common-ui/resources/web/dojo/pentaho/common/RowLimitControl.css" rel="stylesheet"
-      type="text/css"/>
   <link rel="stylesheet" href="../../../content/reporting/reportviewer/reportviewer.css" type="text/css" />
 
   <script type="text/javascript">
@@ -86,8 +83,6 @@
         <div id="pageControl" data-dojo-type="pentaho.common.PageControl" class="dijitInline"></div>
         <span id="toolbar-parameter-separator" data-dojo-type="dijit.ToolbarSeparator"></span>
         <div id="toolbar-parameterToggle" data-dojo-type="dijit.form.ToggleButton" iconClass="dijitEditorIcon dijitEditorIconParameters" showLabel="false">Parameters</div>
-        <span id="toolbar-parameter-separator-row-limit" data-dojo-type="dijit.ToolbarSeparator" class="hidden"></span>
-        <div id="rowLimitControl" data-dojo-type="pentaho.common.RowLimitControl" class="dijitInline hidden"></div>
         <span id="toolbar-parameter-separator-refresh" data-dojo-type="dijit.ToolbarSeparator"></span>
         <div id="toolbar-clearCache" data-dojo-type="dijit.form.Button" iconClass="dijitEditorIcon dijitEditorIconRefresh" showLabel="false">Refresh report data</div>
       </div>
@@ -123,7 +118,8 @@
   </div>
 </div>
 
-<div id="rowLimitMessage" data-dojo-type="pentaho.common.RowLimitMessage">
+<div id="queryLimitReachedArea" class="hidden">
+  <div id="queryLimitReachedMessage"></div>
 </div>
 <div id="reportArea" class="pentaho-transparent">
   <div id="notification-screen" class="hidden pentaho-notification">
@@ -154,8 +150,6 @@
 <div id="reportGlassPane" data-dojo-type="pentaho.reportviewer.GlassPane" title="" style="width:400px; display:none;">
 </div>
 <div id="glassPane" data-dojo-type="pentaho.common.GlassPane">
-</div>
-<div id="rowLimitExceededDialog" data-dojo-type="pentaho.common.RowLimitExceededDialog" style="display: none">
 </div>
 </body>
 </html>

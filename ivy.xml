@@ -72,9 +72,8 @@
         
         <dependency org="org.apache.cxf" name="cxf-rt-transports-local" rev="2.7.18" conf="test->default" />
         <dependency org="org.apache.cxf" name="cxf-bundle-jaxrs" rev="2.7.18" conf="test->default" />
-        <dependency org="org.powermock" name="powermock-module-junit4" rev="1.6.4" conf="test->default" />
-        <dependency org="org.powermock" name="powermock-api-mockito" rev="1.6.4" conf="test->default" />
-        <dependency org="org.springframework" name="spring-test" rev="${dependency.spring.framework.revision}" transitive="false" conf="test->default"/>
+        <dependency org="org.powermock" name="powermock-module-junit4" rev="1.6.3" conf="test->default" />
+        <dependency org="org.powermock" name="powermock-api-mockito" rev="1.6.3" conf="test->default" />
 
         <!-- JavaScript dependencies -->
       <dependency org="pentaho" name="common-ui" rev="${dependency.common-ui.revision}" conf="js->default" transitive="false" changing="true">

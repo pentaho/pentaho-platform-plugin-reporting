@@ -17,7 +17,19 @@
 
 package org.pentaho.reporting.platform.plugin;
 
-import org.apache.commons.lang.math.NumberUtils;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.Serializable;
+import java.lang.reflect.Array;
+import java.net.URL;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+import javax.print.DocFlavor;
+import javax.print.PrintService;
+import javax.print.PrintServiceLookup;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.pentaho.platform.api.engine.IAcceptsRuntimeInputs;
@@ -55,19 +67,6 @@ import org.pentaho.reporting.platform.plugin.output.FastExportReportOutputHandle
 import org.pentaho.reporting.platform.plugin.output.ReportOutputHandler;
 import org.pentaho.reporting.platform.plugin.output.ReportOutputHandlerFactory;
 import org.pentaho.reporting.platform.plugin.output.ReportOutputHandlerSelector;
-
-import javax.print.DocFlavor;
-import javax.print.PrintService;
-import javax.print.PrintServiceLookup;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.Serializable;
-import java.lang.reflect.Array;
-import java.net.URL;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
 
 public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntimeInputs {
 
@@ -453,17 +452,6 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     if ( inputs.containsKey( DASHBOARD_MODE ) ) {
       dashboardMode = "true".equals( String.valueOf( inputs.get( DASHBOARD_MODE ) ) ); //$NON-NLS-1$
     }
-    if ( inputs.containsKey( ParameterXmlContentHandler.SYS_PARAM_QUERY_LIMIT ) ) {
-      try {
-        if ( inputs.get( ParameterXmlContentHandler.SYS_PARAM_QUERY_LIMIT ) != null ) {
-          this.getReport().setQueryLimit(
-            checkAndGetUserInputQueryLimit( inputs.get( ParameterXmlContentHandler.SYS_PARAM_QUERY_LIMIT ),
-              this.getReport().getQueryLimit() ) );
-        }
-      } catch ( final Exception e ) {
-        log.warn( e.getMessage(), e );
-      }
-    }
   }
 
   // ----------------------------------------------------------------------------
@@ -532,12 +520,12 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
         if ( autoSubmitDefaultSetting != null ) {
           boolean autoSubmitDefault = Boolean.parseBoolean( autoSubmitDefaultSetting.toString() );
           report.setAttribute( AttributeNames.Core.NAMESPACE, AttributeNames.Core.AUTO_SUBMIT_DEFAULT,
-            autoSubmitDefault );
+              autoSubmitDefault );
         }
         // lock preferred output?
         if ( forceUnlockPreferredOutput
-          && Boolean.parseBoolean( pm.getPluginSetting( "reporting", "settings/force-prpti-output-unlock", "false" )
-          .toString() ) ) {
+            && Boolean.parseBoolean( pm.getPluginSetting( "reporting", "settings/force-prpti-output-unlock", "false" )
+                .toString() ) ) {
           report.setAttribute( AttributeNames.Core.NAMESPACE, AttributeNames.Core.LOCK_PREFERRED_OUTPUT_TYPE, false );
         }
       }
@@ -622,12 +610,12 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     }
 
     if ( Boolean.TRUE.equals( report.getAttribute( AttributeNames.Core.NAMESPACE,
-      AttributeNames.Core.LOCK_PREFERRED_OUTPUT_TYPE ) ) ) {
+        AttributeNames.Core.LOCK_PREFERRED_OUTPUT_TYPE ) ) ) {
       // preferred output type is one of the engine's output-target identifiers. It is not a mime-type string.
       // The engine supports multiple subformats per mime-type (example HTML: zipped/streaming/flow/pageable)
       // The mime-mapping would be inaccurate.
       final Object preferredOutputType =
-        report.getAttribute( AttributeNames.Core.NAMESPACE, AttributeNames.Core.PREFERRED_OUTPUT_TYPE );
+          report.getAttribute( AttributeNames.Core.NAMESPACE, AttributeNames.Core.PREFERRED_OUTPUT_TYPE );
       if ( preferredOutputType != null ) {
         final String preferredOutputTypeString = String.valueOf( preferredOutputType );
         if ( isValidOutputType( preferredOutputTypeString ) ) {
@@ -638,12 +626,12 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
         final String mappedLegacyType = mapOutputTypeToOutputTarget( preferredOutputTypeString );
         if ( mappedLegacyType != null ) {
           log.warn( Messages.getInstance().getString( "ReportPlugin.warnLegacyLockedOutput",
-            preferredOutputTypeString ) );
+              preferredOutputTypeString ) );
           return mappedLegacyType;
         }
 
         log.warn( Messages.getInstance().getString( "ReportPlugin.warnInvalidLockedOutput",
-          preferredOutputTypeString ) );
+            preferredOutputTypeString ) );
       }
     }
 
@@ -664,7 +652,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
 
     // if nothing is specified explicity, we may as well ask the report what it prefers..
     final Object preferredOutputType =
-      report.getAttribute( AttributeNames.Core.NAMESPACE, AttributeNames.Core.PREFERRED_OUTPUT_TYPE );
+        report.getAttribute( AttributeNames.Core.NAMESPACE, AttributeNames.Core.PREFERRED_OUTPUT_TYPE );
     if ( preferredOutputType != null ) {
       final String preferredOutputTypeString = String.valueOf( preferredOutputType );
       if ( isValidOutputType( preferredOutputTypeString ) ) {
@@ -674,12 +662,12 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       final String mappedLegacyType = mapOutputTypeToOutputTarget( preferredOutputTypeString );
       if ( mappedLegacyType != null ) {
         log.warn( Messages.getInstance()
-          .getString( "ReportPlugin.warnLegacyPreferredOutput", preferredOutputTypeString ) );
+            .getString( "ReportPlugin.warnLegacyPreferredOutput", preferredOutputTypeString ) );
         return mappedLegacyType;
       }
 
       log.warn( Messages.getInstance().getString( "ReportPlugin.warnInvalidPreferredOutput", preferredOutputTypeString,
-        getDefaultOutputTarget() ) );
+          getDefaultOutputTarget() ) );
       return getDefaultOutputTarget();
     }
 
@@ -687,7 +675,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       // if you have come that far, it means you really messed up. Sorry, this error is not a error caused
       // by our legacy code - it is more likely that you just entered values that are totally wrong.
       log.error( Messages.getInstance().getString( "ReportPlugin.warnInvalidOutputType", getOutputType(),
-        getDefaultOutputTarget() ) );
+          getDefaultOutputTarget() ) );
     }
     return getDefaultOutputTarget();
   }
@@ -798,7 +786,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   @Deprecated
   public ValidationResult applyInputsToReportParameters( final ParameterContext context,
                                                          ValidationResult validationResult )
-    throws IOException, ResourceException {
+      throws IOException, ResourceException {
     return ReportContentUtil.applyInputsToReportParameters( getReport(), context, inputs, validationResult );
   }
 
@@ -871,7 +859,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    */
   public boolean validate() throws Exception {
     if ( reportDefinition == null && reportDefinitionInputStream == null && fileId == null
-      && reportDefinitionPath == null ) {
+        && reportDefinitionPath == null ) {
       log.error( Messages.getInstance().getString( "ReportPlugin.reportDefinitionNotProvided" ) ); //$NON-NLS-1$
       return false;
     }
@@ -897,8 +885,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     final MasterReport report = getReport();
     int yieldRate = getYieldRate();
     if ( yieldRate > 0 ) {
-      report.getReportConfiguration()
-        .setConfigProperty( "org.pentaho.reporting.engine.classic.core.YieldRate", String.valueOf( yieldRate ) );
+      report.getReportConfiguration().setConfigProperty( "org.pentaho.reporting.engine.classic.core.YieldRate", String.valueOf( yieldRate ) );
     }
 
     try {
@@ -917,7 +904,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
         PrintService printService = PrintServiceLookup.lookupDefaultPrintService();
         if ( StringUtils.isEmpty( getPrinter() ) == false ) {
           final PrintService[] services =
-            PrintServiceLookup.lookupPrintServices( DocFlavor.SERVICE_FORMATTED.PAGEABLE, null );
+              PrintServiceLookup.lookupPrintServices( DocFlavor.SERVICE_FORMATTED.PAGEABLE, null );
           for ( final PrintService service : services ) {
             if ( service.getName().equals( printer ) ) {
               printService = service;
@@ -962,7 +949,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     }
 
     final Object attribute =
-      report.getAttribute( AttributeNames.Pentaho.NAMESPACE, AttributeNames.Pentaho.REPORT_CACHE );
+        report.getAttribute( AttributeNames.Pentaho.NAMESPACE, AttributeNames.Pentaho.REPORT_CACHE );
     final ReportCacheKey reportCacheKey = new ReportCacheKey( getViewerSessionId(), inputs );
     ReportCache cache;
     if ( Boolean.FALSE.equals( attribute ) ) {
@@ -985,7 +972,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     }
 
     ReportOutputHandler reportOutputHandler =
-      handlerFactory.createOutputHandlerForOutputType( new InternalOutputHandlerSelector( outputType ) );
+        handlerFactory.createOutputHandlerForOutputType( new InternalOutputHandlerSelector( outputType ) );
     if ( reportOutputHandler == null ) {
       return null;
     }
@@ -1022,7 +1009,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
         log.warn( Messages.getInstance().getString( "ReportPlugin.warnUnprocessableRequest", outputType ) );
         return 0;
       }
-      synchronized ( reportOutputHandler.getReportLock() ) {
+      synchronized( reportOutputHandler.getReportLock() ) {
         try {
           return reportOutputHandler.paginate( report, getYieldRate() );
         } finally {
@@ -1076,40 +1063,6 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
         input = defaultValue;
       }
       return idx.cast( input );
-    }
-  }
-
-  int checkAndGetUserInputQueryLimit( final Object userInputQueryLimit, final int reportQueryLimit ) {
-    int systemQueryLimit = 0;
-
-    final IPluginManager pm = PentahoSystem.get( IPluginManager.class );
-    if ( pm != null ) {
-      systemQueryLimit =
-        NumberUtils.toInt( (String) pm.getPluginSetting( "reporting", "settings/query-limit", "0" ), 0 );
-    }
-
-    if ( reportQueryLimit > 0 ) {
-      //Report limit is set - we should return either report limit or system
-      if ( reportQueryLimit > 0 && systemQueryLimit > 0 ) {
-        //System limit is set - return min (reportLimit, systemLimit)
-        return Math.min( reportQueryLimit, systemQueryLimit );
-      } else {
-        //System limit is not set - return report limit
-        return reportQueryLimit;
-      }
-    } else {
-      //Report limit is not set - we should return either user limit or system
-      final int userLimit = NumberUtils.toInt( (String) userInputQueryLimit, -1 );
-      if ( userLimit > 0 && systemQueryLimit > 0 ) {
-        //System limit and user limit are set - return min (reportLimit, systemLimit)
-        return Math.min( userLimit, systemQueryLimit );
-      } else if ( systemQueryLimit > 0 ) {
-        //System limit is set but no user limit - return system limit
-        return systemQueryLimit;
-      } else {
-        //System limit is not set - return user limit or -1 by default
-        return userLimit;
-      }
     }
   }
 

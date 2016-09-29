@@ -17,20 +17,17 @@
 
 package org.pentaho.reporting.platform.plugin.output;
 
-import org.pentaho.reporting.engine.classic.core.MasterReport;
-import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
-import org.pentaho.reporting.engine.classic.core.modules.output.fast.csv.FastCsvExportProcessor;
-import org.pentaho.reporting.engine.classic.core.modules.output.fast.validator.ReportStructureValidator;
-import org.pentaho.reporting.libraries.repository.ContentIOException;
-import org.pentaho.reporting.platform.plugin.async.IAsyncReportListener;
-import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
-
 import java.io.IOException;
 import java.io.OutputStream;
 
-import static java.lang.System.out;
+import org.pentaho.reporting.engine.classic.core.MasterReport;
+import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
+import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
+import org.pentaho.reporting.engine.classic.core.modules.output.fast.csv.FastCsvReportUtil;
+import org.pentaho.reporting.libraries.repository.ContentIOException;
+import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
 
-public class FastCSVOutput extends CSVOutput {
+public class FastCSVOutput implements ReportOutputHandler {
   public FastCSVOutput() {
   }
 
@@ -48,15 +45,8 @@ public class FastCSVOutput extends CSVOutput {
                        final OutputStream outputStream,
                        final int yieldRate )
     throws ReportProcessingException, IOException, ContentIOException {
-    final IAsyncReportListener listener = ReportListenerThreadHolder.getListener();
-    ReportStructureValidator validator = new ReportStructureValidator();
-    if ( validator.isValidForFastProcessing( report ) == false ) {
-      return super.generate( report, acceptedPage, outputStream, yieldRate );
-    }
-
-    final FastCsvExportProcessor reportProcessor = new FastCsvExportProcessor( report, out );
-    doProcess( listener, reportProcessor );
-    out.flush();
+    final ReportProgressListener listener = ReportListenerThreadHolder.getListener();
+    FastCsvReportUtil.process( report, outputStream, listener );
     return 0;
   }
 
@@ -67,5 +57,4 @@ public class FastCSVOutput extends CSVOutput {
   public void close() {
 
   }
-
 }

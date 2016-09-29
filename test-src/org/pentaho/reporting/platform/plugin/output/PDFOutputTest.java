@@ -25,29 +25,20 @@ import org.junit.Test;
 import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressEvent;
-import org.pentaho.reporting.engine.classic.core.layout.output.YieldReportListener;
-import org.pentaho.reporting.platform.plugin.MicroPlatformFactory;
 import org.pentaho.reporting.platform.plugin.async.IAsyncReportListener;
 import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
-import org.pentaho.test.platform.engine.core.MicroPlatform;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
-
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 public class PDFOutputTest {
   PDFOutput pdfOutput;
   private IAsyncReportListener listener;
 
-  YieldReportListener yieldReportListener;
-
   @Before public void setUp() {
-    yieldReportListener = mock( YieldReportListener.class );
-    pdfOutput = new PDFOutput() {
-      @Override public YieldReportListener getYieldListener( final int yieldRate ) {
-        return yieldReportListener;
-      }
-    };
+    pdfOutput = new PDFOutput();
     listener = mock( IAsyncReportListener.class );
     ReportListenerThreadHolder.setListener( listener );
   }
@@ -56,7 +47,6 @@ public class PDFOutputTest {
     ReportListenerThreadHolder.clear();
     listener = null;
   }
-
   @Test public void testPaginate() throws Exception {
     Assert.assertEquals( 0, pdfOutput.paginate( null, 0 ) );
   }
@@ -88,25 +78,6 @@ public class PDFOutputTest {
     verify( listener, times( 0 ) ).reportProcessingStarted( any( ReportProgressEvent.class ) );
     verify( listener, times( 0 ) ).reportProcessingFinished( any( ReportProgressEvent.class ) );
     verify( listener, times( 0 ) ).reportProcessingUpdate( any( ReportProgressEvent.class ) );
-    verify( yieldReportListener, atLeast( 1 ) ).reportProcessingUpdate( any( ReportProgressEvent.class ) );
-  }
-
-  @Test
-  public void testGenerateYield0() throws Exception {
-    MicroPlatform microPlatform = MicroPlatformFactory.create();
-    microPlatform.start();
-    ClassicEngineBoot.getInstance().start();
-    ReportListenerThreadHolder.clear();
-    try {
-      pdfOutput.generate( new MasterReport(), 1, new ByteArrayOutputStream(), 0 );
-      verify( listener, times( 0 ) ).reportProcessingStarted( any( ReportProgressEvent.class ) );
-      verify( listener, times( 0 ) ).reportProcessingFinished( any( ReportProgressEvent.class ) );
-      verify( listener, times( 0 ) ).reportProcessingUpdate( any( ReportProgressEvent.class ) );
-      verifyZeroInteractions( yieldReportListener );
-    } finally {
-      microPlatform.stop();
-      microPlatform = null;
-    }
   }
 }
 
