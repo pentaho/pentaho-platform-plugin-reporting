@@ -21,8 +21,6 @@ import org.pentaho.platform.api.engine.IApplicationContext;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
-import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
-import org.pentaho.reporting.engine.classic.core.layout.output.YieldReportListener;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.base.StreamReportProcessor;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.AllItemsHtmlPrinter;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlOutputProcessor;
@@ -36,6 +34,7 @@ import org.pentaho.reporting.libraries.repository.ContentIOException;
 import org.pentaho.reporting.libraries.repository.ContentLocation;
 import org.pentaho.reporting.libraries.repository.DefaultNameGenerator;
 import org.pentaho.reporting.libraries.repository.email.EmailRepository;
+import org.pentaho.reporting.platform.plugin.async.IAsyncReportListener;
 import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
 
 import javax.mail.MessagingException;
@@ -69,7 +68,6 @@ public class EmailOutput implements ReportOutputHandler {
     }
 
 
-
     try {
 
       final Configuration configuration = report.getConfiguration();
@@ -96,26 +94,15 @@ public class EmailOutput implements ReportOutputHandler {
 
       final StreamReportProcessor sp = new StreamReportProcessor( report, outputProcessor );
       if ( yieldRate > 0 ) {
-        sp.addReportProgressListener( new YieldReportListener( yieldRate ) );
+        sp.addReportProgressListener( getYieldListener( yieldRate ) );
       }
 
-      final ReportProgressListener listener = ReportListenerThreadHolder.getListener();
-      //Add async job listener
-      if ( listener != null ) {
-        sp.addReportProgressListener( listener );
-      }
-      try {
-        sp.processReport();
-        dataRepository.writeEmail( outputStream );
+      final IAsyncReportListener listener = ReportListenerThreadHolder.getListener();
 
-        outputStream.flush();
-        return 0;
-      } finally {
-        if ( listener != null ) {
-          sp.removeReportProgressListener( listener );
-        }
-        sp.close();
-      }
+      doProcess( listener, sp );
+      dataRepository.writeEmail( outputStream );
+      outputStream.flush();
+      return 0;
     } catch ( final MessagingException e ) {
       throw new ReportProcessingException( "Error", e );
     }
