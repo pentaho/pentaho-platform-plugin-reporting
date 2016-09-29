@@ -16,41 +16,30 @@
  */
 package org.pentaho.reporting.platform.plugin.output;
 
-import org.pentaho.reporting.engine.classic.core.MasterReport;
-import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
-import org.pentaho.reporting.engine.classic.core.modules.output.fast.validator.ReportStructureValidator;
-import org.pentaho.reporting.engine.classic.core.modules.output.fast.xls.FastExcelExportProcessor;
-import org.pentaho.reporting.libraries.repository.ContentIOException;
-import org.pentaho.reporting.platform.plugin.async.IAsyncReportListener;
-import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
-
 import java.io.IOException;
 import java.io.OutputStream;
 
-public class FastXLSOutput extends XLSOutput {
+import org.pentaho.reporting.engine.classic.core.MasterReport;
+import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
+import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
+import org.pentaho.reporting.engine.classic.core.modules.output.fast.xls.FastExcelReportUtil;
+import org.pentaho.reporting.libraries.repository.ContentIOException;
+import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
+
+public class FastXLSOutput implements ReportOutputHandler {
   private ProxyOutputStream proxyOutputStream;
 
   public FastXLSOutput() {
     proxyOutputStream = new ProxyOutputStream();
   }
 
-  @Override
   public int generate( final MasterReport report,
                        final int acceptedPage,
                        final OutputStream outputStream,
-                       final int yieldRate ) throws ReportProcessingException, IOException {
+                       final int yieldRate ) throws ReportProcessingException, IOException, ContentIOException {
     proxyOutputStream.setParent( outputStream );
-    final IAsyncReportListener listener = ReportListenerThreadHolder.getListener();
-    ReportStructureValidator validator = new ReportStructureValidator();
-    if ( validator.isValidForFastProcessing( report ) == false ) {
-      return super.generate( report, acceptedPage, outputStream, yieldRate );
-    }
-
-    final FastExcelExportProcessor reportProcessor = new FastExcelExportProcessor( report, outputStream, false );
-
-    doProcess( listener, reportProcessor );
-    outputStream.flush();
-
+    final ReportProgressListener listener = ReportListenerThreadHolder.getListener();
+    FastExcelReportUtil.processXls( report, outputStream, listener );
     return 0;
   }
 

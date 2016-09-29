@@ -17,20 +17,13 @@
 
 package org.pentaho.reporting.platform.plugin.async;
 
-import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.junit.Test;
-import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
-import org.pentaho.platform.engine.core.system.StandaloneSession;
 import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
-import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressEvent;
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
 import org.pentaho.reporting.engine.classic.core.layout.output.ReportProcessorThreadHolder;
 import org.pentaho.reporting.libraries.base.config.ModifiableConfiguration;
-import org.pentaho.reporting.libraries.resourceloader.ResourceManager;
-import org.pentaho.reporting.platform.plugin.output.FastCSVOutput;
 
-import java.io.File;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -167,7 +160,7 @@ public class AsyncReportStatusListenerTest {
   @Test
   public void testIsQueryLimitReached() throws Exception {
     final AsyncReportStatusListener listener =
-      new AsyncReportStatusListener( "", UUID.randomUUID(), "", Collections.<ReportProgressListener>emptyList() );
+            new AsyncReportStatusListener( "", UUID.randomUUID(), "", Collections.<ReportProgressListener>emptyList() );
     listener.setIsQueryLimitReached( true );
     assertTrue( listener.getState().getIsQueryLimitReached() );
   }
@@ -179,34 +172,7 @@ public class AsyncReportStatusListenerTest {
     final AsyncReportStatusListener listener =
       new AsyncReportStatusListener( "", UUID.randomUUID(), "", Collections.<ReportProgressListener>emptyList() );
     listener.cancel();
-    listener
-      .reportProcessingUpdate( new ReportProgressEvent( this, ReportProgressEvent.PAGINATING, 0, 0, 0, 0, 0, 0 ) );
+    listener.reportProcessingUpdate( new ReportProgressEvent( this, ReportProgressEvent.PAGINATING, 0, 0, 0, 0, 0, 0 ) );
     assertEquals( "AsyncPaginatingTitle", listener.getState().getActivity() );
-  }
-
-
-  @Test
-  public void limitReached() throws Exception {
-    final AsyncReportStatusListener asyncReportStatusListener =
-      new AsyncReportStatusListener( "resource/solution/test/reporting/limit10.prpt", UUID.randomUUID(), "text/csv",
-        Collections.emptyList() );
-
-    try {
-      ClassicEngineBoot.getInstance().start();
-      ReportListenerThreadHolder.setListener( asyncReportStatusListener );
-      PentahoSessionHolder.setSession( new StandaloneSession() );
-      final FastCSVOutput fastCSVOutput = new FastCSVOutput();
-
-      final File file = new File( "resource/solution/test/reporting/limit10.prpt" );
-      final MasterReport report =
-        (MasterReport) new ResourceManager().createDirectly( file.getPath(), MasterReport.class ).getResource();
-      fastCSVOutput.generate( report, 1, new ByteArrayOutputStream(), 1 );
-      assertTrue( asyncReportStatusListener.isQueryLimitReached() );
-      assertEquals( 10, asyncReportStatusListener.getTotalRows() );
-    } finally {
-      ReportProcessorThreadHolder.clear();
-      PentahoSessionHolder.removeSession();
-    }
-
   }
 }

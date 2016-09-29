@@ -17,8 +17,12 @@
 
 package org.pentaho.reporting.platform.plugin.output;
 
+import java.io.IOException;
+import java.io.OutputStream;
+
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
+import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
 import org.pentaho.reporting.engine.classic.core.modules.output.fast.html.FastHtmlContentItems;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.base.StreamReportProcessor;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.AllItemsHtmlPrinter;
@@ -26,11 +30,7 @@ import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlO
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlPrinter;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.StreamHtmlOutputProcessor;
 import org.pentaho.reporting.libraries.repository.ContentIOException;
-import org.pentaho.reporting.platform.plugin.async.IAsyncReportListener;
 import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
-
-import java.io.IOException;
-import java.io.OutputStream;
 
 public class StreamHtmlOutput extends AbstractHtmlOutput {
   public StreamHtmlOutput() {
@@ -55,12 +55,19 @@ public class StreamHtmlOutput extends AbstractHtmlOutput {
     outputProcessor.setPrinter( printer );
     final StreamReportProcessor sp = new StreamReportProcessor( report, outputProcessor );
 
-    final IAsyncReportListener listener = ReportListenerThreadHolder.getListener();
+    final ReportProgressListener listener = ReportListenerThreadHolder.getListener();
     //Add async job listener
     if ( listener != null ) {
       sp.addReportProgressListener( listener );
     }
-    doProcess( listener, sp );
+    try {
+      sp.processReport();
+    } finally {
+      if ( listener != null ) {
+        sp.removeReportProgressListener( listener );
+      }
+      sp.close();
+    }
 
     outputStream.flush();
     return 1;

@@ -234,7 +234,7 @@ public class PentahoAsyncExecutor<TReportState extends IAsyncReportState>
       throw new IllegalStateException( "We must have a task at this point." );
     }
 
-    final UpdateSchedulingLocationListener listener = getUpdateSchedulingLocationListener( folderId, newName );
+    final UpdateSchedulingLocationListener listener = new UpdateSchedulingLocationListener( folderId, newName );
 
 
     try {
@@ -254,11 +254,6 @@ public class PentahoAsyncExecutor<TReportState extends IAsyncReportState>
     }
 
 
-  }
-
-  protected UpdateSchedulingLocationListener getUpdateSchedulingLocationListener( final Serializable folderId,
-                                                                                  final String newName ) {
-    return new UpdateSchedulingLocationListener( folderId, newName );
   }
 
   @Override public TReportState getReportState( final UUID id, final IPentahoSession session ) {

@@ -59,7 +59,6 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
       _manuallyScheduled: null,
       _scheduleScreenBtnCallbacks: null,
       _editModeToggledHandler: null,
-      _isFinished : false,
 
       _bindPromptEvents: function() {
         var baseShowGlassPane = this.reportPrompt.showGlassPane.bind(this.reportPrompt);
@@ -191,35 +190,6 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
         this._bindPromptEvents();
         this.reportPrompt.createPromptPanel();
-
-        var rowLimitControl = registry.byId('rowLimitControl');
-
-        rowLimitControl.bindChange(dojo.hitch(this, this._submitRowLimitUpdate));
-        rowLimitControl.bindGetMessage(function () {
-          return registry.byId('rowLimitMessage');
-        });
-        rowLimitControl.bindGetDialog(function () {
-          return registry.byId('rowLimitExceededDialog');
-        });
-        rowLimitControl.bindShowGlassPane(dojo.hitch(this, this._forceShowGlassPane));
-        rowLimitControl.bindHideGlassPane(dojo.hitch(this, function(){
-          this._forceHideGlassPane();
-        }));
-        var rowLimitMessage = registry.byId('rowLimitMessage');
-        rowLimitMessage.bindRun(function () {
-          var match = window.location.href.match('.*repos\/(.*)(\.prpt).*');
-          if (match && match.length > 1) {
-            window.parent.executeCommand("RunInBackgroundCommand", {
-              solutionPath: decodeURIComponent(match[1] + match[2]).replace(/:/g, '/')
-            });
-          }
-        });
-        rowLimitMessage.bindSchedule(function () {
-          var match = window.location.href.match('.*repos\/(.*)(\.prpt).*');
-          if (match && match.length > 1) {
-            window.parent.mantle_openRepositoryFile(decodeURIComponent(match[1] + match[2]).replace(/:/g, '/'), "SCHEDULE_NEW");
-          }
-        });
       },
 
       view: logged({
@@ -240,9 +210,6 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         localize: function() {
           $('#toolbar-parameterToggle').attr('title', _Messages.getString('parameterToolbarItem_title'));
           registry.byId('pageControl').registerLocalizationLookup(_Messages.getString);
-          registry.byId('rowLimitControl').registerLocalizationLookup(_Messages.getString);
-          registry.byId('rowLimitExceededDialog').registerLocalizationLookup(_Messages.getString);
-          registry.byId('rowLimitMessage').registerLocalizationLookup(_Messages.getString);
         },
 
         /**
@@ -406,7 +373,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
             domClass.remove('promptPanel', 'pentaho-rounded-panel-bottom-lr');
             domClass.remove('reportControlPanel', 'pentaho-shadow');
             domClass.remove('reportControlPanel', 'pentaho-rounded-panel-bottom-lr');
-
+          
           }
         },
 
@@ -583,9 +550,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           var vp = win.getBox();
           var tp = geometry.getMarginBox('toppanel');
 
-          var rcpHeight = geometry.getMarginBox("rowLimitMessage");
-
-          var mb = {h: vp.h - tp.h - rcpHeight.h - 2};
+          var mb = {h: vp.h - tp.h - 2};
 
           logger && logger.log("viewport=(" + vp.w + ","  + vp.h + ") " + " toppanel=(" + tp.w + ","  + tp.h + ") ");
 
@@ -954,25 +919,6 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         domClass.add('notification-screen', 'hidden');
       },
 
-      _submitRowLimitUpdate: function (selectedLimit) {
-        var me = this;
-
-        me.cancel(me._currentReportStatus, me._currentReportUuid);
-        me._isFinished = true;
-        me._submitReportEnded(true);
-        me.reportPrompt.api.operation.setParameterValue("query-limit", selectedLimit);
-        me._hideDialogAndPane(registry.byId('feedbackScreen'));
-        if (window.top.mantle_removeHandler) {
-          window.top.mantle_removeHandler(this._handlerRegistration);
-        }
-        me.view.updatePageControl();
-
-        setTimeout(function () {
-          me.submitReport(true);
-        }, me.reportPrompt._pollingInterval);
-
-      },
-
       _updateReportContentCore: function() {
 
         //no report generation in scheduling dialog ever!
@@ -1003,14 +949,6 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         var isProportionalWidth = isHtml && options['htmlProportionalWidth'] == "true";
         var isReportAlone = domClass.contains('toppanel', 'hidden');
 
-        var isQueryLimitControlEnabled = me.reportPrompt._isAsync && options['query-limit-ui-enabled'] == "true";
-        var requestLimit = parseInt(options['query-limit'], 0);
-
-        if (isQueryLimitControlEnabled) {
-          domClass.remove(dom.byId("toolbar-parameter-separator-row-limit"), "hidden");
-          domClass.remove(dom.byId('rowLimitControl'), "hidden");
-        }
-
         var styled = _isTopReportViewer && !isReportAlone &&
             isHtml && !isProportionalWidth &&
             !inMobile;
@@ -1037,7 +975,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         //This flag is switched to true after we get total page count and updated page control
         var isPageCountUpdated = false;
         //Report generation finished ( also includes canceled and failed cases)
-        me._isFinished = false;
+        var isFinished = false;
         //Hides feedback screen and glasspane
         var hideDlgAndPane = this._hideDialogAndPane.bind(me);
         //Tells us if report was manually scheduled from the feedback screen
@@ -1058,11 +996,6 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
             if (mainJobStatus && mainJobStatus.status != null) {
 
-              if (mainJobStatus.totalRows > 0 && isQueryLimitControlEnabled) {
-                var systemRowLimit = parseInt(options['maximum-query-limit'], 0);
-                registry.byId('rowLimitControl').apply(systemRowLimit, requestLimit, mainJobStatus.totalRows, mainJobStatus.isQueryLimitReached);
-              }
-
               me._updateFeedbackScreen(mainJobStatus, feedbackDialog);
 
               //Configure callback for first page
@@ -1081,7 +1014,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                     me._keepPolling(firstPageJobStatus.uuid, url, firtsPageReadyCallback);
                     break;
                   case  "FINISHED" :
-                    me._isFinished = true;
+                    isFinished = true;
                     me._hideAsyncScreens();
                     //Let's get first page
                     me._getContent(firstPageJobStatus.uuid, url, function () {
@@ -1150,7 +1083,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                   break;
                 case "FINISHED":
 
-                  me._isFinished = true;
+                  isFinished = true;
 
                   hideDlgAndPane(registry.byId('feedbackScreen'));
                   me._hideAsyncScreens();
@@ -1191,7 +1124,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
                   break;
                 case "FAILED":
-                  me._isFinished = true;
+                  isFinished = true;
                   me._submitReportEnded();
 
                   //Hide dialogs and show error
@@ -1214,7 +1147,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                   if(me._locationPromptFinished){
                     me._keepPolling(mainJobStatus.uuid, url, mainReportGeneration);
                   } else if (!me._manuallyScheduled){
-                    me._isFinished = true;
+                    isFinished = true;
                     var autoScheduleDlg = registry.byId('scheduleScreen');
                     autoScheduleDlg.setTitle(_Messages.getString('AutoScheduleTitle'));
                     autoScheduleDlg.setText(_Messages.getString('AutoScheduleText'));
@@ -1229,7 +1162,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                   break;
                 case "SCHEDULED":
                   //Scheduling is confirmed, the task is not cancelable anymore
-                  me._isFinished = true;
+                  isFinished = true;
                   me._submitReportEnded();
                   me._hideAsyncScreens();
 
@@ -1258,7 +1191,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
           //Don't show dialog if report is ready faster than threshold
           setTimeout(function () {
-            if (!me._isFinished) {
+            if (!isFinished) {
               feedbackDialog.show();
             }
           }, me.reportPrompt._dialogThreshold);
@@ -1287,12 +1220,12 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                   me._hideAsyncScreens();
                 } else {
                   //Page navigation occurred  - callbacks will do the job
-                  me._isFinished = true;
+                  isFinished = true;
                 }
               } else {
                 //Need to request cache flush
                 me._requestCacheFlush(url);
-                me._isFinished = true;
+                isFinished = true;
               }
               break;
             default:
@@ -1312,7 +1245,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                   }
                 });
               } else {
-                me._isFinished = true;
+                isFinished = true;
                 hideDlgAndPane();
               }
               break;

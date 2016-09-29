@@ -17,13 +17,6 @@
 
 package org.pentaho.reporting.platform.plugin.output;
 
-import org.pentaho.reporting.engine.classic.core.MasterReport;
-import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
-import org.pentaho.reporting.engine.classic.core.modules.output.pageable.graphics.PageDrawable;
-import org.pentaho.reporting.engine.classic.core.modules.output.pageable.graphics.PrintReportProcessor;
-import org.pentaho.reporting.libraries.base.util.PngEncoder;
-import org.pentaho.reporting.libraries.repository.ContentIOException;
-
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
@@ -31,6 +24,14 @@ import java.awt.image.BufferedImage;
 import java.awt.print.PageFormat;
 import java.io.IOException;
 import java.io.OutputStream;
+
+import org.pentaho.reporting.engine.classic.core.MasterReport;
+import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
+import org.pentaho.reporting.engine.classic.core.layout.output.YieldReportListener;
+import org.pentaho.reporting.engine.classic.core.modules.output.pageable.graphics.PageDrawable;
+import org.pentaho.reporting.engine.classic.core.modules.output.pageable.graphics.PrintReportProcessor;
+import org.pentaho.reporting.libraries.base.util.PngEncoder;
+import org.pentaho.reporting.libraries.repository.ContentIOException;
 
 public class PNGOutput implements ReportOutputHandler {
   private transient PrintReportProcessor proc;
@@ -100,7 +101,7 @@ public class PNGOutput implements ReportOutputHandler {
     throws ReportProcessingException {
     final PrintReportProcessor proc = new PrintReportProcessor( report );
     if ( yieldRate > 0 ) {
-      proc.addReportProgressListener( getYieldListener( yieldRate ) );
+      proc.addReportProgressListener( new YieldReportListener( yieldRate ) );
     }
     return proc;
   }
