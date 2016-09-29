@@ -17,21 +17,20 @@
 
 package org.pentaho.reporting.platform.plugin.output;
 
+import org.pentaho.reporting.engine.classic.core.MasterReport;
+import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
+import org.pentaho.reporting.engine.classic.core.modules.output.table.base.FlowReportProcessor;
+import org.pentaho.reporting.engine.classic.core.modules.output.table.xls.FlowExcelOutputProcessor;
+import org.pentaho.reporting.libraries.base.util.IOUtils;
+import org.pentaho.reporting.libraries.repository.ContentIOException;
+import org.pentaho.reporting.platform.plugin.async.IAsyncReportListener;
+import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-
-import org.pentaho.reporting.engine.classic.core.MasterReport;
-import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
-import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
-import org.pentaho.reporting.engine.classic.core.layout.output.YieldReportListener;
-import org.pentaho.reporting.engine.classic.core.modules.output.table.base.FlowReportProcessor;
-import org.pentaho.reporting.engine.classic.core.modules.output.table.xls.FlowExcelOutputProcessor;
-import org.pentaho.reporting.libraries.base.util.IOUtils;
-import org.pentaho.reporting.libraries.repository.ContentIOException;
-import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
 
 public class XLSXOutput implements ReportOutputHandler {
   private byte[] templateData;
@@ -73,7 +72,7 @@ public class XLSXOutput implements ReportOutputHandler {
     final FlowReportProcessor reportProcessor = new FlowReportProcessor( report, target );
 
     if ( yieldRate > 0 ) {
-      reportProcessor.addReportProgressListener( new YieldReportListener( yieldRate ) );
+      reportProcessor.addReportProgressListener( getYieldListener( yieldRate ) );
     }
     return reportProcessor;
   }
@@ -86,7 +85,7 @@ public class XLSXOutput implements ReportOutputHandler {
   public int generate( final MasterReport report, final int acceptedPage, final OutputStream outputStream,
                        final int yieldRate ) throws ReportProcessingException, IOException {
     final FlowReportProcessor reportProcessor = createProcessor( report, yieldRate );
-    final ReportProgressListener listener = ReportListenerThreadHolder.getListener();
+    final IAsyncReportListener listener = ReportListenerThreadHolder.getListener();
     //Add async job listener
     if ( listener != null ) {
       reportProcessor.addReportProgressListener( listener );
@@ -99,6 +98,9 @@ public class XLSXOutput implements ReportOutputHandler {
       }
 
       reportProcessor.processReport();
+      if ( listener != null ) {
+        listener.setIsQueryLimitReached( reportProcessor.isQueryLimitReached() );
+      }
       outputStream.flush();
       return 0;
     } finally {

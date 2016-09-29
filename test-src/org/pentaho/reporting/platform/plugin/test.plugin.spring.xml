@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ws="http://jax-ws.dev.java.net/spring/core"
+       xmlns:wss="http://jax-ws.dev.java.net/spring/servlet"
+       xmlns:pen="http://www.pentaho.com/schema/pentaho-system" xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+                           http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-2.5.xsd
+                           http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.5.xsd
+                           http://jax-ws.dev.java.net/spring/core http://jax-ws.dev.java.net/spring/core.xsd
+                           http://jax-ws.dev.java.net/spring/servlet http://jax-ws.dev.java.net/spring/servlet.xsd
+                           http://www.pentaho.com/schema/pentaho-system http://www.pentaho.com/schema/pentaho-system.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+  <context:annotation-config />
+
+  <bean id="prpt" class="org.pentaho.reporting.platform.plugin.ReportContentGenerator" scope="prototype"/>
+  <bean id="prpt.report" class="org.pentaho.reporting.platform.plugin.ReportContentGenerator" scope="prototype"/>
+  <bean id="prpt.viewer" class="org.pentaho.platform.plugin.services.webservices.content.PluginFileContentGenerator" scope="prototype">
+    <property name="mimeType" value="text/html" />
+    <property name="relativeFilePath" value="reportviewer/report.html" />
+    <property name="pluginId" value="reporting" />
+  </bean>  
+  <bean id="prpt.mobile" class="org.pentaho.platform.plugin.services.webservices.content.PluginFileContentGenerator" scope="prototype">
+    <property name="mimeType" value="text/html" />
+    <property name="relativeFilePath" value="reportviewer/report.html" />
+    <property name="pluginId" value="reporting" />
+  </bean>  
+  <bean id="prpt.parameter" class="org.pentaho.reporting.platform.plugin.ParameterContentGenerator" scope="prototype"/>
+  <bean id="prpt.backgroundExecution" class="org.pentaho.reporting.platform.plugin.SimpleReportingAction" scope="prototype"/>
+  <bean id="prpt.parameterUi" class="org.pentaho.platform.plugin.services.webservices.content.PluginFileContentGenerator" scope="prototype">
+    <property name="mimeType" value="text/html" />
+    <property name="relativeFilePath" value="reportviewer/report.html" />
+    <property name="pluginId" value="reporting" />
+  </bean>
+
+  <bean id="prpt.viewer-gwt" class="org.pentaho.platform.plugin.services.webservices.content.PluginFileContentGenerator" scope="prototype">
+    <property name="mimeType" value="text/html" />
+    <property name="relativeFilePath" value="reportviewer/gwt/report-test.html" />
+    <property name="pluginId" value="reporting" />
+  </bean>
+
+
+  <bean id="prpt.reportjob" class="org.pentaho.reporting.platform.plugin.BackgroundJobReportContentGenerator" scope="prototype" />
+  
+  <bean id="SimpleReportingComponent" class="org.pentaho.reporting.platform.plugin.SimpleReportingComponent" scope="prototype"/>
+
+  <!-- Register with PentahoSystem -->
+  <bean class="org.pentaho.platform.engine.core.system.objfac.spring.ApplicationContextPentahoSystemRegisterer" scope="singleton"/>
+
+  <bean class="org.pentaho.platform.engine.core.solution.ContentInfo">
+  	<property name="mimeType" value="application/prpt"/>	
+		<property name="extension" value=".prpt"/>	
+		<property name="canImport" value="true"/>
+		<property name="canExport" value="true"/>		
+		<pen:publish as-type="INTERFACES"/>
+	</bean>
+  <bean id="ReportOutputHandlerFactory"
+        class="org.pentaho.reporting.platform.plugin.output.FastExportReportOutputHandlerFactory" scope="prototype"/>
+  <bean id="org.pentaho.reporting.platform.plugin.cache.ReportCache"
+        class="org.pentaho.reporting.platform.plugin.cache.NullReportCache" scope="prototype"/>
+
+  <bean id="ICacheBackend"
+        class="org.pentaho.reporting.platform.plugin.cache.FileSystemCacheBackend" scope="singleton" >
+    <property name="cachePath" value="/reporting-plugin/"/>
+  </bean>
+
+  <!--The bean is singleton, nevertheless it calls PentahoSessionHolder.getSession()
+   on each cache key computation, so we have separate cache per session.
+   Also it registers LogoutListener to clean cache for each session.
+   You also have an option to use DeleteOldOnAccessCache and provide cache living time in days.-->
+  <bean id="IReportContentCache"
+        class="org.pentaho.reporting.platform.plugin.cache.PluginSessionCache" scope="singleton">
+    <property name="backend" ref="ICacheBackend"/>
+  </bean>
+
+  <bean id="IPluginCacheManager"
+        class="org.pentaho.reporting.platform.plugin.cache.PluginCacheManagerImpl" scope="singleton">
+    <property name="strategy" ref="IReportContentCache" />
+  </bean>
+
+  <!-- Thread pool executor -->
+  <!-- The thread-pool capacity heavily depends on the expected number of users on the system
+   and how many resources should be allocated to the report execution.
+   Minimum value: 2
+   Default value: depends on your case but probably should be equal to your CPU core quantity.
+   Maximum value:  Integer.MAX_VALUE
+
+  -->
+  <bean id="IPentahoAsyncExecutor" class="org.pentaho.reporting.platform.plugin.async.PentahoAsyncExecutor" scope="singleton" >
+    <!-- fixed thread pool capacity -->
+    <constructor-arg type="int" value="10" />
+    <!--Maximum rows for automatic scheduling defines a threshold for quantity of rows in report after
+    which report will be automatically scheduled to run in background.
+    Minimum value: 0
+    Default value : 0 - no auto-scheduling
+    Maximum value: Integer.MAX_VALUE-->
+    <constructor-arg type="int" value="0" />
+  </bean>
+
+  <!--<bean id="api" class="org.pentaho.platform.web.servlet.JAXRSPluginServlet"/>-->
+
+  <!-- Job manager has some properties you can configure:
+      0) You should provide all constructor arguments even if you disable async execution.
+      1) Asynchronous execution enabled/disabled - you can disable async execution by passing "false" to the argument
+      2) Status polling interval (ms) - how often browser asks server for running report status
+      3) Dialog showing threshold (ms) - minimum execution time to show progress dialog
+       If report was generated faster -  dialog would not be shown. Proposed minimum ratio is 3:1 to polling interval.
+      4) Whether to prompt for location when scheduling the report
+      -->
+  <bean class="org.pentaho.reporting.platform.plugin.JobManager">
+    <!-- async execution enabled/disabled -->
+    <constructor-arg type="boolean" value="true" />
+    <!-- status polling interval -->
+    <constructor-arg type="long" value="500" />
+    <!-- dialog threshold -->
+    <constructor-arg type="long" value="1500" />
+    <!-- prompt for scheduling location -->
+    <constructor-arg type="boolean" value="true" />
+  </bean>
+
+  <!--Default scheduling from user console will save reports to user's home directory-->
+  <bean id="ISchedulingDirectoryStrategy" class="org.pentaho.reporting.platform.plugin.async.HomeSchedulingDirStrategy" />
+
+  <!--You can provide your own absolute or relative to home path.
+   The main limitation - the directory must already exist in repository. -->
+  <!--<bean id="ISchedulingDirectoryStrategy" class="org.pentaho.reporting.platform.plugin.async.ProvidedSchedulingDirStrategy" >
+    <constructor-arg value="/public"/>
+  </bean>-->
+
+  <!--Used to pregenerate and validate async jobs ids -->
+  <bean id="IJobIdGenerator" class="org.pentaho.reporting.platform.plugin.async.JobIdGenerator"/>
+
+  <!--Rest API to manage cache in plugin -->
+  <bean class="org.pentaho.reporting.platform.plugin.CacheManagerEndpoint" />
+
+  <!-- A way to clear cache from other modules without dependency on reporting plugin -->
+  <bean id="_ClearCacheAction" class="org.pentaho.reporting.platform.plugin.async.ClearCacheAction"/>
+
+</beans>

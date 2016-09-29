@@ -17,18 +17,17 @@
 
 package org.pentaho.reporting.platform.plugin.output;
 
-import java.io.IOException;
-import java.io.OutputStream;
-
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
-import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
-import org.pentaho.reporting.engine.classic.core.layout.output.YieldReportListener;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.base.PageableReportProcessor;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.plaintext.PageableTextOutputProcessor;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.plaintext.driver.TextFilePrinterDriver;
 import org.pentaho.reporting.libraries.repository.ContentIOException;
+import org.pentaho.reporting.platform.plugin.async.IAsyncReportListener;
 import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
+
+import java.io.IOException;
+import java.io.OutputStream;
 
 public class PlainTextOutput implements ReportOutputHandler {
   private ProxyOutputStream proxyOutputStream;
@@ -49,7 +48,7 @@ public class PlainTextOutput implements ReportOutputHandler {
                        final int yieldRate ) throws ReportProcessingException, IOException, ContentIOException {
     final PageableReportProcessor proc = create( report, yieldRate );
     proxyOutputStream.setParent( outputStream );
-    final ReportProgressListener listener = ReportListenerThreadHolder.getListener();
+    final IAsyncReportListener listener = ReportListenerThreadHolder.getListener();
     //Add async job listener
     if ( listener != null ) {
       proc.addReportProgressListener( listener );
@@ -59,6 +58,9 @@ public class PlainTextOutput implements ReportOutputHandler {
         proc.paginate();
       }
       proc.processReport();
+      if ( listener != null ) {
+        listener.setIsQueryLimitReached( proc.isQueryLimitReached() );
+      }
       return 0;
     } finally {
       if ( listener != null ) {
@@ -77,7 +79,7 @@ public class PlainTextOutput implements ReportOutputHandler {
       new PageableTextOutputProcessor( driver, report.getConfiguration() );
     final PageableReportProcessor proc = new PageableReportProcessor( report, outputProcessor );
     if ( yieldRate > 0 ) {
-      proc.addReportProgressListener( new YieldReportListener( yieldRate ) );
+      proc.addReportProgressListener( getYieldListener( yieldRate ) );
     }
     return proc;
   }
