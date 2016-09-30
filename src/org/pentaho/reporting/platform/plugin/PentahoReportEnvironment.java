@@ -12,12 +12,13 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
 
 import java.net.URL;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Locale;
 
@@ -34,8 +35,8 @@ import org.pentaho.reporting.engine.classic.core.DefaultReportEnvironment;
 import org.pentaho.reporting.libraries.base.config.Configuration;
 import org.pentaho.reporting.libraries.base.util.CSVQuoter;
 import org.pentaho.reporting.platform.plugin.messages.Messages;
-import org.springframework.security.Authentication;
-import org.springframework.security.GrantedAuthority;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 
 public class PentahoReportEnvironment extends DefaultReportEnvironment {
   private static final Log logger = LogFactory.getLog( PentahoReportEnvironment.class );
@@ -130,24 +131,23 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment {
           return null;
         }
         final StringBuilder property = new StringBuilder();
-        final GrantedAuthority[] roles = authentication.getAuthorities();
+        final Collection<? extends GrantedAuthority> roles = authentication.getAuthorities();
         ITenantedPrincipleNameResolver tenantedRoleNameUtils =
             PentahoSystem.get( ITenantedPrincipleNameResolver.class, "tenantedRoleNameUtils", session );
         if ( roles == null ) {
           return null;
         }
 
-        final int rolesSize = roles.length;
         final CSVQuoter quoter = new CSVQuoter( ',', '"' ); //$NON-NLS-1$
-        for ( int i = 0; i < rolesSize; i++ ) {
-          if ( i != 0 ) {
+        for ( GrantedAuthority ga : roles ) {
+          if ( property.length() > 0 ) {
             property.append( "," ); //$NON-NLS-1$
           }
           String authority = null;
           if ( tenantedRoleNameUtils != null ) {
-            authority = tenantedRoleNameUtils.getPrincipleName( roles[i].getAuthority() );
+            authority = tenantedRoleNameUtils.getPrincipleName( ga.getAuthority() );
           } else {
-            authority = roles[i].getAuthority();
+            authority = ga.getAuthority();
           }
 
           property.append( quoter.doQuoting( authority ) );
