@@ -1375,6 +1375,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
         var successScheduleDialogCallbacks = [
           function hide() {
+            me._updateParametersDisabledState(false);
             me._forceHideGlassPane();
             successDlg.hide();
           }.bind(me)
@@ -1484,6 +1485,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         var me = this;
         return function (event) {
           if (event.eventSubType == 'locationPromptCanceled') {
+            me._updateParametersDisabledState(false);
             me._forceHideGlassPane();
             me.cancel(me._currentReportStatus, me._currentReportUuid);
             me._removeLocationPromptHandlers();
@@ -1576,9 +1578,11 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           autoScheduleDialogCallbacks = [
             function openPrompt() {
               autoScheduleDlg.hide();
-              me._locationPromptCancelHandlerRegistration = window.top.mantle_addHandler("GenericEvent", this._onLocationPromptCancelAuto().bind(this) );
-              me._locationPromptOkHandlerRegistration = window.top.mantle_addHandler("GenericEvent", this._onLocationPromptOkAuto(mainReportGeneration, url).bind(this) );
-              me._locationPromptFinishHandlerRegistration = window.top.mantle_addHandler("GenericEvent", this._onLocationPromptFinish().bind(this));
+              if(window.top.mantle_addHandler) {
+                me._locationPromptCancelHandlerRegistration = window.top.mantle_addHandler("GenericEvent", this._onLocationPromptCancelAuto().bind(this) );
+                me._locationPromptOkHandlerRegistration = window.top.mantle_addHandler("GenericEvent", this._onLocationPromptOkAuto(mainReportGeneration, url).bind(this) );
+                me._locationPromptFinishHandlerRegistration = window.top.mantle_addHandler("GenericEvent", this._onLocationPromptFinish().bind(this));
+              }
 
               //Open location prompt
               me._locationPromptFinished = false;
@@ -1586,6 +1590,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
             }.bind(me),
             function cancel() {
               autoScheduleDlg.hide();
+              me._updateParametersDisabledState(false);
               me._forceHideGlassPane();
               me.cancel(me._currentReportStatus, me._currentReportUuid);
             }.bind(me)
@@ -1601,6 +1606,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
             }.bind(me),
             function cancel() {
               autoScheduleDlg.hide();
+              me._updateParametersDisabledState(false);
               me._forceHideGlassPane();
               me.cancel(me._currentReportStatus, me._currentReportUuid);
             }.bind(me)
