@@ -32,6 +32,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.URL;
 import java.util.Collections;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -44,7 +45,8 @@ class PaginationControlWrapper {
   private static Log logger = LogFactory.getLog( PaginationControlWrapper.class );
   private static final String TEMPLATE_PATH = "system/reporting/reportviewer/paginationTemplate.html";
   private static final String STAGING_PATH = "system/tmp/";
-  private static final Pattern CSS = Pattern.compile( "(.*link.*\\/pentaho\\/getImage\\?image=)(.*)(\".*)" );
+  private static final Pattern CSS = Pattern.compile( "(.*link.*\\/getImage\\?image=)(.*)(\".*)" );
+  private static final Pattern IMG = Pattern.compile( "(.*img.*src=\")(http.+)(\\/getImage\\?image=)(.*)(\".*)" );
 
   private static String pageableHtml;
 
@@ -76,6 +78,7 @@ class PaginationControlWrapper {
       String pageContent = new String( page, "UTF-8" );
       try {
         pageContent = embedCss( pageContent );
+        pageContent = replaceImgSrc( pageContent );
       } catch ( final IOException e ) {
         //Can't embed, let's not fail and at least make it usable inside the platform
         logger.error( "Can't embed styles and images into scheduled HTML file: ", e );
@@ -103,6 +106,21 @@ class PaginationControlWrapper {
     return pageContent;
   }
 
+  private static String replaceImgSrc( String pageContent ) throws IOException {
+    String fullyQualifiedServerUrl = PentahoSystem.getApplicationContext().getFullyQualifiedServerURL();
+    URL url = new URL( fullyQualifiedServerUrl );
+    String garbage = url.getProtocol() + "://" + url.getHost() + ":" + url.getPort();
+    String prefix = fullyQualifiedServerUrl.substring( garbage.length(), fullyQualifiedServerUrl.length() - 1 );
+
+    Matcher imgLinkMatcher = IMG.matcher( pageContent );
+    while ( imgLinkMatcher.find() && imgLinkMatcher.groupCount() > 1 ) {
+      String imgContent = imgLinkMatcher.group( 0 );
+      imgContent = imgContent.replace( imgLinkMatcher.group( 2 ), prefix );
+      pageContent = imgLinkMatcher.replaceFirst( imgContent );
+      imgLinkMatcher = IMG.matcher( pageContent );
+    }
+    return pageContent;
+  }
 
   private static String getSolutionDirFileContent( final String path ) throws IOException {
     final IApplicationContext context = PentahoSystem.getApplicationContext();
