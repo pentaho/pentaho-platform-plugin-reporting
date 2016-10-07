@@ -738,7 +738,7 @@ public class ParameterXmlContentHandler {
           final String namespace = namespaces[ i ];
           final String[] attributeNames = parameter.getParameterAttributeNames( namespace );
           for ( final String attributeName : attributeNames ) {
-            final String attributeValue = parameter.getParameterAttribute( namespace, attributeName, parameterContext );
+            final String attributeValue = parameter.getTranslatedParameterAttribute( namespace, attributeName, parameterContext );
             // expecting: label, parameter-render-type, parameter-layout
             // but others possible as well, so we set them all
             final Element attributeElement = document.createElement( "attribute" ); // NON-NLS
