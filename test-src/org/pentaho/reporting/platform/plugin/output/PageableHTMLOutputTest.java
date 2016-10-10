@@ -22,6 +22,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.StandaloneSession;
@@ -45,6 +46,9 @@ import org.pentaho.reporting.platform.plugin.cache.IReportContent;
 import org.pentaho.reporting.platform.plugin.cache.IReportContentCache;
 import org.pentaho.reporting.platform.plugin.cache.PluginCacheManagerImpl;
 import org.pentaho.test.platform.engine.core.MicroPlatform;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.File;
 import java.io.IOException;
@@ -53,9 +57,24 @@ import java.util.Random;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.*;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyObject;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+@RunWith( PowerMockRunner.class )
+@PrepareForTest( CachingPageableHTMLOutput.class )
 public class PageableHTMLOutputTest {
   PageableHTMLOutput pageableHTMLOutput;
   private IAsyncReportListener listener;
@@ -352,4 +371,35 @@ public class PageableHTMLOutputTest {
       microPlatform = null;
     }
   }
+
+
+  @Test
+  public void testRegenerateCacheThrowExceptionForNullMasterReport() throws Exception {
+    // BACKLOG-11306
+    boolean thrown = false;
+    final CachingPageableHTMLOutput cachingPageableHTMLOutput = PowerMockito.mock( CachingPageableHTMLOutput.class );
+    final IReportContent iReportContent = PowerMockito.mock( IReportContent.class );
+    final MasterReport masterReport = PowerMockito.mock( MasterReport.class );
+    final ReportListenerThreadHolder reportListenerThreadHolder = PowerMockito.mock( ReportListenerThreadHolder.class );
+    reportListenerThreadHolder.setListener( null );
+
+    PowerMockito.when( cachingPageableHTMLOutput, "produceCacheablePages", null, 1, "key", 0  ).thenReturn( iReportContent );
+    PowerMockito.when( cachingPageableHTMLOutput.regenerateCache( anyObject(), anyInt(), anyString(), anyInt() ) ).thenCallRealMethod();
+
+    try {
+      cachingPageableHTMLOutput.regenerateCache( null, 1, "key", 0 );
+    } catch ( NullPointerException e ) {
+      thrown = true;
+    }
+    assertTrue( thrown );
+
+    thrown = false;
+    try {
+      cachingPageableHTMLOutput.regenerateCache( masterReport, 1, "key", 0 );
+    } catch ( NullPointerException e ) {
+      thrown = true;
+    }
+    assertFalse( thrown );
+  }
+
 }
