@@ -9,4 +9,7 @@
   <slate>
     <file>Slate.css</file>
   </slate>
+  <sapphire>
+    <file>Sapphire.css</file>
+  </sapphire>
 </themes>
