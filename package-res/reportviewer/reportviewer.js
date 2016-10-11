@@ -194,7 +194,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
         var rowLimitControl = registry.byId('rowLimitControl');
 
-        rowLimitControl.bindChange(dojo.hitch(this, this._submitRowLimitUpdate));
+        rowLimitControl.bindChange(dojo.hitch(this, this._initRowLimitCallback));
         rowLimitControl.bindGetMessage(function () {
           return registry.byId('rowLimitMessage');
         });
@@ -872,6 +872,16 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
       },
 
       _updateReportContent: function() {
+        //init row limit UI in any case
+        var options = this._buildReportContentOptions();
+        var requestLimit = parseInt(options['query-limit'], 0);
+        var systemRowLimit = parseInt(options['maximum-query-limit'], 0);
+        var isQueryLimitControlEnabled = this.reportPrompt._isAsync && options['query-limit-ui-enabled'] == "true";
+        if (isQueryLimitControlEnabled) {
+          registry.byId('rowLimitControl').apply(systemRowLimit, requestLimit, false);
+          domClass.remove(dom.byId("toolbar-parameter-separator-row-limit"), "hidden");
+          domClass.remove(dom.byId('rowLimitControl'), "hidden");
+        };
         if (this.reportPrompt._isSubmitPromptPhaseActivated || this.reportPrompt._getStateProperty("autoSubmit")) {
           this._updateReportContentCore();
         }
@@ -973,6 +983,11 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
       },
 
+      _initRowLimitCallback: function (selectedLimit) {
+        this.reportPrompt.api.operation.setParameterValue("query-limit", selectedLimit);
+        registry.byId('rowLimitControl').bindChange(dojo.hitch(this, this._submitRowLimitUpdate));
+      },
+
       _updateReportContentCore: function() {
 
         //no report generation in scheduling dialog ever!
@@ -1005,11 +1020,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
         var isQueryLimitControlEnabled = me.reportPrompt._isAsync && options['query-limit-ui-enabled'] == "true";
         var requestLimit = parseInt(options['query-limit'], 0);
-
-        if (isQueryLimitControlEnabled) {
-          domClass.remove(dom.byId("toolbar-parameter-separator-row-limit"), "hidden");
-          domClass.remove(dom.byId('rowLimitControl'), "hidden");
-        }
+        var systemRowLimit = parseInt(options['maximum-query-limit'], 0);
 
         var styled = _isTopReportViewer && !isReportAlone &&
             isHtml && !isProportionalWidth &&
@@ -1058,9 +1069,8 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
             if (mainJobStatus && mainJobStatus.status != null) {
 
-              if (mainJobStatus.totalRows > 0 && isQueryLimitControlEnabled) {
-                var systemRowLimit = parseInt(options['maximum-query-limit'], 0);
-                registry.byId('rowLimitControl').apply(systemRowLimit, requestLimit, mainJobStatus.totalRows, mainJobStatus.isQueryLimitReached);
+              if (isQueryLimitControlEnabled) {
+                registry.byId('rowLimitControl').apply(systemRowLimit, requestLimit, mainJobStatus.isQueryLimitReached);
               }
 
               me._updateFeedbackScreen(mainJobStatus, feedbackDialog);
