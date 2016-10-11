@@ -63,7 +63,6 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
   private static Log logger = LogFactory.getLog( CachingPageableHTMLOutput.class );
   public static final String IS_QUERY_LIMIT_REACHED = "IsQueryLimitReached";
   public static final String REPORT_ROWS = "ReportRows";
-  private MasterReport masterReport;
   private PageableReportProcessor processor;
 
   private class CacheListener implements ReportProgressListener {
@@ -153,8 +152,6 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
   public synchronized int generate( final MasterReport report, final int acceptedPage,
                                     final OutputStream outputStream, final int yieldRate )
     throws ReportProcessingException, IOException, ContentIOException {
-
-    masterReport = report;
 
     if ( acceptedPage < 0 ) {
       return generateNonCaching( report, acceptedPage, outputStream, yieldRate );
@@ -246,7 +243,7 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
     if ( listener != null ) {
       persistContent( key, result, listener.getTotalRows() );
     } else {
-      persistContent( key, result, masterReport.getQueryLimit() );
+      persistContent( key, result, report.getQueryLimit() );
     }
 
     return result;
