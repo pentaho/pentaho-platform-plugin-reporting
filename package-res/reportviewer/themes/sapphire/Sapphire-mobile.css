@@ -1,0 +1,67 @@
+/* top toolbar for report viewer in iPad */
+#toolbarlinner2{
+	background: #f5f6f8;!important;
+	border: solid #cbdde8;!important;
+	border-radius: 0 !important;
+	border-width: 0 0 1px 0 !important;
+	padding: 2px;
+	box-shadow: rgba(0, 0, 0, 0.3) 1px 0px 5px 1px !important;
+	height: auto;
+}
+#reportControlPanel{
+	background:#f5f6f8;!important;
+	background-repeat:repeat;
+	border-radius: 0 !important;
+	margin: 0 !important;
+	border: 0 !important;
+	border-bottom: 1px solid #cbdde8 !important;
+	
+}
+.pentaho-shadow {
+	box-shadow: rgba(0, 0, 0, 0.3) 1px 0px 5px 1px !important;
+}
+/* paging controls for iPad */
+.pc_pagePrevDisabled {
+	background: transparent url('../../../../pentaho-mobile/resources/css/crystal/images/ico-page-left.png') no-repeat !important;
+	cursor: default !important;
+}
+.pc_pagePrev {
+	float: left;
+	background: transparent url('../../../../pentaho-mobile/resources/css/crystal/images/ico-page-left.png') no-repeat !important;
+	height: 32px;
+	width: 32px;
+	white-space: nowrap;
+	cursor: pointer;
+}
+.pc_pageNextDisabled {
+	background: transparent url('../../../../pentaho-mobile/resources/css/crystal/images/ico-page-right.png') no-repeat !important;
+	cursor: default !important;
+}
+.pc_pageNext {
+	float: left;
+	background: transparent url('../../../../pentaho-mobile/resources/css/crystal/images/ico-page-right.png') no-repeat !important;
+	height: 32px;
+	width: 32px;
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+.pc_pageControlContainer {
+	height: auto;
+}
+
+.pc_pageControlContainer .dijitTextBox {
+	margin-top: 6px;
+}
+.pc_pageTotal {
+	margin-top: 6px;
+}
+
+#mobile-toolbar{
+	height: 39px;
+}
+/* hide them background to show mobile bg */
+.pentaho-page-background{
+	background: transparent;
+	background-color: rgba(00,00,00,00.2) !important;
+}
