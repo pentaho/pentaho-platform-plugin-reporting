@@ -806,7 +806,9 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
       },
 
       beforeUpdateCallback: function() {
-        this.reportPrompt._isUpdatingPrompting = true;
+        if(this.reportPrompt.api.operation.state().autoSubmit) {
+          this.reportPrompt._isUpdatingPrompting = true;
+        }
       },
 
       afterUpdateCallback: function() {
