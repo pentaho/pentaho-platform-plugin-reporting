@@ -402,4 +402,24 @@ public class PageableHTMLOutputTest {
     assertFalse( thrown );
   }
 
+  @Test
+  public void testGenerateWErrorCache() throws Exception {
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    final String key = "test";
+
+    MasterReport mockMasterReport = mock( MasterReport.class );
+    CachingPageableHTMLOutput mockCachingPageableHTMLOutput = mock( CachingPageableHTMLOutput.class );
+
+    ReportListenerThreadHolder.clear();
+
+    doReturn( key ).when( mockMasterReport ).getContentCacheKey();
+    doReturn( null ).when( mockCachingPageableHTMLOutput ).getCachedContent( key );
+    doReturn( null ).when( mockCachingPageableHTMLOutput ).regenerateCache( mockMasterReport, 1, key, 1 );
+    when( mockCachingPageableHTMLOutput.generate( mockMasterReport, 1, baos, 1 ) ).thenCallRealMethod();
+
+    int returnedValue = mockCachingPageableHTMLOutput.generate( mockMasterReport, 1, baos, 1 );
+
+    verify( mockCachingPageableHTMLOutput ).regenerateCache( mockMasterReport, 1, key, 1 );
+    assertTrue( returnedValue == -1 );
+  }
 }
