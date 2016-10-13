@@ -37,13 +37,15 @@ public class SimpleReportingComponentTest {
 
 
   public SimpleReportingComponentTest( final int reportLimit, final int systemLimit, final int userLimit,
-                                       final int result ) {
+                                       final int result, final boolean isLimitEnabled ) {
     this.reportLimit = reportLimit;
     this.systemLimit = systemLimit;
     this.userLimit = userLimit;
     this.result = result;
+    this.isLimitEnabled = isLimitEnabled;
   }
 
+  private boolean isLimitEnabled;
   private int reportLimit;
   private int systemLimit;
   private int userLimit;
@@ -56,18 +58,26 @@ public class SimpleReportingComponentTest {
     return Arrays.asList( new Object[][] {
       //Report limit is set - we should return either report limit or system
       //System limit is set - return min (reportLimit, systemLimit)
-      { 100, 200, -1, 100 },
-      { 100, 50, -1, 50 },
+      { 100, 200, -1, 100, true },
+      { 100, 50, -1, 50, true },
       //System limit is not set - return report limit
-      { 100, 0, -1, 100 },
+      { 100, 0, -1, 100, true },
       //Report limit is not set - we should return either user limit or system
       //System limit and user limit are set - return min (reportLimit, systemLimit)
-      { -1, 200, 100, 100 },
-      { -1, 50, 100, 50 },
+      { -1, 200, 100, 100, true },
+      { -1, 50, 100, 50, true },
       //System limit is set but no user limit - return system limit
-      { -1, 50, -1, 50 },
+      { -1, 50, -1, 50, true },
       //System limit is not set - return user limit or -1 by default
-      { -1, 0, 100, 100 }
+      { -1, 0, 100, 100, true },
+      //When limit is disabled
+      { 100, 200, -1, 100, false },
+      { 100, 50, -1, 100, false },
+      { 100, 0, -1, 100, false },
+      { -1, 200, 100, 100, false },
+      { -1, 50, 100, 100, false },
+      { -1, 50, -1, -1, false },
+      { -1, 0, 100, 100, false }
     } );
   }
 
@@ -77,6 +87,8 @@ public class SimpleReportingComponentTest {
     PentahoSystem.registerObject( pluginManager, IPluginManager.class );
     when( pluginManager.getPluginSetting( "reporting", "settings/query-limit", "0" ) )
       .thenReturn( String.valueOf( systemLimit ) );
+    when( pluginManager.getPluginSetting( "reporting", "settings/query-limit-ui-enabled", "false" ) )
+      .thenReturn( String.valueOf( isLimitEnabled ) );
   }
 
   @After
