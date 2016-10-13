@@ -859,7 +859,10 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
       clearReportCache: function (callback) {
         try {
           var url = window.location.href.split('?')[0];
-          pentahoPost(url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/cache/clear', '', callback, 'text/text');
+          this.cancel(this._currentReportStatus, this._currentReportUuid);
+          setTimeout(function () {
+            pentahoPost(url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/cache/clear', '', callback, 'text/text');
+          }, this.reportPrompt._pollingInterval);
         } catch (e) {
           logger && logger.log("Can't clear cache.");
           callback();
