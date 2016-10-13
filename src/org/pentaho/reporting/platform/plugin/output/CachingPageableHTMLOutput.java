@@ -170,18 +170,22 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
         logger.warn( "No cached content found for key: " + key );
         final IReportContent freshCache = regenerateCache( report, yieldRate, key, acceptedPage );
 
-        //write all pages for scheduling case
-        if ( forcePaginated || ( listener != null && listener.isScheduled() ) ) {
-          PaginationControlWrapper.write( outputStream, freshCache );
+        if ( freshCache != null ) {
+          //write all pages for scheduling case
+          if ( forcePaginated || ( listener != null && listener.isScheduled() ) ) {
+            PaginationControlWrapper.write( outputStream, freshCache );
+            return freshCache.getPageCount();
+          }
+          setQueryLimitReachedToListener( key, listener );
+
+          final byte[] pageData = freshCache.getPageData( acceptedPage );
+
+          outputStream.write( pageData );
+          outputStream.flush();
           return freshCache.getPageCount();
+        } else {
+          return -1;
         }
-        setQueryLimitReachedToListener( key, listener );
-
-        final byte[] pageData = freshCache.getPageData( acceptedPage );
-
-        outputStream.write( pageData );
-        outputStream.flush();
-        return freshCache.getPageCount();
       }
 
       setQueryLimitReachedToListener( key, listener );
