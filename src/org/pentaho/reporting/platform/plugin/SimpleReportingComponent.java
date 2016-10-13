@@ -1084,8 +1084,9 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
 
     final IPluginManager pm = PentahoSystem.get( IPluginManager.class );
     if ( pm != null ) {
-      systemQueryLimit =
-        NumberUtils.toInt( (String) pm.getPluginSetting( "reporting", "settings/query-limit", "0" ), 0 );
+      final boolean isQueryLimitControlEnabled = Boolean.parseBoolean(
+        (String) pm.getPluginSetting( "reporting", "settings/query-limit-ui-enabled", "false" ) );
+      systemQueryLimit = isQueryLimitControlEnabled ? NumberUtils.toInt( (String) pm.getPluginSetting( "reporting", "settings/query-limit", "0" ), 0 ) : 0;
     }
 
     if ( reportQueryLimit > 0 ) {
