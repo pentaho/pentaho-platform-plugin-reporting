@@ -194,32 +194,36 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
         var rowLimitControl = registry.byId('rowLimitControl');
 
-        rowLimitControl.bindChange(dojo.hitch(this, this._initRowLimitCallback));
-        rowLimitControl.bindGetMessage(function () {
-          return registry.byId('rowLimitMessage');
-        });
-        rowLimitControl.bindGetDialog(function () {
-          return registry.byId('rowLimitExceededDialog');
-        });
-        rowLimitControl.bindShowGlassPane(dojo.hitch(this, this._forceShowGlassPane));
-        rowLimitControl.bindHideGlassPane(dojo.hitch(this, function(){
-          this._forceHideGlassPane();
-        }));
+        if(rowLimitControl) {
+          rowLimitControl.bindChange(dojo.hitch(this, this._initRowLimitCallback));
+          rowLimitControl.bindGetMessage(function () {
+            return registry.byId('rowLimitMessage');
+          });
+          rowLimitControl.bindGetDialog(function () {
+            return registry.byId('rowLimitExceededDialog');
+          });
+          rowLimitControl.bindShowGlassPane(dojo.hitch(this, this._forceShowGlassPane));
+          rowLimitControl.bindHideGlassPane(dojo.hitch(this, function () {
+            this._forceHideGlassPane();
+          }));
+        }
         var rowLimitMessage = registry.byId('rowLimitMessage');
-        rowLimitMessage.bindRun(function () {
-          var match = window.location.href.match('.*repos\/(.*)(\.prpt).*');
-          if (match && match.length > 1) {
-            window.parent.executeCommand("RunInBackgroundCommand", {
-              solutionPath: decodeURIComponent(match[1] + match[2]).replace(/:/g, '/')
-            });
-          }
-        });
-        rowLimitMessage.bindSchedule(function () {
-          var match = window.location.href.match('.*repos\/(.*)(\.prpt).*');
-          if (match && match.length > 1) {
-            window.parent.mantle_openRepositoryFile(decodeURIComponent(match[1] + match[2]).replace(/:/g, '/'), "SCHEDULE_NEW");
-          }
-        });
+        if(rowLimitMessage) {
+          rowLimitMessage.bindRun(function () {
+            var match = window.location.href.match('.*repos\/(.*)(\.prpt).*');
+            if (match && match.length > 1) {
+              window.parent.executeCommand("RunInBackgroundCommand", {
+                solutionPath: decodeURIComponent(match[1] + match[2]).replace(/:/g, '/')
+              });
+            }
+          });
+          rowLimitMessage.bindSchedule(function () {
+            var match = window.location.href.match('.*repos\/(.*)(\.prpt).*');
+            if (match && match.length > 1) {
+              window.parent.mantle_openRepositoryFile(decodeURIComponent(match[1] + match[2]).replace(/:/g, '/'), "SCHEDULE_NEW");
+            }
+          });
+        }
       },
 
       view: logged({
@@ -239,10 +243,10 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
          */
         localize: function() {
           $('#toolbar-parameterToggle').attr('title', _Messages.getString('parameterToolbarItem_title'));
-          registry.byId('pageControl').registerLocalizationLookup(_Messages.getString);
-          registry.byId('rowLimitControl').registerLocalizationLookup(_Messages.getString);
-          registry.byId('rowLimitExceededDialog').registerLocalizationLookup(_Messages.getString);
-          registry.byId('rowLimitMessage').registerLocalizationLookup(_Messages.getString);
+          registry.byId('pageControl') && registry.byId('pageControl').registerLocalizationLookup(_Messages.getString);
+          registry.byId('rowLimitControl') && registry.byId('rowLimitControl').registerLocalizationLookup(_Messages.getString);
+          registry.byId('rowLimitExceededDialog') && registry.byId('rowLimitExceededDialog').registerLocalizationLookup(_Messages.getString);
+          registry.byId('rowLimitMessage') && registry.byId('rowLimitMessage').registerLocalizationLookup(_Messages.getString);
         },
 
         /**
@@ -880,9 +884,12 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         var systemRowLimit = parseInt(options['maximum-query-limit'], 0);
         var isQueryLimitControlEnabled = this.reportPrompt._isAsync && options['query-limit-ui-enabled'] == "true";
         if (isQueryLimitControlEnabled) {
-          registry.byId('rowLimitControl').apply(systemRowLimit, requestLimit, false);
-          domClass.remove(dom.byId("toolbar-parameter-separator-row-limit"), "hidden");
-          domClass.remove(dom.byId('rowLimitControl'), "hidden");
+          var rowLimitControl =  registry.byId('rowLimitControl');
+          if(rowLimitControl) {
+            rowLimitControl.apply(systemRowLimit, requestLimit, false);
+            domClass.remove(dom.byId("toolbar-parameter-separator-row-limit"), "hidden");
+            domClass.remove(dom.byId('rowLimitControl'), "hidden");
+          }
         };
         if (this.reportPrompt._isSubmitPromptPhaseActivated || this.reportPrompt._getStateProperty("autoSubmit")) {
           this._updateReportContentCore();
@@ -987,7 +994,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
       _initRowLimitCallback: function (selectedLimit) {
         this.reportPrompt.api.operation.setParameterValue("query-limit", selectedLimit);
-        registry.byId('rowLimitControl').bindChange(dojo.hitch(this, this._submitRowLimitUpdate));
+        registry.byId('rowLimitControl') && registry.byId('rowLimitControl').bindChange(dojo.hitch(this, this._submitRowLimitUpdate));
       },
 
       _updateReportContentCore: function() {
@@ -1072,7 +1079,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
             if (mainJobStatus && mainJobStatus.status != null) {
 
               if (isQueryLimitControlEnabled) {
-                registry.byId('rowLimitControl').apply(systemRowLimit, requestLimit, mainJobStatus.isQueryLimitReached);
+                registry.byId('rowLimitControl') && registry.byId('rowLimitControl').apply(systemRowLimit, requestLimit, mainJobStatus.isQueryLimitReached);
               }
 
               me._updateFeedbackScreen(mainJobStatus, feedbackDialog);
