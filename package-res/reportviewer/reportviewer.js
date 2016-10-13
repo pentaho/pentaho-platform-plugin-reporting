@@ -73,7 +73,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         this.reportPrompt.api.event.afterUpdate(this.afterUpdateCallback.bind(this));
         this.reportPrompt.api.event.afterRender(this.view.afterRender.bind(this.view));
 
-        if (typeof parent.pho !== 'undefined' && typeof parent.pho.dashboards !== 'undefined') {
+        if (typeof parent.pho !== 'undefined' && typeof parent.pho.dashboards !== 'undefined' && typeof parent.pho.dashboards.addEditContentToggledListener !== 'undefined') {
           this._editModeToggledHandler = this.editModeToggledHandler.bind(this);
           parent.pho.dashboards.addEditContentToggledListener(this._editModeToggledHandler);
         }
