@@ -50,6 +50,10 @@ define(["reportviewer/reportviewer", "reportviewer/reportviewer-logging", "repor
 
         spyOn(domClass, 'add');
         spyOn(domClass, 'remove');
+        spyOn(domClass, 'contains');
+
+        logger = jasmine.createSpy("logger");
+        logger.log = jasmine.createSpy("log");
 
         reportPrompt.createPromptPanel();
         reportViewer = new ReportViewer(reportPrompt);
@@ -413,6 +417,41 @@ define(["reportviewer/reportviewer", "reportviewer/reportviewer-logging", "repor
           expect(domClass.remove).toHaveBeenCalledWith('promptPanel', 'pentaho-rounded-panel-bottom-lr');
           expect(domClass.remove).toHaveBeenCalledWith('reportControlPanel', 'pentaho-shadow');
           expect(domClass.remove).toHaveBeenCalledWith('reportControlPanel', 'pentaho-rounded-panel-bottom-lr');
+        });
+      });
+
+      describe("_updateReportContentCore sync mode", function() {
+
+        var expectedStatus = "\"FINISHED\"";
+
+        beforeEach(function() {
+          // do not share viewer state between executions
+
+          spyOn( reportViewer, "_hideAsyncScreens" );
+          spyOn( reportViewer, "_getFeedbackScreen" );
+
+          pentahoPost = jasmine.createSpy("pentahoPost").and.callFake( function(url, query, func, mimeType) {
+            if ( url.indexOf("reserveId") !== -1 ) {
+              // this is reserve id request
+              func("{ \"reservedId\" : \"6660666\" }");
+            } else {
+              // ok return some status;
+              func("{ \"status\" : " + expectedStatus + " }");
+            }
+          });
+
+          spyOn(reportViewer, "_keepPolling");
+          spyOn(reportViewer, "_updateFeedbackScreen");
+
+          reportViewer.reportPrompt._isAsync = true;
+          spyOn( reportViewer.reportPrompt, "_getStateProperty").and.returnValue(false);
+        });
+
+        it("should set false isFinished when current report status undefined", function() {
+          expectedStatus = "\"WORKING\"";
+
+          reportViewer._updateReportContentCore();
+          expect(reportViewer._isFinished).toBe(false);
         });
       });
     });
