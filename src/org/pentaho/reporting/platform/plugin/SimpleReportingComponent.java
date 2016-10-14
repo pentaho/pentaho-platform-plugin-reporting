@@ -1079,7 +1079,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     }
   }
 
-  int checkAndGetUserInputQueryLimit( final Object userInputQueryLimit, final int reportQueryLimit ) {
+  protected int checkAndGetUserInputQueryLimit( final Object userInputQueryLimit, final int reportQueryLimit ) {
     int systemQueryLimit = 0;
 
     final IPluginManager pm = PentahoSystem.get( IPluginManager.class );
