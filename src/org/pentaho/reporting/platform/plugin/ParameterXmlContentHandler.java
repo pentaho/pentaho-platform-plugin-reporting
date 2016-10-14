@@ -747,8 +747,7 @@ public class ParameterXmlContentHandler {
 
             parameterElement.appendChild( attributeElement );
 
-            if ( isTextFieldButNotString( valueType, attributeValue ) || ParameterAttributeNames.Core.POST_PROCESSOR_FORMULA.equals( attributeName )
-                    || ( ( ParameterAttributeNames.Core.RE_EVALUATE_ON_FAILED_VALUES.equals( attributeName ) || ParameterAttributeNames.Core.AUTOFILL_SELECTION.equals( attributeName ) ) && "true".equals( attributeValue ) ) ) {
+            if ( isParameterServerValidated( attributeName, attributeValue, valueType ) ) {
               // must validate on server
               final Element attrElement = document.createElement( "attribute" );
               attrElement.setAttribute( "namespace", SYS_SERVER_NAMESPACE );
@@ -937,10 +936,23 @@ public class ParameterXmlContentHandler {
     }
   }
 
-  private boolean isTextFieldButNotString( Class<?> valueType, String attributeValue ) {
-    return ( ParameterAttributeNames.Core.TYPE_TEXTBOX.equals( attributeValue )
-            || ParameterAttributeNames.Core.TYPE_MULTILINE.equals( attributeValue ) )
-            && !String.class.equals( valueType );
+  protected boolean isParameterServerValidated( String attributeName, String attributeValue, Class<?> valueType ) {
+    // Parameters with parameter-render-type textbox or textarea and types(number, date or string) can be validated on the client.
+    if ( attributeValue.equals( ParameterAttributeNames.Core.TYPE_TEXTBOX ) || attributeValue.equals( ParameterAttributeNames.Core.TYPE_MULTILINE ) ) {
+      if ( !Number.class.isAssignableFrom( valueType ) && valueType != String.class && !Date.class.isAssignableFrom( valueType ) ) {
+        return true;
+      }
+    }
+
+    if ( ParameterAttributeNames.Core.POST_PROCESSOR_FORMULA.equals( attributeName ) ) {
+      return true;
+    }
+
+    if ( ParameterAttributeNames.Core.RE_EVALUATE_ON_FAILED_VALUES.equals( attributeName ) || ParameterAttributeNames.Core.AUTOFILL_SELECTION.equals( attributeName ) ) {
+      return "true".equals( attributeValue );
+    }
+
+    return false;
   }
 
   /**
