@@ -14,7 +14,7 @@
 	-->
 
   <!-- Enabled or disabled row limit control on UI. No value means disabled.-->
-  <query-limit-ui-enabled>false</query-limit-ui-enabled>
+  <query-limit-ui-enabled>true</query-limit-ui-enabled>
   <!-- The maximum number of rows that will be rendered in a report viewer. -->
   <query-limit>0</query-limit>
     
