@@ -18,10 +18,20 @@
 
 package org.pentaho.reporting.platform.plugin.async;
 
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
+import java.io.Serializable;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -35,17 +45,10 @@ import org.pentaho.reporting.libraries.base.util.StringUtils;
 import org.pentaho.reporting.platform.plugin.staging.AsyncJobFileStagingHandler;
 import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
 
-import java.io.Serializable;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
 
 public class PentahoAsyncExecutor<TReportState extends IAsyncReportState>
   implements ILogoutListener, IPentahoAsyncExecutor<TReportState> {
@@ -72,7 +75,15 @@ public class PentahoAsyncExecutor<TReportState extends IAsyncReportState>
     log.info( "Initialized reporting async execution fixed thread pool with capacity: " + capacity );
     executorService =
       new DelegatedListenableExecutor( new ThreadPoolExecutor( capacity, capacity, 0L, TimeUnit.MILLISECONDS,
-        new LinkedBlockingQueue<>() ) );
+        new LinkedBlockingQueue<>(), new ThreadFactory() {
+          @Override
+          public Thread newThread( Runnable r ) {
+            Thread thread = Executors.defaultThreadFactory().newThread( r );
+            thread.setDaemon( true );
+            thread.setName( "PentahoAsyncExecutor Thread Pool" );
+            return thread;
+          }
+        } ) );
     PentahoSystem.addLogoutListener( this );
     this.writeToJcrListeners = new ConcurrentHashMap<>();
     this.schedulingLocationListener = new MemorizeSchedulingLocationListener();
