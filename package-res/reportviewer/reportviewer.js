@@ -908,7 +908,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         dlg.setText3(_Messages.getString('FeedbackScreenRow'));
         dlg.setCancelText(_Messages.getString('ScreenCancel'));
 
-        if(!this.view._isDashboardEditMode()){
+        if(!this.view._isDashboardEditMode() && !inMobile){
           dlg.showBackgroundBtn(_Messages.getString('FeedbackScreenBackground'));
         }else {
           scheduleScreenBtnCallbacks.shift();
