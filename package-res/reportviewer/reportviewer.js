@@ -682,6 +682,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
               // changing width to jquery due to problems with dojo getting the width correcty
               // although, dojo is used to get the height due to issues on ie8 and 9
               dimensions.w = $('#reportContent').contents().width();
+              dimensions.h = $('#reportContent').contents().height();
 
               logger && logger.log("Styled page - polled dimensions = (" + dimensions.w + ", " + dimensions.h + ")");
 
@@ -702,7 +703,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
               geometry.setContentSize(t, {w: dimensions.w, h: dimensions.h});
               $('#reportContent').hide().fadeIn('fast');
-            }, 10);
+            }, 15);
           });
         }
       }), // end view
