@@ -59,7 +59,9 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
       _manuallyScheduled: null,
       _scheduleScreenBtnCallbacks: null,
       _editModeToggledHandler: null,
-      _isFinished : false,
+      // var to block new report submission in case multiple UI events start generate new
+      // report executions without cancelling current running ones.
+      _isFinished : true,
 
       _bindPromptEvents: function() {
         var baseShowGlassPane = this.reportPrompt.showGlassPane.bind(this.reportPrompt);
@@ -1003,15 +1005,18 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
       _updateReportContentCore: function() {
 
+        var me = this;
+
         //no report generation in scheduling dialog ever!
-        if(inSchedulerDialog){
+        //_isFinished avoid create new report job execution if current not finished
+        if(inSchedulerDialog || !me._isFinished ){
           return;
         }
 
-        var me = this;
-
         // PRD-3962 - remove glass pane after 5 seconds in case iframe onload/onreadystatechange was not detected
         me._updateReportTimeout = setTimeout(logged('updateReportTimeout', function() {
+          //unblock submitting new report executions
+          me._isFinished = true;
           //BACKLOG-8070 don't show empty content in async mode
           me._submitReportEnded( !me.reportPrompt._isAsync );
         }), 5000);
@@ -1061,6 +1066,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         //This flag is switched to true after we get total page count and updated page control
         var isPageCountUpdated = false;
         //Report generation finished ( also includes canceled and failed cases)
+        //at this moment we block all new reportjob submissions see BACKLOG-11397
         me._isFinished = false;
         //Hides feedback screen and glasspane
         var hideDlgAndPane = this._hideDialogAndPane.bind(me);
@@ -1343,6 +1349,8 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
         } else {
 
+          me._isFinished = true;
+          // now user is able to click on controls after the curtain is hidden.
           me._hideAsyncScreens();
 
           logger && logger.log("Will set iframe url to " + url.substr(0, 50) + "... ");
