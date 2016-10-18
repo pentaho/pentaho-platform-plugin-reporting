@@ -20,7 +20,6 @@ package org.pentaho.reporting.platform.plugin;
 import java.net.URL;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Locale;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -51,7 +50,7 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment {
   public PentahoReportEnvironment( final Configuration configuration, final String clText ) {
     super( configuration );
     this.clText = clText;
-    this.locale = LocaleHelper.getLocale();
+    setLocale( LocaleHelper.getLocale() );
   }
 
   public String getEnvironmentProperty( final String key ) {
@@ -201,9 +200,5 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment {
       logger.warn( Messages.getInstance().getString( "ReportPlugin.warnNoHostColonPort" ), e );
     }
     return null;
-  }
-
-  public Locale getLocale() {
-    return this.locale;
   }
 }
