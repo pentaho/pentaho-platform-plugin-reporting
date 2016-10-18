@@ -51,6 +51,7 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment {
   public PentahoReportEnvironment( final Configuration configuration, final String clText ) {
     super( configuration );
     this.clText = clText;
+    this.locale = LocaleHelper.getLocale();
   }
 
   public String getEnvironmentProperty( final String key ) {
@@ -203,6 +204,6 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment {
   }
 
   public Locale getLocale() {
-    return LocaleHelper.getLocale();
+    return this.locale;
   }
 }
