@@ -747,7 +747,7 @@ public class ParameterXmlContentHandler {
 
             parameterElement.appendChild( attributeElement );
 
-            if ( ParameterAttributeNames.Core.POST_PROCESSOR_FORMULA.equals( attributeName )
+            if ( isTextFieldButNotString( valueType, attributeValue ) || ParameterAttributeNames.Core.POST_PROCESSOR_FORMULA.equals( attributeName )
                     || ( ( ParameterAttributeNames.Core.RE_EVALUATE_ON_FAILED_VALUES.equals( attributeName ) || ParameterAttributeNames.Core.AUTOFILL_SELECTION.equals( attributeName ) ) && "true".equals( attributeValue ) ) ) {
               // must validate on server
               final Element attrElement = document.createElement( "attribute" );
@@ -935,6 +935,12 @@ public class ParameterXmlContentHandler {
         parameter.getName(), String.valueOf( selections ) ), be );
       throw be;
     }
+  }
+
+  private boolean isTextFieldButNotString( Class<?> valueType, String attributeValue ) {
+    return ( ParameterAttributeNames.Core.TYPE_TEXTBOX.equals( attributeValue )
+            || ParameterAttributeNames.Core.TYPE_MULTILINE.equals( attributeValue ) )
+            && !String.class.equals( valueType );
   }
 
   /**
