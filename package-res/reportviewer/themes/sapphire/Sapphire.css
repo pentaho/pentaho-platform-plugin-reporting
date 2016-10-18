@@ -2,11 +2,14 @@
   background: #E6EFF6;
 }
 
+.pentaho-dialog .feedbackscreen-content {
+  background: transparent;
+}
+
 .feedbackscreentextupper {
   padding: 10px 0 20px 7px;
   line-height: 2em;
-  text-align: center;
-  color: #999;
+  color: #333333;
 }
 
 .feedbackscreentextmiddle {
@@ -111,10 +114,6 @@ div.prompt-panel div.parameter-label.parameter-label {
 div.submit-panel label.auto-complete-checkbox input[type='checkbox'] {
   top: 2px;
   position: relative;
-}
-
-.feedbackscreen-content {
-  background: transparent;
 }
 
 .nonMobile.styled.styled #reportControlPanel {
