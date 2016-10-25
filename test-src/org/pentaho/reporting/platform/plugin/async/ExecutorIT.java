@@ -19,7 +19,6 @@ package org.pentaho.reporting.platform.plugin.async;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.pentaho.platform.api.engine.IPluginManager;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
@@ -40,13 +39,11 @@ import java.util.Collections;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@Ignore
+
 public class ExecutorIT extends SpringIT {
 
   @Autowired
@@ -66,7 +63,7 @@ public class ExecutorIT extends SpringIT {
   }
 
   @After
-  public  void stop() throws PlatformInitializationException {
+  public void stop() throws PlatformInitializationException {
     microPlatform.stop();
   }
 
@@ -99,7 +96,7 @@ public class ExecutorIT extends SpringIT {
       while ( reportState.getTotalRows() < 1 ) {
         reportState = executor.getReportState( uuid, session );
       }
-      assertEquals( 50, reportState.getTotalRows() );
+      assertEquals( 100, reportState.getTotalRows() );
       final UUID recalculate = executor
         .recalculate( uuid, session );
 
@@ -142,7 +139,7 @@ public class ExecutorIT extends SpringIT {
       while ( reportState.getTotalRows() < 1 ) {
         reportState = executor.getReportState( uuid, session );
       }
-      assertEquals( 50, reportState.getTotalRows() );
+      assertEquals( 100, reportState.getTotalRows() );
 
       assertTrue( jobManager.getContext( uuid.toString() ).needRecalculation( false ) );
 
