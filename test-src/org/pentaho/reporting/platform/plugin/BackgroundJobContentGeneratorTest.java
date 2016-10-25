@@ -147,7 +147,8 @@ public class BackgroundJobContentGeneratorTest {
     verify( generator, times( 0 ) ).sendErrorResponse();
     verify( generator, times( 1 ) ).sendSuccessRedirect( eq( uuid ) );
 
-    verify( httpResponse ).sendRedirect( eq( BackgroundJobReportContentGenerator.REDIRECT_PREFIX + uuid.toString()
+    final String contextUrl = PentahoSystem.getApplicationContext().getFullyQualifiedServerURL();
+    verify( httpResponse ).sendRedirect( eq( contextUrl + BackgroundJobReportContentGenerator.REDIRECT_PREFIX + uuid.toString()
       + BackgroundJobReportContentGenerator.REDIRECT_POSTFIX ) );
 
     assertEquals( "BACKLOG-6745", instanceId, ReportListenerThreadHolder.getRequestId() );

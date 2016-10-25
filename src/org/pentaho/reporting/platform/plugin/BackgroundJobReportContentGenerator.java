@@ -57,7 +57,7 @@ public class BackgroundJobReportContentGenerator extends ParameterContentGenerat
     int SC_PROCESSING = 102;
   }
 
-  static final String REDIRECT_PREFIX = "/pentaho/plugin/reporting/api/jobs/";
+  static final String REDIRECT_PREFIX = "plugin/reporting/api/jobs/";
   static final String REDIRECT_POSTFIX = "/status";
 
   @Override
@@ -148,9 +148,10 @@ public class BackgroundJobReportContentGenerator extends ParameterContentGenerat
   }
 
   protected void sendSuccessRedirect( final UUID uuid ) throws IOException {
+    final String contextUrl = PentahoSystem.getApplicationContext().getFullyQualifiedServerURL();
     final HttpServletResponse httpResponse = getServletResponse();
     httpResponse.setStatus( HttpServletResponse102.SC_PROCESSING );
-    httpResponse.sendRedirect( REDIRECT_PREFIX + uuid.toString() + REDIRECT_POSTFIX );
+    httpResponse.sendRedirect( contextUrl + REDIRECT_PREFIX + uuid.toString() + REDIRECT_POSTFIX );
   }
 
   protected HttpServletResponse getServletResponse() {
