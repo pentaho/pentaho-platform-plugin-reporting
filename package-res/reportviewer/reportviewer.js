@@ -1269,6 +1269,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
                   break;
                 case "CANCELED":
+                  me._isFinished = true;
                   me._submitReportEnded();
                   me._hideAsyncScreens();
                   break;
