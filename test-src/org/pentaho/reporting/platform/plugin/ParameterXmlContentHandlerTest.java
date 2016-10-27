@@ -19,25 +19,6 @@
 package org.pentaho.reporting.platform.plugin;
 
 import com.google.common.collect.Lists;
-import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
 import org.apache.commons.collections.map.HashedMap;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -61,6 +42,7 @@ import org.pentaho.reporting.engine.classic.core.parameters.DefaultParameterCont
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterAttributeNames;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterContext;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterDefinitionEntry;
+import org.pentaho.reporting.engine.classic.core.parameters.PlainParameter;
 import org.pentaho.reporting.engine.classic.core.parameters.ReportParameterDefinition;
 import org.pentaho.reporting.engine.classic.core.parameters.ValidationMessage;
 import org.pentaho.reporting.engine.classic.core.parameters.ValidationResult;
@@ -75,6 +57,26 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
+import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -673,4 +675,50 @@ public class ParameterXmlContentHandlerTest {
     final NodeList nodeList = (NodeList) xpath.evaluate( "/parameter/attribute", doc, XPathConstants.NODESET );
     return nodeList.getLength() != 0;
   }
+
+  @Test
+  public void createParameterElementWhichMustValidateOnServerTest()
+          throws BeanException, ReportDataFactoryException, ParserConfigurationException, XPathExpressionException {
+
+    // String parameters with render type textbox or textarea must be validated on the UI
+    assertNotNull( createParameterElement( Object.class, ParameterAttributeNames.Core.TYPE_TEXTBOX ) );
+    assertFalse( isContainsMustValidateOnServerParameter( createParameterElement( String.class, ParameterAttributeNames.Core.TYPE_TEXTBOX ) ) );
+
+    // Numeric parameters with render type textbox or textarea must be validated on the UI
+    assertNotNull( createParameterElement( Object.class, ParameterAttributeNames.Core.TYPE_TEXTBOX ) );
+    assertFalse( isContainsMustValidateOnServerParameter( createParameterElement( Double.class, ParameterAttributeNames.Core.TYPE_MULTILINE ) ) );
+
+    // Date parameters with render type textbox or textarea must be validated on the UI
+    assertNotNull( createParameterElement( Object.class, ParameterAttributeNames.Core.TYPE_TEXTBOX ) );
+    assertFalse( isContainsMustValidateOnServerParameter( createParameterElement( Date.class, ParameterAttributeNames.Core.TYPE_TEXTBOX ) ) );
+
+    // Date parameters with render type textbox or textarea must be validated on the UI
+    assertNotNull( createParameterElement( Object.class, ParameterAttributeNames.Core.TYPE_TEXTBOX ) );
+    assertFalse( isContainsMustValidateOnServerParameter( createParameterElement( java.sql.Date.class, ParameterAttributeNames.Core.TYPE_TEXTBOX ) ) );
+
+    // Other types parameters with render type textbox or textarea must be validated on the server
+    assertNotNull( createParameterElement( Object.class, ParameterAttributeNames.Core.TYPE_TEXTBOX ) );
+    assertTrue( isContainsMustValidateOnServerParameter( createParameterElement( Object.class, ParameterAttributeNames.Core.TYPE_TEXTBOX ) ) );
+
+  }
+
+  private boolean isContainsMustValidateOnServerParameter( final Element element ) {
+    NodeList childNodes = element.getChildNodes();
+    for ( int i = 0; i < childNodes.getLength(); i++ ) {
+      Element childNode = (Element) childNodes.item( i );
+      if ( childNode.getAttribute( "name" ).equals( "must-validate-on-server" ) ) {
+        return ( Boolean.valueOf( childNode.getAttribute( "value" ) ) );
+      }
+    }
+    return false;
+  }
+
+  private Element createParameterElement( Class<?> valueType, String parameterRenderType ) throws ParserConfigurationException, ReportDataFactoryException, BeanException {
+    final ParameterContext context = getTestParameterContext();
+    final PlainParameter plainObjectParameterMust = new PlainParameter( "mustValidateParameter", valueType );
+    plainObjectParameterMust.setParameterAttribute( ParameterAttributeNames.Core.NAMESPACE, "parameter-render-type", parameterRenderType );
+    handler.document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+    return handler.createParameterElement( plainObjectParameterMust, context, null, null, Boolean.FALSE );
+  }
+
 }
