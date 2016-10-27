@@ -127,3 +127,7 @@ div.submit-panel label.auto-complete-checkbox input[type='checkbox'] {
 #toppanelinner {
     padding: 0 4px;
 }
+
+.dijitDialogPaneContent {
+  width: 100% !important;
+}
