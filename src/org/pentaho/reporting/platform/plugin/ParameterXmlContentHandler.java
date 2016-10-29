@@ -26,6 +26,7 @@ import org.pentaho.platform.api.engine.IParameterProvider;
 import org.pentaho.platform.api.engine.IPluginManager;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.util.UUIDUtil;
+import org.pentaho.plugin.jfreereport.reportcharts.ChartExpression;
 import org.pentaho.reporting.engine.classic.core.AttributeNames;
 import org.pentaho.reporting.engine.classic.core.CompoundDataFactory;
 import org.pentaho.reporting.engine.classic.core.DataFactory;
@@ -696,7 +697,7 @@ public class ParameterXmlContentHandler {
 
   // default visibility for testing purposes
   void createParameterDependencies( final Element element, final ParameterDefinitionEntry parameter,
-                                            final HashNMap dependencies ) {
+                                    final HashNMap dependencies ) {
     if ( element == null || parameter == null ) {
       throw new NullPointerException();
     }
@@ -748,7 +749,7 @@ public class ParameterXmlContentHandler {
             parameterElement.appendChild( attributeElement );
 
             if ( isTextFieldButNotString( valueType, attributeValue ) || ParameterAttributeNames.Core.POST_PROCESSOR_FORMULA.equals( attributeName )
-                    || ( ( ParameterAttributeNames.Core.RE_EVALUATE_ON_FAILED_VALUES.equals( attributeName ) || ParameterAttributeNames.Core.AUTOFILL_SELECTION.equals( attributeName ) ) && "true".equals( attributeValue ) ) ) {
+              || ( ( ParameterAttributeNames.Core.RE_EVALUATE_ON_FAILED_VALUES.equals( attributeName ) || ParameterAttributeNames.Core.AUTOFILL_SELECTION.equals( attributeName ) ) && "true".equals( attributeValue ) ) ) {
               // must validate on server
               final Element attrElement = document.createElement( "attribute" );
               attrElement.setAttribute( "namespace", SYS_SERVER_NAMESPACE );
@@ -939,8 +940,8 @@ public class ParameterXmlContentHandler {
 
   private boolean isTextFieldButNotString( Class<?> valueType, String attributeValue ) {
     return ( ParameterAttributeNames.Core.TYPE_TEXTBOX.equals( attributeValue )
-            || ParameterAttributeNames.Core.TYPE_MULTILINE.equals( attributeValue ) )
-            && !String.class.equals( valueType );
+      || ParameterAttributeNames.Core.TYPE_MULTILINE.equals( attributeValue ) )
+      && !String.class.equals( valueType );
   }
 
   /**
@@ -1248,78 +1249,97 @@ public class ParameterXmlContentHandler {
 
     private void inspectElement( final ReportElement element, final LinkedHashSet<String> parameter ) {
       try {
-        final Expression expression = element.getStyleExpression( ElementStyleKeys.HREF_TARGET );
-        if ( expression instanceof FormulaExpression == false ) {
-          // DrillDown only works with the formula function of the same name
+
+        Expression expression = element.getStyleExpression( ElementStyleKeys.HREF_TARGET );
+        String[] expressionStrings;
+        if ( expression instanceof FormulaExpression ) {
+          final FormulaExpression fe = (FormulaExpression) expression;
+          expressionStrings = new String[] { fe.getFormulaExpression() };
+        } else {
+          expression = element.getAttributeExpression( AttributeNames.Core.NAMESPACE, AttributeNames.Core.VALUE );
+          if ( expression instanceof ChartExpression ) {
+            final ChartExpression ce = (ChartExpression) expression;
+            expressionStrings = ce.getHyperlinkFormulas();
+          } else {
+            return;
+          }
+        }
+
+        if ( null == expressionStrings && expressionStrings.length < 1 ) {
           return;
         }
 
-        final FormulaExpression fe = (FormulaExpression) expression;
-        final String formulaText = fe.getFormulaExpression();
-        if ( StringUtils.isEmpty( formulaText ) ) {
-          // DrillDown only works with the formula function of the same name
-          return;
-        }
+        for ( String expressionText : expressionStrings ) {
 
-        if ( formulaText.startsWith( "DRILLDOWN" ) == false ) { // NON-NLS
-          // DrillDown only works if the function is the only element. Everything else is beyond our control.
-          return;
-        }
-        final FormulaParser formulaParser = new FormulaParser();
-        final LValue value = formulaParser.parse( formulaText );
-        if ( value instanceof FormulaFunction == false ) {
-          // Not a valid formula or a complex term - we do not handle that
-          return;
-        }
-        final DefaultFormulaContext context = new DefaultFormulaContext();
-        value.initialize( context );
-
-        final FormulaFunction fn = (FormulaFunction) value;
-        final LValue[] params = fn.getChildValues();
-        if ( params.length != 3 ) {
-          // Malformed formula: Need 3 parameter
-          return;
-        }
-        final String config = extractText( params[ 0 ] );
-        if ( config == null ) {
-          // Malformed formula: No statically defined config profile
-          return;
-        }
-
-        final DrillDownProfile profile = DrillDownProfileMetaData.getInstance().getDrillDownProfile( config );
-        if ( profile == null ) {
-          // Malformed formula: Unknown drilldown profile
-          return;
-        }
-
-        if ( StringUtils.isEmpty( profile.getAttribute( "group" ) ) || !profile.getAttribute( "group" )
-          .startsWith( "pentaho" ) ) { // NON-NLS
-          // Only 'pentaho' and 'pentaho-sugar' drill-down profiles can be used. Filters out all other third party
-          // drilldowns
-          return;
-        }
-
-        if ( params[ 2 ] instanceof DataTable == false ) {
-          // Malformed formula: Not a parameter table
-          return;
-        }
-        final DataTable dataTable = (DataTable) params[ 2 ];
-        final int rowCount = dataTable.getRowCount();
-        final int colCount = dataTable.getColumnCount();
-        if ( colCount != 2 ) {
-          // Malformed formula: Parameter table is invalid. Must be two cols, many rows ..
-          return;
-        }
-
-        for ( int i = 0; i < rowCount; i++ ) {
-          final LValue valueAt = dataTable.getValueAt( i, 0 );
-          final String name = extractText( valueAt );
-          if ( name == null ) {
+          if ( StringUtils.isEmpty( expressionText ) ) {
+            // DrillDown only works with the formula function of the same name
             continue;
           }
-          parameter.add( name );
+
+          if ( expressionText.startsWith( "=" ) ) {
+            expressionText = expressionText.substring( 1 );
+          }
+
+          if ( expressionText.startsWith( "DRILLDOWN" ) == false ) { // NON-NLS
+            // DrillDown only works if the function is the only element. Everything else is beyond our control.
+            continue;
+          }
+          final FormulaParser formulaParser = new FormulaParser();
+          final LValue value = formulaParser.parse( expressionText );
+          if ( value instanceof FormulaFunction == false ) {
+            // Not a valid formula or a complex term - we do not handle that
+            continue;
+          }
+          final DefaultFormulaContext context = new DefaultFormulaContext();
+          value.initialize( context );
+
+          final FormulaFunction fn = (FormulaFunction) value;
+          final LValue[] params = fn.getChildValues();
+          if ( params.length != 3 ) {
+            // Malformed formula: Need 3 parameter
+            continue;
+          }
+          final String config = extractText( params[ 0 ] );
+          if ( config == null ) {
+            // Malformed formula: No statically defined config profile
+            continue;
+          }
+
+          final DrillDownProfile profile = DrillDownProfileMetaData.getInstance().getDrillDownProfile( config );
+          if ( profile == null ) {
+            // Malformed formula: Unknown drilldown profile
+            continue;
+          }
+
+          if ( StringUtils.isEmpty( profile.getAttribute( "group" ) ) || !profile.getAttribute( "group" )
+            .startsWith( "pentaho" ) ) { // NON-NLS
+            // Only 'pentaho' and 'pentaho-sugar' drill-down profiles can be used. Filters out all other third party
+            // drilldowns
+            continue;
+          }
+
+          if ( params[ 2 ] instanceof DataTable == false ) {
+            // Malformed formula: Not a parameter table
+            continue;
+          }
+          final DataTable dataTable = (DataTable) params[ 2 ];
+          final int rowCount = dataTable.getRowCount();
+          final int colCount = dataTable.getColumnCount();
+          if ( colCount != 2 ) {
+            // Malformed formula: Parameter table is invalid. Must be two cols, many rows ..
+            continue;
+          }
+
+          for ( int i = 0; i < rowCount; i++ ) {
+            final LValue valueAt = dataTable.getValueAt( i, 0 );
+            final String name = extractText( valueAt );
+            if ( name == null ) {
+              continue;
+            }
+            parameter.add( name );
+          }
         }
-      } catch ( Exception e ) {
+      } catch ( final Exception e ) {
         // ignore ..
         CommonUtil.checkStyleIgnore();
       }
