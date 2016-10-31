@@ -38,6 +38,7 @@ import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
 import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
 import org.pentaho.test.platform.engine.core.SimpleObjectFactory;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.Serializable;
@@ -76,6 +77,7 @@ public class BackgroundJobContentGeneratorTest {
   IPentahoSession session = mock( IPentahoSession.class );
   IParameterProvider paramProvider = mock( IParameterProvider.class );
   HttpServletResponse httpResponse = mock( HttpServletResponse.class );
+  HttpServletRequest httpRequest = mock( HttpServletRequest.class );
 
   Map<String, IParameterProvider> parameterProviders;
   private IJobIdGenerator jobIdGenerator;
@@ -104,6 +106,7 @@ public class BackgroundJobContentGeneratorTest {
     parameterProviders.put( "path", paramProvider );
     parameterProviders.put( IParameterProvider.SCOPE_REQUEST, paramProvider );
     when( paramProvider.getParameter( "httpresponse" ) ).thenReturn( httpResponse );
+    when( paramProvider.getParameter( "httprequest" ) ).thenReturn( httpRequest );
     when( paramProvider.getStringParameter( anyString(), anyString() ) )
       .thenAnswer( ( i ) -> {
         if ( !"reservedId".equals( i.getArguments()[ 0 ] ) ) {
@@ -113,6 +116,7 @@ public class BackgroundJobContentGeneratorTest {
         }
       } );
     when( paramProvider.getParameterNames() ).thenReturn( Collections.emptyIterator() );
+    when( httpRequest.getContextPath() ).thenReturn( "/custompath" );
 
     PentahoSessionHolder.setSession( session );
   }
@@ -147,7 +151,8 @@ public class BackgroundJobContentGeneratorTest {
     verify( generator, times( 0 ) ).sendErrorResponse();
     verify( generator, times( 1 ) ).sendSuccessRedirect( eq( uuid ) );
 
-    verify( httpResponse ).sendRedirect( eq( BackgroundJobReportContentGenerator.REDIRECT_PREFIX + uuid.toString()
+    final String contextUrl = httpRequest.getContextPath();
+    verify( httpResponse ).sendRedirect( eq( contextUrl + BackgroundJobReportContentGenerator.REDIRECT_PREFIX + uuid.toString()
       + BackgroundJobReportContentGenerator.REDIRECT_POSTFIX ) );
 
     assertEquals( "BACKLOG-6745", instanceId, ReportListenerThreadHolder.getRequestId() );
@@ -270,6 +275,7 @@ public class BackgroundJobContentGeneratorTest {
     customParameterProviders.put( "path", customParamProvider );
     customParameterProviders.put( IParameterProvider.SCOPE_REQUEST, customParamProvider );
     when( customParamProvider.getParameter( "httpresponse" ) ).thenReturn( httpResponse );
+    when( customParamProvider.getParameter( "httprequest" ) ).thenReturn( httpRequest );
     when( customParamProvider.getStringParameter( anyString(), anyString() ) )
       .thenAnswer( ( i ) -> {
         if ( !"reservedId".equals( i.getArguments()[ 0 ] ) ) {

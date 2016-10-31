@@ -32,6 +32,7 @@ import org.pentaho.reporting.platform.plugin.async.PentahoAsyncReportExecution;
 import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
 import org.pentaho.reporting.platform.plugin.staging.AsyncJobFileStagingHandler;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -51,13 +52,14 @@ public class BackgroundJobReportContentGenerator extends ParameterContentGenerat
   private static final String RESERVED_ID = "reservedId";
   private static final String PATH = "path";
   private static final String HTTPRESPONSE = "httpresponse";
+  private static final String HTTPREQUEST = "httprequest";
 
   interface HttpServletResponse102 extends HttpServletResponse {
     // Processing (WebDAV; RFC 2518)
     int SC_PROCESSING = 102;
   }
 
-  static final String REDIRECT_PREFIX = "/pentaho/plugin/reporting/api/jobs/";
+  static final String REDIRECT_PREFIX = "/plugin/reporting/api/jobs/";
   static final String REDIRECT_POSTFIX = "/status";
 
   @Override
@@ -149,14 +151,22 @@ public class BackgroundJobReportContentGenerator extends ParameterContentGenerat
 
   protected void sendSuccessRedirect( final UUID uuid ) throws IOException {
     final HttpServletResponse httpResponse = getServletResponse();
+    final HttpServletRequest servletRequest = getServletRequest();
+    final String contextUrl = servletRequest.getContextPath();
     httpResponse.setStatus( HttpServletResponse102.SC_PROCESSING );
-    httpResponse.sendRedirect( REDIRECT_PREFIX + uuid.toString() + REDIRECT_POSTFIX );
+    httpResponse.sendRedirect( contextUrl + REDIRECT_PREFIX + uuid.toString() + REDIRECT_POSTFIX );
   }
 
   protected HttpServletResponse getServletResponse() {
     final IParameterProvider pathProviders = parameterProviders.get( PATH );
     final Object httpResponseObj = pathProviders.getParameter( HTTPRESPONSE );
     return HttpServletResponse.class.cast( httpResponseObj );
+  }
+
+  protected HttpServletRequest getServletRequest() {
+    final IParameterProvider pathProviders = parameterProviders.get( PATH );
+    final Object httpRequestObj = pathProviders.getParameter( HTTPREQUEST );
+    return HttpServletRequest.class.cast( httpRequestObj );
   }
 
   @Override
