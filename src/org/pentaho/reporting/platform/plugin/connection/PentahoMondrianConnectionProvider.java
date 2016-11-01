@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin.connection;
@@ -24,9 +24,11 @@ import javax.sql.DataSource;
 
 import mondrian.olap.Connection;
 import org.pentaho.platform.api.engine.IConnectionUserRoleMapper;
+import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.api.engine.PentahoAccessControlException;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
+import org.pentaho.platform.engine.security.SecurityHelper;
 import org.pentaho.reporting.engine.classic.core.ReportDataFactoryException;
 import org.pentaho.reporting.engine.classic.extensions.datasources.mondrian.DefaultMondrianConnectionProvider;
 import org.pentaho.reporting.libraries.base.util.StringUtils;
@@ -83,11 +85,15 @@ public class PentahoMondrianConnectionProvider extends DefaultMondrianConnection
 
   public Object getConnectionHash( final Properties properties ) throws ReportDataFactoryException {
     try {
-      final ArrayList<Object> hash = (ArrayList<Object>) super.getConnectionHash( properties );
-      final String catalog = properties.getProperty( "Catalog" );
-      hash.add( computeRoleString( catalog ) );
-      return hash;
-    } catch ( PentahoAccessControlException e ) {
+      final IPentahoSession session = PentahoSessionHolder.getSession();
+      final String name = session.getName();
+      return SecurityHelper.getInstance().runAsUser( name, () -> {
+        final ArrayList<Object> hash = (ArrayList<Object>) super.getConnectionHash( properties );
+        final String catalog = properties.getProperty( "Catalog" );
+        hash.add( computeRoleString( catalog ) );
+        return hash;
+      } );
+    } catch ( Exception e ) {
       throw new ReportDataFactoryException( "Failed to map roles", e );
     }
   }
