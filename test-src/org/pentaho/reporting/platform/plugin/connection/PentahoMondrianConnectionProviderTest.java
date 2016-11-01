@@ -12,26 +12,50 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2015 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin.connection;
 
-import junit.framework.TestCase;
-
-import javax.sql.DataSource;
 import java.util.ArrayList;
 import java.util.Properties;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.pentaho.platform.api.engine.IPentahoSession;
+import org.pentaho.platform.api.engine.IUserRoleListService;
+import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
+import org.pentaho.platform.engine.core.system.PentahoSystem;
 
+
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
-public class PentahoMondrianConnectionProviderTest extends TestCase {
-  PentahoMondrianConnectionProvider provider;
+public class PentahoMondrianConnectionProviderTest {
 
-  protected void setUp() {
-    provider = new PentahoMondrianConnectionProvider();
+  private static IPentahoSession session = mock( IPentahoSession.class );
+  private static IUserRoleListService userRoleListService = mock( IUserRoleListService.class );
+  private PentahoMondrianConnectionProvider provider = new PentahoMondrianConnectionProvider();
+
+  @BeforeClass
+  public static void beforeClass() {
+    PentahoSessionHolder.setSession( session );
+    PentahoSystem.registerObject( userRoleListService );
   }
 
+  @AfterClass
+  public static void afterClass() {
+    PentahoSessionHolder.setSession( null );
+  }
+
+  @Before
+  public void before() {
+    when( session.getName() ).thenReturn( "karasik" );
+  }
+
+  @Test
   public void testGetConnectionHash() throws Exception {
     ArrayList result = (ArrayList) provider.getConnectionHash( mock( Properties.class ) );
 

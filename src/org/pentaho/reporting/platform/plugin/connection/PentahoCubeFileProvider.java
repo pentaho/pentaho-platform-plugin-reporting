@@ -12,13 +12,15 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin.connection;
 
+import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
+import org.pentaho.platform.engine.security.SecurityHelper;
 import org.pentaho.platform.plugin.action.mondrian.catalog.IMondrianCatalogService;
 import org.pentaho.platform.plugin.action.mondrian.catalog.MondrianCatalog;
 import org.pentaho.reporting.engine.classic.core.ReportDataFactoryException;
@@ -52,10 +54,18 @@ public class PentahoCubeFileProvider extends DefaultCubeFileProvider {
     // Was added fallback - if schema wasn't found on server try to find file by full path.
 
     if ( StringUtils.isEmpty( getCubeConnectionName() ) == false ) {
+      final IPentahoSession session = PentahoSessionHolder.getSession();
+
       final IMondrianCatalogService catalogService =
-          PentahoSystem.get( IMondrianCatalogService.class, PentahoSessionHolder.getSession() );
-      final MondrianCatalog catalog =
-          catalogService.getCatalog( getCubeConnectionName(), PentahoSessionHolder.getSession() );
+          PentahoSystem.get( IMondrianCatalogService.class, session );
+      MondrianCatalog catalog = null;
+      try {
+        catalog = SecurityHelper.getInstance().runAsUser( session.getName(), () ->
+          catalogService.getCatalog( getCubeConnectionName(), PentahoSessionHolder.getSession() ) );
+      } catch ( Exception e ) {
+        catalog = null;
+      }
+
       if ( catalog == null ) {
         // throw new ReportDataFactoryException( "Unable to locate mondrian schema with name '" +
         // getCubeConnectionName()
