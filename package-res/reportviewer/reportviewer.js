@@ -729,10 +729,12 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         }
       },
 
-      cancel: function(status, uuid) {
+      cancel: function(status, uuid, callback) {
+        var me = this;
+        me._isFinished = true;
         var url = window.location.href.split('?')[0];
         if( uuid && (!status || status == 'WORKING' || status == 'QUEUED' || status == 'CONTENT_AVAILABLE' || status == 'PRE_SCHEDULED') ) {
-          pentahoGet(url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + uuid + '/cancel', "");
+          pentahoGet(url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + uuid + '/cancel', "", callback);
         }
       },
 
@@ -1269,7 +1271,6 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
                   break;
                 case "CANCELED":
-                  me._isFinished = true;
                   me._submitReportEnded();
                   me._hideAsyncScreens();
                   break;
@@ -1312,8 +1313,10 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                 if (current && running && current[1] != running[1]) {
                   //Actually user changed not the page but prompts/output target - we need a new job to get it
                   me._reportUrl = reportUrl;
-                  me.cancel(me._currentReportStatus, me._currentReportUuid);
-                  pentahoPost('reportjob', reportUrl, mainReportGeneration, 'text/text');
+                  me.cancel(me._currentReportStatus, me._currentReportUuid, dojo.hitch(me, function(){
+                    me._isFinished = false;
+                    pentahoPost('reportjob', reportUrl, mainReportGeneration, 'text/text');
+                  }));
                   me._hideAsyncScreens();
                 } else {
                   //Page navigation occurred  - callbacks will do the job
