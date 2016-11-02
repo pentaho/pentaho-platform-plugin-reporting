@@ -249,6 +249,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           registry.byId('rowLimitControl') && registry.byId('rowLimitControl').registerLocalizationLookup(_Messages.getString);
           registry.byId('rowLimitExceededDialog') && registry.byId('rowLimitExceededDialog').registerLocalizationLookup(_Messages.getString);
           registry.byId('rowLimitMessage') && registry.byId('rowLimitMessage').registerLocalizationLookup(_Messages.getString);
+          registry.byId('toolbar-clearCache') && registry.byId('toolbar-clearCache').set('title', _Messages.getString('RefreshReportData_Title'));
         },
 
         /**
