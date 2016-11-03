@@ -72,4 +72,33 @@ public class DeleteOldOnAccessCacheTest {
     Thread.sleep( 10 );
     assertNull( cache.get( SOME_KEY ) );
   }
+
+
+  @Test
+  public void testCleanupCurrentSession() throws Exception {
+    //We have two users
+    final StandaloneSession bill = new StandaloneSession( "bill" );
+    final StandaloneSession steve = new StandaloneSession( "steve" );
+    PentahoSessionHolder.setSession( bill );
+    final DeleteOldOnAccessCache cache = new DeleteOldOnAccessCache( fileSystemCacheBackend );
+    cache.setDaysToLive( 1L );
+    //The first one creates cache
+    cache.put( SOME_KEY, SOME_VALUE );
+    assertNotNull( cache.get( SOME_KEY ) );
+    PentahoSessionHolder.setSession( steve );
+    //The second one doesn't have cache
+    assertNull( cache.get( SOME_KEY ) );
+    //The second one creates cache
+    cache.put( SOME_KEY, SOME_VALUE );
+    assertNotNull( cache.get( SOME_KEY ) );
+    //The second one cleans cache
+    cache.cleanupCurrentSession();
+    assertNull( cache.get( SOME_KEY ) );
+    //The first one still has his data
+    PentahoSessionHolder.setSession( bill );
+    assertNotNull( cache.get( SOME_KEY ) );
+    //The first one cleans cache
+    cache.cleanupCurrentSession();
+    assertNull( cache.get( SOME_KEY ) );
+  }
 }
