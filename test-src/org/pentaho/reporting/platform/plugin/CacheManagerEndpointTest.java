@@ -58,8 +58,7 @@ public class CacheManagerEndpointTest {
       final Response clear = new CacheManagerEndpoint().clear();
 
       assertEquals( 200, clear.getStatus() );
-      verify( contentCache, times( 1 ) ).cleanup();
-      verify( iCacheManager, times( 1 ) ).clearRegionCache( "report-dataset-cache" );
+      verify( contentCache, times( 1 ) ).cleanupCurrentSession();
       verify( iCacheManager, times( 1 ) ).clearRegionCache( "report-output-handlers" );
       verify( dataCacheManager, times( 1 ) ).clearAll();
     } finally {
