@@ -63,6 +63,11 @@ public class PluginSessionCache extends AbstractReportContentCache {
     getBackend().purge( Collections.singletonList( SEGMENT ) );
   }
 
+  @Override public void cleanupCurrentSession() {
+    final IPentahoSession session = PentahoSessionHolder.getSession();
+    getBackend().purge(  Collections.unmodifiableList( Arrays.asList( SEGMENT, session.getId() ) ) );
+  }
+
   /**
    * Logout listener that purges cache
    */
