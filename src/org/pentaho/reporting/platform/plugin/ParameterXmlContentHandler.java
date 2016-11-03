@@ -429,6 +429,10 @@ public class ParameterXmlContentHandler {
       if ( pm != null ) {
         isQueryLimitControlEnabled = Boolean.parseBoolean(
           (String) pm.getPluginSetting( "reporting", "settings/query-limit-ui-enabled", "false" ) );
+        final Expression expression = report.getAttributeExpression( AttributeNames.Internal.NAMESPACE, AttributeNames.Internal.QUERY_LIMIT );
+        if ( expression != null ) {
+          isQueryLimitControlEnabled = false;
+        }
         maxQueryLimit = isQueryLimitControlEnabled ? NumberUtils.toInt( (String) pm.getPluginSetting( "reporting", "settings/query-limit", "0" ), 0 ) : 0;
       }
       inputs.put( SYS_PARAM_IS_QUERY_CONTROL_ENABLED, isQueryLimitControlEnabled );
