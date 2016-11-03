@@ -30,4 +30,6 @@ public interface IReportContentCache {
   Map<String, Serializable> getMetaData( String key );
 
   void cleanup();
+
+  void cleanupCurrentSession();
 }
