@@ -38,11 +38,10 @@ public class CacheManagerEndpoint {
     try {
       final IPluginCacheManager iPluginCacheManager = PentahoSystem.get( IPluginCacheManager.class );
       final IReportContentCache cache = iPluginCacheManager.getCache();
-      cache.cleanup();
+      cache.cleanupCurrentSession();
 
       final ICacheManager cacheManager = PentahoSystem.get( ICacheManager.class );
 
-      cacheManager.clearRegionCache( "report-dataset-cache" );
       cacheManager.clearRegionCache( "report-output-handlers" );
 
       DataCacheFactory.getCache().getCacheManager().clearAll();
