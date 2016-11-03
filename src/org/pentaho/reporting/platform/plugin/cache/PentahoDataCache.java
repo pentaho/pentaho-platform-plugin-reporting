@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin.cache;
@@ -94,13 +94,15 @@ public class PentahoDataCache implements DataCache, ILogoutListener {
 
     public void clearAll() {
       if ( cacheManager != null ) {
-        cacheManager.clearRegionCache( CACHE_NAME );
+        final IPentahoSession session = PentahoSessionHolder.getSession();
+        cacheManager.killSessionCache( session );
       }
     }
 
     public void shutdown() {
       if ( cacheManager != null ) {
-        cacheManager.removeRegionCache( CACHE_NAME );
+        final IPentahoSession session = PentahoSessionHolder.getSession();
+        cacheManager.killSessionCache( session );
       }
     }
 
