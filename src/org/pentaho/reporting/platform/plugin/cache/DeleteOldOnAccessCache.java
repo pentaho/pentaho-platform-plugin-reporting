@@ -120,6 +120,13 @@ public class DeleteOldOnAccessCache extends AbstractReportContentCache {
     cleanUp();
   }
 
+  @Override public void cleanupCurrentSession() {
+    final IPentahoSession session = PentahoSessionHolder.getSession();
+    final List<String> key = Collections.unmodifiableList( Arrays.asList( SEGMENT, createKey( session.getName() ) ) );
+    final ICacheBackend backend = getBackend();
+    backend.purgeSegment( key, ( k, m ) -> true );
+  }
+
   private void cleanUp() {
     logger.debug( "Starting periodical cache eviction" );
     final long currentTimeMillis = System.currentTimeMillis();
