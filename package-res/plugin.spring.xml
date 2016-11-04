@@ -85,7 +85,7 @@
    Maximum value:  Integer.MAX_VALUE
 
   -->
-  <bean id="IPentahoAsyncExecutor" class="org.pentaho.reporting.platform.plugin.async.PentahoAsyncExecutor" scope="singleton" >
+  <bean id="IPentahoAsyncExecutor" class="org.pentaho.reporting.platform.plugin.async.PentahoAsyncExecutor" scope="singleton" lazy-init="false">
     <!-- fixed thread pool capacity -->
     <constructor-arg type="int" value="10" />
     <!--Maximum rows for automatic scheduling defines a threshold for quantity of rows in report after
