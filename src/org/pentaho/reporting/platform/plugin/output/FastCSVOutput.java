@@ -28,8 +28,6 @@ import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import static java.lang.System.out;
-
 public class FastCSVOutput extends CSVOutput {
   public FastCSVOutput() {
   }
@@ -49,14 +47,13 @@ public class FastCSVOutput extends CSVOutput {
                        final int yieldRate )
     throws ReportProcessingException, IOException, ContentIOException {
     final IAsyncReportListener listener = ReportListenerThreadHolder.getListener();
-    ReportStructureValidator validator = new ReportStructureValidator();
+    final ReportStructureValidator validator = new ReportStructureValidator();
     if ( validator.isValidForFastProcessing( report ) == false ) {
       return super.generate( report, acceptedPage, outputStream, yieldRate );
     }
-
-    final FastCsvExportProcessor reportProcessor = new FastCsvExportProcessor( report, out );
+    final FastCsvExportProcessor reportProcessor = new FastCsvExportProcessor( report, outputStream );
     doProcess( listener, reportProcessor );
-    out.flush();
+    outputStream.flush();
     return 0;
   }
 
