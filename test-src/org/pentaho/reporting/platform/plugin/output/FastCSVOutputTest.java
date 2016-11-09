@@ -33,6 +33,7 @@ import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
 
 import java.io.File;
 
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
@@ -74,14 +75,26 @@ public class FastCSVOutputTest {
   }
 
   @Test
-  public void testGenerate() throws Exception {
-    ClassicEngineBoot.getInstance().start();
-    ReportListenerThreadHolder.clear();
-    fastCSVOutput.generate( new MasterReport(), 1, new ByteArrayOutputStream(), 1 );
+  public void testGenerateFast() throws Exception {
+    try {
+      ClassicEngineBoot.getInstance().start();
+      ReportListenerThreadHolder.clear();
+      PentahoSessionHolder.setSession( new StandaloneSession() );
 
-    verify( listener, times( 0 ) ).reportProcessingStarted( any( ReportProgressEvent.class ) );
-    verify( listener, times( 0 ) ).reportProcessingFinished( any( ReportProgressEvent.class ) );
-    verify( listener, times( 0 ) ).reportProcessingUpdate( any( ReportProgressEvent.class ) );
+      final File file = new File( "resource/solution/test/reporting/limit10.prpt" );
+      final MasterReport report =
+        (MasterReport) new ResourceManager().createDirectly( file.getPath(), MasterReport.class ).getResource();
+      try ( ByteArrayOutputStream baos = new ByteArrayOutputStream() ) {
+        fastCSVOutput.generate( report, 1, baos, 1 );
+        assertTrue( baos.size() > 0 );
+      }
+
+      verify( listener, times( 0 ) ).reportProcessingStarted( any( ReportProgressEvent.class ) );
+      verify( listener, times( 0 ) ).reportProcessingFinished( any( ReportProgressEvent.class ) );
+      verify( listener, times( 0 ) ).reportProcessingUpdate( any( ReportProgressEvent.class ) );
+    } finally {
+      PentahoSessionHolder.removeSession();
+    }
   }
 
   @Test
@@ -94,7 +107,10 @@ public class FastCSVOutputTest {
       final File file = new File( "resource/solution/test/reporting/report.prpt" );
       final MasterReport report =
         (MasterReport) new ResourceManager().createDirectly( file.getPath(), MasterReport.class ).getResource();
-      fastCSVOutput.generate( report, 1, new ByteArrayOutputStream(), 1 );
+      try ( ByteArrayOutputStream baos = new ByteArrayOutputStream() ) {
+        fastCSVOutput.generate( report, 1, baos, 1 );
+        assertTrue( baos.size() > 0 );
+      }
 
       verify( listener, times( 0 ) ).reportProcessingStarted( any( ReportProgressEvent.class ) );
       verify( listener, times( 0 ) ).reportProcessingFinished( any( ReportProgressEvent.class ) );
