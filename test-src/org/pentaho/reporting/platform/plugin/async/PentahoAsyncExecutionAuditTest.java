@@ -21,7 +21,6 @@ package org.pentaho.reporting.platform.plugin.async;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -77,8 +76,8 @@ public class PentahoAsyncExecutionAuditTest {
     final ISecurityHelper iSecurityHelper = mock( ISecurityHelper.class );
     when( iSecurityHelper.runAsUser( any(), any() ) ).thenAnswer( new Answer<Object>() {
       @Override public Object answer( InvocationOnMock invocation ) throws Throwable {
-        ( (Callable) invocation.getArguments()[ 1 ] ).call();
-        return null;
+        final Object call = ( (Callable) invocation.getArguments()[ 1 ] ).call();
+        return call;
       }
     } );
 
@@ -320,10 +319,10 @@ public class PentahoAsyncExecutionAuditTest {
   /**
    * This is almost a copy of #testCancellationStatusTest above, but now we have one 'scheduled' execution.
    */
-  @Ignore
   @Test
   public void testScheduledExecutionsNotGetCancelled() throws Exception {
-    SecurityHelper.setMockInstance( mock( ISecurityHelper.class ) );
+   /* SecurityHelper.setMockInstance( mock( ISecurityHelper.class ) );*/
+
     // we still have 4 threads capacity
     final int CAPACITY = 4;
     // but now one of the threads is scheduled
@@ -434,8 +433,8 @@ public class PentahoAsyncExecutionAuditTest {
       eq( sessionId ),
       eq( sessionName ),
       eq( url ),
-      eq( PentahoAsyncReportExecution.class.getName() ),
-      eq( PentahoAsyncReportExecution.class.getName() ),
+      startsWith( PentahoAsyncReportExecution.class.getName() ),
+      startsWith( PentahoAsyncReportExecution.class.getName() ),
       eq( MessageTypes.INSTANCE_START ),
       eq( auditId ),
       eq( "" ),
@@ -447,8 +446,8 @@ public class PentahoAsyncExecutionAuditTest {
       eq( sessionId ),
       eq( sessionName ),
       eq( url ),
-      eq( PentahoAsyncReportExecution.class.getName() ),
-      eq( PentahoAsyncReportExecution.class.getName() ),
+      startsWith( PentahoAsyncReportExecution.class.getName() ),
+      startsWith( PentahoAsyncReportExecution.class.getName() ),
       eq( MessageTypes.CANCELLED ),
       eq( auditId ),
       eq( "" ),
@@ -461,8 +460,8 @@ public class PentahoAsyncExecutionAuditTest {
       eq( sessionId ),
       eq( sessionName ),
       eq( url ),
-      eq( PentahoAsyncReportExecution.class.getName() ),
-      eq( PentahoAsyncReportExecution.class.getName() ),
+      startsWith( PentahoAsyncReportExecution.class.getName() ),
+      startsWith( PentahoAsyncReportExecution.class.getName() ),
       eq( MessageTypes.INSTANCE_END ),
       eq( auditId ),
       eq( "" ),

@@ -21,7 +21,6 @@ package org.pentaho.reporting.platform.plugin.async;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
@@ -86,8 +85,8 @@ public class PentahoAsyncExecutionTest {
     final ISecurityHelper iSecurityHelper = mock( ISecurityHelper.class );
     when( iSecurityHelper.runAsUser( any(), any() ) ).thenAnswer( new Answer<Object>() {
       @Override public Object answer( InvocationOnMock invocation ) throws Throwable {
-        ( (Callable) invocation.getArguments()[ 1 ] ).call();
-        return null;
+        final Object call = ( (Callable) invocation.getArguments()[ 1 ] ).call();
+        return call;
       }
     } );
 
@@ -100,7 +99,6 @@ public class PentahoAsyncExecutionTest {
     PentahoSessionHolder.removeSession();
   }
 
-  @Ignore
   @Test
   public void testListenerSuccessExecution() throws Exception {
     when( component.execute() ).thenReturn( true );
@@ -131,7 +129,6 @@ public class PentahoAsyncExecutionTest {
     };
   }
 
-  @Ignore
   @Test
   public void testListenerFailExecution() throws Exception {
     when( component.execute() ).thenReturn( false );
