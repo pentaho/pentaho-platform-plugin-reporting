@@ -22,7 +22,6 @@ import junit.framework.Assert;
 import org.apache.poi.util.IOUtils;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
@@ -135,8 +134,8 @@ public class PentahoAsyncReportExecutorTest {
     final ISecurityHelper iSecurityHelper = mock( ISecurityHelper.class );
     when( iSecurityHelper.runAsUser( any(), any() ) ).thenAnswer( new Answer<Object>() {
       @Override public Object answer( InvocationOnMock invocation ) throws Throwable {
-        ( (Callable) invocation.getArguments()[ 1 ] ).call();
-        return null;
+        final Object call = ( (Callable) invocation.getArguments()[ 1 ] ).call();
+        return call;
       }
     } );
 
@@ -423,8 +422,6 @@ public class PentahoAsyncReportExecutorTest {
 
   }
 
-
-  @Ignore
   @Test( expected = IllegalStateException.class ) public void testScheduleAfterCallback() throws InterruptedException {
     final CountDownLatch latch = new CountDownLatch( 1 );
     final PentahoAsyncExecutor exec = new PentahoAsyncExecutor( 1, autoSchedulerThreshold ) {
@@ -692,7 +689,6 @@ public class PentahoAsyncReportExecutorTest {
 
   }
 
-  @Ignore
   @Test public void testRequestLocationAfterCallback() throws InterruptedException {
     final CountDownLatch latch = new CountDownLatch( 1 );
 
