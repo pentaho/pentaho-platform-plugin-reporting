@@ -38,6 +38,8 @@ import org.pentaho.reporting.libraries.base.util.StringUtils;
 import org.pentaho.reporting.libraries.resourceloader.ResourceException;
 import org.pentaho.reporting.platform.plugin.messages.Messages;
 
+import org.owasp.esapi.ESAPI;
+
 import javax.swing.table.TableModel;
 import java.io.IOException;
 import java.lang.reflect.Array;
@@ -93,7 +95,7 @@ public class ReportContentUtil {
           if ( log.isWarnEnabled() ) {
             log.warn( Messages.getInstance().getString( "ReportPlugin.logErrorParametrization" ), e ); //$NON-NLS-1$
           }
-          validationResult.addError( paramName, new ValidationMessage( e.getMessage() ) );
+          validationResult.addError( paramName, new ValidationMessage( ESAPI.encoder().encodeForHTML( e.getMessage() ) ) );
         }
       }
     }
