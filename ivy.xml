@@ -64,7 +64,9 @@
         <dependency org="GWT-FX" name="GWT-FX" rev="0.5.0" conf="codegen->default" transitive="false"/>
 
         <!--  test dependencies -->
-        <dependency org="${pentaho-platform.group}" name="pentaho-platform-core-test" rev="${dependency.bi-platform.revision}"  changing="true" conf="test->default"/>
+        <dependency org="${pentaho-platform.group}" name="pentaho-platform-core" rev="${dependency.bi-platform.revision}"  changing="true" conf="test->default">
+            <artifact name="pentaho-platform-core" ext="jar" m:classifier="tests" />
+        </dependency>
         <dependency org="junit" name="junit" rev="4.10" conf="test->default" />
         <dependency org="org.hsqldb" name="hsqldb" rev="2.3.2" conf="test->default" transitive="false"/>
         <dependency org="${ivy.artifact.group}" name="pentaho-reporting-engine-classic-core-test"
