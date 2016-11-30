@@ -166,7 +166,7 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
       final IAsyncReportListener listener = ReportListenerThreadHolder.getListener();
       final IReportContent cachedContent = getCachedContent( key );
       final boolean forcePaginated = isForceAllPages( report );
-      if ( cachedContent == null ) {
+      if ( cachedContent == null || ( listener != null && listener.isScheduled() && cachedContent.getPageCount() != cachedContent.getStoredPageCount() ) ) {
         logger.warn( "No cached content found for key: " + key );
         final IReportContent freshCache = regenerateCache( report, yieldRate, key, acceptedPage );
 
