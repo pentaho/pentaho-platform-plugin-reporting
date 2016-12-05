@@ -35,6 +35,7 @@ import org.pentaho.reporting.libraries.base.config.ModifiableConfiguration;
 import org.pentaho.reporting.libraries.resourceloader.ResourceManager;
 import org.pentaho.reporting.platform.plugin.MicroPlatformFactory;
 import org.pentaho.reporting.platform.plugin.SimpleReportingComponent;
+import org.pentaho.reporting.platform.plugin.async.AsyncExecutionStatus;
 import org.pentaho.reporting.platform.plugin.async.IAsyncReportListener;
 import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
 import org.pentaho.reporting.platform.plugin.async.TestListener;
@@ -52,8 +53,14 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
@@ -242,4 +249,81 @@ public class CachingPageableHTMLOutputIT {
     // execute the component
     assertTrue( rc.execute() );
   }
+
+  @Test
+  public void testScheduledReportContainsAllPages() throws Exception {
+
+    ReportListenerThreadHolder.clear();
+    final CountDownLatch latch1 = new CountDownLatch( 1 );
+    final CountDownLatch latch2 = new CountDownLatch( 1 );
+    final ExecutorService executorService = Executors.newFixedThreadPool( 2 );
+
+    final SimpleReportingComponent rc = new SimpleReportingComponent();
+    final ResourceManager mgr = new ResourceManager();
+    final File src = new File( "resource/solution/test/reporting/BigReport.prpt" );
+    final MasterReport masterReport = (MasterReport) mgr.createDirectly( src, MasterReport.class ).getResource();
+    final String key = "test";
+    masterReport.setContentCacheKey( key );
+    masterReport.setQueryLimit( 500 );
+    rc.setReport( masterReport );
+
+    rc.setOutputType( "text/html" ); //$NON-NLS-1$
+    // turn on pagination, by way of input (typical mode for xaction)
+    final HashMap<String, Object> inputs = new HashMap<String, Object>();
+    inputs.put( "paginate", "true" ); //$NON-NLS-1$ //$NON-NLS-2$
+    inputs.put( "accepted-page", "0" ); //$NON-NLS-1$ //$NON-NLS-2$
+    rc.setInputs( inputs );
+
+    final TestListener future1Listener = new TestListener( "1", UUID.randomUUID(), "" );
+    future1Listener.setStatus( AsyncExecutionStatus.SCHEDULED );
+    final TestListener future2Listener = new TestListener( "1", UUID.randomUUID(), "" );
+
+    final Future<byte[]> future1 =
+      executorService.submit( new CachingPageableHTMLOutputIT.TestTask( latch1, rc, future1Listener ) );
+    final Future<byte[]> future2 =
+      executorService.submit( new CachingPageableHTMLOutputIT.TestTask( latch2, rc, future2Listener ) );
+
+    latch2.countDown();
+    while ( !future2.isDone() ) {
+      if ( future2Listener.isOnFirstPage() ) {
+        latch1.countDown();
+        break;
+      }
+      Thread.sleep( 10 );
+    }
+
+    final String content2 = new String( future2.get(), "UTF-8" );
+    assertFalse( content2.contains( "Scheduled paginated HTML report" ) );
+
+    final String content1 = new String( future1.get(), "UTF-8" );
+    assertTrue( content1.contains( "Scheduled paginated HTML report" ) );
+
+    assertEquals( future2Listener.getState().getPage(), future1Listener.getState().getTotalPages() );
+    assertEquals( future1Listener.getState().getPage(), future1Listener.getState().getTotalPages() );
+  }
+
+  private class TestTask implements Callable<byte[]> {
+
+    private final CountDownLatch latch;
+    private final SimpleReportingComponent rc;
+    private final TestListener listener;
+
+    private TestTask( final CountDownLatch latch, final SimpleReportingComponent rc, final TestListener listener ) {
+      this.latch = latch;
+      this.rc = rc;
+      this.listener = listener;
+    }
+
+    @Override public byte[] call() throws Exception {
+      latch.await();
+      try ( final java.io.ByteArrayOutputStream outputStream =
+              new java.io.ByteArrayOutputStream() ) { //$NON-NLS-1$ //$NON-NLS-2$
+        rc.setOutputStream( outputStream );
+        ReportListenerThreadHolder.setListener( listener );
+        rc.execute();
+        return outputStream.toByteArray();
+      }
+    }
+  }
+
 }
