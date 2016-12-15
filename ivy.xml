@@ -38,7 +38,8 @@
 		<dependency org="${pentaho-platform.group}" name="pentaho-platform-core" rev="${dependency.bi-platform.revision}"  changing="true"  transitive="false"/>
 		<dependency org="${pentaho-platform.group}" name="pentaho-platform-repository" rev="${dependency.bi-platform.revision}"  changing="true"  transitive="false"/>
 		<dependency org="${pentaho-platform.group}" name="pentaho-platform-extensions" rev="${dependency.bi-platform.revision}"  changing="true"  transitive="false"/>
-      <dependency org="commons-collections" name="commons-collections" rev="3.2.2"  changing="true" />
+    <dependency org="commons-collections" name="commons-collections" rev="3.2.2"  changing="true" />
+    <dependency org="pentaho-kettle" name="kettle-engine" rev="${dependency.kettle.revision}"  changing="true"  transitive="false"/>
 
 		<dependency org="javax.servlet" name="servlet-api" rev="2.4"/>
 		<dependency org="javax.ws.rs" name="javax.ws.rs-api" rev="2.0.1" conf="runtime->default"/>
