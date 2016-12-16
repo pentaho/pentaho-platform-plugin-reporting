@@ -17,7 +17,34 @@
 
 package org.pentaho.reporting.platform.plugin;
 
-import com.google.common.collect.Lists;
+import java.io.OutputStream;
+import java.io.Serializable;
+import java.lang.reflect.Array;
+import java.math.BigDecimal;
+import java.sql.Timestamp;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TimeZone;
+import java.util.stream.Collectors;
+
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.commons.logging.Log;
@@ -78,32 +105,7 @@ import org.springframework.web.util.HtmlUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import java.io.OutputStream;
-import java.io.Serializable;
-import java.lang.reflect.Array;
-import java.math.BigDecimal;
-import java.sql.Timestamp;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimeZone;
-import java.util.stream.Collectors;
+import com.google.common.collect.Lists;
 
 public class ParameterXmlContentHandler {
   public static final String SYS_PARAM_ACCEPTED_PAGE = "accepted-page";
@@ -130,14 +132,14 @@ public class ParameterXmlContentHandler {
   // default visibility for testing purposes
   Document document;
   private Map<String, ParameterDefinitionEntry> systemParameter;
-  private boolean paginate;
-  private IParameterProvider requestParameters;
-  private Map<String, Object> inputs;
+  private final boolean paginate;
+  private final IParameterProvider requestParameters;
+  private final Map<String, Object> inputs;
 
   public ParameterXmlContentHandler( final ParameterContentGenerator contentGenerator, final boolean paginate ) {
     this.paginate = paginate;
-    this.inputs = contentGenerator.createInputs();
-    this.requestParameters = contentGenerator.getRequestParameters();
+    inputs = contentGenerator.createInputs();
+    requestParameters = contentGenerator.getRequestParameters();
   }
 
   public static String convertParameterValueToString( final ParameterDefinitionEntry parameter,
@@ -149,7 +151,7 @@ public class ParameterXmlContentHandler {
 
     // PIR-652
     if ( value instanceof Object[] ) {
-      Object[] o = (Object[]) value;
+      final Object[] o = (Object[]) value;
       if ( o.length == 1 ) {
         return String.valueOf( o[ 0 ] );
       }
@@ -157,7 +159,7 @@ public class ParameterXmlContentHandler {
 
     // PIR-724 - Convert String arrays to a single string with values separated by '|'
     if ( value instanceof String[] ) {
-      String[] o = (String[]) value;
+      final String[] o = (String[]) value;
       return org.apache.commons.lang.StringUtils.join( o, '|' );
     }
 
@@ -166,7 +168,7 @@ public class ParameterXmlContentHandler {
       return String.valueOf( value );
     }
     if ( Date.class.isAssignableFrom( type ) ) {
-      if ( value instanceof Date == false ) {
+      if ( ( value instanceof Date ) == false ) {
         throw new BeanException( Messages.getInstance().getString( "ReportPlugin.errorNonDateParameterValue" ) );
       }
 
@@ -174,7 +176,7 @@ public class ParameterXmlContentHandler {
         parameter.getParameterAttribute( ParameterAttributeNames.Core.NAMESPACE,
           ParameterAttributeNames.Core.TIMEZONE, context );
       final DateFormat dateFormat;
-      if ( timezone == null || "server".equals( timezone ) || //$NON-NLS-1$
+      if ( ( timezone == null ) || "server".equals( timezone ) || //$NON-NLS-1$
         "client".equals( timezone ) ) { //$NON-NLS-1$
         // nothing needed ..
         // for server: Just print it as it is, including the server timezone.
@@ -227,7 +229,7 @@ public class ParameterXmlContentHandler {
 
   private Map<String, ParameterDefinitionEntry> getSystemParameter() {
     if ( systemParameter == null ) {
-      final Map<String, ParameterDefinitionEntry> parameter = new LinkedHashMap<String, ParameterDefinitionEntry>();
+      final Map<String, ParameterDefinitionEntry> parameter = new LinkedHashMap<>();
       parameter.put( SYS_PARAM_OUTPUT_TARGET, createOutputParameter() );
       parameter.put( SYS_PARAM_CONTENT_LINK, createContentLinkingParameter() ); // NON-NLS
       parameter.put( SYS_PARAM_TAB_NAME, createGenericSystemParameter( SYS_PARAM_TAB_NAME, false, true ) ); // NON-NLS
@@ -291,11 +293,11 @@ public class ParameterXmlContentHandler {
   public void createParameterContent( final OutputStream outputStream, final Serializable fileId, final String path,
                                       boolean overrideOutputType, MasterReport report ) throws Exception {
     final Object rawSessionId = inputs.get( ParameterXmlContentHandler.SYS_PARAM_SESSION_ID );
-    if ( ( rawSessionId instanceof String ) == false || "".equals( rawSessionId ) ) {
+    if ( ( ( rawSessionId instanceof String ) == false ) || "".equals( rawSessionId ) ) {
       inputs.put( ParameterXmlContentHandler.SYS_PARAM_SESSION_ID, UUIDUtil.getUUIDAsString() );
     }
 
-    this.document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+    document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
 
     final IParameterProvider requestParams = getRequestParameters();
 
@@ -317,7 +319,7 @@ public class ParameterXmlContentHandler {
     }
     reportComponent.setDefaultOutputTarget( HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE );
 
-    if ( path.endsWith( ".prpti" ) && requestParams.getParameter( "json" ) == null ) {
+    if ( path.endsWith( ".prpti" ) && ( requestParams.getParameter( "json" ) == null ) ) {
       reportComponent.setForceUnlockPreferredOutput( true );
     }
 
@@ -342,7 +344,7 @@ public class ParameterXmlContentHandler {
       HashNMap<String, String> dependencies = null;
       try {
         dependencies = getDependentParameters( vr.getParameterValues(), parameterContext, report );
-      } catch ( ReportDataFactoryException e ) {
+      } catch ( final ReportDataFactoryException e ) {
         logger.debug( "unable to determine dependent parameters", e );
       }
 
@@ -385,7 +387,7 @@ public class ParameterXmlContentHandler {
       // System parameter must come last in the list, as this is how it was done in the original
       // version and this is how people expect it to be now.
       final LinkedHashMap<String, ParameterDefinitionEntry> reportParameters =
-        new LinkedHashMap<String, ParameterDefinitionEntry>();
+        new LinkedHashMap<>();
       for ( final ParameterDefinitionEntry parameter : parameterDefinitions ) {
         reportParameters.put( parameter.getName(), parameter );
       }
@@ -418,7 +420,7 @@ public class ParameterXmlContentHandler {
       }
 
       // Adding proportional width config parameter
-      String proportionalWidth =
+      final String proportionalWidth =
         report.getReportConfiguration().getConfigProperty( CONFIG_PARAM_HTML_PROPORTIONAL_WIDTH );
       inputs.put( SYS_PARAM_HTML_PROPORTIONAL_WIDTH, Boolean.valueOf( proportionalWidth ) );
 
@@ -452,8 +454,7 @@ public class ParameterXmlContentHandler {
       }
 
       final String[] outputParameter = new OutputParameterCollector().collectParameter( report );
-      for ( int i = 0; i < outputParameter.length; i++ ) {
-        final String outputParameterName = outputParameter[ i ];
+      for ( final String outputParameterName : outputParameter ) {
         // <output-parameter displayName="Territory" id="[Markets].[Territory]"/>
         final Element element = document.createElement( "output-parameter" ); // NON-NLS
         element.setAttribute( "displayName", outputParameterName ); // NON-NLS
@@ -487,36 +488,41 @@ public class ParameterXmlContentHandler {
                                     final Map<String, Object> inputs,
                                     final String[] changedParamsQuery )
     throws CloneNotSupportedException, BeanException, ReportDataFactoryException {
-    if ( changedParamsQuery != null && changedParamsQuery.length > 0 ) {
+    if ( ( changedParamsQuery != null ) && ( changedParamsQuery.length > 0 ) ) {
       final Set<Object> changedParameters = new HashSet<>( Arrays.asList( changedParamsQuery ) );
 
-      //Changed parameters and their dependencies
+      // Changed parameters and their dependencies
       final Set<Object> changedWithDependencies = addAllDependencies( dependencies, changedParameters );
 
-      //Filter definitions
+      // Filter definitions
       final List<ParameterDefinitionEntry> changedParamDefinitions =
-        reportParameters.values().stream().filter( p -> changedWithDependencies.contains( p.getName() ) ).collect( Collectors
+          reportParameters.values().stream().filter( p -> changedWithDependencies.contains( p.getName() ) ).collect(
+              Collectors
 
-          .toList() );
+                  .toList() );
 
-      //Filtered list without attributes
-      renderParameters( parameterContext, vr, parameters, new HashNMap<>(), changedParamDefinitions, inputs, Boolean.TRUE );
+      // Filtered list without attributes
+      renderParameters( parameterContext, vr, parameters, new HashNMap<>(), changedParamDefinitions, changedParameters,
+          inputs, Boolean.TRUE );
       parameters.setAttribute( "minimized", "true" );
     } else {
-      //Initial parameter call or not async mode
-      renderParameters( parameterContext, vr, parameters, dependencies, reportParameters.values(), inputs, Boolean.FALSE );
+      // Initial parameter call or not async mode
+      renderParameters( parameterContext, vr, parameters, dependencies, reportParameters.values(), null,
+          inputs, Boolean.FALSE );
     }
   }
 
-  private void renderParameters( final DefaultParameterContext parameterContext,
+  protected void renderParameters( final DefaultParameterContext parameterContext,
                                  final ValidationResult vr,
                                  final Element parameters,
                                  final HashNMap<String, String> dependencies,
                                  final Collection<ParameterDefinitionEntry> reportParameters,
+                                 final Set<Object> changedParameters,
                                  final Map<String, Object> inputs,
                                  final boolean  ignoreAttributes ) throws BeanException, ReportDataFactoryException {
     for ( final ParameterDefinitionEntry parameter : reportParameters ) {
-      final Object selections = inputs.get( parameter.getName() );
+      final Object selections = getSelections( parameter, changedParameters );
+
       final ParameterContextWrapper wrapper =
         new ParameterContextWrapper( parameterContext, vr.getParameterValues() );
       final Element el = createParameterElement( parameter, wrapper, selections, dependencies, ignoreAttributes  );
@@ -525,35 +531,48 @@ public class ParameterXmlContentHandler {
     }
   }
 
-  HashNMap<String, String> getDependentParameters( ReportParameterValues computedParameterValues,
-                                                   ParameterContext parameterContext, MasterReport report )
+  protected Object getSelections( final ParameterDefinitionEntry parameter, final Set<Object> changedParameters ) {
+    final String pName = parameter.getName();
+
+    final ListParameter listParameter = parameter instanceof ListParameter ? (ListParameter) parameter : null;
+    // is the selections verified
+    final boolean isVerifiedValue = ( listParameter != null ) && listParameter.isStrictValueCheck();
+
+    // otherwise the parameter is dependent and the selections are outdated
+    final boolean ifChangedParameter = ( changedParameters != null ) && changedParameters.contains( pName );
+
+    return isVerifiedValue || ifChangedParameter ? inputs.get( pName ) : null;
+  }
+
+  HashNMap<String, String> getDependentParameters( final ReportParameterValues computedParameterValues,
+                                                   final ParameterContext parameterContext, final MasterReport report )
     throws ReportDataFactoryException {
-    HashNMap<String, String> downstreamParams = new HashNMap<>();
+    final HashNMap<String, String> downstreamParams = new HashNMap<>();
 
     final ReportParameterDefinition reportParameterDefinition = report.getParameterDefinition();
 
-    DesignTimeDataFactoryContext factoryContext = new DesignTimeDataFactoryContext( report );
+    final DesignTimeDataFactoryContext factoryContext = new DesignTimeDataFactoryContext( report );
 
-    for ( ParameterDefinitionEntry entry : reportParameterDefinition.getParameterDefinitions() ) {
+    for ( final ParameterDefinitionEntry entry : reportParameterDefinition.getParameterDefinitions() ) {
       // default list parameter is only dynamic values provider now.
       if ( entry instanceof DefaultListParameter ) {
 
-        DefaultListParameter listParameter = (DefaultListParameter) entry;
+        final DefaultListParameter listParameter = (DefaultListParameter) entry;
 
         // inspect for dependent fields
         final String queryName = listParameter.getQueryName();
         if ( queryName != null ) {
-          CompoundDataFactory cdf = CompoundDataFactory.normalize( report.getDataFactory() );
+          final CompoundDataFactory cdf = CompoundDataFactory.normalize( report.getDataFactory() );
           final DataFactory dataFactoryForQuery = cdf.getDataFactoryForQuery( queryName );
 
           if ( dataFactoryForQuery != null ) {
             dataFactoryForQuery.initialize( factoryContext );
 
-            String[] fields = dataFactoryForQuery.getMetaData()
+            final String[] fields = dataFactoryForQuery.getMetaData()
               .getReferencedFields( dataFactoryForQuery, queryName, computedParameterValues );
 
             if ( fields != null ) {
-              for ( String field : fields ) {
+              for ( final String field : fields ) {
                 if ( !field.startsWith( SYS_IGNORE_PARAM ) ) {
                   downstreamParams.add( field, entry.getName() );
                 }
@@ -573,7 +592,7 @@ public class ParameterXmlContentHandler {
   private Set<Object> addAllDependencies( final HashNMap<String, String> dependencies, final Set<Object> changedNames )
     throws CloneNotSupportedException {
 
-    if ( dependencies != null && !dependencies.isEmpty() ) {
+    if ( ( dependencies != null ) && !dependencies.isEmpty() ) {
       final Set<Object> destination = new HashSet<>( changedNames );
       final Iterator<Object> changedIterator = changedNames.iterator();
       while ( changedIterator.hasNext() ) {
@@ -589,7 +608,7 @@ public class ParameterXmlContentHandler {
   private void fillParams( final Set<Object> destination, final HashNMap<String, String> dependencies,
                            final String paramName ) {
     final Iterator<String> all = dependencies.getAll( paramName );
-    if ( all != null && all.hasNext() ) {
+    if ( ( all != null ) && all.hasNext() ) {
       while ( all.hasNext() ) {
         final String nextName = all.next();
         destination.add( nextName );
@@ -598,34 +617,34 @@ public class ParameterXmlContentHandler {
     }
   }
 
-  void computeNormalLineage( ParameterContext pc, ParameterDefinitionEntry pe, HashNMap<String, String> m ) {
-    String name = pe.getName();
-    String defValue =
+  void computeNormalLineage( final ParameterContext pc, final ParameterDefinitionEntry pe, final HashNMap<String, String> m ) {
+    final String name = pe.getName();
+    final String defValue =
       pe.getParameterAttribute( ParameterAttributeNames.Core.NAMESPACE,
         ParameterAttributeNames.Core.DEFAULT_VALUE_FORMULA, pc );
-    String postProc =
+    final String postProc =
       pe.getParameterAttribute( ParameterAttributeNames.Core.NAMESPACE,
         ParameterAttributeNames.Core.POST_PROCESSOR_FORMULA, pc );
     final String formula =
       pe.getParameterAttribute( ParameterAttributeNames.Core.NAMESPACE,
         ParameterAttributeNames.Core.DISPLAY_VALUE_FORMULA, pc );
 
-    for ( String field : analyzeFormula( defValue ) ) {
+    for ( final String field : analyzeFormula( defValue ) ) {
       m.add( field, name );
     }
-    for ( String field : analyzeFormula( formula ) ) {
+    for ( final String field : analyzeFormula( formula ) ) {
       m.add( field, name );
     }
-    for ( String field : analyzeFormula( postProc ) ) {
+    for ( final String field : analyzeFormula( postProc ) ) {
       m.add( field, name );
     }
   }
 
-  private String[] analyzeFormula( String formula ) {
+  private String[] analyzeFormula( final String formula ) {
     if ( formula == null ) {
       return new String[ 0 ];
     }
-    FormulaExpression fe = new FormulaExpression();
+    final FormulaExpression fe = new FormulaExpression();
     fe.setFormula( formula );
 
     final ExpressionMetaData md =
@@ -640,7 +659,7 @@ public class ParameterXmlContentHandler {
                                                 final LinkedHashMap<String, ParameterDefinitionEntry> reportParameters,
                                                 final String computedOutputTarget,
                                                 final ValidationResult result ) {
-    final Map<String, Object> realInputs = new HashMap<String, Object>();
+    final Map<String, Object> realInputs = new HashMap<>();
     realInputs.put( SYS_PARAM_DESTINATION, lookupDestination() );
 
     final ReportParameterValues parameterValues = result.getParameterValues();
@@ -673,7 +692,7 @@ public class ParameterXmlContentHandler {
         } else {
           realInputs.put( parameterName, null );
         }
-      } catch ( Exception be ) {
+      } catch ( final Exception be ) {
         if ( logger.isDebugEnabled() ) {
           logger.debug( Messages.getInstance().getString( "ReportPlugin.debugParameterCannotBeConverted",
             parameter.getName(), String.valueOf( value ) ), be );
@@ -702,18 +721,18 @@ public class ParameterXmlContentHandler {
   // default visibility for testing purposes
   void createParameterDependencies( final Element element, final ParameterDefinitionEntry parameter,
                                     final HashNMap dependencies ) {
-    if ( element == null || parameter == null ) {
+    if ( ( element == null ) || ( parameter == null ) ) {
       throw new NullPointerException();
     }
-    if ( dependencies == null || dependencies.isEmpty() || !dependencies.containsKey( parameter.getName() ) ) {
+    if ( ( dependencies == null ) || dependencies.isEmpty() || !dependencies.containsKey( parameter.getName() ) ) {
       return;
     }
     final Element valuesElement = document.createElement( "dependencies" );
-    Iterator it = dependencies.getAll( parameter.getName() );
+    final Iterator it = dependencies.getAll( parameter.getName() );
     while ( it.hasNext() ) {
-      Object rName = it.next();
-      String dependency = String.valueOf( rName );
-      Element name = document.createElement( "name" );
+      final Object rName = it.next();
+      final String dependency = String.valueOf( rName );
+      final Element name = document.createElement( "name" );
       name.setTextContent( dependency );
       valuesElement.appendChild( name );
     }
@@ -738,8 +757,7 @@ public class ParameterXmlContentHandler {
       final String[] namespaces = parameter.getParameterAttributeNamespaces();
       boolean isMustValidateOnServerSet = false;
       if ( !ignoreAttributes ) {
-        for ( int i = 0; i < namespaces.length; i++ ) {
-          final String namespace = namespaces[ i ];
+        for ( final String namespace : namespaces ) {
           final String[] attributeNames = parameter.getParameterAttributeNames( namespace );
           for ( final String attributeName : attributeNames ) {
             final String attributeValue = parameter.getTranslatedParameterAttribute( namespace, attributeName, parameterContext );
@@ -767,8 +785,8 @@ public class ParameterXmlContentHandler {
       }
 
       //parameter dependencies: see backlog-7980
-      if ( dependencies != null && !dependencies.isEmpty() && dependencies.getAll( parameter.getName() ).hasNext() && !ignoreAttributes ) {
-        List<String> deps = Lists.newArrayList( dependencies.getAll( parameter.getName() ) );
+      if ( ( dependencies != null ) && !dependencies.isEmpty() && dependencies.getAll( parameter.getName() ).hasNext() && !ignoreAttributes ) {
+        final List<String> deps = Lists.newArrayList( dependencies.getAll( parameter.getName() ) );
 
         if ( !deps.isEmpty() ) {
           if ( !isMustValidateOnServerSet ) {
@@ -796,7 +814,7 @@ public class ParameterXmlContentHandler {
         elementValueType = valueType;
       }
 
-      final LinkedHashSet<Object> selectionSet = new LinkedHashSet<Object>();
+      final LinkedHashSet<Object> selectionSet = new LinkedHashSet<>();
       if ( selections != null ) {
         if ( selections.getClass().isArray() ) {
           final int length = Array.getLength( selections );
@@ -861,18 +879,18 @@ public class ParameterXmlContentHandler {
             valueElement.setAttribute( "selected", String.valueOf( selectionSet.contains( bd ) ) ); //$NON-NLS-1$
             handledValues.remove( bd );
           } else if ( key instanceof Timestamp ) {
-            Timestamp origKey = (Timestamp) possibleValues.getKeyValue( i );
+            final Timestamp origKey = (Timestamp) possibleValues.getKeyValue( i );
             valueElement.setAttribute( "selected",
               String.valueOf( selectionSet.contains( new Date( origKey.getTime() ) ) ) ); //$NON-NLS-1$
             handledValues.remove( key );
           } else if ( key == null ) {
-            if ( selections == null || selectionSet.contains( null ) ) {
+            if ( ( selections == null ) || selectionSet.contains( null ) ) {
               valueElement.setAttribute( "selected", "true" ); //$NON-NLS-1$
               handledValues.remove( null );
             }
           } else {
             // key may have been encoded, we want the original raw value.
-            Object origKey = possibleValues.getKeyValue( i );
+            final Object origKey = possibleValues.getKeyValue( i );
             valueElement.setAttribute( "selected", String.valueOf( selectionSet.contains( origKey ) ) ); //$NON-NLS-1$
             handledValues.remove( key );
           }
@@ -898,7 +916,7 @@ public class ParameterXmlContentHandler {
             valueElement.setAttribute( "type", elementValueType.getName() ); //$NON-NLS-1$
 
             if ( key instanceof Number ) {
-              BigDecimal bd = new BigDecimal( String.valueOf( key ) );
+              final BigDecimal bd = new BigDecimal( String.valueOf( key ) );
               valueElement.setAttribute( "selected", String.valueOf( selectionSet.contains( bd ) ) ); //$NON-NLS-1$
             } else {
               valueElement.setAttribute( "selected", String.valueOf( selectionSet.contains( key ) ) ); //$NON-NLS-1$
@@ -935,14 +953,14 @@ public class ParameterXmlContentHandler {
         }
       }
       return parameterElement;
-    } catch ( BeanException be ) {
+    } catch ( final BeanException be ) {
       logger.error( Messages.getInstance().getString( "ReportPlugin.errorFailedToGenerateParameter",
         parameter.getName(), String.valueOf( selections ) ), be );
       throw be;
     }
   }
 
-  private boolean isTextFieldButNotString( Class<?> valueType, String attributeValue ) {
+  private boolean isTextFieldButNotString( final Class<?> valueType, final String attributeValue ) {
     return ( ParameterAttributeNames.Core.TYPE_TEXTBOX.equals( attributeValue )
       || ParameterAttributeNames.Core.TYPE_MULTILINE.equals( attributeValue ) )
       && !String.class.equals( valueType );
@@ -952,13 +970,13 @@ public class ParameterXmlContentHandler {
    * Determine whether value contains any ISO control characters, which are not allowed in XML.
    * http://www.w3.org/TR/2006/REC-xml11-20060816/#charsets
    */
-  private boolean hasISOControlChars( Object value, Class<?> type ) {
+  private boolean hasISOControlChars( final Object value, final Class<?> type ) {
     if ( value == null ) {
       return false;
     }
 
     if ( type == String.class ) {
-      String string = value.toString();
+      final String string = value.toString();
       for ( int i = 0; i < string.length(); i++ ) {
         if ( Character.isISOControl( string.charAt( i ) ) ) {
           return true;
@@ -971,7 +989,7 @@ public class ParameterXmlContentHandler {
     return false;
   }
 
-  private Object resolveSelectionValue( Object value ) {
+  private Object resolveSelectionValue( final Object value ) {
     // convert all numerics to BigDecimals for cross-numeric-class matching
     if ( value instanceof Number ) {
       return new BigDecimal( String.valueOf( value.toString() ) );
@@ -993,7 +1011,7 @@ public class ParameterXmlContentHandler {
     } else {
       final TimeZone timeZone;
       final StringBuffer value = new StringBuffer();
-      if ( timezoneSpec == null || "server".equals( timezoneSpec ) ) { //$NON-NLS-1$
+      if ( ( timezoneSpec == null ) || "server".equals( timezoneSpec ) ) { //$NON-NLS-1$
         timeZone = TimeZone.getDefault();
       } else if ( "utc".equals( timezoneSpec ) ) { //$NON-NLS-1$
         timeZone = TimeZone.getTimeZone( "UTC" ); //$NON-NLS-1$
@@ -1002,8 +1020,8 @@ public class ParameterXmlContentHandler {
       }
 
       final int offset;
-      if ( selectionSet != null && selectionSet.size() > 0 ) {
-        Date date = (Date) selectionSet.iterator().next();
+      if ( ( selectionSet != null ) && ( selectionSet.size() > 0 ) ) {
+        final Date date = (Date) selectionSet.iterator().next();
         offset = timeZone.getOffset( date.getTime() );
       } else {
         offset = timeZone.getRawOffset();
@@ -1043,8 +1061,7 @@ public class ParameterXmlContentHandler {
       }
     }
     final ValidationMessage[] globalMessages = vr.getErrors();
-    for ( int i = 0; i < globalMessages.length; i++ ) {
-      final ValidationMessage globalMessage = globalMessages[ i ];
+    for ( final ValidationMessage globalMessage : globalMessages ) {
       final Element error = document.createElement( "global-error" ); //$NON-NLS-1$
       error.setAttribute( "message", globalMessage.getMessage() ); //$NON-NLS-1$
       errors.appendChild( error );
@@ -1135,7 +1152,7 @@ public class ParameterXmlContentHandler {
       handlerFactory = new FastExportReportOutputHandlerFactory();
     }
 
-    for ( Map.Entry<String, String> entry : handlerFactory.getSupportedOutputTypes() ) {
+    for ( final Map.Entry<String, String> entry : handlerFactory.getSupportedOutputTypes() ) {
       listParameter.addValues( entry.getKey(), entry.getValue() );
     }
 
@@ -1178,7 +1195,7 @@ public class ParameterXmlContentHandler {
       }
     }
 
-    if ( attributeNamespace != null && attributeName != null ) {
+    if ( ( attributeNamespace != null ) && ( attributeName != null ) ) {
       final Object attr = report.getAttribute( attributeNamespace, attributeName );
       if ( Boolean.TRUE.equals( attr ) || "true".equals( attr ) ) {
         return Boolean.TRUE;
@@ -1211,9 +1228,9 @@ public class ParameterXmlContentHandler {
       }
     }
 
-    if ( attributeNamespace != null && attributeName != null ) {
+    if ( ( attributeNamespace != null ) && ( attributeName != null ) ) {
       final Object attr = report.getAttribute( attributeNamespace, attributeName );
-      if ( attr != null && StringUtils.isEmpty( String.valueOf( attr ) ) == false ) {
+      if ( ( attr != null ) && ( StringUtils.isEmpty( String.valueOf( attr ) ) == false ) ) {
         return String.valueOf( attr );
       }
     }
@@ -1232,7 +1249,7 @@ public class ParameterXmlContentHandler {
     }
 
     public String[] collectParameter( final MasterReport reportDefinition ) {
-      final LinkedHashSet<String> parameter = new LinkedHashSet<String>();
+      final LinkedHashSet<String> parameter = new LinkedHashSet<>();
 
       inspectElement( reportDefinition, parameter );
       traverseSection( reportDefinition, parameter );
@@ -1269,7 +1286,7 @@ public class ParameterXmlContentHandler {
           }
         }
 
-        if ( null == expressionStrings && expressionStrings.length < 1 ) {
+        if ( ( null == expressionStrings ) && ( expressionStrings.length < 1 ) ) {
           return;
         }
 
@@ -1290,7 +1307,7 @@ public class ParameterXmlContentHandler {
           }
           final FormulaParser formulaParser = new FormulaParser();
           final LValue value = formulaParser.parse( expressionText );
-          if ( value instanceof FormulaFunction == false ) {
+          if ( ( value instanceof FormulaFunction ) == false ) {
             // Not a valid formula or a complex term - we do not handle that
             continue;
           }
@@ -1322,7 +1339,7 @@ public class ParameterXmlContentHandler {
             continue;
           }
 
-          if ( params[ 2 ] instanceof DataTable == false ) {
+          if ( ( params[ 2 ] instanceof DataTable ) == false ) {
             // Malformed formula: Not a parameter table
             continue;
           }
