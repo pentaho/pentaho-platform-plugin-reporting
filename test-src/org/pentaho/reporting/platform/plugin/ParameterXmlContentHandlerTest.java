@@ -130,7 +130,6 @@ public class ParameterXmlContentHandlerTest {
   @Before
   public void before() {
     final ParameterContentGenerator generator = mock( ParameterContentGenerator.class );
-    when( generator.createInputs() ).thenReturn( Collections.singletonMap( "name", "value" ) );
     handler = new ParameterXmlContentHandler( generator, true );
 
     report = mock( MasterReport.class );
@@ -161,17 +160,19 @@ public class ParameterXmlContentHandlerTest {
 
   @Test
   public void testGetSelections() throws ReportDataFactoryException, BeanException {
+    final Map<String, Object> inputs = Collections.singletonMap( "name", "value" );
+
     ParameterDefinitionEntry rp =
         new DefaultListParameter( "query", "keyColumn", "textColumn", "name", false, true, String.class );
     final Set<Object> changedParameters = Collections.singleton( "name" );
-    Object result = handler.getSelections( rp, changedParameters );
+    Object result = handler.getSelections( rp, changedParameters, inputs );
     assertEquals( "value", result );
 
     rp = new DefaultListParameter( "query", "keyColumn", "textColumn", "name", false, false, String.class );
-    result = handler.getSelections( rp, null );
+    result = handler.getSelections( rp, null, inputs );
     assertEquals( null, result );
 
-    result = handler.getSelections( rp, changedParameters );
+    result = handler.getSelections( rp, changedParameters, inputs );
     assertEquals( "value", result );
   }
 

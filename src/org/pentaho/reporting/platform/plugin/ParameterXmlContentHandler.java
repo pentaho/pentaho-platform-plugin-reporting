@@ -521,7 +521,7 @@ public class ParameterXmlContentHandler {
                                  final Map<String, Object> inputs,
                                  final boolean  ignoreAttributes ) throws BeanException, ReportDataFactoryException {
     for ( final ParameterDefinitionEntry parameter : reportParameters ) {
-      final Object selections = getSelections( parameter, changedParameters );
+      final Object selections = getSelections( parameter, changedParameters, inputs );
 
       final ParameterContextWrapper wrapper =
         new ParameterContextWrapper( parameterContext, vr.getParameterValues() );
@@ -531,7 +531,8 @@ public class ParameterXmlContentHandler {
     }
   }
 
-  protected Object getSelections( final ParameterDefinitionEntry parameter, final Set<Object> changedParameters ) {
+  protected Object getSelections( final ParameterDefinitionEntry parameter, final Set<Object> changedParameters,
+      final Map<String, Object> inputs ) {
     final String pName = parameter.getName();
 
     final ListParameter listParameter = parameter instanceof ListParameter ? (ListParameter) parameter : null;
