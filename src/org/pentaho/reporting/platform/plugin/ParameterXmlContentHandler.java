@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2017 Pentaho Corporation..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
@@ -535,9 +535,16 @@ public class ParameterXmlContentHandler {
       final Map<String, Object> inputs ) {
     final String pName = parameter.getName();
 
-    final ListParameter listParameter = parameter instanceof ListParameter ? (ListParameter) parameter : null;
+    final boolean isList = parameter instanceof ListParameter;
+
+    if ( !isList ) {
+      //Don't mess up with plain parameters or you risk to ruin default values
+      return inputs.get( pName );
+    }
+
+    final ListParameter listParameter = (ListParameter) parameter;
     // is the selections verified
-    final boolean isVerifiedValue = ( listParameter != null ) && listParameter.isStrictValueCheck();
+    final boolean isVerifiedValue = listParameter.isStrictValueCheck();
 
     // otherwise the parameter is dependent and the selections are outdated
     final boolean ifChangedParameter = ( changedParameters != null ) && changedParameters.contains( pName );

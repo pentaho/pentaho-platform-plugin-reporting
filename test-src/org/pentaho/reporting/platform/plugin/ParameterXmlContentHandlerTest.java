@@ -13,31 +13,30 @@
  * See the GNU General Public License for more details.
  *
  *
- * Copyright 2006 - 2016 Pentaho Corporation.  All rights reserved.
+ * Copyright 2006 - 2017 Pentaho Corporation.  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
+import com.google.common.collect.Lists;
+import org.apache.commons.collections.map.HashedMap;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.pentaho.reporting.engine.classic.core.*;
+import org.pentaho.reporting.engine.classic.core.metadata.DataFactoryMetaData;
+import org.pentaho.reporting.engine.classic.core.modules.misc.tablemodel.GeneratorTableModel;
+import org.pentaho.reporting.engine.classic.core.parameters.*;
+import org.pentaho.reporting.engine.classic.core.util.ReportParameterValues;
+import org.pentaho.reporting.engine.classic.core.util.beans.BeanException;
+import org.pentaho.reporting.libraries.base.config.Configuration;
+import org.pentaho.reporting.libraries.base.util.HashNMap;
+import org.pentaho.reporting.libraries.resourceloader.ResourceKey;
+import org.pentaho.reporting.libraries.resourceloader.ResourceManager;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -50,45 +49,14 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
+import java.io.StringWriter;
+import java.util.*;
+import java.util.stream.Collectors;
 
-import org.apache.commons.collections.map.HashedMap;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
-import org.pentaho.reporting.engine.classic.core.CompoundDataFactory;
-import org.pentaho.reporting.engine.classic.core.DataFactory;
-import org.pentaho.reporting.engine.classic.core.DataRow;
-import org.pentaho.reporting.engine.classic.core.DefaultReportEnvironment;
-import org.pentaho.reporting.engine.classic.core.DefaultResourceBundleFactory;
-import org.pentaho.reporting.engine.classic.core.MasterReport;
-import org.pentaho.reporting.engine.classic.core.ReportDataFactoryException;
-import org.pentaho.reporting.engine.classic.core.ReportEnvironment;
-import org.pentaho.reporting.engine.classic.core.ResourceBundleFactory;
-import org.pentaho.reporting.engine.classic.core.StaticDataRow;
-import org.pentaho.reporting.engine.classic.core.TableDataFactory;
-import org.pentaho.reporting.engine.classic.core.metadata.DataFactoryMetaData;
-import org.pentaho.reporting.engine.classic.core.modules.misc.tablemodel.GeneratorTableModel;
-import org.pentaho.reporting.engine.classic.core.parameters.DefaultListParameter;
-import org.pentaho.reporting.engine.classic.core.parameters.DefaultParameterContext;
-import org.pentaho.reporting.engine.classic.core.parameters.ParameterAttributeNames;
-import org.pentaho.reporting.engine.classic.core.parameters.ParameterContext;
-import org.pentaho.reporting.engine.classic.core.parameters.ParameterDefinitionEntry;
-import org.pentaho.reporting.engine.classic.core.parameters.ReportParameterDefinition;
-import org.pentaho.reporting.engine.classic.core.parameters.ValidationMessage;
-import org.pentaho.reporting.engine.classic.core.parameters.ValidationResult;
-import org.pentaho.reporting.engine.classic.core.util.ReportParameterValues;
-import org.pentaho.reporting.engine.classic.core.util.beans.BeanException;
-import org.pentaho.reporting.libraries.base.config.Configuration;
-import org.pentaho.reporting.libraries.base.util.HashNMap;
-import org.pentaho.reporting.libraries.resourceloader.ResourceKey;
-import org.pentaho.reporting.libraries.resourceloader.ResourceManager;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-
-import com.google.common.collect.Lists;
+import static org.junit.Assert.*;
+import static org.mockito.Matchers.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * see backlog-7980
@@ -173,6 +141,21 @@ public class ParameterXmlContentHandlerTest {
     assertEquals( null, result );
 
     result = handler.getSelections( rp, changedParameters, inputs );
+    assertEquals( "value", result );
+  }
+
+  @Test
+  public void testGetSelectionsPlain() throws ReportDataFactoryException, BeanException {
+    final Map<String, Object> inputs = Collections.singletonMap( "name", "value" );
+
+    ParameterDefinitionEntry rp = new PlainParameter( "name", String.class );
+
+    final Set<Object> changedParameters = Collections.singleton( "name" );
+    Object result = handler.getSelections( rp, changedParameters, inputs );
+    assertEquals( "value", result );
+
+    rp = new PlainParameter( "name", String.class );
+    result = handler.getSelections( rp, null, inputs );
     assertEquals( "value", result );
   }
 
