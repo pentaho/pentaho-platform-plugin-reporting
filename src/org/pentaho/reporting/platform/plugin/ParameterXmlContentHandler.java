@@ -619,8 +619,10 @@ public class ParameterXmlContentHandler {
     if ( ( all != null ) && all.hasNext() ) {
       while ( all.hasNext() ) {
         final String nextName = all.next();
-        destination.add( nextName );
-        fillParams( destination, dependencies, nextName );
+        if ( !destination.contains( nextName ) ) {
+          destination.add( nextName );
+          fillParams( destination, dependencies, nextName );
+        }
       }
     }
   }
