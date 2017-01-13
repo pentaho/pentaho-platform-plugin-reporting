@@ -12,12 +12,13 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2017 Pentaho Corporation..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin.connection;
 
 import java.sql.Connection;
+
 
 import org.pentaho.di.core.database.DatabaseMeta;
 import org.pentaho.metadata.repository.IMetadataDomainRepository;
@@ -39,6 +40,14 @@ public class PentahoPmdConnectionProvider extends PmdConnectionProvider {
     return PentahoSystem.get( IMetadataDomainRepository.class, null );
   }
 
+  PentahoJndiDatasourceConnectionProvider getJndiProvider() {
+    return new PentahoJndiDatasourceConnectionProvider();
+  }
+
+  PentahoPoolDataSourceConnectionProvider getPoolProvider() {
+    return new PentahoPoolDataSourceConnectionProvider();
+  }
+
   public Connection createConnection( final DatabaseMeta databaseMeta, final String username, final String password )
     throws ReportDataFactoryException {
     try {
@@ -49,9 +58,21 @@ public class PentahoPmdConnectionProvider extends PmdConnectionProvider {
         final String jndiName = databaseMeta.getDatabaseName();
         if ( jndiName != null ) {
           try {
-            final PentahoJndiDatasourceConnectionProvider connectionProvider =
-                new PentahoJndiDatasourceConnectionProvider();
+            final PentahoJndiDatasourceConnectionProvider connectionProvider = getJndiProvider();
             connectionProvider.setJndiName( jndiName );
+            return connectionProvider.createConnection( realUser, realPassword );
+          } catch ( Exception e ) {
+            // fall back to JDBC
+            CommonUtil.checkStyleIgnore();
+          }
+        }
+      }
+      if ( databaseMeta.isUsingConnectionPool() ) {
+        final String name = databaseMeta.getName();
+        if ( name != null ) {
+          try {
+            final PentahoPoolDataSourceConnectionProvider connectionProvider = getPoolProvider();
+            connectionProvider.setName( name );
             return connectionProvider.createConnection( realUser, realPassword );
           } catch ( Exception e ) {
             // fall back to JDBC
