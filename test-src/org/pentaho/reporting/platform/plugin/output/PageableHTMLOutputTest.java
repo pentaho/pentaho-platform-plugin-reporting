@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2017 Pentaho Corporation..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin.output;
@@ -48,6 +48,7 @@ import org.pentaho.reporting.platform.plugin.cache.PluginCacheManagerImpl;
 import org.pentaho.test.platform.engine.core.MicroPlatform;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.File;
@@ -75,6 +76,7 @@ import static org.mockito.Mockito.when;
 
 @RunWith( PowerMockRunner.class )
 @PrepareForTest( CachingPageableHTMLOutput.class )
+@PowerMockIgnore( "javax.swing.*" )
 public class PageableHTMLOutputTest {
   PageableHTMLOutput pageableHTMLOutput;
   private IAsyncReportListener listener;
