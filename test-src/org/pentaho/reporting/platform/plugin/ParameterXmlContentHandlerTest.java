@@ -13,57 +13,20 @@
  * See the GNU General Public License for more details.
  *
  *
- * Copyright 2006 - 2016 Pentaho Corporation.  All rights reserved.
+ * Copyright 2006 - 2017 Pentaho Corporation.  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
 
 import com.google.common.collect.Lists;
-import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
 import org.apache.commons.collections.map.HashedMap;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
-import org.pentaho.reporting.engine.classic.core.CompoundDataFactory;
-import org.pentaho.reporting.engine.classic.core.DataFactory;
-import org.pentaho.reporting.engine.classic.core.DataRow;
-import org.pentaho.reporting.engine.classic.core.DefaultReportEnvironment;
-import org.pentaho.reporting.engine.classic.core.DefaultResourceBundleFactory;
-import org.pentaho.reporting.engine.classic.core.MasterReport;
-import org.pentaho.reporting.engine.classic.core.ReportDataFactoryException;
-import org.pentaho.reporting.engine.classic.core.ReportEnvironment;
-import org.pentaho.reporting.engine.classic.core.ResourceBundleFactory;
-import org.pentaho.reporting.engine.classic.core.StaticDataRow;
-import org.pentaho.reporting.engine.classic.core.TableDataFactory;
+import org.pentaho.reporting.engine.classic.core.*;
 import org.pentaho.reporting.engine.classic.core.metadata.DataFactoryMetaData;
 import org.pentaho.reporting.engine.classic.core.modules.misc.tablemodel.GeneratorTableModel;
-import org.pentaho.reporting.engine.classic.core.parameters.DefaultListParameter;
-import org.pentaho.reporting.engine.classic.core.parameters.DefaultParameterContext;
-import org.pentaho.reporting.engine.classic.core.parameters.ParameterAttributeNames;
-import org.pentaho.reporting.engine.classic.core.parameters.ParameterContext;
-import org.pentaho.reporting.engine.classic.core.parameters.ParameterDefinitionEntry;
-import org.pentaho.reporting.engine.classic.core.parameters.ReportParameterDefinition;
-import org.pentaho.reporting.engine.classic.core.parameters.ValidationMessage;
-import org.pentaho.reporting.engine.classic.core.parameters.ValidationResult;
+import org.pentaho.reporting.engine.classic.core.parameters.*;
 import org.pentaho.reporting.engine.classic.core.util.ReportParameterValues;
 import org.pentaho.reporting.engine.classic.core.util.beans.BeanException;
 import org.pentaho.reporting.libraries.base.config.Configuration;
@@ -75,15 +38,23 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
+import java.io.StringWriter;
+import java.util.*;
+import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.junit.Assert.*;
+import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -106,11 +77,11 @@ public class ParameterXmlContentHandlerTest {
   }
 
   // helper method
-  private String toString( Document doc ) {
+  private String toString( final Document doc ) {
     try {
-      StringWriter stringWriter = new StringWriter();
-      TransformerFactory factory = TransformerFactory.newInstance();
-      Transformer transformer = factory.newTransformer();
+      final StringWriter stringWriter = new StringWriter();
+      final TransformerFactory factory = TransformerFactory.newInstance();
+      final Transformer transformer = factory.newTransformer();
       transformer.setOutputProperty( OutputKeys.OMIT_XML_DECLARATION, "yes" );
       transformer.setOutputProperty( OutputKeys.METHOD, "xml" );
       transformer.setOutputProperty( OutputKeys.INDENT, "yes" );
@@ -118,7 +89,7 @@ public class ParameterXmlContentHandlerTest {
 
       transformer.transform( new DOMSource( doc ), new StreamResult( stringWriter ) );
       return stringWriter.toString();
-    } catch ( Exception ex ) {
+    } catch ( final Exception ex ) {
       // no op
       return "fail";
     }
@@ -156,6 +127,39 @@ public class ParameterXmlContentHandlerTest {
   }
 
   @Test
+  public void testGetSelections() throws ReportDataFactoryException, BeanException {
+    final Map<String, Object> inputs = Collections.singletonMap( "name", "value" );
+
+    ParameterDefinitionEntry rp =
+        new DefaultListParameter( "query", "keyColumn", "textColumn", "name", false, true, String.class );
+    final Set<Object> changedParameters = Collections.singleton( "name" );
+    Object result = handler.getSelections( rp, changedParameters, inputs );
+    assertEquals( "value", result );
+
+    rp = new DefaultListParameter( "query", "keyColumn", "textColumn", "name", false, false, String.class );
+    result = handler.getSelections( rp, null, inputs );
+    assertEquals( null, result );
+
+    result = handler.getSelections( rp, changedParameters, inputs );
+    assertEquals( "value", result );
+  }
+
+  @Test
+  public void testGetSelectionsPlain() throws ReportDataFactoryException, BeanException {
+    final Map<String, Object> inputs = Collections.singletonMap( "name", "value" );
+
+    ParameterDefinitionEntry rp = new PlainParameter( "name", String.class );
+
+    final Set<Object> changedParameters = Collections.singleton( "name" );
+    Object result = handler.getSelections( rp, changedParameters, inputs );
+    assertEquals( "value", result );
+
+    rp = new PlainParameter( "name", String.class );
+    result = handler.getSelections( rp, null, inputs );
+    assertEquals( "value", result );
+  }
+
+  @Test
   public void testParameterDependencies() throws ReportDataFactoryException {
 
     final ReportParameterValues computedParameterValues = mock( ReportParameterValues.class );
@@ -186,22 +190,22 @@ public class ParameterXmlContentHandlerTest {
     assertFalse( parameters.isEmpty() );
     assertEquals( 4, parameters.keySet().size() );
 
-    List<String> list1 = Lists.newArrayList( parameters.getAll( "f1" ) );
+    final List<String> list1 = Lists.newArrayList( parameters.getAll( "f1" ) );
     assertFalse( list1.isEmpty() );
     assertEquals( 1, list1.size() );
     assertTrue( list1.contains( "name1" ) );
 
-    List<String> list11 = Lists.newArrayList( parameters.getAll( "f2" ) );
+    final List<String> list11 = Lists.newArrayList( parameters.getAll( "f2" ) );
     assertFalse( list11.isEmpty() );
     assertEquals( 1, list11.size() );
     assertTrue( list11.contains( "name1" ) );
 
-    List<String> list2 = Lists.newArrayList( parameters.getAll( "g1" ) );
+    final List<String> list2 = Lists.newArrayList( parameters.getAll( "g1" ) );
     assertFalse( list2.isEmpty() );
     assertEquals( 1, list2.size() );
     assertTrue( list2.contains( "name2" ) );
 
-    List<String> list22 = Lists.newArrayList( parameters.getAll( "g1" ) );
+    final List<String> list22 = Lists.newArrayList( parameters.getAll( "g1" ) );
     assertFalse( list22.isEmpty() );
     assertEquals( 1, list22.size() );
     assertTrue( list22.contains( "name2" ) );
@@ -246,7 +250,7 @@ public class ParameterXmlContentHandlerTest {
     assertFalse( map.isEmpty() );
     assertEquals( 3, map.keySet().size() );
 
-    List<List<String>> list = new ArrayList<>();
+    final List<List<String>> list = new ArrayList<>();
     list.add( Lists.newArrayList( map.getAll( "sPostal1" ) ) );
     list.add( Lists.newArrayList( map.getAll( "sPostal2" ) ) );
     list.add( Lists.newArrayList( map.getAll( "sPostal3" ) ) );
@@ -255,7 +259,7 @@ public class ParameterXmlContentHandlerTest {
     list.stream().forEach( i -> assertFalse( i.isEmpty() ) );
     list.stream().forEach( i -> assertEquals( 1, i.size() ) );
 
-    List empty = list.stream().filter( i -> i.contains( "aname" ) && i.size() == 1 ).collect( Collectors.toList() );
+    final List empty = list.stream().filter( i -> i.contains( "aname" ) && ( i.size() == 1 ) ).collect( Collectors.toList() );
     assertEquals( 3, list.size() );
   }
 
@@ -274,45 +278,45 @@ public class ParameterXmlContentHandlerTest {
    */
   @Test
   public void createErrorElementsTest() throws ParserConfigurationException, XPathExpressionException {
-    ValidationResult vr = new ValidationResult();
+    final ValidationResult vr = new ValidationResult();
     vr.addError( "parameter1", new ValidationMessage( "not good" ) );
     vr.addError( "parameter2", new ValidationMessage( "not good at all" ) );
     vr.addError( new ValidationMessage( "kernel panic" ) );
 
     // save parameter name - attribute value mapping
-    Map<String, String> attrMap = new HashMap();
+    final Map<String, String> attrMap = new HashMap();
     attrMap.put( "parameter3", "" );
     attrMap.put( "parameter2", "not good at all" );
     attrMap.put( "parameter1", "not good" );
 
     handler.document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
-    Element el = handler.createErrorElements( vr );
+    final Element el = handler.createErrorElements( vr );
     handler.document.appendChild( el );
 
     assertNotNull( el );
     assertEquals( 3, el.getChildNodes().getLength() );
 
     // use xpath for future validation just to get rid of numerous for() loops in DOM api
-    XPath xpath = xpathFactory.newXPath();
+    final XPath xpath = xpathFactory.newXPath();
 
-    NodeList found = NodeList.class.cast( xpath.evaluate( "/errors/error", handler.document, XPathConstants.NODESET ) );
+    final NodeList found = NodeList.class.cast( xpath.evaluate( "/errors/error", handler.document, XPathConstants.NODESET ) );
     assertNotNull( found );
 
     for ( int i = 0; i < found.getLength(); i++ ) {
-      Node node = found.item( i );
+      final Node node = found.item( i );
       assertEquals( "error", node.getNodeName() );
-      Element oneError = (Element) node;
-      String paramName = oneError.getAttribute( "parameter" );
+      final Element oneError = (Element) node;
+      final String paramName = oneError.getAttribute( "parameter" );
       assertTrue( attrMap.containsKey( paramName ) );
       assertEquals( attrMap.get( paramName ), oneError.getAttribute( "message" ) );
     }
 
-    Node globalError = (Node) xpath.evaluate( "/errors/global-error", handler.document, XPathConstants.NODE );
+    final Node globalError = (Node) xpath.evaluate( "/errors/global-error", handler.document, XPathConstants.NODE );
     assertNotNull( globalError );
 
     assertEquals( "global-error", globalError.getNodeName() );
 
-    Element globalErrEl = Element.class.cast( globalError );
+    final Element globalErrEl = Element.class.cast( globalError );
 
     assertEquals( "kernel panic", globalErrEl.getAttribute( "message" ) );
   }
@@ -340,23 +344,23 @@ public class ParameterXmlContentHandlerTest {
   @Test
   public void createParameterElementTest()
     throws BeanException, ReportDataFactoryException, ParserConfigurationException, XPathExpressionException {
-    DefaultListParameter parameter =
+    final DefaultListParameter parameter =
       new DefaultListParameter( "query", "c1", "c2", "name", true, true, String.class );
 
-    ParameterContext context = getTestParameterContext();
+    final ParameterContext context = getTestParameterContext();
 
     handler.document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
 
-    HashNMap<String, String> dependencies = new HashNMap<>();
+    final HashNMap<String, String> dependencies = new HashNMap<>();
     dependencies.add( "name", "dep1" );
     dependencies.add( "name", "dep2" );
 
-    Element element = handler.createParameterElement( parameter, context, null, dependencies, false );
+    final Element element = handler.createParameterElement( parameter, context, null, dependencies, false );
     assertNotNull( element );
     handler.document.appendChild( element );
     handler.createParameterDependencies( element, parameter, new HashNMap() );
 
-    String xml = toString( handler.document );
+    final String xml = toString( handler.document );
 
     examineStandardXml( handler.document );
     assertTrue( isThereAttributes( handler.document ) );
@@ -396,18 +400,18 @@ public class ParameterXmlContentHandlerTest {
   @Test
   public void createParameterWithDependenciesTest()
     throws BeanException, ReportDataFactoryException, ParserConfigurationException, XPathExpressionException {
-    DefaultListParameter parameter =
+    final DefaultListParameter parameter =
       new DefaultListParameter( "query", "c1", "c2", "name", true, true, String.class );
 
-    ParameterContext context = getTestParameterContext();
+    final ParameterContext context = getTestParameterContext();
 
     handler.document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
 
-    HashNMap<String, String> dependencies = new HashNMap<>();
+    final HashNMap<String, String> dependencies = new HashNMap<>();
     dependencies.add( "name", "dep0" );
     dependencies.add( "name", "dep1" );
 
-    Element element = handler.createParameterElement( parameter, context, null, dependencies, false );
+    final Element element = handler.createParameterElement( parameter, context, null, dependencies, false );
     assertNotNull( element );
     handler.document.appendChild( element );
     handler.createParameterDependencies( element, parameter, dependencies );
@@ -415,18 +419,18 @@ public class ParameterXmlContentHandlerTest {
     examineStandardXml( handler.document );
     assertTrue( isThereAttributes( handler.document ) );
 
-    String xml = toString( handler.document );
+    final String xml = toString( handler.document );
 
     // test dependencies specific elements:
-    XPath xpath = xpathFactory.newXPath();
+    final XPath xpath = xpathFactory.newXPath();
 
-    NodeList list =
+    final NodeList list =
       (NodeList) xpath.evaluate( "/parameter/dependencies/name", handler.document, XPathConstants.NODESET );
     assertNotNull( list );
     assertEquals( 2, list.getLength() );
 
     for ( int i = 0; i < list.getLength(); i++ ) {
-      Node node = list.item( i );
+      final Node node = list.item( i );
       assertNotNull( node );
       assertEquals( "dep" + i, node.getTextContent() );
     }
@@ -447,14 +451,14 @@ public class ParameterXmlContentHandlerTest {
     assertEquals( "true", elAttr1.getAttribute( "value" ) );
   }
 
-  private void examineStandardXml( Document doc ) throws XPathExpressionException {
-    XPath xpath = xpathFactory.newXPath();
-    NodeList nodeList = (NodeList) xpath.evaluate( "/parameter/values/value", doc, XPathConstants.NODESET );
+  private void examineStandardXml( final Document doc ) throws XPathExpressionException {
+    final XPath xpath = xpathFactory.newXPath();
+    final NodeList nodeList = (NodeList) xpath.evaluate( "/parameter/values/value", doc, XPathConstants.NODESET );
     assertNotNull( nodeList );
     assertEquals( 2, nodeList.getLength() );
 
     for ( int i = 0; i < nodeList.getLength(); i++ ) {
-      Element item = (Element) nodeList.item( i );
+      final Element item = (Element) nodeList.item( i );
       assertEquals( "c1" + i, item.getAttribute( "value" ) );
     }
   }
@@ -466,15 +470,15 @@ public class ParameterXmlContentHandlerTest {
    * @throws ReportDataFactoryException
    */
   private DefaultParameterContext getTestParameterContext() throws ReportDataFactoryException {
-    GeneratorTableModel model =
+    final GeneratorTableModel model =
       new GeneratorTableModel( new String[] { "c1", "c2" }, new Class[] { String.class, String.class }, 2 );
-    DataFactory df = new TableDataFactory( "query", model );
-    DataRow dr = new StaticDataRow( new String[] { "1" }, new Object[] { 1 } );
-    Configuration conf = ClassicEngineBoot.getInstance().getExtendedConfig();
-    ResourceBundleFactory factory = new DefaultResourceBundleFactory();
-    ResourceManager manager = new ResourceManager();
-    ResourceKey key = new ResourceKey( "", "", Collections.emptyMap() );
-    ReportEnvironment env = new DefaultReportEnvironment( conf );
+    final DataFactory df = new TableDataFactory( "query", model );
+    final DataRow dr = new StaticDataRow( new String[] { "1" }, new Object[] { 1 } );
+    final Configuration conf = ClassicEngineBoot.getInstance().getExtendedConfig();
+    final ResourceBundleFactory factory = new DefaultResourceBundleFactory();
+    final ResourceManager manager = new ResourceManager();
+    final ResourceKey key = new ResourceKey( "", "", Collections.emptyMap() );
+    final ReportEnvironment env = new DefaultReportEnvironment( conf );
     return new DefaultParameterContext( df, dr, conf, factory, manager, key, env );
   }
 
@@ -518,7 +522,7 @@ public class ParameterXmlContentHandlerTest {
     dependencies.add( "first", "second" );
     dependencies.add( "second", "third" );
 
-    Element parameters = handler.document.createElement( "parameters" );
+    final Element parameters = handler.document.createElement( "parameters" );
     handler.document.appendChild( parameters );
 
     handler.appendParametersList( context, vr, parameters, dependencies, parameterDefinitions, new HashMap(  ), null  );
@@ -542,7 +546,7 @@ public class ParameterXmlContentHandlerTest {
     dependencies.add( "first", "second" );
     dependencies.add( "second", "third" );
 
-    Element parameters = handler.document.createElement( "parameters" );
+    final Element parameters = handler.document.createElement( "parameters" );
     handler.document.appendChild( parameters );
 
     handler.appendParametersList( context, vr, parameters, dependencies, parameterDefinitions, new HashMap(  ), new String[]{"first"} );
@@ -566,7 +570,7 @@ public class ParameterXmlContentHandlerTest {
     dependencies.add( "first", "second" );
     dependencies.add( "second", "third" );
 
-    Element parameters = handler.document.createElement( "parameters" );
+    final Element parameters = handler.document.createElement( "parameters" );
     handler.document.appendChild( parameters );
 
     handler.appendParametersList( context, vr, parameters, dependencies, parameterDefinitions, new HashedMap(  ), new String[]{"fourth"} );

@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2017 Pentaho Corporation..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
@@ -494,24 +494,28 @@ public class ParameterXmlContentHandler {
 
           .toList() );
 
-      //Filtered list without attributes
-      renderParameters( parameterContext, vr, parameters, new HashNMap<>(), changedParamDefinitions, inputs, Boolean.TRUE );
+      // Filtered list without attributes
+      renderParameters( parameterContext, vr, parameters, new HashNMap<>(), changedParamDefinitions, changedParameters,
+          inputs, Boolean.TRUE );
       parameters.setAttribute( "minimized", "true" );
     } else {
-      //Initial parameter call or not async mode
-      renderParameters( parameterContext, vr, parameters, dependencies, reportParameters.values(), inputs, Boolean.FALSE );
+      // Initial parameter call or not async mode
+      renderParameters( parameterContext, vr, parameters, dependencies, reportParameters.values(), null,
+          inputs, Boolean.FALSE );
     }
   }
 
-  private void renderParameters( final DefaultParameterContext parameterContext,
+  protected void renderParameters( final DefaultParameterContext parameterContext,
                                  final ValidationResult vr,
                                  final Element parameters,
                                  final HashNMap<String, String> dependencies,
                                  final Collection<ParameterDefinitionEntry> reportParameters,
+                                 final Set<Object> changedParameters,
                                  final Map<String, Object> inputs,
                                  final boolean  ignoreAttributes ) throws BeanException, ReportDataFactoryException {
     for ( final ParameterDefinitionEntry parameter : reportParameters ) {
-      final Object selections = inputs.get( parameter.getName() );
+      final Object selections = getSelections( parameter, changedParameters, inputs );
+
       final ParameterContextWrapper wrapper =
         new ParameterContextWrapper( parameterContext, vr.getParameterValues() );
       final Element el = createParameterElement( parameter, wrapper, selections, dependencies, ignoreAttributes  );
@@ -520,8 +524,29 @@ public class ParameterXmlContentHandler {
     }
   }
 
-  HashNMap<String, String> getDependentParameters( ReportParameterValues computedParameterValues,
-                                                   ParameterContext parameterContext, MasterReport report )
+  protected Object getSelections( final ParameterDefinitionEntry parameter, final Set<Object> changedParameters,
+      final Map<String, Object> inputs ) {
+    final String pName = parameter.getName();
+
+    final boolean isList = parameter instanceof ListParameter;
+
+    if ( !isList ) {
+      //Don't mess up with plain parameters or you risk to ruin default values
+      return inputs.get( pName );
+    }
+
+    final ListParameter listParameter = (ListParameter) parameter;
+    // is the selections verified
+    final boolean isVerifiedValue = listParameter.isStrictValueCheck();
+
+    // otherwise the parameter is dependent and the selections are outdated
+    final boolean ifChangedParameter = ( changedParameters != null ) && changedParameters.contains( pName );
+
+    return isVerifiedValue || ifChangedParameter ? inputs.get( pName ) : null;
+  }
+
+  HashNMap<String, String> getDependentParameters( final ReportParameterValues computedParameterValues,
+                                                   final ParameterContext parameterContext, final MasterReport report )
     throws ReportDataFactoryException {
     HashNMap<String, String> downstreamParams = new HashNMap<>();
 
