@@ -16,10 +16,6 @@
  */
 package org.pentaho.reporting.platform.plugin.connection;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 import java.sql.Connection;
 import java.sql.SQLException;
 
@@ -29,6 +25,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.mockito.Matchers;
 import org.pentaho.di.core.database.DatabaseMeta;
 import org.pentaho.reporting.engine.classic.core.ReportDataFactoryException;
 
@@ -48,28 +45,29 @@ public class PentahoPmdConnectionProviderTest {
 
   @Test
   public void testCreateConnection() throws SQLException {
+    Connection mockconn = Mockito.mock( Connection.class );
     PentahoJndiDatasourceConnectionProvider jndicp = Mockito.mock( PentahoJndiDatasourceConnectionProvider.class );
     PentahoPoolDataSourceConnectionProvider poolcp = Mockito.mock( PentahoPoolDataSourceConnectionProvider.class );
     PentahoPmdConnectionProvider ppcp = Mockito.spy( new PentahoPmdConnectionProvider() );
-    when( ppcp.getJndiProvider() ).thenReturn( jndicp );
-    when( ppcp.getPoolProvider() ).thenReturn( poolcp );
-    when( jndicp.createConnection( any(), any() ) ).thenReturn( (Connection) Mockito.mock( Connection.class ) );
-    when( poolcp.createConnection( any(), any() ) ).thenReturn( (Connection) Mockito.mock( Connection.class ) );
+    Mockito.when( ppcp.getJndiProvider() ).thenReturn( jndicp );
+    Mockito.when( ppcp.getPoolProvider() ).thenReturn( poolcp );
+    Mockito.when( jndicp.createConnection( Matchers.anyString(), Matchers.anyString() ) ).thenReturn( mockconn );
+    Mockito.when( poolcp.createConnection( Matchers.anyString(), Matchers.anyString() ) ).thenReturn( mockconn );
     String username = "user";
     String password = "pass";
-    DatabaseMeta databaseMeta = mock( DatabaseMeta.class );
-    when( databaseMeta.getAccessType() ).thenReturn( DatabaseMeta.TYPE_ACCESS_JNDI );
-    when( databaseMeta.getDatabaseName() ).thenReturn( "test" );
-    when( databaseMeta.isUsingConnectionPool() ).thenReturn( false );
+    DatabaseMeta databaseMeta = Mockito.mock( DatabaseMeta.class );
+    Mockito.when( databaseMeta.getAccessType() ).thenReturn( DatabaseMeta.TYPE_ACCESS_JNDI );
+    Mockito.when( databaseMeta.getDatabaseName() ).thenReturn( "test" );
+    Mockito.when( databaseMeta.isUsingConnectionPool() ).thenReturn( false );
     try {
       Connection conn = ppcp.createConnection( databaseMeta, username, password  );
       Assert.assertFalse( "JNDI connection", conn == null );
     } catch ( ReportDataFactoryException e ) {
       Assert.fail();
     }
-    when( databaseMeta.getAccessType() ).thenReturn( DatabaseMeta.TYPE_ACCESS_NATIVE );
-    when( databaseMeta.getName() ).thenReturn( "test" );
-    when( databaseMeta.isUsingConnectionPool() ).thenReturn( true );
+    Mockito.when( databaseMeta.getAccessType() ).thenReturn( DatabaseMeta.TYPE_ACCESS_NATIVE );
+    Mockito.when( databaseMeta.getName() ).thenReturn( "test" );
+    Mockito.when( databaseMeta.isUsingConnectionPool() ).thenReturn( true );
     try {
       Connection conn = ppcp.createConnection( databaseMeta, username, password  );
       Assert.assertFalse( "Pool connection", conn == null );
