@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2017 Pentaho Corporation..  All rights reserved.
  */
 
 define([
@@ -299,10 +299,7 @@ define([
           if(oldParams){
             oldParams.mapParameters( function (p) {
               if(names && names.indexOf(p.name) >= 0){
-                //Don't need to request formulas
-                if(p && (!p.attributes || (p.attributes && !p.attributes['post-processor-formula']))){
                   needToUpdate.push(p.name);
-                }
               } else {
                 //Request update for invalid auto-fill parameters
                 if(p.attributes && oldParams.errors[p.name] && "true" === p.attributes['autofill-selection']){

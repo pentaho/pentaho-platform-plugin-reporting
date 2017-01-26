@@ -544,7 +544,15 @@ public class ParameterXmlContentHandlerTest {
 
     final HashNMap<String, String> dependencies = new HashNMap<>();
     dependencies.add( "first", "second" );
+    dependencies.add( "first", "fourth" );
     dependencies.add( "second", "third" );
+    dependencies.add( "third", "seventh" );
+    dependencies.add( "second", "fourth" );
+    //How about some cycles?
+    dependencies.add( "fourth", "third" );
+    dependencies.add( "third", "fourth" );
+    //Independent parameters
+    dependencies.add( "fifth", "sixth" );
 
     final Element parameters = handler.document.createElement( "parameters" );
     handler.document.appendChild( parameters );
@@ -587,10 +595,19 @@ public class ParameterXmlContentHandlerTest {
       new DefaultListParameter( "query", "c1", "c2", "third", true, true, String.class );
     final DefaultListParameter parameter3 =
       new DefaultListParameter( "query", "c1", "c2", "fourth", true, true, String.class );
+    final DefaultListParameter parameter4 =
+      new DefaultListParameter( "query", "c1", "c2", "fifth", true, true, String.class );
+    final DefaultListParameter parameter5 =
+      new DefaultListParameter( "query", "c1", "c2", "sixth", true, true, String.class );
+    final DefaultListParameter parameter6 =
+      new DefaultListParameter( "query", "c1", "c2", "seventh", true, true, String.class );
     parameterDefinitions.put( "first", parameter );
     parameterDefinitions.put( "second", parameter1 );
     parameterDefinitions.put( "third", parameter2 );
     parameterDefinitions.put( "fourth", parameter3 );
+    parameterDefinitions.put( "fifth", parameter4 );
+    parameterDefinitions.put( "sixth", parameter5 );
+    parameterDefinitions.put( "seventh", parameter6 );
     return parameterDefinitions;
   }
 
@@ -601,7 +618,7 @@ public class ParameterXmlContentHandlerTest {
     final Node minimized = root.item( 0 ).getAttributes().getNamedItem( "minimized" );
     assertNull( minimized );
     final NodeList nodeList = (NodeList) xpath.evaluate( "/parameters/parameter", doc, XPathConstants.NODESET );
-    assertEquals( 4, nodeList.getLength() );
+    assertEquals( 7, nodeList.getLength() );
     final NodeList first =
       (NodeList) xpath.evaluate( "/parameters/parameter[@name='first']", doc, XPathConstants.NODESET );
     assertEquals( 1, first.getLength() );
@@ -627,7 +644,7 @@ public class ParameterXmlContentHandlerTest {
     final Node minimized = root.item( 0 ).getAttributes().getNamedItem( "minimized" );
     assertNotNull( minimized );
     final NodeList nodeList = (NodeList) xpath.evaluate( "/parameters/parameter", doc, XPathConstants.NODESET );
-    assertEquals( 3, nodeList.getLength() );
+    assertEquals( 5, nodeList.getLength() );
     final NodeList first =
       (NodeList) xpath.evaluate( "/parameters/parameter[@name='first']", doc, XPathConstants.NODESET );
     assertEquals( 1, first.getLength() );
@@ -639,7 +656,16 @@ public class ParameterXmlContentHandlerTest {
     assertEquals( 1, third.getLength() );
     final NodeList fourth =
       (NodeList) xpath.evaluate( "/parameters/parameter[@name='fourth']", doc, XPathConstants.NODESET );
-    assertEquals( 0, fourth.getLength() );
+    assertEquals( 1, fourth.getLength() );
+    final NodeList fifth =
+      (NodeList) xpath.evaluate( "/parameters/parameter[@name='fifth']", doc, XPathConstants.NODESET );
+    assertEquals( 0, fifth.getLength() );
+    final NodeList sixth =
+      (NodeList) xpath.evaluate( "/parameters/parameter[@name='sixth']", doc, XPathConstants.NODESET );
+    assertEquals( 0, sixth.getLength() );
+    final NodeList seventh =
+      (NodeList) xpath.evaluate( "/parameters/parameter[@name='seventh']", doc, XPathConstants.NODESET );
+    assertEquals( 1, seventh.getLength() );
     final NodeList attributes = (NodeList) xpath.evaluate( "/parameters/parameter/attribute", doc, XPathConstants.NODESET );
     assertFalse( attributes.getLength() != 0 );
     final NodeList dependencies = (NodeList) xpath.evaluate( "/parameters/parameter/dependencies", doc, XPathConstants.NODESET );
