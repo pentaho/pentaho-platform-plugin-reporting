@@ -12,7 +12,7 @@
 * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 * See the GNU Lesser General Public License for more details.
 *
-* Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
+* Copyright (c) 2002-2017 Pentaho Corporation..  All rights reserved.
 */
 
 define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'common-ui/prompting/parameters/ParameterXmlParser', 'common-ui/prompting/PromptPanel'],
@@ -22,6 +22,8 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
     return logged({
       // The current prompt mode
       mode: 'INITIAL',
+
+      _oldParameterSet: null,
 
       load: function() {
         Messages.addUrlBundle('reportviewer', CONTEXT_PATH+'i18n?plugin=reporting&name=reportviewer/messages/messages');
@@ -236,6 +238,8 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
 
         var fetchParamDefId = ++me._fetchParamDefId;
 
+        var changedParams = me.findChangedParameters();
+
         me.showGlassPane();
 
         if(!promptMode) {
@@ -316,6 +320,8 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
               newParamDefn.autoSubmitUI = autoSubmit;
             }
 
+            me._oldParameterSet = me.extractParameterValues(newParamDefn);
+
             callback.call(me, newParamDefn);
           } catch (e) {
             me.onFatalError(e);
@@ -327,6 +333,10 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
             me.onFatalError(e);
           }
         };
+
+        if(changedParams){
+          options['changedParameters'] = changedParams;
+        }
 
         $.ajax({
           async:   true,
@@ -403,6 +413,72 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
         }
         messageBox.show();
       },
+
+      findChangedParameters: function() {
+
+        if(!this.panel){
+          return;
+        }
+
+        var currentParameterSet = this.panel.getParameterValues();
+
+        // compare currentParameterSet with oldParmaeterSet. Return an array of changed parameters. (More than one can change if we use the API).
+        var changedParameters = this.compareParameters(this._oldParameterSet, currentParameterSet);
+        return changedParameters;
+      },
+
+
+      compareParameters: function(oldParameterSet, currentParameterSet) {
+        var changedParameters = [];
+
+        $.each(oldParameterSet, function (i, parameter) {
+          if (currentParameterSet.hasOwnProperty(parameter.name)) {
+            if(JSON.stringify(parameter.value.toString()) !== JSON.stringify(currentParameterSet[parameter.name].toString())) {
+              // add to changed
+              changedParameters.push(parameter.name);
+            }
+          } else if("" != parameter.value) {
+            // add to changed
+            changedParameters.push(parameter.name);
+          }
+        });
+
+        for (var parameter in currentParameterSet) {
+          if (oldParameterSet && !oldParameterSet.hasOwnProperty(parameter)) {
+            changedParameters.push(parameter);
+          }
+        }
+
+        return changedParameters;
+      },
+
+
+      extractParameterValues: function(paramDefn) {
+        var extractedParameters = {};
+        $.each(paramDefn.parameterGroups, function (i, group) {
+          var parameters = group.parameters;
+          for(var i=0; i<parameters.length; i++) {
+            if(parameters[i].multiSelect && parameters[i].getSelectedValuesValue().length > 0) {
+              extractedParameters[parameters[i].name] = {
+                value: parameters[i].getSelectedValuesValue(),
+                group: group.name,
+                name: parameters[i].name
+              };
+            } else {
+              if(parameters[i].getSelectedValuesValue().length > 0) {
+                extractedParameters[parameters[i].name] = {
+                  value: parameters[i].getSelectedValuesValue()[0],
+                  group: group.name,
+                  name: parameters[i].name
+                };
+              }
+            }
+          }
+        });
+
+        return extractedParameters;
+      },
+
 
       /**
        * Called when there is a fatal error during parameter definition fetching/parsing

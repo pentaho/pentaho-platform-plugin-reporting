@@ -18,9 +18,11 @@
 
 package org.pentaho.reporting.platform.plugin;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
 import org.pentaho.reporting.engine.classic.core.CompoundDataFactory;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
@@ -47,10 +49,8 @@ import javax.xml.xpath.XPathFactory;
 import java.io.StringWriter;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * see backlog-7980
@@ -91,57 +91,66 @@ public class ParameterXmlContentHandlerTest {
 
   @Before
   public void before() {
-    final ParameterContentGenerator generator = mock( ParameterContentGenerator.class );
+    final ParameterContentGenerator generator = Mockito.mock( ParameterContentGenerator.class );
     handler = new ParameterXmlContentHandler( generator, true );
 
-    report = mock( MasterReport.class );
+    report = Mockito.mock( MasterReport.class );
 
-    final Configuration conf = mock( Configuration.class );
+    final Configuration conf = Mockito.mock( Configuration.class );
 
     final ResourceManager rmanager = new ResourceManager();
     final ResourceKey rkey = new ResourceKey( "", "", Collections.<ParameterKey, Object>emptyMap() );
-    final ResourceBundleFactory resBFactory = mock( ResourceBundleFactory.class );
-    final ReportEnvironment environment = mock( ReportEnvironment.class );
+    final ResourceBundleFactory resBFactory = Mockito.mock( ResourceBundleFactory.class );
+    final ReportEnvironment environment = Mockito.mock( ReportEnvironment.class );
 
-    when( report.getConfiguration() ).thenReturn( conf );
-    when( report.getResourceManager() ).thenReturn( rmanager );
-    when( report.getContentBase() ).thenReturn( rkey );
-    when( report.getResourceBundleFactory() ).thenReturn( resBFactory );
-    when( report.getReportEnvironment() ).thenReturn( environment );
+    Mockito.when( report.getConfiguration() ).thenReturn( conf );
+    Mockito.when( report.getResourceManager() ).thenReturn( rmanager );
+    Mockito.when( report.getContentBase() ).thenReturn( rkey );
+    Mockito.when( report.getResourceBundleFactory() ).thenReturn( resBFactory );
+    Mockito.when( report.getReportEnvironment() ).thenReturn( environment );
 
-    definition = mock( ReportParameterDefinition.class );
-    when( report.getParameterDefinition() ).thenReturn( definition );
+    definition = Mockito.mock( ReportParameterDefinition.class );
+    Mockito.when( report.getParameterDefinition() ).thenReturn( definition );
 
-    factory = mock( CompoundDataFactory.class );
+    factory = Mockito.mock( CompoundDataFactory.class );
     // preparation of data factory to fetch parameter names
     // the actual factory for query will be returned when 'getDataFactoryForQuery' called.
-    when( factory.isNormalized() ).thenReturn( true );
-    when( factory.derive() ).thenReturn( factory );
-    when( report.getDataFactory() ).thenReturn( factory );
+    Mockito.when( factory.isNormalized() ).thenReturn( true );
+    Mockito.when( factory.derive() ).thenReturn( factory );
+    Mockito.when( report.getDataFactory() ).thenReturn( factory );
   }
 
   @Test
   public void testGetSelections() throws ReportDataFactoryException, BeanException {
-    final Map<String, ?> inputs = Collections.singletonMap( "name", "value" );
+    final Map<String, Object> inputs = Collections.singletonMap( "name", (Object) "value" );
 
     ParameterDefinitionEntry rp =
       new DefaultListParameter( "query", "keyColumn", "textColumn", "name", false, true, String.class );
-
+    final Set<Object> changedParameters = Collections.singleton( (Object) "name" );
+    Object result = handler.getSelections( rp, changedParameters, inputs );
+    Assert.assertEquals( "value", result );
 
     rp = new DefaultListParameter( "query", "keyColumn", "textColumn", "name", false, false, String.class );
-    Object result = handler.getSelections( rp, inputs );
-    assertEquals( null, result );
+    result = handler.getSelections( rp, null, inputs );
+    Assert.assertEquals( null, result );
+
+    result = handler.getSelections( rp, changedParameters, inputs );
+    Assert.assertEquals( "value", result );
   }
 
   @Test
   public void testGetSelectionsPlain() throws ReportDataFactoryException, BeanException {
-    final Map<String, String> inputs = Collections.singletonMap( "name", "value" );
+    final Map<String, Object> inputs = Collections.singletonMap( "name", (Object) "value" );
 
     ParameterDefinitionEntry rp = new PlainParameter( "name", String.class );
 
+    final Set<Object> changedParameters = Collections.singleton( (Object) "name" );
+    Object result = handler.getSelections( rp, changedParameters, inputs );
+    Assert.assertEquals( "value", result );
+
     rp = new PlainParameter( "name", String.class );
-    Object result = handler.getSelections( rp, inputs );
-    assertEquals( "value", result );
+    result = handler.getSelections( rp, null, inputs );
+    Assert.assertEquals( "value", result );
   }
 
 

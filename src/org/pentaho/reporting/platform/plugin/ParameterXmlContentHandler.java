@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2017 Pentaho Corporation..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
@@ -24,14 +24,21 @@ import org.pentaho.platform.api.engine.IParameterProvider;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.util.UUIDUtil;
 import org.pentaho.reporting.engine.classic.core.AttributeNames;
+import org.pentaho.reporting.engine.classic.core.CompoundDataFactory;
+import org.pentaho.reporting.engine.classic.core.DataFactory;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportDataFactoryException;
 import org.pentaho.reporting.engine.classic.core.ReportElement;
 import org.pentaho.reporting.engine.classic.core.Section;
+import org.pentaho.reporting.engine.classic.core.designtime.datafactory.DesignTimeDataFactoryContext;
 import org.pentaho.reporting.engine.classic.core.function.Expression;
 import org.pentaho.reporting.engine.classic.core.function.FormulaExpression;
+import org.pentaho.reporting.engine.classic.core.metadata.ExpressionMetaData;
+import org.pentaho.reporting.engine.classic.core.metadata.ExpressionPropertyMetaData;
+import org.pentaho.reporting.engine.classic.core.metadata.ExpressionRegistry;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlTableModule;
 import org.pentaho.reporting.engine.classic.core.parameters.AbstractParameter;
+import org.pentaho.reporting.engine.classic.core.parameters.DefaultListParameter;
 import org.pentaho.reporting.engine.classic.core.parameters.DefaultParameterContext;
 import org.pentaho.reporting.engine.classic.core.parameters.ListParameter;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterAttributeNames;
@@ -51,6 +58,7 @@ import org.pentaho.reporting.engine.classic.core.util.beans.ConverterRegistry;
 import org.pentaho.reporting.engine.classic.core.util.beans.ValueConverter;
 import org.pentaho.reporting.engine.classic.extensions.drilldown.DrillDownProfile;
 import org.pentaho.reporting.engine.classic.extensions.drilldown.DrillDownProfileMetaData;
+import org.pentaho.reporting.libraries.base.util.HashNMap;
 import org.pentaho.reporting.libraries.base.util.NullOutputStream;
 import org.pentaho.reporting.libraries.base.util.StringUtils;
 import org.pentaho.reporting.libraries.formula.DefaultFormulaContext;
@@ -78,15 +86,22 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.TimeZone;
 
 public class ParameterXmlContentHandler {
+
+  private static final String SYS_IGNORE_PARAM = "::org.pentaho.reporting";
+
   private static class OutputParameterCollector {
     private OutputParameterCollector() {
     }
@@ -354,6 +369,14 @@ public class ParameterXmlContentHandler {
         reportParameterDefinition.getValidator().validate( validationResult, reportParameterDefinition,
           parameterContext );
 
+      // determine dependent parameters
+      HashNMap<String, String> dependencies = null;
+      try {
+        dependencies = getDependentParameters( vr.getParameterValues(), parameterContext, report );
+      } catch ( final ReportDataFactoryException e ) {
+        logger.debug( "unable to determine dependent parameters", e );
+      }
+
       parameters = document.createElement( GROUP_PARAMETERS ); //$NON-NLS-1$
       parameters
         .setAttribute( "is-prompt-needed", String.valueOf( vr.isEmpty() == false ) ); //$NON-NLS-1$ //$NON-NLS-2$
@@ -430,8 +453,13 @@ public class ParameterXmlContentHandler {
         report.getReportConfiguration().getConfigProperty( CONFIG_PARAM_HTML_PROPORTIONAL_WIDTH );
       inputs.put( SYS_PARAM_HTML_PROPORTIONAL_WIDTH, Boolean.valueOf( proportionalWidth ) );
 
+      //get changed parameters from request
+      final String[] changedParamsQuery = requestParams.getStringArrayParameter( "changedParameters", new String[]{} );
+      final Set<Object> changedParametersSet = new HashSet<Object>( Arrays.asList( changedParamsQuery ) );
+      final Set<Object> changedAndDependencies = addAllDependencies( dependencies, changedParametersSet );
+
       for ( final ParameterDefinitionEntry parameter : reportParameters.values() ) {
-        final Object selections = getSelections( parameter, inputs );
+        final Object selections = changedAndDependencies.contains( parameter.getName() ) ? getSelections( parameter, changedParametersSet, inputs ) : inputs.get( parameter.getName() );
         final ParameterContextWrapper wrapper =
           new ParameterContextWrapper( parameterContext, vr.getParameterValues() );
         parameters.appendChild( createParameterElement( parameter, wrapper, selections ) );
@@ -466,7 +494,7 @@ public class ParameterXmlContentHandler {
     }
   }
 
-  protected Object getSelections( final ParameterDefinitionEntry parameter, final Map<String, ?> inputs ) {
+  protected Object getSelections( final ParameterDefinitionEntry parameter, Set<Object> changedParameters, final Map<String, ?> inputs ) {
     final String pName = parameter.getName();
 
     final boolean isList = parameter instanceof ListParameter;
@@ -480,7 +508,123 @@ public class ParameterXmlContentHandler {
     // is the selections verified
     final boolean isVerifiedValue = listParameter.isStrictValueCheck();
 
-    return isVerifiedValue ? inputs.get( pName ) : null;
+    // otherwise the parameter is dependent and the selections are outdated
+    final boolean ifChangedParameter = ( changedParameters != null ) && changedParameters.contains( pName );
+
+    return isVerifiedValue || ifChangedParameter ? inputs.get( pName ) : null;
+  }
+
+  HashNMap<String, String> getDependentParameters( final ReportParameterValues computedParameterValues,
+                                                   final ParameterContext parameterContext, final MasterReport report )
+    throws ReportDataFactoryException {
+    final HashNMap<String, String> downstreamParams = new HashNMap<String, String>();
+
+    final ReportParameterDefinition reportParameterDefinition = report.getParameterDefinition();
+
+    final DesignTimeDataFactoryContext factoryContext = new DesignTimeDataFactoryContext( report );
+
+    for ( final ParameterDefinitionEntry entry : reportParameterDefinition.getParameterDefinitions() ) {
+      // default list parameter is only dynamic values provider now.
+      if ( entry instanceof DefaultListParameter ) {
+
+        final DefaultListParameter listParameter = (DefaultListParameter) entry;
+
+        // inspect for dependent fields
+        final String queryName = listParameter.getQueryName();
+        if ( queryName != null ) {
+          final CompoundDataFactory cdf = CompoundDataFactory.normalize( report.getDataFactory() );
+          final DataFactory dataFactoryForQuery = cdf.getDataFactoryForQuery( queryName );
+
+          if ( dataFactoryForQuery != null ) {
+            dataFactoryForQuery.initialize( factoryContext );
+
+            final String[] fields = dataFactoryForQuery.getMetaData()
+              .getReferencedFields( dataFactoryForQuery, queryName, computedParameterValues );
+
+            if ( fields != null ) {
+              for ( final String field : fields ) {
+                if ( !field.startsWith( SYS_IGNORE_PARAM ) ) {
+                  downstreamParams.add( field, entry.getName() );
+                }
+              }
+            }
+          }
+        }
+
+      }
+      // inspect post proc formulas, def values, etc.
+      computeNormalLineage( parameterContext, entry, downstreamParams );
+    }
+
+    return downstreamParams;
+  }
+
+  void computeNormalLineage( final ParameterContext pc, final ParameterDefinitionEntry pe, final HashNMap<String, String> m ) {
+    final String name = pe.getName();
+    final String defValue =
+      pe.getParameterAttribute( ParameterAttributeNames.Core.NAMESPACE,
+        ParameterAttributeNames.Core.DEFAULT_VALUE_FORMULA, pc );
+    final String postProc =
+      pe.getParameterAttribute( ParameterAttributeNames.Core.NAMESPACE,
+        ParameterAttributeNames.Core.POST_PROCESSOR_FORMULA, pc );
+    final String formula =
+      pe.getParameterAttribute( ParameterAttributeNames.Core.NAMESPACE,
+        ParameterAttributeNames.Core.DISPLAY_VALUE_FORMULA, pc );
+
+    for ( final String field : analyzeFormula( defValue ) ) {
+      m.add( field, name );
+    }
+    for ( final String field : analyzeFormula( formula ) ) {
+      m.add( field, name );
+    }
+    for ( final String field : analyzeFormula( postProc ) ) {
+      m.add( field, name );
+    }
+  }
+
+  private String[] analyzeFormula( final String formula ) {
+    if ( formula == null ) {
+      return new String[ 0 ];
+    }
+    final FormulaExpression fe = new FormulaExpression();
+    fe.setFormula( formula );
+
+    final ExpressionMetaData md =
+      ExpressionRegistry.getInstance().getExpressionMetaData( fe.getClass().getName() );
+
+    final ExpressionPropertyMetaData pd = md.getPropertyDescription( "formula" );
+
+    return pd.getReferencedFields( fe, fe.getFormula() );
+  }
+
+  private Set<Object> addAllDependencies( final HashNMap<String, String> dependencies, final Set<Object> changedNames )
+    throws CloneNotSupportedException {
+
+    if ( ( dependencies != null ) && !dependencies.isEmpty() ) {
+      final Set<Object> destination = new HashSet<Object>( changedNames );
+      final Iterator<Object> changedIterator = changedNames.iterator();
+      while ( changedIterator.hasNext() ) {
+        final String nextName = String.valueOf( changedIterator.next() );
+        fillParams( destination, dependencies, nextName );
+      }
+      return destination;
+    }
+
+    return changedNames;
+  }
+
+  private void fillParams( final Set<Object> destination, final HashNMap<String, String> dependencies,
+                           final String paramName ) {
+    final Iterator<String> all = dependencies.getAll( paramName );
+    if ( ( all != null ) && all.hasNext() ) {
+      while ( all.hasNext() ) {
+        final String nextName = all.next();
+        if ( !destination.contains( nextName ) ) {
+          destination.add( nextName );
+          fillParams( destination, dependencies, nextName );
+        }
+      }
+    }
   }
 
   private Map<String, Object> computeRealInput( final ParameterContext parameterContext,
