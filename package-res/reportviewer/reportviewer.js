@@ -1116,7 +1116,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                     me._isFinished = true;
                     me._hideAsyncScreens();
                     //Let's get first page
-                    me._getContent(firstPageJobStatus.uuid, url, function () {
+                    me._getContent(firstPageJobStatus.uuid, url, null, function () {
                       isIframeContentSet = true;
                     });
 
@@ -1189,7 +1189,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
                   //Show report
                   if (!isIframeContentSet) {
-                    me._getContent(mainJobStatus.uuid, url, function () {
+                    me._getContent(mainJobStatus.uuid, url, mainJobStatus.mimeType, function () {
                       isIframeContentSet = true;
                     });
 
@@ -1359,7 +1359,11 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           me._hideAsyncScreens();
 
           logger && logger.log("Will set iframe url to " + url.substr(0, 50) + "... ");
-
+          
+          if (me._isIE11() && outputFormat === 'pageable/pdf') {
+            me._forceLoadEvent();
+          }
+          
           //submit hidden form to POST data to iframe
           $('#hiddenReportContentForm').attr("action", url);
           $('#hiddenReportContentForm').submit();
@@ -1659,11 +1663,17 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         }, me.reportPrompt._pollingInterval);
       },
 
-      _getContent : function (uuid, url, callback) {
+      _getContent : function (uuid, url, mimeType, callback) {
         var me = this;
         var urlContent = url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + uuid + '/content';
         logger && logger.log("Will set iframe url to " + urlContent.substr(0, 50) + "... ");
 
+        var isPdf = (mimeType === "application/pdf");
+        
+        if (me._isIE11() && isPdf) {
+           me._forceLoadEvent();
+        }
+        
         $('#hiddenReportContentForm').attr("action", urlContent);
         $('#hiddenReportContentForm').submit();
         $('#reportContent').attr("data-src", urlContent);
@@ -1672,6 +1682,16 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         if(callback){
           callback();
         }
+      },
+      
+      //IE11 workaround when no "load" event after Pdf pushed to iframe (BISERVER-12804)
+      _forceLoadEvent : function(){
+        var boundOnReportContentLoaded = this._onReportContentLoaded.bind(this);      
+        var onFrameLoaded = logged('onFrameLoaded', function() {
+          setTimeout(boundOnReportContentLoaded);
+        });
+        $('#reportContent').attr("onreadystatechange", "$('#reportContent').trigger('customLoad');");
+        $('#reportContent').one("customLoad", onFrameLoaded);
       },
 
       _getAsyncJobStatus : function(result, hideDlgAndPane){
@@ -1864,6 +1884,10 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
       _isDownloadableFormat: function (mime) {
         var mimes = ["application/rtf", "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "text/csv", "mime-message/text/html"];
         return mimes.indexOf(mime) > -1;
+      },
+      
+      _isIE11: function(){
+        return has("trident") && !has("ie"); //has("ie") in IE11 is undefined
       }
 
     }); // end of: var v = {
