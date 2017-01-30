@@ -22,7 +22,7 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
     return logged({
       // The current prompt mode
       mode: 'INITIAL',
-
+      forceUpdateParams: [],
       _oldParameterSet: null,
 
       load: function() {
@@ -48,6 +48,11 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
         panel.submitStart = this.submitStart.bind(this);
         panel.ready = this.ready.bind(this);
         panel.onAfterRender = this.onAfterRender.bind(this);
+
+        if (!panel.onParameterChanged) {
+          panel.onParameterChanged = {};
+        }
+        panel.onParameterChanged[''] = this._applyUserInput.bind(this);
 
         // User changes the value of a parameter:
         //
@@ -80,6 +85,68 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
         this.initPromptPanel();
 
         this._hideLoadingIndicator();
+      },
+
+      /**
+       * Called to sync the parameter definition with the latest user input
+       * @param {Parameter} param
+       * @param value
+       * @private
+       */
+      _applyUserInput: function (name, value, param) {
+        if (!param.values || param.values.length < 1) {
+          return;
+        }
+        //Working with a list
+        if (param.values.length > 1) {
+          //Unify multivalue and singlevalue logic
+          if (!$.isArray(value)) {
+            value = [value];
+          }
+          var counter = 0;
+          for (var i in param.values) {
+            var paramVal = param.values[i];
+            if (value.indexOf(paramVal.value) > -1) {
+              if (!paramVal.selected) {
+                paramVal.selected = true;
+                counter++;
+              }
+            } else {
+              if (paramVal.selected) {
+                paramVal.selected = false;
+                counter++;
+              }
+            }
+          }
+          //Ok, we changed something, let's ask for a parameter component refresh
+          if (counter > 0) {
+            this.forceUpdateParams.push(param.name);
+          }
+        } else {
+          //Working with a plain parameter
+          //Already has a valid value
+          if (param.values[0].value === value) {
+            return;
+          } else {
+            //Datepickers require some extra care
+            if (param.attributes['parameter-render-type'] === 'datepicker') {
+
+              if (param.timezoneHint) {
+                value = value + param.timezoneHint.slice(1);
+              }
+
+              //We are comparing only the date, not the time
+              if ((new Date(value).setHours(0, 0, 0, 0)) === (new Date(param.values[0].value).setHours(0, 0, 0, 0))) {
+                //Already has a valid value
+                return;
+              }
+
+            }
+            //Need to update the value and request a parameter component refresh
+            param.values[0].value = value;
+            this.forceUpdateParams.push(param.name);
+          }
+        }
       },
 
       _hideLoadingIndicator: function() {
@@ -321,6 +388,17 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
             }
 
             me._oldParameterSet = me.extractParameterValues(newParamDefn);
+
+            //BISERVER-13170
+            for (var i in me.forceUpdateParams) {
+              var name = me.forceUpdateParams[i];
+              newParamDefn.mapParameters(function (param) {
+                if (name === param.name) {
+                  param.forceUpdate = true;
+                }
+              }, me);
+            }
+            me.forceUpdateParams = [];
 
             callback.call(me, newParamDefn);
           } catch (e) {
