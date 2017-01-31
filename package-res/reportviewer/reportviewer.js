@@ -50,6 +50,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
       _previousPage: 0,
       _reportUrl : null,
       _handlerRegistration : null,
+      _glassPaneListenerRegistration : null,
       _locationPromptCancelHandlerRegistration: null,
       _locationPromptOkHandlerRegistration: null,
       _locationPromptFinishHandlerRegistration: null,
@@ -708,7 +709,15 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
         this.cancel(this._currentReportStatus, this._currentReportUuid);
 
-        if(isRunningIFrameInSameOrigin) {          
+        if (this._topMantleOpenTabRegistration) {
+          top.mantle_openTab = null;
+        }
+
+        if (this._topOpenUrlInDialogRegistration) {
+          top.reportViewer_openUrlInDialog = null;
+        }
+
+        if(isRunningIFrameInSameOrigin) {
 
           if (top.mantle_removeHandler) {
             if (this._handlerRegistration) {
@@ -727,7 +736,16 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
               top.mantle_removeHandler(this._locationPromptFinishHandlerRegistration);
             }
           }
-        }       
+
+          if (this._glassPaneListenerRegistration) {
+            top.removeGlassPaneListenerById(this._glassPaneListenerRegistration);
+          }
+          if (parent.pho && parent.pho.dashboard && parent.pho.dashboards.removeEditContentToggledListener) {
+            parent.pho.dashboards.removeEditContentToggledListener(this._editModeToggledHandler);
+          }
+        }
+
+        document.removeChild(document.documentElement);
       },
 
       cancel: function(status, uuid, callback) {
@@ -754,9 +772,9 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
         if(isRunningIFrameInSameOrigin) {
           if (!top.mantle_initialized) {
-            top.mantle_openTab = function(name, title, url) {
+            this._topMantleOpenTabRegistration = top.mantle_openTab = function(name, title, url) {
               window.open(url, '_blank');
-            }
+            };
           }
 
           if (top.mantle_initialized) {
@@ -767,7 +785,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
             top.reportViewer_openUrlInDialog = this.openUrlInDialog.bind(this);
           }
 
-          window.reportViewer_openUrlInDialog = top.reportViewer_openUrlInDialog;
+          this._topOpenUrlInDialogRegistration = window.reportViewer_openUrlInDialog = top.reportViewer_openUrlInDialog;
         }
 
         window.reportViewer_hide = this.hide.bind(this);
@@ -780,7 +798,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         var localThis = this;
 
         if (isRunningIFrameInSameOrigin && typeof window.top.addGlassPaneListener !== 'undefined') {
-          window.top.addGlassPaneListener({
+          this._glassPaneListenerRegistration = window.top.addGlassPaneListener({
             glassPaneHidden: function(){
               localThis.view.show();
             }
