@@ -12,7 +12,7 @@
 * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 * See the GNU Lesser General Public License for more details.
 *
-* Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
+* Copyright (c) 2002-2017 Pentaho Corporation..  All rights reserved.
 */
 
 define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/formatting', 'pentaho/common/Messages', "dojo/dom", "dojo/on", "dojo/_base/lang",
@@ -50,6 +50,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
       _previousPage: 0,
       _reportUrl : null,
       _handlerRegistration : null,
+      _glassPaneListenerRegistration : null,
       _locationPromptCancelHandlerRegistration: null,
       _locationPromptOkHandlerRegistration: null,
       _locationPromptFinishHandlerRegistration: null,
@@ -122,6 +123,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           }));
         }
 
+        // TODO: XSS...
         if(window.top.mantle_addHandler){
           //When slow connection there is a gap between tab glass pane and prompt glass pane
           //So, let's hide tab glass pane only after widget is attached
@@ -133,40 +135,16 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           this._locationPromptAttachHandlerRegistration = window.top.mantle_addHandler('GenericEvent', onAttach.bind(this) );
         }
 
-        window.onbeforeunload = function(e) {
-          this.cancel(this._currentReportStatus, this._currentReportUuid);
-          if(window.top.mantle_removeHandler) {
-            if(this._handlerRegistration) {
-              window.top.mantle_removeHandler(this._handlerRegistration);
-            }
-            if(this._locationPromptAttachHandlerRegistration) {
-              window.top.mantle_removeHandler(this._locationPromptAttachHandlerRegistration);
-            }
-            if(this._locationPromptCancelHandlerRegistration) {
-              window.top.mantle_removeHandler(this._locationPromptCancelHandlerRegistration);
-            }
-            if(this._locationPromptOkHandlerRegistration) {
-              window.top.mantle_removeHandler(this._locationPromptOkHandlerRegistration);
-            }
-            if(this._locationPromptFinishHandlerRegistration) {
-              window.top.mantle_removeHandler(this._locationPromptFinishHandlerRegistration);
-            }
-          }
-          return;
-        }.bind(this);
+        window.onbeforeunload = this.dispose.bind(this);
 
         $("#reportContent")[0].contentWindow.onbeforeunload = function(e) {
           if($("#reportContent")[0].contentWindow._isFirstIframeUrlSet == true) {
             //user clicking a link in the report
-            this.cancel(this._currentReportStatus, this._currentReportUuid);
-            if(window.top.mantle_removeHandler) {
-              window.top.mantle_removeHandler(this._handlerRegistration);
-            }
+            this.dispose();
           } else {
             //content is writing in the reportContent iframe first time
             $("#reportContent")[0].contentWindow._isFirstIframeUrlSet = true;
           }
-          return;
         }.bind(this);
 
         var boundOnReportContentLoaded = this._onReportContentLoaded.bind(this);
@@ -714,19 +692,48 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
       onTabCloseEvent: function (event) {
         if(window.frameElement.src != null && window.frameElement.src.indexOf('dashboard-mode') !== -1 ){
           if (event.eventSubType == 'tabClosing' && event.stringParam == window.parent.frameElement.id) {
-            this.cancel(this._currentReportStatus, this._currentReportUuid);
-            if(window.top.mantle_removeHandler) {
-              window.top.mantle_removeHandler(this._handlerRegistration);
-            }
+            this.dispose();
           }
         }
         else {
           if (event.eventSubType == 'tabClosing' && event.stringParam == window.frameElement.id) {
-            this.cancel(this._currentReportStatus, this._currentReportUuid);
-            if(window.top.mantle_removeHandler) {
-              window.top.mantle_removeHandler(this._handlerRegistration);
-            }
+            this.dispose();
           }
+        }
+      },
+
+      dispose: function() {
+
+        this.cancel(this._currentReportStatus, this._currentReportUuid);
+
+        if(this._topMantleOpenTabRegistration) {
+          top.mantle_openTab = null;
+        }
+
+        if(this._topOpenUrlInDialogRegistration) {
+          top.reportViewer_openUrlInDialog = null;
+        }
+
+        if(top.mantle_removeHandler) {
+          if(this._handlerRegistration) {
+            top.mantle_removeHandler(this._handlerRegistration);
+          }
+          if(this._locationPromptAttachHandlerRegistration) {
+            top.mantle_removeHandler(this._locationPromptAttachHandlerRegistration);
+          }
+          if(this._locationPromptCancelHandlerRegistration) {
+            top.mantle_removeHandler(this._locationPromptCancelHandlerRegistration);
+          }
+          if(this._locationPromptOkHandlerRegistration) {
+            top.mantle_removeHandler(this._locationPromptOkHandlerRegistration);
+          }
+          if(this._locationPromptFinishHandlerRegistration) {
+            top.mantle_removeHandler(this._locationPromptFinishHandlerRegistration);
+          }
+        }
+
+        if(this._glassPaneListenerRegistration){
+          window.top.removeGlassPaneListenerById(this._glassPaneListenerRegistration);
         }
       },
 
@@ -761,11 +768,13 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           isRunningIFrameInSameOrigin = false;
         }
 
+        this._isRunningIFrameInSameOrigin = isRunningIFrameInSameOrigin;
+
         if(isRunningIFrameInSameOrigin) {
           if (!top.mantle_initialized) {
-            top.mantle_openTab = function(name, title, url) {
+            this._topMantleOpenTabRegistration = top.mantle_openTab = function(name, title, url) {
               window.open(url, '_blank');
-            }
+            };
           }
 
           if (top.mantle_initialized) {
@@ -776,7 +785,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
             top.reportViewer_openUrlInDialog = this.openUrlInDialog.bind(this);
           }
 
-          window.reportViewer_openUrlInDialog = top.reportViewer_openUrlInDialog;
+          this._topOpenUrlInDialogRegistration = window.reportViewer_openUrlInDialog = top.reportViewer_openUrlInDialog;
         }
 
         window.reportViewer_hide = this.hide.bind(this);
@@ -789,7 +798,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         var localThis = this;
 
         if (isRunningIFrameInSameOrigin && typeof window.top.addGlassPaneListener !== 'undefined') {
-          window.top.addGlassPaneListener({
+          this._glassPaneListenerRegistration = window.top.addGlassPaneListener({
             glassPaneHidden: function(){
               localThis.view.show();
             }
