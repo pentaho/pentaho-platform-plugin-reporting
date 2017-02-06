@@ -494,8 +494,11 @@ public class ParameterXmlContentHandler {
 
           .toList() );
 
+      //We only need the top level parents in order to erase children selections in lists
+      final Set<Object> effectivelyChanged = filterChildren( changedParameters, dependencies );
+
       // Filtered list without attributes
-      renderParameters( parameterContext, vr, parameters, new HashNMap<>(), changedParamDefinitions, changedParameters,
+      renderParameters( parameterContext, vr, parameters, new HashNMap<>(), changedParamDefinitions, effectivelyChanged,
           inputs, Boolean.TRUE );
       parameters.setAttribute( "minimized", "true" );
     } else {
@@ -589,6 +592,30 @@ public class ParameterXmlContentHandler {
 
     return downstreamParams;
   }
+
+  private Set<Object> filterChildren( final Set<Object> changedParameters,
+                                      final HashNMap<String, String> dependencies ) {
+    if ( changedParameters == null || changedParameters.isEmpty() ) {
+      return Collections.emptySet();
+    }
+    final Set<Object> effectivelyChanged = new HashSet<>( changedParameters );
+    if ( ( dependencies != null ) && !dependencies.isEmpty() ) {
+      final Iterator<String> keyIterator = dependencies.keys();
+      while ( keyIterator.hasNext() ) {
+        final String parent = keyIterator.next();
+        if ( changedParameters.contains( parent ) ) {
+          final Iterator<String> valuesIterator = dependencies.getAll( parent );
+          while ( valuesIterator.hasNext() ) {
+            final String child = valuesIterator.next();
+            effectivelyChanged.remove( child );
+          }
+        }
+      }
+    }
+    return effectivelyChanged;
+  }
+
+
 
   private Set<Object> addAllDependencies( final HashNMap<String, String> dependencies, final Set<Object> changedNames )
     throws CloneNotSupportedException {
