@@ -23,10 +23,29 @@ import org.apache.commons.collections.map.HashedMap;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.pentaho.reporting.engine.classic.core.*;
+import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
+import org.pentaho.reporting.engine.classic.core.CompoundDataFactory;
+import org.pentaho.reporting.engine.classic.core.DataFactory;
+import org.pentaho.reporting.engine.classic.core.DataRow;
+import org.pentaho.reporting.engine.classic.core.DefaultReportEnvironment;
+import org.pentaho.reporting.engine.classic.core.DefaultResourceBundleFactory;
+import org.pentaho.reporting.engine.classic.core.MasterReport;
+import org.pentaho.reporting.engine.classic.core.ReportDataFactoryException;
+import org.pentaho.reporting.engine.classic.core.ReportEnvironment;
+import org.pentaho.reporting.engine.classic.core.ResourceBundleFactory;
+import org.pentaho.reporting.engine.classic.core.StaticDataRow;
+import org.pentaho.reporting.engine.classic.core.TableDataFactory;
 import org.pentaho.reporting.engine.classic.core.metadata.DataFactoryMetaData;
 import org.pentaho.reporting.engine.classic.core.modules.misc.tablemodel.GeneratorTableModel;
-import org.pentaho.reporting.engine.classic.core.parameters.*;
+import org.pentaho.reporting.engine.classic.core.parameters.DefaultListParameter;
+import org.pentaho.reporting.engine.classic.core.parameters.DefaultParameterContext;
+import org.pentaho.reporting.engine.classic.core.parameters.ParameterAttributeNames;
+import org.pentaho.reporting.engine.classic.core.parameters.ParameterContext;
+import org.pentaho.reporting.engine.classic.core.parameters.ParameterDefinitionEntry;
+import org.pentaho.reporting.engine.classic.core.parameters.PlainParameter;
+import org.pentaho.reporting.engine.classic.core.parameters.ReportParameterDefinition;
+import org.pentaho.reporting.engine.classic.core.parameters.ValidationMessage;
+import org.pentaho.reporting.engine.classic.core.parameters.ValidationResult;
 import org.pentaho.reporting.engine.classic.core.util.ReportParameterValues;
 import org.pentaho.reporting.engine.classic.core.util.beans.BeanException;
 import org.pentaho.reporting.libraries.base.config.Configuration;
@@ -50,7 +69,13 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 import java.io.StringWriter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
@@ -585,22 +610,115 @@ public class ParameterXmlContentHandlerTest {
     examineChangedIndependentParameters( handler.document );
   }
 
+
+  @Test
+  public void resetInputParentChanged()
+    throws BeanException, ReportDataFactoryException, ParserConfigurationException, XPathExpressionException,
+    CloneNotSupportedException {
+
+    final LinkedHashMap<String, ParameterDefinitionEntry> parameterDefinitions = getParametersMap( false );
+
+
+    final DefaultParameterContext context = getTestParameterContext();
+    final ValidationResult vr = new ValidationResult();
+    vr.setParameterValues( new ReportParameterValues(  ) );
+
+    handler.document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+
+    final HashNMap<String, String> dependencies = new HashNMap<>();
+    dependencies.add( "first", "second" );
+    dependencies.add( "second", "third" );
+
+    final Element parameters = handler.document.createElement( "parameters" );
+    handler.document.appendChild( parameters );
+
+    final Map<String, Object> inputs = new HashMap<>(  );
+    inputs.put( "first", new String[]{ "c11", "c10" } );
+    inputs.put( "second", new String[]{ "c11", "c10" } );
+    inputs.put( "third", new String[]{ "c11", "c10" } );
+    handler.appendParametersList( context, vr, parameters, dependencies, parameterDefinitions, inputs, new String[]{"first"} );
+    examineChangedResetParameters( handler.document );
+  }
+
+  @Test
+  public void resetInputParentChangedChildSentFromUI()
+    throws BeanException, ReportDataFactoryException, ParserConfigurationException, XPathExpressionException,
+    CloneNotSupportedException {
+
+    final LinkedHashMap<String, ParameterDefinitionEntry> parameterDefinitions = getParametersMap( false );
+
+
+    final DefaultParameterContext context = getTestParameterContext();
+    final ValidationResult vr = new ValidationResult();
+    vr.setParameterValues( new ReportParameterValues(  ) );
+
+    handler.document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+
+    final HashNMap<String, String> dependencies = new HashNMap<>();
+    dependencies.add( "first", "second" );
+    dependencies.add( "second", "third" );
+
+    final Element parameters = handler.document.createElement( "parameters" );
+    handler.document.appendChild( parameters );
+
+    final Map<String, Object> inputs = new HashMap<>(  );
+    inputs.put( "first", new String[]{ "c11", "c10" } );
+    inputs.put( "second", new String[]{ "c11", "c10" } );
+    inputs.put( "third", new String[]{ "c11", "c10" } );
+    handler.appendParametersList( context, vr, parameters, dependencies, parameterDefinitions, inputs, new String[]{"first", "second"} );
+    examineChangedResetParameters( handler.document );
+  }
+
+
+  @Test
+  public void resetInputParentInTheMiddleChangedChildSentFromUI()
+    throws BeanException, ReportDataFactoryException, ParserConfigurationException, XPathExpressionException,
+    CloneNotSupportedException {
+
+    final LinkedHashMap<String, ParameterDefinitionEntry> parameterDefinitions = getParametersMap( false );
+
+
+    final DefaultParameterContext context = getTestParameterContext();
+    final ValidationResult vr = new ValidationResult();
+    vr.setParameterValues( new ReportParameterValues(  ) );
+
+    handler.document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+
+    final HashNMap<String, String> dependencies = new HashNMap<>();
+    dependencies.add( "first", "second" );
+    dependencies.add( "second", "third" );
+
+    final Element parameters = handler.document.createElement( "parameters" );
+    handler.document.appendChild( parameters );
+
+    final Map<String, Object> inputs = new HashMap<>(  );
+    inputs.put( "first", new String[]{ "c11", "c10" } );
+    inputs.put( "second", new String[]{ "c11", "c10" } );
+    inputs.put( "third", new String[]{ "c11", "c10" } );
+    handler.appendParametersList( context, vr, parameters, dependencies, parameterDefinitions, inputs, new String[]{"third", "second"} );
+    examineChangedMiddleResetParameters( handler.document );
+  }
+
   private LinkedHashMap<String, ParameterDefinitionEntry> getParametersMap() {
+    return getParametersMap( true );
+  }
+
+  private LinkedHashMap<String, ParameterDefinitionEntry> getParametersMap( boolean isStrict ) {
     final LinkedHashMap<String, ParameterDefinitionEntry> parameterDefinitions = new LinkedHashMap<>(  );
     final DefaultListParameter parameter =
-      new DefaultListParameter( "query", "c1", "c2", "first", true, true, String.class );
+      new DefaultListParameter( "query", "c1", "c2", "first", true, isStrict, String.class );
     final DefaultListParameter parameter1 =
-      new DefaultListParameter( "query", "c1", "c2", "second", true, true, String.class );
+      new DefaultListParameter( "query", "c1", "c2", "second", true, isStrict, String.class );
     final DefaultListParameter parameter2 =
-      new DefaultListParameter( "query", "c1", "c2", "third", true, true, String.class );
+      new DefaultListParameter( "query", "c1", "c2", "third", true, isStrict, String.class );
     final DefaultListParameter parameter3 =
-      new DefaultListParameter( "query", "c1", "c2", "fourth", true, true, String.class );
+      new DefaultListParameter( "query", "c1", "c2", "fourth", true, isStrict, String.class );
     final DefaultListParameter parameter4 =
-      new DefaultListParameter( "query", "c1", "c2", "fifth", true, true, String.class );
+      new DefaultListParameter( "query", "c1", "c2", "fifth", true, isStrict, String.class );
     final DefaultListParameter parameter5 =
-      new DefaultListParameter( "query", "c1", "c2", "sixth", true, true, String.class );
+      new DefaultListParameter( "query", "c1", "c2", "sixth", true, isStrict, String.class );
     final DefaultListParameter parameter6 =
-      new DefaultListParameter( "query", "c1", "c2", "seventh", true, true, String.class );
+      new DefaultListParameter( "query", "c1", "c2", "seventh", true, isStrict, String.class );
     parameterDefinitions.put( "first", parameter );
     parameterDefinitions.put( "second", parameter1 );
     parameterDefinitions.put( "third", parameter2 );
@@ -692,6 +810,94 @@ public class ParameterXmlContentHandlerTest {
     final NodeList fourth =
       (NodeList) xpath.evaluate( "/parameters/parameter[@name='fourth']", doc, XPathConstants.NODESET );
     assertEquals( 1, fourth.getLength() );
+    final NodeList attributes = (NodeList) xpath.evaluate( "/parameters/parameter/attribute", doc, XPathConstants.NODESET );
+    assertFalse( attributes.getLength() != 0 );
+    final NodeList dependencies = (NodeList) xpath.evaluate( "/parameters/parameter/dependencies", doc, XPathConstants.NODESET );
+    assertFalse( dependencies.getLength() != 0 );
+  }
+
+
+  private void examineChangedResetParameters( final Document doc ) throws XPathExpressionException {
+    final XPath xpath = xpathFactory.newXPath();
+    final NodeList root = (NodeList) xpath.evaluate( "/parameters", doc, XPathConstants.NODESET );
+    assertEquals( 1, root.getLength() );
+    final Node minimized = root.item( 0 ).getAttributes().getNamedItem( "minimized" );
+    assertNotNull( minimized );
+    final NodeList nodeList = (NodeList) xpath.evaluate( "/parameters/parameter", doc, XPathConstants.NODESET );
+    assertEquals( 3, nodeList.getLength() );
+    final NodeList first =
+      (NodeList) xpath.evaluate( "/parameters/parameter[@name='first']", doc, XPathConstants.NODESET );
+    assertEquals( 1, first.getLength() );
+    final NodeList firstValues =
+      (NodeList) xpath.evaluate( "/parameters/parameter[@name='first']/values/value", doc, XPathConstants.NODESET );
+    assertEquals( 2, firstValues.getLength() );
+    final NodeList firstSelectedValues =
+      (NodeList) xpath.evaluate( "/parameters/parameter[@name='first']/values/value[@selected='true']", doc, XPathConstants.NODESET );
+    assertEquals( 2, firstSelectedValues.getLength() );
+    final NodeList second =
+      (NodeList) xpath.evaluate( "/parameters/parameter[@name='second']", doc, XPathConstants.NODESET );
+    assertEquals( 1, second.getLength() );
+    final NodeList secondValues =
+      (NodeList) xpath.evaluate( "/parameters/parameter[@name='second']/values/value", doc, XPathConstants.NODESET );
+    assertEquals( 2, secondValues.getLength() );
+    //Values are reset
+    final NodeList secondSelectedValues =
+      (NodeList) xpath.evaluate( "/parameters/parameter[@name='second']/values/value[@selected='true']", doc, XPathConstants.NODESET );
+    assertEquals( 0, secondSelectedValues.getLength() );
+    final NodeList third =
+      (NodeList) xpath.evaluate( "/parameters/parameter[@name='third']", doc, XPathConstants.NODESET );
+    assertEquals( 1, third.getLength() );
+    final NodeList thirdValues =
+      (NodeList) xpath.evaluate( "/parameters/parameter[@name='third']/values/value", doc, XPathConstants.NODESET );
+    assertEquals( 2, thirdValues.getLength() );
+    //Deeper levels are also reset
+    final NodeList thirdSelectedValues =
+      (NodeList) xpath.evaluate( "/parameters/parameter[@name='third']/values/value[@selected='true']", doc, XPathConstants.NODESET );
+    assertEquals( 0, thirdSelectedValues.getLength() );
+    final NodeList fourth =
+      (NodeList) xpath.evaluate( "/parameters/parameter[@name='fourth']", doc, XPathConstants.NODESET );
+    assertEquals( 0, fourth.getLength() );
+    final NodeList attributes = (NodeList) xpath.evaluate( "/parameters/parameter/attribute", doc, XPathConstants.NODESET );
+    assertFalse( attributes.getLength() != 0 );
+    final NodeList dependencies = (NodeList) xpath.evaluate( "/parameters/parameter/dependencies", doc, XPathConstants.NODESET );
+    assertFalse( dependencies.getLength() != 0 );
+  }
+
+
+  private void examineChangedMiddleResetParameters( final Document doc ) throws XPathExpressionException {
+    final XPath xpath = xpathFactory.newXPath();
+    final NodeList root = (NodeList) xpath.evaluate( "/parameters", doc, XPathConstants.NODESET );
+    assertEquals( 1, root.getLength() );
+    final Node minimized = root.item( 0 ).getAttributes().getNamedItem( "minimized" );
+    assertNotNull( minimized );
+    final NodeList nodeList = (NodeList) xpath.evaluate( "/parameters/parameter", doc, XPathConstants.NODESET );
+    assertEquals( 2, nodeList.getLength() );
+    final NodeList first =
+      (NodeList) xpath.evaluate( "/parameters/parameter[@name='first']", doc, XPathConstants.NODESET );
+    assertEquals( 0, first.getLength() );
+    final NodeList second =
+      (NodeList) xpath.evaluate( "/parameters/parameter[@name='second']", doc, XPathConstants.NODESET );
+    assertEquals( 1, second.getLength() );
+    final NodeList secondValues =
+      (NodeList) xpath.evaluate( "/parameters/parameter[@name='second']/values/value", doc, XPathConstants.NODESET );
+    assertEquals( 2, secondValues.getLength() );
+    //Values are not reset
+    final NodeList secondSelectedValues =
+      (NodeList) xpath.evaluate( "/parameters/parameter[@name='second']/values/value[@selected='true']", doc, XPathConstants.NODESET );
+    assertEquals( 2, secondSelectedValues.getLength() );
+    final NodeList third =
+      (NodeList) xpath.evaluate( "/parameters/parameter[@name='third']", doc, XPathConstants.NODESET );
+    assertEquals( 1, third.getLength() );
+    final NodeList thirdValues =
+      (NodeList) xpath.evaluate( "/parameters/parameter[@name='third']/values/value", doc, XPathConstants.NODESET );
+    assertEquals( 2, thirdValues.getLength() );
+    //Deeper levels are reset
+    final NodeList thirdSelectedValues =
+      (NodeList) xpath.evaluate( "/parameters/parameter[@name='third']/values/value[@selected='true']", doc, XPathConstants.NODESET );
+    assertEquals( 0, thirdSelectedValues.getLength() );
+    final NodeList fourth =
+      (NodeList) xpath.evaluate( "/parameters/parameter[@name='fourth']", doc, XPathConstants.NODESET );
+    assertEquals( 0, fourth.getLength() );
     final NodeList attributes = (NodeList) xpath.evaluate( "/parameters/parameter/attribute", doc, XPathConstants.NODESET );
     assertFalse( attributes.getLength() != 0 );
     final NodeList dependencies = (NodeList) xpath.evaluate( "/parameters/parameter/dependencies", doc, XPathConstants.NODESET );
