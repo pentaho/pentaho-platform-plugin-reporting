@@ -1370,7 +1370,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           logger && logger.log("Will set iframe url to " + url.substr(0, 50) + "... ");
           
           if (me._isIE11() && outputFormat === 'pageable/pdf') {
-            me._forceLoadEvent();
+            $('#reportContent').attr("onreadystatechange", "viewer.forceLoadEvent();");
           }
           
           //submit hidden form to POST data to iframe
@@ -1680,7 +1680,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         var isPdf = (mimeType === "application/pdf");
         
         if (me._isIE11() && isPdf) {
-           me._forceLoadEvent();
+          $('#reportContent').attr("onreadystatechange", "viewer.forceLoadEvent();");
         }
         
         $('#hiddenReportContentForm').attr("action", urlContent);
@@ -1694,13 +1694,13 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
       },
       
       //IE11 workaround when no "load" event after Pdf pushed to iframe (BISERVER-12804)
-      _forceLoadEvent : function(){
-        var boundOnReportContentLoaded = this._onReportContentLoaded.bind(this);      
+      forceLoadEvent : function(){
+        var boundOnReportContentLoaded = this._onReportContentLoaded.bind(this);
         var onFrameLoaded = logged('onFrameLoaded', function() {
           setTimeout(boundOnReportContentLoaded);
         });
-        $('#reportContent').attr("onreadystatechange", "$('#reportContent').trigger('customLoad');");
-        $('#reportContent').one("customLoad", onFrameLoaded);
+        onFrameLoaded();
+        $('#reportContent').removeAttr("onreadystatechange");  //should be invoked only once, so remove after the first invocation
       },
 
       _getAsyncJobStatus : function(result, hideDlgAndPane){
