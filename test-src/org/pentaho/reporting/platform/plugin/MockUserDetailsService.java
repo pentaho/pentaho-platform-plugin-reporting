@@ -12,12 +12,11 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2017 Pentaho Corporation..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
 
-import org.springframework.dao.DataAccessException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -66,7 +65,7 @@ public class MockUserDetailsService implements UserDetailsService {
   public MockUserDetailsService() {
   }
 
-  public UserDetails loadUserByUsername( final String userName ) throws UsernameNotFoundException, DataAccessException {
+  public UserDetails loadUserByUsername( final String userName ) throws UsernameNotFoundException {
     return new DummyUserDetails( userName );
   }
 }
