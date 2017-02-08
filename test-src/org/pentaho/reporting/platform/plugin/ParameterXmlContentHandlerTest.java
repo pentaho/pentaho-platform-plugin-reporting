@@ -153,35 +153,47 @@ public class ParameterXmlContentHandlerTest {
 
   @Test
   public void testGetSelections() throws ReportDataFactoryException, BeanException {
-    final Map<String, Object> inputs = Collections.singletonMap( "name", "value" );
+    final Map<String, Object> inputs = new HashMap<String, Object>( ) {
+      {
+        put( "changed_unverified", "value" );
+        put( "unchanged_unverified", "value1" );
+        put( "verified", "value2" );
+        put( "plain", "value3" );
+      }
+    };
 
-    ParameterDefinitionEntry rp =
-        new DefaultListParameter( "query", "keyColumn", "textColumn", "name", false, true, String.class );
-    final Set<Object> changedParameters = Collections.singleton( "name" );
-    Object result = handler.getSelections( rp, changedParameters, inputs );
-    assertEquals( "value", result );
+    final Set<Object> changedParameters = Collections.singleton( "changed_unverified" );
 
-    rp = new DefaultListParameter( "query", "keyColumn", "textColumn", "name", false, false, String.class );
-    result = handler.getSelections( rp, null, inputs );
-    assertEquals( null, result );
+    final ParameterDefinitionEntry changed =
+        new DefaultListParameter( "query", "keyColumn", "textColumn", "changed_unverified", false, false, String.class );
+    final ParameterDefinitionEntry unchanged =
+      new DefaultListParameter( "query", "keyColumn", "textColumn", "unchanged_unverified", false, false, String.class );
+    final ParameterDefinitionEntry verified =
+      new DefaultListParameter( "query", "keyColumn", "textColumn", "verified", false, true, String.class );
+    final ParameterDefinitionEntry plain = new PlainParameter( "plain", String.class );
 
-    result = handler.getSelections( rp, changedParameters, inputs );
-    assertEquals( "value", result );
-  }
+    //Initial call
+    final Object changedResult = handler.getSelections( changed, null, inputs );
+    final Object unchangedResult = handler.getSelections( unchanged, null, inputs );
+    final Object verifiedResult = handler.getSelections( verified, null, inputs );
+    final Object plainResult = handler.getSelections( plain, null, inputs );
 
-  @Test
-  public void testGetSelectionsPlain() throws ReportDataFactoryException, BeanException {
-    final Map<String, Object> inputs = Collections.singletonMap( "name", "value" );
+    assertEquals( "value", changedResult );
+    assertEquals( "value1", unchangedResult );
+    assertEquals( "value2", verifiedResult );
+    assertEquals( "value3", plainResult );
 
-    ParameterDefinitionEntry rp = new PlainParameter( "name", String.class );
 
-    final Set<Object> changedParameters = Collections.singleton( "name" );
-    Object result = handler.getSelections( rp, changedParameters, inputs );
-    assertEquals( "value", result );
+    //Changed call
+    final Object changedResult1 = handler.getSelections( changed, changedParameters, inputs );
+    final Object unchangedResult1 = handler.getSelections( unchanged, changedParameters, inputs );
+    final Object verifiedResult1 = handler.getSelections( verified, changedParameters, inputs );
+    final Object plainResult1 = handler.getSelections( plain, changedParameters, inputs );
 
-    rp = new PlainParameter( "name", String.class );
-    result = handler.getSelections( rp, null, inputs );
-    assertEquals( "value", result );
+    assertEquals( "value", changedResult1 );
+    assertEquals( null, unchangedResult1 );
+    assertEquals( "value2", verifiedResult1 );
+    assertEquals( "value3", plainResult1 );
   }
 
   @Test
