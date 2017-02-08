@@ -31,3 +31,7 @@ node_modules/
 .idea/encodings.xml
 checkstyle/
 out/
+target/
+node_modules/
+*.iml
+.idea
