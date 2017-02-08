@@ -5,7 +5,9 @@
   "repository": "https://github.com/pentaho/pentaho-platform-plugin-reporting/",
   "license": "LGPL",
   "private": true,
-  "dependencies": {},
+  "dependencies": {
+    "mddir": "^1.1.0"
+  },
   "devDependencies": {
     "jasmine-core": "^2.4.1",
     "jsdoc": "^3.4.0",

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <parent>
+    <relativePath>../pom.xml</relativePath>
+    <artifactId>pentaho-reporting-engine-classic-core-platform-plugin-parent-pom</artifactId>
+    <groupId>pentaho-reporting-engine</groupId>
+    <version>7.1-SNAPSHOT</version>
+  </parent>
+  <modelVersion>4.0.0</modelVersion>
+  <artifactId>reporting-plugin-assemblies-parent-pom</artifactId>
+  <packaging>pom</packaging>
+  <name>Pentaho Platform Reporting Plugin Assemblies</name>
+  <modules>
+    <module>web</module>
+  </modules>
+</project>
