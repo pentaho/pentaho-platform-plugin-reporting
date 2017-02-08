@@ -538,6 +538,10 @@ public class ParameterXmlContentHandler {
       final Map<String, Object> inputs ) {
     final String pName = parameter.getName();
 
+    if ( null == changedParameters || changedParameters.isEmpty() ) {
+      return inputs.get( pName );
+    }
+
     final boolean isList = parameter instanceof ListParameter;
 
     if ( !isList ) {
