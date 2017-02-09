@@ -3,138 +3,27 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <relativePath>../pom.xml</relativePath>
-    <artifactId>reporting-plugin-assemblies-parent-pom</artifactId>
-    <groupId>pentaho-reporting-engine</groupId>
+    <groupId>org.pentaho.reporting</groupId>
+    <artifactId>pentaho-reporting-platform-plugin-assemblies</artifactId>
     <version>7.1-SNAPSHOT</version>
   </parent>
-  <artifactId>pentaho-reporting-engine-classic-core-platform-plugin-js</artifactId>
+
+  <groupId>pentaho-reporting-engine</groupId>
+  <artifactId>pentaho-reporting-engine-classic-core-platform-plugin-package</artifactId>
   <packaging>pom</packaging>
-  <name>Pentaho Platform Reporting Plugin Web</name>
+
+  <name>Pentaho Platform Reporting Plugin Web Package</name>
+
   <properties>
-    <build.dependenciesDirectory>${project.build.directory}/dependency</build.dependenciesDirectory>
-    <build.javascriptTestConfigDirectory>${project.build.directory}/test-javascript</build.javascriptTestConfigDirectory>
-    <javascript-test_karma-phase>integration-test</javascript-test_karma-phase>
-    <javascript.exclusion.pattern>**/*.jsdoc</javascript.exclusion.pattern>
-    <js.build.optimizer>uglify</js.build.optimizer>
-    <js.project.list>common-ui,pentaho-cdf-js</js.project.list>
-    <pentaho-js-build.dir>${build.dependenciesDirectory}/pentaho-js-build</pentaho-js-build.dir>
-    <plugin.config.directory>${project.basedir}/src/main/assembly/package-res</plugin.config.directory>
-    <requirejs.config.files.pattern>**/*-require-js-cfg.js</requirejs.config.files.pattern>
+    <js.project.list>pentaho-reporting-engine-classic-core-platform-plugin</js.project.list>
   </properties>
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-resources-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>copy-javascript</id>
-            <phase>generate-resources</phase>
-            <goals>
-              <goal>copy-resources</goal>
-            </goals>
-            <configuration>
-              <outputDirectory>${project.build.directory}/src-javascript</outputDirectory>
-              <resources>
-                <resource>
-                  <directory>src/main/javascript</directory>
-                  <filtering>false</filtering>
-                </resource>
-                <resource>
-                  <directory>target/dependency</directory>
-                  <includes>
-                    <include>common-ui/**</include>
-                    <include>cdf/**</include>
-                  </includes>
-                  <filtering>false</filtering>
-                </resource>
-              </resources>
-            </configuration>
-          </execution>
-        </executions>
-        <configuration>
-          <encoding>UTF-8</encoding>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-antrun-plugin</artifactId>
-        <version>${maven-antrun-plugin.version}</version>
-        <executions>
-          <execution>
-            <id>compressed</id>
-            <phase>package</phase>
-            <goals>
-              <goal>run</goal>
-            </goals>
-            <configuration>
-              <target>
-                <mkdir dir="${project.build.directory}/src-javascript/reportviewer/compressed"></mkdir>
-                <copy todir="${project.build.directory}/src-javascript/reportviewer/compressed">
-                  <fileset dir="${project.build.directory}/build-javascript/reportviewer">
-                    <include name="**/formatter.js"></include>
-                    <include name="**/reportviewer-app.js"></include>
-                    <include name="**reportviewer-main-module.js"></include>
-                  </fileset>
-                </copy>
-              </target>
-            </configuration>
-          </execution>
-          <execution>
-            <id>copy-js-tests</id>
-            <phase>pre-integration-test</phase>
-            <goals>
-              <goal>run</goal>
-            </goals>
-            <configuration>
-              <target>
-                <copy todir="${project.build.directory}/test-javascript">
-                  <fileset dir="${project.build.directory}/src-javascript"></fileset>
-                  <fileset dir="${basedir}/src/test/javascript"></fileset>
-                  <fileset dir="${basedir}/src/test/config/javascript">
-                    <include name="**/*.js"></include>
-                  </fileset>
-                </copy>
-              </target>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-assembly-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>standalone</id>
-            <phase>package</phase>
-            <goals>
-              <goal>single</goal>
-            </goals>
-            <configuration>
-              <descriptors>
-                <descriptor>/src/main/assembly/bin.xml</descriptor>
-              </descriptors>
-              <appendAssemblyId>false</appendAssemblyId>
-              <finalName>pentaho-reporting-engine-classic-core-platform-plugin-package-${project.version}</finalName>
-            </configuration>
-          </execution>
-          <execution>
-            <id>js</id>
-            <phase>package</phase>
-            <goals>
-              <goal>single</goal>
-            </goals>
-            <configuration>
-              <descriptors>
-                <descriptor>/src/main/assembly/js.xml</descriptor>
-              </descriptors>
-              <appendAssemblyId>false</appendAssemblyId>
-              <finalName>pentaho-reporting-engine-classic-core-platform-plugin-package-${project.version}-js</finalName>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
-  </build>
+
+  <dependencies>
+    <dependency>
+      <groupId>pentaho-reporting-engine</groupId>
+      <artifactId>pentaho-reporting-engine-classic-core-platform-plugin</artifactId>
+      <version>${project.version}</version>
+      <classifier>js-compressed</classifier>
+    </dependency>
+  </dependencies>
 </project>

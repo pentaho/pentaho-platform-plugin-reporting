@@ -1,23 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <modules>
-    <module>assemblies</module>
-  </modules>
   <parent>
     <artifactId>pentaho-ce-jar-parent-pom</artifactId>
     <groupId>org.pentaho</groupId>
     <version>7.1-SNAPSHOT</version>
   </parent>
-  <groupId>pentaho-reporting-engine</groupId>
-  <artifactId>pentaho-reporting-engine-classic-core-platform-plugin-parent-pom</artifactId>
+
+  <groupId>org.pentaho.reporting</groupId>
+  <artifactId>pentaho-reporting-platform-plugin</artifactId>
   <version>7.1-SNAPSHOT</version>
+
   <packaging>pom</packaging>
   <name>Pentaho Platform Reporting Plugin</name>
-
-  <organization>
-    <name>Pentaho Corporation</name>
-  </organization>
 
   <licenses>
     <license>
@@ -68,6 +63,7 @@
       </modules>
     </profile>
   </profiles>
+
   <properties>
     <GWT-FX.version>0.5.0</GWT-FX.version>
     <basedir>${project.basedir}</basedir>
@@ -521,13 +517,6 @@
     </dependency>
   </dependencies>
   <build>
-    <testResources>
-      <testResource>
-        <targetPath>${project.build.directory}/test</targetPath>
-        <filtering>false</filtering>
-        <directory>core/src/test/resources</directory>
-      </testResource>
-    </testResources>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
