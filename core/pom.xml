@@ -3,21 +3,155 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <relativePath>../pom.xml</relativePath>
-    <artifactId>pentaho-reporting-engine-classic-core-platform-plugin-parent-pom</artifactId>
-    <groupId>pentaho-reporting-engine</groupId>
+    <groupId>org.pentaho.reporting</groupId>
+    <artifactId>pentaho-reporting-platform-plugin</artifactId>
     <version>7.1-SNAPSHOT</version>
   </parent>
+
+  <groupId>pentaho-reporting-engine</groupId>
   <artifactId>pentaho-reporting-engine-classic-core-platform-plugin</artifactId>
   <packaging>jar</packaging>
+
   <name>Pentaho Platform Reporting Plugin Core</name>
+
+  <properties>
+    <build.dependenciesDirectory>${project.build.directory}/dependency</build.dependenciesDirectory>
+    <build.javascriptTestConfigDirectory>${project.build.directory}/test-javascript</build.javascriptTestConfigDirectory>
+
+    <javascript-test_karma-phase>integration-test</javascript-test_karma-phase>
+    <javascript.exclusion.pattern>**/*.jsdoc</javascript.exclusion.pattern>
+
+    <js.project.list>common-ui,pentaho-cdf-js</js.project.list>
+    <js.build.optimizer>uglify</js.build.optimizer>
+
+    <pentaho-js-build.dir>${build.dependenciesDirectory}/pentaho-js-build</pentaho-js-build.dir>
+    <requirejs.config.files.pattern>**/*-require-js-cfg.js</requirejs.config.files.pattern>
+  </properties>
+
   <build>
-  <testResources>
-    <testResource>
-      <targetPath>${project.build.directory}/test</targetPath>
-      <filtering>false</filtering>
-      <directory>${basedir}/src/test/resources</directory>
-    </testResource>
-  </testResources>
+    <testResources>
+      <testResource>
+        <targetPath>${project.build.directory}/test</targetPath>
+        <filtering>false</filtering>
+        <directory>${basedir}/src/test/resources</directory>
+      </testResource>
+    </testResources>
+
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-resources-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>copy-javascript</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/src-javascript</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>src/main/javascript</directory>
+                  <filtering>false</filtering>
+                </resource>
+                <resource>
+                  <directory>target/dependency</directory>
+                  <includes>
+                    <include>common-ui/**</include>
+                    <include>cdf/**</include>
+                  </includes>
+                  <filtering>false</filtering>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>${maven-antrun-plugin.version}</version>
+        <executions>
+          <execution>
+            <id>compressed</id>
+            <phase>package</phase>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <target>
+                <mkdir dir="${project.build.directory}/src-javascript/reportviewer/compressed"></mkdir>
+                <copy todir="${project.build.directory}/src-javascript/reportviewer/compressed">
+                  <fileset dir="${project.build.directory}/build-javascript/reportviewer">
+                    <include name="**/formatter.js"></include>
+                    <include name="**/reportviewer-app.js"></include>
+                    <include name="**reportviewer-main-module.js"></include>
+                  </fileset>
+                </copy>
+              </target>
+            </configuration>
+          </execution>
+          <execution>
+            <id>copy-js-tests</id>
+            <phase>pre-integration-test</phase>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <target>
+                <copy todir="${project.build.directory}/test-javascript">
+                  <fileset dir="${project.build.directory}/src-javascript"></fileset>
+                  <fileset dir="${basedir}/src/test/javascript"></fileset>
+                  <fileset dir="${basedir}/src/test/config/javascript">
+                    <include name="**/*.js"></include>
+                  </fileset>
+                </copy>
+              </target>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>javascript-jar</id>
+            <phase>package</phase>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+            <configuration>
+              <classifier>js</classifier>
+              <classesDirectory>${project.build.directory}/src-javascript</classesDirectory>
+              <includes>
+                <include>reportviewer/**/*</include>
+              </includes>
+              <excludes>
+                <exclude>**/compressed/**</exclude>
+              </excludes>
+            </configuration>
+          </execution>
+          <execution>
+            <id>javascript-compressed-jar</id>
+            <phase>package</phase>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+            <configuration>
+              <classifier>js-compressed</classifier>
+              <classesDirectory>${project.build.directory}/src-javascript</classesDirectory>
+              <includes>
+                <include>reportviewer/**/*</include>
+              </includes>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
   </build>
+
 </project>
