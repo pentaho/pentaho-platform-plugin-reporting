@@ -22,8 +22,9 @@ define([
   "common-ui/prompting/api/PromptingAPI",
   "common-ui/jquery-clean",
   "common-ui/underscore",
-  "cdf/dashboard/Utils"
-], function(util, Messages, registry, PromptingAPI, $, _, Utils) {
+  "cdf/dashboard/Utils",
+  "dojo/dom-class"
+], function(util, Messages, registry, PromptingAPI, $, _, Utils, domClass) {
 
   var _api =  new PromptingAPI('promptPanel');
 
@@ -244,6 +245,7 @@ define([
             try {
               var outputFormat = paramDefn.getParameter("output-target").getSelectedValuesValue();
               this._isReportHtmlPagebleOutputFormat = outputFormat.indexOf('table/html;page-mode=page') !== -1;
+              this.togglePageControl();
             } catch (ignored) {
             }           
 
@@ -340,6 +342,26 @@ define([
 
       hideGlassPane: function() {
         registry.byId('glassPane').hide();
+      },
+
+      togglePageControl: function() {
+        var pageControlWidget = registry.byId('pageControl');
+        var toolBarSeparatorWidget = registry.byId('toolbar-parameter-separator');
+        if (this._isReportHtmlPagebleOutputFormat){
+          if (pageControlWidget){
+            domClass.remove(pageControlWidget.domNode, "hidden");
+          }
+          if (toolBarSeparatorWidget){
+            domClass.remove(toolBarSeparatorWidget.domNode, "hidden");
+          }
+        } else {
+          if (pageControlWidget){
+            domClass.add(pageControlWidget.domNode, "hidden");
+          }
+          if (toolBarSeparatorWidget){
+            domClass.add(toolBarSeparatorWidget.domNode, "hidden");
+          }
+        }
       },
 
       parseParameterDefinition: function(xmlString) {
