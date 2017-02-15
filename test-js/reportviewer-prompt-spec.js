@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2016 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2017 Pentaho Corporation..  All rights reserved.
  */
 
 define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging", "common-ui/jquery-clean",
@@ -29,10 +29,14 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
         var mockGlassPane = jasmine.createSpyObj("glassPane", ["show", "hide"]);
         mockGlassPane.id = "glassPane";
         registryMock.mock(mockGlassPane);
+        var messageBox = jasmine.createSpyObj("messageBox", ["setTitle", "setMessage", "setButtons"]);
+        messageBox.id = "messageBox";
+        registryMock.mock(messageBox);
       });
 
       afterAll(function() {
         registryMock.unMock("glassPane");
+        registryMock.unMock("messageBox");
       });
 
       beforeEach(function() {
@@ -274,6 +278,49 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
           expect(reportPrompt.api.util.parseParameterXml).toHaveBeenCalledWith(xmlString);
           expect(returnVal).toBe(parseVal);
         });
+      });
+
+      describe("should toggle page control visibility", function () {
+        var pageControlWidget;
+        var toolBarSeparatorWidget;
+
+        beforeEach(function() {
+          pageControlWidget = jasmine.createSpyObj("pageControl", ["domNode"]);
+          toolBarSeparatorWidget = jasmine.createSpyObj("toolbar-parameter-separator", ["domNode"]);
+
+          pageControlWidget.id = "pageControl";
+          toolBarSeparatorWidget.id = "toolbar-parameter-separator";
+          registryMock.mock(pageControlWidget);
+          registryMock.mock(toolBarSeparatorWidget);
+
+          spyOn(domClass, 'add');
+          spyOn(domClass, 'remove');
+
+
+          reportPrompt.createPromptPanel();
+        });
+
+        afterAll(function() {
+          registryMock.unMock("pageControl");
+          registryMock.unMock("toolbar-parameter-separator");
+          reportPrompt = new Prompt();
+          jasmine.reset(domClass);
+        });
+
+        it("should show a control if the output is pageable HTML", function () {
+          reportPrompt._isReportHtmlPagebleOutputFormat = true;
+          reportPrompt.togglePageControl();
+          expect(domClass.remove).toHaveBeenCalledWith(pageControlWidget.domNode, "hidden");
+          expect(domClass.remove).toHaveBeenCalledWith(toolBarSeparatorWidget.domNode, "hidden");
+        });
+
+        it("should hide a control otherwise", function () {
+          reportPrompt._isReportHtmlPagebleOutputFormat = false;
+          reportPrompt.togglePageControl();
+          expect(domClass.add).toHaveBeenCalledWith(pageControlWidget.domNode, "hidden");
+          expect(domClass.add).toHaveBeenCalledWith(toolBarSeparatorWidget.domNode, "hidden");
+        });
+
       });
     });
   });
