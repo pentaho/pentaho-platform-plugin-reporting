@@ -108,19 +108,17 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
             var paramVal = param.values[i];
             if (value.indexOf(paramVal.value) > -1) {
               if (!paramVal.selected) {
-                paramVal.selected = true;
                 counter++;
               }
             } else {
               if (paramVal.selected) {
-                paramVal.selected = false;
                 counter++;
               }
             }
           }
           //Ok, we changed something, let's ask for a parameter component refresh
           if (counter > 0) {
-            this.forceUpdateParams.push(param.name);
+            this.forceUpdateParams.push(param);
           }
         } else {
           //Working with a plain parameter
@@ -144,7 +142,7 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
             }
             //Need to update the value and request a parameter component refresh
             param.values[0].value = value;
-            this.forceUpdateParams.push(param.name);
+            this.forceUpdateParams.push(param);
           }
         }
       },
@@ -391,10 +389,15 @@ define(['common-ui/util/util', 'pentaho/common/Messages', "dijit/registry", 'com
 
             //BISERVER-13170
             for (var i in me.forceUpdateParams) {
-              var name = me.forceUpdateParams[i];
+              var forced = me.forceUpdateParams[i];
               newParamDefn.mapParameters(function (param) {
-                if (name === param.name) {
+                if (forced.name === param.name) {
                   param.forceUpdate = true;
+                  if (param.values.length > 1 && JSON.stringify(param.values) === JSON.stringify(forced.values)) {
+                    //On 6.1 the flag isn't enought to trigger an update for a list parameter
+                    //We reset an old parameter values to trigger a differ here
+                    forced.values = [];
+                  }
                 }
               }, me);
             }
