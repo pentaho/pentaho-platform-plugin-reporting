@@ -772,6 +772,10 @@ define([ 'common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui/ut
 
         logger && logger.log("Will set iframe url to " + url.substr(0, 50) + "... ");
 
+        if (me._isIE11() && outputFormat === 'pageable/pdf') {
+          $('#reportContent').attr("onreadystatechange", "viewer.forceLoadEvent();");
+        }
+
         //submit hidden form to POST data to iframe
         $('#hiddenReportContentForm').attr("action", url);
         $('#hiddenReportContentForm').submit();
@@ -796,6 +800,16 @@ define([ 'common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui/ut
 
           me._submitReportEnded(promptPanel);
         });
+      },
+
+      //IE11 workaround when no "load" event after Pdf pushed to iframe (BISERVER-12804)
+      forceLoadEvent : function(){
+        var boundOnReportContentLoaded = this._onReportContentLoaded.bind(this);
+        var onFrameLoaded = logged('onFrameLoaded', function() {
+          setTimeout(boundOnReportContentLoaded);
+        });
+        onFrameLoaded();
+        $('#reportContent').removeAttr("onreadystatechange");  //should be invoked only once, so remove after the first invocation
       },
 
       _submitReportEnded: function(promptPanel, isTimeout) {
@@ -923,6 +937,10 @@ define([ 'common-ui/util/util','reportviewer/reportviewer-prompt', 'common-ui/ut
         });
 
         return url + params.join("&");
+      },
+
+      _isIE11: function(){
+        return has("trident") && !has("ie"); //has("ie") in IE11 is undefined
       }
     }); // end of: var v = {
 
