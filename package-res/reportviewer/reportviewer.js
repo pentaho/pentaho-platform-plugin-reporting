@@ -732,9 +732,15 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           }
         }
 
-        if(this._glassPaneListenerRegistration){
+        if(this._glassPaneListenerRegistration) {
           window.top.removeGlassPaneListenerById(this._glassPaneListenerRegistration);
         }
+
+        if(parent.pho && parent.pho.dashboard && parent.pho.dashboards.removeEditContentToggledListener) {
+          parent.pho.dashboards.removeEditContentToggledListener(this._editModeToggledHandler);
+        }
+
+        document.removeChild(document.documentElement);
       },
 
       cancel: function(status, uuid, callback) {
