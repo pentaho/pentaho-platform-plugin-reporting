@@ -2,7 +2,10 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/pentaho-platform-plugin-reporting.iml" filepath="$PROJECT_DIR$/pentaho-platform-plugin-reporting.iml" />
+      <module fileurl="file://$PROJECT_DIR$/core/classic-core-platform-plugin.iml" filepath="$PROJECT_DIR$/core/classic-core-platform-plugin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/assemblies/web/classic-core-platform-plugin-package.iml" filepath="$PROJECT_DIR$/assemblies/web/classic-core-platform-plugin-package.iml" />
+      <module fileurl="file://$PROJECT_DIR$/reporting-platform-plugin.iml" filepath="$PROJECT_DIR$/reporting-platform-plugin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/assemblies/reporting-platform-plugin-assemblies.iml" filepath="$PROJECT_DIR$/assemblies/reporting-platform-plugin-assemblies.iml" />
     </modules>
   </component>
 </project>
