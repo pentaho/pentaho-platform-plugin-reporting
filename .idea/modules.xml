@@ -2,9 +2,10 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/assemblies/web/pentaho-reporting-engine-classic-core-platform-plugin-js.iml" filepath="$PROJECT_DIR$/assemblies/web/pentaho-reporting-engine-classic-core-platform-plugin-js.iml" />
-      <module fileurl="file://$PROJECT_DIR$/pentaho-reporting-engine-classic-core-platform-plugin-parent-pom.iml" filepath="$PROJECT_DIR$/pentaho-reporting-engine-classic-core-platform-plugin-parent-pom.iml" />
-      <module fileurl="file://$PROJECT_DIR$/assemblies/reporting-plugin-assemblies-parent-pom.iml" filepath="$PROJECT_DIR$/assemblies/reporting-plugin-assemblies-parent-pom.iml" />
+      <module fileurl="file://$PROJECT_DIR$/core/classic-core-platform-plugin.iml" filepath="$PROJECT_DIR$/core/classic-core-platform-plugin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/assemblies/web/classic-core-platform-plugin-package.iml" filepath="$PROJECT_DIR$/assemblies/web/classic-core-platform-plugin-package.iml" />
+      <module fileurl="file://$PROJECT_DIR$/reporting-platform-plugin.iml" filepath="$PROJECT_DIR$/reporting-platform-plugin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/assemblies/reporting-platform-plugin-assemblies.iml" filepath="$PROJECT_DIR$/assemblies/reporting-platform-plugin-assemblies.iml" />
     </modules>
   </component>
 </project>
