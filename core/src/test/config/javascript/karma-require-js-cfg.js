@@ -12,9 +12,10 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2017 Pentaho Corporation..  All rights reserved.
  */
 
+var isRunningIFrameInSameOrigin = true;
 var SESSION_NAME = "dummy";
 var SESSION_LOCALE = "en-US";
 var CONTEXT_PATH = "/pentaho/";
