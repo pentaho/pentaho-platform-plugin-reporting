@@ -76,7 +76,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         this.reportPrompt.api.event.afterUpdate(this.afterUpdateCallback.bind(this));
         this.reportPrompt.api.event.afterRender(this.view.afterRender.bind(this.view));
 
-        if (typeof parent.pho !== 'undefined' && typeof parent.pho.dashboards !== 'undefined' && typeof parent.pho.dashboards.addEditContentToggledListener !== 'undefined') {
+        if (isRunningIFrameInSameOrigin && typeof parent.pho !== 'undefined' && typeof parent.pho.dashboards !== 'undefined' && typeof parent.pho.dashboards.addEditContentToggledListener !== 'undefined') {
           this._editModeToggledHandler = this.editModeToggledHandler.bind(this);
           parent.pho.dashboards.addEditContentToggledListener(this._editModeToggledHandler);
         }
@@ -123,8 +123,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           }));
         }
 
-        // TODO: XSS...
-        if(window.top.mantle_addHandler){
+        if(isRunningIFrameInSameOrigin && window.top.mantle_addHandler){
           //When slow connection there is a gap between tab glass pane and prompt glass pane
           //So, let's hide tab glass pane only after widget is attached
           var onAttach = function(event){
@@ -190,17 +189,21 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         var rowLimitMessage = registry.byId('rowLimitMessage');
         if(rowLimitMessage) {
           rowLimitMessage.bindRun(function () {
-            var match = window.location.href.match('.*repos\/(.*)(\.prpt).*');
-            if (match && match.length > 1) {
-              window.parent.executeCommand("RunInBackgroundCommand", {
-                solutionPath: decodeURIComponent(match[1] + match[2]).replace(/:/g, '/')
-              });
+            if (isRunningIFrameInSameOrigin) {
+              var match = window.location.href.match('.*repos\/(.*)(\.prpt).*');
+              if (match && match.length > 1) {
+                window.parent.executeCommand("RunInBackgroundCommand", {
+                  solutionPath: decodeURIComponent(match[1] + match[2]).replace(/:/g, '/')
+                });
+              }
             }
           });
           rowLimitMessage.bindSchedule(function () {
-            var match = window.location.href.match('.*repos\/(.*)(\.prpt).*');
-            if (match && match.length > 1) {
-              window.parent.mantle_openRepositoryFile(decodeURIComponent(match[1] + match[2]).replace(/:/g, '/'), "SCHEDULE_NEW");
+            if (isRunningIFrameInSameOrigin) {
+              var match = window.location.href.match('.*repos\/(.*)(\.prpt).*');
+              if (match && match.length > 1) {
+                window.parent.mantle_openRepositoryFile(decodeURIComponent(match[1] + match[2]).replace(/:/g, '/'), "SCHEDULE_NEW");
+              }
             }
           });
         }
@@ -690,7 +693,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
       }), // end view
 
       onTabCloseEvent: function (event) {
-        if(window.frameElement.src != null && window.frameElement.src.indexOf('dashboard-mode') !== -1 ){
+        if(isRunningIFrameInSameOrigin && window.frameElement.src != null && window.frameElement.src.indexOf('dashboard-mode') !== -1 ){
           if (event.eventSubType == 'tabClosing' && event.stringParam == window.parent.frameElement.id) {
             this.dispose();
           }
@@ -706,38 +709,40 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
         this.cancel(this._currentReportStatus, this._currentReportUuid);
 
-        if(this._topMantleOpenTabRegistration) {
-          top.mantle_openTab = null;
-        }
+        if(isRunningIFrameInSameOrigin) {
+          if (this._topMantleOpenTabRegistration) {
+            top.mantle_openTab = null;
+          }
 
-        if(this._topOpenUrlInDialogRegistration) {
-          top.reportViewer_openUrlInDialog = null;
-        }
+          if (this._topOpenUrlInDialogRegistration) {
+            top.reportViewer_openUrlInDialog = null;
+          }
 
-        if(top.mantle_removeHandler) {
-          if(this._handlerRegistration) {
-            top.mantle_removeHandler(this._handlerRegistration);
+          if (top.mantle_removeHandler) {
+            if (this._handlerRegistration) {
+              top.mantle_removeHandler(this._handlerRegistration);
+            }
+            if (this._locationPromptAttachHandlerRegistration) {
+              top.mantle_removeHandler(this._locationPromptAttachHandlerRegistration);
+            }
+            if (this._locationPromptCancelHandlerRegistration) {
+              top.mantle_removeHandler(this._locationPromptCancelHandlerRegistration);
+            }
+            if (this._locationPromptOkHandlerRegistration) {
+              top.mantle_removeHandler(this._locationPromptOkHandlerRegistration);
+            }
+            if (this._locationPromptFinishHandlerRegistration) {
+              top.mantle_removeHandler(this._locationPromptFinishHandlerRegistration);
+            }
           }
-          if(this._locationPromptAttachHandlerRegistration) {
-            top.mantle_removeHandler(this._locationPromptAttachHandlerRegistration);
-          }
-          if(this._locationPromptCancelHandlerRegistration) {
-            top.mantle_removeHandler(this._locationPromptCancelHandlerRegistration);
-          }
-          if(this._locationPromptOkHandlerRegistration) {
-            top.mantle_removeHandler(this._locationPromptOkHandlerRegistration);
-          }
-          if(this._locationPromptFinishHandlerRegistration) {
-            top.mantle_removeHandler(this._locationPromptFinishHandlerRegistration);
-          }
-        }
 
-        if(this._glassPaneListenerRegistration) {
-          window.top.removeGlassPaneListenerById(this._glassPaneListenerRegistration);
-        }
+          if (this._glassPaneListenerRegistration) {
+            window.top.removeGlassPaneListenerById(this._glassPaneListenerRegistration);
+          }
 
-        if(parent.pho && parent.pho.dashboard && parent.pho.dashboards.removeEditContentToggledListener) {
-          parent.pho.dashboards.removeEditContentToggledListener(this._editModeToggledHandler);
+          if (parent.pho && parent.pho.dashboard && parent.pho.dashboards.removeEditContentToggledListener) {
+            parent.pho.dashboards.removeEditContentToggledListener(this._editModeToggledHandler);
+          }
         }
 
         document.removeChild(document.documentElement);
@@ -765,17 +770,6 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         }
         */
 
-        var isRunningIFrameInSameOrigin = null;
-        try {
-          var ignoredCheckCanReachOutToTop = window.top.mantle_initialized;
-          isRunningIFrameInSameOrigin = true;
-        } catch (ignoredSameOriginPolicyViolation) {
-          // IFrame is running embedded in a web page in another domain
-          isRunningIFrameInSameOrigin = false;
-        }
-
-        this._isRunningIFrameInSameOrigin = isRunningIFrameInSameOrigin;
-
         if(isRunningIFrameInSameOrigin) {
           if (!top.mantle_initialized) {
             this._topMantleOpenTabRegistration = top.mantle_openTab = function(name, title, url) {
@@ -796,7 +790,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
         window.reportViewer_hide = this.hide.bind(this);
 
-        if(window.location.href.indexOf("/parameterUi") == -1 && window.top.mantle_addHandler) {
+        if(isRunningIFrameInSameOrigin && window.location.href.indexOf("/parameterUi") == -1 && window.top.mantle_addHandler) {
           // only in case when report is opened in tab('/viewer')
           this._handlerRegistration = window.top.mantle_addHandler("GenericEvent", this.onTabCloseEvent.bind(this));
         }
@@ -1005,7 +999,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         me._submitReportEnded(true);
         me.reportPrompt.api.operation.setParameterValue("query-limit", selectedLimit);
         me._hideDialogAndPane(registry.byId('feedbackScreen'));
-        if (window.top.mantle_removeHandler) {
+        if (isRunningIFrameInSameOrigin && window.top.mantle_removeHandler) {
           window.top.mantle_removeHandler(this._handlerRegistration);
         }
         me.view.updatePageControl();
@@ -1527,7 +1521,8 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
       return function (event) {
         if (event.eventSubType == 'locationPromptFinish') {
           me._currentReportUuid = event.stringParam;
-          if (window.top.mantle_removeHandler) {
+          //A paranoid check, must never be called if no mantle application is available
+          if (isRunningIFrameInSameOrigin && window.top.mantle_removeHandler) {
             if (me._locationPromptFinishHandlerRegistration) {
               window.top.mantle_removeHandler(me._locationPromptFinishHandlerRegistration);
             }
@@ -1579,7 +1574,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
       },
 
       _removeLocationPromptHandlers: function(){
-        if (window.top.mantle_removeHandler) {
+        if (isRunningIFrameInSameOrigin && window.top.mantle_removeHandler) {
           if(this._locationPromptCancelHandlerRegistration) {
             window.top.mantle_removeHandler(this._locationPromptCancelHandlerRegistration);
           }
@@ -1600,16 +1595,18 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
           registry.byId('feedbackScreen').hide();
           if (me.reportPrompt._promptForLocation) {
-
-            if(window.top.mantle_addHandler) {
-              me._locationPromptCancelHandlerRegistration = window.top.mantle_addHandler("GenericEvent",
-                  this._onLocationPromptCancel(mainReportGeneration, url).bind(this) );
-              me._locationPromptOkHandlerRegistration = window.top.mantle_addHandler("GenericEvent", this._onLocationPromptOk(mainReportGeneration, url).bind(this) );
-              me._locationPromptFinishHandlerRegistration = window.top.mantle_addHandler("GenericEvent", this._onLocationPromptFinish().bind(this));
+            //A paranoid check, must never be called if no mantle application is available
+            if (isRunningIFrameInSameOrigin) {
+              if (window.top.mantle_addHandler) {
+                me._locationPromptCancelHandlerRegistration = window.top.mantle_addHandler("GenericEvent",
+                    this._onLocationPromptCancel(mainReportGeneration, url).bind(this));
+                me._locationPromptOkHandlerRegistration = window.top.mantle_addHandler("GenericEvent", this._onLocationPromptOk(mainReportGeneration, url).bind(this));
+                me._locationPromptFinishHandlerRegistration = window.top.mantle_addHandler("GenericEvent", this._onLocationPromptFinish().bind(this));
+              }
+              //Open location prompt
+              me._locationPromptFinished = false;
+              window.top.executeCommand("AdhocRunInBackgroundCommand", me._buildParameter(pathArray, me._currentReportUuid));
             }
-            //Open location prompt
-            me._locationPromptFinished = false;
-            window.top.executeCommand("AdhocRunInBackgroundCommand", me._buildParameter(pathArray, me._currentReportUuid));
           }
         }.bind(me),
         //Cancel report
@@ -1633,15 +1630,18 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           autoScheduleDialogCallbacks = [
             function openPrompt() {
               autoScheduleDlg.hide();
-              if(window.top.mantle_addHandler) {
-                me._locationPromptCancelHandlerRegistration = window.top.mantle_addHandler("GenericEvent", this._onLocationPromptCancelAuto().bind(this) );
-                me._locationPromptOkHandlerRegistration = window.top.mantle_addHandler("GenericEvent", this._onLocationPromptOkAuto(mainReportGeneration, url).bind(this) );
-                me._locationPromptFinishHandlerRegistration = window.top.mantle_addHandler("GenericEvent", this._onLocationPromptFinish().bind(this));
-              }
+              if (isRunningIFrameInSameOrigin) {
+                if (window.top.mantle_addHandler) {
+                  me._locationPromptCancelHandlerRegistration = window.top.mantle_addHandler("GenericEvent", this._onLocationPromptCancelAuto().bind(this));
+                  me._locationPromptOkHandlerRegistration = window.top.mantle_addHandler("GenericEvent", this._onLocationPromptOkAuto(mainReportGeneration, url).bind(this));
+                  me._locationPromptFinishHandlerRegistration = window.top.mantle_addHandler("GenericEvent", this._onLocationPromptFinish().bind(this));
+                }
 
-              //Open location prompt
-              me._locationPromptFinished = false;
-              window.top.executeCommand("AdhocRunInBackgroundCommand", me._buildParameter(pathArray, me._currentReportUuid));
+
+                //Open location prompt
+                me._locationPromptFinished = false;
+                window.top.executeCommand("AdhocRunInBackgroundCommand", me._buildParameter(pathArray, me._currentReportUuid));
+              }
             }.bind(me),
             function cancel() {
               autoScheduleDlg.hide();
