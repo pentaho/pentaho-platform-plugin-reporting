@@ -396,16 +396,8 @@ define([
       },
 
       reauthenticate: function(f) {
-        var isRunningIFrameInSameOrigin = null;
-        try {
-          var ignoredCheckCanReachOutToParent = window.parent.mantle_initialized;
-          isRunningIFrameInSameOrigin = true;
-        } catch (ignoredSameOriginPolicyViolation) {
-          // IFrame is running embedded in a web page in another domain
-          isRunningIFrameInSameOrigin = false;
-        }
 
-        if(isRunningIFrameInSameOrigin && top.mantle_initialized) {
+        if(isRunningIFrameInSameOrigin) {
           var callback = {
             loginCallback : f
           }
@@ -466,7 +458,12 @@ define([
               this._isAsync = asyncConf.supportAsync;
               this._pollingInterval = asyncConf.pollingIntervalMilliseconds;
               this._dialogThreshold = asyncConf.dialogThresholdMilliseconds;
-              this._promptForLocation = asyncConf.promptForLocation;
+              //No location prompting if mantle application is unavailable
+              var isMantleAvailable = false;
+              if (isRunningIFrameInSameOrigin){
+                isMantleAvailable = window.top.executeCommand;
+              }
+              this._promptForLocation = asyncConf.promptForLocation && isMantleAvailable;
               this._defaultOutputPath = asyncConf.defaultOutputPath;
             } catch (ignored){
               //not async

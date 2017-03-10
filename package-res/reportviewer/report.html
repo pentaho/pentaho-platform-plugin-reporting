@@ -63,6 +63,16 @@
         window.parent.showLoadingIndicator();
       }
     } catch(ex) { } // Ignore "Same-origin policy" violation in embedded IFrame
+
+    var isRunningIFrameInSameOrigin = null;
+    try {
+      var ignoredCheckCanReachOutToParent = window.top.mantle_initialized;
+      isRunningIFrameInSameOrigin = true;
+    } catch (ignoredSameOriginPolicyViolation) {
+      // IFrame is running embedded in a web page in another domain
+      isRunningIFrameInSameOrigin = false;
+    }
+
   </script>
   <script type="text/javascript" src="../../../content/common-ui/resources/web/formatter/formatter.nocache.js"></script>
 
