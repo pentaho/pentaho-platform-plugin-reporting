@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2016 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2017 Pentaho Corporation..  All rights reserved.
  */
 
 define(["reportviewer/reportviewer", "reportviewer/reportviewer-logging", "reportviewer/reportviewer-prompt", "common-ui/jquery-clean",
@@ -27,10 +27,14 @@ define(["reportviewer/reportviewer", "reportviewer/reportviewer-logging", "repor
         var mockGlassPane = jasmine.createSpyObj("glassPane", ["show", "hide"]);
         mockGlassPane.id = "glassPane";
         registryMock.mock(mockGlassPane);
+        var messageBox = jasmine.createSpyObj("messageBox", ["setTitle", "setMessage", "setButtons", "show"]);
+        messageBox.id = "messageBox";
+        registryMock.mock(messageBox);
       });
 
       afterAll(function() {
         registryMock.unMock("glassPane");
+        registryMock.unMock("messageBox");
       });
 
       beforeEach(function() {
@@ -402,8 +406,6 @@ define(["reportviewer/reportviewer", "reportviewer/reportviewer-logging", "repor
 
           expect(reportViewer.reportPrompt.hideGlassPane).toHaveBeenCalled();
           expect(reportViewer.view.showPromptPanel).not.toHaveBeenCalled();
-          expect(domClass.add).not.toHaveBeenCalled();
-          expect(domClass.remove).not.toHaveBeenCalled();
         });
 
         it("should execute logic for scheduler dialog", function() {
