@@ -648,19 +648,62 @@ define([
           }
         } else {
           //Working with a plain parameter
-          //Already has a valid value
           if (param.values[0].value === value) {
+            //Already has a valid value
             return;
           } else {
             //Datepickers require some extra care
             if (param.attributes['parameter-render-type'] === 'datepicker') {
+              var parameterValueStr = param.values[0].value;
+              //A regular expression for a common timezone format like a +3000
+              var tzRegex = /^.*[+-]{1}\d{4}$/;
+              //A regular expression for a tricky timezone without like a +09.530 or a +12.7545
+              var trickyTimezoneRegex = /(^.*[+-]{1}\d{2})(\.5|\.75)(\d{2}$)/;
+              //A parameter timezone hint
+              var timezoneHint = param.timezoneHint;
 
-              if (param.timezoneHint) {
-                value = value + param.timezoneHint.slice(1);
+
+              var processTimezone = function (processingValue) {
+                //Is a timezone present in a value?
+                var matchesArr = processingValue.match(tzRegex);
+                if (matchesArr && matchesArr.length > 0) {
+                  //A common timezone format
+                  return processingValue;
+                }
+                matchesArr = processingValue.match(trickyTimezoneRegex);
+                if (matchesArr && matchesArr.length === 4) {
+                  //A tricky timezone format
+                  return matchesArr[1] + matchesArr[3];
+                }
+
+                //Timezone is not found in a value, check the hint
+                if (timezoneHint) {
+                  //Timezone hint is present, apply it
+                  return processingValue + timezoneHint.slice(1);
+                }
+
+                //Nothing to do here
+                return processingValue;
+              };
+
+              value = processTimezone(value);
+              parameterValueStr = processTimezone(parameterValueStr);
+
+              //Erase seconds and milliseconds, minutes are needed to represent a timezone
+              var dtValue = new Date(value);
+              dtValue.setMilliseconds(0);
+              dtValue.setSeconds(0);
+
+              var dtParamValue = new Date(parameterValueStr);
+              dtParamValue.setMilliseconds(0);
+              dtParamValue.setSeconds(0);
+
+              if (isNaN(dtValue.getTime()) || isNaN(dtParamValue.getTime())) {
+                //Something went wrong we have an invalid date - don't loop the UI anyway
+                return;
               }
 
-              //We are comparing only the date, not the time
-              if ((new Date(value).setHours(0, 0, 0, 0)) === (new Date(param.values[0].value).setHours(0, 0, 0, 0))) {
+              if (dtValue.getTime() === dtParamValue.getTime()) {
                 //Already has a valid value
                 return;
               }
