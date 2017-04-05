@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2017 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2016-2017 Pentaho Corporation..  All rights reserved.
  */
 
 define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging", "common-ui/jquery-clean",
@@ -319,6 +319,216 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
           reportPrompt.togglePageControl();
           expect(domClass.add).toHaveBeenCalledWith(pageControlWidget.domNode, "hidden");
           expect(domClass.add).toHaveBeenCalledWith(toolBarSeparatorWidget.domNode, "hidden");
+        });
+
+      });
+
+      describe("should respect formula values on user selections", function () {
+
+        it("should not do anything if the values are empty", function () {
+          var param = {};
+          reportPrompt._applyUserInput("anyname", "test", param);
+          expect(reportPrompt.forceUpdate).toBe(undefined);
+          reportPrompt._applyUserInput("anyname", "test", {values: []});
+          expect(param.forceUpdate).toBe(undefined);
+        });
+
+        it("should not force an update if the plaintext value is not changed", function () {
+          var param = {values: [{value: "test"}]};
+          reportPrompt._applyUserInput("anyname", "test", param);
+          expect(param.forceUpdate).toBe(undefined);
+        });
+
+        it("should not force an update if the single selection value is not changed", function () {
+          var param = {values: [{value: "test", selected: true}, {value: "test1"}]};
+          reportPrompt._applyUserInput("anyname", "test", param);
+          expect(reportPrompt.forceUpdate).toBe(undefined);
+        });
+
+        it("should not force an update if the multiple selection value is not changed", function () {
+          var parameter = {
+            values: [
+              {value: "test", selected: true},
+              {value: "test1", selected: true},
+              {value: "test2"}
+            ]
+          };
+          reportPrompt._applyUserInput("anyname", ["test", "test1"], parameter);
+          expect(parameter.forceUpdate).toBe(undefined);
+        });
+
+        it("should force an update if the plaintext value is changed", function () {
+          var param = {values: [{value: "test"}], attributes: {}};
+          reportPrompt._applyUserInput("anyname", "test1", param);
+          expect(param.forceUpdate).toBe(true);
+        });
+
+        it("should force an update if the single selection value is changed", function () {
+          var param = {values: [{value: "test", selected: true}, {value: "test1"}]};
+          reportPrompt._applyUserInput("anyname", "test1", param);
+          expect(param.forceUpdate).toBe(true);
+        });
+
+        it("should force an update if the multiple selection value is changed", function () {
+          var parameter = {
+            values: [
+              {value: "test", selected: true},
+              {value: "test1", selected: true},
+              {value: "test2"}
+            ]
+          };
+          reportPrompt._applyUserInput("anyname", ["test", "test2"], parameter);
+          expect(parameter.forceUpdate).toBe(true);
+        });
+
+        it("should force an update if the multiple selection value has different number of selections", function () {
+          var parameter = {
+            values: [
+              {value: "test", selected: true},
+              {value: "test1", selected: true},
+              {value: "test2"}
+            ]
+          };
+          reportPrompt._applyUserInput("anyname", ["test"], parameter);
+          expect(parameter.forceUpdate).toBe(true);
+          var parameter = {
+            values: [
+              {value: "test", selected: true},
+              {value: "test1", selected: true},
+              {value: "test2"}
+            ]
+          };
+          reportPrompt._applyUserInput("anyname", ["test", "test1", "test2"], parameter);
+          expect(parameter.forceUpdate).toBe(true);
+        });
+
+        //This is true because if a string representation is matcheing then no timezone hints can affect the final result
+        it("should treat a matching datepicker values as plaintext", function () {
+          var param = {values: [{value: "2017-01-01"}], attributes: {"parameter-render-type": "datepicker"}};
+          reportPrompt._applyUserInput("anyname", "2017-01-01", param);
+          expect(param.forceUpdate).toBe(undefined);
+          var param = {
+            values: [{value: "2017-01-01T11:00:00.000"}],
+            attributes: {"parameter-render-type": "datepicker"}
+          };
+          reportPrompt._applyUserInput("anyname", "2017-01-01T11:00:00.000", param);
+          expect(param.forceUpdate).toBe(undefined);
+          var param = {values: [{value: "2017-01-01"}], attributes: {"parameter-render-type": "datepicker"}};
+          reportPrompt._applyUserInput("anyname", "2017-01-01", param);
+          expect(param.forceUpdate).toBe(undefined);
+          var param = {
+            values: [{value: "2017-01-01T11:00:00.000+1100"}],
+            attributes: {"parameter-render-type": "datepicker"}
+          };
+          reportPrompt._applyUserInput("anyname", "2017-01-01T11:00:00.000+1100", param);
+          expect(param.forceUpdate).toBe(undefined);
+          var param = {
+            values: [{value: "2017-01-01T11:00:00.000+09.530"}],
+            attributes: {"parameter-render-type": "datepicker"}
+          };
+          reportPrompt._applyUserInput("anyname", "2017-01-01T11:00:00.000+09.530", param);
+          expect(param.forceUpdate).toBe(undefined);
+        });
+
+        it("should not force an update if the datepicker value is not changed, different timezones", function () {
+          var param = {
+            values: [{value: "2017-01-01T11:00:00.000-0100"}],
+            attributes: {"parameter-render-type": "datepicker"}
+          };
+          reportPrompt._applyUserInput("anyname", "2017-01-01T10:00:00.000-0200", param);
+          expect(param.forceUpdate).toBe(undefined);
+        });
+
+        it("should not force an update if the datepicker value is not changed, no timezone", function () {
+          var param = {
+            values: [{value: "2017-01-01T11:00:00.000-0100"}],
+            attributes: {"parameter-render-type": "datepicker"},
+            timezoneHint: "/-0100"
+          };
+          reportPrompt._applyUserInput("anyname", "2017-01-01T11:00:00.000", param);
+          expect(param.forceUpdate).toBe(undefined);
+        });
+
+        it("should not force an update if the datepicker value is not changed, a timezone and a hint", function () {
+          var param = {
+            values: [{value: "2017-01-01T11:00:00.000-0100"}],
+            attributes: {"parameter-render-type": "datepicker", timezoneHint: "/-0100"}
+          };
+          reportPrompt._applyUserInput("anyname", "2017-01-01T10:00:00.000-0200", param);
+          expect(param.forceUpdate).toBe(undefined);
+        });
+
+        it("should not force an update if the datepicker value is not changed, Ausie timezone and a hint", function () {
+          var param = {
+            values: [{value: "2017-01-01T11:00:00.000+0930"}],
+            attributes: {"parameter-render-type": "datepicker"},
+            timezoneHint: "/-0100"
+          };
+          reportPrompt._applyUserInput("anyname", "2017-01-01T11:00:00.000+09.530", param);
+          expect(param.forceUpdate).toBe(undefined);
+        });
+
+        it("should not force an update if the datepicker value is not changed, Mauri timezone and a hint", function () {
+          var param = {
+            values: [{value: "2017-01-01T11:00:00.000+1145"}],
+            attributes: {"parameter-render-type": "datepicker"},
+            timezoneHint: "/-0100"
+          };
+          reportPrompt._applyUserInput("anyname", "2017-01-01T11:00:00.000+11.7545", param);
+          expect(param.forceUpdate).toBe(undefined);
+        });
+
+        it("should not force an update if only seconds and milliseconds changed", function () {
+          var param = {
+            values: [{value: "2017-01-01T00:0:44.010"}],
+            attributes: {"parameter-render-type": "datepicker"}
+          };
+          reportPrompt._applyUserInput("anyname", "2017-01-01T11:00:00.000", param);
+          expect(param.forceUpdate).toBe(undefined);
+        });
+
+        it("should force an update if the date changed, no hint", function () {
+          var param = {
+            values: [{value: "2017-01-01T11:00:00.000"}],
+            attributes: {"parameter-render-type": "datepicker"}
+          };
+          reportPrompt._applyUserInput("anyname", "2017-01-02T11:00:00.000", param);
+          expect(param.forceUpdate).toBe(true);
+          var param = {
+            values: [{value: "2017-01-01T00:00:00.000"}],
+            attributes: {"parameter-render-type": "datepicker"}
+          };
+          reportPrompt._applyUserInput("anyname", "2017-01-02T11:00:00.000", param);
+          expect(param.forceUpdate).toBe(true);
+          var param = {
+            values: [{value: "2017-01-01T00:01:00.000"}],
+            attributes: {"parameter-render-type": "datepicker"}
+          };
+          reportPrompt._applyUserInput("anyname", "2017-01-01T11:00:00.000", param);
+          expect(param.forceUpdate).toBe(true);
+        });
+
+        it("should force an update same time, timezones changed", function () {
+          var param = {
+            values: [{value: "2017-01-01T00:00:00.000-0100"}],
+            attributes: {"parameter-render-type": "datepicker"}
+          };
+          reportPrompt._applyUserInput("anyname", "2017-01-01T00:00:00.000+0100", param);
+          setTimeout(500, function () {
+            expect(param.forceUpdate).toBe(true)
+          });
+        });
+
+        it("should force an update same time, timezones different, hint is present", function () {
+          var param = {
+            values: [{value: "2017-01-01T00:00:00.000-0100"}],
+            attributes: {"parameter-render-type": "datepicker"},
+            timezoneHint: "/-0100"
+          };
+          reportPrompt._applyUserInput("anyname", "2017-01-01T00:00:00.000+0100", param);
+          setTimeout(500, function () {
+            expect(param.forceUpdate).toBe(true)
+          });
         });
 
       });
