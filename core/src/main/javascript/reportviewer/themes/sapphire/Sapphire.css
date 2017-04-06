@@ -102,7 +102,6 @@ div.prompt-panel div.parameter-label.parameter-label {
 #reportControlPanel select {
   overflow-y: auto;
   margin-bottom: 10px;
-  padding: 0 10px;
   line-height: 22px;
 }
 
