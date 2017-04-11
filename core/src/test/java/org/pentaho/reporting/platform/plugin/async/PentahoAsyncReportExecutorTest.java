@@ -18,8 +18,8 @@
 
 package org.pentaho.reporting.platform.plugin.async;
 
+import com.google.common.io.CharStreams;
 import junit.framework.Assert;
-import org.apache.poi.util.IOUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -54,6 +54,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -175,7 +176,7 @@ public class PentahoAsyncReportExecutorTest {
     }
     IFixedSizeStreamingContent resultInput = result.get();
 
-    String actual = new String( IOUtils.toByteArray( input.getStream() ) );
+    String actual = new String(CharStreams.toString( new InputStreamReader( input.getStream()) )) ;
 
     assertEquals( MAGIC, actual );
   }
