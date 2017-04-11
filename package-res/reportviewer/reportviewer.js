@@ -740,7 +740,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           if (this._glassPaneListenerRegistration) {
             top.removeGlassPaneListenerById(this._glassPaneListenerRegistration);
           }
-          if (parent.pho && parent.pho.dashboard && parent.pho.dashboards.removeEditContentToggledListener) {
+          if (parent.pho && parent.pho.dashboards && parent.pho.dashboards.removeEditContentToggledListener) {
             parent.pho.dashboards.removeEditContentToggledListener(this._editModeToggledHandler);
           }
         }
