@@ -12,7 +12,7 @@
 * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 * See the GNU Lesser General Public License for more details.
 *
-* Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
+* Copyright (c) 2002-2017 Pentaho Corporation..  All rights reserved.
 */
 
 /**
@@ -651,7 +651,7 @@ define(function() {
       if (hours < 10) {
         offset += '0';
       }
-      offset += hours;
+      offset += Math.floor(hours);
       if (minutes < 10) {
         offset += '0';
       }
