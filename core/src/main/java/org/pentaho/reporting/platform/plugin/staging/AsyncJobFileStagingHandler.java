@@ -13,7 +13,7 @@
  * See the GNU General Public License for more details.
  *
  *
- * Copyright 2006 - 2016 Pentaho Corporation.  All rights reserved.
+ * Copyright 2006 - 2017 Pentaho Corporation.  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin.staging;
@@ -23,9 +23,11 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.pentaho.platform.api.engine.IApplicationContext;
 import org.pentaho.platform.api.engine.IPentahoSession;
+import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.util.UUIDUtil;
 import org.pentaho.reporting.libraries.base.util.ArgumentNullException;
+import org.pentaho.platform.api.util.ITempFileDeleter;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -85,7 +87,16 @@ public class AsyncJobFileStagingHandler {
     }
     final Path tempFilePath = stagingExecutionFolder.resolve( UUIDUtil.getUUIDAsString() + POSTFIX );
     tmpFile = tempFilePath.toFile();
-    tmpFile.deleteOnExit();
+    final IPentahoSession session = PentahoSessionHolder.getSession();
+    ITempFileDeleter deleter = null;
+    if ( session != null ) {
+      deleter = (ITempFileDeleter) session.getAttribute( ITempFileDeleter.DELETER_SESSION_VARIABLE );
+    }
+    if ( deleter != null ) {
+      deleter.trackTempFile( tmpFile );
+    } else {
+      tmpFile.deleteOnExit();
+    }
 
     fileTrackingStream = new BufferedOutputStream( new FileOutputStream( tmpFile ) );
   }
