@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2017 Pentaho Corporation..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin.repository;
@@ -20,8 +20,11 @@ package org.pentaho.reporting.platform.plugin.repository;
 import java.io.File;
 import java.io.IOException;
 
-import org.pentaho.platform.api.util.ITempFileDeleter;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
+import org.pentaho.platform.api.engine.IPentahoSession;
+import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
+import org.pentaho.platform.api.engine.IApplicationContext;
+
 import org.pentaho.reporting.libraries.repository.ContentIOException;
 import org.pentaho.reporting.libraries.repository.ContentLocation;
 import org.pentaho.reporting.libraries.repository.DefaultNameGenerator;
@@ -70,13 +73,9 @@ public class TempDirectoryNameGenerator implements PentahoNameGenerator {
     }
     final String suffix = mimeRegistry.getSuffix( mimeType );
     try {
-      final File tempFile = File.createTempFile( nameHint, "." + suffix, targetDirectory );
-      if ( safeToDelete ) {
-        final ITempFileDeleter deleter = PentahoSystem.get( ITempFileDeleter.class );
-        if ( deleter != null ) {
-          deleter.trackTempFile( tempFile );
-        }
-      }
+      final IApplicationContext appCtx = PentahoSystem.getApplicationContext(); // Use the deleter functionality in the application context
+      final IPentahoSession userSession = PentahoSessionHolder.getSession();
+      final File tempFile = appCtx.createTempFile( userSession, nameHint, "." + suffix, safeToDelete );
       return tempFile.getName();
     } catch ( IOException e ) {
       throw new ContentIOException( "Unable to generate a name for the data file", e );
