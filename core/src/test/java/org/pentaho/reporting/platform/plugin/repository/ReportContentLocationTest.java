@@ -12,11 +12,12 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2017 Pentaho Corporation..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin.repository;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
@@ -28,6 +29,7 @@ import org.pentaho.reporting.libraries.repository.ContentIOException;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.UUID;
 
 import static org.junit.Assert.*;
@@ -170,6 +172,16 @@ public class ReportContentLocationTest {
     assertNotNull( test );
     assertEquals( value, test.getName() );
 
+  }
+
+  @Test
+  public void testCreateItem() throws Exception {
+    final HashMap<String, Serializable> metadata = new HashMap<>();
+    when( repository.getFile( anyString() ) ).thenReturn( repositoryFile );
+    when( repository.getFileMetadata( any() ) ).thenReturn( metadata );
+    when( repositoryFile.getPath() ).thenReturn( "/testPath" );
+    reportContentLocation.createItem( "testName" );
+    Assert.assertTrue( repository.getFileMetadata( repositoryFile.getId() ).containsKey( ReportContentLocation.RESERVEDMAPKEY_LINEAGE_ID ) );
   }
 
 }
