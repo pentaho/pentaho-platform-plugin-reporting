@@ -12,14 +12,17 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2017 Pentaho Corporation..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin.repository;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.UUID;
 
 import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
 import org.pentaho.platform.api.repository2.unified.RepositoryFile;
@@ -45,6 +48,7 @@ public class ReportContentLocation implements ContentLocation {
 
   private ReportContentRepository repository;
   private String[] hiddenExtensions = { ".jpe", ".jpeg", ".jpg", ".png", ".css" };
+  public static final String RESERVEDMAPKEY_LINEAGE_ID = "lineage-id";
 
   public ReportContentLocation( final RepositoryFile location, final ReportContentRepository repository ) {
     if ( location == null ) {
@@ -99,6 +103,12 @@ public class ReportContentLocation implements ContentLocation {
         throw new ContentCreationException( e.getMessage(), e );
       }
     }
+    // We need to add RESERVEDMAPKEY_LINEAGE_ID to the generated file's meta, in order to find and delete it in
+    // org.pentaho.platform.admin.GeneratedContentCleaner.findGeneratedContent()
+    // see http://jira.pentaho.com/browse/BISERVER-12930 for more details.
+    Map<String, Serializable> meta = repo.getFileMetadata( repo.getFile( path ).getId() );
+    meta.put( RESERVEDMAPKEY_LINEAGE_ID, UUID.randomUUID().toString() );
+    repo.setFileMetadata( repo.getFile( path ).getId(), meta );
     return new ReportContentItem( repo.getFile( path ), this, mimeType );
   }
 

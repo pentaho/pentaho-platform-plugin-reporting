@@ -12,79 +12,176 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2015 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2017 Pentaho Corporation..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin.repository;
 
-import junit.framework.TestCase;
+import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Test;
+import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
 import org.pentaho.platform.api.repository2.unified.RepositoryFile;
+import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.libraries.repository.ContentCreationException;
+import org.pentaho.reporting.libraries.repository.ContentEntity;
+import org.pentaho.reporting.libraries.repository.ContentIOException;
 
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.UUID;
 
-public class ReportContentLocationTest extends TestCase {
+import org.mockito.Matchers;
+import org.mockito.Mockito;
+
+public class ReportContentLocationTest {
   ReportContentRepository reportContentRepository;
   RepositoryFile repositoryFile;
   ReportContentLocation reportContentLocation;
+  IUnifiedRepository repository;
 
   @Before
-  protected void setUp() throws Exception {
-    repositoryFile = mock( RepositoryFile.class );
-    doReturn( "contentId" ).when( repositoryFile ).getId();
-    doReturn( "contentName" ).when( repositoryFile ).getName();
-    doReturn( "version" ).when( repositoryFile ).getVersionId();
-    reportContentRepository = mock( ReportContentRepository.class );
+  public void setUp() throws Exception {
+    PentahoSystem.shutdown();
+    repositoryFile = Mockito.mock( RepositoryFile.class );
+    Mockito.doReturn( "contentId" ).when( repositoryFile ).getId();
+    Mockito.doReturn( "contentName" ).when( repositoryFile ).getName();
+    Mockito.doReturn( "version" ).when( repositoryFile ).getVersionId();
+    reportContentRepository = Mockito.mock( ReportContentRepository.class );
     reportContentLocation = new ReportContentLocation( repositoryFile, reportContentRepository );
+    repository = Mockito.mock( IUnifiedRepository.class );
+    PentahoSystem.registerObject( repository, IUnifiedRepository.class );
   }
 
+  @Test
   public void testIsHiddenExtension() throws Exception {
-    assertTrue( reportContentLocation.isHiddenExtension( ".jpe" ) );
-    assertTrue( reportContentLocation.isHiddenExtension( ".jpeg" ) );
-    assertTrue( reportContentLocation.isHiddenExtension( ".jpg" ) );
-    assertTrue( reportContentLocation.isHiddenExtension( ".png" ) );
-    assertTrue( reportContentLocation.isHiddenExtension( ".css" ) );
-    assertFalse( reportContentLocation.isHiddenExtension( "" ) );
+    Assert.assertTrue( reportContentLocation.isHiddenExtension( ".jpe" ) );
+    Assert.assertTrue( reportContentLocation.isHiddenExtension( ".jpeg" ) );
+    Assert.assertTrue( reportContentLocation.isHiddenExtension( ".jpg" ) );
+    Assert.assertTrue( reportContentLocation.isHiddenExtension( ".png" ) );
+    Assert.assertTrue( reportContentLocation.isHiddenExtension( ".css" ) );
+    Assert.assertFalse( reportContentLocation.isHiddenExtension( "" ) );
   }
 
+  @Test
   public void testDelete() throws Exception {
-    assertFalse( reportContentLocation.delete() );
+    Assert.assertFalse( reportContentLocation.delete() );
   }
 
+  @Test
   public void testGetParent() throws Exception {
-    assertNull( reportContentLocation.getParent() );
+    Assert.assertNull( reportContentLocation.getParent() );
   }
 
+  @Test
   public void testGetRepository() throws Exception {
-    assertEquals( reportContentRepository, reportContentLocation.getRepository() );
+    Assert.assertEquals( reportContentRepository, reportContentLocation.getRepository() );
   }
 
+  @Test
   public void testSetAttribute() throws Exception {
-    assertFalse( reportContentLocation.setAttribute( "", "", null ) );
+    Assert.assertFalse( reportContentLocation.setAttribute( "", "", null ) );
   }
 
+  @Test
   public void testCreateLocation() throws Exception {
     try {
       reportContentLocation.createLocation( "" );
     } catch ( ContentCreationException ex ) {
-      assertTrue( true );
+      Assert.assertTrue( true );
     }
   }
 
+  @Test
   public void testGetName() throws Exception {
-    assertEquals( "contentName", reportContentLocation.getName() );
+    Assert.assertEquals( "contentName", reportContentLocation.getName() );
   }
 
+  @Test
   public void testGetContentId() throws Exception {
-    assertEquals( "contentId", reportContentLocation.getContentId() );
+    Assert.assertEquals( "contentId", reportContentLocation.getContentId() );
   }
 
+  @Test
   public void testGetAttribute() throws Exception {
-    assertEquals( null, reportContentLocation.getAttribute( "", "" ) );
-    assertEquals( null, reportContentLocation.getAttribute( "org.jfree.repository", "" ) );
-    assertEquals( null, reportContentLocation.getAttribute( "", "version" ) );
-    assertEquals( "version", reportContentLocation.getAttribute( "org.jfree.repository", "version" ) );
+    Assert.assertEquals( null, reportContentLocation.getAttribute( "", "" ) );
+    Assert.assertEquals( null, reportContentLocation.getAttribute( "org.jfree.repository", "" ) );
+    Assert.assertEquals( null, reportContentLocation.getAttribute( "", "version" ) );
+    Assert.assertEquals( "version", reportContentLocation.getAttribute( "org.jfree.repository", "version" ) );
   }
+
+  @Test( expected = NullPointerException.class )
+  public void testNullRepo() {
+    new ReportContentLocation( Mockito.mock( RepositoryFile.class ), null );
+  }
+
+  @Test( expected = NullPointerException.class )
+  public void testNullLocation() {
+    new ReportContentLocation( null, Mockito.mock( ReportContentRepository.class ) );
+  }
+
+
+  @Test
+  public void testList() throws ContentIOException {
+
+
+    final ArrayList<RepositoryFile> repositoryFiles = new ArrayList<>();
+    final RepositoryFile repositoryFile = Mockito.mock( RepositoryFile.class );
+    final String value = UUID.randomUUID().toString();
+    Mockito.when( repositoryFile.getName() ).thenReturn( value );
+    repositoryFiles.add( repositoryFile );
+    Mockito.when( repository.getChildren( Matchers.any( Serializable.class ) ) ).thenReturn( repositoryFiles );
+
+    final ReportContentLocation reportContentLocation =
+            new ReportContentLocation( this.repositoryFile, reportContentRepository );
+
+    final ContentEntity[] contentEntities = reportContentLocation.listContents();
+
+    Assert.assertNotNull( contentEntities );
+    Assert.assertEquals( 1, contentEntities.length );
+    Assert.assertEquals( value, contentEntities[ 0 ].getName() );
+  }
+
+
+  @Test( expected = ContentIOException.class )
+  public void testGetEntryNotExist() throws ContentIOException {
+
+    final ReportContentLocation reportContentLocation =
+            new ReportContentLocation( this.repositoryFile, reportContentRepository );
+
+    reportContentLocation.getEntry( "test" );
+  }
+
+  @Test
+  public void testGetEntry() throws ContentIOException {
+
+
+    final RepositoryFile repositoryFile = Mockito.mock( RepositoryFile.class );
+    final String value = UUID.randomUUID().toString();
+    Mockito.when( repositoryFile.getName() ).thenReturn( value );
+
+    Mockito.when( repository.getFile( "null/test" ) ).thenReturn( repositoryFile );
+
+    final ReportContentLocation reportContentLocation =
+            new ReportContentLocation( this.repositoryFile, reportContentRepository );
+
+    final ContentEntity test = reportContentLocation.getEntry( "test" );
+
+    Assert.assertNotNull( test );
+    Assert.assertEquals( value, test.getName() );
+
+  }
+
+  @Test
+  public void testCreateItem() throws Exception {
+    final HashMap<String, Serializable> metadata = new HashMap<>();
+    Mockito.when( repository.getFile( Matchers.anyString() ) ).thenReturn( repositoryFile );
+    Mockito.when( repository.getFileMetadata( Matchers.any( Class.class ) ) ).thenReturn( metadata );
+    Mockito.when( repositoryFile.getPath() ).thenReturn( "/testPath" );
+    reportContentLocation.createItem( "testName" );
+    Assert.assertTrue( repository.getFileMetadata( repositoryFile.getId() ).containsKey( ReportContentLocation.RESERVEDMAPKEY_LINEAGE_ID ) );
+  }
+
 }
+
