@@ -896,6 +896,7 @@ public class ParameterXmlContentHandler {
         final Element valuesElement = document.createElement( "values" ); //$NON-NLS-1$
         parameterElement.appendChild( valuesElement );
 
+        boolean valuesContainDateType = false;
         final ParameterValues possibleValues = asListParam.getValues( parameterContext );
         for ( int i = 0; i < possibleValues.getRowCount(); i++ ) {
           Object key = possibleValues.getKeyValue( i );
@@ -924,6 +925,13 @@ public class ParameterXmlContentHandler {
             valueElement.setAttribute( "selected",
               String.valueOf( selectionSet.contains( new Date( origKey.getTime() ) ) ) ); //$NON-NLS-1$
             handledValues.remove( key );
+          } else if ( key instanceof Date ) {
+            final Date origKey = (Date) possibleValues.getKeyValue( i );
+            valuesContainDateType = true;
+            valueElement.setAttribute( "selected",
+                    String.valueOf( selectionSet.contains( new Date( origKey.getTime() ) ) ) ); //$NON-NLS-1$
+            valueElement.setAttribute( "type", Date.class.getName() ); //$NON-NLS-1$
+            handledValues.remove( key );
           } else if ( key == null ) {
             if ( ( selections == null ) || selectionSet.contains( null ) ) {
               valueElement.setAttribute( "selected", "true" ); //$NON-NLS-1$
@@ -935,12 +943,19 @@ public class ParameterXmlContentHandler {
             valueElement.setAttribute( "selected", String.valueOf( selectionSet.contains( origKey ) ) ); //$NON-NLS-1$
             handledValues.remove( key );
           }
+
           if ( key == null ) {
             valueElement.setAttribute( "null", "true" ); //$NON-NLS-1$ //$NON-NLS-2$
           } else {
             valueElement.setAttribute( "null", "false" ); //$NON-NLS-1$ //$NON-NLS-2$
-            valueElement.setAttribute( "value", convertParameterValueToString( parameter, parameterContext, key,
-              elementValueType ) ); //$NON-NLS-1$ //$NON-NLS-2$
+            if ( valuesContainDateType ) {
+              parameterElement.setAttribute( "type", Date.class.getName() ); //$NON-NLS-1$
+              valueElement.setAttribute( "value", convertParameterValueToString( parameter, parameterContext, key,
+                      Date.class ) ); //$NON-NLS-1$ //$NON-NLS-2$
+            } else {
+              valueElement.setAttribute( "value", convertParameterValueToString( parameter, parameterContext, key,
+                      elementValueType ) ); //$NON-NLS-1$ //$NON-NLS-2$
+            }
           }
 
         }
