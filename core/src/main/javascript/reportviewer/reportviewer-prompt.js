@@ -91,7 +91,14 @@ define([
 
         $.each(oldParameterSet, function (i, parameter) {
           if (currentParameterSet.hasOwnProperty(parameter.name)) {
-            if(JSON.stringify(parameter.value.toString()) !== JSON.stringify(currentParameterSet[parameter.name].toString())) {
+            var oldValue = parameter.value.toString();
+            var currentValue = currentParameterSet[parameter.name].toString();
+            if (parameter.parameterRenderType && parameter.parameterRenderType === 'datepicker') {
+              if (!this._compareDatesOnly(oldValue, currentValue, parameter.timezoneHint)) {
+                // add to changed
+                changedParameters.push(parameter.name);
+              }
+            } else if(JSON.stringify(oldValue) !== JSON.stringify(currentValue)) {
               // add to changed
               changedParameters.push(parameter.name);
             }
@@ -99,7 +106,7 @@ define([
             // add to changed
             changedParameters.push(parameter.name);
           }
-        });
+        }.bind(this));
 
         for (var parameter in currentParameterSet) {
           if (oldParameterSet && !oldParameterSet.hasOwnProperty(parameter)) {
@@ -115,20 +122,20 @@ define([
         $.each(paramDefn.parameterGroups, function (i, group) {
           var parameters = group.parameters;
           for(var i=0; i<parameters.length; i++) {
-            if(parameters[i].multiSelect && parameters[i].getSelectedValuesValue().length > 0) {
-              extractedParameters[parameters[i].name] = { 
-                value: parameters[i].getSelectedValuesValue(),
-                group: group.name,
-                name: parameters[i].name
-              };
-            } else {
-              if(parameters[i].getSelectedValuesValue().length > 0) {
-                extractedParameters[parameters[i].name] = {
-                  value: parameters[i].getSelectedValuesValue()[0],
-                  group: group.name,
-                  name: parameters[i].name
-                };
+            if (parameters[i].getSelectedValuesValue().length > 0) {
+              var value;
+              if (parameters[i].multiSelect) {
+                value = parameters[i].getSelectedValuesValue();
+              } else {
+                value = parameters[i].getSelectedValuesValue()[0];
               }
+              extractedParameters[parameters[i].name] = {
+                value: value,
+                group: group.name,
+                name: parameters[i].name,
+                parameterRenderType: parameters[i].attributes['parameter-render-type'],
+                timezoneHint: parameters[i].timezoneHint
+              };
             }
           }
         });
@@ -247,7 +254,7 @@ define([
               this._isReportHtmlPagebleOutputFormat = outputFormat.indexOf('table/html;page-mode=page') !== -1;
               this.togglePageControl();
             } catch (ignored) {
-            }           
+            }
 
             // A first request is made with promptMode='INITIAL' and renderMode='PARAMETER'.
             //
@@ -313,7 +320,7 @@ define([
 
           this.fetchParameterDefinition(paramDefnCallback.bind(this), this.mode, needToUpdate);
         }.bind(this));
-        this.api.event.parameterChanged(this._applyUserInput);
+        this.api.event.parameterChanged(this._applyUserInput.bind(this));
        },
 
       _createPromptPanelFetchCallback: _.once(function(paramDefn) {
@@ -654,66 +661,70 @@ define([
           } else {
             //Datepickers require some extra care
             if (param.attributes['parameter-render-type'] === 'datepicker') {
-              var parameterValueStr = param.values[0].value;
-              //A regular expression for a common timezone format like a +3000
-              var tzRegex = /^.*[+-]{1}\d{4}$/;
-              //A regular expression for a tricky timezone without like a +09.530 or a +12.7545
-              var trickyTimezoneRegex = /(^.*[+-]{1}\d{2})(\.5|\.75)(\d{2}$)/;
-              //A parameter timezone hint
-              var timezoneHint = param.timezoneHint;
-
-
-              var processTimezone = function (processingValue) {
-                //Is a timezone present in a value?
-                var matchesArr = processingValue.match(tzRegex);
-                if (matchesArr && matchesArr.length > 0) {
-                  //A common timezone format
-                  return processingValue;
-                }
-                matchesArr = processingValue.match(trickyTimezoneRegex);
-                if (matchesArr && matchesArr.length === 4) {
-                  //A tricky timezone format
-                  return matchesArr[1] + matchesArr[3];
-                }
-
-                //Timezone is not found in a value, check the hint
-                if (timezoneHint) {
-                  //Timezone hint is present, apply it
-                  return processingValue + timezoneHint.slice(1);
-                }
-
-                //Nothing to do here
-                return processingValue;
-              };
-
-              value = processTimezone(value);
-              parameterValueStr = processTimezone(parameterValueStr);
-
-              //Erase seconds and milliseconds, minutes are needed to represent a timezone
-              var dtValue = new Date(value);
-              dtValue.setMilliseconds(0);
-              dtValue.setSeconds(0);
-
-              var dtParamValue = new Date(parameterValueStr);
-              dtParamValue.setMilliseconds(0);
-              dtParamValue.setSeconds(0);
-
-              if (isNaN(dtValue.getTime()) || isNaN(dtParamValue.getTime())) {
-                //Something went wrong we have an invalid date - don't loop the UI anyway
+              if (this._compareDatesOnly(param.values[0].value, value, param.timezoneHint)) {
                 return;
               }
-
-              if (dtValue.getTime() === dtParamValue.getTime()) {
-                //Already has a valid value
-                return;
-              }
-
             }
             //Need to update the value and request a parameter component refresh
             param.values[0].value = value;
             param.forceUpdate = true;
           }
         }
+      },
+
+      _compareDatesOnly: function (oldValue, newValue, timezoneHint) {
+          //A regular expression for a common timezone format like a +3000
+          var tzRegex = /^.*[+-]{1}\d{4}$/;
+          //A regular expression for a tricky timezone without like a +09.530 or a +12.7545
+          var trickyTimezoneRegex = /(^.*[+-]{1}\d{2})(\.5|\.75)(\d{2}$)/;
+
+
+          var processTimezone = function (processingValue) {
+            //Is a timezone present in a value?
+            var matchesArr = processingValue.match(tzRegex);
+            if (matchesArr && matchesArr.length > 0) {
+              //A common timezone format
+              return processingValue;
+            }
+            matchesArr = processingValue.match(trickyTimezoneRegex);
+            if (matchesArr && matchesArr.length === 4) {
+              //A tricky timezone format
+              return matchesArr[1] + matchesArr[3];
+            }
+
+            //Timezone is not found in a value, check the hint
+            if (timezoneHint) {
+              //Timezone hint is present, apply it
+              return processingValue + timezoneHint.slice(1);
+            }
+
+            //Nothing to do here
+            return processingValue;
+          };
+
+          oldValue = processTimezone(oldValue);
+          newValue = processTimezone(newValue);
+
+          //Erase seconds and milliseconds, minutes are needed to represent a timezone
+          var dtValue = new Date(oldValue);
+          dtValue.setMilliseconds(0);
+          dtValue.setSeconds(0);
+
+          var dtParamValue = new Date(newValue);
+          dtParamValue.setMilliseconds(0);
+          dtParamValue.setSeconds(0);
+
+          if (isNaN(dtValue.getTime()) || isNaN(dtParamValue.getTime())) {
+            //Something went wrong we have an invalid date - don't loop the UI anyway
+            return true;
+          }
+
+          if (dtValue.getTime() === dtParamValue.getTime()) {
+            //Already has a valid value
+            return true;
+          }
+
+          return false;
       },
 
 
