@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2017 Pentaho Corporation..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
@@ -23,6 +23,7 @@ import java.util.HashMap;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.owasp.encoder.Encode;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.api.mt.ITenantedPrincipleNameResolver;
 import org.pentaho.platform.engine.core.system.PentahoRequestContextHolder;
@@ -41,15 +42,24 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment {
   private static final Log logger = LogFactory.getLog( PentahoReportEnvironment.class );
   private HashMap<String, String> cache;
   private String clText;
-  private String clId;
+  private String repositoryPath;
 
+  @Deprecated
   public PentahoReportEnvironment( final Configuration configuration ) {
     this( configuration, null );
   }
 
+  @Deprecated
   public PentahoReportEnvironment( final Configuration configuration, final String clText ) {
     super( configuration );
     this.clText = clText;
+    setLocale( LocaleHelper.getLocale() );
+  }
+
+  public PentahoReportEnvironment( final Configuration configuration, final String clText, final String repositoryPath ) {
+    super( configuration );
+    this.clText = clText;
+    this.repositoryPath = repositoryPath != null ? repositoryPath.replaceAll( "/", ":" ) : repositoryPath;
     setLocale( LocaleHelper.getLocale() );
   }
 
@@ -92,6 +102,15 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment {
       } else if ( "requestContextPath".equals( key ) ) { //$NON-NLS-1$
         final String requestContextPath = PentahoRequestContextHolder.getRequestContext().getContextPath();
         cache.put( key, requestContextPath );
+      } else if ( "selfURL".equals( key ) ) {
+        String path = getRepositoryPath( true );
+        if ( path != null ) {
+          final String selfURL = fullyQualifiedServerUrl + "api/repos/" + path + "/viewer?";
+          cache.put( key, selfURL );
+          return selfURL;
+        } else {
+          return null;
+        }
       }
     } else {
       if ( "serverBaseURL".equals( key ) || //$NON-NLS-1$
@@ -200,5 +219,17 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment {
       logger.warn( Messages.getInstance().getString( "ReportPlugin.warnNoHostColonPort" ), e );
     }
     return null;
+  }
+
+  public String getRepositoryPath() {
+    return getRepositoryPath( false );
+  }
+
+  private String getRepositoryPath( boolean encoded ) {
+    if ( encoded ) {
+      return Encode.forUriComponent( repositoryPath );
+    } else {
+      return repositoryPath;
+    }
   }
 }

@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2017 Pentaho Corporation..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
@@ -46,6 +46,7 @@ import org.pentaho.reporting.engine.classic.extensions.modules.java14print.Java1
 import org.pentaho.reporting.libraries.base.util.CSVQuoter;
 import org.pentaho.reporting.libraries.base.util.StringUtils;
 import org.pentaho.reporting.libraries.resourceloader.ResourceException;
+import org.pentaho.reporting.libraries.resourceloader.ResourceKey;
 import org.pentaho.reporting.libraries.xmlns.common.ParserUtil;
 import org.pentaho.reporting.platform.plugin.cache.NullReportCache;
 import org.pentaho.reporting.platform.plugin.cache.ReportCache;
@@ -59,6 +60,7 @@ import org.pentaho.reporting.platform.plugin.output.ReportOutputHandlerSelector;
 import javax.print.DocFlavor;
 import javax.print.PrintService;
 import javax.print.PrintServiceLookup;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -488,7 +490,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   public void setReport( MasterReport report ) {
     this.report = report;
     final String clText = extractContentLinkSpec();
-    report.setReportEnvironment( new PentahoReportEnvironment( report.getConfiguration(), clText ) );
+    report.setReportEnvironment( new PentahoReportEnvironment( report.getConfiguration(), clText, getReportPath( report.getContentBase() ) ) );
   }
 
   /**
@@ -516,7 +518,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       }
 
       final String clText = extractContentLinkSpec();
-      report.setReportEnvironment( new PentahoReportEnvironment( report.getConfiguration(), clText ) );
+      report.setReportEnvironment( new PentahoReportEnvironment( report.getConfiguration(), clText, getReportPath( report.getContentBase() ) ) );
     }
 
     try {
@@ -586,6 +588,23 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     } else {
       return String.valueOf( clRaw );
     }
+  }
+
+  static String getReportPath( ResourceKey key ) {
+    while ( key != null ) {
+      final Object rk = key.getIdentifier();
+      if ( rk instanceof File ) {
+        final File file = (File) rk;
+        return file.getAbsolutePath();
+      } else if ( rk instanceof String ) {
+        final String path = String.valueOf( rk );
+        if ( path.endsWith( "prpt" ) ) {
+          return path;
+        }
+      }
+      key = key.getParent();
+    }
+    return null;
   }
 
   private boolean isValidOutputType( final String outputType ) {
