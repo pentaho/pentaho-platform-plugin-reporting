@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2017 Pentaho Corporation..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
@@ -81,6 +81,8 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment {
       } else if ( "pentahoBaseURL".equals( key ) ) { //$NON-NLS-1$
         cache.put( key, fullyQualifiedServerUrl );
         return fullyQualifiedServerUrl;
+      } else if ( "selfURL".equals( key ) ) { //$NON-NLS-1$
+        return fullyQualifiedServerUrl + "api/repos/";
       } else if ( "solutionRoot".equals( key ) ) { //$NON-NLS-1$
         final String solutionRoot = PentahoSystem.getApplicationContext().getSolutionPath( "" );
         cache.put( key, solutionRoot );
