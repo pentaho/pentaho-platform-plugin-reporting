@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2017 Pentaho Corporation..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
@@ -445,7 +445,7 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
   public void setReport( MasterReport report ) {
     this.report = report;
     final String clText = extractContentLinkSpec();
-    report.setReportEnvironment( new PentahoReportEnvironment( report.getConfiguration(), clText ) );
+    report.setReportEnvironment( new PentahoReportEnvironment( report.getConfiguration(), clText, SimpleReportingComponent.getReportPath( report.getContentBase() ) ) );
   }
 
   /**
@@ -482,7 +482,7 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
       }
 
       final String clText = extractContentLinkSpec();
-      report.setReportEnvironment( new PentahoReportEnvironment( report.getConfiguration(), clText ) );
+      report.setReportEnvironment( new PentahoReportEnvironment( report.getConfiguration(), clText, SimpleReportingComponent.getReportPath( report.getContentBase() ) ) );
     }
     try {
       // force autoSubmit flag (based on settings.xml)?
