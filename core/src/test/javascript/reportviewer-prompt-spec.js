@@ -232,6 +232,7 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
 
       describe("showMessageBox", function() {
         var messageBox;
+
         beforeEach(function() {
           messageBox = jasmine.createSpyObj("messageBox", ["hide", "setTitle", "setMessage", "setButtons", "show"]);
           messageBox.id = "messageBox";
@@ -285,6 +286,12 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
         var toolBarSeparatorWidget;
 
         beforeEach(function() {
+          makeAjaxSpy();
+
+          var messageBox = jasmine.createSpyObj("messageBox", ["hide", "setTitle", "setMessage", "setButtons", "show"]);
+          messageBox.id = "messageBox";
+          registryMock.mock(messageBox);
+
           pageControlWidget = jasmine.createSpyObj("pageControl", ["domNode"]);
           toolBarSeparatorWidget = jasmine.createSpyObj("toolbar-parameter-separator", ["domNode"]);
 
@@ -295,7 +302,6 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
 
           spyOn(domClass, 'add');
           spyOn(domClass, 'remove');
-
 
           reportPrompt.createPromptPanel();
         });
@@ -324,6 +330,12 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
       });
 
       describe("should respect formula values on user selections", function () {
+        beforeAll(function() {
+          var messageBox;
+          messageBox = jasmine.createSpyObj("messageBox", ["hide", "setTitle", "setMessage", "setButtons", "show"]);
+          messageBox.id = "messageBox";
+          registryMock.mock(messageBox);
+        });
 
         it("should not do anything if the values are empty", function () {
           var param = {};
@@ -515,7 +527,7 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
           };
           reportPrompt._applyUserInput("anyname", "2017-01-01T00:00:00.000+0100", param);
           setTimeout(500, function () {
-            expect(param.forceUpdate).toBe(true)
+            expect(param.forceUpdate).toBe(true);
           });
         });
 
@@ -527,10 +539,9 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
           };
           reportPrompt._applyUserInput("anyname", "2017-01-01T00:00:00.000+0100", param);
           setTimeout(500, function () {
-            expect(param.forceUpdate).toBe(true)
+            expect(param.forceUpdate).toBe(true);
           });
         });
-
       });
     });
   });
