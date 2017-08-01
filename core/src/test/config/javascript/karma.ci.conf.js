@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2017 Pentaho Corporation..  All rights reserved.
  */
 
 module.exports = function(config) {
@@ -33,9 +33,7 @@ module.exports = function(config) {
             "**/*-require-js-cfg.js",
             'karma-require-js-cfg.js',
             {pattern: '*.+(js|min.js|xml|properties|html|css|png|gif)', included: false, watched: false},
-            {pattern: '**/*.+(js|min.js|xml|properties|html|css|png|gif)', included: false, watched: false},
-            {pattern: '**/**/*.+(js|min.js|xml|properties|html|css|png|gif)', included: false, watched: false},
-            {pattern: '**/**/**/*.+(js|min.js|xml|properties|html|css|png|gif)', included: false, watched: false}
+            {pattern: '**/*.+(js|min.js|xml|properties|html|css|png|gif)', included: false, watched: false}
         ],
 
 
