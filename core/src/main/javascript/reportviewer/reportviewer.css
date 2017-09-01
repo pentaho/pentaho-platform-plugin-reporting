@@ -296,8 +296,8 @@ div.prompt-panel {
 
 .tundra .dijitMenuPassive .dijitMenuItemHover,
 .tundra .dijitMenuItemSelected {
-	background-color: #87df27;
-	color:#000000;
+	background-color: #CC0000;
+	color:#FFF;
 }
 
 .tundra .dijitTextBox {
