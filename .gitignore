@@ -1,3 +1,4 @@
+.idea/
 bin/
 dist/
 js-lib/
@@ -24,14 +25,10 @@ build-res/requireCfg.js
 *.ear
 *.iml
 /war
-.idea/uiDesigner.xml
 *.lck
 /pentaho.log
 node_modules/
-.idea/encodings.xml
 checkstyle/
 out/
 target/
 node_modules/
-*.iml
-.idea
