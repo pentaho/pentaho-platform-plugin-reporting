@@ -1,0 +1,129 @@
+.dijitDialog .dijitDialogPaneContent #downloadProgress .dijitProgressBarTile {
+  background: #E6EFF6;
+}
+
+.pentaho-dialog .feedbackscreen-content {
+  background: transparent;
+}
+
+.feedbackscreentextupper {
+  padding: 10px 0 20px 7px;
+  line-height: 2em;
+  color: #333333;
+}
+
+.feedbackscreentextmiddle {
+  padding: 0 0 0 7px;
+}
+
+.feedbackscreentextbottom {
+  padding: 10px 0 0 0;
+  line-height: 2em;
+  width: 50%;
+  text-align: center;
+}
+
+.feedbackscreentitle {
+  padding-left: 7px !important;
+}
+
+#downloadProgress {
+  width: 98%;
+}
+
+.bottom-table {
+  width: 100%;
+  padding-bottom: 8px;
+}
+
+.pentaho-reportviewer-errordialogmessage {
+  margin-left: -8px;
+}
+
+/*report viewer specific*/
+.topViewer.leafViewer #reportControlPanel {
+  border-top: 0;
+}
+
+.topViewer.leafViewer .pentaho-toggle-button-container .pentaho-toggle-button-horizontal {
+  color: #CC0000;
+  background-color: #FFFFFF;
+  display: inline-block;
+  margin: 0;
+  padding: 8px 10px;
+}
+
+.topViewer.leafViewer div.prompt-panel div.parameter {
+  margin-right: 15px;
+}
+
+.topViewer.leafViewer div.prompt-panel div.parameter-wrapper {
+  margin: auto 0 4px 0;
+}
+
+.topViewer.leafViewer .pentaho-toggle-button-container .pentaho-toggle-button-horizontal.pentaho-toggle-button-down {
+  color: #FFFFFF;
+  background-color: #CC0000;
+  background-image: url(images/checkbox-hover.png);
+  background-repeat: no-repeat;
+  background-position: left 8px center;
+}
+
+.topViewer.leafViewer .pentaho-toggle-button-container .pentaho-toggle-button-horizontal.pentaho-toggle-button-up:hover {
+  color: #FFFFFF;
+  background-color: #CC0000;
+}
+
+.topViewer.leafViewer .pentaho-toggle-button-container .pentaho-toggle-button-horizontal button {
+  font-size: 14px;
+  font-weight: 400;
+  padding: 0 15px;
+  margin: 0;
+}
+
+.topViewer.leafViewer div.prompt-panel .pentaho-toggle-button-container {
+  margin: 0;
+}
+
+.topViewer.leafViewer div.prompt-panel .pentaho-toggle-button-container > div {
+  height: auto;
+  padding: 0 0 3px 0;
+}
+
+div.prompt-panel div.parameter-label.parameter-label {
+  font-size: 14px;
+  color: #666;
+  font-weight: normal;
+}
+
+#reportControlPanel select {
+  overflow-y: auto;
+  margin-bottom: 10px;
+  line-height: 22px;
+}
+
+.tundra .dijitToolbar,
+.tundra .dijitToolbar#toolbar {
+  padding: 3px;
+}
+
+div.submit-panel label.auto-complete-checkbox input[type='checkbox'] {
+  top: 2px;
+  position: relative;
+}
+
+.nonMobile.styled.styled #reportControlPanel {
+  margin: 0;
+}
+
+.pentaho-padding-sm.pentaho-padding-sm {
+    padding: 4px 0;
+}
+
+#toppanelinner {
+    padding: 0 4px;
+}
+
+.dijitDialogPaneContent {
+  width: 100% !important;
+}
