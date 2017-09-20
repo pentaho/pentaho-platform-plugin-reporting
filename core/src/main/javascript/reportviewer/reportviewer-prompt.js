@@ -170,7 +170,7 @@ define([
       },
 
       canSkipParameterChange: function(names) {
-        if(this._oldParameterSet["output-target"].value != this.api.operation.getParameterValues()["output-target"]) {
+        if(this._oldParameterSet["output-target"] && this._oldParameterSet["output-target"].value != this.api.operation.getParameterValues()["output-target"]) {
           // this has to be validated on the server.
           return false;
         }
