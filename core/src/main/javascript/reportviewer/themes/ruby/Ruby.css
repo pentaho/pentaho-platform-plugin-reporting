@@ -1,5 +1,5 @@
 .dijitDialog .dijitDialogPaneContent #downloadProgress .dijitProgressBarTile {
-  background: #E6EFF6;
+  background: rgba(254,0,0,0.2);
 }
 
 .pentaho-dialog .feedbackscreen-content {
