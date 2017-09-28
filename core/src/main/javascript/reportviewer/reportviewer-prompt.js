@@ -23,8 +23,9 @@ define([
   "common-ui/jquery-clean",
   "common-ui/underscore",
   "cdf/dashboard/Utils",
-  "dojo/dom-class"
-], function(util, Messages, registry, PromptingAPI, $, _, Utils, domClass) {
+  "dojo/dom-class",
+  "common-ui/util/formatting"
+], function(util, Messages, registry, PromptingAPI, $, _, Utils, domClass, FormatUtils) {
 
   var _api =  new PromptingAPI('promptPanel');
 
@@ -94,7 +95,7 @@ define([
             var oldValue = parameter.value.toString();
             var currentValue = currentParameterSet[parameter.name].toString();
             if (parameter.parameterRenderType && parameter.parameterRenderType === 'datepicker') {
-              if (!this._compareDatesOnly(oldValue, currentValue, parameter.timezoneHint)) {
+              if (!this._compareDatesOnly(oldValue, currentValue, parameter.timezoneHint, this._createFormatter(parameter))) {
                 // add to changed
                 changedParameters.push(parameter.name);
               }
@@ -134,7 +135,13 @@ define([
                 group: group.name,
                 name: parameters[i].name,
                 parameterRenderType: parameters[i].attributes['parameter-render-type'],
-                timezoneHint: parameters[i].timezoneHint
+                timezoneHint: parameters[i].timezoneHint,
+                type:parameters[i].type,
+                attributes:{
+                    'timezone': parameters[i].attributes['timezone'],
+                	'data-format': parameters[i].attributes['data-format'],
+                	'post-processor-formula': parameters[i].attributes['post-processor-formula']
+                }
               };
             }
           }
@@ -661,7 +668,7 @@ define([
           } else {
             //Datepickers require some extra care
             if (param.attributes['parameter-render-type'] === 'datepicker') {
-              if (this._compareDatesOnly(param.values[0].value, value, param.timezoneHint)) {
+              if (this._compareDatesOnly(param.values[0].value, value, param.timezoneHint, this._createFormatter(param))) {
                 return;
               }
             }
@@ -671,8 +678,15 @@ define([
           }
         }
       },
-
-      _compareDatesOnly: function (oldValue, newValue, timezoneHint) {
+	  _createFormatter: function(param){
+		  if(param.attributes['data-format'] && param.attributes['post-processor-formula']){
+			return {
+				paramFormatter: FormatUtils.createFormatter(param, param.attributes['data-format']),
+				transportFormatter: FormatUtils.createDataTransportFormatter(param)
+			}
+		}
+	  },
+      _compareDatesOnly: function (oldValue, newValue, timezoneHint, formatter) {
           //A regular expression for a common timezone format like a +3000
           var tzRegex = /^.*[+-]{1}\d{4}$/;
           //A regular expression for a tricky timezone without like a +09.530 or a +12.7545
@@ -701,6 +715,31 @@ define([
             //Nothing to do here
             return processingValue;
           };
+
+          var applyParamFormatter = function(processingValue, formatter){
+            //No formatter is present for parameter - do nothing
+          	if(!formatter){
+          	  return processingValue;
+          	}
+          	//Transport formatter to convert a Date to/from the internal transport format (ISO-8601) used by Pentaho Reporting Engine
+            //and found in parameter xml generated for Report Viewer
+          	var transportFormatter = formatter.transportFormatter;
+          	//Formatter created based on parameter data-format
+          	var paramFormatter = formatter.paramFormatter;
+
+            if(!(transportFormatter && paramFormatter)){
+          	   return processingValue;
+          	}
+          	//Parse date from the internal transport format via transport formatter
+          	var date = transportFormatter.parse(processingValue);
+          	//Apply the parameter data-format - like it's done on data-picker
+          	date = paramFormatter.parse(paramFormatter.format(date));
+          	//format to date value via transport formatter
+          	return transportFormatter.format(date);
+          }
+          //bring date values to the same parameter data-format for the correct comparison.
+          oldValue = applyParamFormatter(oldValue, formatter);
+          newValue = applyParamFormatter(newValue, formatter);
 
           oldValue = processTimezone(oldValue);
           newValue = processTimezone(newValue);
