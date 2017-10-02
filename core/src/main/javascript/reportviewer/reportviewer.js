@@ -49,6 +49,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
       _requestedPage: 0,
       _previousPage: 0,
       _reportUrl : null,
+      _hasSchedulePermissions : false,
       _handlerRegistration : null,
       _glassPaneListenerRegistration : null,
       _locationPromptCancelHandlerRegistration: null,
@@ -207,6 +208,14 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
             }
           });
         }
+        var url = this._buildReportContentUrl();
+        pentahoGet(url.substring(0, url.indexOf("/api/repos")) + '/api/scheduler/canSchedule', "", dojo.hitch( this, function(result) {
+          _hasSchedulePermission = "true" == result;
+          if(!this.view._isDashboardEditMode() && !inMobile && _hasSchedulePermission){
+            registry.byId('feedbackScreen').showBackgroundBtn(_Messages.getString('FeedbackScreenBackground'));
+          }
+        }));
+
       },
 
       view: logged({
@@ -922,7 +931,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         dlg.setText3(_Messages.getString('FeedbackScreenRow'));
         dlg.setCancelText(_Messages.getString('ScreenCancel'));
 
-        if(!this.view._isDashboardEditMode() && !inMobile){
+        if(!this.view._isDashboardEditMode() && !inMobile && _hasSchedulePermission){
           dlg.showBackgroundBtn(_Messages.getString('FeedbackScreenBackground'));
         }else {
           scheduleScreenBtnCallbacks.shift();
