@@ -12,7 +12,7 @@
 * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 * See the GNU Lesser General Public License for more details.
 *
-* Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
+* Copyright (c) 2002-2017 Pentaho Corporation..  All rights reserved.
 */
 
 ({
@@ -115,8 +115,11 @@
     {
       name: "reportviewer/reportviewer-app",
       include: ["reportviewer/reportviewer-app"],
+      //exclude css otherwise we will not be able to use them without load issues
+      //see http://jira.pentaho.com/browse/PRD-5915
       exclude: [	
-        "css!cdf/dashboard/Dashboard.notifications"
+        "css!cdf/dashboard/Dashboard.notifications",
+        "css!cdf/Dashboard"
         ],
       create: true
     }
