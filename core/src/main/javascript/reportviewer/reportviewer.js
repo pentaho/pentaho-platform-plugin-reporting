@@ -137,16 +137,6 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
         window.onbeforeunload = this.dispose.bind(this);
 
-        $("#reportContent")[0].contentWindow.onbeforeunload = function(e) {
-          if($("#reportContent")[0].contentWindow._isFirstIframeUrlSet == true) {
-            //user clicking a link in the report
-            this.dispose();
-          } else {
-            //content is writing in the reportContent iframe first time
-            $("#reportContent")[0].contentWindow._isFirstIframeUrlSet = true;
-          }
-        }.bind(this);
-
         var boundOnReportContentLoaded = this._onReportContentLoaded.bind(this);
 
         // Schedule the resize after the document has been rendered and CSS applied
