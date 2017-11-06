@@ -12,6 +12,6 @@ without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 See the GNU General Public License for more details.
 
 
-Copyright (c) ${project.inceptionYear} - ${project.currentYear} Pentaho Corporation and Contributors.  All rights reserved.
+Copyright (c) ${project.inceptionYear} - ${project.currentYear} Hitachi Vantara and Contributors.  All rights reserved.
 
 
