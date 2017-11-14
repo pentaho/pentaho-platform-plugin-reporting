@@ -265,7 +265,8 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
               logger && logger.log("Will clear content iframe.data-src");
 
               //submit hidden form to POST data to iframe
-              $('#hiddenReportContentForm').attr("action", 'about:blank');
+              var url = window.location.href.substring(0, window.location.href.indexOf("/api/repos")) + "/content/reporting/reportviewer/no-content.html";
+              $('#hiddenReportContentForm').attr("action", url);
               $('#hiddenReportContentForm').submit();
               //set data attribute so that we know what url is currently displayed in
               //the iframe without actually triggering a GET
