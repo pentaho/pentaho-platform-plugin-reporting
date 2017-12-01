@@ -68,7 +68,7 @@
     <dependency>
       <groupId>pentaho</groupId>
       <artifactId>pentaho-platform-api</artifactId>
-      <version>${dependency.bi-platform.revision}</version>
+      <version>${platform.version}</version>
     </dependency>
     <dependency>
       <groupId>pentaho</groupId>
@@ -137,7 +137,7 @@
     <dependency>
       <groupId>pentaho</groupId>
       <artifactId>common-ui</artifactId>
-      <version>${dependency.common-ui.revision}</version>
+      <version>${common-ui.version}</version>
       <type>zip</type>
       <classifier>js</classifier>
     </dependency>
