@@ -115,8 +115,8 @@
       <artifactId>gwt-dev</artifactId>
     </dependency>
     <dependency>
-      <groupId>pentaho</groupId>
-      <artifactId>pentaho-gwt-widgets</artifactId>
+      <groupId>org.pentaho</groupId>
+      <artifactId>commons-gwt-widgets</artifactId>
     </dependency>
     <dependency>
       <groupId>com.google.code.gwtx</groupId>
