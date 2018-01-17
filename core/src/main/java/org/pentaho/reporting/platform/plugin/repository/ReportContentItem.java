@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2017 Hitachi Vantara..  All rights reserved.
+ * Copyright (c) 2002-2018 Hitachi Vantara..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin.repository;
@@ -110,6 +110,11 @@ public class ReportContentItem implements ContentItem {
   }
 
   public Object getContentId() {
-    return RepositoryPathEncoder.encode( file.getPath() );
+    // ':' is used instead of '/' as a separator to work around Spring Security.
+    // Since ':' is allowed in file/folder names in the repo, it is replaced with '\t' before changing the separator.
+    String path = file.getPath()
+            .replace( ':', '\t' )
+            .replace( '/', ':' );
+    return RepositoryPathEncoder.encode( path );
   }
 }
