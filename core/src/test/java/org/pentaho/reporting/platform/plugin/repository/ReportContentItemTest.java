@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2017 Hitachi Vantara..  All rights reserved.
+ * Copyright (c) 2002-2018 Hitachi Vantara..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin.repository;
@@ -52,8 +52,8 @@ public class ReportContentItemTest extends TestCase {
   }
 
   public void testGetContentId() throws Exception {
-    doReturn( "c:\\Dev\\" ).when( repositoryFile ).getPath();
-    String expectedResult = "c%3A%255CDev%255C";
+    doReturn( "/home/admin/namewithcolon:/picture118632338.png" ).when( repositoryFile ).getPath();
+    String expectedResult = "%3Ahome%3Aadmin%3Anamewithcolon%09%3Apicture118632338.png";
 
     assertEquals( expectedResult, reportContentItem.getContentId() );
   }
