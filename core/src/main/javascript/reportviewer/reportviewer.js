@@ -12,7 +12,7 @@
 * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 * See the GNU Lesser General Public License for more details.
 *
-* Copyright (c) 2002-2017 Pentaho Corporation..  All rights reserved.
+* Copyright (c) 2002-2018 Pentaho Corporation..  All rights reserved.
 */
 
 define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/formatting', 'pentaho/common/Messages', "dojo/dom", "dojo/on", "dojo/_base/lang",
@@ -201,7 +201,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         var url = this._buildReportContentUrl();
         pentahoGet(url.substring(0, url.indexOf("/api/repos")) + '/api/scheduler/canSchedule', "", dojo.hitch( this, function(result) {
           _hasSchedulePermission = "true" == result;
-          if(!this.view._isDashboardEditMode() && !inMobile && _hasSchedulePermission){
+          if(!this.view._isInsideDashboard() && !inMobile && _hasSchedulePermission){
             registry.byId('feedbackScreen').showBackgroundBtn(_Messages.getString('FeedbackScreenBackground'));
           }
         }));
@@ -311,6 +311,14 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         _isDashboardEditMode : function(){
           try {
             return window.frameElement.src.indexOf('dashboard-mode') !== -1 && parent.pho.dashboards.editMode;
+          } catch (e) {
+            return false;
+          }
+        },
+
+        _isInsideDashboard : function() {
+          try {
+            return window.frameElement.src.indexOf('dashboard-mode') !== -1;
           } catch (e) {
             return false;
           }
@@ -922,7 +930,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         dlg.setText3(_Messages.getString('FeedbackScreenRow'));
         dlg.setCancelText(_Messages.getString('ScreenCancel'));
 
-        if(!this.view._isDashboardEditMode() && !inMobile && _hasSchedulePermission){
+        if(!this.view._isInsideDashboard() && !inMobile && _hasSchedulePermission){
           dlg.showBackgroundBtn(_Messages.getString('FeedbackScreenBackground'));
         }else {
           scheduleScreenBtnCallbacks.shift();
