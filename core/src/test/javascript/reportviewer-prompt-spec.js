@@ -414,6 +414,13 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
           expect(parameter.forceUpdate).toBe(true);
         });
 
+        it("should keep parameter as is if we have only differnet timezone", function () {
+            var _oldValue = "2017-01-01T11:00:00.000";
+            var _newValue = "2017-01-01T11:00:00.000"
+            var _timezoneHint = "-0800"
+            expect( reportPrompt._compareDatesOnly( _oldValue, _newValue, _timezoneHint, undefined ) ).toBe(true);
+          });
+        
         //This is true because if a string representation is matcheing then no timezone hints can affect the final result
         it("should treat a matching datepicker values as plaintext", function () {
           var param = {values: [{value: "2017-01-01"}], attributes: {"parameter-render-type": "datepicker"}};
