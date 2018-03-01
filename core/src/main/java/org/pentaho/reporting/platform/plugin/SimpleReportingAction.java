@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2017 Hitachi Vantara..  All rights reserved.
+ * Copyright (c) 2002-2018 Hitachi Vantara.  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
@@ -873,8 +873,6 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
         final Configuration configuration = report.getConfiguration();
         if ( configuration instanceof ModifiableConfiguration ) {
           final ModifiableConfiguration modifiableConfiguration = (ModifiableConfiguration) configuration;
-          //use tmp folder to store images and styles
-          setUseJcr( false );
           modifiableConfiguration.setConfigProperty( PentahoPlatformModule.FORCE_ALL_PAGES, "true" );
         }
       }

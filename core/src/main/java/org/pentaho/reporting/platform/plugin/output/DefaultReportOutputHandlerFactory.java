@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2017 Hitachi Vantara..  All rights reserved.
+ * Copyright (c) 2002-2018 Hitachi Vantara.  All rights reserved.
  */
 package org.pentaho.reporting.platform.plugin.output;
 
@@ -528,6 +528,7 @@ public class DefaultReportOutputHandlerFactory implements ReportOutputHandlerFac
     if ( isCachePageableHtmlContentEnabled( selector.getReport() ) ) {
       final CachingPageableHTMLOutput pageableHTMLOutput = new CachingPageableHTMLOutput();
       pageableHTMLOutput.setContentHandlerPattern( contentHandlerPattern );
+      pageableHTMLOutput.setJcrOutputPath( selector.isUseJcrOutput() ? selector.getJcrOutputPath() : null );
       return pageableHTMLOutput;
     } else {
       final PageableHTMLOutput pageableHTMLOutput = new PageableHTMLOutput();

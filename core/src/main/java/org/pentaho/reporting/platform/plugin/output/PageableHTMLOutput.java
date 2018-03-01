@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2017 Hitachi Vantara..  All rights reserved.
+ * Copyright (c) 2002-2018 Hitachi Vantara.  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin.output;
@@ -55,9 +55,8 @@ import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
 
-public class PageableHTMLOutput implements ReportOutputHandler {
+public class PageableHTMLOutput extends AbstractHtmlOutput {
 
-  private String contentHandlerPattern;
   private ProxyOutputStream proxyOutputStream;
   private PageableReportProcessor proc;
   private AllItemsHtmlPrinter printer;
@@ -67,14 +66,6 @@ public class PageableHTMLOutput implements ReportOutputHandler {
 
   public Object getReportLock() {
     return this;
-  }
-
-  public void setContentHandlerPattern( final String contentHandlerPattern ) {
-    this.contentHandlerPattern = contentHandlerPattern;
-  }
-
-  public String getContentHandlerPattern() {
-    return contentHandlerPattern;
   }
 
   public ProxyOutputStream getProxyOutputStream() {
@@ -102,12 +93,12 @@ public class PageableHTMLOutput implements ReportOutputHandler {
   }
 
   protected PageableReportProcessor createReportProcessor( final MasterReport report, final int yieldRate )
-    throws ReportProcessingException {
+          throws ReportProcessingException {
 
     proxyOutputStream = new ProxyOutputStream();
 
     printer = new AllItemsHtmlPrinter( report.getResourceManager() );
-    printer.setUrlRewriter( new PentahoURLRewriter( contentHandlerPattern, false ) );
+    printer.setUrlRewriter( new PentahoURLRewriter( getContentHandlerPattern(), shouldUseContentIdAsName() ) );
 
     final PageableHtmlOutputProcessor outputProcessor = new PageableHtmlOutputProcessor( report.getConfiguration() );
     outputProcessor.setPrinter( printer );
@@ -120,22 +111,24 @@ public class PageableHTMLOutput implements ReportOutputHandler {
     return proc;
   }
 
+  protected boolean shouldUseContentIdAsName() {
+    return false;
+  }
 
   protected void reinitOutputTarget() throws ReportProcessingException, ContentIOException {
 
-    final Pair<ContentLocation, PentahoNameGenerator> pair =
-      reinitLoactionAndNameGenerator();
+    final Pair<ContentLocation, PentahoNameGenerator> pair = reinitLocationAndNameGenerator();
 
     final StreamRepository targetRepository = new StreamRepository( null, proxyOutputStream, "report" ); //$NON-NLS-1$
     final ContentLocation targetRoot = targetRepository.getRoot();
 
     printer.setContentWriter( targetRoot,
-      new DefaultNameGenerator( targetRoot, "index", "html" ) ); //$NON-NLS-1$ //$NON-NLS-2$
+            new DefaultNameGenerator( targetRoot, "index", "html" ) ); //$NON-NLS-1$ //$NON-NLS-2$
     printer.setDataWriter( pair.getKey(), pair.getValue() );
   }
 
-  private Pair<ContentLocation, PentahoNameGenerator> reinitLoactionAndNameGenerator()
-    throws ReportProcessingException, ContentIOException {
+  protected Pair<ContentLocation, PentahoNameGenerator> reinitLocationAndNameGenerator()
+          throws ReportProcessingException, ContentIOException {
     final IApplicationContext ctx = PentahoSystem.getApplicationContext();
 
     final ContentLocation dataLocation;
@@ -156,7 +149,7 @@ public class PageableHTMLOutput implements ReportOutputHandler {
       dataNameGenerator = PentahoSystem.get( PentahoNameGenerator.class );
       if ( dataNameGenerator == null ) {
         throw new IllegalStateException( Messages.getInstance().getString(
-          "ReportPlugin.errorNameGeneratorMissingConfiguration" ) );
+                "ReportPlugin.errorNameGeneratorMissingConfiguration" ) );
       }
       dataNameGenerator.initialize( dataLocation, true );
     } else {
@@ -167,7 +160,7 @@ public class PageableHTMLOutput implements ReportOutputHandler {
   }
 
   public int paginate( final MasterReport report, final int yieldRate ) throws ReportProcessingException, IOException,
-    ContentIOException {
+          ContentIOException {
     if ( proc == null ) {
       proc = createReportProcessor( report, yieldRate );
     }
@@ -272,8 +265,7 @@ public class PageableHTMLOutput implements ReportOutputHandler {
 
   protected Repository reinitOutputTargetRepo() throws ReportProcessingException, ContentIOException {
 
-    final Pair<ContentLocation, PentahoNameGenerator> pair =
-      reinitLoactionAndNameGenerator();
+    final Pair<ContentLocation, PentahoNameGenerator> pair = reinitLocationAndNameGenerator();
 
     final ZipRepository targetRepository = new ZipRepository(); //$NON-NLS-1$
     final ContentLocation targetRoot = targetRepository.getRoot();
@@ -281,7 +273,7 @@ public class PageableHTMLOutput implements ReportOutputHandler {
     final HtmlPrinter printer = getPrinter();
     // generates predictable file names like "page-0.html", "page-1.html" and so on.
     printer.setContentWriter( targetRoot,
-      new PageSequenceNameGenerator( targetRoot, "page", "html" ) ); //$NON-NLS-1$ //$NON-NLS-2$
+            new PageSequenceNameGenerator( targetRoot, "page", "html" ) ); //$NON-NLS-1$ //$NON-NLS-2$
     printer.setDataWriter( pair.getKey(), pair.getValue() );
 
     return targetRepository;
@@ -302,7 +294,7 @@ public class PageableHTMLOutput implements ReportOutputHandler {
 
   protected IReportContent produceReportContent( final PageableReportProcessor proc,
                                                  final Repository targetRepository )
-    throws ContentIOException, IOException {
+          throws ContentIOException, IOException {
     final int pageCount = proc.getLogicalPageCount();
     final ContentLocation root = targetRepository.getRoot();
     final Map<Integer, byte[]> pages = new HashMap<>();

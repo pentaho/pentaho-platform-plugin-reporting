@@ -12,12 +12,15 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2017 Hitachi Vantara..  All rights reserved.
+ * Copyright (c) 2002-2018 Hitachi Vantara.  All rights reserved.
  */
 package org.pentaho.reporting.platform.plugin.output;
 
+import mondrian.util.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
+import org.pentaho.platform.api.repository2.unified.RepositoryFile;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportDataFactoryException;
@@ -34,6 +37,7 @@ import org.pentaho.reporting.engine.classic.core.util.ReportParameterValues;
 import org.pentaho.reporting.engine.classic.core.util.beans.BeanException;
 import org.pentaho.reporting.engine.classic.core.util.beans.ConverterRegistry;
 import org.pentaho.reporting.libraries.repository.ContentIOException;
+import org.pentaho.reporting.libraries.repository.ContentLocation;
 import org.pentaho.reporting.libraries.repository.Repository;
 import org.pentaho.reporting.libraries.resourceloader.ResourceData;
 import org.pentaho.reporting.libraries.resourceloader.ResourceKey;
@@ -46,6 +50,8 @@ import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
 import org.pentaho.reporting.platform.plugin.cache.IPluginCacheManager;
 import org.pentaho.reporting.platform.plugin.cache.IReportContent;
 import org.pentaho.reporting.platform.plugin.cache.IReportContentCache;
+import org.pentaho.reporting.platform.plugin.repository.PentahoNameGenerator;
+import org.pentaho.reporting.platform.plugin.repository.ReportContentRepository;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -64,6 +70,7 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
   public static final String IS_QUERY_LIMIT_REACHED = "IsQueryLimitReached";
   public static final String REPORT_ROWS = "ReportRows";
   private PageableReportProcessor processor;
+  private String jcrOutputPath;
 
   private class CacheListener implements ReportProgressListener {
 
@@ -226,6 +233,35 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
     } catch ( final CacheKeyException e ) {
       return generateNonCaching( report, acceptedPage, outputStream, yieldRate );
     }
+  }
+
+  private boolean isJcrImagesAndCss() {
+    return getJcrOutputPath() != null && !getJcrOutputPath().isEmpty();
+  }
+
+  @Override
+  protected Pair<ContentLocation, PentahoNameGenerator> reinitLocationAndNameGenerator()
+          throws ReportProcessingException, ContentIOException {
+
+    if ( !isJcrImagesAndCss() ) {
+      return super.reinitLocationAndNameGenerator();
+    } else {
+      IUnifiedRepository repo = PentahoSystem.get( IUnifiedRepository.class );
+      final RepositoryFile outputFolder = repo.getFile( jcrOutputPath );
+
+      final ReportContentRepository repository = new ReportContentRepository( outputFolder );
+      final ContentLocation dataLocation = repository.getRoot();
+
+      final PentahoNameGenerator dataNameGenerator = createPentahoNameGenerator();
+      dataNameGenerator.initialize( dataLocation, isSafeToDelete() );
+
+      return Pair.of( dataLocation, dataNameGenerator );
+    }
+  }
+
+  @Override
+  protected boolean shouldUseContentIdAsName() {
+    return isJcrImagesAndCss();
   }
 
   private void setQueryLimitReachedToListener( String key, IAsyncReportListener listener ) {
@@ -446,4 +482,11 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
     return -1;
   }
 
+  public String getJcrOutputPath() {
+    return jcrOutputPath;
+  }
+
+  public void setJcrOutputPath( String jcrOutputPath ) {
+    this.jcrOutputPath = jcrOutputPath;
+  }
 }
