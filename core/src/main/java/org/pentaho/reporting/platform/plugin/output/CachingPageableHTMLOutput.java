@@ -235,7 +235,7 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
     }
   }
 
-  private boolean isJcrImagesAndCss() {
+  protected boolean isJcrImagesAndCss() {
     return getJcrOutputPath() != null && !getJcrOutputPath().isEmpty();
   }
 
