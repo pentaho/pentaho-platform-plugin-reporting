@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2017 Hitachi Vantara..  All rights reserved.
+ * Copyright (c) 2002-2018 Hitachi Vantara..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin.output;
@@ -30,6 +30,8 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.junit.Assert.*;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.*;
 
 public class DefaultReportOutputHandlerFactoryTest {
 
@@ -212,23 +214,23 @@ public class DefaultReportOutputHandlerFactoryTest {
   public void testGetMimeType() throws Exception {
     MockOutputHandlerSelector selector = new MockOutputHandlerSelector();
 
-    HashMap<String, String> outpytTypes = new HashMap<String, String>();
-    outpytTypes.put( "table/html;page-mode=stream", "text/html" ); //$NON-NLS-1$ //$NON-NLS-2$
-    outpytTypes.put( "table/html;page-mode=page", "text/html" ); //$NON-NLS-1$ //$NON-NLS-2$
-    outpytTypes.put( "table/excel;page-mode=flow", "application/vnd.ms-excel" ); //$NON-NLS-1$ //$NON-NLS-2$
-    outpytTypes.put( "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;page-mode=flow",
+    HashMap<String, String> outputTypes = new HashMap<String, String>();
+    outputTypes.put( "table/html;page-mode=stream", "text/html" ); //$NON-NLS-1$ //$NON-NLS-2$
+    outputTypes.put( "table/html;page-mode=page", "text/html" ); //$NON-NLS-1$ //$NON-NLS-2$
+    outputTypes.put( "table/excel;page-mode=flow", "application/vnd.ms-excel" ); //$NON-NLS-1$ //$NON-NLS-2$
+    outputTypes.put( "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;page-mode=flow",
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ); //$NON-NLS-1$ //$NON-NLS-2$
-    outpytTypes.put( "table/csv;page-mode=stream", "text/csv" ); //$NON-NLS-1$ //$NON-NLS-2$
-    outpytTypes.put( "table/rtf;page-mode=flow", "application/rtf" ); //$NON-NLS-1$ //$NON-NLS-2$
-    outpytTypes.put( "pageable/pdf", "application/pdf" ); //$NON-NLS-1$ //$NON-NLS-2$
-    outpytTypes.put( "pageable/text", "text/plain" ); //$NON-NLS-1$ //$NON-NLS-2$
-    outpytTypes.put( "mime-message/text/html", "mime-message/text/html" ); //$NON-NLS-1$ //$NON-NLS-2$
-    outpytTypes.put( "table/xml", "application/xml" ); //$NON-NLS-1$ //$NON-NLS-2$
-    outpytTypes.put( "pageable/xml", "application/xml" ); //$NON-NLS-1$ //$NON-NLS-2$
-    outpytTypes.put( "pageable/X-AWT-Graphics;image-type=png", "image/png" ); //$NON-NLS-1$ //$NON-NLS-2$
-    outpytTypes.put( "", "application/octet-stream" ); //$NON-NLS-1$ //$NON-NLS-2$
+    outputTypes.put( "table/csv;page-mode=stream", "text/csv" ); //$NON-NLS-1$ //$NON-NLS-2$
+    outputTypes.put( "table/rtf;page-mode=flow", "application/rtf" ); //$NON-NLS-1$ //$NON-NLS-2$
+    outputTypes.put( "pageable/pdf", "application/pdf" ); //$NON-NLS-1$ //$NON-NLS-2$
+    outputTypes.put( "pageable/text", "text/plain" ); //$NON-NLS-1$ //$NON-NLS-2$
+    outputTypes.put( "mime-message/text/html", "mime-message/text/html" ); //$NON-NLS-1$ //$NON-NLS-2$
+    outputTypes.put( "table/xml", "application/xml" ); //$NON-NLS-1$ //$NON-NLS-2$
+    outputTypes.put( "pageable/xml", "application/xml" ); //$NON-NLS-1$ //$NON-NLS-2$
+    outputTypes.put( "pageable/X-AWT-Graphics;image-type=png", "image/png" ); //$NON-NLS-1$ //$NON-NLS-2$
+    outputTypes.put( "", "application/octet-stream" ); //$NON-NLS-1$ //$NON-NLS-2$
 
-    for ( Map.Entry<String, String> outputType : outpytTypes.entrySet() ) {
+    for ( Map.Entry<String, String> outputType : outputTypes.entrySet() ) {
       selector.setOutputType( outputType.getKey() );
       assertEquals( outputType.getValue(), roh.getMimeType( selector ) );
     }
@@ -324,6 +326,35 @@ public class DefaultReportOutputHandlerFactoryTest {
     roh.setHtmlStreamAvailable( false );
     assertNull( roh.createHtmlPageOutput( null ) );
     assertNull( roh.createHtmlStreamOutput( null ) );
+  }
+
+  @Test
+  public void htmlCachingJcrOrTemp() {
+    ReportOutputHandlerSelector mockSelector = mock( ReportOutputHandlerSelector.class );
+
+    //Test for pageable HTML reports writing to JCR
+    when( mockSelector.isUseJcrOutput() ).thenReturn( true );
+    when( mockSelector.getJcrOutputPath() ).thenReturn( "test/path/for/jcr/output" );
+    DefaultReportOutputHandlerFactory mockRoh = mock( DefaultReportOutputHandlerFactory.class, CALLS_REAL_METHODS );
+    doReturn( true ).when( mockRoh ).isHtmlPageAvailable();
+    doReturn( "http://localhost:8080/pentaho/api/repo/files/{0}/inline" ).when( mockRoh ).computeContentHandlerPattern( mockSelector );
+    doReturn( true ).when( mockRoh ).isCachePageableHtmlContentEnabled( any() );
+
+    ReportOutputHandler out = mockRoh.createHtmlPageOutput( mockSelector );
+    assertNotNull( ( ( CachingPageableHTMLOutput ) out ).getJcrOutputPath() );
+    assertTrue( ( ( CachingPageableHTMLOutput ) out ).isJcrImagesAndCss() );
+
+    //Test for pageable HTML reports not writing to JCR
+    when( mockSelector.isUseJcrOutput() ).thenReturn( false );
+    when( mockSelector.getJcrOutputPath() ).thenReturn( "test/path/for/tmp/output" );
+    DefaultReportOutputHandlerFactory mockRoh2 = mock( DefaultReportOutputHandlerFactory.class, CALLS_REAL_METHODS );
+    doReturn( true ).when( mockRoh2 ).isHtmlPageAvailable();
+    doReturn( "/pentaho/getImage?image={0}" ).when( mockRoh2 ).computeContentHandlerPattern( mockSelector );
+    doReturn( true ).when( mockRoh2 ).isCachePageableHtmlContentEnabled( any() );
+
+    ReportOutputHandler out2 = mockRoh2.createHtmlPageOutput( mockSelector );
+    assertNull( ( ( CachingPageableHTMLOutput ) out2 ).getJcrOutputPath() );
+    assertFalse( ( ( CachingPageableHTMLOutput ) out2 ).isJcrImagesAndCss() );
   }
 
   @Test
