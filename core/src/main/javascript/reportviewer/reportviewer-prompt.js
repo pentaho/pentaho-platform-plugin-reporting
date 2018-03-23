@@ -709,7 +709,7 @@ define([
             //Timezone is not found in a value, check the hint
             if (timezoneHint) {
               //Timezone hint is present, apply it
-              return processingValue + timezoneHint.slice(1);
+              return processingValue + timezoneHint;
             }
 
             //Nothing to do here
