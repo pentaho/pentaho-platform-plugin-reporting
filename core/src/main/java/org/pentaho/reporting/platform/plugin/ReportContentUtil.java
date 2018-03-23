@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2017 Hitachi Vantara..  All rights reserved.
+ * Copyright (c) 2002-2018 Hitachi Vantara..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
@@ -287,21 +287,13 @@ public class ReportContentUtil {
     final String timezoneSpec =
       parameterEntry.getParameterAttribute( ParameterAttributeNames.Core.NAMESPACE,
         ParameterAttributeNames.Core.TIMEZONE, context );
-    if ( timezoneSpec == null || "server".equals( timezoneSpec ) ) { // NON-NLS
+    if ( timezoneSpec == null || "server".equals( timezoneSpec ) || "client".equals( timezoneSpec ) ) { // NON-NLS
       final SimpleDateFormat simpleDateFormat = new SimpleDateFormat( "yyyy-MM-dd'T'HH:mm:ss.SSS" ); // NON-NLS
       return simpleDateFormat.parse( value );
     } else if ( "utc".equals( timezoneSpec ) ) { // NON-NLS
       final SimpleDateFormat simpleDateFormat = new SimpleDateFormat( "yyyy-MM-dd'T'HH:mm:ss.SSS" ); // NON-NLS
       simpleDateFormat.setTimeZone( TimeZone.getTimeZone( "UTC" ) ); // NON-NLS
       return simpleDateFormat.parse( value );
-    } else if ( "client".equals( timezoneSpec ) ) { // NON-NLS
-      try {
-        final SimpleDateFormat simpleDateFormat = new SimpleDateFormat( "yyyy-MM-dd'T'HH:mm:ss.SSSZ" ); // NON-NLS
-        return simpleDateFormat.parse( value );
-      } catch ( ParseException pe ) {
-        final SimpleDateFormat simpleDateFormat = new SimpleDateFormat( "yyyy-MM-dd'T'HH:mm:ss.SSS" ); // NON-NLS
-        return simpleDateFormat.parse( value );
-      }
     } else {
       final TimeZone timeZone = TimeZone.getTimeZone( timezoneSpec );
       // this never returns null, but if the timezone is not understood, we end up with GMT/UTC.
