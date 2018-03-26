@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2017 Hitachi Vantara..  All rights reserved.
+ * Copyright (c) 2002-2018 Hitachi Vantara..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin.drilldown;
@@ -62,8 +62,8 @@ public class ContentLinkFunction implements Function {
     for ( int i = 0; i < contentLink.length; i++ ) {
       final String variable = contentLink[ i ];
       builder
-        .append( "var wnd=window.parent;var slf;while(!(wnd.Dashboards && wnd.Dashboards.fireOutputParam) && "
-          + "wnd.parent && wnd.parent !== wnd){slf=wnd;wnd=wnd.parent};wnd.Dashboards.fireOutputParam(slf," );
+        .append( "var wnd=window.parent;var slf;while(!(wnd.pentahoDashboardController && wnd.pentahoDashboardController.fireOutputParam) && "
+          + "wnd.parent && wnd.parent !== wnd){slf=wnd;wnd=wnd.parent};wnd.pentahoDashboardController.fireOutputParam(slf," );
       builder.append( '\'' );
       builder.append( QuoteTextFunction.saveConvert( variable ) );
       builder.append( '\'' );
