@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2017 Hitachi Vantara..  All rights reserved.
+ * Copyright (c) 2002-2018 Hitachi Vantara..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin.drilldown;
@@ -93,8 +93,8 @@ public class ContentLinkFunctionTest extends TestCase {
     assertTrue(
         result.getType().toString().contains( "org.pentaho.reporting.libraries.formula.typing.coretypes.TextType" ) );
     assertEquals(
-        "javascript:var wnd=window.parent;var slf;while(!(wnd.Dashboards && wnd.Dashboards.fireOutputParam) "
-            + "&& wnd.parent && wnd.parent !== wnd){slf=wnd;wnd=wnd.parent};wnd.Dashboards.fireOutputParam(slf,"
+        "javascript:var wnd=window.parent;var slf;while(!(wnd.pentahoDashboardController && wnd.pentahoDashboardController.fireOutputParam) "
+            + "&& wnd.parent && wnd.parent !== wnd){slf=wnd;wnd=wnd.parent};wnd.pentahoDashboardController.fireOutputParam(slf,"
             + "'testValue1',null);",
         result.getValue() );
 
@@ -107,8 +107,8 @@ public class ContentLinkFunctionTest extends TestCase {
     assertTrue(
         result.getType().toString().contains( "org.pentaho.reporting.libraries.formula.typing.coretypes.TextType" ) );
     assertEquals(
-        "javascript:var wnd=window.parent;var slf;while(!(wnd.Dashboards && wnd.Dashboards.fireOutputParam) && wnd"
-            + ".parent && wnd.parent !== wnd){slf=wnd;wnd=wnd.parent};wnd.Dashboards.fireOutputParam(slf,"
+        "javascript:var wnd=window.parent;var slf;while(!(wnd.pentahoDashboardController && wnd.pentahoDashboardController.fireOutputParam) && wnd"
+            + ".parent && wnd.parent !== wnd){slf=wnd;wnd=wnd.parent};wnd.pentahoDashboardController.fireOutputParam(slf,"
             + "'testValue1','testValue2');",
         result.getValue() );
 
@@ -124,10 +124,9 @@ public class ContentLinkFunctionTest extends TestCase {
     assertTrue(
         result.getType().toString().contains( "org.pentaho.reporting.libraries.formula.typing.coretypes.TextType" ) );
     assertEquals(
-        "javascript:var wnd=window.parent;var slf;while(!(wnd.Dashboards && wnd.Dashboards.fireOutputParam) && wnd"
-            + ".parent && wnd.parent !== wnd){slf=wnd;wnd=wnd.parent};wnd.Dashboards.fireOutputParam(slf,"
+        "javascript:var wnd=window.parent;var slf;while(!(wnd.pentahoDashboardController && wnd.pentahoDashboardController.fireOutputParam) && wnd"
+            + ".parent && wnd.parent !== wnd){slf=wnd;wnd=wnd.parent};wnd.pentahoDashboardController.fireOutputParam(slf,"
             + "'testValue1',new Array('testValue2','testValue3'));",
         result.getValue() );
-
   }
 }
