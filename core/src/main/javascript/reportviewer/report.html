@@ -55,15 +55,7 @@
       }
     };
 
-
-    try {
-      if(window.top.showLoadingIndicator) {
-        window.top.showLoadingIndicator();
-      } else if(window.parent.showLoadingIndicator) {
-        window.parent.showLoadingIndicator();
-      }
-    } catch(ex) { } // Ignore "Same-origin policy" violation in embedded IFrame
-
+	
     var isRunningIFrameInSameOrigin = null;
     try {
       var ignoredCheckCanReachOutToParent = window.top.mantle_initialized;
