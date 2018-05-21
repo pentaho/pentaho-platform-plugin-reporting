@@ -212,6 +212,30 @@ define(['reportviewer/reportviewer-timeutil'], function(ReportTimeUtil) {
           }
 
           if(timezone == 'client') {
+
+              if (value.length == 28) {
+
+                  var currentDate = new Date();
+                  var offset = -currentDate.getTimezoneOffset();
+
+                  // calculation is done in minutes because it is the smaller unit on a timezone definition
+                  // e.g.: "2018-05-20T01:12:23.456-0430" where -04h30m is the timezone setting
+                  var offsetServerMinutes = value.substring(23, 26) * 60;
+                  var diffOffset = offset - offsetServerMinutes;
+
+                  if(diffOffset != 0){
+                      this._initDateFormatters();
+
+                      var currentMinutes = ( currentDate.getHours() * 60 ) + currentDate.getMinutes();
+
+                      var diffMinutes = currentMinutes - diffOffset;
+                      var localDate = this.parseDateWithoutTimezoneInfo(value);
+                      var dayVariance = (diffMinutes < 0) ? 1 : (diffMinutes >= 1440) ? -1 : 0;
+
+                      var dayVarianceApplied = localDate.setDate(localDate.getDate() + dayVariance);
+                      return this.dateFormatters['with-timezone'].format(new Date(dayVarianceApplied));
+                  }
+              }
             return value;
           }
 

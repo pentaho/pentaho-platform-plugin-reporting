@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2017 Hitachi Vantara..  All rights reserved.
+ * Copyright (c) 2002-2018 Hitachi Vantara..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
@@ -282,33 +282,41 @@ public class ReportContentUtil {
     throw new ParseException( "Unable to parse Date", 0 );
   }
 
-  private static Date parseDateStrict( final ParameterDefinitionEntry parameterEntry, final ParameterContext context,
+  /**
+   * Method to parse a date based on timezone type value which can be one of the following:
+   * 1) server - timezone already handled by the server
+   * 2) client - timezone handled in the client side (see pentaho-platform-plugin-common-ui - formatting.js)
+   * 3) utc - timezone forced to UTC
+   * 4) customized timezone - timezone forced to customized timezone
+   *
+   * @param parameterEntry a map with all parameter attributes
+   * @param context a ParameterContext for which the parameters will be under
+   * @param value the date to be parsed
+   * @return a parsed date
+   * @throws ParseException
+   */
+  static Date parseDateStrict( final ParameterDefinitionEntry parameterEntry, final ParameterContext context,
                                        final String value ) throws ParseException {
     final String timezoneSpec =
-      parameterEntry.getParameterAttribute( ParameterAttributeNames.Core.NAMESPACE,
-        ParameterAttributeNames.Core.TIMEZONE, context );
-    if ( timezoneSpec == null || "server".equals( timezoneSpec ) ) { // NON-NLS
-      final SimpleDateFormat simpleDateFormat = new SimpleDateFormat( "yyyy-MM-dd'T'HH:mm:ss.SSS" ); // NON-NLS
-      return simpleDateFormat.parse( value );
-    } else if ( "utc".equals( timezoneSpec ) ) { // NON-NLS
-      final SimpleDateFormat simpleDateFormat = new SimpleDateFormat( "yyyy-MM-dd'T'HH:mm:ss.SSS" ); // NON-NLS
-      simpleDateFormat.setTimeZone( TimeZone.getTimeZone( "UTC" ) ); // NON-NLS
-      return simpleDateFormat.parse( value );
-    } else if ( "client".equals( timezoneSpec ) ) { // NON-NLS
-      try {
-        final SimpleDateFormat simpleDateFormat = new SimpleDateFormat( "yyyy-MM-dd'T'HH:mm:ss.SSSZ" ); // NON-NLS
-        return simpleDateFormat.parse( value );
-      } catch ( ParseException pe ) {
-        final SimpleDateFormat simpleDateFormat = new SimpleDateFormat( "yyyy-MM-dd'T'HH:mm:ss.SSS" ); // NON-NLS
-        return simpleDateFormat.parse( value );
-      }
-    } else {
-      final TimeZone timeZone = TimeZone.getTimeZone( timezoneSpec );
-      // this never returns null, but if the timezone is not understood, we end up with GMT/UTC.
-      final SimpleDateFormat simpleDateFormat = new SimpleDateFormat( "yyyy-MM-dd'T'HH:mm:ss.SSS" ); // NON-NLS
-      simpleDateFormat.setTimeZone( timeZone );
-      return simpleDateFormat.parse( value );
-    }
-  }
+            parameterEntry.getParameterAttribute( ParameterAttributeNames.Core.NAMESPACE,
+                    ParameterAttributeNames.Core.TIMEZONE, context );
 
+    final SimpleDateFormat simpleDateFormat = new SimpleDateFormat( "yyyy-MM-dd'T'HH:mm:ss.SSS" ); // NON-NLS
+
+    if ( timezoneSpec != null ) {
+      switch ( timezoneSpec ) {
+        case "utc": // timezone forced to UTC
+          simpleDateFormat.setTimeZone( TimeZone.getTimeZone( "UTC" ) ); // NON-NLS
+          break;
+        case "server": // timezone already handled by the server
+        case "client": // timezone handled in the client side (see pentaho-platform-plugin-common-ui - formatting.js)
+          break;
+        default:
+          // this never returns null, but if the timezone is not understood, we end up with GMT/UTC.
+          final TimeZone timeZone = TimeZone.getTimeZone( timezoneSpec );
+          simpleDateFormat.setTimeZone( timeZone );
+      }
+    }
+    return simpleDateFormat.parse( value );
+  }
 }
