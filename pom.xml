@@ -58,7 +58,7 @@
     <commons-gwt.version>9.0.0.0-SNAPSHOT</commons-gwt.version>
     <!-- jackson-databind depends on jackson-core and jackson-annotations
     so that this artifacts have the same version to prevent compile errors -->
-    <fasterxml.jackson.core.version>2.9.4</fasterxml.jackson.core.version>
+    <fasterxml.jackson.core.version>2.9.5</fasterxml.jackson.core.version>
     <common-ui.version>9.0.0.0-SNAPSHOT</common-ui.version>
     <runITs>false</runITs>
     <guava.version>17.0</guava.version>
