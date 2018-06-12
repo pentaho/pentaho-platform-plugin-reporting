@@ -263,6 +263,9 @@
                     <include>common-ui/**</include>
                     <include>cdf/**</include>
                   </includes>
+                  <excludes>
+                    <exclude>common-ui/compressed/**</exclude>
+                  </excludes>
                   <filtering>false</filtering>
                 </resource>
               </resources>
