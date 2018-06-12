@@ -67,7 +67,8 @@
     'pir/i18n' : 'empty:',
     'dojox/widget/ColorPicker':'empty:',
     'dojo/number':'empty:',
-    'reportviewer/formatter' : 'empty:'
+    'reportviewer/formatter' : 'empty:',
+    'pentaho/environment': 'empty:'
   },
 
   mainConfigFile: '${project.build.directory}/requireCfg.js',
@@ -117,7 +118,7 @@
       include: ["reportviewer/reportviewer-app"],
       //exclude css otherwise we will not be able to use them without load issues
       //see http://jira.pentaho.com/browse/PRD-5915
-      exclude: [	
+      exclude: [
         "css!cdf/dashboard/Dashboard.notifications",
         "css!cdf/Dashboard"
         ],
