@@ -56,9 +56,6 @@
     <test.workers>1</test.workers>
     <commons-lang3.version>3.0</commons-lang3.version>
     <commons-gwt.version>8.1.0.0-SNAPSHOT</commons-gwt.version>
-    <!-- jackson-databind depends on jackson-core and jackson-annotations
-    so that this artifacts have the same version to prevent compile errors -->
-    <fasterxml.jackson.core.version>2.9.4</fasterxml.jackson.core.version>
     <common-ui.version>8.1.0.0-SNAPSHOT</common-ui.version>
     <runITs>false</runITs>
     <guava.version>17.0</guava.version>
@@ -219,39 +216,6 @@
         <artifactId>javax.ws.rs-api</artifactId>
         <version>${javax.ws.rs-api.version}</version>
         <scope>compile</scope>
-      </dependency>
-      <dependency>
-        <groupId>com.fasterxml.jackson.core</groupId>
-        <artifactId>jackson-core</artifactId>
-        <version>${fasterxml.jackson.core.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>*</groupId>
-            <artifactId>*</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>com.fasterxml.jackson.core</groupId>
-        <artifactId>jackson-annotations</artifactId>
-        <version>${fasterxml.jackson.core.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>*</groupId>
-            <artifactId>*</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>com.fasterxml.jackson.core</groupId>
-        <artifactId>jackson-databind</artifactId>
-        <version>${fasterxml.jackson.core.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>*</groupId>
-            <artifactId>*</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.springframework.security</groupId>
