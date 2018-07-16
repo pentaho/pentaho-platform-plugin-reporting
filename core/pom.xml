@@ -92,15 +92,11 @@
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-core</artifactId>
+      <artifactId>jackson-databind</artifactId>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-annotations</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
     </dependency>
     <dependency>
       <groupId>org.springframework.security</groupId>
@@ -263,6 +259,9 @@
                     <include>common-ui/**</include>
                     <include>cdf/**</include>
                   </includes>
+                  <excludes>
+                    <exclude>common-ui/compressed/**</exclude>
+                  </excludes>
                   <filtering>false</filtering>
                 </resource>
               </resources>
