@@ -487,7 +487,8 @@ define([
 
         var curUrl = window.location.href.split('?')[0];
         if (this._isAsync === null) {
-          var asyncConf = pentahoGet(curUrl.substring(0, curUrl.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/config', "");
+          var asyncConf = pentahoGet(curUrl.substring(0, curUrl.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/config',
+            "", null, "application/json");
           if (asyncConf) {
             try {
               asyncConf = JSON.parse(asyncConf);
