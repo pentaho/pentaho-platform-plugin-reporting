@@ -204,7 +204,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           if(!this.view._isInsideDashboard() && !inMobile && _hasSchedulePermission){
             registry.byId('feedbackScreen').showBackgroundBtn(_Messages.getString('FeedbackScreenBackground'));
           }
-        }));
+        }), "application/json");
 
       },
 
@@ -1361,7 +1361,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                     logger && logger.log("Can't reserve id");
                     pentahoPost('reportjob', reportUrl, mainReportGeneration, 'text/text');
                   }
-                });
+                }, "application/json");
               } else {
                 me._isFinished = true;
                 hideDlgAndPane();
@@ -1483,7 +1483,8 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
             });
             //Keep polling
             setTimeout(function () {
-              pentahoGet(url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + me._currentReportUuid + '/status', "", specialCaseProxy);
+              pentahoGet(url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + me._currentReportUuid + '/status',
+                "", specialCaseProxy, "application/json");
             }, me.reportPrompt._pollingInterval);
             me._removeLocationPromptHandlers();
           }
@@ -1508,7 +1509,8 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                   mainReportGeneration(result);
                 } else {
                   setTimeout(function () {
-                    pentahoGet(url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + me._currentReportUuid + '/status', "", waitForScheduled);
+                    pentahoGet(url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + me._currentReportUuid + '/status',
+                      "", waitForScheduled, "application/json");
                   }, me.reportPrompt._pollingInterval);
                 }
               } catch (e) {
@@ -1517,7 +1519,8 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
             });
             //Keep polling
             setTimeout(function () {
-              pentahoGet(url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + me._currentReportUuid + '/status', "", waitForScheduled);
+              pentahoGet(url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + me._currentReportUuid + '/status',
+                "", waitForScheduled, "application/json");
             }, me.reportPrompt._pollingInterval);
             me._removeLocationPromptHandlers();
           }
@@ -1565,7 +1568,8 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                   mainReportGeneration(result);
                 } else {
                   setTimeout(function () {
-                    pentahoGet(url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + me._currentReportUuid + '/status', "", waitForScheduled);
+                    pentahoGet(url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + me._currentReportUuid + '/status',
+                      "", waitForScheduled, "application/json");
                   }, me.reportPrompt._pollingInterval);
                 }
               } catch (e) {
@@ -1573,7 +1577,8 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
               }
             });
             setTimeout(function () {
-              pentahoGet(url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + me._currentReportUuid + '/status', "", waitForScheduled);
+              pentahoGet(url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + me._currentReportUuid + '/status',
+                "", waitForScheduled, "application/json");
             }, me.reportPrompt._pollingInterval);
 
             me._removeLocationPromptHandlers();
@@ -1682,7 +1687,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
       _keepPolling : function (uuid, url, callback){
         var me = this;
         setTimeout(function () {
-          pentahoGet(url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + uuid + '/status', "", callback);
+          pentahoGet(url.substring(0, url.indexOf("/api/repos")) + '/plugin/reporting/api/jobs/' + uuid + '/status', "", callback, "application/json");
         }, me.reportPrompt._pollingInterval);
       },
 
