@@ -59,6 +59,9 @@ import java.util.Collections;
 import java.util.UUID;
 import java.util.concurrent.Future;
 
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
+
 @Path( "/reporting/api/jobs" )
 public class JobManager {
 
@@ -87,13 +90,15 @@ public class JobManager {
       promptForLocation );
   }
 
-
-  @GET @Path( "config" ) public Response getConfig() {
+  @GET
+  @Path( "config" )
+  @Produces( APPLICATION_JSON )
+  public Response getConfig() {
     return getJson( config );
   }
 
-
-  @GET @Path( "{job_id}/content" )
+  @GET
+  @Path( "{job_id}/content" )
   public Response getPDFContent( @PathParam( "job_id" ) final String job_id ) throws IOException {
     logger.debug( "Chrome pdf viewer workaround. See BACKLOG-7598 for details" );
 
@@ -101,7 +106,9 @@ public class JobManager {
   }
 
   @SuppressWarnings( "unchecked" )
-  @POST @Path( "{job_id}/content" ) public Response getContent( @PathParam( "job_id" ) final String jobId )
+  @POST
+  @Path( "{job_id}/content" )
+  public Response getContent( @PathParam( "job_id" ) final String jobId )
     throws IOException {
 
     try {
@@ -146,14 +153,12 @@ public class JobManager {
     }
   }
 
-
-  @GET @Path( "{job_id}/status" ) @Produces( "application/json" )
+  @GET
+  @Path( "{job_id}/status" )
+  @Produces( APPLICATION_JSON )
   public Response getStatus( @PathParam( "job_id" ) final String jobId ) {
-
     try {
-
       final ExecutionContext context = getContext( jobId );
-
       final IAsyncReportState responseJson = context.getReportState();
 
       return getJson( responseJson );
@@ -164,14 +169,12 @@ public class JobManager {
 
   private Response getJson( final Object responseJson ) {
     final ObjectMapper mapper = new ObjectMapper();
-    String json = null;
     try {
-      json = mapper.writeValueAsString( responseJson );
+      return Response.ok( mapper.writeValueAsString( responseJson ) ).build();
     } catch ( final Exception e ) {
       logger.error( UNABLE_TO_SERIALIZE_TO_JSON + responseJson.toString() );
-      Response.serverError().build();
+      return Response.serverError().build();
     }
-    return Response.ok( json ).build();
   }
 
   protected IPentahoAsyncExecutor getExecutor() {
@@ -179,9 +182,10 @@ public class JobManager {
   }
 
   @SuppressWarnings( "unchecked" )
-  @GET @Path( "{job_id}/cancel" ) public Response cancel( @PathParam( "job_id" ) final String jobId ) {
+  @GET
+  @Path( "{job_id}/cancel" )
+  public Response cancel( @PathParam( "job_id" ) final String jobId ) {
     try {
-
       final ExecutionContext context = getContext( jobId );
 
       final Future<InputStream> future = context.getFuture();
@@ -199,8 +203,9 @@ public class JobManager {
     }
   }
 
-
-  @GET @Path( "{job_id}/requestPage/{page}" ) @Produces( "text/text" )
+  @GET
+  @Path( "{job_id}/requestPage/{page}" )
+  @Produces( TEXT_PLAIN )
   public Response requestPage( @PathParam( "job_id" ) final String jobId, @PathParam( "page" ) final int page ) {
     try {
 
@@ -214,10 +219,10 @@ public class JobManager {
     }
   }
 
-
-  @GET @Path( "{job_id}/schedule" ) @Produces( "text/text" )
-  public Response schedule( @PathParam( "job_id" ) final String jobId,
-                            @DefaultValue( "true" )
+  @GET
+  @Path( "{job_id}/schedule" )
+  @Produces( TEXT_PLAIN )
+  public Response schedule( @PathParam( "job_id" ) final String jobId, @DefaultValue( "true" )
                             @QueryParam( "confirm" ) final boolean confirm ) {
     try {
       ExecutionContext context = getContext( jobId );
@@ -241,8 +246,9 @@ public class JobManager {
     }
   }
 
-
-  @POST @Path( "{job_id}/schedule" ) @Produces( "application/json" )
+  @POST
+  @Path( "{job_id}/schedule" )
+  @Produces( APPLICATION_JSON )
   public Response confirmSchedule( @PathParam( "job_id" ) final String jobId,
                                    @DefaultValue( "true" )
                                    @QueryParam( "confirm" ) final boolean confirm,
@@ -251,14 +257,12 @@ public class JobManager {
                                    @QueryParam( "folderId" ) final String folderId,
                                    @QueryParam( "newName" ) final String newName ) {
     try {
-
       //We can't go further without folder id and file name
       if ( StringUtil.isEmpty( folderId ) || StringUtil.isEmpty( newName ) ) {
         return get404();
       }
 
       ExecutionContext context = getContext( jobId );
-
 
       //The report can be already scheduled but we still may want to update the location
       if ( confirm ) {
@@ -287,7 +291,9 @@ public class JobManager {
     return executionContext;
   }
 
-  @POST @Path( "reserveId" ) @Produces( "application/json" )
+  @POST
+  @Path( "reserveId" )
+  @Produces( APPLICATION_JSON )
   public Response reserveId() {
     final IPentahoSession session = PentahoSessionHolder.getSession();
     final IJobIdGenerator iJobIdGenerator = PentahoSystem.get( IJobIdGenerator.class );
@@ -299,11 +305,9 @@ public class JobManager {
     }
   }
 
-
   protected final Response get404() {
     return Response.status( Response.Status.NOT_FOUND ).build();
   }
-
 
   /**
    * In-place implementation to support streaming responses. By default - even InputStream passed - streaming is not
@@ -425,7 +429,6 @@ public class JobManager {
       this.jobId = jobId;
     }
 
-
     private void evaluate() throws ContextFailedException {
       try {
         this.session = PentahoSessionHolder.getSession();
@@ -436,7 +439,6 @@ public class JobManager {
       }
     }
 
-
     public IPentahoSession getSession() {
       return session;
     }
@@ -445,7 +447,6 @@ public class JobManager {
     private IPentahoAsyncExecutor getReportExecutor() {
       return getExecutor();
     }
-
 
     public Future getFuture() throws FutureNotFoundException {
       final Future future = getReportExecutor().getFuture( uuid, session );
@@ -544,5 +545,4 @@ public class JobManager {
       super( message );
     }
   }
-
 }
