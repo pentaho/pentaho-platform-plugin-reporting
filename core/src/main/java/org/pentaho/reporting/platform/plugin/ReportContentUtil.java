@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2017 Hitachi Vantara..  All rights reserved.
+ * Copyright (c) 2002-2018 Hitachi Vantara..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
@@ -54,6 +54,8 @@ import java.util.Map;
 import java.util.TimeZone;
 
 public class ReportContentUtil {
+
+  private static final String ONLY_DATE_REGEX_PATTERN = "(y{4}|([dM]){2})([-/])(([dM]){2})([-/])(y{4}|([dM]){2})";
 
   /**
    * Apply inputs (if any) to corresponding report parameters, care is taken when checking parameter types to perform
@@ -282,7 +284,7 @@ public class ReportContentUtil {
     throw new ParseException( "Unable to parse Date", 0 );
   }
 
-  private static Date parseDateStrict( final ParameterDefinitionEntry parameterEntry, final ParameterContext context,
+  static Date parseDateStrict( final ParameterDefinitionEntry parameterEntry, final ParameterContext context,
                                        final String value ) throws ParseException {
     final String timezoneSpec =
       parameterEntry.getParameterAttribute( ParameterAttributeNames.Core.NAMESPACE,
@@ -296,7 +298,12 @@ public class ReportContentUtil {
       return simpleDateFormat.parse( value );
     } else if ( "client".equals( timezoneSpec ) ) { // NON-NLS
       try {
-        final SimpleDateFormat simpleDateFormat = new SimpleDateFormat( "yyyy-MM-dd'T'HH:mm:ss.SSSZ" ); // NON-NLS
+        // As a workaround, when there is only date configured (and no time) then we parse only as date to avoid errors
+        // caused by change of day due to client/server different timezones (because reporting mechanism assumes no time = 00:00:00)
+        // Note: a whole refactor should be done to integrate new Java 8 DateTime API and then this workaround can be removed.
+        final SimpleDateFormat simpleDateFormat = isOnlyDateFormat( parameterEntry, context )
+          ? new SimpleDateFormat( "yyyy-MM-dd" ) // NON-NLS
+          : new SimpleDateFormat( "yyyy-MM-dd'T'HH:mm:ss.SSSZ" ); // NON-NLS
         return simpleDateFormat.parse( value );
       } catch ( ParseException pe ) {
         final SimpleDateFormat simpleDateFormat = new SimpleDateFormat( "yyyy-MM-dd'T'HH:mm:ss.SSS" ); // NON-NLS
@@ -309,6 +316,22 @@ public class ReportContentUtil {
       simpleDateFormat.setTimeZone( timeZone );
       return simpleDateFormat.parse( value );
     }
+  }
+
+  /**
+   * Checks whether expected format only contains date using a regex pattern
+   *
+   * @param parameterEntry the parameter definition entry
+   * @param context the parameter context
+   * @return true if expected format only contains date, false otherwise
+   */
+  private static boolean isOnlyDateFormat( ParameterDefinitionEntry parameterEntry, final ParameterContext context ) {
+
+    final String dataFormatSpec =
+            parameterEntry.getParameterAttribute( ParameterAttributeNames.Core.NAMESPACE,
+                    ParameterAttributeNames.Core.DATA_FORMAT, context );
+
+    return dataFormatSpec != null && dataFormatSpec.matches( ONLY_DATE_REGEX_PATTERN );
   }
 
 }
