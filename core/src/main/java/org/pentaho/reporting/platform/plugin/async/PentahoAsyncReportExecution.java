@@ -13,7 +13,7 @@
  * See the GNU General Public License for more details.
  *
  *
- * Copyright 2006 - 2016 Pentaho Corporation.  All rights reserved.
+ * Copyright 2006 - 2018 Hitachi Vantara.  All rights reserved.
  */
 
 
@@ -126,7 +126,15 @@ public class PentahoAsyncReportExecution extends AbstractAsyncReportExecution<IA
           log.error( "fail to execute report in async mode: " + ee );
 
           if ( ee.getMessage() != null ) {
-            listener.setErrorMessage( ee.getMessage() );
+            String errorMessage = "";
+            Throwable throwable = ee;
+
+            while ( throwable != null ) {
+              errorMessage += throwable.getMessage() + ".\n";
+              throwable = throwable.getCause();
+            }
+
+            listener.setErrorMessage( errorMessage );
           }
           fail();
           return NULL;
