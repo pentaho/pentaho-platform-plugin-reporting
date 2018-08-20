@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2017 Hitachi Vantara..  All rights reserved.
+ * Copyright (c) 2002-2018 Hitachi Vantara..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
@@ -30,6 +30,7 @@ import org.pentaho.reporting.engine.classic.core.AttributeNames;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportDataFactoryException;
 import org.pentaho.reporting.engine.classic.core.ReportInterruptedException;
+import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
 import org.pentaho.reporting.engine.classic.core.metadata.ReportProcessTaskRegistry;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.pdf.PdfPageableModule;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.plaintext.PlainTextPageableModule;
@@ -970,6 +971,9 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       log.info( "Report execution interrupted." );
     } catch ( Exception e ) {
       log.error( Messages.getInstance().getString( "ReportPlugin.executionFailed" ), e ); //$NON-NLS-1$
+      if ( e instanceof ReportProcessingException ) {
+        throw e;
+      }
     }
     // lets not pretend we were successfull, if the export type was not a valid one.
     return false;
