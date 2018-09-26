@@ -996,7 +996,9 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
       _hideAsyncScreens: function(){
         registry.byId('reportGlassPane').hide();
-        domClass.add('notification-screen', 'hidden');
+        if(domClass && domClass.className) {
+          domClass.add('notification-screen', 'hidden');
+        }
       },
 
       _submitRowLimitUpdate: function (selectedLimit) {
