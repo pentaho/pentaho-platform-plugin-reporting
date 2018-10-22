@@ -747,7 +747,7 @@ public class ParameterXmlContentHandler {
 
         //parameter dependencies: see backlog-7980
         boolean shouldValidateOnServer =
-          dependencies.isNoDependencyInformationAvailable()
+          !dependencies.isNoDependencyInformationAvailable()
             || shouldAlwaysValidateOnServer( parameter, parameterContext );
         final Set<String> dependentParams = dependencies.getDependentParameterFor( parameter.getName() );
         if ( !dependentParams.isEmpty() ) {
