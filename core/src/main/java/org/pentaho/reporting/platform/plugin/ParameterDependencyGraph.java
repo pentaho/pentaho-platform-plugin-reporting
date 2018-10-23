@@ -112,7 +112,7 @@ public class ParameterDependencyGraph {
 
   public Set<String> getDependentParameterFor( String parameterName ) {
     if ( noDependencyInformationAvailable ) {
-      return Collections.unmodifiableSet( allParameterNames );
+      return Collections.emptySet();
     }
 
     final Set<String> strings = dependencyGraph.getOrDefault( parameterName, Collections.emptySet() );
