@@ -34,7 +34,7 @@ public class ParameterDependencyGraphTest {
   @Test
   public void testGetDependentParameterFor() {
     ParameterDependencyGraph paramDepGrap = new ParameterDependencyGraph( true, "param1", "param2" );
-    assertEquals( paramDepGrap.getDependentParameterFor( "param1" ), asSet( "param1", "param2" ) );
+    assertEquals( paramDepGrap.getDependentParameterFor( "param1" ), asSet() );
 
     paramDepGrap.setNoDependencyInformationAvailable( false );
     LinkedHashMap<String, Set<String>> dependencyGraph = new LinkedHashMap<>();
