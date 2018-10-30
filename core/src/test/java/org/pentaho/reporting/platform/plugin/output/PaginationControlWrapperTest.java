@@ -12,11 +12,12 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2017 Hitachi Vantara..  All rights reserved.
+ * Copyright (c) 2002-2018 Hitachi Vantara..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin.output;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -108,15 +109,19 @@ public class PaginationControlWrapperTest {
 
   @Test
   public void embedCss() throws Exception {
+    // This test ensures that the stylesheet code is added inline from the
+    // links provided to the stylesheets.
+    File tmp = new File( "target/test/resource/solution/system/tmp" );
+    tmp.mkdirs();
+
     final String solutionPath = PentahoSystem.getApplicationContext().getSolutionPath( "system/tmp/test.css" );
     final File file = new File( solutionPath );
     try {
-      if ( !file.exists() ) {
-        file.createNewFile();
-      }
+      FileUtils.writeStringToFile(file, ".fakeClass{}");
       final Map<Integer, byte[]> pages = new HashMap<>();
       pages
         .put( 0, "<link type=\"text/css\" rel=\"stylesheet\" href=\"/pentaho/getImage?image=test.css\">".getBytes() );
+      // File does not exist so the link will not be replaced with inline styles
       pages
         .put( 1, "<link type=\"text/css\" rel=\"stylesheet\" href=\"/pentaho/getImage?image=nofile.css\">".getBytes() );
       final String res;
@@ -124,11 +129,17 @@ public class PaginationControlWrapperTest {
         PaginationControlWrapper.write( baos, new ReportContentImpl( 1, pages ) );
         res = new String( baos.toByteArray(), "UTF-8" );
       }
+
+      // Ensure the pages contain the encoded sylesheet content for test.css and
+      // that the nofile.css link is still there since no file exists.
+      assertTrue( res.contains( "var pages = [ 'Jmx0O3N0eWxlJmd0OwouZmFrZUNsYXNze30KJmx0Oy9zdHlsZSZndDs=', \n" +
+              "'Jmx0O2xpbmsgdHlwZT0mcXVvdDt0ZXh0L2NzcyZxdW90OyByZWw9JnF1b3Q7c3R5bGVzaGVldCZxdW90OyBocmVmPSZxdW90Oy9wZW50YWhvL2dldEltYWdlP2ltYWdlPW5vZmlsZS5jc3MmcXVvdDsmZ3Q7' ];" ) );
+
       assertFalse( res.contains( "link" ) );
       assertTrue( res.contains( "style" ) );
     } finally {
       file.delete();
+      tmp.delete();
     }
-
   }
 }
