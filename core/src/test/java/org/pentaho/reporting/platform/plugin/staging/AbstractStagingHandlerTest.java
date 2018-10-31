@@ -13,11 +13,12 @@
  * See the GNU General Public License for more details.
  *
  *
- * Copyright 2006 - 2017 Hitachi Vantara.  All rights reserved.
+ * Copyright 2006 - 2018 Hitachi Vantara.  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin.staging;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.Test;
 import org.pentaho.platform.api.engine.IApplicationContext;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
@@ -26,11 +27,16 @@ import org.pentaho.reporting.engine.classic.core.util.StagingMode;
 import org.pentaho.reporting.platform.plugin.MicroPlatformFactory;
 import org.pentaho.test.platform.engine.core.MicroPlatform;
 
+import java.io.File;
+
 import static org.junit.Assert.assertTrue;
 
 public class AbstractStagingHandlerTest {
   @Test
   public void getStagingHandlerImpl() throws Exception {
+    File tmp = new File( "target/test/resource/solution/system/tmp" );
+    tmp.mkdirs();
+
     MicroPlatform microPlatform = MicroPlatformFactory.create();
     microPlatform.start();
     try {
@@ -48,6 +54,7 @@ public class AbstractStagingHandlerTest {
     } finally {
       microPlatform.stop();
       microPlatform = null;
+      FileUtils.deleteDirectory(tmp);
     }
   }
 }
