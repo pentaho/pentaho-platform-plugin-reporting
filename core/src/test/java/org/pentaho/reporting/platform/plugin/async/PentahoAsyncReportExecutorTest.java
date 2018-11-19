@@ -13,17 +13,14 @@
  * See the GNU General Public License for more details.
  *
  *
- * Copyright 2006 - 2017 Hitachi Vantara.  All rights reserved.
+ * Copyright 2006 - 2018 Hitachi Vantara.  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin.async;
 
 import com.google.common.io.CharStreams;
 import junit.framework.Assert;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.Timeout;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -103,8 +100,20 @@ public class PentahoAsyncReportExecutorTest {
   private IUnifiedRepository repository;
   File temp;
 
+  private static IApplicationContext backupContext;
 
-  @Before public void before() throws Exception {
+  @BeforeClass
+  public static void backup() {
+    backupContext = PentahoSystem.getApplicationContext();
+  }
+
+  @AfterClass
+  public static void restore() {
+    PentahoSystem.setApplicationContext( backupContext );
+  }
+
+  @Before
+  public void before() throws Exception {
     PentahoSystem.clearObjectFactory();
     PentahoSessionHolder.removeSession();
 
@@ -153,7 +162,6 @@ public class PentahoAsyncReportExecutorTest {
 
     PentahoSystem.registerObject( repository, IUnifiedRepository.class );
     PentahoSystem.registerObject( strategy, ISchedulingDirectoryStrategy.class );
-
   }
 
   @After
