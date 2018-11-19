@@ -15,7 +15,7 @@
 * Copyright (c) 2002-2013 Pentaho Corporation..  All rights reserved.
 */
 
-pen.define(['common-ui/util/formatting'], function(ReportFormatUtil) {
+define(['common-ui/util/formatting'], function(ReportFormatUtil) {
   // Determine the size of an object (# of properties)
   var sizeOf = function(obj) {
     var size = 0, key;
