@@ -104,9 +104,6 @@
   //not have the same comments option support as esprima.
   preserveLicenseComments: false,
 
-  //Indicates the namespace to use for require/requirejs/define.
-  namespace: "pen",
-
   modules: [
     {
       name: "reportviewer/reportviewer-main-module",

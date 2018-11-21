@@ -8,7 +8,7 @@
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
         <!-- start customized section: fixup URLs if necessary -->
-        <link rel="stylesheet" type="text/css" href="../../../common-ui/resources/web/dojo/util/doh/runner.css"/>    
+        <link rel="stylesheet" type="text/css" href="../../../common-ui/resources/web/dojo/util/doh/runner.css"/>
         <link rel="stylesheet" type="text/css" href="../../../common-ui/resources/web/dojo/dijit/themes/pentaho/pentaho.css"/>
         <script type="text/javascript">
             //<![CDATA[
@@ -26,7 +26,7 @@
         <!-- start customized section: configure the dojo modules here -->
         <script type="text/javascript">
             //<![CDATA[
-                var djConfig = { 
+                var djConfig = {
                     modulePaths: { },
                     baseUrl: '../../../common-ui/resources/web/dojo/dojo/',
                     parseOnLoad: false
@@ -47,13 +47,13 @@
                     dojo.parser.parse();
                     setupTestRunner();
 
-                    pen.define('dojo');
+                    define('dojo');
                 }
 
                 gwtModuleLoaded = function(module) {
                     if (module === 'formatter') {
                         // Load the tests
-                        pen.require([
+                        require([
                           'reportviewer/unittests/reportviewer-tests',
                           'reportviewer/unittests/reportviewer-formatting-tests'
                         ]);
