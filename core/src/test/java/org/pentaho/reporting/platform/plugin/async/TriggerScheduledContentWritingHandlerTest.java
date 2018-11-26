@@ -12,11 +12,12 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2017 Hitachi Vantara..  All rights reserved.
+ * Copyright (c) 2002-2018 Hitachi Vantara..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin.async;
 
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -47,11 +48,13 @@ public class TriggerScheduledContentWritingHandlerTest {
 
   @BeforeClass
   public static void setUpClass() throws Exception {
-
     PentahoSystem.registerObject( repository, IUnifiedRepository.class );
-
   }
 
+  @AfterClass
+  public static void restore() {
+    PentahoSystem.shutdown();
+  }
 
   @Before
   public void setUp() throws Exception {
@@ -63,7 +66,6 @@ public class TriggerScheduledContentWritingHandlerTest {
     SecurityHelper.setMockInstance( iSecurityHelper );
     reset( repository );
   }
-
 
   @Test
   public void notifyListeners() throws Exception {
