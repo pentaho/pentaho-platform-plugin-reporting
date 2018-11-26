@@ -12,14 +12,12 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2017 Hitachi Vantara..  All rights reserved.
+ * Copyright (c) 2002-2018 Hitachi Vantara..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin.repository;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
 import org.pentaho.platform.api.repository2.unified.RepositoryFile;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
@@ -41,6 +39,12 @@ public class ReportContentLocationTest {
   RepositoryFile repositoryFile;
   ReportContentLocation reportContentLocation;
   IUnifiedRepository repository;
+
+  @AfterClass
+  public static void restoreBackup() {
+    // Remove mocked references used in PentahoSystem.
+    PentahoSystem.shutdown();
+  }
 
   @Before
   public void setUp() throws Exception {
