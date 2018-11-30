@@ -15,6 +15,9 @@
  * Copyright (c) 2002-2017 Hitachi Vantara..  All rights reserved.
  */
 
+const puppeteer = require('puppeteer');
+process.env.CHROME_BIN = puppeteer.executablePath();
+
 module.exports = function(config) {
     config.set({
 
@@ -91,7 +94,7 @@ module.exports = function(config) {
 
         // start these browsers
         // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
-        browsers: ['PhantomJS'],
+        browsers: ['ChromeHeadless'],
 
 
         // Continuous Integration mode
