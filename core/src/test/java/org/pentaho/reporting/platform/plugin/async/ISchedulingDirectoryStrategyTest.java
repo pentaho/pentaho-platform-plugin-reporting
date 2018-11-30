@@ -13,21 +13,20 @@
  * See the GNU General Public License for more details.
  *
  *
- * Copyright 2006 - 2017 Hitachi Vantara.  All rights reserved.
+ * Copyright 2006 - 2018 Hitachi Vantara.  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin.async;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.pentaho.platform.api.engine.IApplicationContext;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
 import org.pentaho.platform.api.repository2.unified.RepositoryFile;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
-import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.engine.core.system.StandaloneSession;
 import org.pentaho.platform.engine.core.system.boot.PlatformInitializationException;
 import org.pentaho.reporting.platform.plugin.MicroPlatformFactory;
@@ -62,6 +61,7 @@ public class ISchedulingDirectoryStrategyTest {
   public static void tearDown() throws Exception {
     microPlatform.stop();
     microPlatform = null;
+    FileUtils.deleteDirectory( new File( "target/test/resource/solution/system/tmp"  ) );
   }
 
   @Test

@@ -13,15 +13,15 @@
  * See the GNU General Public License for more details.
  *
  *
- * Copyright 2006 - 2017 Hitachi Vantara.  All rights reserved.
+ * Copyright 2006 - 2018 Hitachi Vantara.  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin.async;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.pentaho.platform.api.engine.IApplicationContext;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
@@ -51,25 +51,29 @@ public class PentahoAsyncExecutionInterruptTest {
   private int autoSchedulerThreshold = 0;
   private PentahoAsyncExecutor executor = new PentahoAsyncExecutor( 2, autoSchedulerThreshold );
   private IPentahoSession session = mock( IPentahoSession.class );
+  private File tmp;
 
-  @Before public void before() throws PlatformInitializationException {
+  @Before
+  public void before() throws PlatformInitializationException {
     PentahoSystem.clearObjectFactory();
     PentahoSessionHolder.removeSession();
     when( session.getId() ).thenReturn( "junit" );
     PentahoSessionHolder.setSession( session );
 
-    new File( "target/test/resource/solution/system/tmp" ).mkdirs();
+    tmp = new File( "target/test/resource/solution/system/tmp" );
+    tmp.mkdirs();
     microPlatform = MicroPlatformFactory.create();
     microPlatform.start();
   }
 
   @After
-  public void after() {
+  public void after() throws IOException {
     PentahoSystem.shutdown();
     PentahoSystem.clearObjectFactory();
     PentahoSessionHolder.removeSession();
     microPlatform.stop();
     microPlatform = null;
+    FileUtils.deleteDirectory( tmp );
   }
 
   @Test public void testInterrupt() throws IOException, InterruptedException {
