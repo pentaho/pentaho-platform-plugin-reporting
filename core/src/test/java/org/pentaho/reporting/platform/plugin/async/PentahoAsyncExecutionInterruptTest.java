@@ -18,7 +18,6 @@
 
 package org.pentaho.reporting.platform.plugin.async;
 
-import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -73,7 +72,6 @@ public class PentahoAsyncExecutionInterruptTest {
     PentahoSessionHolder.removeSession();
     microPlatform.stop();
     microPlatform = null;
-    FileUtils.deleteDirectory( tmp );
   }
 
   @Test public void testInterrupt() throws IOException, InterruptedException {

@@ -18,7 +18,6 @@
 
 package org.pentaho.reporting.platform.plugin.staging;
 
-import org.apache.commons.io.FileUtils;
 import org.junit.Test;
 import org.pentaho.platform.api.engine.IApplicationContext;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
@@ -54,7 +53,6 @@ public class AbstractStagingHandlerTest {
     } finally {
       microPlatform.stop();
       microPlatform = null;
-      FileUtils.deleteDirectory(tmp);
     }
   }
 }

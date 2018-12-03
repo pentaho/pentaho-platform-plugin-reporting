@@ -18,7 +18,6 @@
 package org.pentaho.reporting.platform.plugin;
 
 import junit.framework.Assert;
-import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -110,7 +109,6 @@ public class PageableHTMLTest {
   @After
   public void tearDown() throws Exception {
     reset( iPluginCacheManager );
-    FileUtils.deleteDirectory( tmp );
   }
 
   @Test
@@ -411,7 +409,6 @@ public class PageableHTMLTest {
     // create/set the InputStream
     FileInputStream reportDefinition =
       new FileInputStream( "target/test/resource/solution/test/reporting/report1.prpt" ); //$NON-NLS-1$
-      new FileInputStream( "target/test/resource/solution/test/reporting/report1.prpt" ); //$NON-NLS-1$
     rc.setReportDefinitionInputStream( reportDefinition );
     rc.setOutputType( "text/html" ); //$NON-NLS-1$
 
@@ -421,15 +418,23 @@ public class PageableHTMLTest {
     inputs.put( "accepted-page", "0" ); //$NON-NLS-1$ //$NON-NLS-2$
     rc.setInputs( inputs );
 
-    FileOutputStream outputStream =
-      new FileOutputStream( new File( tmp, System.currentTimeMillis() + ".html" ) ); //$NON-NLS-1$ //$NON-NLS-2$
+    File file = new File( tmp, System.currentTimeMillis() + ".html" ); //$NON-NLS-1$ //$NON-NLS-2$
+    FileOutputStream outputStream = new FileOutputStream( file );
     rc.setOutputStream( outputStream );
 
-    // execute the component
-    assertTrue( rc.execute() );
+    try {
+      // execute the component
+      assertTrue( rc.execute() );
 
-    // make sure this report has 8 pages (we know this report will produce 8 pages with sample data)
-    assertEquals( 8, rc.getPageCount() );
+      // make sure this report has 8 pages (we know this report will produce 8 pages with sample data)
+      assertEquals(8, rc.getPageCount());
+    } finally {
+      reportDefinition.close();
+      outputStream.close();
+      if ( file.exists() ) {
+        file.delete();
+      }
+    }
   }
 
   @Test
@@ -454,8 +459,8 @@ public class PageableHTMLTest {
     inputs.put( "accepted-page", "0" ); //$NON-NLS-1$ //$NON-NLS-2$
     rc.setInputs( inputs );
 
-    FileOutputStream outputStream =
-      new FileOutputStream( new File( tmp, System.currentTimeMillis() + ".html" ) ); //$NON-NLS-1$ //$NON-NLS-2$
+    File file = new File( tmp, System.currentTimeMillis() + ".html" ); //$NON-NLS-1$ //$NON-NLS-2$
+    FileOutputStream outputStream = new FileOutputStream( file );
     rc.setOutputStream( outputStream );
 
     // check the accepted page
@@ -463,20 +468,30 @@ public class PageableHTMLTest {
 
     // make sure pagination is really on
     assertTrue( rc.isPaginateOutput() );
-    // validate the component
-    assertTrue( rc.validate() );
 
-    // execute the component
-    assertTrue( rc.execute() );
+    try {
+      // validate the component
+      assertTrue( rc.validate() );
 
-    // make sure this report has 8 pages (we know this report will produce 8 pages with sample data)
-    assertEquals( 8, rc.getPageCount() );
+      // execute the component
+      assertTrue( rc.execute() );
 
+      // make sure this report has 8 pages (we know this report will produce 8 pages with sample data)
+      assertEquals(8, rc.getPageCount());
+    } finally {
+        reportDefinition.close();
+        outputStream.close();
+        if ( file.exists() ) {
+          file.delete();
+        }
+    }
   }
 
   @Test
   public void testCaching() throws Exception {
 
+    File file = null;
+    FileOutputStream outputStream = null;
     ModifiableConfiguration edConf = ClassicEngineBoot.getInstance().getEditableConfig();
     edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.CachePageableHtmlContent", "true" );
     try {
@@ -499,8 +514,8 @@ public class PageableHTMLTest {
       inputs.put( "accepted-page", "0" ); //$NON-NLS-1$ //$NON-NLS-2$
       rc.setInputs( inputs );
 
-      FileOutputStream outputStream =
-        new FileOutputStream( new File( tmp, System.currentTimeMillis() + ".html" ) ); //$NON-NLS-1$ //$NON-NLS-2$
+      file = new File( tmp, System.currentTimeMillis() + ".html" ); //$NON-NLS-1$ //$NON-NLS-2$
+      outputStream = new FileOutputStream( file );
       rc.setOutputStream( outputStream );
 
       // execute the component
@@ -518,6 +533,12 @@ public class PageableHTMLTest {
 
     } finally {
       edConf.setConfigProperty( "org.pentaho.reporting.platform.plugin.output.CachePageableHtmlContent", null );
+      if ( null != outputStream ) {
+        outputStream.close();
+      }
+      if ( null != file && file.exists() ) {
+        file.delete();
+      }
     }
   }
 
@@ -799,11 +820,19 @@ public class PageableHTMLTest {
     inputs.put( "accepted-page", "-1" ); //$NON-NLS-1$ //$NON-NLS-2$
     rc.setInputs( inputs );
 
-    final FileOutputStream outputStream =
-      new FileOutputStream( new File( tmp, System.currentTimeMillis() + ".html" ) ); //$NON-NLS-1$ //$NON-NLS-2$
+    File file = new File( tmp, System.currentTimeMillis() + ".html" ); //$NON-NLS-1$ //$NON-NLS-2$
+    final FileOutputStream outputStream = new FileOutputStream( file );
     rc.setOutputStream( outputStream );
 
-    assertEquals( 8, rc.paginate() );
+    try {
+      assertEquals(  8, rc.paginate() );
+    } finally {
+      reportDefinition.close();
+      outputStream.close();
+      if ( file.exists() ) {
+        file.delete();
+      }
+    }
 
   }
 
@@ -866,12 +895,19 @@ public class PageableHTMLTest {
     inputs.put( "content-handler-pattern", "test" );
     rc.setInputs( inputs );
 
-    final FileOutputStream outputStream =
-      new FileOutputStream( new File( tmp, System.currentTimeMillis() + ".html" ) ); //$NON-NLS-1$ //$NON-NLS-2$
+    File file = new File( tmp, System.currentTimeMillis() + ".html" ); //$NON-NLS-1$ //$NON-NLS-2$
+    final FileOutputStream outputStream = new FileOutputStream( file );
     rc.setOutputStream( outputStream );
 
-    // execute the component
-    assertTrue( rc.execute() );
+    try {
+      // execute the component
+      assertTrue( rc.execute() );
+    } finally {
+      outputStream.close();
+      if ( file.exists() ) {
+        file.delete();
+      }
+    }
   }
 
 
