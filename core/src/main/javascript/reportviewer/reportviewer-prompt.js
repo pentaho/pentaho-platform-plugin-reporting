@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2017 Hitachi Vantara..  All rights reserved.
+ * Copyright (c) 2002-2018 Hitachi Vantara..  All rights reserved.
  */
 
 define([
@@ -206,7 +206,7 @@ define([
           var untrusted = this.api.operation.getParameterValues()[names[i]];
           if(undefined === untrusted ){
             var p = paramDefn.getParameter(names[i]);
-            if(p && p.attributes && p.attributes['must-validate-on-server']){
+            if(p && p.attributes && (p.attributes['must-validate-on-server'] || p.attributes['parameter-render-type'] === 'textbox')){
               untrusted = p.getSelectedValuesValue();
             }
           }
