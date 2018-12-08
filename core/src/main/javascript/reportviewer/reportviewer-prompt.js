@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2017 Hitachi Vantara..  All rights reserved.
+ * Copyright (c) 2002-2018 Hitachi Vantara..  All rights reserved.
  */
 
 define([
@@ -295,10 +295,12 @@ define([
             this._oldParameterDefinition = paramDefn;
             this._oldParameterSet = this.extractParameterValues(paramDefn);
 
-            callback(paramDefn);
+            if( this.mode == "INITIAL" || autoSubmit ) {
+              callback(paramDefn);
 
-            this._createPromptPanelFetchCallback(paramDefn);
-            this.hideGlassPane();
+              this._createPromptPanelFetchCallback(paramDefn);
+              this.hideGlassPane();
+            }
           };
 
           var names = this.findChangedParameters();
