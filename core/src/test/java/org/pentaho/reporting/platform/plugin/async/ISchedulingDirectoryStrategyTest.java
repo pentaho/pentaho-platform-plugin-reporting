@@ -61,7 +61,6 @@ public class ISchedulingDirectoryStrategyTest {
   public static void tearDown() throws Exception {
     microPlatform.stop();
     microPlatform = null;
-    FileUtils.deleteDirectory( new File( "target/test/resource/solution/system/tmp"  ) );
   }
 
   @Test
