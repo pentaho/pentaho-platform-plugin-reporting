@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2016 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2018 Hitachi Vantara..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
@@ -30,9 +30,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.pentaho.platform.api.engine.IApplicationContext;
 import org.pentaho.platform.api.engine.IPentahoSession;
-import org.pentaho.platform.api.util.ITempFileDeleter;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
-import org.pentaho.platform.util.UUIDUtil;
 import org.pentaho.reporting.engine.classic.core.util.StagingMode;
 import org.pentaho.reporting.libraries.base.util.MemoryByteArrayOutputStream;
 
@@ -89,24 +87,7 @@ public class StagingHandler {
     } else if ( mode == StagingMode.TMPFILE ) {
       final IApplicationContext appCtx = PentahoSystem.getApplicationContext();
       // Use the deleter framework for safety...
-      if ( userSession.getId().length() >= 10 ) {
-        tmpFile = appCtx.createTempFile( userSession, "repstg", ".tmp", true ); //$NON-NLS-1$ //$NON-NLS-2$
-      } else {
-        // Workaround bug in appContext.createTempFile ... :-(
-        final File parentDir = new File( appCtx.getSolutionPath( "system/tmp" ) ); //$NON-NLS-1$
-        final ITempFileDeleter fileDeleter =
-            (ITempFileDeleter) userSession.getAttribute( ITempFileDeleter.DELETER_SESSION_VARIABLE );
-        final String newPrefix =
-            new StringBuilder()
-                .append( "repstg" ).append( UUIDUtil.getUUIDAsString().substring( 0, 10 ) ).append( '-' ).toString(); //$NON-NLS-1$
-        tmpFile = File.createTempFile( newPrefix, ".tmp", parentDir ); //$NON-NLS-1$
-        if ( fileDeleter != null ) {
-          fileDeleter.trackTempFile( tmpFile );
-        } else {
-          // There is no deleter, so cleanup on VM exit. (old behavior)
-          tmpFile.deleteOnExit();
-        }
-      }
+      tmpFile = appCtx.createTempFile( userSession, "repstg", ".tmp", true ); //$NON-NLS-1$ //$NON-NLS-2$
 
       createTrackingProxy( new BufferedOutputStream( new FileOutputStream( tmpFile ) ) );
     } else {

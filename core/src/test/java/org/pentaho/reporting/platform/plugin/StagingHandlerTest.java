@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2015 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2018 Hitachi Vantara..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
@@ -20,32 +20,56 @@ package org.pentaho.reporting.platform.plugin;
 import junit.framework.TestCase;
 import org.junit.Before;
 import org.junit.Test;
+import org.pentaho.di.core.util.UUIDUtil;
+import org.pentaho.platform.api.engine.IApplicationContext;
 import org.pentaho.platform.api.engine.IPentahoSession;
+import org.pentaho.platform.api.util.ITempFileDeleter;
 import org.pentaho.reporting.engine.classic.core.util.StagingMode;
 
+import java.io.File;
 import java.io.OutputStream;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 
 public class StagingHandlerTest extends TestCase {
   OutputStream outputStream;
   StagingMode stagingMode;
   IPentahoSession session;
+  IApplicationContext appContext;
   StagingHandler handler;
+
+  private static String PREFIX = "repstg";
+  private static String POSTFIX = ".tmp";
 
   @Before
   public void setUp() throws Exception {
     outputStream = mock( OutputStream.class );
     stagingMode = mock( StagingMode.class );
     session = mock( IPentahoSession.class );
+    appContext = mock( IApplicationContext.class );
     doReturn( "" ).when( session ).getId();
 
     handler = new StagingHandler( outputStream, stagingMode, session );
+
+    // mock solution temp folder path
+    when( appContext.getSolutionPath( anyString() ) ).thenReturn( "target/test/resource/solution" );
+
+    final File parentDir = new File( appContext.getSolutionPath( "system/tmp" ) ); //$NON-NLS-1$
+    final ITempFileDeleter fileDeleter =
+            (ITempFileDeleter) session.getAttribute( ITempFileDeleter.DELETER_SESSION_VARIABLE );
+    final String newPrefix =
+            new StringBuilder()
+                    .append( "repstg" ).append( UUIDUtil.getUUIDAsString().substring( 0, 10 ) ).append( '-' ).toString(); //$NON-NLS-1$
+    File tmpFile = File.createTempFile( newPrefix, ".tmp", parentDir ); //$NON-NLS-1$
+
+    when( appContext.createTempFile( session, PREFIX, POSTFIX, true ) ).thenReturn( tmpFile );
   }
 
   @Test
