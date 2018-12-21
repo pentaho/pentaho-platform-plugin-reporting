@@ -459,7 +459,7 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
       final MessageDigest md = MessageDigest.getInstance( "SHA-256" );
       md.update( text ); // Change this to "UTF-16" if needed
       final byte[] digest = md.digest();
-      return new String( Base64.encode( digest ) );
+      return new String( Base64.encode( digest ) ) + report.getReportEnvironment().getLocale().toString();
     } catch ( final Exception b ) {
       throw new CacheKeyException( b );
     }
