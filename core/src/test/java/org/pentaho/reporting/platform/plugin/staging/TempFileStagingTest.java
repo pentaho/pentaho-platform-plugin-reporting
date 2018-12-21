@@ -13,7 +13,7 @@
  * See the GNU General Public License for more details.
  *
  *
- * Copyright 2006 - 2017 Hitachi Vantara.  All rights reserved.
+ * Copyright 2006 - 2018 Hitachi Vantara.  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin.staging;
@@ -22,18 +22,23 @@ import org.junit.Before;
 import org.junit.Test;
 import org.pentaho.platform.api.engine.IApplicationContext;
 import org.pentaho.platform.api.engine.IPentahoSession;
+import org.pentaho.platform.api.util.ITempFileDeleter;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.engine.core.system.StandaloneSession;
+import org.pentaho.platform.util.UUIDUtil;
 import org.pentaho.reporting.engine.classic.core.util.StagingMode;
 import org.pentaho.reporting.platform.plugin.MicroPlatformFactory;
 import org.pentaho.test.platform.engine.core.MicroPlatform;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.UUID;
 
-import static org.junit.Assert.*;
+import static junit.framework.TestCase.assertFalse;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -44,13 +49,25 @@ public class TempFileStagingTest {
   private IPentahoSession session = mock( IPentahoSession.class );
   private IApplicationContext appContext = mock( IApplicationContext.class );
 
+  private static String PREFIX = "repstg";
+  private static String POSTFIX = ".tmp";
+
   @Before
-  public void before() {
+  public void before() throws IOException {
     when( session.getId() ).thenReturn( "test" );
     PentahoSystem.init();
 
     // mock solution temp folder path
     when( appContext.getSolutionPath( anyString() ) ).thenReturn( "target/test/resource/solution" );
+
+    final File parentDir = new File( appContext.getSolutionPath( "system/tmp" ) ); //$NON-NLS-1$
+    final ITempFileDeleter fileDeleter =
+            (ITempFileDeleter) session.getAttribute( ITempFileDeleter.DELETER_SESSION_VARIABLE );
+    final String newPrefix = PREFIX + UUIDUtil.getUUIDAsString().substring( 0, 10 ) + "-";
+    File tmpFile = File.createTempFile( newPrefix, POSTFIX, parentDir );
+
+    when( appContext.createTempFile( session, PREFIX, POSTFIX, true ) ).thenReturn( tmpFile );
+
     PentahoSystem.setApplicationContext( appContext );
   }
 

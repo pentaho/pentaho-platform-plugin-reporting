@@ -13,7 +13,7 @@
  * See the GNU General Public License for more details.
  *
  *
- * Copyright 2006 - 2017 Hitachi Vantara.  All rights reserved.
+ * Copyright 2006 - 2018 Hitachi Vantara.  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin.staging;
@@ -23,9 +23,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.pentaho.platform.api.engine.IApplicationContext;
 import org.pentaho.platform.api.engine.IPentahoSession;
-import org.pentaho.platform.api.util.ITempFileDeleter;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
-import org.pentaho.platform.util.UUIDUtil;
 import org.pentaho.reporting.engine.classic.core.util.StagingMode;
 import org.pentaho.reporting.platform.plugin.TrackingOutputStream;
 
@@ -65,23 +63,9 @@ public class TempFileStagingHandler extends AbstractStagingHandler {
     logger.trace( "Staging mode set - TEMP_FILE" );
 
     final IApplicationContext appCtx = PentahoSystem.getApplicationContext();
+
     // Use the deleter framework for safety...
-    if ( userSession.getId().length() >= 10 ) {
-      tmpFile = appCtx.createTempFile( userSession, PREFIX, POSTFIX, true );
-    } else {
-      // Workaround bug in appContext.createTempFile ... :-(
-      final File parentDir = new File( appCtx.getSolutionPath( "system/tmp" ) ); //$NON-NLS-1$
-      final ITempFileDeleter fileDeleter =
-          (ITempFileDeleter) userSession.getAttribute( ITempFileDeleter.DELETER_SESSION_VARIABLE );
-      final String newPrefix = PREFIX + UUIDUtil.getUUIDAsString().substring( 0, 10 ) + "-";
-      tmpFile = File.createTempFile( newPrefix, POSTFIX, parentDir );
-      if ( fileDeleter != null ) {
-        fileDeleter.trackTempFile( tmpFile );
-      } else {
-        // There is no deleter, so cleanup on VM exit. (old behavior)
-        tmpFile.deleteOnExit();
-      }
-    }
+    tmpFile = appCtx.createTempFile( userSession, PREFIX, POSTFIX, true );
 
     fileTrackingStream = new TrackingOutputStream( new BufferedOutputStream( new FileOutputStream( tmpFile ) ) );
   }
