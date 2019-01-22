@@ -49,7 +49,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
       _requestedPage: 0,
       _previousPage: 0,
       _reportUrl : null,
-      _hasSchedulePermissions : false,
+      _hasSchedulePermission : false,
       _handlerRegistration : null,
       _glassPaneListenerRegistration : null,
       _locationPromptCancelHandlerRegistration: null,
