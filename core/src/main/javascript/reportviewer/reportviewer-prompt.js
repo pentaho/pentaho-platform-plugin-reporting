@@ -27,7 +27,7 @@ define([
   "common-ui/util/formatting"
 ], function(util, Messages, registry, PromptingAPI, $, _, Utils, domClass, FormatUtils) {
 
-  var _api =  new PromptingAPI('promptPanel');
+  var _api =  new PromptingAPI('promptPanel', { isSilent:true } );
 
   return function() {
     return logged({
