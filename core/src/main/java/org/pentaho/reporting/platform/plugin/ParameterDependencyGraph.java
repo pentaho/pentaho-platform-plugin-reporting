@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2018 Hitachi Vantara..  All rights reserved.
+ * Copyright (c) 2002-2019 Hitachi Vantara..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
@@ -70,7 +70,7 @@ public class ParameterDependencyGraph {
     this.dependencyGraph = new LinkedHashMap<>();
     this.allParameterNames = new HashSet<>( reportParameter.keySet() );
     this.noDependencyInformationAvailable =
-      processDependentParameters( report, reportParameter, parameterContext,
+      !processDependentParameters( report, reportParameter, parameterContext,
         new StaticDataRow( computedParameterValues ) );
   }
 
@@ -187,26 +187,34 @@ public class ParameterDependencyGraph {
       final CompoundDataFactory derive = (CompoundDataFactory) cdf.derive();
       derive.initialize( factoryContext );
 
+      Boolean anyDependencyProcessed = false;
       try {
         for ( final ParameterDefinitionEntry entry : reportParameter.values() ) {
           final List<String> dependentParameter = computeNormalLineage( parameterContext, entry );
           final List<String> queryDependencies = computeListParameterLineage( derive, entry, parameterValues );
+
+          // No dependency information at all - No need to continue
           if ( queryDependencies == null ) {
-            return true;
+            return false;
           }
 
-          dependentParameter.forEach( p -> addDependency( p, entry.getName() ) );
-          queryDependencies.forEach( p -> addDependency( p, entry.getName() ) );
+          if ( dependentParameter != null && dependentParameter.size() > 0 ) {
+            dependentParameter.forEach( p -> addDependency( p, entry.getName() ) );
+            anyDependencyProcessed = true;
+          }
+          if ( queryDependencies != null && queryDependencies.size() > 0 ) {
+            queryDependencies.forEach( p -> addDependency( p, entry.getName() ) );
+            anyDependencyProcessed = true;
+          }
         }
       } finally {
         derive.close();
       }
 
-      // inspect post proc formulas, def values, etc.
-      return false;
+      return anyDependencyProcessed;
     } catch ( ReportDataFactoryException re ) {
       DebugLog.log( "Failed to compute dependency information", re );
-      return true;
+      return false;
     }
   }
 
