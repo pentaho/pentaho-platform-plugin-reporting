@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2017 Pentaho Corporation..  All rights reserved.
+ * Copyright (c) 2002-2019 Hitachi Vantara..  All rights reserved.
  */
 
 define([
@@ -27,7 +27,7 @@ define([
   "common-ui/util/formatting"
 ], function(util, Messages, registry, PromptingAPI, $, _, Utils, domClass, FormatUtils) {
 
-  var _api =  new PromptingAPI('promptPanel');
+  var _api =  new PromptingAPI('promptPanel', { isSilent:true } );
 
   return function() {
     return logged({
