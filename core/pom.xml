@@ -1,32 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.pentaho.reporting.plugin</groupId>
     <artifactId>reporting-platform-plugin</artifactId>
-    <version>7.1-SNAPSHOT</version>
+    <version>7.1.0.21-185</version>
   </parent>
-
   <artifactId>classic-core-platform-plugin</artifactId>
-  <packaging>jar</packaging>
-
+  <version>7.1.0.21-185</version>
   <name>Pentaho Platform Reporting Plugin Core</name>
-
   <properties>
-    <build.dependenciesDirectory>${project.build.directory}/dependency</build.dependenciesDirectory>
-    <build.javascriptTestConfigDirectory>${project.build.directory}/test-javascript</build.javascriptTestConfigDirectory>
-
-    <javascript-test_karma-phase>integration-test</javascript-test_karma-phase>
-    <javascript.exclusion.pattern>**/*.jsdoc</javascript.exclusion.pattern>
-
     <js.project.list>common-ui,pentaho-cdf-js</js.project.list>
+    <javascript.exclusion.pattern>**/*.jsdoc</javascript.exclusion.pattern>
+    <javascript-test_karma-phase>integration-test</javascript-test_karma-phase>
+    <build.dependenciesDirectory>${project.build.directory}/dependency</build.dependenciesDirectory>
     <js.build.optimizer>uglify</js.build.optimizer>
-
-    <pentaho-js-build.dir>${build.dependenciesDirectory}/pentaho-js-build</pentaho-js-build.dir>
     <requirejs.config.files.pattern>**/*-require-js-cfg.js</requirejs.config.files.pattern>
+    <build.javascriptTestConfigDirectory>${project.build.directory}/test-javascript</build.javascriptTestConfigDirectory>
+    <pentaho-js-build.dir>${build.dependenciesDirectory}/pentaho-js-build</pentaho-js-build.dir>
   </properties>
-
   <dependencies>
     <dependency>
       <groupId>com.google.guava</groupId>
@@ -231,7 +224,6 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
-
   <build>
     <testResources>
       <testResource>
@@ -240,10 +232,8 @@
         <directory>${project.basedir}/src/test/resources</directory>
       </testResource>
     </testResources>
-
     <plugins>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-resources-plugin</artifactId>
         <executions>
           <execution>
@@ -272,9 +262,7 @@
           </execution>
         </executions>
       </plugin>
-
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-antrun-plugin</artifactId>
         <version>${maven-antrun-plugin.version}</version>
         <executions>
@@ -317,9 +305,7 @@
           </execution>
         </executions>
       </plugin>
-
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
         <executions>
           <execution>
@@ -357,5 +343,4 @@
       </plugin>
     </plugins>
   </build>
-
 </project>
