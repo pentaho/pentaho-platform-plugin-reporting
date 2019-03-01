@@ -20,12 +20,12 @@ package org.pentaho.reporting.platform.plugin;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.cxf.jaxrs.impl.ResponseBuilderImpl;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.pentaho.platform.api.engine.IPentahoObjectFactory;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
@@ -43,7 +43,6 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.util.UUID;
@@ -153,14 +152,17 @@ public class JobManagerTest {
       new AsyncReportState( UUID.randomUUID(), "/somepath/anotherlevel/file.prpt", AsyncExecutionStatus.FINISHED, 0, 0,
         0, 0, 0, 0, "", "text/csv", "", false );
 
-    final Response.ResponseBuilder builder = new ResponseBuilderImpl();
+    final Response.ResponseBuilder builder = mock( Response.ResponseBuilder.class );
 
     JobManager.calculateContentDisposition( builder, state );
-    final Response resp = builder.build();
-    final MultivaluedMap<String, String> stringHeaders = resp.getStringHeaders();
-    assertTrue( stringHeaders.get( "Content-Description" ).contains( "file.prpt" ) );
-    assertTrue( stringHeaders.get( "Content-Disposition" ).contains( "inline; filename*=UTF-8''file.csv" ) );
-    resp.close();
+
+    ArgumentCaptor<String> argument = ArgumentCaptor.forClass(String.class);
+
+    verify( builder, times( 1 )).header( eq( "Content-Description" ), argument.capture() );
+    assertTrue( argument.getValue().contains( "file.prpt" ) );
+
+    verify( builder, times( 1 )).header( eq( "Content-Disposition" ), argument.capture() );
+    assertTrue( argument.getValue().contains( "inline; filename*=UTF-8''file.csv" ) );
   }
 
 
