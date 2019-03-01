@@ -28,7 +28,6 @@
     <pentaho-cdf-plugin.version>8.3.0.0-SNAPSHOT</pentaho-cdf-plugin.version>
     <dependency.osgi-bundles.revision>${project.version}</dependency.osgi-bundles.revision>
     <junit.version>4.12</junit.version>
-    <cxf.version>2.7.18</cxf.version>
     <frontend-maven-plugin.version>0.0.29</frontend-maven-plugin.version>
     <powermock.version>1.6.4</powermock.version>
     <slf4j-api.version>1.7.3</slf4j-api.version>
@@ -58,7 +57,7 @@
     <runITs>false</runITs>
     <guava.version>17.0</guava.version>
     <gwt-dnd.version>3.1.1</gwt-dnd.version>
-    <javax.ws.rs-api.version>2.0-m10</javax.ws.rs-api.version>
+    <javax.ws.rs-api.version>2.0</javax.ws.rs-api.version>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -417,13 +416,7 @@
       </dependency>
       <dependency>
         <groupId>org.apache.cxf</groupId>
-        <artifactId>cxf-rt-transports-local</artifactId>
-        <version>${cxf.version}</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.cxf</groupId>
-        <artifactId>cxf-bundle-jaxrs</artifactId>
+        <artifactId>cxf-rt-frontend-jaxrs</artifactId>
         <version>${cxf.version}</version>
         <scope>test</scope>
       </dependency>
