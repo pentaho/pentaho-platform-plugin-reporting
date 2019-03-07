@@ -12,7 +12,7 @@
 * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 * See the GNU Lesser General Public License for more details.
 *
-* Copyright (c) 2002-2017 Hitachi Vantara..  All rights reserved.
+* Copyright (c) 2002-2019 Hitachi Vantara..  All rights reserved.
 */
 
 define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/formatting', 'pentaho/common/Messages', "dojo/dom", "dojo/on", "dojo/_base/lang",
@@ -49,7 +49,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
       _requestedPage: 0,
       _previousPage: 0,
       _reportUrl : null,
-      _hasSchedulePermission : false,
+      _hasSchedulePermission : null,
       _handlerRegistration : null,
       _glassPaneListenerRegistration : null,
       _locationPromptCancelHandlerRegistration: null,
@@ -200,8 +200,8 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         }
         var url = this._buildReportContentUrl();
         pentahoGet(url.substring(0, url.indexOf("/api/repos")) + '/api/scheduler/canSchedule', "", dojo.hitch( this, function(result) {
-          _hasSchedulePermission = "true" == result;
-          if(!this.view._isInsideDashboard() && !inMobile && _hasSchedulePermission){
+          this._hasSchedulePermission = "true" == result;
+          if(!this.view._isInsideDashboard() && !inMobile && this._hasSchedulePermission){
             registry.byId('feedbackScreen').showBackgroundBtn(_Messages.getString('FeedbackScreenBackground'));
           }
         }), "application/json");
@@ -930,7 +930,14 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         dlg.setText3(_Messages.getString('FeedbackScreenRow'));
         dlg.setCancelText(_Messages.getString('ScreenCancel'));
 
-        if(!this.view._isInsideDashboard() && !inMobile && _hasSchedulePermission){
+        // BISERVER-14167 - To assure a very unelikly scenario where _hasSchedulePermission has not been set during load function
+        if(this._hasSchedulePermission == null){
+          var url = this._buildReportContentUrl();
+          var result = pentahoGet(url.substring(0, url.indexOf("/api/repos")) + '/api/scheduler/canSchedule', "", null, "application/json");
+          this._hasSchedulePermission = "true" === result;
+        }
+
+        if(!this.view._isInsideDashboard() && !inMobile && this._hasSchedulePermission){
           dlg.showBackgroundBtn(_Messages.getString('FeedbackScreenBackground'));
         }else {
           scheduleScreenBtnCallbacks.shift();
