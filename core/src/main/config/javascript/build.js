@@ -41,6 +41,7 @@
   //built code is transformed in some way.
   keepBuildDir: false,
 
+  buildCSS: false,
   optimizeCss: "none",
 
   skipDirOptimize: true,
@@ -65,6 +66,10 @@
   //   "src/main/javascript/scripts/reporting-require-js-bundles-cfg.js".
 
   bundlesConfigOutFile: "${project.build.directory}/requireCfg.bundles.js",
+
+  // Do not write a build.txt file in the output folder.
+  // Requires r.js >= 2.2.0.
+  writeBuildTxt: false,
 
   //If using UglifyJS2 for script optimization, these config options can be
   //used to pass configuration values to UglifyJS2.
@@ -102,6 +107,7 @@
       name: "reportviewer/reportviewer-main-module",
       include: ["reportviewer/reportviewer-main-module"],
       exclude: [
+        "css",
         "amd",
         "text"
       ],
@@ -114,8 +120,7 @@
       //see http://jira.pentaho.com/browse/PRD-5915
       exclude: [
         "reportviewer/reportviewer-main-module",
-        "css!cdf/dashboard/Dashboard.notifications",
-        "css!cdf/Dashboard",
+        "css",
         "amd",
         "text"
       ],
