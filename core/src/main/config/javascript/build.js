@@ -49,29 +49,22 @@
   //contents.
   paths: {
     requireLib: 'require',
-    'dojo/selector/_loader' : "empty:",
-    'dojo/query': 'empty:',
-    'dojo/request': 'empty:',
-    'dijit/layout/ContentPane': 'empty:',
-    'dijit/Dialog' : 'empty:',
-    'dojo/text' : 'common-ui/util/text',
-    'dijit/layout/StackController': 'empty:',
-    'dijit/layout/StackContainer': 'empty:',
-    'dijit/layout/TabController': 'empty:',
-    'dijit/form/ValidationTextBox':'empty:',
-    'dijit/form/_ComboBoxMenuMixin':'empty:',
-    'dijit/_TemplatedMixin':'empty:',
-    'dijit/form/Select':'empty:',
-    'dijit/ColorPalette':'empty:',
-    'dojo/date/locale':'empty:',
-    'pir/i18n' : 'empty:',
-    'dojox/widget/ColorPicker':'empty:',
-    'dojo/number':'empty:',
-    'reportviewer/formatter' : 'empty:',
+    'dojo/text': 'common-ui/util/text',
+    'pir/i18n': 'empty:',
+    'reportviewer/formatter': 'empty:',
     'pentaho/environment': 'empty:'
   },
 
   mainConfigFile: '${project.build.directory}/requireCfg.js',
+
+  // Runtime Bundles Configuration
+  // ----
+  // Use the following option with a r.js of version >= 2.2.0 to
+  // automatically generate the RequireJS `bundles` configuration.
+  // Currently, this requires to manually copy the output of this file into
+  //   "src/main/javascript/scripts/reporting-require-js-bundles-cfg.js".
+
+  bundlesConfigOutFile: "${project.build.directory}/requireCfg.bundles.js",
 
   //If using UglifyJS2 for script optimization, these config options can be
   //used to pass configuration values to UglifyJS2.
@@ -108,6 +101,10 @@
     {
       name: "reportviewer/reportviewer-main-module",
       include: ["reportviewer/reportviewer-main-module"],
+      exclude: [
+        "amd",
+        "text"
+      ],
       create: true
     },
     {
@@ -116,9 +113,12 @@
       //exclude css otherwise we will not be able to use them without load issues
       //see http://jira.pentaho.com/browse/PRD-5915
       exclude: [
+        "reportviewer/reportviewer-main-module",
         "css!cdf/dashboard/Dashboard.notifications",
-        "css!cdf/Dashboard"
-        ],
+        "css!cdf/Dashboard",
+        "amd",
+        "text"
+      ],
       create: true
     }
   ]
