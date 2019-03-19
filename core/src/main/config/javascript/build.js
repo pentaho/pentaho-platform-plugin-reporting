@@ -67,6 +67,10 @@
 
   bundlesConfigOutFile: "${project.build.directory}/requireCfg.bundles.js",
 
+  // Do not write a build.txt file in the output folder.
+  // Requires r.js >= 2.2.0.
+  writeBuildTxt: false,
+
   //If using UglifyJS2 for script optimization, these config options can be
   //used to pass configuration values to UglifyJS2.
   //For possible `output` values see:
