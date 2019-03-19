@@ -41,6 +41,7 @@
   //built code is transformed in some way.
   keepBuildDir: false,
 
+  buildCSS: false,
   optimizeCss: "none",
 
   skipDirOptimize: true,
@@ -102,6 +103,7 @@
       name: "reportviewer/reportviewer-main-module",
       include: ["reportviewer/reportviewer-main-module"],
       exclude: [
+        "css",
         "amd",
         "text"
       ],
@@ -114,8 +116,7 @@
       //see http://jira.pentaho.com/browse/PRD-5915
       exclude: [
         "reportviewer/reportviewer-main-module",
-        "css!cdf/dashboard/Dashboard.notifications",
-        "css!cdf/Dashboard",
+        "css",
         "amd",
         "text"
       ],
