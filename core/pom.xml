@@ -183,11 +183,6 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>pentaho</groupId>
       <artifactId>simple-jndi</artifactId>
       <scope>test</scope>
@@ -204,12 +199,7 @@
     </dependency>
     <dependency>
       <groupId>org.apache.cxf</groupId>
-      <artifactId>cxf-rt-transports-local</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.cxf</groupId>
-      <artifactId>cxf-bundle-jaxrs</artifactId>
+      <artifactId>cxf-rt-frontend-jaxrs</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
