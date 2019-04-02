@@ -246,6 +246,28 @@
         <artifactId>maven-resources-plugin</artifactId>
         <executions>
           <execution>
+            <id>copy-requireCfg-bundles</id>
+
+            <phase>${javascript_unpack-dependencies-phase}</phase>
+
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+
+            <configuration>
+              <outputDirectory>${project.build.directory}</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${basedir}/src/main/config/resources</directory>
+                  <includes>
+                    <include>requireCfg.bundles.js</include>
+                  </includes>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+
+          <execution>
             <id>copy-javascript</id>
             <phase>generate-resources</phase>
             <goals>

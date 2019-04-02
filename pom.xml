@@ -35,7 +35,7 @@
     <gwtx.version>1.5.2</gwtx.version>
     <GWT-FX.version>0.5.0</GWT-FX.version>
     <gwt-incubator.version>2.1.0</gwt-incubator.version>
-    <pentaho-js-build.version>1.0.0</pentaho-js-build.version>
+    <pentaho-js-build.version>2.0.1</pentaho-js-build.version>
     <pentaho-reporting.version>8.2.0.0-SNAPSHOT</pentaho-reporting.version>
     <spring-web.version>4.3.2.RELEASE</spring-web.version>
     <platform.version>8.2.0.0-SNAPSHOT</platform.version>
