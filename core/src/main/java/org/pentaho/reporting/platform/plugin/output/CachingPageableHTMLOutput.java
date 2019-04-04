@@ -22,9 +22,7 @@ import org.apache.commons.logging.LogFactory;
 import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
 import org.pentaho.platform.api.repository2.unified.RepositoryFile;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
-import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
-import org.pentaho.reporting.engine.classic.core.PerformanceTags;
 import org.pentaho.reporting.engine.classic.core.ReportDataFactoryException;
 import org.pentaho.reporting.engine.classic.core.ReportParameterValidationException;
 import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
@@ -35,12 +33,9 @@ import org.pentaho.reporting.engine.classic.core.modules.output.pageable.base.Pa
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.PageableHtmlOutputProcessor;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterDefinitionEntry;
 import org.pentaho.reporting.engine.classic.core.parameters.ReportParameterDefinition;
-import org.pentaho.reporting.engine.classic.core.states.PerformanceMonitorContext;
 import org.pentaho.reporting.engine.classic.core.util.ReportParameterValues;
 import org.pentaho.reporting.engine.classic.core.util.beans.BeanException;
 import org.pentaho.reporting.engine.classic.core.util.beans.ConverterRegistry;
-import org.pentaho.reporting.libraries.base.util.FormattedMessage;
-import org.pentaho.reporting.libraries.base.util.PerformanceLoggingStopWatch;
 import org.pentaho.reporting.libraries.repository.ContentIOException;
 import org.pentaho.reporting.libraries.repository.ContentLocation;
 import org.pentaho.reporting.libraries.repository.Repository;
@@ -164,7 +159,6 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
   public synchronized int generate( final MasterReport report, final int acceptedPage,
                                     final OutputStream outputStream, final int yieldRate )
     throws ReportProcessingException, IOException, ContentIOException {
-    PerformanceLoggingStopWatch sw = null;
 
     if ( acceptedPage < 0 ) {
       return generateNonCaching( report, acceptedPage, outputStream, yieldRate );
@@ -200,10 +194,6 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
           return -1;
         }
       }
-
-      sw = ClassicEngineBoot.getInstance().getObjectFactory().get( PerformanceMonitorContext.class ).createStopWatch( PerformanceTags.REPORT_PARAMETER_QUERY,
-              new FormattedMessage( "Serving Cached Content " ) );
-      sw.start();
 
       setQueryLimitReachedToListener( key, listener );
 
@@ -242,10 +232,6 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
       return fullReportCache.getPageCount();
     } catch ( final CacheKeyException e ) {
       return generateNonCaching( report, acceptedPage, outputStream, yieldRate );
-    } finally {
-      if ( sw != null ) {
-        sw.close();
-      }
     }
   }
 
