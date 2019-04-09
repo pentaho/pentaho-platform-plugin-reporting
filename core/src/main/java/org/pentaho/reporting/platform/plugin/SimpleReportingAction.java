@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2018 Hitachi Vantara.  All rights reserved.
+ * Copyright (c) 2002-2019 Hitachi Vantara.  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
@@ -50,6 +50,7 @@ import org.pentaho.reporting.libraries.base.config.ModifiableConfiguration;
 import org.pentaho.reporting.libraries.base.util.CSVQuoter;
 import org.pentaho.reporting.libraries.base.util.StringUtils;
 import org.pentaho.reporting.libraries.resourceloader.ResourceException;
+import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
 import org.pentaho.reporting.platform.plugin.cache.DefaultReportCache;
 import org.pentaho.reporting.platform.plugin.cache.NullReportCache;
 import org.pentaho.reporting.platform.plugin.cache.ReportCache;
@@ -108,6 +109,8 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
   public static final String DASHBOARD_MODE = "dashboard-mode"; //$NON-NLS-1$
   public static final String MIME_GENERIC_FALLBACK = "application/octet-stream"; //$NON-NLS-1$
   public static final String PNG_EXPORT_TYPE = "pageable/X-AWT-Graphics;image-type=png"; //$NON-NLS-1$
+
+  public static final String RESERVEDMAPKEY_LINEAGE_ID = "lineage-id";
 
   /**
    * Static initializer block to guarantee that the ReportingComponent will be in a state where the reporting engine
@@ -925,6 +928,10 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
       }
       synchronized ( reportOutputHandler.getReportLock() ) {
         try {
+          // if the report is executed in background (scheduled) and it's execution is to be logged we need to set the requestId to the lineage-id
+          if ( ReportListenerThreadHolder.getRequestId() == null && this.inputs.get( RESERVEDMAPKEY_LINEAGE_ID ) != null && !this.inputs.get( RESERVEDMAPKEY_LINEAGE_ID ).toString().equals( "" ) ) {
+            ReportListenerThreadHolder.setRequestId( this.inputs.get( RESERVEDMAPKEY_LINEAGE_ID ).toString() );
+          }
           pageCount = reportOutputHandler.generate( report, acceptedPage, outputStream, getYieldRate() );
           return pageCount != -1;
         } finally {
