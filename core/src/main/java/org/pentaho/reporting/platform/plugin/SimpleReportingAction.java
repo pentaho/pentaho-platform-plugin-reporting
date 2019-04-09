@@ -81,34 +81,34 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
    */
   private static final Log log = LogFactory.getLog( SimpleReportingAction.class );
 
-  public static final String OUTPUT_TARGET = "output-target"; //$NON-NLS-1$
+  public static final String OUTPUT_TARGET = "output-target";
 
-  public static final String OUTPUT_TYPE = "output-type"; //$NON-NLS-1$
-  public static final String MIME_TYPE_HTML = "text/html"; //$NON-NLS-1$
-  public static final String MIME_TYPE_EMAIL = "mime-message/text/html"; //$NON-NLS-1$
-  public static final String MIME_TYPE_PDF = "application/pdf"; //$NON-NLS-1$
-  public static final String MIME_TYPE_XLS = "application/vnd.ms-excel"; //$NON-NLS-1$
-  public static final String MIME_TYPE_XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"; //$NON-NLS-1$
-  public static final String MIME_TYPE_RTF = "application/rtf"; //$NON-NLS-1$
-  public static final String MIME_TYPE_CSV = "text/csv"; //$NON-NLS-1$
-  public static final String MIME_TYPE_TXT = "text/plain"; //$NON-NLS-1$
-  public static final String MIME_TYPE_XML = "application/xml"; //$NON-NLS-1$
-  public static final String MIME_TYPE_PNG = "image/png"; //$NON-NLS-1$
+  public static final String OUTPUT_TYPE = "output-type";
+  public static final String MIME_TYPE_HTML = "text/html";
+  public static final String MIME_TYPE_EMAIL = "mime-message/text/html";
+  public static final String MIME_TYPE_PDF = "application/pdf";
+  public static final String MIME_TYPE_XLS = "application/vnd.ms-excel";
+  public static final String MIME_TYPE_XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+  public static final String MIME_TYPE_RTF = "application/rtf";
+  public static final String MIME_TYPE_CSV = "text/csv";
+  public static final String MIME_TYPE_TXT = "text/plain";
+  public static final String MIME_TYPE_XML = "application/xml";
+  public static final String MIME_TYPE_PNG = "image/png";
 
-  public static final String XLS_WORKBOOK_PARAM = "workbook"; //$NON-NLS-1$
+  public static final String XLS_WORKBOOK_PARAM = "workbook";
 
-  public static final String REPORTLOAD_RESURL = "res-url"; //$NON-NLS-1$
-  public static final String REPORT_DEFINITION_INPUT = "report-definition"; //$NON-NLS-1$
-  public static final String USE_JCR = "useJcr"; //$NON-NLS-1$
-  public static final String REPORTHTML_CONTENTHANDLER_PATTERN = "content-handler-pattern"; //$NON-NLS-1$
-  public static final String REPORTGENERATE_YIELDRATE = "yield-rate"; //$NON-NLS-1$
-  public static final String ACCEPTED_PAGE = "accepted-page"; //$NON-NLS-1$
-  public static final String PAGINATE_OUTPUT = "paginate"; //$NON-NLS-1$
-  public static final String PRINT = "print"; //$NON-NLS-1$
-  public static final String PRINTER_NAME = "printer-name"; //$NON-NLS-1$
-  public static final String DASHBOARD_MODE = "dashboard-mode"; //$NON-NLS-1$
-  public static final String MIME_GENERIC_FALLBACK = "application/octet-stream"; //$NON-NLS-1$
-  public static final String PNG_EXPORT_TYPE = "pageable/X-AWT-Graphics;image-type=png"; //$NON-NLS-1$
+  public static final String REPORTLOAD_RESURL = "res-url";
+  public static final String REPORT_DEFINITION_INPUT = "report-definition";
+  public static final String USE_JCR = "useJcr";
+  public static final String REPORTHTML_CONTENTHANDLER_PATTERN = "content-handler-pattern";
+  public static final String REPORTGENERATE_YIELDRATE = "yield-rate";
+  public static final String ACCEPTED_PAGE = "accepted-page";
+  public static final String PAGINATE_OUTPUT = "paginate";
+  public static final String PRINT = "print";
+  public static final String PRINTER_NAME = "printer-name";
+  public static final String DASHBOARD_MODE = "dashboard-mode";
+  public static final String MIME_GENERIC_FALLBACK = "application/octet-stream";
+  public static final String PNG_EXPORT_TYPE = "pageable/X-AWT-Graphics;image-type=png";
 
   public static final String RESERVEDMAPKEY_LINEAGE_ID = "lineage-id";
 
@@ -695,25 +695,25 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
       return PlainTextPageableModule.PLAINTEXT_EXPORT_TYPE;
     }
 
-    if ( "pdf".equalsIgnoreCase( outputType ) ) { //$NON-NLS-1$
+    if ( "pdf".equalsIgnoreCase( outputType ) ) {
       log.warn( Messages.getInstance().getString( "ReportPlugin.warnDeprecatedPDF" ) );
       return PdfPageableModule.PDF_EXPORT_TYPE;
-    } else if ( "html".equalsIgnoreCase( outputType ) ) { //$NON-NLS-1$
+    } else if ( "html".equalsIgnoreCase( outputType ) ) {
       log.warn( Messages.getInstance().getString( "ReportPlugin.warnDeprecatedHTML" ) );
       if ( isPaginateOutput() ) {
         return HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE;
       }
       return HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE;
-    } else if ( "csv".equalsIgnoreCase( outputType ) ) { //$NON-NLS-1$
+    } else if ( "csv".equalsIgnoreCase( outputType ) ) {
       log.warn( Messages.getInstance().getString( "ReportPlugin.warnDeprecatedCSV" ) );
       return CSVTableModule.TABLE_CSV_STREAM_EXPORT_TYPE;
-    } else if ( "rtf".equalsIgnoreCase( outputType ) ) { //$NON-NLS-1$
+    } else if ( "rtf".equalsIgnoreCase( outputType ) ) {
       log.warn( Messages.getInstance().getString( "ReportPlugin.warnDeprecatedRTF" ) );
       return RTFTableModule.TABLE_RTF_FLOW_EXPORT_TYPE;
-    } else if ( "xls".equalsIgnoreCase( outputType ) ) { //$NON-NLS-1$
+    } else if ( "xls".equalsIgnoreCase( outputType ) ) {
       log.warn( Messages.getInstance().getString( "ReportPlugin.warnDeprecatedXLS" ) );
       return ExcelTableModule.EXCEL_FLOW_EXPORT_TYPE;
-    } else if ( "txt".equalsIgnoreCase( outputType ) ) { //$NON-NLS-1$
+    } else if ( "txt".equalsIgnoreCase( outputType ) ) {
       log.warn( Messages.getInstance().getString( "ReportPlugin.warnDeprecatedTXT" ) );
       return PlainTextPageableModule.PLAINTEXT_EXPORT_TYPE;
     }
@@ -842,15 +842,15 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
    */
   public boolean validate() throws Exception {
     if ( reportDefinition == null && reportDefinitionInputStream == null && reportDefinitionPath == null ) {
-      log.error( Messages.getInstance().getString( "ReportPlugin.reportDefinitionNotProvided" ) ); //$NON-NLS-1$
+      log.error( Messages.getInstance().getString( "ReportPlugin.reportDefinitionNotProvided" ) );
       return false;
     }
     if ( outputStream == null && print == false ) {
-      log.error( Messages.getInstance().getString( "ReportPlugin.outputStreamRequired" ) ); //$NON-NLS-1$
+      log.error( Messages.getInstance().getString( "ReportPlugin.outputStreamRequired" ) );
       return false;
     }
     if ( inputs == null ) {
-      log.error( Messages.getInstance().getString( "ReportPlugin.inputParameterRequired" ) ); //$NON-NLS-1$
+      log.error( Messages.getInstance().getString( "ReportPlugin.inputParameterRequired" ) );
       return false;
     }
     return true;
@@ -939,7 +939,7 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
         }
       }
     } catch ( Throwable t ) {
-      log.error( Messages.getInstance().getString( "ReportPlugin.executionFailed" ), t ); //$NON-NLS-1$
+      log.error( Messages.getInstance().getString( "ReportPlugin.executionFailed" ), t );
     }
     // lets not pretend we were successfull, if the export type was not a valid one.
     return false;
@@ -1024,7 +1024,7 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
         }
       }
     } catch ( Throwable t ) {
-      log.error( Messages.getInstance().getString( "ReportPlugin.executionFailed" ), t ); //$NON-NLS-1$
+      log.error( Messages.getInstance().getString( "ReportPlugin.executionFailed" ), t );
     }
     // lets not pretend we were successfull, if the export type was not a valid one.
     return 0;
