@@ -112,10 +112,6 @@
             <artifactId>*</artifactId>
             <groupId>com.sun.jersey</groupId>
           </exclusion>
-          <exclusion>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
-          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
