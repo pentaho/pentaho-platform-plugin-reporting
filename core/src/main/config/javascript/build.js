@@ -104,6 +104,7 @@
 
   modules: [
     {
+      // this bundle is for external consumption; currently used by pir
       name: "reportviewer/reportviewer-main-module",
       include: ["reportviewer/reportviewer-main-module"],
       exclude: [
@@ -114,12 +115,12 @@
       create: true
     },
     {
+      // this bundle is used internally; it setups and launches the report viewer application
       name: "reportviewer/reportviewer-app",
       include: ["reportviewer/reportviewer-app"],
       //exclude css otherwise we will not be able to use them without load issues
       //see http://jira.pentaho.com/browse/PRD-5915
       exclude: [
-        "reportviewer/reportviewer-main-module",
         "css",
         "amd",
         "text"
