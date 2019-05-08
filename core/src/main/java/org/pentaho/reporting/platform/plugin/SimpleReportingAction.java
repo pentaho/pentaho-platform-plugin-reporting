@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2018 Hitachi Vantara..  All rights reserved.
+ * Copyright (c) 2002-2019 Hitachi Vantara..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
@@ -50,6 +50,7 @@ import org.pentaho.reporting.libraries.base.config.ModifiableConfiguration;
 import org.pentaho.reporting.libraries.base.util.CSVQuoter;
 import org.pentaho.reporting.libraries.base.util.StringUtils;
 import org.pentaho.reporting.libraries.resourceloader.ResourceException;
+import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
 import org.pentaho.reporting.platform.plugin.cache.DefaultReportCache;
 import org.pentaho.reporting.platform.plugin.cache.NullReportCache;
 import org.pentaho.reporting.platform.plugin.cache.ReportCache;
@@ -72,6 +73,8 @@ import java.net.URL;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+
+import static org.pentaho.reporting.platform.plugin.repository.ReportContentLocation.RESERVEDMAPKEY_LINEAGE_ID;
 
 public class SimpleReportingAction implements IStreamProcessingAction, IStreamingAction, IVarArgsAction {
 
@@ -927,6 +930,10 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
       }
       synchronized ( reportOutputHandler.getReportLock() ) {
         try {
+          // if the report is executed in background (scheduled) and it's execution is to be logged we need to set the requestId to the lineage-id
+          if ( ReportListenerThreadHolder.getRequestId() == null && this.inputs.get( RESERVEDMAPKEY_LINEAGE_ID ) != null && !this.inputs.get( RESERVEDMAPKEY_LINEAGE_ID ).toString().equals( "" ) ) {
+            ReportListenerThreadHolder.setRequestId( this.inputs.get( RESERVEDMAPKEY_LINEAGE_ID ).toString() );
+          }
           pageCount = reportOutputHandler.generate( report, acceptedPage, outputStream, getYieldRate() );
           return pageCount != -1;
         } finally {
