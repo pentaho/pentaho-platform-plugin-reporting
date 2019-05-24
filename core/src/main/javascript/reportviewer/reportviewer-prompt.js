@@ -700,7 +700,6 @@ define([
           //A regular expression for a tricky timezone without like a +09.530 or a +12.7545
           var trickyTimezoneRegex = /(^.*[+-]{1}\d{2})(\.5|\.75)(\d{2}$)/;
 
-
           var processTimezone = function (processingValue) {
             //Is a timezone present in a value?
             var matchesArr = processingValue.match(tzRegex);
@@ -716,6 +715,7 @@ define([
 
             //Timezone is not found in a value, check the hint
             if (timezoneHint) {
+              timezoneHint = timezoneHint.replace("/\\+/", "+"); //remove illegal format "\+xxxx" for timezone
               //Timezone hint is present, apply it
               return processingValue + timezoneHint;
             }
@@ -745,6 +745,10 @@ define([
           	//format to date value via transport formatter
           	return transportFormatter.format(date);
           }
+
+          var isSameDate = function(date1, date2) {
+            return date1.getFullYear() === date2.getFullYear() && date1.getMonth() === date2.getMonth() && date1.getDate() === date2.getDate();
+          }
           //bring date values to the same parameter data-format for the correct comparison.
           oldValue = applyParamFormatter(oldValue, formatter);
           newValue = applyParamFormatter(newValue, formatter);
@@ -752,21 +756,20 @@ define([
           oldValue = processTimezone(oldValue);
           newValue = processTimezone(newValue);
 
-          //Erase seconds and milliseconds, minutes are needed to represent a timezone
           var dtValue = new Date(oldValue);
-          dtValue.setMilliseconds(0);
-          dtValue.setSeconds(0);
 
           var dtParamValue = new Date(newValue);
-          dtParamValue.setMilliseconds(0);
-          dtParamValue.setSeconds(0);
-
+          //date picker value does not take into account the hours. in order to not miscalculate the timezone lets make the hours the same
+          //in the date picker in order to compare them after
+          dtParamValue.setHours(dtValue.getHours(), dtValue.getMinutes(), dtValue.getSeconds(), dtValue.getMilliseconds());
+          
           if (isNaN(dtValue.getTime()) || isNaN(dtParamValue.getTime())) {
             //Something went wrong we have an invalid date - don't loop the UI anyway
             return true;
           }
 
-          if (dtValue.getTime() === dtParamValue.getTime()) {
+          //compare the dates
+          if (isSameDate(dtValue, dtParamValue)) {
             //Already has a valid value
             return true;
           }
