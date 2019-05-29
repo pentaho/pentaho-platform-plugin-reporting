@@ -13,7 +13,7 @@
  * See the GNU General Public License for more details.
  *
  *
- * Copyright 2006 - 2016 Pentaho Corporation.  All rights reserved.
+ * Copyright 2006 - 2019 Hitachi Vantara.  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
@@ -43,6 +43,7 @@ public class CacheManagerEndpoint {
       final ICacheManager cacheManager = PentahoSystem.get( ICacheManager.class );
 
       cacheManager.clearRegionCache( "report-output-handlers" );
+      cacheManager.clearRegionCache( "report-dataset-cache" );
 
       DataCacheFactory.getCache().getCacheManager().clearAll();
 
