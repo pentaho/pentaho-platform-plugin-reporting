@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2018 Hitachi Vantara..  All rights reserved.
+ * Copyright (c) 2002-2019 Hitachi Vantara..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
@@ -1015,7 +1015,7 @@ public class ParameterXmlContentHandler {
       if ( offset < 0 ) {
         value.append( "-" );
       } else {
-        value.append( "\\+" );
+        value.append( "+" );
       }
 
       final int seconds = Math.abs( offset / 1000 );
