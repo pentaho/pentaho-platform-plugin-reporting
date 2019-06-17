@@ -13,7 +13,7 @@
  * See the GNU General Public License for more details.
  *
  *
- * Copyright 2006 - 2018 Hitachi Vantara.  All rights reserved.
+ * Copyright 2006 - 2019 Hitachi Vantara.  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
@@ -32,6 +32,7 @@ import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
 import org.pentaho.platform.api.repository2.unified.RepositoryFile;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
+import org.pentaho.platform.util.web.MimeHelper;
 import org.pentaho.reporting.platform.plugin.async.AsyncExecutionStatus;
 import org.pentaho.reporting.platform.plugin.async.AsyncReportState;
 import org.pentaho.reporting.platform.plugin.async.IAsyncReportState;
@@ -148,21 +149,37 @@ public class JobManagerTest {
 
   @Test
   public void calculateContentDisposition() throws Exception {
-    final IAsyncReportState state =
+    final IAsyncReportState state1 =
       new AsyncReportState( UUID.randomUUID(), "/somepath/anotherlevel/file.prpt", AsyncExecutionStatus.FINISHED, 0, 0,
-        0, 0, 0, 0, "", "text/csv", "", false );
+        0, 0, 0, 0, "", MimeHelper.MIMETYPE_CSV, "", false );
 
-    final Response.ResponseBuilder builder = mock( Response.ResponseBuilder.class );
+    final Response.ResponseBuilder builder1 = mock( Response.ResponseBuilder.class );
 
-    JobManager.calculateContentDisposition( builder, state );
+    JobManager.calculateContentDisposition( builder1, state1 );
 
-    ArgumentCaptor<String> argument = ArgumentCaptor.forClass(String.class);
+    ArgumentCaptor<String> argument = ArgumentCaptor.forClass( String.class );
 
-    verify( builder, times( 1 )).header( eq( "Content-Description" ), argument.capture() );
+    verify( builder1, times( 1 ) ).header( eq( "Content-Description" ), argument.capture() );
     assertTrue( argument.getValue().contains( "file.prpt" ) );
 
-    verify( builder, times( 1 )).header( eq( "Content-Disposition" ), argument.capture() );
-    assertTrue( argument.getValue().contains( "inline; filename*=UTF-8''file.csv" ) );
+    verify( builder1, times( 1 ) ).header( eq( "Content-Disposition" ), argument.capture() );
+    assertTrue( argument.getValue().contains( "attachment; filename*=UTF-8''file.csv" ) );
+
+    final IAsyncReportState state2 =
+      new AsyncReportState( UUID.randomUUID(), "/somepath/anotherlevel/file.prpt", AsyncExecutionStatus.FINISHED, 0, 0,
+        0, 0, 0, 0, "", MimeHelper.MIMETYPE_PDF, "", false );
+
+    final Response.ResponseBuilder builder2 = mock( Response.ResponseBuilder.class );
+
+    JobManager.calculateContentDisposition( builder2, state2 );
+
+    argument = ArgumentCaptor.forClass( String.class );
+
+    verify( builder2, times( 1 ) ).header( eq( "Content-Description" ), argument.capture() );
+    assertTrue( argument.getValue().contains( "file.prpt" ) );
+
+    verify( builder2, times( 1 ) ).header( eq( "Content-Disposition" ), argument.capture() );
+    assertTrue( argument.getValue().contains( "inline; filename*=UTF-8''file.pdf" ) );
   }
 
 
