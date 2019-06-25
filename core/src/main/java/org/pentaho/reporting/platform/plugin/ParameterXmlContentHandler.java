@@ -552,7 +552,7 @@ public class ParameterXmlContentHandler {
       final ParameterContextWrapper wrapper =
         new ParameterContextWrapper( parameterContext, vr.getParameterValues() );
       final Element el = createParameterElement( parameter, wrapper, selections, dependencies, ignoreAttributes );
-      if ( !ignoreAttributes ) {
+      if ( !ignoreAttributes || ReportContentUtil.isDateParameter( parameter ) ) {
         createParameterDependencies( el, parameter, dependencies );
       }
       parameters.appendChild( el );

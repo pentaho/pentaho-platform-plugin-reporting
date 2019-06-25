@@ -24,9 +24,13 @@ import org.pentaho.reporting.engine.classic.core.parameters.ParameterAttributeNa
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterContext;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterDefinitionEntry;
 
+import java.sql.Time;
+import java.sql.Timestamp;
 import java.util.Date;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
 public class ReportContentUtilTest {
@@ -72,6 +76,41 @@ public class ReportContentUtilTest {
       ParameterAttributeNames.Core.DATA_FORMAT, null ) ).thenReturn( "yyyy-MM-dd" );
 
     validateParseDateStrict( "2018-05-20T00:00:00.000-0400", "Sun May 20 00:00:00 UTC 2018" );
+  }
+
+  @Test
+  public void isDateParameterTestNullParameter() {
+    assertFalse( ReportContentUtil.isDateParameter( null ) );
+  }
+
+  @Test
+  public void isDateParameterTestInvalidClassType() {
+    when( pde.getValueType() ).thenReturn( ReportContentUtil.class );
+    assertFalse( ReportContentUtil.isDateParameter( pde ) );
+  }
+
+  @Test
+  public void isDateParameterTestSqlDateValueType() {
+    when( pde.getValueType() ).thenReturn( java.sql.Date.class );
+    assertTrue( ReportContentUtil.isDateParameter( pde ) );
+  }
+
+  @Test
+  public void isDateParameterTestTimestampValueType() {
+    when( pde.getValueType() ).thenReturn( Timestamp.class );
+    assertTrue( ReportContentUtil.isDateParameter( pde ) );
+  }
+
+  @Test
+  public void isDateParameterTestTimeValueType() {
+    when( pde.getValueType() ).thenReturn( Time.class );
+    assertTrue( ReportContentUtil.isDateParameter( pde ) );
+  }
+
+  @Test
+  public void isDateParameterTestDateValueType() {
+    when( pde.getValueType() ).thenReturn( Date.class );
+    assertTrue( ReportContentUtil.isDateParameter( pde ) );
   }
 
   private void validateParseDateStrict( final String dateToParse, final String dateResult ) throws Exception {

@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2018 Hitachi Vantara..  All rights reserved.
+ * Copyright (c) 2002-2019 Hitachi Vantara..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
@@ -151,6 +151,15 @@ public class ReportContentUtil {
     } else {
       return convert( parameterContext, parameterDefinition, parameterDefinition.getValueType(), value );
     }
+  }
+
+  public static boolean isDateParameter( ParameterDefinitionEntry parameter ) {
+    if ( parameter == null ) {
+      return false;
+    }
+    Class valueType = parameter.getValueType();
+    return Timestamp.class.equals( valueType ) || Time.class.equals( valueType )
+      || java.sql.Date.class.equals( valueType ) || Date.class.equals( valueType );
   }
 
   private static boolean isAllowMultiSelect( final ParameterDefinitionEntry parameter ) {
@@ -297,18 +306,13 @@ public class ReportContentUtil {
       simpleDateFormat.setTimeZone( TimeZone.getTimeZone( "UTC" ) ); // NON-NLS
       return simpleDateFormat.parse( value );
     } else if ( "client".equals( timezoneSpec ) ) { // NON-NLS
-      try {
-        // As a workaround, when there is only date configured (and no time) then we parse only as date to avoid errors
-        // caused by change of day due to client/server different timezones (because reporting mechanism assumes no time = 00:00:00)
-        // Note: a whole refactor should be done to integrate new Java 8 DateTime API and then this workaround can be removed.
-        final SimpleDateFormat simpleDateFormat = isOnlyDateFormat( parameterEntry, context )
-          ? new SimpleDateFormat( "yyyy-MM-dd" ) // NON-NLS
-          : new SimpleDateFormat( "yyyy-MM-dd'T'HH:mm:ss.SSSZ" ); // NON-NLS
-        return simpleDateFormat.parse( value );
-      } catch ( ParseException pe ) {
-        final SimpleDateFormat simpleDateFormat = new SimpleDateFormat( "yyyy-MM-dd'T'HH:mm:ss.SSS" ); // NON-NLS
-        return simpleDateFormat.parse( value );
-      }
+      // As a workaround, when there is only date configured (and no time) then we parse only as date to avoid errors
+      // caused by change of day due to client/server different timezones (because reporting mechanism assumes no time = 00:00:00)
+      // Note: a whole refactor should be done to integrate new Java 8 DateTime API and then this workaround can be removed.
+      final SimpleDateFormat simpleDateFormat = isOnlyDateFormat( parameterEntry, context )
+        ? new SimpleDateFormat( "yyyy-MM-dd" ) // NON-NLS
+        : new SimpleDateFormat( "yyyy-MM-dd'T'HH:mm:ss.SSS" ); // NON-NLS
+      return simpleDateFormat.parse( value );
     } else {
       final TimeZone timeZone = TimeZone.getTimeZone( timezoneSpec );
       // this never returns null, but if the timezone is not understood, we end up with GMT/UTC.
