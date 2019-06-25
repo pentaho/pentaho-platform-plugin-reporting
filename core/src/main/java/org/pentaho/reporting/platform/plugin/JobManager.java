@@ -13,7 +13,7 @@
  * See the GNU General Public License for more details.
  *
  *
- * Copyright 2006 - 2016 Pentaho Corporation.  All rights reserved.
+ * Copyright 2006 - 2019 Hitachi Vantara.  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
@@ -59,6 +59,11 @@ import java.util.Collections;
 import java.util.UUID;
 import java.util.concurrent.Future;
 
+import static org.pentaho.platform.util.web.MimeHelper.MIMETYPE_CSV;
+import static org.pentaho.platform.util.web.MimeHelper.MIMETYPE_EMAIL_MSG;
+import static org.pentaho.platform.util.web.MimeHelper.MIMETYPE_MS_EXCEL_2007;
+import static org.pentaho.platform.util.web.MimeHelper.MIMETYPE_MS_EXCEL;
+import static org.pentaho.platform.util.web.MimeHelper.MIMETYPE_RTF;
 @Path( "/reporting/api/jobs" )
 public class JobManager {
 
@@ -344,7 +349,8 @@ public class JobManager {
     final org.pentaho.reporting.libraries.base.util.IOUtils utils = org.pentaho.reporting.libraries
       .base.util.IOUtils.getInstance();
 
-    final String targetExt = MimeHelper.getExtension( state.getMimeType() );
+    final String mimeType = state.getMimeType();
+    final String targetExt = MimeHelper.getExtension( mimeType );
     final String fullPath = state.getPath();
     final String sourceExt = utils.getFileExtension( fullPath );
     String cleanFileName = utils.stripFileExtension( utils.getFileName( fullPath ) );
@@ -354,13 +360,40 @@ public class JobManager {
 
     final String
       disposition =
-      "inline; filename*=UTF-8''" + RepositoryPathEncoder
+      getDispositionType( mimeType ) + " filename*=UTF-8''" + RepositoryPathEncoder
         .encode( RepositoryPathEncoder.encodeRepositoryPath( cleanFileName + targetExt ) );
     response.header( "Content-Disposition", disposition );
 
     response.header( "Content-Description", cleanFileName + sourceExt );
 
     return response;
+  }
+
+  protected static String getDispositionType( String mimeType ) {
+    /*
+     * [PRD-6031]
+     * Some files cannot be done inline and have to be forced to be downloaded. In most browsers this can be handled
+     * automatically (whether you set inline or attachment), but browsers such as IE7/8/11 cannot handle this
+     * appropriately and will show the legacy Open/Save/Save As dialog, which loses the focus of the filename provided
+     * in the response message. This is because Internet Explorer's design does not allow inline and filename to work
+     * together for some files. It appears these files are files that can be opened using the Microsoft Office framework
+     * (Outlook, Excel, Word). What does work is to specifically call out attachment and filename, then IE will use the
+     * newer Open/Save/Save As dialog, which does capture the filename appropriately. This switch statement also works
+     * in Firefox, Opera, and Google Chrome.
+     */
+    String dispositionType;
+    switch ( mimeType ) {
+      case MIMETYPE_EMAIL_MSG:
+      case MIMETYPE_MS_EXCEL:
+      case MIMETYPE_MS_EXCEL_2007:
+      case MIMETYPE_CSV:
+      case MIMETYPE_RTF:
+        dispositionType = "attachment;";
+        break;
+      default:
+        dispositionType = "inline;";
+    }
+    return dispositionType;
   }
 
   @JsonPropertyOrder( alphabetic = true ) //stable response structure

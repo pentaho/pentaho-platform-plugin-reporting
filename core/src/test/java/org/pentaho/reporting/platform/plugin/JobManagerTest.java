@@ -13,7 +13,7 @@
  * See the GNU General Public License for more details.
  *
  *
- * Copyright 2006 - 2016 Pentaho Corporation.  All rights reserved.
+ * Copyright 2006 - 2019 Hitachi Vantara.  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
@@ -26,12 +26,14 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.pentaho.platform.api.engine.IPentahoObjectFactory;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
 import org.pentaho.platform.api.repository2.unified.RepositoryFile;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
+import org.pentaho.platform.util.web.MimeHelper;
 import org.pentaho.reporting.platform.plugin.async.AsyncExecutionStatus;
 import org.pentaho.reporting.platform.plugin.async.AsyncReportState;
 import org.pentaho.reporting.platform.plugin.async.IAsyncReportState;
@@ -142,18 +144,37 @@ public class JobManagerTest {
 
   @Test
   public void calculateContentDisposition() throws Exception {
-    final IAsyncReportState state =
+    final IAsyncReportState state1 =
       new AsyncReportState( UUID.randomUUID(), "/somepath/anotherlevel/file.prpt", AsyncExecutionStatus.FINISHED, 0, 0,
-        0, 0, 0, 0, "", "text/csv", "", false );
+        0, 0, 0, 0, "", MimeHelper.MIMETYPE_CSV, "", false );
 
-    final Response.ResponseBuilder builder = new ResponseBuilderImpl();
+    final Response.ResponseBuilder builder1 = mock( Response.ResponseBuilder.class );
 
-    JobManager.calculateContentDisposition( builder, state );
-    final Response resp = builder.build();
-    final MultivaluedMap<String, String> stringHeaders = resp.getStringHeaders();
-    assertTrue( stringHeaders.get( "Content-Description" ).contains( "file.prpt" ) );
-    assertTrue( stringHeaders.get( "Content-Disposition" ).contains( "inline; filename*=UTF-8''file.csv" ) );
-    resp.close();
+    JobManager.calculateContentDisposition( builder1, state1 );
+
+    ArgumentCaptor<String> argument = ArgumentCaptor.forClass( String.class );
+
+    verify( builder1, times( 1 ) ).header( eq( "Content-Description" ), argument.capture() );
+    assertTrue( argument.getValue().contains( "file.prpt" ) );
+
+    verify( builder1, times( 1 ) ).header( eq( "Content-Disposition" ), argument.capture() );
+    assertTrue( argument.getValue().contains( "attachment; filename*=UTF-8''file.csv" ) );
+
+    final IAsyncReportState state2 =
+      new AsyncReportState( UUID.randomUUID(), "/somepath/anotherlevel/file.prpt", AsyncExecutionStatus.FINISHED, 0, 0,
+        0, 0, 0, 0, "", MimeHelper.MIMETYPE_PDF, "", false );
+
+    final Response.ResponseBuilder builder2 = mock( Response.ResponseBuilder.class );
+
+    JobManager.calculateContentDisposition( builder2, state2 );
+
+    argument = ArgumentCaptor.forClass( String.class );
+
+    verify( builder2, times( 1 ) ).header( eq( "Content-Description" ), argument.capture() );
+    assertTrue( argument.getValue().contains( "file.prpt" ) );
+
+    verify( builder2, times( 1 ) ).header( eq( "Content-Disposition" ), argument.capture() );
+    assertTrue( argument.getValue().contains( "inline; filename*=UTF-8''file.pdf" ) );
   }
 
 
