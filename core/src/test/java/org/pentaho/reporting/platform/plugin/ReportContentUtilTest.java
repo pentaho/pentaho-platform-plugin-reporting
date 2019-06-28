@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2018 Hitachi Vantara..  All rights reserved.
+ * Copyright (c) 2002-2019 Hitachi Vantara..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
@@ -24,59 +24,98 @@ import org.pentaho.reporting.engine.classic.core.parameters.ParameterAttributeNa
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterContext;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterDefinitionEntry;
 
+import java.sql.Time;
+import java.sql.Timestamp;
 import java.util.Date;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
 public class ReportContentUtilTest {
 
-    @Mock private ParameterContext context;
+  @Mock private ParameterContext context;
 
-    private ParameterDefinitionEntry pde = Mockito.mock( ParameterDefinitionEntry.class );
+  private ParameterDefinitionEntry pde = Mockito.mock( ParameterDefinitionEntry.class );
 
-    @Test
-    public void parseDateStrict_null_Test() throws Exception {
+  @Test
+  public void parseDateStrict_null_Test() throws Exception {
 
-        when( pde.getParameterAttribute( ParameterAttributeNames.Core.NAMESPACE,
-                ParameterAttributeNames.Core.TIMEZONE, null ) ).thenReturn( null );
+    when( pde.getParameterAttribute( ParameterAttributeNames.Core.NAMESPACE,
+      ParameterAttributeNames.Core.TIMEZONE, null ) ).thenReturn( null );
 
-        validateParseDateStrict( "2018-05-20T01:12:23.456-0400", "Sun May 20 01:12:23 UTC 2018" );
-    }
+    validateParseDateStrict( "2018-05-20T01:12:23.456-0400", "Sun May 20 01:12:23 UTC 2018" );
+  }
 
-    @Test
-    public void parseDateStrict_GMTplus3_Test() throws Exception {
+  @Test
+  public void parseDateStrict_GMTplus3_Test() throws Exception {
 
-        when( pde.getParameterAttribute( ParameterAttributeNames.Core.NAMESPACE,
-                ParameterAttributeNames.Core.TIMEZONE, null ) ).thenReturn( "Etc/GMT+3" );
+    when( pde.getParameterAttribute( ParameterAttributeNames.Core.NAMESPACE,
+      ParameterAttributeNames.Core.TIMEZONE, null ) ).thenReturn( "Etc/GMT+3" );
 
-        validateParseDateStrict( "2018-05-20T01:12:23.456-0400", "Sun May 20 04:12:23 UTC 2018" );
-    }
+    validateParseDateStrict( "2018-05-20T01:12:23.456-0400", "Sun May 20 04:12:23 UTC 2018" );
+  }
 
-    @Test
-    public void parseDateStrict_GMTminus7_Test() throws Exception {
+  @Test
+  public void parseDateStrict_GMTminus7_Test() throws Exception {
 
-        when( pde.getParameterAttribute( ParameterAttributeNames.Core.NAMESPACE,
-                ParameterAttributeNames.Core.TIMEZONE, null ) ).thenReturn( "Etc/GMT-7" );
+    when( pde.getParameterAttribute( ParameterAttributeNames.Core.NAMESPACE,
+      ParameterAttributeNames.Core.TIMEZONE, null ) ).thenReturn( "Etc/GMT-7" );
 
-        validateParseDateStrict( "2018-05-20T01:12:23.456-0400", "Sat May 19 18:12:23 UTC 2018" );
-    }
+    validateParseDateStrict( "2018-05-20T01:12:23.456-0400", "Sat May 19 18:12:23 UTC 2018" );
+  }
 
-    @Test
-    public void parseDateStrict_server_Test() throws Exception {
+  @Test
+  public void parseDateStrict_server_Test() throws Exception {
 
-        when( pde.getParameterAttribute( ParameterAttributeNames.Core.NAMESPACE,
-                ParameterAttributeNames.Core.TIMEZONE, null ) ).thenReturn( "client" );
+    when( pde.getParameterAttribute( ParameterAttributeNames.Core.NAMESPACE,
+      ParameterAttributeNames.Core.TIMEZONE, null ) ).thenReturn( "client" );
 
-        when( pde.getParameterAttribute( ParameterAttributeNames.Core.NAMESPACE,
-                ParameterAttributeNames.Core.DATA_FORMAT, null ) ).thenReturn( "yyyy-MM-dd" );
+    when( pde.getParameterAttribute( ParameterAttributeNames.Core.NAMESPACE,
+      ParameterAttributeNames.Core.DATA_FORMAT, null ) ).thenReturn( "yyyy-MM-dd" );
 
-        validateParseDateStrict( "2018-05-20T00:00:00.000-0400", "Sun May 20 00:00:00 UTC 2018" );
-    }
+    validateParseDateStrict( "2018-05-20T00:00:00.000-0400", "Sun May 20 00:00:00 UTC 2018" );
+  }
 
-    private void validateParseDateStrict( final String dateToParse, final String dateResult ) throws Exception {
+  @Test
+  public void isDateParameterTestNullParameter() {
+    assertFalse( ReportContentUtil.isDateParameter( null ) );
+  }
 
-        Date date = ReportContentUtil.parseDateStrict( pde, context, dateToParse );
-        assertEquals( dateResult, date.toString() );
-    }
+  @Test
+  public void isDateParameterTestInvalidClassType() {
+    when( pde.getValueType() ).thenReturn( ReportContentUtil.class );
+    assertFalse( ReportContentUtil.isDateParameter( pde ) );
+  }
+
+  @Test
+  public void isDateParameterTestSqlDateValueType() {
+    when( pde.getValueType() ).thenReturn( java.sql.Date.class );
+    assertTrue( ReportContentUtil.isDateParameter( pde ) );
+  }
+
+  @Test
+  public void isDateParameterTestTimestampValueType() {
+    when( pde.getValueType() ).thenReturn( Timestamp.class );
+    assertTrue( ReportContentUtil.isDateParameter( pde ) );
+  }
+
+  @Test
+  public void isDateParameterTestTimeValueType() {
+    when( pde.getValueType() ).thenReturn( Time.class );
+    assertTrue( ReportContentUtil.isDateParameter( pde ) );
+  }
+
+  @Test
+  public void isDateParameterTestDateValueType() {
+    when( pde.getValueType() ).thenReturn( Date.class );
+    assertTrue( ReportContentUtil.isDateParameter( pde ) );
+  }
+
+  private void validateParseDateStrict( final String dateToParse, final String dateResult ) throws Exception {
+
+    Date date = ReportContentUtil.parseDateStrict( pde, context, dateToParse );
+    assertEquals( dateResult, date.toString() );
+  }
 }
