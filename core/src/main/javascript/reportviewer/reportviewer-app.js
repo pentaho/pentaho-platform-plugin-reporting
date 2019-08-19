@@ -53,7 +53,7 @@ define(["reportviewer/reportviewer-main-module", 'dojo/parser',"reportviewer/rep
   $(document).ready(function ()
 	{
 		cookie('scrollValue', "", { expires: -1 });
-		$("iframe#reportContent").load(function()
+		$("iframe#reportContent").on('load', function()
 		{
 			var scrollVal = 0;
 			scrollVal = cookie('scrollValue');
