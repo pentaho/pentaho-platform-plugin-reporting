@@ -352,7 +352,8 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
         });
 
         it("should not force an update if the single selection value is not changed", function () {
-          var param = {values: [{value: "test", selected: true}, {value: "test1"}]};
+          var param = {values: [{value: "test", selected: true}, {value: "test1"}],
+            attributes: {'parameter-render-type': 'list'}};
           reportPrompt._applyUserInput("anyname", "test", param);
           expect(reportPrompt.forceUpdate).toBe(undefined);
         });
@@ -363,7 +364,8 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
               {value: "test", selected: true},
               {value: "test1", selected: true},
               {value: "test2"}
-            ]
+            ],
+            attributes: {'parameter-render-type': 'list'}
           };
           reportPrompt._applyUserInput("anyname", ["test", "test1"], parameter);
           expect(parameter.forceUpdate).toBe(undefined);
@@ -376,7 +378,8 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
         });
 
         it("should force an update if the single selection value is changed", function () {
-          var param = {values: [{value: "test", selected: true}, {value: "test1"}]};
+          var param = {values: [{value: "test", selected: true}, {value: "test1"}],
+            attributes: {'parameter-render-type': 'list'}};
           reportPrompt._applyUserInput("anyname", "test1", param);
           expect(param.forceUpdate).toBe(true);
         });
@@ -387,7 +390,8 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
               {value: "test", selected: true},
               {value: "test1", selected: true},
               {value: "test2"}
-            ]
+            ],
+            attributes: {'parameter-render-type': 'list'}
           };
           reportPrompt._applyUserInput("anyname", ["test", "test2"], parameter);
           expect(parameter.forceUpdate).toBe(true);
@@ -399,7 +403,8 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
               {value: "test", selected: true},
               {value: "test1", selected: true},
               {value: "test2"}
-            ]
+            ],
+            attributes: {'parameter-render-type': 'list'}
           };
           reportPrompt._applyUserInput("anyname", ["test"], parameter);
           expect(parameter.forceUpdate).toBe(true);
@@ -408,10 +413,47 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
               {value: "test", selected: true},
               {value: "test1", selected: true},
               {value: "test2"}
-            ]
+            ],
+            attributes: {'parameter-render-type': 'list'}
           };
           reportPrompt._applyUserInput("anyname", ["test", "test1", "test2"], parameter);
           expect(parameter.forceUpdate).toBe(true);
+        });
+
+        // [BISERVER-14306]
+        // These 2 tests only occur in code when there's a default value for a Date object.  The selection goes through
+        // A loop to first remove the bad date and then adds the new date value. Code was updated to handle the forced
+        // deselection of the old date.
+        it("should force an update if the date selection value has a different number of selections", function () {
+          var dateSelectionParameter = {
+            values: [
+              {value: "2019-09-13", selected: false},
+              {value: "2019-09-13T00:00:00.000-0400", selected: true}
+            ],
+            attributes: {'parameter-render-type': 'datepicker'}
+          };
+          spyOn(reportPrompt, "_createFormatter").and.returnValue(undefined);
+          spyOn(reportPrompt, "_compareDatesOnly").and.returnValue(false);
+          reportPrompt._applyUserInput("anyname", ["2019-09-10T00:00:00.000"], dateSelectionParameter);
+
+          expect(dateSelectionParameter.values[1].selected).toBe(false);
+          expect(dateSelectionParameter.forceUpdate).toBe(true);
+        });
+
+        it("should not force an update if the date selection value is the same as one of the stored selections", function () {
+          var dateSelectionParameter2 = {
+            values: [
+              {value: "2019-09-13", selected: false},
+              {value: "2019-09-10T00:00:00.000-0400", selected: false}
+            ],
+            attributes: {'parameter-render-type': 'datepicker'}
+          };
+          spyOn(reportPrompt, "_createFormatter").and.returnValue(undefined);
+          spyOn(reportPrompt, "_compareDatesOnly").and.returnValue(true);
+          reportPrompt._applyUserInput("anyname", ["2019-09-10T00:00:00.000"], dateSelectionParameter2);
+
+          expect(dateSelectionParameter2.values[1].selected).toBe(true);
+          expect(dateSelectionParameter2.forceUpdate).toBe(true);
         });
 
         it("should keep parameter as is if we have only differnet timezone", function () {
@@ -511,6 +553,8 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
             values: [{value: "2017-01-01T11:00:00.000"}],
             attributes: {"parameter-render-type": "datepicker"}
           };
+          spyOn(reportPrompt, "_createFormatter").and.returnValue(undefined);
+          spyOn(reportPrompt, "_compareDatesOnly").and.returnValue(false);
           reportPrompt._applyUserInput("anyname", "2017-01-02T11:00:00.000", param);
           expect(param.forceUpdate).toBe(true);
           var param = {

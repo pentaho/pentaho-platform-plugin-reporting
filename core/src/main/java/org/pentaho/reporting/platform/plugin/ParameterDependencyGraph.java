@@ -23,6 +23,7 @@ import org.pentaho.reporting.engine.classic.core.DataRow;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportDataFactoryException;
 import org.pentaho.reporting.engine.classic.core.StaticDataRow;
+import org.pentaho.reporting.engine.classic.core.TableDataFactory;
 import org.pentaho.reporting.engine.classic.core.designtime.datafactory.DesignTimeDataFactoryContext;
 import org.pentaho.reporting.engine.classic.core.function.FormulaExpression;
 import org.pentaho.reporting.engine.classic.core.metadata.ExpressionMetaData;
@@ -59,7 +60,7 @@ import java.util.stream.Collectors;
 public class ParameterDependencyGraph {
   private static final String SYS_IGNORE_PARAM = "::org.pentaho.reporting";
 
-  private boolean noDependencyInformationAvailable;
+  private boolean dependencyInformationAvailable = true;
   private LinkedHashMap<String, Set<String>> dependencyGraph;
   private Set<String> allParameterNames;
 
@@ -69,29 +70,25 @@ public class ParameterDependencyGraph {
                                    final Map<String, Object> computedParameterValues ) {
     this.dependencyGraph = new LinkedHashMap<>();
     this.allParameterNames = new HashSet<>( reportParameter.keySet() );
-    this.noDependencyInformationAvailable =
-      !processDependentParameters( report, reportParameter, parameterContext,
-        new StaticDataRow( computedParameterValues ) );
+    processDependentParameters( report, reportParameter, parameterContext, new StaticDataRow( computedParameterValues ) );
   }
 
   /**
    * Test support ..
    *
-   * @param noDeps
    * @param allParameterNames
    */
-  ParameterDependencyGraph( boolean noDeps, String... allParameterNames ) {
+  ParameterDependencyGraph( String... allParameterNames ) {
     this.dependencyGraph = new LinkedHashMap<>();
     this.allParameterNames = new HashSet<>( Arrays.asList( allParameterNames ) );
-    this.noDependencyInformationAvailable = noDeps;
   }
 
-  public void setNoDependencyInformationAvailable( boolean noDependencyInformationAvailable ) {
-    this.noDependencyInformationAvailable = noDependencyInformationAvailable;
+  public void setDependencyInformationAvailable( boolean dependencyInformationAvailable ) {
+    this.dependencyInformationAvailable = dependencyInformationAvailable;
   }
 
-  public boolean getNoDependencyInformationAvailable() {
-    return this.noDependencyInformationAvailable;
+  public boolean getDependencyInformationAvailable() {
+    return this.dependencyInformationAvailable;
   }
 
   public LinkedHashMap<String, Set<String>> getDependencyGraph() {
@@ -111,7 +108,7 @@ public class ParameterDependencyGraph {
   }
 
   public Set<String> getDependentParameterFor( String parameterName ) {
-    if ( noDependencyInformationAvailable ) {
+    if ( !dependencyInformationAvailable ) {
       return Collections.emptySet();
     }
 
@@ -124,7 +121,7 @@ public class ParameterDependencyGraph {
   }
 
   public Set<String> getAllDependencies( Iterable<String> parameterNames ) {
-    if ( noDependencyInformationAvailable ) {
+    if ( !dependencyInformationAvailable ) {
       return Collections.unmodifiableSet( allParameterNames );
     }
 
@@ -140,6 +137,18 @@ public class ParameterDependencyGraph {
     return Collections.unmodifiableSet( dependencyGraph.keySet() );
   }
 
+  /**
+   * Stream and verify that the parameter exists as a dependency in the dependency graph
+   * @param parameterName
+   * @return
+   */
+  public boolean doesDependencyExist( String parameterName ) {
+    return dependencyGraph
+          .values()
+          .stream()
+          .flatMap( Set::stream )
+          .anyMatch( s -> s.compareTo( parameterName ) == 0 );
+  }
   /**
    * Recursively collects all dependencies, and avoids visiting parameters twice and thus
    * wont crash on circular dependencies.
@@ -187,7 +196,7 @@ public class ParameterDependencyGraph {
       final CompoundDataFactory derive = (CompoundDataFactory) cdf.derive();
       derive.initialize( factoryContext );
 
-      Boolean anyDependencyProcessed = false;
+      boolean anyDependencyProcessed = false;
       try {
         for ( final ParameterDefinitionEntry entry : reportParameter.values() ) {
           final List<String> dependentParameter = computeNormalLineage( parameterContext, entry );
@@ -195,7 +204,8 @@ public class ParameterDependencyGraph {
 
           // No dependency information at all - No need to continue
           if ( queryDependencies == null ) {
-            return false;
+            dependencyInformationAvailable = false;
+            continue;
           }
 
           if ( dependentParameter != null && dependentParameter.size() > 0 ) {
@@ -233,7 +243,7 @@ public class ParameterDependencyGraph {
     }
 
     final DataFactory dataFactoryForQuery = cdf.getDataFactoryForQuery( queryName );
-    if ( dataFactoryForQuery == null ) {
+    if ( dataFactoryForQuery == null || dataFactoryForQuery instanceof TableDataFactory ) {
       return Collections.emptyList();
     }
 
@@ -250,8 +260,8 @@ public class ParameterDependencyGraph {
     }
   }
 
-  public boolean isNoDependencyInformationAvailable() {
-    return noDependencyInformationAvailable;
+  public boolean isDependencyInformationAvailable() {
+    return dependencyInformationAvailable;
   }
 
   private static String extractFormula( final ParameterContext parameterContext,

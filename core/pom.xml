@@ -377,6 +377,21 @@
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <groupId>com.github.eirslett</groupId>
+        <artifactId>frontend-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>javascript-test_karma</id>
+            <goals>
+              <goal>karma</goal>
+            </goals>
+            <configuration>
+              <workingDirectory>${project.basedir}/..</workingDirectory>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 </project>
