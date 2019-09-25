@@ -52,15 +52,15 @@ import java.util.stream.Collectors;
  * this would return a mapping "City -> [Country]".
  * <p>
  * If there is a problem with computing dependency information or if the queries use a datasource
- * that cannot provide dependency information, this implementation will return "true" on
- * "noDependencyInformationAvailable"
+ * that cannot provide dependency information, this implementation will return "false" on
+ * "allParametersProcessed"
  * and will return all other parameters as dependent values (to indicate that any change may be a
  * cause of change in the parameter values).
  */
 public class ParameterDependencyGraph {
   private static final String SYS_IGNORE_PARAM = "::org.pentaho.reporting";
 
-  private boolean dependencyInformationAvailable = true;
+  private boolean allParametersProcessed;
   private LinkedHashMap<String, Set<String>> dependencyGraph;
   private Set<String> allParameterNames;
 
@@ -70,7 +70,8 @@ public class ParameterDependencyGraph {
                                    final Map<String, Object> computedParameterValues ) {
     this.dependencyGraph = new LinkedHashMap<>();
     this.allParameterNames = new HashSet<>( reportParameter.keySet() );
-    processDependentParameters( report, reportParameter, parameterContext, new StaticDataRow( computedParameterValues ) );
+    this.allParametersProcessed = processDependentParameters( report, reportParameter, parameterContext,
+      new StaticDataRow( computedParameterValues ) );
   }
 
   /**
@@ -80,15 +81,16 @@ public class ParameterDependencyGraph {
    */
   ParameterDependencyGraph( String... allParameterNames ) {
     this.dependencyGraph = new LinkedHashMap<>();
+    this.allParametersProcessed = true;
     this.allParameterNames = new HashSet<>( Arrays.asList( allParameterNames ) );
   }
 
-  public void setDependencyInformationAvailable( boolean dependencyInformationAvailable ) {
-    this.dependencyInformationAvailable = dependencyInformationAvailable;
+  void setAllParametersProcessed( boolean allParametersProcessed ) {
+    this.allParametersProcessed = allParametersProcessed;
   }
 
-  public boolean getDependencyInformationAvailable() {
-    return this.dependencyInformationAvailable;
+  public boolean getAllParametersProcessed() {
+    return this.allParametersProcessed;
   }
 
   public LinkedHashMap<String, Set<String>> getDependencyGraph() {
@@ -108,7 +110,7 @@ public class ParameterDependencyGraph {
   }
 
   public Set<String> getDependentParameterFor( String parameterName ) {
-    if ( !dependencyInformationAvailable ) {
+    if ( !allParametersProcessed ) {
       return Collections.emptySet();
     }
 
@@ -121,7 +123,7 @@ public class ParameterDependencyGraph {
   }
 
   public Set<String> getAllDependencies( Iterable<String> parameterNames ) {
-    if ( !dependencyInformationAvailable ) {
+    if ( !allParametersProcessed ) {
       return Collections.unmodifiableSet( allParameterNames );
     }
 
@@ -190,13 +192,13 @@ public class ParameterDependencyGraph {
                                               ParameterContext parameterContext,
                                               DataRow parameterValues ) {
 
+    boolean isDependencyInfoAvail = true;
     try {
       final DesignTimeDataFactoryContext factoryContext = new DesignTimeDataFactoryContext( report );
       final CompoundDataFactory cdf = CompoundDataFactory.normalize( report.getDataFactory() );
       final CompoundDataFactory derive = (CompoundDataFactory) cdf.derive();
       derive.initialize( factoryContext );
 
-      boolean anyDependencyProcessed = false;
       try {
         for ( final ParameterDefinitionEntry entry : reportParameter.values() ) {
           final List<String> dependentParameter = computeNormalLineage( parameterContext, entry );
@@ -204,28 +206,25 @@ public class ParameterDependencyGraph {
 
           // No dependency information at all - No need to continue
           if ( queryDependencies == null ) {
-            dependencyInformationAvailable = false;
+            isDependencyInfoAvail = false;
             continue;
           }
 
           if ( dependentParameter != null && dependentParameter.size() > 0 ) {
             dependentParameter.forEach( p -> addDependency( p, entry.getName() ) );
-            anyDependencyProcessed = true;
           }
           if ( queryDependencies != null && queryDependencies.size() > 0 ) {
             queryDependencies.forEach( p -> addDependency( p, entry.getName() ) );
-            anyDependencyProcessed = true;
           }
         }
       } finally {
         derive.close();
       }
-
-      return anyDependencyProcessed;
     } catch ( ReportDataFactoryException re ) {
       DebugLog.log( "Failed to compute dependency information", re );
-      return false;
+      isDependencyInfoAvail = false;
     }
+    return isDependencyInfoAvail;
   }
 
   private List<String> computeListParameterLineage( CompoundDataFactory cdf,
@@ -260,8 +259,8 @@ public class ParameterDependencyGraph {
     }
   }
 
-  public boolean isDependencyInformationAvailable() {
-    return dependencyInformationAvailable;
+  public boolean areAllParametersProcessed() {
+    return allParametersProcessed;
   }
 
   private static String extractFormula( final ParameterContext parameterContext,

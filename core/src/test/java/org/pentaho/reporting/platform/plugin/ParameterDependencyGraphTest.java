@@ -38,22 +38,22 @@ public class ParameterDependencyGraphTest {
     ParameterDependencyGraph paramDepGrap = new ParameterDependencyGraph( "param1", "param2" );
     assertEquals( paramDepGrap.getDependentParameterFor( "param1" ), asSet() );
 
-    paramDepGrap.setDependencyInformationAvailable( true );
+    paramDepGrap.setAllParametersProcessed( true );
     LinkedHashMap<String, Set<String>> dependencyGraph = new LinkedHashMap<>();
     dependencyGraph.put( "param1", asSet( "param2", "param3" ) );
     paramDepGrap.setDependencyGraph( dependencyGraph );
     assertEquals( paramDepGrap.getDependentParameterFor( "param1" ), asSet( "param2", "param3" ) );
-    paramDepGrap.setDependencyInformationAvailable( false );
+    paramDepGrap.setAllParametersProcessed( false );
     assertEquals( paramDepGrap.getDependentParameterFor( "param2" ), Collections.emptySet() );
   }
 
   @Test
   public void testGetAllDependencies() {
     ParameterDependencyGraph paramDepGrap = new ParameterDependencyGraph( "param1", "param2" );
-    paramDepGrap.setDependencyInformationAvailable( false );
+    paramDepGrap.setAllParametersProcessed( false );
     assertEquals( paramDepGrap.getAllDependencies( "param1" ), asSet( "param1", "param2" ) );
 
-    paramDepGrap.setDependencyInformationAvailable( true );
+    paramDepGrap.setAllParametersProcessed( true );
     assertEquals( paramDepGrap.getAllDependencies( asSet( "param1", "param1" ) ), Collections.emptySet() );
   }
 
