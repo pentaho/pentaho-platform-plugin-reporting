@@ -89,10 +89,6 @@ public class ParameterDependencyGraph {
     this.allParametersProcessed = allParametersProcessed;
   }
 
-  public boolean getAllParametersProcessed() {
-    return this.allParametersProcessed;
-  }
-
   public LinkedHashMap<String, Set<String>> getDependencyGraph() {
     return dependencyGraph;
   }
@@ -140,7 +136,7 @@ public class ParameterDependencyGraph {
   }
 
   /**
-   * Stream and verify that the parameter exists as a dependency in the dependency graph
+   * Verify that the parameter exists as a dependency in the dependency graph
    * @param parameterName
    * @return
    */
@@ -242,6 +238,8 @@ public class ParameterDependencyGraph {
     }
 
     final DataFactory dataFactoryForQuery = cdf.getDataFactoryForQuery( queryName );
+    // We are also checking for TableDataFactory, because this Data Factory is a manual table that cannot
+    // have or be used in a dependency query. So it's list should be empty.
     if ( dataFactoryForQuery == null || dataFactoryForQuery instanceof TableDataFactory ) {
       return Collections.emptyList();
     }

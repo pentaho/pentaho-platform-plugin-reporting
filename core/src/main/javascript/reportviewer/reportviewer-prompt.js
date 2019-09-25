@@ -655,6 +655,8 @@ define([
             if (value.indexOf(paramVal.value) > -1
               //Datepickers require some extra care (this is needed if the values list has a stored default value and
               // keeps it ready and selected=false.)
+              // We check against value[0], because in this instance the value will be an array with 1 item in it, the
+              // selected date. So we retrieve this selected date value by choosing value[0]
               || (param.attributes['parameter-render-type'] === 'datepicker'
                 && this._compareDatesOnly(paramVal.value, value[0], param.timezoneHint, this._createFormatter(param)))) {
               if (!paramVal.selected) {

@@ -422,7 +422,7 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
 
         // [BISERVER-14306]
         // These 2 tests only occur in code when there's a default value for a Date object.  The selection goes through
-        // A loop to first remove the bad date and then adds the new date value. Code was updated to handle the forced
+        // A loop to first remove the previously selected date and then adds the new date value. Code was updated to handle the forced
         // deselection of the old date.
         it("should force an update if the date selection value has a different number of selections", function () {
           var dateSelectionParameter = {
