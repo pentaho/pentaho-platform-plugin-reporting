@@ -145,7 +145,7 @@ public class ParameterDependencyGraph {
           .values()
           .stream()
           .flatMap( Set::stream )
-          .anyMatch( s -> s.compareTo( parameterName ) == 0 );
+          .anyMatch( s -> s.equals( parameterName ) );
   }
   /**
    * Recursively collects all dependencies, and avoids visiting parameters twice and thus
