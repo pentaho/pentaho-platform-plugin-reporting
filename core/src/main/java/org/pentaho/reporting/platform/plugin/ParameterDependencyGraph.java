@@ -23,6 +23,7 @@ import org.pentaho.reporting.engine.classic.core.DataRow;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportDataFactoryException;
 import org.pentaho.reporting.engine.classic.core.StaticDataRow;
+import org.pentaho.reporting.engine.classic.core.TableDataFactory;
 import org.pentaho.reporting.engine.classic.core.designtime.datafactory.DesignTimeDataFactoryContext;
 import org.pentaho.reporting.engine.classic.core.function.FormulaExpression;
 import org.pentaho.reporting.engine.classic.core.metadata.ExpressionMetaData;
@@ -51,15 +52,15 @@ import java.util.stream.Collectors;
  * this would return a mapping "City -> [Country]".
  * <p>
  * If there is a problem with computing dependency information or if the queries use a datasource
- * that cannot provide dependency information, this implementation will return "true" on
- * "noDependencyInformationAvailable"
+ * that cannot provide dependency information, this implementation will return "false" on
+ * "allParametersProcessed"
  * and will return all other parameters as dependent values (to indicate that any change may be a
  * cause of change in the parameter values).
  */
 public class ParameterDependencyGraph {
   private static final String SYS_IGNORE_PARAM = "::org.pentaho.reporting";
 
-  private boolean noDependencyInformationAvailable;
+  private boolean allParametersProcessed;
   private LinkedHashMap<String, Set<String>> dependencyGraph;
   private Set<String> allParameterNames;
 
@@ -69,29 +70,23 @@ public class ParameterDependencyGraph {
                                    final Map<String, Object> computedParameterValues ) {
     this.dependencyGraph = new LinkedHashMap<>();
     this.allParameterNames = new HashSet<>( reportParameter.keySet() );
-    this.noDependencyInformationAvailable =
-      !processDependentParameters( report, reportParameter, parameterContext,
-        new StaticDataRow( computedParameterValues ) );
+    this.allParametersProcessed = processDependentParameters( report, reportParameter, parameterContext,
+      new StaticDataRow( computedParameterValues ) );
   }
 
   /**
    * Test support ..
    *
-   * @param noDeps
    * @param allParameterNames
    */
-  ParameterDependencyGraph( boolean noDeps, String... allParameterNames ) {
+  ParameterDependencyGraph( String... allParameterNames ) {
     this.dependencyGraph = new LinkedHashMap<>();
+    this.allParametersProcessed = true;
     this.allParameterNames = new HashSet<>( Arrays.asList( allParameterNames ) );
-    this.noDependencyInformationAvailable = noDeps;
   }
 
-  public void setNoDependencyInformationAvailable( boolean noDependencyInformationAvailable ) {
-    this.noDependencyInformationAvailable = noDependencyInformationAvailable;
-  }
-
-  public boolean getNoDependencyInformationAvailable() {
-    return this.noDependencyInformationAvailable;
+  void setAllParametersProcessed( boolean allParametersProcessed ) {
+    this.allParametersProcessed = allParametersProcessed;
   }
 
   public LinkedHashMap<String, Set<String>> getDependencyGraph() {
@@ -111,7 +106,7 @@ public class ParameterDependencyGraph {
   }
 
   public Set<String> getDependentParameterFor( String parameterName ) {
-    if ( noDependencyInformationAvailable ) {
+    if ( !allParametersProcessed ) {
       return Collections.emptySet();
     }
 
@@ -124,7 +119,7 @@ public class ParameterDependencyGraph {
   }
 
   public Set<String> getAllDependencies( Iterable<String> parameterNames ) {
-    if ( noDependencyInformationAvailable ) {
+    if ( !allParametersProcessed ) {
       return Collections.unmodifiableSet( allParameterNames );
     }
 
@@ -140,6 +135,18 @@ public class ParameterDependencyGraph {
     return Collections.unmodifiableSet( dependencyGraph.keySet() );
   }
 
+  /**
+   * Verify that the parameter exists as a dependency in the dependency graph
+   * @param parameterName
+   * @return
+   */
+  public boolean doesDependencyExist( String parameterName ) {
+    return dependencyGraph
+          .values()
+          .stream()
+          .flatMap( Set::stream )
+          .anyMatch( s -> s.equals( parameterName ) );
+  }
   /**
    * Recursively collects all dependencies, and avoids visiting parameters twice and thus
    * wont crash on circular dependencies.
@@ -181,13 +188,13 @@ public class ParameterDependencyGraph {
                                               ParameterContext parameterContext,
                                               DataRow parameterValues ) {
 
+    boolean isDependencyInfoAvail = true;
     try {
       final DesignTimeDataFactoryContext factoryContext = new DesignTimeDataFactoryContext( report );
       final CompoundDataFactory cdf = CompoundDataFactory.normalize( report.getDataFactory() );
       final CompoundDataFactory derive = (CompoundDataFactory) cdf.derive();
       derive.initialize( factoryContext );
 
-      Boolean anyDependencyProcessed = false;
       try {
         for ( final ParameterDefinitionEntry entry : reportParameter.values() ) {
           final List<String> dependentParameter = computeNormalLineage( parameterContext, entry );
@@ -195,27 +202,25 @@ public class ParameterDependencyGraph {
 
           // No dependency information at all - No need to continue
           if ( queryDependencies == null ) {
-            return false;
+            isDependencyInfoAvail = false;
+            continue;
           }
 
           if ( dependentParameter != null && dependentParameter.size() > 0 ) {
             dependentParameter.forEach( p -> addDependency( p, entry.getName() ) );
-            anyDependencyProcessed = true;
           }
           if ( queryDependencies != null && queryDependencies.size() > 0 ) {
             queryDependencies.forEach( p -> addDependency( p, entry.getName() ) );
-            anyDependencyProcessed = true;
           }
         }
       } finally {
         derive.close();
       }
-
-      return anyDependencyProcessed;
     } catch ( ReportDataFactoryException re ) {
       DebugLog.log( "Failed to compute dependency information", re );
-      return false;
+      isDependencyInfoAvail = false;
     }
+    return isDependencyInfoAvail;
   }
 
   private List<String> computeListParameterLineage( CompoundDataFactory cdf,
@@ -233,7 +238,9 @@ public class ParameterDependencyGraph {
     }
 
     final DataFactory dataFactoryForQuery = cdf.getDataFactoryForQuery( queryName );
-    if ( dataFactoryForQuery == null ) {
+    // We are also checking for TableDataFactory, because this Data Factory is a manual table that cannot
+    // have or be used in a dependency query. So it's list should be empty.
+    if ( dataFactoryForQuery == null || dataFactoryForQuery instanceof TableDataFactory ) {
       return Collections.emptyList();
     }
 
@@ -250,8 +257,8 @@ public class ParameterDependencyGraph {
     }
   }
 
-  public boolean isNoDependencyInformationAvailable() {
-    return noDependencyInformationAvailable;
+  public boolean areAllParametersProcessed() {
+    return allParametersProcessed;
   }
 
   private static String extractFormula( final ParameterContext parameterContext,
