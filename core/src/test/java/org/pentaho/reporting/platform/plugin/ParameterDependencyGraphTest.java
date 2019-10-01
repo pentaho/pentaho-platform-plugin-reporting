@@ -13,7 +13,7 @@
  * See the GNU General Public License for more details.
  *
  *
- * Copyright 2006 - 2018 Hitachi Vantara.  All rights reserved.
+ * Copyright 2006 - 2019 Hitachi Vantara.  All rights reserved.
  */
 package org.pentaho.reporting.platform.plugin;
 
@@ -24,6 +24,8 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Set;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class ParameterDependencyGraphTest {
 
@@ -33,29 +35,31 @@ public class ParameterDependencyGraphTest {
 
   @Test
   public void testGetDependentParameterFor() {
-    ParameterDependencyGraph paramDepGrap = new ParameterDependencyGraph( true, "param1", "param2" );
+    ParameterDependencyGraph paramDepGrap = new ParameterDependencyGraph( "param1", "param2" );
     assertEquals( paramDepGrap.getDependentParameterFor( "param1" ), asSet() );
 
-    paramDepGrap.setNoDependencyInformationAvailable( false );
+    paramDepGrap.setAllParametersProcessed( true );
     LinkedHashMap<String, Set<String>> dependencyGraph = new LinkedHashMap<>();
     dependencyGraph.put( "param1", asSet( "param2", "param3" ) );
     paramDepGrap.setDependencyGraph( dependencyGraph );
     assertEquals( paramDepGrap.getDependentParameterFor( "param1" ), asSet( "param2", "param3" ) );
+    paramDepGrap.setAllParametersProcessed( false );
     assertEquals( paramDepGrap.getDependentParameterFor( "param2" ), Collections.emptySet() );
   }
 
   @Test
   public void testGetAllDependencies() {
-    ParameterDependencyGraph paramDepGrap = new ParameterDependencyGraph( true, "param1", "param2" );
+    ParameterDependencyGraph paramDepGrap = new ParameterDependencyGraph( "param1", "param2" );
+    paramDepGrap.setAllParametersProcessed( false );
     assertEquals( paramDepGrap.getAllDependencies( "param1" ), asSet( "param1", "param2" ) );
 
-    paramDepGrap.setNoDependencyInformationAvailable( false );
+    paramDepGrap.setAllParametersProcessed( true );
     assertEquals( paramDepGrap.getAllDependencies( asSet( "param1", "param1" ) ), Collections.emptySet() );
   }
 
   @Test
   public void testGetKnownParameter() {
-    ParameterDependencyGraph paramDepGrap = new ParameterDependencyGraph( true );
+    ParameterDependencyGraph paramDepGrap = new ParameterDependencyGraph();
     LinkedHashMap<String, Set<String>> dependencyGraph = new LinkedHashMap<>();
     dependencyGraph.put( "param1", asSet( "param2", "param3" ) );
     dependencyGraph.put( "param2", asSet( "param3", "param4" ) );
@@ -66,7 +70,7 @@ public class ParameterDependencyGraphTest {
 
   @Test
   public void testAddDependency() {
-    ParameterDependencyGraph paramDepGrap = new ParameterDependencyGraph( true );
+    ParameterDependencyGraph paramDepGrap = new ParameterDependencyGraph();
     LinkedHashMap<String, Set<String>> dependencyGraph = new LinkedHashMap<>();
     dependencyGraph.put( "param1", asSet( "param2", "param3" ) );
     dependencyGraph.put( "param2", asSet( "param3", "param4" ) );
@@ -76,4 +80,29 @@ public class ParameterDependencyGraphTest {
     assertEquals( paramDepGrap.getKnownParameter(), asSet( "param1", "param2", "param3" ) );
   }
 
+  @Test
+  public void testDoesDependencyExist() {
+    final ParameterDependencyGraph dependencyGraph = new ParameterDependencyGraph( "param1",
+      "param2", "param3" );
+    assertFalse( dependencyGraph.doesDependencyExist( "param2" ) );
+    dependencyGraph.addDependency( "param1", "param2" );
+    assertTrue( dependencyGraph.doesDependencyExist( "param2" ) );
+  }
+
+  @Test
+  public void testGetAllParameterNames() {
+    Set<String> paramSet = new HashSet<>();
+    paramSet.add( "param1" );
+    paramSet.add( "param2" );
+    paramSet.add( "param3" );
+
+    final ParameterDependencyGraph dependencyGraph = new ParameterDependencyGraph( "param1",
+      "param2", "param3" );
+    assertEquals( paramSet, dependencyGraph.getAllParameterNames() );
+
+    paramSet.add( "param4" );
+    dependencyGraph.setAllParameterNames( paramSet );
+    assertEquals( paramSet, dependencyGraph.getAllParameterNames() );
+
+  }
 }

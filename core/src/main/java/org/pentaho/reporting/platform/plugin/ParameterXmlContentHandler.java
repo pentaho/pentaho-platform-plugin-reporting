@@ -547,7 +547,7 @@ public class ParameterXmlContentHandler {
                                    final Map<String, Object> inputs,
                                    final boolean ignoreAttributes ) throws BeanException, ReportDataFactoryException {
     for ( final ParameterDefinitionEntry parameter : reportParameters ) {
-      final Object selections = getSelections( parameter, changedParameters, inputs );
+      final Object selections = getSelections( parameter, changedParameters, dependencies, inputs );
 
       final ParameterContextWrapper wrapper =
         new ParameterContextWrapper( parameterContext, vr.getParameterValues() );
@@ -561,6 +561,7 @@ public class ParameterXmlContentHandler {
 
   protected Object getSelections( final ParameterDefinitionEntry parameter,
                                   final Set<String> changedParameters,
+                                  final ParameterDependencyGraph dependencies,
                                   final Map<String, Object> inputs ) {
     Objects.requireNonNull( changedParameters );
     Objects.requireNonNull( parameter );
@@ -583,7 +584,11 @@ public class ParameterXmlContentHandler {
 
     // otherwise the parameter is dependent and the selections are outdated
     final boolean ifChangedParameter = changedParameters.contains( pName );
-    return isVerifiedValue || ifChangedParameter ? inputs.get( pName ) : null;
+
+    // Need to also check if the parameter is a dependency, if it isn't a dependency, no need to reset selection
+    final boolean isDependency = dependencies.doesDependencyExist( pName );
+
+    return isVerifiedValue || ifChangedParameter || !isDependency ? inputs.get( pName ) : null;
   }
 
   private Set<String> filterRedundantParameter( final Set<String> changedParameters,
@@ -746,9 +751,7 @@ public class ParameterXmlContentHandler {
         }
 
         //parameter dependencies: see backlog-7980
-        boolean shouldValidateOnServer =
-          !dependencies.isNoDependencyInformationAvailable()
-            || shouldAlwaysValidateOnServer( parameter, parameterContext );
+        boolean shouldValidateOnServer = shouldAlwaysValidateOnServer( parameter, parameterContext );
         final Set<String> dependentParams = dependencies.getDependentParameterFor( parameter.getName() );
         if ( !dependentParams.isEmpty() ) {
           // and it is also has a dependencies
