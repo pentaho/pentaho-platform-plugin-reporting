@@ -13,7 +13,7 @@
  * See the GNU General Public License for more details.
  *
  *
- * Copyright 2006 - 2018 Hitachi Vantara.  All rights reserved.
+ * Copyright 2006 - 2019 Hitachi Vantara.  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
@@ -159,6 +159,7 @@ public class ParameterXmlContentHandlerTest {
   public void testGetSelections() throws ReportDataFactoryException, BeanException {
     final Map<String, Object> inputs = new HashMap<String, Object>() {
       {
+        put( "unchanged_parent", "value0" );
         put( "changed_unverified", "value" );
         put( "unchanged_unverified", "value1" );
         put( "verified", "value2" );
@@ -177,11 +178,16 @@ public class ParameterXmlContentHandlerTest {
       new DefaultListParameter( "query", "keyColumn", "textColumn", "verified", false, true, String.class );
     final ParameterDefinitionEntry plain = new PlainParameter( "plain", String.class );
 
+    final ParameterDependencyGraph dependencyGraph = new ParameterDependencyGraph( "unchanged_parent",
+      "changed_unverified", "unchanged_unverified", "verified", "plain" );
+    dependencyGraph.addDependency( "unchanged_parent", "unchanged_unverified" );
+    final ParameterDependencyGraph noDependencyGraph = new ParameterDependencyGraph();
+
     //Initial call
-    final Object changedResult = handler.getSelections( changed, new HashSet<>(), inputs );
-    final Object unchangedResult = handler.getSelections( unchanged, new HashSet<>(), inputs );
-    final Object verifiedResult = handler.getSelections( verified, new HashSet<>(), inputs );
-    final Object plainResult = handler.getSelections( plain, new HashSet<>(), inputs );
+    final Object changedResult = handler.getSelections( changed, new HashSet<>(), dependencyGraph, inputs );
+    final Object unchangedResult = handler.getSelections( unchanged, new HashSet<>(), dependencyGraph, inputs );
+    final Object verifiedResult = handler.getSelections( verified, new HashSet<>(), dependencyGraph, inputs );
+    final Object plainResult = handler.getSelections( plain, new HashSet<>(), dependencyGraph, inputs );
 
     assertEquals( "value", changedResult );
     assertEquals( "value1", unchangedResult );
@@ -190,15 +196,26 @@ public class ParameterXmlContentHandlerTest {
 
 
     //Changed call
-    final Object changedResult1 = handler.getSelections( changed, changedParameters, inputs );
-    final Object unchangedResult1 = handler.getSelections( unchanged, changedParameters, inputs );
-    final Object verifiedResult1 = handler.getSelections( verified, changedParameters, inputs );
-    final Object plainResult1 = handler.getSelections( plain, changedParameters, inputs );
+    final Object changedResult1 = handler.getSelections( changed, changedParameters, dependencyGraph, inputs );
+    final Object unchangedResult1 = handler.getSelections( unchanged, changedParameters, dependencyGraph, inputs );
+    final Object verifiedResult1 = handler.getSelections( verified, changedParameters, dependencyGraph, inputs );
+    final Object plainResult1 = handler.getSelections( plain, changedParameters, dependencyGraph, inputs );
 
     assertEquals( "value", changedResult1 );
     assertEquals( null, unchangedResult1 );
     assertEquals( "value2", verifiedResult1 );
     assertEquals( "value3", plainResult1 );
+
+    //Changed call with no dependencies
+    final Object changedResult2 = handler.getSelections( changed, changedParameters, noDependencyGraph, inputs );
+    final Object unchangedResult2 = handler.getSelections( unchanged, changedParameters, noDependencyGraph, inputs );
+    final Object verifiedResult2 = handler.getSelections( verified, changedParameters, noDependencyGraph, inputs );
+    final Object plainResult2 = handler.getSelections( plain, changedParameters, noDependencyGraph, inputs );
+
+    assertEquals( "value", changedResult2 );
+    assertEquals( "value1", unchangedResult2 );
+    assertEquals( "value2", verifiedResult2 );
+    assertEquals( "value3", plainResult2 );
   }
 
   @Test
@@ -380,7 +397,7 @@ public class ParameterXmlContentHandlerTest {
 
     handler.document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
 
-    final ParameterDependencyGraph dependencies = new ParameterDependencyGraph( false, "name", "dep1", "dep2" );
+    final ParameterDependencyGraph dependencies = new ParameterDependencyGraph( "name", "dep1", "dep2" );
     dependencies.addDependency( "name", "dep1" );
     dependencies.addDependency( "name", "dep2" );
 
@@ -436,7 +453,7 @@ public class ParameterXmlContentHandlerTest {
 
     handler.document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
 
-    final ParameterDependencyGraph dependencies = new ParameterDependencyGraph( false, "name", "dep1", "dep2" );
+    final ParameterDependencyGraph dependencies = new ParameterDependencyGraph( "name", "dep1", "dep2" );
     dependencies.addDependency( "name", "dep0" );
     dependencies.addDependency( "name", "dep1" );
 
@@ -522,7 +539,7 @@ public class ParameterXmlContentHandlerTest {
 
     handler.document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
 
-    final ParameterDependencyGraph dependencies = new ParameterDependencyGraph( false, "name", "dep1", "dep2" );
+    final ParameterDependencyGraph dependencies = new ParameterDependencyGraph( "name", "dep1", "dep2" );
     dependencies.addDependency( "name", "dep1" );
     dependencies.addDependency( "name", "dep2" );
 
@@ -547,7 +564,7 @@ public class ParameterXmlContentHandlerTest {
 
     handler.document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
 
-    final ParameterDependencyGraph dependencies = new ParameterDependencyGraph( false, "first", "second", "third" );
+    final ParameterDependencyGraph dependencies = new ParameterDependencyGraph( "first", "second", "third" );
     dependencies.addDependency( "first", "second" );
     dependencies.addDependency( "second", "third" );
 
@@ -573,7 +590,7 @@ public class ParameterXmlContentHandlerTest {
     handler.document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
 
     final ParameterDependencyGraph dependencies =
-      new ParameterDependencyGraph( false, "first", "second", "third", "fourth", "fifth", "sixth" );
+      new ParameterDependencyGraph( "first", "second", "third", "fourth", "fifth", "sixth" );
     dependencies.addDependency( "first", "second" );
     dependencies.addDependency( "first", "fourth" );
     dependencies.addDependency( "second", "third" );
@@ -607,7 +624,7 @@ public class ParameterXmlContentHandlerTest {
 
     handler.document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
 
-    final ParameterDependencyGraph dependencies = new ParameterDependencyGraph( false, "first", "second", "third" );
+    final ParameterDependencyGraph dependencies = new ParameterDependencyGraph( "first", "second", "third" );
     dependencies.addDependency( "first", "second" );
     dependencies.addDependency( "second", "third" );
 
@@ -634,7 +651,7 @@ public class ParameterXmlContentHandlerTest {
 
     handler.document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
 
-    final ParameterDependencyGraph dependencies = new ParameterDependencyGraph( false, "first", "second", "third" );
+    final ParameterDependencyGraph dependencies = new ParameterDependencyGraph( "first", "second", "third" );
     dependencies.addDependency( "first", "second" );
     dependencies.addDependency( "second", "third" );
 
@@ -664,7 +681,7 @@ public class ParameterXmlContentHandlerTest {
 
     handler.document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
 
-    final ParameterDependencyGraph dependencies = new ParameterDependencyGraph( false, "first", "second", "third" );
+    final ParameterDependencyGraph dependencies = new ParameterDependencyGraph( "first", "second", "third" );
     dependencies.addDependency( "first", "second" );
     dependencies.addDependency( "second", "third" );
 
@@ -698,7 +715,7 @@ public class ParameterXmlContentHandlerTest {
 
     handler.document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
 
-    final ParameterDependencyGraph dependencies = new ParameterDependencyGraph( false, "first", "second", "third" );
+    final ParameterDependencyGraph dependencies = new ParameterDependencyGraph( "first", "second", "third" );
     dependencies.addDependency( "first", "second" );
     dependencies.addDependency( "second", "third" );
 
