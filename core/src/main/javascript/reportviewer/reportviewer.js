@@ -1003,7 +1003,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
       _hideAsyncScreens: function(){
         registry.byId('reportGlassPane').hide();
-        if(domClass && domClass.className) {
+        if(domClass) {
           domClass.add('notification-screen', 'hidden');
         }
       },
@@ -1151,7 +1151,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                     hideDlgAndPane(registry.byId('feedbackScreen'));
 
                     //Show loading screen
-                    $('#notification-message').html(_Messages.getString('LoadingPage'));
+                    $('#notification-message').html(_Messages.getString('LoadingPage') + " " + mainJobStatus.page + " " + _Messages.getString('Of') + " " + mainJobStatus.totalPages);
                     $('#notification-screen').css("z-index", 100);
                     if (me._currentReportStatus == 'CONTENT_AVAILABLE') {
                       domClass.remove('notification-screen', 'hidden');
@@ -1203,11 +1203,14 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                   //note - no break here - w e need to poll
                 case "QUEUED":
                 case "WORKING":
+                  // Although we are hiding the screen latter, update the label anyway;
+                  $('#notification-message').html(_Messages.getString('LoadingPage') + " " + mainJobStatus.page + " " + _Messages.getString('Of') + " " + mainJobStatus.totalPages);
                   me._hideAsyncScreens();
                   me._keepPolling(mainJobStatus.uuid, url, mainReportGeneration);
                   break;
                 case "FINISHED":
-
+                  // Although we are hiding the screen latter, update the label anyway;
+                  $('#notification-message').html(_Messages.getString('LoadingPage') + " " + mainJobStatus.page + " " + _Messages.getString('Of') + " " + mainJobStatus.totalPages);
                   me._isFinished = true;
 
                   hideDlgAndPane(registry.byId('feedbackScreen'));
