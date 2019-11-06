@@ -604,7 +604,12 @@ public class ParameterXmlContentHandler {
       // then eliminate all downstream dependencies from this list
       if ( changedParameters.contains( knownParameter ) ) {
         for ( String child : dependencies.getDependentParameterFor( knownParameter ) ) {
-          effectivelyChanged.remove( child );
+          // [PRD-6038] A query parameter in the dependency graph may write the known parameter as the child parameter
+          // In this case, we need to make sure we don't remove the true changed parameter from the effectively changed
+          // parameter
+          if ( !child.equals( knownParameter ) ) {
+            effectivelyChanged.remove( child );
+          }
         }
       }
     }
