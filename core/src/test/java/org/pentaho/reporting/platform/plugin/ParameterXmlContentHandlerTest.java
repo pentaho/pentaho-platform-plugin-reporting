@@ -601,6 +601,8 @@ public class ParameterXmlContentHandlerTest {
     dependencies.addDependency( "third", "fourth" );
     //Independent parameters
     dependencies.addDependency( "fifth", "sixth" );
+    // [PRD-6038] For certain queries, test against having a dependency of itself, ensure it does not lose changed status
+    dependencies.addDependency( "first", "first" );
 
     final Element parameters = handler.document.createElement( "parameters" );
     handler.document.appendChild( parameters );
