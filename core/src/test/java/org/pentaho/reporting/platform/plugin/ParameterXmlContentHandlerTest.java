@@ -51,6 +51,7 @@ import org.pentaho.reporting.engine.classic.core.util.beans.BeanException;
 import org.pentaho.reporting.libraries.base.config.Configuration;
 import org.pentaho.reporting.libraries.resourceloader.ResourceKey;
 import org.pentaho.reporting.libraries.resourceloader.ResourceManager;
+import org.springframework.web.util.HtmlUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -365,6 +366,40 @@ public class ParameterXmlContentHandlerTest {
     final Element globalErrEl = Element.class.cast( globalError );
 
     assertEquals( "kernel panic", globalErrEl.getAttribute( "message" ) );
+  }
+
+
+  @Test
+  public void createErrorElementsXSSInjectionTest() throws ParserConfigurationException, XPathExpressionException {
+    final ValidationResult vr = new ValidationResult();
+    String xssParameter = "<script>alert('xss');</script>";
+    vr.addError( xssParameter, new ValidationMessage( "not good" ) );
+
+    // save parameter name - attribute value mapping
+    final Map<String, String> attrMap = new HashMap();
+    attrMap.put( xssParameter, "not good" );
+
+    handler.document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+    final Element el = handler.createErrorElements( vr );
+    handler.document.appendChild( el );
+
+    assertNotNull( el );
+    assertEquals( 1, el.getChildNodes().getLength() );
+
+    // use xpath for future validation just to get rid of numerous for() loops in DOM api
+    final XPath xpath = xpathFactory.newXPath();
+
+    final NodeList found =
+      NodeList.class.cast( xpath.evaluate( "/errors/error", handler.document, XPathConstants.NODESET ) );
+    assertNotNull( found );
+
+    for ( int i = 0; i < found.getLength(); i++ ) {
+      final Node node = found.item( i );
+      assertEquals( "error", node.getNodeName() );
+      final Element oneError = (Element) node;
+      final String paramName = oneError.getAttribute( "parameter" );
+      assertEquals( HtmlUtils.htmlEscape( xssParameter ), paramName );
+    }
   }
 
   /**
