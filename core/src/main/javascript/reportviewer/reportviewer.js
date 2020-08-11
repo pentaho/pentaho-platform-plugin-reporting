@@ -135,7 +135,9 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           this._locationPromptAttachHandlerRegistration = window.top.mantle_addHandler('GenericEvent', onAttach.bind(this) );
         }
 
-        window.onbeforeunload = this.dispose.bind(this);
+        // The added callback snippet, that apparently doesn't do anything, will determine the decision to whether the
+        // XMLHttpRequest call is an async one or not (in common-ui's pentaho-ajax.js#L308-L310).
+        window.onbeforeunload = this.dispose.bind(this, function() {});
 
         var boundOnReportContentLoaded = this._onReportContentLoaded.bind(this);
 
@@ -713,9 +715,9 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         }
       },
 
-      dispose: function() {
+      dispose: function(callback) {
 
-        this.cancel(this._currentReportStatus, this._currentReportUuid);
+        this.cancel(this._currentReportStatus, this._currentReportUuid, callback);
 
         if(isRunningIFrameInSameOrigin) {
           if (this._topMantleOpenTabRegistration) {
