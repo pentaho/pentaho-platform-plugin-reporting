@@ -1044,19 +1044,19 @@ public class ParameterXmlContentHandler {
 
   // default visibility for testing purposes
   Element createErrorElements( final ValidationResult vr ) {
-    final Element errors = document.createElement( "errors" ); //$NON-NLS-1$
+    final Element errors = document.createElement( "errors" );
     for ( final String property : vr.getProperties() ) {
       for ( final ValidationMessage message : vr.getErrors( property ) ) {
-        final Element error = document.createElement( "error" ); //$NON-NLS-1$
-        error.setAttribute( "parameter", property ); //$NON-NLS-1$
-        error.setAttribute( "message", message.getMessage() ); //$NON-NLS-1$
+        final Element error = document.createElement( "error" );
+        error.setAttribute( "parameter", HtmlUtils.htmlEscape( property ) );
+        error.setAttribute( "message", message.getMessage() );
         errors.appendChild( error );
       }
     }
     final ValidationMessage[] globalMessages = vr.getErrors();
     for ( final ValidationMessage globalMessage : globalMessages ) {
-      final Element error = document.createElement( "global-error" ); //$NON-NLS-1$
-      error.setAttribute( "message", globalMessage.getMessage() ); //$NON-NLS-1$
+      final Element error = document.createElement( "global-error" );
+      error.setAttribute( "message", globalMessage.getMessage() );
       errors.appendChild( error );
     }
     return errors;
