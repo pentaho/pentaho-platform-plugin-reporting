@@ -13,11 +13,15 @@
  * See the GNU General Public License for more details.
  *
  *
- * Copyright 2006 - 2018 Hitachi Vantara.  All rights reserved.
+ * Copyright 2006 - 2020 Hitachi Vantara.  All rights reserved.
  */
 
 
 package org.pentaho.reporting.platform.plugin.async;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.concurrent.Callable;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -32,10 +36,6 @@ import org.pentaho.reporting.platform.plugin.ReportCreator;
 import org.pentaho.reporting.platform.plugin.SimpleReportingComponent;
 import org.pentaho.reporting.platform.plugin.staging.AsyncJobFileStagingHandler;
 import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
-
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.concurrent.Callable;
 
 public class PentahoAsyncReportExecution extends AbstractAsyncReportExecution<IAsyncReportState> {
 
@@ -80,6 +80,7 @@ public class PentahoAsyncReportExecution extends AbstractAsyncReportExecution<IA
    * @throws Exception
    */
   @Override public IFixedSizeStreamingContent call() throws Exception {
+    mdcUtil.setContextMap();
     final AsyncReportStatusListener listener = getListener();
     if ( listener == null ) {
       throw new NullPointerException( "No listener for async report execution: " + url );

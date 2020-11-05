@@ -13,15 +13,19 @@
  * See the GNU General Public License for more details.
  *
  *
- * Copyright 2006 - 2017 Hitachi Vantara.  All rights reserved.
+ * Copyright 2006 - 2020 Hitachi Vantara.  All rights reserved.
  */
 package org.pentaho.reporting.platform.plugin.async;
 
-import com.google.common.util.concurrent.ListenableFuture;
+import java.io.InputStream;
+import java.util.List;
+import java.util.UUID;
+
 import org.apache.commons.io.input.NullInputStream;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.pentaho.platform.api.engine.IPentahoSession;
+import org.pentaho.platform.engine.core.audit.MDCUtil;
 import org.pentaho.platform.engine.core.audit.MessageTypes;
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
 import org.pentaho.reporting.libraries.base.util.ArgumentNullException;
@@ -30,10 +34,7 @@ import org.pentaho.reporting.platform.plugin.SimpleReportingComponent;
 import org.pentaho.reporting.platform.plugin.staging.AsyncJobFileStagingHandler;
 import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
 
-
-import java.io.InputStream;
-import java.util.List;
-import java.util.UUID;
+import com.google.common.util.concurrent.ListenableFuture;
 
 public abstract class AbstractAsyncReportExecution<TReportState extends IAsyncReportState>
   implements IAsyncReportExecution<TReportState>, IListenableFutureDelegator<IFixedSizeStreamingContent> {
@@ -49,6 +50,8 @@ public abstract class AbstractAsyncReportExecution<TReportState extends IAsyncRe
   private static final Log log = LogFactory.getLog( AbstractAsyncReportExecution.class );
 
   private AuditWrapper audit;
+  
+  protected final MDCUtil mdcUtil = new MDCUtil();
 
   public AbstractAsyncReportExecution( final String url,
                                        final SimpleReportingComponent reportComponent,
