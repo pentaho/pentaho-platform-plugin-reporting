@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2017 Hitachi Vantara..  All rights reserved.
+ * Copyright (c) 2017-2021 Hitachi Vantara..  All rights reserved.
  */
 
 define(["reportviewer/reportviewer", "reportviewer/reportviewer-logging", "reportviewer/reportviewer-prompt", "common-ui/jquery-clean",
@@ -391,6 +391,21 @@ define(["reportviewer/reportviewer", "reportviewer/reportviewer-logging", "repor
           expect(reportViewer.view._showReportContent).not.toHaveBeenCalled();
           expect(reportViewer.reportPrompt.api.operation.refreshPrompt).toHaveBeenCalled();
         });
+
+        it("should not update report content if isSuppressSubmit on", function() {
+          spyOn(reportViewer.reportPrompt, "_getStateProperty").and.callFake(function(param) {
+            return (param === "isSuppressSubmit" || param === "autoSubmit") ? true : false;
+          });
+
+          reportViewer.submitReport();
+
+          expect(reportViewer._submitReportEnded).not.toHaveBeenCalled();
+          expect(reportViewer.view._initLayout).toHaveBeenCalled();
+          expect(reportViewer._updateReportContentCore).not.toHaveBeenCalled();
+          expect(reportViewer.view._showReportContent).not.toHaveBeenCalled();
+          expect(reportViewer.reportPrompt.api.operation.refreshPrompt).not.toHaveBeenCalled();
+        });
+
       });
 
       describe("promptReady", function() {
