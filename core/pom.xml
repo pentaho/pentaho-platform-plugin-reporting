@@ -5,10 +5,10 @@
   <parent>
     <groupId>org.pentaho.reporting.plugin</groupId>
     <artifactId>reporting-platform-plugin</artifactId>
-    <version>9.1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
   </parent>
   <artifactId>classic-core-platform-plugin</artifactId>
-  <version>9.1.0.0-SNAPSHOT</version>
+  <version>1.0.0</version>
   <name>Pentaho Platform Reporting Plugin Core</name>
   <properties>
     <js.project.list>common-ui,pentaho-cdf-js</js.project.list>

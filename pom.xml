@@ -5,11 +5,11 @@
   <parent>
     <groupId>org.pentaho</groupId>
     <artifactId>pentaho-ce-jar-parent-pom</artifactId>
-    <version>9.1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
   </parent>
   <groupId>org.pentaho.reporting.plugin</groupId>
   <artifactId>reporting-platform-plugin</artifactId>
-  <version>9.1.0.0-SNAPSHOT</version>
+  <version>1.0.0</version>
   <packaging>pom</packaging>
   <name>Pentaho Platform Reporting Plugin</name>
   <licenses>
@@ -25,7 +25,7 @@
     <url>scm:git:git@github.com:pentaho/pentaho-platform-plugin-reporting.git</url>
   </scm>
   <properties>
-    <pentaho-cdf-plugin.version>9.1.0.0-SNAPSHOT</pentaho-cdf-plugin.version>
+    <pentaho-cdf-plugin.version>1.0.0</pentaho-cdf-plugin.version>
     <dependency.osgi-bundles.revision>${project.version}</dependency.osgi-bundles.revision>
     <junit.version>4.12</junit.version>
     <frontend-maven-plugin.version>0.0.29</frontend-maven-plugin.version>
@@ -34,12 +34,12 @@
     <GWT-FX.version>0.5.0</GWT-FX.version>
     <gwt-incubator.version>2.1.0</gwt-incubator.version>
     <pentaho-js-build.version>1.0.0</pentaho-js-build.version>
-    <pentaho-reporting.version>9.1.0.0-SNAPSHOT</pentaho-reporting.version>
-    <platform.version>9.1.0.0-SNAPSHOT</platform.version>
+    <pentaho-reporting.version>1.0.0</pentaho-reporting.version>
+    <platform.version>1.0.0</platform.version>
     <commons-collections.version>3.2.2</commons-collections.version>
     <simple-jndi.version>1.0.3</simple-jndi.version>
     <test.long>false</test.long>
-    <pentaho-reporting.version>9.1.0.0-SNAPSHOT</pentaho-reporting.version>
+    <pentaho-reporting.version>1.0.0</pentaho-reporting.version>
     <jaxws-spring.version>1.8</jaxws-spring.version>
     <hsqldb.version>2.3.2</hsqldb.version>
     <mockito-all.version>1.10.19</mockito-all.version>
@@ -51,8 +51,8 @@
     <license.inception.year>2002</license.inception.year>
     <test.workers>1</test.workers>
     <commons-lang3.version>3.0</commons-lang3.version>
-    <commons-gwt.version>9.1.0.0-SNAPSHOT</commons-gwt.version>
-    <common-ui.version>9.1.0.0-SNAPSHOT</common-ui.version>
+    <commons-gwt.version>1.0.0</commons-gwt.version>
+    <common-ui.version>1.0.0</common-ui.version>
     <runITs>false</runITs>
     <guava.version>17.0</guava.version>
     <gwt-dnd.version>3.1.1</gwt-dnd.version>

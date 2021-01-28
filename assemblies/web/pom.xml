@@ -5,10 +5,10 @@
   <parent>
     <groupId>org.pentaho.reporting.plugin</groupId>
     <artifactId>reporting-platform-plugin-assemblies</artifactId>
-    <version>9.1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
   </parent>
   <artifactId>classic-core-platform-plugin-package</artifactId>
-  <version>9.1.0.0-SNAPSHOT</version>
+  <version>1.0.0</version>
   <packaging>pom</packaging>
   <name>Pentaho Platform Reporting Plugin Web Package</name>
   <properties>
