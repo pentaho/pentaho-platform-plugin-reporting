@@ -711,7 +711,7 @@ define([
             var matchesArr = processingValue.match(tzRegex);
             if (matchesArr && matchesArr.length > 0) {
               //A common timezone format
-              return processingValue;
+              return util.convertTimezoneToStandardFormat(processingValue);
             }
             matchesArr = processingValue.match(trickyTimezoneRegex);
             if (matchesArr && matchesArr.length === 4) {
@@ -725,7 +725,7 @@ define([
               //Ex: +600 or +0000 or -0530
               //Although most browsers support this format, the standard for a timezone string should be "+00:00" for example.
               //The wrong format of timezone would not allow to create a new Date object in some browsers (i'm looking at you IE)
-              timezoneHint = util.updateTimezoneFormat(timezoneHint)
+              timezoneHint = util.convertTimezoneToStandardFormat(timezoneHint)
               //Timezone hint is present, apply it
               return processingValue + timezoneHint;
             }
