@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2019 Hitachi Vantara..  All rights reserved.
+ * Copyright (c) 2002-2021 Hitachi Vantara..  All rights reserved.
  */
 
 define([
@@ -711,7 +711,7 @@ define([
             var matchesArr = processingValue.match(tzRegex);
             if (matchesArr && matchesArr.length > 0) {
               //A common timezone format
-              return processingValue;
+              return util.convertTimezoneToStandardFormat(processingValue);
             }
             matchesArr = processingValue.match(trickyTimezoneRegex);
             if (matchesArr && matchesArr.length === 4) {
@@ -721,6 +721,11 @@ define([
 
             //Timezone is not found in a value, check the hint
             if (timezoneHint) {
+              //Timezone hint will be in the format of "[+|-]xxx[x]"
+              //Ex: +600 or +0000 or -0530
+              //Although most browsers support this format, the standard for a timezone string should be "+00:00" for example.
+              //The wrong format of timezone would not allow to create a new Date object in some browsers (i'm looking at you IE)
+              timezoneHint = util.convertTimezoneToStandardFormat(timezoneHint)
               //Timezone hint is present, apply it
               return processingValue + timezoneHint;
             }
