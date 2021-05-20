@@ -37,7 +37,6 @@
     <pentaho-reporting.version>9.3.0.0-SNAPSHOT</pentaho-reporting.version>
     <platform.version>9.3.0.0-SNAPSHOT</platform.version>
     <commons-collections.version>3.2.2</commons-collections.version>
-    <simple-jndi.version>1.0.3</simple-jndi.version>
     <test.long>false</test.long>
     <pentaho-reporting.version>9.3.0.0-SNAPSHOT</pentaho-reporting.version>
     <jaxws-spring.version>1.8</jaxws-spring.version>
