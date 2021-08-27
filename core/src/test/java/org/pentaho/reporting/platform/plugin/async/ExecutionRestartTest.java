@@ -43,7 +43,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
 
 @RunWith( PowerMockRunner.class )
 @PrepareForTest( ReportCreator.class )
-@PowerMockIgnore( "javax.swing.*" )
+@PowerMockIgnore( { "javax.swing.*", "jdk.internal.reflect.*" } )
 public class ExecutionRestartTest {
 
   @Test

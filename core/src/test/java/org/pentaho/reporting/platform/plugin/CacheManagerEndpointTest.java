@@ -31,6 +31,7 @@ import org.pentaho.reporting.platform.plugin.cache.IReportContentCache;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
 
 import javax.ws.rs.core.Response;
 
@@ -38,6 +39,7 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
 @RunWith( PowerMockRunner.class )
+@PowerMockIgnore( "jdk.internal.reflect.*" )
 @PrepareForTest( DataCacheFactory.class )
 public class CacheManagerEndpointTest {
 

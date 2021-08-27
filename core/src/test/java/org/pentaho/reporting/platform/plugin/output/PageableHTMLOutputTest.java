@@ -79,7 +79,7 @@ import static org.mockito.Mockito.when;
 
 @RunWith( PowerMockRunner.class )
 @PrepareForTest( CachingPageableHTMLOutput.class )
-@PowerMockIgnore( "javax.swing.*" )
+@PowerMockIgnore( { "javax.swing.*", "jdk.internal.reflect.*" } )
 public class PageableHTMLOutputTest {
   PageableHTMLOutput pageableHTMLOutput;
   private IAsyncReportListener listener;
