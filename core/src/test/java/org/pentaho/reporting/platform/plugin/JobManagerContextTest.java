@@ -33,6 +33,7 @@ import org.pentaho.reporting.platform.plugin.async.IPentahoAsyncExecutor;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -44,6 +45,7 @@ import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 @RunWith( PowerMockRunner.class )
+@PowerMockIgnore( "jdk.internal.reflect.*" )
 @PrepareForTest( { ReportCreator.class, PentahoSessionHolder.class } )
 public class JobManagerContextTest {
 

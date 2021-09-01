@@ -32,6 +32,7 @@ import org.pentaho.test.platform.engine.core.MicroPlatform;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
 
 import javax.ws.rs.core.Response;
 
@@ -39,6 +40,7 @@ import static org.junit.Assert.*;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 @RunWith( PowerMockRunner.class )
+@PowerMockIgnore( "jdk.internal.reflect.*" )
 @PrepareForTest( PentahoSessionHolder.class )
 public class ReservedIdIT {
 
