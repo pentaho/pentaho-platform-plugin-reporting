@@ -768,6 +768,8 @@ define([
 
           var dtValue = new Date(oldValue);
 
+          // fixing timezone issue, ignoring timezone ex. +0100
+          newValue = newValue.split("+")[0];
           var dtParamValue = new Date(newValue);
           //date picker value does not take into account the hours. in order to not miscalculate the timezone lets make the hours the same
           //in the date picker in order to compare them after
