@@ -531,11 +531,11 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
 
         it("should not force an update if the datepicker value is not changed, Mauri timezone and a hint", function () {
           var param = {
-            values: [{value: "2017-01-01T11:00:00.000"}],
+            values: [{value: "2017-01-01T11:00:00.000+1145"}],
             attributes: {"parameter-render-type": "datepicker"},
             timezoneHint: "/-0100"
           };
-          reportPrompt._applyUserInput("anyname", "2017-01-01T11:00:00.000", param);
+          reportPrompt._applyUserInput("anyname", "2017-01-01T11:00:00.000+11.7545", param);
           expect(param.forceUpdate).toBe(undefined);
         });
 
