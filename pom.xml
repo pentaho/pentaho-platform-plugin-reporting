@@ -30,9 +30,6 @@
     <junit.version>4.12</junit.version>
     <frontend-maven-plugin.version>0.0.29</frontend-maven-plugin.version>
     <powermock.version>1.6.4</powermock.version>
-    <gwtx.version>1.5.2</gwtx.version>
-    <GWT-FX.version>0.5.0</GWT-FX.version>
-    <gwt-incubator.version>2.1.0</gwt-incubator.version>
     <pentaho-js-build.version>1.0.0</pentaho-js-build.version>
     <pentaho-reporting.version>9.3.0.0-SNAPSHOT</pentaho-reporting.version>
     <platform.version>9.3.0.0-SNAPSHOT</platform.version>
@@ -54,7 +51,6 @@
     <common-ui.version>9.3.0.0-SNAPSHOT</common-ui.version>
     <runITs>false</runITs>
     <guava.version>17.0</guava.version>
-    <gwt-dnd.version>3.1.1</gwt-dnd.version>
     <javax.ws.rs-api.version>2.0</javax.ws.rs-api.version>
     <javax.servlet-api.version>3.0.1</javax.servlet-api.version>
   </properties>
@@ -236,13 +232,11 @@
       <dependency>
         <groupId>com.google.gwt</groupId>
         <artifactId>gwt-user</artifactId>
-        <version>${gwt.version}</version>
         <scope>compile</scope>
       </dependency>
       <dependency>
         <groupId>com.google.gwt</groupId>
         <artifactId>gwt-dev</artifactId>
-        <version>${gwt.version}</version>
         <scope>compile</scope>
       </dependency>
       <dependency>
@@ -260,13 +254,11 @@
       <dependency>
         <groupId>com.google.gwt</groupId>
         <artifactId>gwt-incubator</artifactId>
-        <version>${gwt-incubator.version}</version>
         <scope>compile</scope>
       </dependency>
       <dependency>
         <groupId>com.allen_sauer</groupId>
         <artifactId>gwt-dnd</artifactId>
-        <version>${gwt-dnd.version}</version>
         <scope>compile</scope>
       </dependency>
       <dependency>
