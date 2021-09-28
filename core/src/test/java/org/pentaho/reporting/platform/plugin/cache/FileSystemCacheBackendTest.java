@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2017 Hitachi Vantara..  All rights reserved.
+ * Copyright (c) 2002-2021 Hitachi Vantara..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin.cache;
@@ -24,6 +24,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.StandaloneSession;
+import org.powermock.reflect.Whitebox;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -32,13 +33,18 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -96,6 +102,14 @@ public class FileSystemCacheBackendTest {
     assertNull( fileSystemCacheBackend.read( Arrays.asList( directoryKey, key ) ) );
   }
 
+  @Test
+  public void testPurgeSyncMapCleaning() {
+    List<String> randomKey = Arrays.asList( UUID.randomUUID().toString() );
+    Map<List<String>, ReentrantReadWriteLock> syncMap = new HashMap<List<String>, ReentrantReadWriteLock>();
+    Whitebox.setInternalState( fileSystemCacheBackend, "syncMap", syncMap );
+    fileSystemCacheBackend.purge( randomKey );
+    assertFalse( ((Map<List<String>, ReentrantReadWriteLock>)Whitebox.getInternalState( fileSystemCacheBackend, "syncMap" )).containsKey( randomKey ) );
+  }
 
   @Test
   public void testReadWhileWriting() throws Exception {
