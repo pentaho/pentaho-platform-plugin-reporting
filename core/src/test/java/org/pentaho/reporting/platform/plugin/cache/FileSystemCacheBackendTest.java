@@ -43,10 +43,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import static junit.framework.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
 
 public class FileSystemCacheBackendTest {
 
@@ -70,7 +70,7 @@ public class FileSystemCacheBackendTest {
 
   @AfterClass
   public static void tearDown() {
-    Assert.assertTrue( fileSystemCacheBackend.purge( Collections.singletonList( "" ) ) );
+    assertTrue( fileSystemCacheBackend.purge( Collections.singletonList( "" ) ) );
   }
 
   private static final String directoryKey = "id344324";
@@ -108,7 +108,7 @@ public class FileSystemCacheBackendTest {
     Map<List<String>, ReentrantReadWriteLock> syncMap = new HashMap<List<String>, ReentrantReadWriteLock>();
     Whitebox.setInternalState( fileSystemCacheBackend, "syncMap", syncMap );
     fileSystemCacheBackend.purge( randomKey );
-    assertFalse( ((Map<List<String>, ReentrantReadWriteLock>)Whitebox.getInternalState( fileSystemCacheBackend, "syncMap" )).containsKey( randomKey ) );
+    assertFalse( ((Map<List<String>, ReentrantReadWriteLock>) Whitebox.getInternalState( fileSystemCacheBackend, "syncMap" )).containsKey( randomKey ) );
   }
 
   @Test
