@@ -266,7 +266,6 @@ public class FileSystemCacheBackend implements ICacheBackend {
           return true;
         }
         final File meta = new File( fileName.replace( DATA, METADATA ) );
-        syncMap.remove( cleanKey );
         return data.delete() && meta.delete();
       }
 
@@ -280,7 +279,6 @@ public class FileSystemCacheBackend implements ICacheBackend {
           purge( subEntry );
         }
 
-        syncMap.remove( cleanKey );
         FileUtils.deleteDirectory( file );
         return !file.exists();
       }
@@ -293,7 +291,6 @@ public class FileSystemCacheBackend implements ICacheBackend {
       }
 
       final File metadata = new File( fileName + METADATA );
-      syncMap.remove( cleanKey );
       return data.delete() && metadata.delete();
 
     } catch ( final Exception e ) {
