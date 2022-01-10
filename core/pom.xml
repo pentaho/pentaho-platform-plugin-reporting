@@ -1,14 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.pentaho.reporting.plugin</groupId>
     <artifactId>reporting-platform-plugin</artifactId>
-    <version>9.3.0.0-SNAPSHOT</version>
+    <version>9.3.0.0-17</version>
   </parent>
   <artifactId>classic-core-platform-plugin</artifactId>
-  <version>9.3.0.0-SNAPSHOT</version>
+  <version>9.3.0.0-17</version>
   <name>Pentaho Platform Reporting Plugin Core</name>
   <properties>
     <js.project.list>common-ui,pentaho-cdf-js</js.project.list>
@@ -329,12 +328,12 @@
             </goals>
             <configuration>
               <target>
-                <mkdir dir="${project.build.directory}/src-javascript/reportviewer/compressed"></mkdir>
+                <mkdir dir="${project.build.directory}/src-javascript/reportviewer/compressed"/>
                 <copy todir="${project.build.directory}/src-javascript/reportviewer/compressed">
                   <fileset dir="${project.build.directory}/build-javascript/reportviewer">
-                    <include name="**/formatter.js"></include>
-                    <include name="**/reportviewer-app.js"></include>
-                    <include name="**reportviewer-main-module.js"></include>
+                    <include name="**/formatter.js"/>
+                    <include name="**/reportviewer-app.js"/>
+                    <include name="**reportviewer-main-module.js"/>
                   </fileset>
                 </copy>
               </target>
@@ -349,10 +348,10 @@
             <configuration>
               <target>
                 <copy todir="${project.build.directory}/test-javascript">
-                  <fileset dir="${project.build.directory}/src-javascript"></fileset>
-                  <fileset dir="${project.basedir}/src/test/javascript"></fileset>
+                  <fileset dir="${project.build.directory}/src-javascript"/>
+                  <fileset dir="${project.basedir}/src/test/javascript"/>
                   <fileset dir="${project.basedir}/src/test/config/javascript">
-                    <include name="**/*.js"></include>
+                    <include name="**/*.js"/>
                   </fileset>
                 </copy>
               </target>
