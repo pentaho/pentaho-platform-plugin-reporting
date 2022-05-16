@@ -766,13 +766,16 @@ define([
           oldValue = processTimezone(oldValue);
           newValue = processTimezone(newValue);
 
+          //get the time from oldValue - example of string in oldValue - 2021-09-13T22:33:50.000+05:00 - so getting 23:33:50
+          var value = oldValue.substring(11,19);
           var dtValue = new Date(oldValue);
-
-          var dtParamValue = new Date(newValue);
           //date picker value does not take into account the hours. in order to not miscalculate the timezone lets make the hours the same
           //in the date picker in order to compare them after
-          dtParamValue.setHours(dtValue.getHours(), dtValue.getMinutes(), dtValue.getSeconds(), dtValue.getMilliseconds());
-          
+          //case the time is different from 00:00:00 replace will not happens it means we already have some hour
+          newValue = newValue.replace("00:00:00",value);
+          var dtParamValue = new Date(newValue);
+
+
           if (isNaN(dtValue.getTime()) || isNaN(dtParamValue.getTime())) {
             //Something went wrong we have an invalid date - don't loop the UI anyway
             return true;
