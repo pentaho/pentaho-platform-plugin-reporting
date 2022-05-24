@@ -12,7 +12,7 @@
  *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  *  See the GNU Lesser General Public License for more details.
  *
- *  Copyright (c) 2002-2017 Hitachi Vantara..  All rights reserved.
+ *  Copyright (c) 2002-2021 Hitachi Vantara..  All rights reserved.
  *
  */
 package org.pentaho.reporting.platform.plugin.cache;
@@ -266,7 +266,6 @@ public class FileSystemCacheBackend implements ICacheBackend {
           return true;
         }
         final File meta = new File( fileName.replace( DATA, METADATA ) );
-        syncMap.remove( cleanKey );
         return data.delete() && meta.delete();
       }
 
@@ -280,7 +279,6 @@ public class FileSystemCacheBackend implements ICacheBackend {
           purge( subEntry );
         }
 
-        syncMap.remove( cleanKey );
         FileUtils.deleteDirectory( file );
         return !file.exists();
       }
@@ -293,7 +291,6 @@ public class FileSystemCacheBackend implements ICacheBackend {
       }
 
       final File metadata = new File( fileName + METADATA );
-      syncMap.remove( cleanKey );
       return data.delete() && metadata.delete();
 
     } catch ( final Exception e ) {
@@ -301,6 +298,7 @@ public class FileSystemCacheBackend implements ICacheBackend {
       return false;
     } finally {
       unlock( locks );
+      syncMap.remove( cleanKey );
     }
   }
 
