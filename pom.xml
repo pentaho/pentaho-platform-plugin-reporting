@@ -9,7 +9,7 @@
   </parent>
   <groupId>org.pentaho.reporting.plugin</groupId>
   <artifactId>reporting-platform-plugin</artifactId>
-  <version>9.6.0.0-SNAPSHOT-15</version>
+  <version>9.6.0.0-SNAPSHOT-16</version>
   <packaging>pom</packaging>
   <name>Pentaho Platform Reporting Plugin</name>
   <licenses>
