@@ -36,7 +36,6 @@
     <commons-collections.version>3.2.2</commons-collections.version>
     <test.long>false</test.long>
     <jaxws-spring.version>1.8</jaxws-spring.version>
-    <hsqldb.version>2.3.2</hsqldb.version>
     <mockito-all.version>1.10.19</mockito-all.version>
     <license.header.file>license/templates/licenseHeader.txt</license.header.file>
     <gwt.version>2.4.0</gwt.version>
