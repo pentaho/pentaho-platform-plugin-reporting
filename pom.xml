@@ -45,7 +45,6 @@
     <test.performance>false</test.performance>
     <license.inception.year>2002</license.inception.year>
     <test.workers>1</test.workers>
-    <commons-lang3.version>3.0</commons-lang3.version>
     <commons-gwt.version>9.6.0.0-SNAPSHOT</commons-gwt.version>
     <common-ui.version>9.6.0.0-SNAPSHOT</common-ui.version>
     <runITs>false</runITs>
