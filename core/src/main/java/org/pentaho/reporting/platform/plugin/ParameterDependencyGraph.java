@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2019 Hitachi Vantara..  All rights reserved.
+ * Copyright (c) 2002-2023 Hitachi Vantara..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
@@ -278,6 +278,8 @@ public class ParameterDependencyGraph {
       analyzeFormula( extractFormula( parameterContext, pe, ParameterAttributeNames.Core.POST_PROCESSOR_FORMULA ) ) );
     retval.addAll(
       analyzeFormula( extractFormula( parameterContext, pe, ParameterAttributeNames.Core.DISPLAY_VALUE_FORMULA ) ) );
+    retval.addAll(
+      analyzeFormula( extractFormula( parameterContext, pe, ParameterAttributeNames.Core.HIDDEN_FORMULA ) ) );
     return retval;
   }
 
