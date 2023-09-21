@@ -13,7 +13,7 @@
  * See the GNU General Public License for more details.
  *
  *
- * Copyright 2006 - 2020 Hitachi Vantara.  All rights reserved.
+ * Copyright 2006 - 2023 Hitachi Vantara.  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
@@ -445,6 +445,33 @@ public class ParameterXmlContentHandlerTest {
 
     examineStandardXml( handler.document );
     assertTrue( isThereAttributes( handler.document ) );
+  }
+
+  @Test
+  public void createParameterElementWithHiddenAttributeTest()
+          throws BeanException, ReportDataFactoryException, ParserConfigurationException, XPathExpressionException {
+    final DefaultListParameter parameter =
+            new DefaultListParameter( "query", "c1", "c2", "name", true, true, String.class );
+    parameter.setParameterAttribute( ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.HIDDEN_FORMULA, "=TRUE()" );
+    parameter.setParameterAttribute( ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.HIDDEN, "false" );
+
+    final ParameterContext context = getTestParameterContext();
+
+    handler.document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+
+    final ParameterDependencyGraph dependencies = new ParameterDependencyGraph( "name", "dep1", "dep2" );
+    dependencies.addDependency( "name", "dep1" );
+    dependencies.addDependency( "name", "dep2" );
+
+    final Element element = handler.createParameterElement( parameter, context, null, dependencies, true );
+    assertNotNull( element );
+    handler.document.appendChild( element );
+    handler.createParameterDependencies( element, parameter, dependencies );
+
+    final String xml = toString( handler.document );
+
+    examineStandardXml( handler.document );
+    assertTrue( hiddenAttributeValue( handler.document ) );
   }
 
   /**
@@ -992,5 +1019,10 @@ public class ParameterXmlContentHandlerTest {
     final XPath xpath = xpathFactory.newXPath();
     final NodeList nodeList = (NodeList) xpath.evaluate( "/parameter/attribute", doc, XPathConstants.NODESET );
     return nodeList.getLength() != 0;
+  }
+
+  private boolean hiddenAttributeValue( final Document doc ) throws XPathExpressionException {
+    final XPath xPath = xpathFactory.newXPath();
+    return (Boolean) xPath.evaluate( "/parameter/attribute/@value", doc, XPathConstants.BOOLEAN );
   }
 }

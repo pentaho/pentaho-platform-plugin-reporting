@@ -12,39 +12,10 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2020 Hitachi Vantara..  All rights reserved.
+ * Copyright (c) 2002-2023 Hitachi Vantara..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
-
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.Serializable;
-import java.lang.reflect.Array;
-import java.math.BigDecimal;
-import java.sql.Timestamp;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.TimeZone;
-import java.util.stream.Collectors;
-
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.math.NumberUtils;
@@ -98,6 +69,34 @@ import org.pentaho.reporting.platform.plugin.output.ReportOutputHandlerFactory;
 import org.springframework.web.util.HtmlUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.Serializable;
+import java.lang.reflect.Array;
+import java.math.BigDecimal;
+import java.sql.Timestamp;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.TimeZone;
+import java.util.stream.Collectors;
 
 
 public class ParameterXmlContentHandler {
@@ -775,6 +774,25 @@ public class ParameterXmlContentHandler {
           attrElement.setAttribute( "name", "must-validate-on-server" );
           attrElement.setAttribute( "value", Boolean.TRUE.toString() );
           parameterElement.appendChild( attrElement );
+        }
+      } else {
+        // hidden param attribute still needs to be recalculated every update
+        for ( final String namespace : namespaces ) {
+          final String[] attributeNames = parameter.getParameterAttributeNames( namespace );
+          for ( final String attributeName : attributeNames ) {
+            if ( attributeName.equalsIgnoreCase( "hidden" ) ) {
+              final String attributeValue =
+                parameter.getTranslatedParameterAttribute( namespace, attributeName, parameterContext );
+              // expecting: label, parameter-render-type, parameter-layout
+              // but others possible as well, so we set them all
+              final Element attributeElement = document.createElement( "attribute" ); // NON-NLS
+              attributeElement.setAttribute( "namespace", namespace ); // NON-NLS
+              attributeElement.setAttribute( "name", attributeName ); // NON-NLS
+              attributeElement.setAttribute( "value", attributeValue ); // NON-NLS
+
+              parameterElement.appendChild( attributeElement );
+            }
+          }
         }
       }
 

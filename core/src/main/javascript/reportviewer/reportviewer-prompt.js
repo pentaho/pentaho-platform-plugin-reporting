@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2021 Hitachi Vantara..  All rights reserved.
+ * Copyright (c) 2002-2023 Hitachi Vantara..  All rights reserved.
  */
 
 define([
@@ -249,6 +249,7 @@ define([
               //Replace all changed parameters values
               paramDefn.mapParameters( function (p) {
                 oldParams.updateParameterValue(p);
+                oldParams.updateParameterAttribute(p);
               });
 
               //Replace root attributes
