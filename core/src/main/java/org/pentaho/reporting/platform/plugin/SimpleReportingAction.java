@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2019 Hitachi Vantara.  All rights reserved.
+ * Copyright (c) 2002-2023 Hitachi Vantara.  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
@@ -787,6 +787,70 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
             log.warn( Messages.getInstance().getString( "ReportPlugin.logErrorParametrization" ), e );
           }
           validationResult.addError( paramName, new ValidationMessage( e.getMessage() ) );
+        }
+      }
+
+      //Handle relative date params
+      String startDateParamName = ReportContentUtil.startDateParamName;
+      String endDateParamName = ReportContentUtil.endDateParamName;
+      if ( inputs.containsKey( startDateParamName ) && inputs.containsKey( endDateParamName )) {
+        String thisLastStr = inputs.get( ReportContentUtil.getThisLastParamName( startDateParamName ) ).toString();
+        String valueStr = inputs.get( ReportContentUtil.getRelativeValParamName( startDateParamName ) ).toString();
+        String unitStr = inputs.get( ReportContentUtil.getRelativeUnitParamName( startDateParamName ) ).toString();
+
+        boolean hadParseError = false;
+        RelativeDateUtil.ThisLast thisLast = null;
+        switch ( thisLastStr ) {
+          case "This":
+            thisLast = RelativeDateUtil.ThisLast.THIS; break;
+          case "Last":
+            thisLast = RelativeDateUtil.ThisLast.LAST; break;
+          default:
+            hadParseError = true;
+            validationResult.addError(ReportContentUtil.getThisLastParamName( startDateParamName ),
+              new ValidationMessage( "Illegal argument for relative date unit this/last" ));
+        }
+
+        RelativeDateUtil.Unit unit = null;
+        switch ( unitStr ) {
+          case "Days":
+            unit = RelativeDateUtil.Unit.DAY; break;
+          case "Weeks":
+            unit = RelativeDateUtil.Unit.WEEK; break;
+          case "Weeks (Calendar)":
+            unit = RelativeDateUtil.Unit.CALENDAR_WEEK; break;
+          case "Months":
+            unit = RelativeDateUtil.Unit.MONTH; break;
+          case "Months (Calendar)":
+            unit = RelativeDateUtil.Unit.CALENDAR_MONTH; break;
+          case "Quarter (Calendar)":
+            unit = RelativeDateUtil.Unit.CALENDAR_QUARTER; break;
+          case "Quarter (Fiscal)":
+            unit = RelativeDateUtil.Unit.FISCAL_QUARTER; break;
+          case "Years":
+            unit = RelativeDateUtil.Unit.YEAR; break;
+          case "Years (Calendar)":
+            unit = RelativeDateUtil.Unit.CALENDAR_YEAR; break;
+          case "Years (Fiscal)":
+            unit = RelativeDateUtil.Unit.FISCAL_YEAR; break;
+          default:
+            hadParseError = true;
+            validationResult.addError(ReportContentUtil.getRelativeUnitParamName( startDateParamName ),
+              new ValidationMessage( "Illegal option for relative date unit" ) );
+        }
+
+        int value = 0;
+        try {
+          value = Integer.parseInt( valueStr );
+        } catch ( NumberFormatException e ) {
+          hadParseError = true;
+          validationResult.addError(ReportContentUtil.getRelativeValParamName( startDateParamName ),
+            new ValidationMessage( "Illegal option for relative date value. " + e.getMessage() ) );
+        }
+
+        if (!hadParseError) {
+          parameterValues.put( startDateParamName, RelativeDateUtil.relativeDateToAbsoluteStartDate( thisLast, value, unit ) );
+          parameterValues.put( endDateParamName, RelativeDateUtil.relativeDateToAbsoluteEndDate( thisLast, unit ) );
         }
       }
     }

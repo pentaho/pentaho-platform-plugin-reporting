@@ -59,14 +59,16 @@ import java.util.Map;
 import java.util.TimeZone;
 
 public class ReportContentUtil {
-
   private static final String ONLY_DATE_REGEX_PATTERN = "(y{4}|([dM]){2})([-/])(([dM]){2})([-/])(y{4}|([dM]){2})";
   private static final String CONFIG_START_DATE_RANGE_PARAM_NAME = "org.pentaho.reporting.engine.classic.core.scheduler.startDateRangeParamName";
   private static final String CONFIG_END_DATE_RANGE_PARAM_NAME = "org.pentaho.reporting.engine.classic.core.scheduler.endDateRangeParamName";
-  private static String startDateParamName = ClassicEngineBoot.getInstance().getGlobalConfig().getConfigProperty( CONFIG_START_DATE_RANGE_PARAM_NAME, "" );
-  private static String endDateParamName = ClassicEngineBoot.getInstance().getGlobalConfig().getConfigProperty( CONFIG_END_DATE_RANGE_PARAM_NAME, "" );
+  public static String startDateParamName = ClassicEngineBoot.getInstance().getGlobalConfig().getConfigProperty( CONFIG_START_DATE_RANGE_PARAM_NAME, "" );
+  public static String endDateParamName = ClassicEngineBoot.getInstance().getGlobalConfig().getConfigProperty( CONFIG_END_DATE_RANGE_PARAM_NAME, "" );
   private static final boolean useRelativeDateParams = !startDateParamName.isEmpty() && !endDateParamName.isEmpty();
   public static final String USE_RELATIVE_DATE_STRING = "Use Relative Date";
+
+  public static final String CONFIG_FISCAL_YEAR_START = "org.pentaho.reporting.engine.classic.core.scheduler.fiscalYearStart";
+  public static final String fiscalYearStartString = ClassicEngineBoot.getInstance().getGlobalConfig().getConfigProperty( CONFIG_FISCAL_YEAR_START, "2023-01-01" );
 
   /**
    * Apply inputs (if any) to corresponding report parameters, care is taken when checking parameter types to perform
@@ -121,23 +123,23 @@ public class ReportContentUtil {
     return validationResult;
   }
 
-  private static String getRelCheckboxParamName( String paramName ) {
+  public static String getRelCheckboxParamName( String paramName ) {
     return paramName + "_Checkbox";
   }
 
-  private static String getThisLastParamName( String paramName ) {
+  public static String getThisLastParamName( String paramName ) {
     return paramName + "_ThisLast";
   }
 
-  private static String getRelativeValParamName( String paramName ) {
+  public static String getRelativeValParamName( String paramName ) {
     return paramName + "_RelativeVal";
   }
 
-  private static String getRelativeUnitParamName( String paramName ) {
+  public static String getRelativeUnitParamName( String paramName ) {
     return paramName + "_RelativeUnit";
   }
 
-  protected static boolean shouldInjectRelativeDateParams(ParameterDefinitionEntry[] inputParams ) {
+  protected static boolean shouldInjectRelativeDateParams( ParameterDefinitionEntry[] inputParams ) {
     boolean hasStartDate = false;
     boolean hasEndDate = false;
     boolean paramsAlreadyPresent = false;
@@ -149,7 +151,9 @@ public class ReportContentUtil {
     return hasStartDate && hasEndDate && !paramsAlreadyPresent;
   }
 
-  protected static ParameterDefinitionEntry[] addRelativeDateFields( ParameterDefinitionEntry[] inputParams, String startDateParamName, String endDateParamName ) {
+  protected static ParameterDefinitionEntry[] addRelativeDateFields( ParameterDefinitionEntry[] inputParams,
+                                                                     String startDateParamName,
+                                                                     String endDateParamName ) {
     ParameterDefinitionEntry[] modifiedParams = new ParameterDefinitionEntry[ inputParams.length + 4 ];
     String checkboxParamName = getRelCheckboxParamName( startDateParamName );
 
@@ -175,7 +179,7 @@ public class ReportContentUtil {
     valueParam.setParameterAttribute( ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.ROLE_USER_PARAMETER, "user" );
     valueParam.setParameterAttribute( ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.TYPE, ParameterAttributeNames.Core.TYPE_TEXTBOX );
     valueParam.setParameterAttribute( ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.LABEL, "Value" );
-    valueParam.setParameterAttribute( ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.HIDDEN_FORMULA, getRelativeDateHiddenFormulaNegated( checkboxParamName) );
+    valueParam.setParameterAttribute( ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.HIDDEN_FORMULA, getRelativeDateHiddenFormulaNegated( checkboxParamName ) );
     valueParam.setHidden( true );
     valueParam.setDefaultValue( 1 );
     modifiedParams[ 2 ] = valueParam;
@@ -202,7 +206,7 @@ public class ReportContentUtil {
     for ( ParameterDefinitionEntry entry : inputParams ) {
       modifiedParams[ paramIndex ] = entry;
       if ( entry.getName().equalsIgnoreCase( startDateParamName ) || entry.getName().equalsIgnoreCase( endDateParamName ) ) {
-        ( (PlainParameter)modifiedParams[ paramIndex ] ).setParameterAttribute(
+        ( (PlainParameter) modifiedParams[ paramIndex ] ).setParameterAttribute(
           ParameterAttributeNames.Core.NAMESPACE, ParameterAttributeNames.Core.HIDDEN_FORMULA, getRelativeDateHiddenFormula( checkboxParamName ) );
       }
       paramIndex++;
@@ -401,7 +405,7 @@ public class ReportContentUtil {
   }
 
   static Date parseDateStrict( final ParameterDefinitionEntry parameterEntry, final ParameterContext context,
-                                       final String value ) throws ParseException {
+                               final String value ) throws ParseException {
     final String timezoneSpec =
       parameterEntry.getParameterAttribute( ParameterAttributeNames.Core.NAMESPACE,
         ParameterAttributeNames.Core.TIMEZONE, context );
@@ -438,14 +442,14 @@ public class ReportContentUtil {
    * Checks whether expected format only contains date using a regex pattern
    *
    * @param parameterEntry the parameter definition entry
-   * @param context the parameter context
+   * @param context        the parameter context
    * @return true if expected format only contains date, false otherwise
    */
   private static boolean isOnlyDateFormat( ParameterDefinitionEntry parameterEntry, final ParameterContext context ) {
 
     final String dataFormatSpec =
-            parameterEntry.getParameterAttribute( ParameterAttributeNames.Core.NAMESPACE,
-                    ParameterAttributeNames.Core.DATA_FORMAT, context );
+      parameterEntry.getParameterAttribute( ParameterAttributeNames.Core.NAMESPACE,
+        ParameterAttributeNames.Core.DATA_FORMAT, context );
 
     return dataFormatSpec != null && dataFormatSpec.matches( ONLY_DATE_REGEX_PATTERN );
   }
