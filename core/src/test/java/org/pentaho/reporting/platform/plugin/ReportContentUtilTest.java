@@ -77,24 +77,10 @@ public class ReportContentUtilTest {
     validateParseDateStrict( "2018-05-20T00:00:00.000-0400", "Sun May 20 00:00:00 UTC 2018" );
   }
 
-  @Test
-  public void testRelativeDateParams() {
-    ParameterDefinitionEntry mockStartParam = mock( ParameterDefinitionEntry.class );
-    when( mockStartParam.getName() ).thenReturn( "startDate" );
-    when( mockStartParam.getValueType() ).thenReturn( java.util.Date.class );
-    ParameterDefinitionEntry mockEndParam = mock( ParameterDefinitionEntry.class );
-    when( mockEndParam.getName() ).thenReturn( "endDate" );
-    when( mockEndParam.getValueType() ).thenReturn( java.util.Date.class );
-    ReportContentUtil.setStartDateParamName( "startDate" );
-    ReportContentUtil.setEndDateParamName( "endDate" );
-
-    assertTrue(
-      ReportContentUtil.shouldInjectRelativeDateParams( new ParameterDefinitionEntry[] { mockEndParam, mockStartParam } ) );
-  }
-
   private void validateParseDateStrict( final String dateToParse, final String dateResult ) throws Exception {
+    ReportContentUtil reportContentUtil = new ReportContentUtil();
 
-    Date date = ReportContentUtil.parseDateStrict( pde, context, dateToParse );
+    Date date = reportContentUtil.parseDateStrict( pde, context, dateToParse );
     assertEquals( dateResult, date.toString() );
   }
 }

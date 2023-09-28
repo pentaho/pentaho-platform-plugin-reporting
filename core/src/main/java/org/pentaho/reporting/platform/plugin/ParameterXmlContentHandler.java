@@ -30,6 +30,7 @@ import org.pentaho.reporting.engine.classic.core.AttributeNames;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportDataFactoryException;
 import org.pentaho.reporting.engine.classic.core.ReportElement;
+import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
 import org.pentaho.reporting.engine.classic.core.Section;
 import org.pentaho.reporting.engine.classic.core.function.Expression;
 import org.pentaho.reporting.engine.classic.core.function.FormulaExpression;
@@ -127,11 +128,13 @@ public class ParameterXmlContentHandler {
   private final boolean paginate;
   private final IParameterProvider requestParameters;
   private final Map<String, Object> inputs;
+  protected ReportContentUtil reportContentUtil;
 
   public ParameterXmlContentHandler( final ParameterContentGenerator contentGenerator, final boolean paginate ) {
     this.paginate = paginate;
     inputs = contentGenerator.createInputs();
     requestParameters = contentGenerator.getRequestParameters();
+    reportContentUtil = new ReportContentUtil();
   }
 
   public static String convertParameterValueToString( final ParameterDefinitionEntry parameter,
@@ -329,7 +332,7 @@ public class ParameterXmlContentHandler {
     try {
       // apply inputs to parameters
       final ValidationResult validationResult =
-        ReportContentUtil.applyInputsToReportParameters( report, parameterContext, inputs, new ValidationResult() );
+        reportContentUtil.applyInputsToReportParameters( report, parameterContext, inputs, new ValidationResult() );
 
       final ReportParameterDefinition reportParameterDefinition = report.getParameterDefinition();
       vr =
@@ -646,7 +649,7 @@ public class ParameterXmlContentHandler {
       }
 
       try {
-        final Object translatedValue = ReportContentUtil.computeParameterValue( parameterContext, parameter, value );
+        final Object translatedValue = reportContentUtil.computeParameterValue( parameterContext, parameter, value );
         if ( translatedValue != null ) {
           realInputs.put( parameterName, translatedValue );
         } else {

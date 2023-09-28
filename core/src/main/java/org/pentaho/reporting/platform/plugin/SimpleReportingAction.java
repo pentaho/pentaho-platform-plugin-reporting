@@ -141,6 +141,7 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
   private boolean dashboardMode;
   private Boolean useJcr;
   private String jcrOutputPath;
+  protected ReportContentUtil reportContentUtil;
 
   /*
    * These fields are for enabling printing
@@ -157,6 +158,7 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
     pageCount = -1;
     defaultOutputTarget = HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE;
     useJcr = Boolean.FALSE;
+    reportContentUtil = new ReportContentUtil();
   }
 
   // ----------------------------------------------------------------------------
@@ -776,7 +778,7 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
         final String paramName = param.getName();
         try {
           final Object computedParameter =
-            ReportContentUtil.computeParameterValue( context, param, inputs.get( paramName ) );
+            reportContentUtil.computeParameterValue( context, param, inputs.get( paramName ) );
           parameterValues.put( param.getName(), computedParameter );
           if ( log.isInfoEnabled() ) {
             log.info( Messages.getInstance().getString( "ReportPlugin.infoParameterValues", paramName,
