@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2017 Hitachi Vantara..  All rights reserved.
+ * Copyright (c) 2002-2023 Hitachi Vantara..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
@@ -57,13 +57,13 @@ public class ParameterContentGenerator extends SimpleContentGenerator {
 
     switch ( renderMode ) {
       case XML: {
-        final ParameterXmlContentHandler parameterXmlContentHandler = new ParameterXmlContentHandler( this, true );
+        final ParameterXmlContentHandler parameterXmlContentHandler = getParameterXmlContentHandler( this, true );
         parameterXmlContentHandler.createParameterContent( outputStream, prptFile.getId(), prptFile.getPath(), false,
             null );
         break;
       }
       case PARAMETER: {
-        final ParameterXmlContentHandler parameterXmlContentHandler = new ParameterXmlContentHandler( this, false );
+        final ParameterXmlContentHandler parameterXmlContentHandler = getParameterXmlContentHandler( this, false );
         parameterXmlContentHandler.createParameterContent( outputStream, prptFile.getId(), prptFile.getPath(), false,
             null );
         break;
@@ -71,6 +71,10 @@ public class ParameterContentGenerator extends SimpleContentGenerator {
       default:
         throw new IllegalArgumentException();
     }
+  }
+
+  protected ParameterXmlContentHandler getParameterXmlContentHandler( ParameterContentGenerator contentGenerator, boolean paginate ) {
+    return new ParameterXmlContentHandler( contentGenerator, paginate );
   }
 
   protected RepositoryFile resolvePrptFile( final IParameterProvider requestParams ) throws UnsupportedEncodingException {

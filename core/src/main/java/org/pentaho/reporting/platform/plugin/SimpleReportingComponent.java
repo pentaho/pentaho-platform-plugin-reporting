@@ -107,6 +107,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   public static final String DASHBOARD_MODE = "dashboard-mode"; //$NON-NLS-1$
   private static final String MIME_GENERIC_FALLBACK = "application/octet-stream"; //$NON-NLS-1$
   public static final String PNG_EXPORT_TYPE = "pageable/X-AWT-Graphics;image-type=png";
+  private ReportContentUtil reportContentUtil;
 
   /**
    * Static initializer block to guarantee that the ReportingComponent will be in a state where the reporting engine
@@ -153,6 +154,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     acceptedPage = -1;
     pageCount = -1;
     defaultOutputTarget = HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE;
+    reportContentUtil = new ReportContentUtil();
   }
 
   // ----------------------------------------------------------------------------
@@ -819,7 +821,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   public ValidationResult applyInputsToReportParameters( final ParameterContext context,
                                                          ValidationResult validationResult )
     throws IOException, ResourceException {
-    return ReportContentUtil.applyInputsToReportParameters( getReport(), context, inputs, validationResult );
+    return reportContentUtil.applyInputsToReportParameters( getReport(), context, inputs, validationResult );
   }
 
   private URL getDefinedResourceURL( final URL defaultValue ) {
