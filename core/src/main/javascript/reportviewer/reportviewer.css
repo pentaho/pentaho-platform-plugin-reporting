@@ -463,3 +463,7 @@ div.prompt-panel {
   -moz-box-shadow: none;
   box-shadow: none;
 }
+
+li.toggleGroup.horizontal {
+  display: inline;
+}
