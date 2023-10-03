@@ -81,6 +81,39 @@
   <div id="toppanelinner" >
     <div id="toolbarlinner2" class="pentaho-rounded-panel2-shadowed pentaho-padding-sm pentaho-shine pentaho-background">
       <div id="toolbar" data-dojo-type="dijit.Toolbar">
+        <div id="reportExportMenu" data-dojo-type="dijit.form.DropDownButton"
+             iconClass="pentaho_dijitEditorIconExport" showLabel="false">
+          <span>Export</span>
+          <div data-dojo-type="pentaho.common.Menu">
+            <div data-dojo-type="pentaho.common.MenuItem"
+                 onclick="viewer.exportReport('table/html;page-mode=stream')">HTML
+            </div>
+            <div data-dojo-type="pentaho.common.MenuItem"
+                 onclick="viewer.exportReport('mime-message/text/html')">HTML (Email)
+            </div>
+            <div data-dojo-type="pentaho.common.MenuItem"
+                 onclick="viewer.exportReport('pageable/pdf')">PDF
+            </div>
+            <div data-dojo-type="pentaho.common.MenuItem"
+                 onclick="viewer.exportReport('table/excel;page-mode=flow')">Excel
+            </div>
+            <div data-dojo-type="pentaho.common.MenuItem"
+                 onclick="viewer.exportReport(
+                               'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;page-mode=flow')">
+              Excel 2007
+            </div>
+            <div data-dojo-type="pentaho.common.MenuItem"
+                 onclick="viewer.exportReport('table/csv;page-mode=stream')">Comma Separated Value
+            </div>
+            <div data-dojo-type="pentaho.common.MenuItem"
+                 onclick="viewer.exportReport('table/rtf;page-mode=flow')">Rich-Text-Format
+            </div>
+            <div data-dojo-type="pentaho.common.MenuItem"
+                 onclick="viewer.exportReport('pageable/text')">Text
+            </div>
+          </div>
+        </div>
+        <span id="exportReportSeparator" data-dojo-type="dijit.ToolbarSeparator"></span>
         <div id="pageControl" data-dojo-type="pentaho.common.PageControl" class="dijitInline"></div>
         <span id="toolbar-parameter-separator" data-dojo-type="dijit.ToolbarSeparator"></span>
         <div id="toolbar-parameterToggle" data-dojo-type="dijit.form.ToggleButton" iconClass="dijitEditorIcon dijitEditorIconParameters" showLabel="false">Parameters</div>
@@ -155,5 +188,7 @@
 </div>
 <div id="rowLimitExceededDialog" data-dojo-type="pentaho.common.RowLimitExceededDialog" style="display: none">
 </div>
+<form id="exportform" method="POST" target="_blank" class="hidden">
+</form>
 </body>
 </html>

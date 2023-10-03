@@ -462,6 +462,8 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
             this.showPromptPanel(showOrHide);
           }
 
+          this._showOrHideExportOption();
+
           this._layoutInited = true;
         },
 
@@ -542,6 +544,22 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           registry.byId('toolbar-parameterToggle').set('checked', !!visible);
 
           domClass[visible ? 'remove' : 'add']('reportControlPanel', 'hidden');
+        },
+
+        _showOrHideExportOption: function() {
+          if (!this._isInsideDashboard()) {
+            this._hideReportExportDiv();
+            this._hideBlockById("exportReportSeparator");
+          }
+        },
+
+        _hideReportExportDiv: function() {
+          this._hideBlockById("reportExportMenu");
+        },
+
+        _hideBlockById: function(id) {
+          var div = document.getElementById(id);
+          domStyle.set(div, 'display', 'none');
         },
 
         isPageStyled: function() {
@@ -1871,12 +1889,16 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           [!isParentViewer ? 'addClass' : 'removeClass']('leafViewer'  );
       },
 
-      _buildReportContentOptions: function() {
+      _buildReportContentOptions: function(outputTarget) {
         var options = this.reportPrompt._buildReportContentOptions('REPORT');
 
         // SimpleReportingComponent expects name to be set
         if (options['name'] === undefined) {
           options['name'] = options['action'];
+        }
+
+        if(outputTarget) {
+          options['output-target'] = outputTarget;
         }
 
         return options;
@@ -1931,8 +1953,16 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
       
       _isIE11: function(){
         return has("trident") && !has("ie"); //has("ie") in IE11 is undefined
-      }
+      },
 
+      exportReport: function(outputTarget) {
+        var options = this._buildReportContentOptions(outputTarget);
+        var url = this._buildReportContentUrl(options);
+
+        var exportForm = document.getElementById("exportform");
+        exportForm.setAttribute("action", url);
+        exportForm.submit();
+      }
     }); // end of: var v = {
 
     // Replace default prompt load
