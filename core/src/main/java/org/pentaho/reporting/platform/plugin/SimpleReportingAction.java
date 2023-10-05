@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2019 Hitachi Vantara.  All rights reserved.
+ * Copyright (c) 2002-2023 Hitachi Vantara.  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
@@ -130,7 +130,7 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
   private String outputTarget;
   private String defaultOutputTarget;
   private MasterReport report;
-  private Map<String, Object> inputs;
+  protected Map<String, Object> inputs;
   private OutputStream outputStream;
   private InputStream reportDefinitionInputStream;
   private IActionSequenceResource reportDefinition;
