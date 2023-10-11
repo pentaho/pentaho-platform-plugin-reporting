@@ -12,17 +12,22 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2017 Hitachi Vantara..  All rights reserved.
+ * Copyright (c) 2002-2023 Hitachi Vantara..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.pentaho.platform.api.engine.IPentahoSession;
+import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
+import org.pentaho.platform.engine.core.system.TenantUtils;
 import org.pentaho.reporting.libraries.base.config.DefaultConfiguration;
 
 import java.lang.reflect.Method;
 import java.util.UUID;
+
+import static org.mockito.Mockito.mock;
 
 public class PentahoReportEnvironmentTest {
 
@@ -89,5 +94,22 @@ public class PentahoReportEnvironmentTest {
     m.setAccessible( true );
     String result = String.valueOf( m.invoke( pre, new Object[] { true } ) );
     Assert.assertEquals( result, "%3A123%3Aqwe%3A123.prpt" );
+  }
+
+  @Test
+  public void testSessionTenantId() {
+    String tenantIdProperty = "session:" + IPentahoSession.TENANT_ID_KEY;
+    String defaultTenantId = "/pentaho/" + TenantUtils.TENANTID_SINGLE_TENANT;
+    IPentahoSession pentahoSession = mock( IPentahoSession.class );
+    PentahoSessionHolder.setSession( pentahoSession );
+    Assert.assertEquals( defaultTenantId, new PentahoReportEnvironment( new DefaultConfiguration() )
+            .getEnvironmentProperty( tenantIdProperty ) );
+  }
+
+  @Test
+  public void testNullSessionTenantId() {
+    String tenantIdProperty = "session:" + IPentahoSession.TENANT_ID_KEY;
+    Assert.assertNull( new PentahoReportEnvironment( new DefaultConfiguration() )
+            .getEnvironmentProperty( tenantIdProperty ) );
   }
 }
