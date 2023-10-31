@@ -1,5 +1,5 @@
 .dijitDialog .dijitDialogPaneContent #downloadProgress .dijitProgressBarTile {
-  background: rgba(254,0,0,0.2);
+  background: rgba(254, 0, 0, 0.2);
 }
 
 .pentaho-dialog .feedbackscreen-content {
@@ -112,16 +112,20 @@ div.submit-panel label.auto-complete-checkbox input[type='checkbox'] {
   position: relative;
 }
 
+div.submit-panel button.pentaho-button {
+  margin: 5px;
+}
+
 .nonMobile.styled.styled #reportControlPanel {
   margin: 0;
 }
 
 .pentaho-padding-sm.pentaho-padding-sm {
-    padding: 4px 0;
+  padding: 4px 0;
 }
 
 #toppanelinner {
-    padding: 0 4px;
+  padding: 0 4px;
 }
 
 .dijitDialogPaneContent {
