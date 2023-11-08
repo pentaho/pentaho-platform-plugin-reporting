@@ -56,8 +56,6 @@ import java.util.TimeZone;
 public class ReportContentUtil {
 
   private static final String ONLY_DATE_REGEX_PATTERN = "(y{4}|([dM]){2})([-/])(([dM]){2})([-/])(y{4}|([dM]){2})";
-  public static final String USE_RELATIVE_DATE_STRING = "Use Relative Date";
-
   /**
    * Apply inputs (if any) to corresponding report parameters, care is taken when checking parameter types to perform
    * any necessary casting and conversion.

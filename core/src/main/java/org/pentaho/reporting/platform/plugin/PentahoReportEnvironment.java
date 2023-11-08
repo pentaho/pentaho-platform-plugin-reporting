@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2017 Hitachi Vantara..  All rights reserved.
+ * Copyright (c) 2002-2023 Hitachi Vantara..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
@@ -30,6 +30,7 @@ import org.pentaho.platform.engine.core.system.PentahoRequestContextHolder;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.engine.security.SecurityHelper;
+import org.pentaho.platform.repository2.unified.jcr.JcrTenantUtils;
 import org.pentaho.platform.util.messages.LocaleHelper;
 import org.pentaho.reporting.engine.classic.core.DefaultReportEnvironment;
 import org.pentaho.reporting.libraries.base.config.Configuration;
@@ -61,6 +62,11 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment {
     this.clText = clText;
     this.repositoryPath = repositoryPath != null ? repositoryPath.replaceAll( "/", ":" ) : repositoryPath;
     setLocale( LocaleHelper.getLocale() );
+  }
+
+  private static String getSessionTenantId() {
+    IPentahoSession session = PentahoSessionHolder.getSession();
+    return JcrTenantUtils.getTenant( session.getName(), true ).getId();
   }
 
   public String getEnvironmentProperty( final String key ) {
@@ -175,7 +181,13 @@ public class PentahoReportEnvironment extends DefaultReportEnvironment {
       }
 
       if ( key.startsWith( "session:" ) ) { //$NON-NLS-1$
-        final Object attribute = session.getAttribute( key.substring( "session:".length() ) ); //$NON-NLS-1$
+        String sessionKey = key.substring( "session:".length() );
+
+        if ( sessionKey.equals( IPentahoSession.TENANT_ID_KEY ) ) {
+          return getSessionTenantId();
+        }
+
+        final Object attribute = session.getAttribute( sessionKey ); //$NON-NLS-1$
         return String.valueOf( attribute );
       } else if ( key.startsWith( "global:" ) ) {
         final Object attribute =
