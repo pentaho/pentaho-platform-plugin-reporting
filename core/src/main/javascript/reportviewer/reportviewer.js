@@ -12,7 +12,7 @@
 * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 * See the GNU Lesser General Public License for more details.
 *
-* Copyright (c) 2002-2020 Hitachi Vantara..  All rights reserved.
+* Copyright (c) 2002-2023 Hitachi Vantara.  All rights reserved.
 */
 
 define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/formatting', 'pentaho/common/Messages', "dojo/dom", "dojo/on", "dojo/_base/lang",
@@ -207,6 +207,23 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
             registry.byId('feedbackScreen').showBackgroundBtn(_Messages.getString('FeedbackScreenBackground'));
           }
         }), "application/json");
+
+        function isEnabled(item) {
+          return !isDisabled(item);
+
+          function isDisabled(item) {
+            if ((item.getAttribute("aria-disabled") !== "true")) {
+              return Array.from(item.classList).some(function (className) {
+                return className.toLowerCase().includes("disabled");
+              });
+            }
+            return true;
+          }
+        }
+
+        a11yUtil.makeAccessibleToolbar(dom.byId("toolbar"), {
+          itemSelector: "[data-type='toolbar-button']",
+          itemFilter: isEnabled});
 
       },
 
@@ -1409,11 +1426,11 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           me._hideAsyncScreens();
 
           logger && logger.log("Will set iframe url to " + url.substr(0, 50) + "... ");
-          
+
           if (me._isIE11() && outputFormat === 'pageable/pdf') {
             $('#reportContent').attr("onreadystatechange", "viewer.forceLoadEvent();");
           }
-          
+
           //submit hidden form to POST data to iframe
           $('#hiddenReportContentForm').attr("action", url);
           $('#hiddenReportContentForm').submit();
@@ -1730,11 +1747,11 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         logger && logger.log("Will set iframe url to " + urlContent.substr(0, 50) + "... ");
 
         var isPdf = (mimeType === "application/pdf");
-        
+
         if (me._isIE11() && isPdf) {
           $('#reportContent').attr("onreadystatechange", "viewer.forceLoadEvent();");
         }
-        
+
         $('#hiddenReportContentForm').attr("action", urlContent);
         $('#hiddenReportContentForm').submit();
         $('#reportContent').attr("data-src", urlContent);
@@ -1744,7 +1761,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           callback();
         }
       },
-      
+
       //IE11 workaround when no "load" event after Pdf pushed to iframe (BISERVER-12804)
       forceLoadEvent : function(){
         var boundOnReportContentLoaded = this._onReportContentLoaded.bind(this);
@@ -1950,7 +1967,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         var mimes = ["application/rtf", "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "text/csv", "mime-message/text/html"];
         return mimes.indexOf(mime) > -1;
       },
-      
+
       _isIE11: function(){
         return has("trident") && !has("ie"); //has("ie") in IE11 is undefined
       },
