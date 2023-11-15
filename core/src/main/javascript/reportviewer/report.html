@@ -36,7 +36,10 @@
       disableFlashStorage: true
     };
 
-
+    var inSchedulerDialog = window.location.pathname.toLowerCase().indexOf('parameterui') >= 0;
+    if (inSchedulerDialog) {
+      document.documentElement.style.setProperty( '--var-default-overflow', "visible" );
+    }
 
     /**
      * This is called when a gwt module has been loaded. We depend on these so we'll defer loading of functionality until

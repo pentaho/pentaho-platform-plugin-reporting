@@ -1,5 +1,9 @@
+:root {
+  --var-default-overflow: hidden;
+}
+
 * {
-	overflow: hidden;
+	overflow: var( --var-default-overflow );
 }
 
 html, body {
