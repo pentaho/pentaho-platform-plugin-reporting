@@ -104,11 +104,13 @@ public class PentahoReportEnvironmentTest {
     PentahoSessionHolder.setSession( pentahoSession );
     Assert.assertEquals( defaultTenantId, new PentahoReportEnvironment( new DefaultConfiguration() )
             .getEnvironmentProperty( tenantIdProperty ) );
+    PentahoSessionHolder.removeSession();
   }
 
   @Test
   public void testNullSessionTenantId() {
     String tenantIdProperty = "session:" + IPentahoSession.TENANT_ID_KEY;
+    PentahoSessionHolder.removeSession();
     Assert.assertNull( new PentahoReportEnvironment( new DefaultConfiguration() )
             .getEnvironmentProperty( tenantIdProperty ) );
   }
