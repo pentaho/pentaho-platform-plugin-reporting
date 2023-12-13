@@ -1,6 +1,6 @@
 package org.pentaho.reporting.platform.plugin;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import org.pentaho.reporting.engine.classic.core.util.CloseableTableModel;
 
 import javax.swing.table.AbstractTableModel;
@@ -13,7 +13,7 @@ public class MockTableModel extends AbstractTableModel implements CloseableTable
     boolean closed;
 
     public MockTableModel(final Object[][] data) {
-        this.data = Objects.firstNonNull(data, new Object[0][0]);
+        this.data = MoreObjects.firstNonNull(data, new Object[0][0]);
         rowCount = this.data.length;
         for (int i = 0; i < this.data.length; i++) {
             columnCount = Math.max(columnCount, this.data[i].length);
