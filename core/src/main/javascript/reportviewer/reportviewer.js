@@ -15,9 +15,13 @@
 * Copyright (c) 2002-2023 Hitachi Vantara.  All rights reserved.
 */
 
-define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/formatting', 'pentaho/common/Messages', "dojo/dom", "dojo/on", "dojo/_base/lang",
-"dijit/registry", "dojo/has", "dojo/sniff", "dojo/dom-class", 'pentaho/reportviewer/ReportDialog', "dojo/dom-style", "dojo/query", "dojo/dom-geometry", "dojo/parser", "dojo/window", "dojo/_base/window", 'cdf/lib/jquery', 'amd!cdf/lib/jquery.ui', "common-repo/pentaho-ajax", "dijit/ProgressBar", "common-data/xhr"],
-    function(util, _timeutil, _formatting, _Messages, dom, on, lang, registry, has, sniff, domClass, ReportDialog, domStyle, query, geometry, parser, win, win2, $) {
+define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/formatting', 'pentaho/common/Messages',
+      "dojo/dom", "dojo/on", "dojo/_base/lang", "dijit/registry", "dojo/has", "dojo/sniff", "dojo/dom-class",
+      'pentaho/reportviewer/ReportDialog', "dojo/dom-style",
+      "dojo/query", "common-ui/util/_a11y", "dojo/dom-geometry", "dojo/parser", "dojo/window", "dojo/_base/window",
+      'cdf/lib/jquery', 'amd!cdf/lib/jquery.ui', "common-repo/pentaho-ajax", "dijit/ProgressBar", "common-data/xhr"],
+    function(util, _timeutil, _formatting, _Messages, dom, on, lang, registry, has, sniff, domClass, ReportDialog,
+             domStyle, query, a11yUtil, geometry, parser, win, win2, $) {
   return function(reportPrompt) {
     if (!reportPrompt) {
       alert("report prompt is required");
