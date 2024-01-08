@@ -205,7 +205,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
           });
         }
         var url = this._buildReportContentUrl();
-        pentahoGet(url.substring(0, url.indexOf("/api/repos")) + '/api/scheduler/canSchedule', "", dojo.hitch( this, function(result) {
+        pentahoGet(parent.pho.getSchedulerPluginContextURL() + 'api/scheduler/canSchedule', "", dojo.hitch( this, function(result) {
           this._hasSchedulePermission = "true" == result;
           if(!this.view._isInsideDashboard() && !inMobile && this._hasSchedulePermission){
             registry.byId('feedbackScreen').showBackgroundBtn(_Messages.getString('FeedbackScreenBackground'));
@@ -975,7 +975,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         // BISERVER-14167 - To assure a very unelikly scenario where _hasSchedulePermission has not been set during load function
         if(this._hasSchedulePermission == null){
           var url = this._buildReportContentUrl();
-          var result = pentahoGet(url.substring(0, url.indexOf("/api/repos")) + '/api/scheduler/canSchedule', "", null, "application/json");
+          var result = pentahoGet(parent.pho.getSchedulerPluginContextURL() + 'api/scheduler/canSchedule', "", null, "application/json");
           this._hasSchedulePermission = "true" === result;
         }
 
