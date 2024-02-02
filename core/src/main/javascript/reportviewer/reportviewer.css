@@ -3,14 +3,14 @@
 }
 
 * {
-	overflow: var( --var-default-overflow );
+  overflow: var(--var-default-overflow);
 }
 
 html, body {
-	padding: 0px;
-	margin:  0px;
-	border:  0px;
-	height:  100%;
+  padding: 0px;
+  margin: 0px;
+  border: 0px;
+  height: 100%;
 }
 
 body.mobile {
@@ -22,25 +22,25 @@ body.mobile {
 }
 
 .body {
-	position: relative;
+  position: relative;
 }
 
 .table {
-    border: 1px solid #808080;
+  border: 1px solid #808080;
 }
 
 /* PROMPT PANEL */
 #toppanel {
-	/* ATTENTION: do NOT remove this pixel.
-	   It prevents collapsing of bottom margin of #reportControlPanel
-	   with the margin of #toppanel,
-	   in non-styled mode.
-	   When this happens, 
-	   because $ fails to detect the collapsing, 
-	   the height measure of #toppanel does not account
-	   for the margin of #reportControlPanel.
-	*/
-	padding: 0 0 1px 0;
+  /* ATTENTION: do NOT remove this pixel.
+     It prevents collapsing of bottom margin of #reportControlPanel
+     with the margin of #toppanel,
+     in non-styled mode.
+     When this happens,
+     because $ fails to detect the collapsing,
+     the height measure of #toppanel does not account
+     for the margin of #reportControlPanel.
+  */
+  padding: 0 0 1px 0;
 }
 
 #reportControlPanel {
@@ -74,13 +74,13 @@ div.prompt-panel {
 */
 #reportArea {
   position: relative;
-  
+
   /* size to 100% of parent's width */
-  display:  block;
-  
+  display: block;
+
   /* Ensure that child reportPageOutline is shown centered */
   text-align: center;
-  
+
   padding: 0;
 }
 
@@ -97,7 +97,7 @@ div.prompt-panel {
 .contentHidden #reportArea {
   position: absolute;
   left: -100000px;
-  top:  -100000px;
+  top: -100000px;
 }
 
 .styled #reportArea {
@@ -111,7 +111,7 @@ div.prompt-panel {
 #reportPageOutline {
   /* When unstyled, both width and height should be that of the parent */
   display: block;
-  height:  100%;
+  height: 100%;
 }
 
 .styled #reportPageOutline {
@@ -121,21 +121,21 @@ div.prompt-panel {
      reportArea's "text-align:center" will center it.
    */
   display: inline-block;
-  height:  auto;
+  height: auto;
 }
 
 #reportContent {
   display: block;
   background-color: #ffffff;
-  width:  100%;
+  width: 100%;
   height: 100%;
 }
 
 .leafViewer.nonStyled #reportContent {
   /* Enables scrolling for the Text format (output-target: pageable/text).
-  	 In PDFs, scrolling is always provided by the pdf viewer, 
-  	 according to the iframe size,
-  	 irrespective of our scrolling settings.
+  In PDFs, scrolling is always provided by the pdf viewer,
+  according to the iframe size,
+  irrespective of our scrolling settings.
   */
   overflow: auto;
 }
@@ -151,7 +151,7 @@ div.prompt-panel {
 }
 
 .styled.parentViewer #reportContent {
-	padding: 0;
+  padding: 0;
 }
 
 .hidden {
@@ -160,15 +160,15 @@ div.prompt-panel {
 
 /* Debugging styles for report */
 .debug #reportArea {
-	border: solid 3px green;
+  border: solid 3px green;
 }
 
 .debug #reportPageOutline {
-	border: solid 1px red;
+  border: solid 1px red;
 }
 
 .debug #reportContent {
-	border: solid 3px yellow;
+  border: solid 3px yellow;
 }
 
 
@@ -176,18 +176,21 @@ div.prompt-panel {
   height: auto;
 }
 
-.dijitDialogUnderlay { opacity: 0.0; cursor: wait;}
+.dijitDialogUnderlay {
+  opacity: 0.0;
+  cursor: wait;
+}
 
 .tundra .dijitTabInnerDiv {
-    padding-left: 3px;
-    padding-right: 3px;
+  padding-left: 3px;
+  padding-right: 3px;
 }
 
 .tundra .dijitTooltipContainer {
-    border: 0px;
-    padding: 0px;
-    background: none;
-    box-shadow: none;
+  border: 0px;
+  padding: 0px;
+  background: none;
+  box-shadow: none;
 }
 
 .tundra .dijitToolbar {
@@ -195,8 +198,8 @@ div.prompt-panel {
 }
 
 .plainDijitToolbar {
-    background: none;
-    border: 0px;
+  background: none;
+  border: 0px;
 }
 
 .dijitEditorIconParameters {
@@ -208,75 +211,76 @@ div.prompt-panel {
 }
 
 .dijitTooltipBelow {
-	/* leave room for arrow above content */
-	padding-top: 25px;
+  /* leave room for arrow above content */
+  padding-top: 25px;
 }
 
 .dijitTooltipAbove {
-	/* leave room for arrow below content */
-	padding-bottom: 14px;
+  /* leave room for arrow below content */
+  padding-bottom: 14px;
 }
 
 .dijitTooltipABRight .dijitTooltipConnector {
-	/* above or below tooltip, but the arrow appears on the right,
-		and the right edges of target and tooltip are aligned rather than the left */
-	left: auto !important;
-	right: 10px;
+  /* above or below tooltip, but the arrow appears on the right,
+    and the right edges of target and tooltip are aligned rather than the left */
+  left: auto !important;
+  right: 10px;
 }
 
 .dijitTooltipBelow .dijitTooltipConnector {
-	/* the arrow piece for tooltips below an element */
-	top: 0;
-	left: 5px;
-	background:url("images/connector_top.png") no-repeat top left;
-	width:36px;
-	height:17px;
+  /* the arrow piece for tooltips below an element */
+  top: 0;
+  left: 5px;
+  background: url("images/connector_top.png") no-repeat top left;
+  width: 36px;
+  height: 17px;
 }
 
-.dj_ie  .dijitTooltipBelow .dijitTooltipConnector {
-	/* use gif for IE7 too, due to png rendering problems on fade-in (see http://trac.dojotoolkit.org/ticket/6555) */
-	background-image: url("images/connector_top.gif");
+.dj_ie .dijitTooltipBelow .dijitTooltipConnector {
+  /* use gif for IE7 too, due to png rendering problems on fade-in (see http://trac.dojotoolkit.org/ticket/6555) */
+  background-image: url("images/connector_top.gif");
 }
 
 .dijitTooltipAbove .dijitTooltipConnector {
-	/* the arrow piece for tooltips above an element */
-	bottom: 0;
-	left: 5px;
-	background:url("images/connector_bottom.png") no-repeat top left;
-	width:36px;
-	height:17px;
+  /* the arrow piece for tooltips above an element */
+  bottom: 0;
+  left: 5px;
+  background: url("images/connector_bottom.png") no-repeat top left;
+  width: 36px;
+  height: 17px;
 }
 
-.dj_ie  .dijitTooltipAbove .dijitTooltipConnector {
-	background-image: url("images/connector_bottom.gif");
+.dj_ie .dijitTooltipAbove .dijitTooltipConnector {
+  background-image: url("images/connector_bottom.gif");
 }
-.dj_ie6  .dijitTooltipAbove .dijitTooltipConnector {
-	bottom: -3px;
+
+.dj_ie6 .dijitTooltipAbove .dijitTooltipConnector {
+  bottom: -3px;
 }
 
 .dijitTooltipLeft {
-	padding-right: 14px;
+  padding-right: 14px;
 }
 
 .dijitTooltipLeft .dijitTooltipConnector {
-	/* the arrow piece for tooltips to the left of an element, bottom borders aligned */
-	right: 0;
-	background:url("images/connector_right.png") no-repeat top left;
-	width:17px;
-	height:36px;
+  /* the arrow piece for tooltips to the left of an element, bottom borders aligned */
+  right: 0;
+  background: url("images/connector_right.png") no-repeat top left;
+  width: 17px;
+  height: 36px;
 }
 
-.dj_ie  .dijitTooltipLeft .dijitTooltipConnector {
-	background-image: url("images/connector_right.gif");
+.dj_ie .dijitTooltipLeft .dijitTooltipConnector {
+  background-image: url("images/connector_right.gif");
 }
 
 .dijitTooltipRight {
-	padding-left: 14px;
+  padding-left: 14px;
 }
 
 .dijitTooltipRight .dijitTooltipConnector {
-	/* the arrow piece for tooltips to the right of an element, bottom borders aligned */
-	left: 0;
+  /* the arrow piece for tooltips to the right of an element, bottom borders aligned */
+  left: 0;
   height: 13px;
   width: 11px;
   background: url("images/connector_left_new.png") no-repeat;
@@ -287,21 +291,21 @@ div.prompt-panel {
 
 .tundra .dijitMenu,
 .tundra .dijitMenuBar {
-	border: 1px solid #000000;
-	margin: 0;
-	padding: 0;
-	background-color: #ffffff;
+  border: 1px solid #000000;
+  margin: 0;
+  padding: 0;
+  background-color: #ffffff;
 }
 
 .tundra .pentaho-MenuItemSelected {
-	background-color: #ff0000;
-	color:#fff;
+  background-color: #ff0000;
+  color: #fff;
 }
 
 .tundra .dijitMenuPassive .dijitMenuItemHover,
 .tundra .dijitMenuItemSelected {
-	background-color: #CC0000;
-	color:#FFF;
+  background-color: #CC0000;
+  color: #FFF;
 }
 
 .tundra .dijitTextBox {
@@ -309,66 +313,69 @@ div.prompt-panel {
 }
 
 .tundra .dijitCheckedMenuItemIcon {
-	background-image: url('/pentaho-style/style/images/checkbox-empty.png');
-	background-position: 0px;
+  background-image: url('/pentaho-style/style/images/checkbox-empty.png');
+  background-position: 0px;
 }
 
 .dj_ie6 .tundra .dijitCheckedMenuItemIcon {
-	background-image: url('/pentaho-style/style/images/checkbox-empty.png');
+  background-image: url('/pentaho-style/style/images/checkbox-empty.png');
 }
 
 .tundra .dijitCheckedMenuItemChecked .dijitCheckedMenuItemIcon {
-	background-image: url('/pentaho-style/style/images/checkbox.png');
-	background-position: 0px;
+  background-image: url('/pentaho-style/style/images/checkbox.png');
+  background-position: 0px;
 }
 
 .selected {
-    background-color: lime;
-    color: #000000;
+  background-color: lime;
+  color: #000000;
 }
 
 .closeIcon {
-    width: 16px;
-    height: 16px;
-	background:url("../../../common-ui/resources/themes/images/close_sm_disabled.png") no-repeat;
-    display:inline-block;
+  width: 16px;
+  height: 16px;
+  background: url("../../../common-ui/resources/themes/images/close_sm_disabled.png") no-repeat;
+  display: inline-block;
 }
 
 .closeIconHover {
-    width: 16px;
-    height: 16px;
-    background:url("../../../common-ui/resources/themes/images/close_sm.png") no-repeat;
+  width: 16px;
+  height: 16px;
+  background: url("../../../common-ui/resources/themes/images/close_sm.png") no-repeat;
 }
 
 .pentaho-shadow-padding {
-    padding-right: 8px; 
-    padding-bottom: 8px;
+  padding-right: 8px;
+  padding-bottom: 8px;
 }
 
-#toolbar.dijitToolbar, #toolbar.dijitToolbar #pageControl.pc_pageControlContainer{
-	overflow:visible;
+  /* Overriding overflow: hidden to allow the focus-outline
+  to "appear" , especially for export button and
+  rowsNumberInput in row-level. */
+#toolbar.dijitToolbar, #toolbar * {
+  overflow: visible;
 }
 
 .dijitTooltip {
-	background: none repeat scroll 0 0 #FEFDE7 !important;
+  background: none repeat scroll 0 0 #FEFDE7 !important;
   border: 1px solid #CACACB;
   color: #26363D;
   padding: 10px;
   font-size: 13px;
-  margin-left:8px;
+  margin-left: 8px;
   box-shadow: 1px 1px 2px #323232;
 }
 
 .dijitTextBoxError .dijitValidationContainer {
-	display: none !important;
+  display: none !important;
 }
 
-.dijitTextBoxError{
-	border: 1px solid #df9999 !important;
-	box-shadow: 0px 0px 6px #b94a48;
+.dijitTextBoxError {
+  border: 1px solid #df9999 !important;
+  box-shadow: 0px 0px 6px #b94a48;
 }
 
-  /* styles for feedback dialog */
+/* styles for feedback dialog */
 .feedbackscreen-content {
   /* fallback color */
   background: #f5f6f8;
@@ -376,12 +383,12 @@ div.prompt-panel {
   border-spacing: 0px;
 }
 
-.upper-table {  
+.upper-table {
   width: 100%;
   border-spacing: 0;
 }
 
-.feedbackscreencontentbody  {  
+.feedbackscreencontentbody {
   padding: 0 0 0 0;
 }
 
@@ -403,9 +410,9 @@ div.prompt-panel {
   border: 1px solid #ccc;
 
   /* shadow */
-  -webkit-box-shadow: 0 3px 5px 0px rgba(0,0,0,.20);
-  -moz-box-shadow: 0 3px 5px 0px rgba(0,0,0,.20);
-  box-shadow: 0 3px 5px 0px rgba(0,0,0,.20);
+  -webkit-box-shadow: 0 3px 5px 0px rgba(0, 0, 0, .20);
+  -moz-box-shadow: 0 3px 5px 0px rgba(0, 0, 0, .20);
+  box-shadow: 0 3px 5px 0px rgba(0, 0, 0, .20);
 }
 
 #notification-screen {
@@ -418,7 +425,7 @@ div.prompt-panel {
   z-index: 10;
   position: absolute;
   right: 0;
-    top: 0;
+  top: 0;
 }
 
 #notification-message {
