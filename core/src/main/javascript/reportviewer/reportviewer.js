@@ -1672,7 +1672,8 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
               }
               //Open location prompt
               me._locationPromptFinished = false;
-              window.top.executeCommand("AdhocRunInBackgroundCommand", me._buildParameter(pathArray, me._currentReportUuid));
+              var adHocParams = me._buildParameter(pathArray, me._currentReportUuid);
+              window.top.pho.runAdhocInBackground(adHocParams.solutionPath, adHocParams.jobId, adHocParams.recalculateFinished);
             }
           }
         }.bind(me),
@@ -1707,7 +1708,8 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
 
                 //Open location prompt
                 me._locationPromptFinished = false;
-                window.top.executeCommand("AdhocRunInBackgroundCommand", me._buildParameter(pathArray, me._currentReportUuid));
+                var adHocParams = me._buildParameter(pathArray, me._currentReportUuid);
+                window.top.pho.runAdhocInBackground(adHocParams.solutionPath, adHocParams.jobId, adHocParams.recalculateFinished);
               }
             }.bind(me),
             function cancel() {
