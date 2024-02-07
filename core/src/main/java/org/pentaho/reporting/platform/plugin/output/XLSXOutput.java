@@ -17,6 +17,9 @@
 
 package org.pentaho.reporting.platform.plugin.output;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.base.FlowReportProcessor;
@@ -35,6 +38,8 @@ import java.io.OutputStream;
 public class XLSXOutput implements ReportOutputHandler {
   private byte[] templateData;
   private ProxyOutputStream proxyOutputStream;
+
+  final Log log = LogFactory.getLog( FastXLSXOutput.class );
 
   public XLSXOutput() {
   }
@@ -69,6 +74,8 @@ public class XLSXOutput implements ReportOutputHandler {
     final FlowExcelOutputProcessor target =
       new FlowExcelOutputProcessor( report.getConfiguration(), proxyOutputStream, report.getResourceManager() );
     target.setUseXlsxFormat( true );
+    target.setMaxSheetRowCount( getPropertyValue( "excel-sheet-limit", "-1" ) );
+
     final FlowReportProcessor reportProcessor = new FlowReportProcessor( report, target );
 
     if ( yieldRate > 0 ) {
@@ -120,5 +127,15 @@ public class XLSXOutput implements ReportOutputHandler {
   }
 
   public void close() {
+  }
+
+  public int getPropertyValue( String propName, String def ) {
+    String limit = PentahoSystem.getSystemSetting( "pentaho-interactive-reporting/settings.xml", propName, def );
+    try {
+      return Integer.parseInt( limit );
+    } catch ( NumberFormatException e ) {
+      log.error( "'" + propName + "' defined incorrectly in the settings.xml" );
+      return -1;
+    }
   }
 }
