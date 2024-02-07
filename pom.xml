@@ -28,7 +28,6 @@
     <pentaho-cdf-plugin.version>10.2.0.0-SNAPSHOT</pentaho-cdf-plugin.version>
     <dependency.osgi-bundles.revision>${project.version}</dependency.osgi-bundles.revision>
     <junit.version>4.12</junit.version>
-    <frontend-maven-plugin.version>0.0.29</frontend-maven-plugin.version>
     <powermock.version>1.6.4</powermock.version>
     <pentaho-js-build.version>1.0.0</pentaho-js-build.version>
     <pentaho-reporting.version>10.2.0.0-SNAPSHOT</pentaho-reporting.version>
