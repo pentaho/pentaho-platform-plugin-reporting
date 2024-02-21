@@ -43,6 +43,7 @@ public class RTFOutput implements ReportOutputHandler {
 
   public int generate( final MasterReport report, final int acceptedPage, final OutputStream outputStream,
                        final int yieldRate ) throws ReportProcessingException, IOException {
+    OutputUtils.overrideQueryLimit( report );
     final FlowRTFOutputProcessor target =
       new FlowRTFOutputProcessor( report.getConfiguration(), outputStream, report.getResourceManager() );
     final FlowReportProcessor proc = new FlowReportProcessor( report, target );
