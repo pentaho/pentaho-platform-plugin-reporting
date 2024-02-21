@@ -17,6 +17,9 @@
 
 package org.pentaho.reporting.platform.plugin.output;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.base.PageableReportProcessor;
@@ -29,6 +32,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 public class PDFOutput implements ReportOutputHandler {
+
   public PDFOutput() {
   }
 
@@ -53,6 +57,7 @@ public class PDFOutput implements ReportOutputHandler {
 
   public int generate( final MasterReport report, final int acceptedPage, final OutputStream outputStream,
                        final int yieldRate ) throws ReportProcessingException, IOException {
+    OutputUtils.overrideQueryLimit( report );
     final PageableReportProcessor proc = createProcessor( report, yieldRate, outputStream );
     final IAsyncReportListener listener = ReportListenerThreadHolder.getListener();
     doProcess( listener, proc );

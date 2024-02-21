@@ -46,6 +46,7 @@ public class PlainTextOutput implements ReportOutputHandler {
 
   public int generate( final MasterReport report, final int acceptedPage, final OutputStream outputStream,
                        final int yieldRate ) throws ReportProcessingException, IOException, ContentIOException {
+    OutputUtils.overrideQueryLimit( report );
     final PageableReportProcessor proc = create( report, yieldRate );
     proxyOutputStream.setParent( outputStream );
     final IAsyncReportListener listener = ReportListenerThreadHolder.getListener();

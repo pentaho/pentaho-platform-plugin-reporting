@@ -38,6 +38,7 @@ public class FastStreamHtmlOutput extends StreamHtmlOutput {
                        final OutputStream outputStream,
                        final int yieldRate ) throws ReportProcessingException, IOException, ContentIOException {
 
+    OutputUtils.overrideQueryLimit( report );
     ReportStructureValidator validator = new ReportStructureValidator();
     if ( validator.isValidForFastProcessing( report ) == false ) {
       return super.generate( report, acceptedPage, outputStream, yieldRate );
