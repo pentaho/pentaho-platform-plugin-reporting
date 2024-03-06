@@ -19,7 +19,9 @@ package org.pentaho.reporting.platform.plugin.async;
 
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.junit.Test;
+import org.pentaho.platform.api.engine.ISystemSettings;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
+import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.engine.core.system.StandaloneSession;
 import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
@@ -187,6 +189,10 @@ public class AsyncReportStatusListenerTest {
 
   @Test
   public void limitReached() throws Exception {
+    ISystemSettings settings = mock( ISystemSettings.class );
+    PentahoSystem.setSystemSettingsService( settings );
+    when( settings.getSystemSetting( anyString(), anyString(), anyString() ) ).thenReturn( "10" );
+
     final AsyncReportStatusListener asyncReportStatusListener =
       new AsyncReportStatusListener( "target/test/resource/solution/test/reporting/limit10.prpt", UUID.randomUUID(), "text/csv",
         Collections.emptyList() );
