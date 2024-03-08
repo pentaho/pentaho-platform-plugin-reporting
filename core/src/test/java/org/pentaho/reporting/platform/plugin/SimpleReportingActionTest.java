@@ -281,7 +281,6 @@ public class SimpleReportingActionTest {
         put( "application/xml", "application/xml" );
         put( "application/pdf", "application/pdf" );
         put( "application/rtf", "application/rtf" );
-        put( "application/vnd.ms-excel", "application/vnd.ms-excel" );
         put( "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
           "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" );
         put( "mime-message/text/html", "mime-message/text/html" );
@@ -290,7 +289,6 @@ public class SimpleReportingActionTest {
         put( "html", "text/html" );
         put( "csv", "text/csv" );
         put( "rtf", "application/rtf" );
-        put( "xls", "application/vnd.ms-excel" );
         put( "txt", "text/plain" );
       }
     };
