@@ -101,8 +101,7 @@
       <value label="HTML (Paginated)" null="false" selected="true" type="java.lang.String" value="table/html;page-mode=page"/>
       <value label="HTML (Single Page)" null="false" selected="false" type="java.lang.String" value="table/html;page-mode=stream"/>
       <value label="PDF" null="false" selected="false" type="java.lang.String" value="pageable/pdf"/>
-      <value label="Excel" null="false" selected="false" type="java.lang.String" value="table/excel;page-mode=flow"/>
-      <value label="Excel 2007" null="false" selected="false" type="java.lang.String" value="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;page-mode=flow"/>
+      <value label="Excel" null="false" selected="false" type="java.lang.String" value="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;page-mode=flow"/>
       <value label="Comma Separated Value" null="false" selected="false" type="java.lang.String" value="table/csv;page-mode=stream"/>
       <value label="Rich-Text-Format" null="false" selected="false" type="java.lang.String" value="table/rtf;page-mode=flow"/>
       <value label="Text" null="false" selected="false" type="java.lang.String" value="pageable/text"/>

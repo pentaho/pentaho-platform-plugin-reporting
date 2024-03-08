@@ -684,9 +684,6 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
     if ( MIME_TYPE_RTF.equals( outputType ) ) {
       return RTFTableModule.TABLE_RTF_FLOW_EXPORT_TYPE;
     }
-    if ( MIME_TYPE_XLS.equals( outputType ) ) {
-      return ExcelTableModule.EXCEL_FLOW_EXPORT_TYPE;
-    }
     if ( MIME_TYPE_XLSX.equals( outputType ) ) {
       return ExcelTableModule.XLSX_FLOW_EXPORT_TYPE;
     }
