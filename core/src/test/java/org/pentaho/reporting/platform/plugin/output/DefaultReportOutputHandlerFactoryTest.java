@@ -217,7 +217,6 @@ public class DefaultReportOutputHandlerFactoryTest {
     HashMap<String, String> outputTypes = new HashMap<String, String>();
     outputTypes.put( "table/html;page-mode=stream", "text/html" ); //$NON-NLS-1$ //$NON-NLS-2$
     outputTypes.put( "table/html;page-mode=page", "text/html" ); //$NON-NLS-1$ //$NON-NLS-2$
-    outputTypes.put( "table/excel;page-mode=flow", "application/vnd.ms-excel" ); //$NON-NLS-1$ //$NON-NLS-2$
     outputTypes.put( "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;page-mode=flow",
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ); //$NON-NLS-1$ //$NON-NLS-2$
     outputTypes.put( "table/csv;page-mode=stream", "text/csv" ); //$NON-NLS-1$ //$NON-NLS-2$
@@ -242,7 +241,6 @@ public class DefaultReportOutputHandlerFactoryTest {
     expectations.add( "table/html;page-mode=page" );
     expectations.add( "table/html;page-mode=stream" );
     expectations.add( "pageable/pdf" );
-    expectations.add( "table/excel;page-mode=flow" );
     expectations.add( "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;page-mode=flow" );
     expectations.add( "table/csv;page-mode=stream" );
     expectations.add( "table/rtf;page-mode=flow" );
@@ -286,7 +284,7 @@ public class DefaultReportOutputHandlerFactoryTest {
     assertNull( roh.createOutputHandlerForOutputType( selector ) );
 
     selector.setOutputType( "table/excel;page-mode=flow" ); //$NON-NLS-1$
-    assertTrue( roh.createOutputHandlerForOutputType( selector ) instanceof XLSOutput );
+    assertTrue( roh.createOutputHandlerForOutputType( selector ) == null );
     roh.setXlsAvailable( false );
     assertNull( roh.createOutputHandlerForOutputType( selector ) );
 

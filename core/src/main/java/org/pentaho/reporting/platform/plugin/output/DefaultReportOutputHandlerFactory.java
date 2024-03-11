@@ -296,9 +296,6 @@ public class DefaultReportOutputHandlerFactory implements ReportOutputHandlerFac
     if ( isHtmlPageAvailable() && HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE.equals( outputTarget ) ) {
       return SimpleReportingComponent.MIME_TYPE_HTML;
     }
-    if ( isXlsAvailable() && ExcelTableModule.EXCEL_FLOW_EXPORT_TYPE.equals( outputTarget ) ) {
-      return SimpleReportingComponent.MIME_TYPE_XLS;
-    }
     if ( isXlsxAvailable() && ExcelTableModule.XLSX_FLOW_EXPORT_TYPE.equals( outputTarget ) ) {
       return SimpleReportingComponent.MIME_TYPE_XLSX;
     }
@@ -344,9 +341,6 @@ public class DefaultReportOutputHandlerFactory implements ReportOutputHandlerFac
     if ( isPdfVisible() && isPdfAvailable() ) {
       outputTypes.put( PdfPageableModule.PDF_EXPORT_TYPE, m.getString( "ReportPlugin.outputPDF" ) );
     }
-    if ( isXlsVisible() && isXlsAvailable() ) {
-      outputTypes.put( ExcelTableModule.EXCEL_FLOW_EXPORT_TYPE, m.getString( "ReportPlugin.outputXLS" ) );
-    }
     if ( isXlsxVisible() && isXlsxAvailable() ) {
       outputTypes.put( ExcelTableModule.XLSX_FLOW_EXPORT_TYPE, m.getString( "ReportPlugin.outputXLSX" ) );
     }
@@ -385,9 +379,6 @@ public class DefaultReportOutputHandlerFactory implements ReportOutputHandlerFac
     }
     if ( PdfPageableModule.PDF_EXPORT_TYPE.equals( t ) ) {
       return createPdfOutput();
-    }
-    if ( ExcelTableModule.EXCEL_FLOW_EXPORT_TYPE.equals( t ) ) {
-      return createXlsOutput( selector );
     }
     if ( ExcelTableModule.XLSX_FLOW_EXPORT_TYPE.equals( t ) ) {
       return createXlsxOutput( selector );
