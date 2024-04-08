@@ -27,8 +27,7 @@
   <properties>
     <pentaho-cdf-plugin.version>10.2.0.0-SNAPSHOT</pentaho-cdf-plugin.version>
     <dependency.osgi-bundles.revision>${project.version}</dependency.osgi-bundles.revision>
-    <junit.version>4.12</junit.version>
-    <powermock.version>1.6.4</powermock.version>
+    <junit.version>4.13.2</junit.version>
     <pentaho-js-build.version>1.0.0</pentaho-js-build.version>
     <pentaho-reporting.version>10.2.0.0-SNAPSHOT</pentaho-reporting.version>
     <platform.version>10.2.0.0-SNAPSHOT</platform.version>
@@ -36,7 +35,7 @@
     <test.long>false</test.long>
     <jaxws-spring.version>1.8</jaxws-spring.version>
     <hsqldb.version>2.3.2</hsqldb.version>
-    <mockito-all.version>1.10.19</mockito-all.version>
+    <mockito.version>5.10.0</mockito.version>
     <license.header.file>license/templates/licenseHeader.txt</license.header.file>
     <gwt.version>2.4.0</gwt.version>
     <license-maven-plugin.version>2.3</license-maven-plugin.version>
@@ -385,26 +384,14 @@
       </dependency>
       <dependency>
         <groupId>org.mockito</groupId>
-        <artifactId>mockito-all</artifactId>
-        <version>${mockito-all.version}</version>
+        <artifactId>mockito-core</artifactId>
+        <version>${mockito.version}</version>
         <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf-rt-frontend-jaxrs</artifactId>
         <version>${cxf.version}</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.powermock</groupId>
-        <artifactId>powermock-module-junit4</artifactId>
-        <version>${powermock.version}</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.powermock</groupId>
-        <artifactId>powermock-api-mockito</artifactId>
-        <version>${powermock.version}</version>
         <scope>test</scope>
       </dependency>
       <dependency>

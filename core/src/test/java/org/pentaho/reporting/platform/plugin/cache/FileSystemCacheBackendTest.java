@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2021 Hitachi Vantara..  All rights reserved.
+ * Copyright (c) 2002-2024 Hitachi Vantara..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin.cache;
@@ -24,7 +24,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.StandaloneSession;
-import org.powermock.reflect.Whitebox;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -106,9 +105,9 @@ public class FileSystemCacheBackendTest {
   public void testPurgeSyncMapCleaning() {
     List<String> randomKey = Arrays.asList( UUID.randomUUID().toString() );
     Map<List<String>, ReentrantReadWriteLock> syncMap = new HashMap<List<String>, ReentrantReadWriteLock>();
-    Whitebox.setInternalState( fileSystemCacheBackend, "syncMap", syncMap );
+    fileSystemCacheBackend.setSyncMap( syncMap );
     fileSystemCacheBackend.purge( randomKey );
-    assertFalse( ((Map<List<String>, ReentrantReadWriteLock>) Whitebox.getInternalState( fileSystemCacheBackend, "syncMap" )).containsKey( randomKey ) );
+    assertFalse( fileSystemCacheBackend.getSyncMap().containsKey( randomKey ) );
   }
 
   @Test

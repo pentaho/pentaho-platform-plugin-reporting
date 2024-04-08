@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2018 Hitachi Vantara..  All rights reserved.
+ * Copyright (c) 2002-2024 Hitachi Vantara..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin.drilldown;
@@ -29,9 +29,8 @@ import org.pentaho.reporting.libraries.formula.lvalues.TypeValuePair;
 import org.pentaho.reporting.libraries.formula.typing.ArrayCallback;
 import org.pentaho.reporting.libraries.formula.typing.TypeRegistry;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyObject;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -79,7 +78,7 @@ public class ContentLinkFunctionTest extends TestCase {
     doReturn( typeRegistry ).when( reportFormulaContext ).getTypeRegistry();
     ArrayCallback callback = mock( ArrayCallback.class );
     doReturn( callback ).when( typeRegistry )
-        .convertToArray( any( org.pentaho.reporting.libraries.formula.typing.Type.class ), anyObject() );
+        .convertToArray( any( org.pentaho.reporting.libraries.formula.typing.Type.class ), any() );
 
     try {
       functionSpy.evaluate( reportFormulaContext, parameters );
