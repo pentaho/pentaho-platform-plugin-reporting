@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2017 Hitachi Vantara..  All rights reserved.
+ * Copyright (c) 2002-2024 Hitachi Vantara..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin.output;
@@ -38,8 +38,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 
 public class EmailOutputTest {
@@ -172,7 +179,7 @@ public class EmailOutputTest {
       verify( listener, times( 0 ) ).reportProcessingStarted( any( ReportProgressEvent.class ) );
       verify( listener, times( 0 ) ).reportProcessingFinished( any( ReportProgressEvent.class ) );
       verify( listener, times( 0 ) ).reportProcessingUpdate( any( ReportProgressEvent.class ) );
-      verifyZeroInteractions( yieldReportListener );
+      verifyNoInteractions( yieldReportListener );
     } finally {
       microPlatform.stop();
       microPlatform = null;

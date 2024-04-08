@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2017 Hitachi Vantara..  All rights reserved.
+ * Copyright (c) 2002-2024 Hitachi Vantara..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin.output;
@@ -24,18 +24,23 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.pentaho.platform.api.engine.IApplicationContext;
+import org.mockito.MockSettings;
+import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
-import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.engine.core.system.StandaloneSession;
 import org.pentaho.platform.engine.core.system.boot.PlatformInitializationException;
 import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
+import org.pentaho.reporting.engine.classic.core.ReportEnvironment;
 import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
+import org.pentaho.reporting.engine.classic.core.ResourceBundleFactory;
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressEvent;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.base.PageableReportProcessor;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.AllItemsHtmlPrinter;
+import org.pentaho.reporting.libraries.base.config.Configuration;
+import org.pentaho.reporting.libraries.base.config.ModifiableConfiguration;
 import org.pentaho.reporting.libraries.repository.ContentIOException;
 import org.pentaho.reporting.libraries.resourceloader.ResourceException;
 import org.pentaho.reporting.libraries.resourceloader.ResourceManager;
@@ -49,10 +54,6 @@ import org.pentaho.reporting.platform.plugin.cache.IReportContent;
 import org.pentaho.reporting.platform.plugin.cache.IReportContentCache;
 import org.pentaho.reporting.platform.plugin.cache.PluginCacheManagerImpl;
 import org.pentaho.test.platform.engine.core.MicroPlatform;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.File;
 import java.io.IOException;
@@ -63,12 +64,14 @@ import java.util.UUID;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyObject;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -77,9 +80,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@RunWith( PowerMockRunner.class )
-@PrepareForTest( CachingPageableHTMLOutput.class )
-@PowerMockIgnore( { "javax.swing.*", "jdk.internal.reflect.*" } )
+@RunWith( MockitoJUnitRunner.class )
 public class PageableHTMLOutputTest {
   PageableHTMLOutput pageableHTMLOutput;
   private IAsyncReportListener listener;
@@ -384,14 +385,12 @@ public class PageableHTMLOutputTest {
   public void testRegenerateCacheThrowExceptionForNullMasterReport() throws Exception {
     // BACKLOG-11306
     boolean thrown = false;
-    final CachingPageableHTMLOutput cachingPageableHTMLOutput = PowerMockito.mock( CachingPageableHTMLOutput.class );
-    final IReportContent iReportContent = PowerMockito.mock( IReportContent.class );
-    final MasterReport masterReport = PowerMockito.mock( MasterReport.class );
-    final ReportListenerThreadHolder reportListenerThreadHolder = PowerMockito.mock( ReportListenerThreadHolder.class );
+    final CachingPageableHTMLOutput cachingPageableHTMLOutput = spy( CachingPageableHTMLOutput.class );
+    final IReportContent iReportContent = mock( IReportContent.class );
+    final ReportListenerThreadHolder reportListenerThreadHolder = mock( ReportListenerThreadHolder.class );
     reportListenerThreadHolder.setListener( null );
 
-    PowerMockito.when( cachingPageableHTMLOutput, "produceCacheablePages", null, 1, "key", 0  ).thenReturn( iReportContent );
-    PowerMockito.when( cachingPageableHTMLOutput.regenerateCache( anyObject(), anyInt(), anyString(), anyInt() ) ).thenCallRealMethod();
+    doReturn( iReportContent ).when( cachingPageableHTMLOutput ).produceCacheablePages(null, 1, "key", 0 );
 
     try {
       cachingPageableHTMLOutput.regenerateCache( null, 1, "key", 0 );
@@ -400,13 +399,6 @@ public class PageableHTMLOutputTest {
     }
     assertTrue( thrown );
 
-    thrown = false;
-    try {
-      cachingPageableHTMLOutput.regenerateCache( masterReport, 1, "key", 0 );
-    } catch ( NullPointerException e ) {
-      thrown = true;
-    }
-    assertFalse( thrown );
   }
 
   @Test

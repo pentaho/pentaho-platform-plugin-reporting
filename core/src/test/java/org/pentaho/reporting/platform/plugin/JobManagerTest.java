@@ -13,7 +13,7 @@
  * See the GNU General Public License for more details.
  *
  *
- * Copyright 2006 - 2019 Hitachi Vantara.  All rights reserved.
+ * Copyright 2006 - 2024 Hitachi Vantara.  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
@@ -26,6 +26,9 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.pentaho.platform.api.engine.IPentahoObjectFactory;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
@@ -40,10 +43,6 @@ import org.pentaho.reporting.platform.plugin.async.ISchedulingDirectoryStrategy;
 import org.pentaho.reporting.platform.plugin.async.JobIdGenerator;
 import org.pentaho.reporting.platform.plugin.async.PentahoAsyncExecutor;
 import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
 
 import javax.ws.rs.core.Response;
 import java.io.IOException;
@@ -56,19 +55,17 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.powermock.api.mockito.PowerMockito.when;
+import static org.mockito.Mockito.when;
 
 
-@RunWith( PowerMockRunner.class )
-@PowerMockIgnore( "jdk.internal.reflect.*" )
-@PrepareForTest( PentahoSessionHolder.class )
+@RunWith( MockitoJUnitRunner.class )
 public class JobManagerTest {
 
   private static final IPentahoSession session = mock( IPentahoSession.class );
@@ -481,13 +478,13 @@ public class JobManagerTest {
 
   @Test
   public void testReserveIdNoSession() throws Exception {
-    PowerMockito.mockStatic( PentahoSessionHolder.class );
-    when( PentahoSessionHolder.getSession() ).thenReturn( null );
-
-    assertNull( PentahoSessionHolder.getSession() );
-    final JobManager jobManager = new JobManager( false, 1000, 1000 );
-    final Response response = jobManager.reserveId();
-    assertEquals( 404, response.getStatus() );
+    try ( MockedStatic<PentahoSessionHolder> pentahoSessionHolderMockedStatic = Mockito.mockStatic( PentahoSessionHolder.class ) ) {
+      pentahoSessionHolderMockedStatic.when( PentahoSessionHolder::getSession ).thenReturn( null );
+      assertNull( PentahoSessionHolder.getSession() );
+      final JobManager jobManager = new JobManager( false, 1000, 1000 );
+      final Response response = jobManager.reserveId();
+      assertEquals( 404, response.getStatus() );
+    }
   }
 
 
@@ -507,9 +504,10 @@ public class JobManagerTest {
   }
 
   private void setSession() {
-    PowerMockito.mockStatic( PentahoSessionHolder.class );
-    when( PentahoSessionHolder.getSession() ).thenReturn( session );
-    assertEquals( session, PentahoSessionHolder.getSession() );
+    try ( MockedStatic<PentahoSessionHolder> pentahoSessionHolderMockedStatic = Mockito.mockStatic( PentahoSessionHolder.class ) ) {
+      pentahoSessionHolderMockedStatic.when( PentahoSessionHolder::getSession ).thenReturn( session );
+      assertEquals( session, PentahoSessionHolder.getSession() );
+    }
   }
 
   public static IAsyncReportState getState() {

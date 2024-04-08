@@ -13,7 +13,7 @@
  * See the GNU General Public License for more details.
  *
  *
- * Copyright 2006 - 2017 Hitachi Vantara.  All rights reserved.
+ * Copyright 2006 - 2024 Hitachi Vantara.  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
@@ -22,6 +22,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
@@ -30,23 +33,19 @@ import org.pentaho.reporting.libraries.resourceloader.ResourceException;
 import org.pentaho.reporting.platform.plugin.async.AsyncExecutionStatus;
 import org.pentaho.reporting.platform.plugin.async.IAsyncReportState;
 import org.pentaho.reporting.platform.plugin.async.IPentahoAsyncExecutor;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
+
 
 import java.io.IOException;
 import java.util.UUID;
 
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
-import static org.mockito.Matchers.anyString;
-import static org.powermock.api.mockito.PowerMockito.mock;
-import static org.powermock.api.mockito.PowerMockito.when;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
-@RunWith( PowerMockRunner.class )
-@PowerMockIgnore( "jdk.internal.reflect.*" )
-@PrepareForTest( { ReportCreator.class, PentahoSessionHolder.class } )
+
+@RunWith( MockitoJUnitRunner.class )
 public class JobManagerContextTest {
 
   private IAsyncReportState state;
@@ -56,7 +55,6 @@ public class JobManagerContextTest {
 
   @Before
   public void before() throws ResourceException, IOException {
-    PowerMockito.mockStatic( ReportCreator.class, PentahoSessionHolder.class );
     session = mock( IPentahoSession.class );
     uuid = UUID.randomUUID();
     final IPentahoAsyncExecutor executor = mock( IPentahoAsyncExecutor.class );
@@ -64,8 +62,6 @@ public class JobManagerContextTest {
     report = mock( MasterReport.class );
     when( executor.getReportState( uuid, session ) ).thenReturn( state );
     PentahoSystem.registerObject( executor, IPentahoAsyncExecutor.class );
-    when( ReportCreator.createReportByName( anyString() ) ).thenReturn( report );
-    when( PentahoSessionHolder.getSession() ).thenReturn( session );
   }
 
   @After
@@ -80,39 +76,67 @@ public class JobManagerContextTest {
 
   @Test
   public void testNeedRecalculateFinished() throws ResourceException, IOException, JobManager.ContextFailedException {
-    when( state.getStatus() ).thenReturn( AsyncExecutionStatus.FINISHED );
-    final JobManager jobManager = new JobManager();
-    final JobManager.ExecutionContext executionContext = jobManager.getContext( uuid.toString() );
-    assertTrue( executionContext.needRecalculation( Boolean.TRUE ) );
+    try ( MockedStatic<ReportCreator> reportCreatorMockedStatic = Mockito.mockStatic( ReportCreator.class );
+          MockedStatic<PentahoSessionHolder> pentahoSessionHolderMockedStatic = Mockito.mockStatic(
+            PentahoSessionHolder.class )
+    ) {
+      reportCreatorMockedStatic.when( () -> ReportCreator.createReport( anyString() ) ).thenReturn( report );
+      pentahoSessionHolderMockedStatic.when( PentahoSessionHolder::getSession ).thenReturn( session );
+      when( state.getStatus() ).thenReturn( AsyncExecutionStatus.FINISHED );
+      final JobManager jobManager = new JobManager();
+      final JobManager.ExecutionContext executionContext = jobManager.getContext( uuid.toString() );
+      assertTrue( executionContext.needRecalculation( Boolean.TRUE ) );
+    }
   }
 
   @Test
   public void testNoNeedRecalculateFinished() throws ResourceException, IOException, JobManager.ContextFailedException {
-    when( state.getStatus() ).thenReturn( AsyncExecutionStatus.FINISHED );
-    final JobManager jobManager = new JobManager();
-    final JobManager.ExecutionContext executionContext = jobManager.getContext( uuid.toString() );
-    assertFalse( executionContext.needRecalculation( Boolean.FALSE ) );
+    try ( MockedStatic<ReportCreator> reportCreatorMockedStatic = Mockito.mockStatic( ReportCreator.class );
+          MockedStatic<PentahoSessionHolder> pentahoSessionHolderMockedStatic = Mockito.mockStatic(
+            PentahoSessionHolder.class )
+    ) {
+      reportCreatorMockedStatic.when( () -> ReportCreator.createReport( anyString() ) ).thenReturn( report );
+      pentahoSessionHolderMockedStatic.when( PentahoSessionHolder::getSession ).thenReturn( session );
+      when( state.getStatus() ).thenReturn( AsyncExecutionStatus.FINISHED );
+      final JobManager jobManager = new JobManager();
+      final JobManager.ExecutionContext executionContext = jobManager.getContext( uuid.toString() );
+      assertFalse( executionContext.needRecalculation( Boolean.FALSE ) );
+    }
   }
 
   @Test
   public void testNeedRecalculateReportLevelLimit()
     throws ResourceException, IOException, JobManager.ContextFailedException {
-    when( state.getStatus() ).thenReturn( AsyncExecutionStatus.FINISHED );
-    final JobManager jobManager = new JobManager();
-    final JobManager.ExecutionContext executionContext = jobManager.getContext( uuid.toString() );
-    when( report.getQueryLimit() ).thenReturn( 100 );
-    assertTrue( executionContext.needRecalculation( Boolean.FALSE ) );
+    try ( MockedStatic<ReportCreator> reportCreatorMockedStatic = Mockito.mockStatic( ReportCreator.class );
+          MockedStatic<PentahoSessionHolder> pentahoSessionHolderMockedStatic = Mockito.mockStatic(
+            PentahoSessionHolder.class )
+    ) {
+      reportCreatorMockedStatic.when( () -> ReportCreator.createReport( anyString() ) ).thenReturn( report );
+      pentahoSessionHolderMockedStatic.when( PentahoSessionHolder::getSession ).thenReturn( session );
+      when( state.getStatus() ).thenReturn( AsyncExecutionStatus.FINISHED );
+      final JobManager jobManager = new JobManager();
+      final JobManager.ExecutionContext executionContext = jobManager.getContext( uuid.toString() );
+      when( report.getQueryLimit() ).thenReturn( 100 );
+      assertTrue( executionContext.needRecalculation( Boolean.FALSE ) );
+    }
   }
 
 
   @Test
   public void testNeedRecalculateReportLimitReached()
     throws ResourceException, IOException, JobManager.ContextFailedException {
-    when( state.getStatus() ).thenReturn( AsyncExecutionStatus.FINISHED );
-    when( state.getIsQueryLimitReached() ).thenReturn( true );
-    final JobManager jobManager = new JobManager();
-    final JobManager.ExecutionContext executionContext = jobManager.getContext( uuid.toString() );
-    assertTrue( executionContext.needRecalculation( Boolean.FALSE ) );
+    try ( MockedStatic<ReportCreator> reportCreatorMockedStatic = Mockito.mockStatic( ReportCreator.class );
+          MockedStatic<PentahoSessionHolder> pentahoSessionHolderMockedStatic = Mockito.mockStatic(
+            PentahoSessionHolder.class )
+    ) {
+      reportCreatorMockedStatic.when( () -> ReportCreator.createReport( anyString() ) ).thenReturn( report );
+      pentahoSessionHolderMockedStatic.when( PentahoSessionHolder::getSession ).thenReturn( session );
+      when( state.getStatus() ).thenReturn( AsyncExecutionStatus.FINISHED );
+      when( state.getIsQueryLimitReached() ).thenReturn( true );
+      final JobManager jobManager = new JobManager();
+      final JobManager.ExecutionContext executionContext = jobManager.getContext( uuid.toString() );
+      assertTrue( executionContext.needRecalculation( Boolean.FALSE ) );
+    }
   }
 
 

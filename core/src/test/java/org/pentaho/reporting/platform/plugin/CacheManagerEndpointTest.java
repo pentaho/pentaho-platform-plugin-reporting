@@ -13,14 +13,16 @@
  * See the GNU General Public License for more details.
  *
  *
- * Copyright 2006 - 2017 Hitachi Vantara.  All rights reserved.
+ * Copyright 2006 - 2024 Hitachi Vantara.  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.pentaho.platform.api.engine.ICacheManager;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.core.cache.DataCache;
@@ -28,27 +30,23 @@ import org.pentaho.reporting.engine.classic.core.cache.DataCacheFactory;
 import org.pentaho.reporting.engine.classic.core.cache.DataCacheManager;
 import org.pentaho.reporting.platform.plugin.cache.IPluginCacheManager;
 import org.pentaho.reporting.platform.plugin.cache.IReportContentCache;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
 
 import javax.ws.rs.core.Response;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-@RunWith( PowerMockRunner.class )
-@PowerMockIgnore( "jdk.internal.reflect.*" )
-@PrepareForTest( DataCacheFactory.class )
+@RunWith( MockitoJUnitRunner.class )
 public class CacheManagerEndpointTest {
 
   @Test
   public void clear() throws Exception {
-    try {
-      PowerMockito.mockStatic( DataCacheFactory.class );
+    try ( MockedStatic<DataCacheFactory> dataCacheFactoryMockedStatic = Mockito.mockStatic( DataCacheFactory.class ) ) {
       final DataCache dataCache = mock( DataCache.class );
-      when( DataCacheFactory.getCache() ).thenReturn( dataCache );
+      dataCacheFactoryMockedStatic.when( DataCacheFactory::getCache ).thenReturn( dataCache );
       final DataCacheManager dataCacheManager = mock( DataCacheManager.class );
       when( dataCache.getCacheManager() ).thenReturn( dataCacheManager );
       final IPluginCacheManager cacheManager = mock( IPluginCacheManager.class );
