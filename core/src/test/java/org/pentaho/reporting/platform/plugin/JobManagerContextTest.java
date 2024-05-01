@@ -34,14 +34,14 @@ import org.pentaho.reporting.platform.plugin.async.AsyncExecutionStatus;
 import org.pentaho.reporting.platform.plugin.async.IAsyncReportState;
 import org.pentaho.reporting.platform.plugin.async.IPentahoAsyncExecutor;
 
-
 import java.io.IOException;
 import java.util.UUID;
 
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
 
@@ -76,11 +76,11 @@ public class JobManagerContextTest {
 
   @Test
   public void testNeedRecalculateFinished() throws ResourceException, IOException, JobManager.ContextFailedException {
-    try ( MockedStatic<ReportCreator> reportCreatorMockedStatic = Mockito.mockStatic( ReportCreator.class );
-          MockedStatic<PentahoSessionHolder> pentahoSessionHolderMockedStatic = Mockito.mockStatic(
+    try ( MockedStatic<ReportCreator> reportCreatorMockedStatic = mockStatic( ReportCreator.class );
+          MockedStatic<PentahoSessionHolder> pentahoSessionHolderMockedStatic = mockStatic(
             PentahoSessionHolder.class )
     ) {
-      reportCreatorMockedStatic.when( () -> ReportCreator.createReport( anyString() ) ).thenReturn( report );
+      reportCreatorMockedStatic.when( () -> ReportCreator.createReportByName( any() ) ).thenReturn( report );
       pentahoSessionHolderMockedStatic.when( PentahoSessionHolder::getSession ).thenReturn( session );
       when( state.getStatus() ).thenReturn( AsyncExecutionStatus.FINISHED );
       final JobManager jobManager = new JobManager();
@@ -95,7 +95,7 @@ public class JobManagerContextTest {
           MockedStatic<PentahoSessionHolder> pentahoSessionHolderMockedStatic = Mockito.mockStatic(
             PentahoSessionHolder.class )
     ) {
-      reportCreatorMockedStatic.when( () -> ReportCreator.createReport( anyString() ) ).thenReturn( report );
+      reportCreatorMockedStatic.when( () -> ReportCreator.createReportByName( any() ) ).thenReturn( report );
       pentahoSessionHolderMockedStatic.when( PentahoSessionHolder::getSession ).thenReturn( session );
       when( state.getStatus() ).thenReturn( AsyncExecutionStatus.FINISHED );
       final JobManager jobManager = new JobManager();
@@ -107,11 +107,11 @@ public class JobManagerContextTest {
   @Test
   public void testNeedRecalculateReportLevelLimit()
     throws ResourceException, IOException, JobManager.ContextFailedException {
-    try ( MockedStatic<ReportCreator> reportCreatorMockedStatic = Mockito.mockStatic( ReportCreator.class );
-          MockedStatic<PentahoSessionHolder> pentahoSessionHolderMockedStatic = Mockito.mockStatic(
+    try ( MockedStatic<ReportCreator> reportCreatorMockedStatic = mockStatic( ReportCreator.class );
+          MockedStatic<PentahoSessionHolder> pentahoSessionHolderMockedStatic = mockStatic(
             PentahoSessionHolder.class )
     ) {
-      reportCreatorMockedStatic.when( () -> ReportCreator.createReport( anyString() ) ).thenReturn( report );
+      reportCreatorMockedStatic.when( () -> ReportCreator.createReportByName( any() ) ).thenReturn( report );
       pentahoSessionHolderMockedStatic.when( PentahoSessionHolder::getSession ).thenReturn( session );
       when( state.getStatus() ).thenReturn( AsyncExecutionStatus.FINISHED );
       final JobManager jobManager = new JobManager();
@@ -125,11 +125,11 @@ public class JobManagerContextTest {
   @Test
   public void testNeedRecalculateReportLimitReached()
     throws ResourceException, IOException, JobManager.ContextFailedException {
-    try ( MockedStatic<ReportCreator> reportCreatorMockedStatic = Mockito.mockStatic( ReportCreator.class );
-          MockedStatic<PentahoSessionHolder> pentahoSessionHolderMockedStatic = Mockito.mockStatic(
+    try ( MockedStatic<ReportCreator> reportCreatorMockedStatic = mockStatic( ReportCreator.class );
+          MockedStatic<PentahoSessionHolder> pentahoSessionHolderMockedStatic = mockStatic(
             PentahoSessionHolder.class )
     ) {
-      reportCreatorMockedStatic.when( () -> ReportCreator.createReport( anyString() ) ).thenReturn( report );
+      reportCreatorMockedStatic.when( () -> ReportCreator.createReportByName( any() ) ).thenReturn( report );
       pentahoSessionHolderMockedStatic.when( PentahoSessionHolder::getSession ).thenReturn( session );
       when( state.getStatus() ).thenReturn( AsyncExecutionStatus.FINISHED );
       when( state.getIsQueryLimitReached() ).thenReturn( true );

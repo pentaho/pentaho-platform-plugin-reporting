@@ -20,6 +20,7 @@ package org.pentaho.reporting.platform.plugin;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -58,14 +59,16 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 
-@RunWith( MockitoJUnitRunner.class )
+@RunWith( MockitoJUnitRunner.Strict.class )
 public class JobManagerTest {
 
   private static final IPentahoSession session = mock( IPentahoSession.class );
@@ -82,6 +85,8 @@ public class JobManagerTest {
   private static volatile IAsyncReportState STATE;
   private static IPentahoObjectFactory objFactory;
 
+  private MockedStatic<PentahoSessionHolder> pentahoSessionHolderMockedStatic;
+
   @BeforeClass public static void setUp() throws Exception {
     STATE = getState();
     executor = mock( PentahoAsyncExecutor.class );
@@ -94,20 +99,25 @@ public class JobManagerTest {
     // return mock executor for any call to it's bean name.
     when( objFactory.objectDefined( anyString() ) ).thenReturn( true );
     when( objFactory.objectDefined( any( Class.class ) ) ).thenReturn( true );
-    when( objFactory.get( any( Class.class ), eq( PentahoAsyncExecutor.BEAN_NAME ), any( IPentahoSession.class ) ) )
+    when( objFactory.get( Mockito.<Class>any(), eq( PentahoAsyncExecutor.BEAN_NAME ), Mockito.<IPentahoSession>any() ) )
       .thenReturn( executor );
 
-    when( objFactory.get( any( Class.class ), eq( "ISchedulingDirectoryStrategy" ), any( IPentahoSession.class ) ) )
+    when( objFactory.get( Mockito.<Class>any(), eq( "ISchedulingDirectoryStrategy" ), Mockito.<IPentahoSession>any() ) )
       .thenReturn( schedulingDirectoryStrategy );
 
     final IUnifiedRepository repository = mock( IUnifiedRepository.class );
-    when( objFactory.get( any( Class.class ), eq( "IUnifiedRepository" ), any( IPentahoSession.class ) ) )
+    when( objFactory.get( Mockito.<Class>any(), eq( "IUnifiedRepository" ), Mockito.<IPentahoSession>any() ) )
       .thenReturn( repository );
 
-    when( objFactory.get( any( Class.class ), eq( "IJobIdGenerator" ), any( IPentahoSession.class ) ) )
+    when( objFactory.get( Mockito.<Class>any(), eq( "IJobIdGenerator" ), Mockito.<IPentahoSession>any() ) )
       .thenReturn( new JobIdGenerator() );
 
     PentahoSystem.registerObjectFactory( objFactory );
+  }
+
+  @After
+  public void afterEach() {
+    pentahoSessionHolderMockedStatic.close();
   }
 
   @AfterClass
@@ -117,13 +127,14 @@ public class JobManagerTest {
 
   @Before
   public void before() {
+    pentahoSessionHolderMockedStatic = mockStatic( PentahoSessionHolder.class );
     reset( executor );
-    when( executor.getReportState( any( UUID.class ), any( IPentahoSession.class ) ) ).thenReturn( STATE );
-    when( executor.schedule( any(), any() ) ).thenAnswer( i -> {
+    when( executor.getReportState( Mockito.<UUID>any(), Mockito.<IPentahoSession>any() ) ).thenReturn( STATE );
+    lenient().when( executor.schedule( any(), any() ) ).thenAnswer( i -> {
       STATUS = AsyncExecutionStatus.SCHEDULED;
       return true;
-    } );
-    when( executor.preSchedule( any(), any() ) ).thenAnswer( i -> {
+    });
+    lenient().when( executor.preSchedule( any(), any() ) ).thenAnswer( i -> {
       STATUS = AsyncExecutionStatus.PRE_SCHEDULED;
       return true;
     } );
@@ -478,36 +489,32 @@ public class JobManagerTest {
 
   @Test
   public void testReserveIdNoSession() throws Exception {
-    try ( MockedStatic<PentahoSessionHolder> pentahoSessionHolderMockedStatic = Mockito.mockStatic( PentahoSessionHolder.class ) ) {
-      pentahoSessionHolderMockedStatic.when( PentahoSessionHolder::getSession ).thenReturn( null );
-      assertNull( PentahoSessionHolder.getSession() );
+    pentahoSessionHolderMockedStatic.when( PentahoSessionHolder::getSession ).thenReturn( null );
+    assertNull( PentahoSessionHolder.getSession() );
       final JobManager jobManager = new JobManager( false, 1000, 1000 );
       final Response response = jobManager.reserveId();
       assertEquals( 404, response.getStatus() );
-    }
   }
 
 
   @Test
   public void testReserveIdNoGenerator() throws Exception {
     try {
-      when( objFactory.get( any( Class.class ), eq( "IJobIdGenerator" ), any( IPentahoSession.class ) ) )
+      when( objFactory.get( Mockito.<Class>any(), eq( "IJobIdGenerator" ), Mockito.<IPentahoSession>any() ) )
         .thenReturn( null );
       setSession();
       final JobManager jobManager = new JobManager( false, 1000, 1000 );
       final Response response = jobManager.reserveId();
       assertEquals( 404, response.getStatus() );
     } finally {
-      when( objFactory.get( any( Class.class ), eq( "IJobIdGenerator" ), any( IPentahoSession.class ) ) )
+      when( objFactory.get( Mockito.<Class>any(), eq( "IJobIdGenerator" ), Mockito.<IPentahoSession>any() ) )
         .thenReturn( new JobIdGenerator() );
     }
   }
 
   private void setSession() {
-    try ( MockedStatic<PentahoSessionHolder> pentahoSessionHolderMockedStatic = Mockito.mockStatic( PentahoSessionHolder.class ) ) {
-      pentahoSessionHolderMockedStatic.when( PentahoSessionHolder::getSession ).thenReturn( session );
-      assertEquals( session, PentahoSessionHolder.getSession() );
-    }
+    pentahoSessionHolderMockedStatic.when( PentahoSessionHolder::getSession ).thenReturn( session );
+    assertEquals( session, PentahoSessionHolder.getSession() );
   }
 
   public static IAsyncReportState getState() {
