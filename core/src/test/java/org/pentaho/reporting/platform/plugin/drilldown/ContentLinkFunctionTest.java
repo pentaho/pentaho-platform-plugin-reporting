@@ -18,6 +18,7 @@
 package org.pentaho.reporting.platform.plugin.drilldown;
 
 import junit.framework.TestCase;
+import org.mockito.Mockito;
 import org.pentaho.reporting.engine.classic.core.ReportEnvironment;
 import org.pentaho.reporting.engine.classic.core.function.ExpressionRuntime;
 import org.pentaho.reporting.engine.classic.core.function.ProcessingContext;
@@ -78,7 +79,7 @@ public class ContentLinkFunctionTest extends TestCase {
     doReturn( typeRegistry ).when( reportFormulaContext ).getTypeRegistry();
     ArrayCallback callback = mock( ArrayCallback.class );
     doReturn( callback ).when( typeRegistry )
-        .convertToArray( any( org.pentaho.reporting.libraries.formula.typing.Type.class ), any() );
+        .convertToArray( Mockito.<org.pentaho.reporting.libraries.formula.typing.Type>any(), any() );
 
     try {
       functionSpy.evaluate( reportFormulaContext, parameters );
