@@ -13,7 +13,7 @@
  * See the GNU General Public License for more details.
  *
  *
- * Copyright 2006 - 2018 Hitachi Vantara.  All rights reserved.
+ * Copyright 2006 - 2024 Hitachi Vantara.  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin.async;
@@ -138,7 +138,7 @@ public class PentahoAsyncReportExecutorTest {
     Path junitPrivate = Paths.get( tempFolder ).resolve( "JUNIT_" + UUID.randomUUID().toString() );
     junitPrivate.toFile().deleteOnExit();
 
-    when( context.getSolutionPath( anyString() ) ).thenReturn( junitPrivate.toString() );
+    when( context.getSolutionPath( any() ) ).thenReturn( junitPrivate.toString() );
 
     PentahoSystem.setApplicationContext( context );
     final ISecurityHelper iSecurityHelper = mock( ISecurityHelper.class );
