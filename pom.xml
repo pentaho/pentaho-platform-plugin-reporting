@@ -49,9 +49,16 @@
     <runITs>false</runITs>
     <javax.ws.rs-api.version>2.0</javax.ws.rs-api.version>
     <javax.servlet-api.version>3.0.1</javax.servlet-api.version>
+    <commons-io.version>2.16.1</commons-io.version>
   </properties>
   <dependencyManagement>
     <dependencies>
+      <dependency>
+        <groupId>commons-io</groupId>
+        <artifactId>commons-io</artifactId>
+        <version>${commons-io.version}</version>
+        <scope>test</scope>
+      </dependency>
       <dependency>
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
