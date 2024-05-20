@@ -12,10 +12,11 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2019 Hitachi Vantara.  All rights reserved.
+ * Copyright (c) 2002-2024 Hitachi Vantara.  All rights reserved.
  */
 package org.pentaho.reporting.platform.plugin.output;
 
+import com.cronutils.utils.VisibleForTesting;
 import mondrian.util.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -303,7 +304,8 @@ public class CachingPageableHTMLOutput extends PageableHTMLOutput {
     return result;
   }
 
-  private IReportContent produceCacheablePages( final MasterReport report, final int yieldRate, final String key,
+  @VisibleForTesting
+  protected IReportContent produceCacheablePages( final MasterReport report, final int yieldRate, final String key,
                                                 final int acceptedPage )
     throws ReportProcessingException {
 

@@ -13,7 +13,7 @@
  * See the GNU General Public License for more details.
  *
  *
- * Copyright 2006 - 2017 Hitachi Vantara.  All rights reserved.
+ * Copyright 2006 - 2024 Hitachi Vantara.  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin.async;
@@ -105,7 +105,7 @@ public class PentahoAsyncExecutionAuditTest {
       eq( auditId ),
       eq( "" ),
       eq( (float) 0 ),
-      any( ILogger.class )
+      nullable( ILogger.class )
     );
 
     verify( wrapper, Mockito.times( 1 ) ).audit(
@@ -118,7 +118,7 @@ public class PentahoAsyncExecutionAuditTest {
       eq( auditId ),
       eq( "" ),
       anyFloat(), // hope more than 0
-      any( ILogger.class )
+      nullable( ILogger.class )
     );
   }
 
@@ -144,7 +144,7 @@ public class PentahoAsyncExecutionAuditTest {
       eq( auditId ),
       eq( "" ),
       eq( (float) 0 ),
-      any( ILogger.class )
+      nullable( ILogger.class )
     );
 
     // no async reports for this case.
@@ -158,7 +158,7 @@ public class PentahoAsyncExecutionAuditTest {
       eq( auditId ),
       eq( "" ),
       eq( (float) 0 ),
-      any( ILogger.class )
+      nullable( ILogger.class )
     );
   }
 
@@ -312,7 +312,7 @@ public class PentahoAsyncExecutionAuditTest {
       eq( auditId ),
       eq( "" ),
       anyFloat(),
-      any( ILogger.class )
+      nullable( ILogger.class )
     );
   }
 
@@ -439,7 +439,7 @@ public class PentahoAsyncExecutionAuditTest {
       eq( auditId ),
       eq( "" ),
       anyFloat(),
-      any( ILogger.class )
+      nullable( ILogger.class )
     );
 
     verify( wrapper, atLeast( CAPACITY ) ).audit(
@@ -452,7 +452,7 @@ public class PentahoAsyncExecutionAuditTest {
       eq( auditId ),
       eq( "" ),
       anyFloat(),
-      any( ILogger.class )
+      nullable( ILogger.class )
     );
 
     // this is ONE sucesfull execution for scheduled task since it was not cancelled!!!
@@ -466,7 +466,7 @@ public class PentahoAsyncExecutionAuditTest {
       eq( auditId ),
       eq( "" ),
       anyFloat(),
-      any( ILogger.class )
+      nullable( ILogger.class )
     );
   }
 

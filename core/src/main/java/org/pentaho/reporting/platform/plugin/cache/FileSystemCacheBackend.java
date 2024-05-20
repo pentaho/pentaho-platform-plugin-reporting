@@ -12,11 +12,12 @@
  *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  *  See the GNU Lesser General Public License for more details.
  *
- *  Copyright (c) 2002-2021 Hitachi Vantara..  All rights reserved.
+ *  Copyright (c) 2002-2024 Hitachi Vantara..  All rights reserved.
  *
  */
 package org.pentaho.reporting.platform.plugin.cache;
 
+import com.cronutils.utils.VisibleForTesting;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
@@ -354,4 +355,14 @@ public class FileSystemCacheBackend implements ICacheBackend {
     return clean;
   }
 
+  @VisibleForTesting
+  void setSyncMap( Map<List<String>, ReentrantReadWriteLock> newMap ) {
+    this.syncMap.clear();
+    this.syncMap.putAll( newMap );
+  }
+
+  @VisibleForTesting
+  Map<List<String>, ReentrantReadWriteLock> getSyncMap() {
+    return this.syncMap;
+  }
 }
