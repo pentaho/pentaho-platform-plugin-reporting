@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2023 Hitachi Vantara.  All rights reserved.
+ * Copyright (c) 2002-2024 Hitachi Vantara.  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
@@ -111,6 +111,9 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
   public static final String PNG_EXPORT_TYPE = "pageable/X-AWT-Graphics;image-type=png";
 
   public static final String RESERVEDMAPKEY_LINEAGE_ID = "lineage-id";
+
+  public static final String REPORT_EXTERNALIZE_STYLE = "externalize-style";
+  public static final String REPORT_BASE64_IMAGES = "base64-images";
 
   /**
    * Static initializer block to guarantee that the ReportingComponent will be in a state where the reporting engine
@@ -888,7 +891,11 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
       report.getReportConfiguration().setConfigProperty(
         "org.pentaho.reporting.engine.classic.core.YieldRate", String.valueOf( yieldRate ) );
     }
-
+    report.getReportConfiguration().setConfigProperty( HtmlTableModule.EXTERNALIZE_STYLE,
+      String.valueOf( getInput( REPORT_EXTERNALIZE_STYLE, null ) ) );
+    report.getReportConfiguration().setConfigProperty(
+      "org.pentaho.reporting.engine.classic.core.modules.output.table.html.Base64Images",
+      String.valueOf( getInput( REPORT_BASE64_IMAGES, null ) ) );
     try {
       final DefaultParameterContext parameterContext = new DefaultParameterContext( report );
       // open parameter context
