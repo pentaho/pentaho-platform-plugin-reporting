@@ -49,6 +49,7 @@
     <javax.ws.rs-api.version>2.0</javax.ws.rs-api.version>
     <javax.servlet-api.version>3.0.1</javax.servlet-api.version>
     <commons-io.version>2.16.1</commons-io.version>
+    <jcip-annotations.version>1.0-1</jcip-annotations.version>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -405,6 +406,12 @@
         <groupId>javax.servlet</groupId>
         <artifactId>javax.servlet-api</artifactId>
         <version>${javax.servlet-api.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>com.github.stephenc.jcip</groupId>
+        <artifactId>jcip-annotations</artifactId>
+        <version>${jcip-annotations.version}</version>
         <scope>test</scope>
       </dependency>
     </dependencies>
