@@ -20,9 +20,12 @@ package org.pentaho.reporting.platform.plugin.async;
 
 import com.google.common.io.CharStreams;
 import junit.framework.Assert;
+import net.jcip.annotations.NotThreadSafe;
 import org.junit.*;
 import org.junit.rules.Timeout;
+import org.junit.runner.RunWith;
 import org.mockito.invocation.InvocationOnMock;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 import org.pentaho.commons.util.repository.exception.RuntimeException;
 import org.pentaho.platform.api.engine.IApplicationContext;
@@ -72,6 +75,8 @@ import static org.mockito.Mockito.*;
  * <p>
  * Created by dima.prokopenko@gmail.com on 2/17/2016.
  */
+@RunWith( MockitoJUnitRunner.class )
+@NotThreadSafe
 public class PentahoAsyncReportExecutorTest {
 
   @Rule public Timeout globalTimeout = new Timeout( 10000 );
@@ -126,8 +131,8 @@ public class PentahoAsyncReportExecutorTest {
     input = new AsyncJobFileStagingHandler.FixedSizeStagingContent( temp );
 
     when( handler.getStagingContent() ).thenReturn( input );
-    when( report.getReportConfiguration() ).thenReturn( configuration );
-    when( component.getReport() ).thenReturn( report );
+    lenient().when( report.getReportConfiguration() ).thenReturn( configuration );
+    lenient().when( component.getReport() ).thenReturn( report );
 
     when( session1.getId() ).thenReturn( sessionUid1.toString() );
     when( session2.getId() ).thenReturn( sessionUid2.toString() );
