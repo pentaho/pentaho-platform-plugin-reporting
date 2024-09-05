@@ -13,7 +13,7 @@
  * See the GNU General Public License for more details.
  *
  *
- * Copyright 2006 - 2017 Hitachi Vantara.  All rights reserved.
+ * Copyright 2024 Hitachi Vantara.  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
@@ -23,8 +23,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
+import org.pentaho.reporting.engine.classic.core.event.async.ReportListenerThreadHolder;
 import org.pentaho.reporting.libraries.base.util.PerformanceLoggingStopWatch;
-import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
