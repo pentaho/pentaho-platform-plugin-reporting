@@ -20,6 +20,7 @@
 package org.pentaho.reporting.platform.plugin.async;
 
 import org.pentaho.platform.api.engine.IPentahoSession;
+import org.pentaho.reporting.engine.classic.core.event.async.IAsyncReportState;
 import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
 
 import java.io.Serializable;

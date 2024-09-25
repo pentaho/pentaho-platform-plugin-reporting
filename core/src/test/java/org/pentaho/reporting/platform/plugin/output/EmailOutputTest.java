@@ -26,12 +26,13 @@ import org.pentaho.platform.engine.core.system.boot.PlatformInitializationExcept
 import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressEvent;
+import org.pentaho.reporting.engine.classic.core.event.async.IAsyncReportListener;
+import org.pentaho.reporting.engine.classic.core.event.async.ReportListenerThreadHolder;
 import org.pentaho.reporting.engine.classic.core.layout.output.YieldReportListener;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlTableModule;
 import org.pentaho.reporting.libraries.base.config.ModifiableConfiguration;
 import org.pentaho.reporting.platform.plugin.MicroPlatformFactory;
-import org.pentaho.reporting.platform.plugin.async.IAsyncReportListener;
-import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
+
 import org.pentaho.test.platform.engine.core.MicroPlatform;
 
 import java.util.HashMap;

@@ -33,6 +33,9 @@ import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.engine.security.SecurityHelper;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
+import org.pentaho.reporting.engine.classic.core.event.async.AsyncExecutionStatus;
+import org.pentaho.reporting.engine.classic.core.event.async.AsyncReportStatusListener;
+import org.pentaho.reporting.engine.classic.core.event.async.IAsyncReportState;
 import org.pentaho.reporting.libraries.base.config.ModifiableConfiguration;
 import org.pentaho.reporting.platform.plugin.AuditWrapper;
 import org.pentaho.reporting.platform.plugin.SimpleReportingComponent;
@@ -122,8 +125,8 @@ public class PentahoAsyncExecutionTest {
     return new PentahoAsyncReportExecution( "junit-path", component, handler, userSession, "not null",
       AuditWrapper.NULL ) {
       @Override
-      protected AsyncReportStatusListener createListener( UUID id,
-                                                          List<? extends ReportProgressListener> callbackListener ) {
+      protected AsyncReportStatusListener createListener(UUID id,
+                                                         List<? extends ReportProgressListener> callbackListener ) {
         return new AsyncReportStatusListener( "display_path", id, "text/html", callbackListener );
       }
     };
