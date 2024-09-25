@@ -72,7 +72,9 @@ define(function() {
     if(!enabled) { return null; }
     
     // May be null in case popups blocked
-    var logWin = window.open('', options.winname || 'report_viewer_log');
+    /* noopener and noreferrer: These attributes mitigate the risk of tabnabbing and
+              prevent the new page from accessing the original window’s properties. */
+    var logWin = window.open('', options.winname || 'report_viewer_log', 'noopener,noreferrer');
     if(!logWin) { return null; }
     
     var logDoc = logWin.document;
