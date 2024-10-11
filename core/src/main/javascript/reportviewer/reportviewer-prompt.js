@@ -722,7 +722,7 @@ define([
               //Ex: +600 or +0000 or -0530
               //Although most browsers support this format, the standard for a timezone string should be "+00:00" for example.
               //The wrong format of timezone would not allow to create a new Date object in some browsers (i'm looking at you IE)
-              timezoneHint = util.convertTimezoneToStandardFormat(timezoneHint)
+              timezoneHint = util.convertTimezoneToStandardFormat(timezoneHint);
               //Timezone hint is present, apply it
               return processingValue + timezoneHint;
             }
@@ -754,37 +754,53 @@ define([
           }
 
           var isSameDate = function(date1, date2) {
-            return date1.getFullYear() === date2.getFullYear() && date1.getMonth() === date2.getMonth() && date1.getDate() === date2.getDate();
-          }
-          //bring date values to the same parameter data-format for the correct comparison.
+            return (
+              date1.getFullYear() === date2.getFullYear() &&
+              date1.getMonth() === date2.getMonth() &&
+              date1.getDate() === date2.getDate()
+            );
+          };
+
+          var isCloseDate = function (date1, date2) {
+            // Check if dates are the same or off by one day
+            var diffInDays = Math.abs((date1 - date2) / (1000 * 60 * 60 * 24));
+            return diffInDays <= 1;
+          };
+
+          // Bring date values to the same parameter data-format for correct comparison.
           oldValue = applyParamFormatter(oldValue, formatter);
           newValue = applyParamFormatter(newValue, formatter);
 
           oldValue = processTimezone(oldValue);
           newValue = processTimezone(newValue);
 
-          //get the time from oldValue - example of string in oldValue - 2021-09-13T22:33:50.000+05:00 - so getting 23:33:50
-          var value = oldValue.substring(11,19);
+          // Get the time component from both values
+          var oldTime = oldValue.substring(11, 23); // Extract "00:00:00.000" part
+          var newTime = newValue.substring(11, 23); // Extract "00:00:00.000" part
+
+          // If both times are "00:00:00.000", ignore timezones and compare dates
+          if (oldTime === "00:00:00.000" && newTime === "00:00:00.000") {
+            var dtValue = new Date(oldValue);
+            var dtParamValue = new Date(newValue);
+
+            if (isNaN(dtValue.getTime()) || isNaN(dtParamValue.getTime())) {
+              return false; // Invalid date handling
+            }
+
+            // Compare if the dates are the same or off by one day due to timezone differences and return
+            return isCloseDate(dtValue, dtParamValue);
+          }
+
+          // Handle comparison when time is not "00:00:00.000" (standard comparison)
           var dtValue = new Date(oldValue);
-          //date picker value does not take into account the hours. in order to not miscalculate the timezone lets make the hours the same
-          //in the date picker in order to compare them after
-          //case the time is different from 00:00:00 replace will not happens it means we already have some hour
-          newValue = newValue.replace("00:00:00",value);
           var dtParamValue = new Date(newValue);
 
-
           if (isNaN(dtValue.getTime()) || isNaN(dtParamValue.getTime())) {
-            //Something went wrong we have an invalid date - don't loop the UI anyway
-            return true;
+            return false; // Invalid date handling
           }
 
-          //compare the dates
-          if (isSameDate(dtValue, dtParamValue)) {
-            //Already has a valid value
-            return true;
-          }
-
-          return false;
+          // Compare the dates, including timezone differences and return
+          return isSameDate(dtValue, dtParamValue);
       },
 
 
