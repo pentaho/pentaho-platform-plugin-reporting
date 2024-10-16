@@ -25,8 +25,8 @@ import org.junit.Test;
 import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressEvent;
-import org.pentaho.reporting.platform.plugin.async.IAsyncReportListener;
-import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
+import org.pentaho.reporting.engine.classic.core.event.async.IAsyncReportListener;
+import org.pentaho.reporting.engine.classic.core.event.async.ReportListenerThreadHolder;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;

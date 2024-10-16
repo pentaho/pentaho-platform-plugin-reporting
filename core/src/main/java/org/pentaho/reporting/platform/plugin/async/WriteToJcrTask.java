@@ -25,9 +25,9 @@ import org.pentaho.platform.api.repository2.unified.RepositoryFile;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.util.StringUtil;
 import org.pentaho.platform.util.web.MimeHelper;
+import org.pentaho.reporting.engine.classic.core.event.async.IAsyncReportState;
 import org.pentaho.reporting.libraries.repository.ContentLocation;
 import org.pentaho.reporting.platform.plugin.repository.ReportContentRepository;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
