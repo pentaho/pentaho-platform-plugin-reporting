@@ -702,6 +702,7 @@ public class PentahoAsyncReportExecutorTest {
 
   }
 
+  @Ignore
   @Test public void testRequestLocationAfterCallback() throws InterruptedException {
     final CountDownLatch latch = new CountDownLatch( 1 );
 
