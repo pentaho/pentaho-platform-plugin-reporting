@@ -32,9 +32,11 @@ import org.pentaho.reporting.libraries.repository.ContentIOException;
 import org.pentaho.reporting.libraries.repository.ContentLocation;
 import org.pentaho.reporting.libraries.repository.DefaultNameGenerator;
 import org.pentaho.reporting.libraries.repository.email.EmailRepository;
+import org.pentaho.reporting.platform.plugin.async.IAsyncReportListener;
+import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
 
-import javax.mail.MessagingException;
-import javax.mail.Session;
+import jakarta.mail.MessagingException;
+import jakarta.mail.Session;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Properties;

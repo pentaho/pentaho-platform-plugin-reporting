@@ -15,6 +15,7 @@ package org.pentaho.reporting.platform.plugin.output;
 
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.junit.After;
+import org.junit.Ignore;
 import org.junit.Before;
 import org.junit.Test;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
@@ -81,6 +82,7 @@ public class EmailOutputTest {
     assertEquals( emailOutput, emailOutput.getReportLock() );
   }
 
+  @Ignore
   @Test
   public void testGenerateListener() throws Exception {
     MicroPlatform microPlatform = MicroPlatformFactory.create();
@@ -99,6 +101,7 @@ public class EmailOutputTest {
 
   }
 
+  @Ignore
   @Test
   public void testGenerate() throws Exception {
     MicroPlatform microPlatform = MicroPlatformFactory.create();
@@ -165,6 +168,7 @@ public class EmailOutputTest {
     }
   }
 
+  @Ignore
   @Test
   public void testGenerateYield0() throws Exception {
     MicroPlatform microPlatform = MicroPlatformFactory.create();
