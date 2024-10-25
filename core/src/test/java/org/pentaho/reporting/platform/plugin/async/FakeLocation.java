@@ -12,12 +12,12 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2017 Hitachi Vantara..  All rights reserved.
+ * Copyright (c) 2002-2024 Hitachi Vantara..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin.async;
 
-import org.eclipse.jetty.util.ConcurrentHashSet;
+import java.util.concurrent.ConcurrentHashMap;
 import org.pentaho.reporting.libraries.repository.ContentCreationException;
 import org.pentaho.reporting.libraries.repository.ContentEntity;
 import org.pentaho.reporting.libraries.repository.ContentIOException;
@@ -44,7 +44,7 @@ public class FakeLocation implements ContentLocation {
     this.latch = firstLatch;
   }
 
-  private Set<String> files = new ConcurrentHashSet<>();
+  private Set<String> files = new ConcurrentHashMap<String,Boolean>().keySet();
 
   @Override public ContentEntity[] listContents() throws ContentIOException {
     throw new UnsupportedOperationException();

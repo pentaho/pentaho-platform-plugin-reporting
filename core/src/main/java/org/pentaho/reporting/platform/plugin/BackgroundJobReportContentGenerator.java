@@ -13,7 +13,7 @@
  * See the GNU General Public License for more details.
  *
  *
- * Copyright 2006 - 2017 Hitachi Vantara.  All rights reserved.
+ * Copyright 2006 - 2024 Hitachi Vantara.  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
@@ -32,8 +32,8 @@ import org.pentaho.reporting.platform.plugin.async.PentahoAsyncReportExecution;
 import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
 import org.pentaho.reporting.platform.plugin.staging.AsyncJobFileStagingHandler;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;

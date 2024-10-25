@@ -13,7 +13,7 @@
  * See the GNU General Public License for more details.
  *
  *
- * Copyright 2006 - 2019 Hitachi Vantara.  All rights reserved.
+ * Copyright 2006 - 2024 Hitachi Vantara.  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
@@ -25,9 +25,9 @@ import org.pentaho.reporting.engine.classic.core.cache.DataCacheFactory;
 import org.pentaho.reporting.platform.plugin.cache.IPluginCacheManager;
 import org.pentaho.reporting.platform.plugin.cache.IReportContentCache;
 
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.core.Response;
 
 @Path( "/reporting/api/cache" )
 public class CacheManagerEndpoint {

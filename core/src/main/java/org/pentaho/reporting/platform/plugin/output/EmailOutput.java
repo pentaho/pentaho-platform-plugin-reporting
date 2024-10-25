@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2017 Hitachi Vantara..  All rights reserved.
+ * Copyright (c) 2002-2024 Hitachi Vantara..  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin.output;
@@ -37,8 +37,8 @@ import org.pentaho.reporting.libraries.repository.email.EmailRepository;
 import org.pentaho.reporting.platform.plugin.async.IAsyncReportListener;
 import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
 
-import javax.mail.MessagingException;
-import javax.mail.Session;
+import jakarta.mail.MessagingException;
+import jakarta.mail.Session;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Properties;

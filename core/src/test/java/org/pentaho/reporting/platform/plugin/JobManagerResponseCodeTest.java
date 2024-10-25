@@ -13,7 +13,7 @@
  * See the GNU General Public License for more details.
  *
  *
- * Copyright 2006 - 2018 Hitachi Vantara.  All rights reserved.
+ * Copyright 2006 - 2024 Hitachi Vantara.  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
@@ -21,7 +21,7 @@ package org.pentaho.reporting.platform.plugin;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response;
 import java.io.IOException;
 import java.util.Map;
 

@@ -46,8 +46,6 @@
     <commons-gwt.version>10.3.0.0-SNAPSHOT</commons-gwt.version>
     <common-ui.version>10.3.0.0-SNAPSHOT</common-ui.version>
     <runITs>false</runITs>
-    <javax.ws.rs-api.version>2.0</javax.ws.rs-api.version>
-    <javax.servlet-api.version>3.0.1</javax.servlet-api.version>
     <commons-io.version>2.16.1</commons-io.version>
     <jcip-annotations.version>1.0-1</jcip-annotations.version>
   </properties>
@@ -207,9 +205,9 @@
         <scope>compile</scope>
       </dependency>
       <dependency>
-        <groupId>javax.ws.rs</groupId>
-        <artifactId>javax.ws.rs-api</artifactId>
-        <version>${javax.ws.rs-api.version}</version>
+        <groupId>jakarta.ws.rs</groupId>
+        <artifactId>jakarta.ws.rs-api</artifactId>
+        <version>${jakarta.ws.rs-api.version}</version>
         <scope>compile</scope>
       </dependency>
       <dependency>
@@ -403,10 +401,9 @@
         <scope>test</scope>
       </dependency>
       <dependency>
-        <groupId>javax.servlet</groupId>
-        <artifactId>javax.servlet-api</artifactId>
-        <version>${javax.servlet-api.version}</version>
-        <scope>test</scope>
+        <groupId>jakarta.servlet</groupId>
+        <artifactId>jakarta.servlet-api</artifactId>
+        <version>${jakarta.servlet.version}</version>
       </dependency>
       <dependency>
         <groupId>com.github.stephenc.jcip</groupId>
