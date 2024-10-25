@@ -40,7 +40,7 @@ import org.pentaho.reporting.platform.plugin.async.JobIdGenerator;
 import org.pentaho.reporting.platform.plugin.async.PentahoAsyncExecutor;
 import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
 
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response;
 import java.io.IOException;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
