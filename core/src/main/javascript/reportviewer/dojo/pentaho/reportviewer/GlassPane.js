@@ -1,5 +1,5 @@
 /*!
-* Copyright 2010 - 2017 Hitachi Vantara.  All rights reserved.
+* Copyright 2010 - 2024 Hitachi Vantara.  All rights reserved.
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
 *
 */
 define(["dojo/_base/declare", "dijit/_WidgetBase", "dijit/_Templated", "dojo/on", "dojo/query",
-"pentaho/common/button", "pentaho/common/Dialog", "dojo/text!pentaho/reportviewer/GlassPane.html"],
-    function(declare, _WidgetBase, _Templated, on, query, button, Dialog, templateStr){
+"pentaho/common/button", "pentaho/common/Dialog", "dojo/text!pentaho/reportviewer/GlassPane.html","common-ui/util/xss"],
+    function(declare, _WidgetBase, _Templated, on, query, button, Dialog, templateStr, xssUtil){
       return declare("pentaho.reportviewer.GlassPane", [Dialog],
       {
         buttons: ['ok'],
@@ -24,17 +24,17 @@ define(["dojo/_base/declare", "dijit/_WidgetBase", "dijit/_Templated", "dojo/on"
         hasTitleBar: false,
 
         setTitle: function(title) {
-            this.glasspanetitle.innerHTML = title;
+            this.xssUtil.setHtml(this.glasspanetitle, title);
         },
 
         setText: function(text) {
-            this.glasspanemessage.innerHTML = text;
+            this.xssUtil.setHtml(this.glasspanemessage, text);
         },
 
         setButtonText: function(text) {
           this.buttons[0] = text;
           query("#button"+0, this.domNode).forEach(function(node, index, arr){
-            node.innerHTML = text;
+            xssUtil.setHtml(node, text);
           });
         },
     
