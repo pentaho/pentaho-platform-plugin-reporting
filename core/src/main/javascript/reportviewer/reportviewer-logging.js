@@ -12,10 +12,11 @@
 * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 * See the GNU Lesser General Public License for more details.
 *
-* Copyright (c) 2002-2017 Hitachi Vantara..  All rights reserved.
+* Copyright (c) 2002-2024 Hitachi Vantara..  All rights reserved.
 */
 
-define(function() {
+define(["common-ui/util/xss"] ,
+  function(xssUtil) {
   var levelIndentText = "&nbsp;&nbsp;&nbsp;&nbsp;";
   
   var S = function(s) { return s == null ? "" : String(s); };
@@ -72,7 +73,7 @@ define(function() {
     if(!enabled) { return null; }
     
     // May be null in case popups blocked
-    var logWin = window.open('', options.winname || 'report_viewer_log');
+    var logWin = xssUtil.setHtml(window.open('', options.winname || 'report_viewer_log'));
     if(!logWin) { return null; }
     
     var logDoc = logWin.document;
