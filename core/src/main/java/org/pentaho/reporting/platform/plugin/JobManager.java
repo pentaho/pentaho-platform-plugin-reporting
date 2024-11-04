@@ -13,7 +13,7 @@
  * See the GNU General Public License for more details.
  *
  *
- * Copyright 2006 - 2019 Hitachi Vantara.  All rights reserved.
+ * Copyright 2024 Hitachi Vantara.  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
@@ -32,9 +32,9 @@ import org.pentaho.platform.util.RepositoryPathEncoder;
 import org.pentaho.platform.util.StringUtil;
 import org.pentaho.platform.util.web.MimeHelper;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
+import org.pentaho.reporting.engine.classic.core.event.async.AsyncExecutionStatus;
+import org.pentaho.reporting.engine.classic.core.event.async.IAsyncReportState;
 import org.pentaho.reporting.libraries.resourceloader.ResourceException;
-import org.pentaho.reporting.platform.plugin.async.AsyncExecutionStatus;
-import org.pentaho.reporting.platform.plugin.async.IAsyncReportState;
 import org.pentaho.reporting.platform.plugin.async.IJobIdGenerator;
 import org.pentaho.reporting.platform.plugin.async.IPentahoAsyncExecutor;
 import org.pentaho.reporting.platform.plugin.async.ISchedulingDirectoryStrategy;

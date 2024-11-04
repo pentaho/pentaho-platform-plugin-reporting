@@ -39,6 +39,10 @@ import org.pentaho.platform.engine.core.system.StandaloneSession;
 import org.pentaho.platform.engine.security.SecurityHelper;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
+import org.pentaho.reporting.engine.classic.core.event.async.AsyncExecutionStatus;
+import org.pentaho.reporting.engine.classic.core.event.async.AsyncReportState;
+import org.pentaho.reporting.engine.classic.core.event.async.AsyncReportStatusListener;
+import org.pentaho.reporting.engine.classic.core.event.async.IAsyncReportState;
 import org.pentaho.reporting.libraries.base.config.ModifiableConfiguration;
 import org.pentaho.reporting.libraries.repository.ContentIOException;
 import org.pentaho.reporting.libraries.resourceloader.ResourceException;
@@ -220,8 +224,8 @@ public class PentahoAsyncReportExecutorTest {
   private PentahoAsyncReportExecution createMockCallable( IPentahoSession session ) {
     return new PentahoAsyncReportExecution( "junit-path", component, handler, session, "not null", AuditWrapper.NULL ) {
       @Override
-      protected AsyncReportStatusListener createListener( final UUID id,
-                                                          List<? extends ReportProgressListener> listenerList ) {
+      protected AsyncReportStatusListener createListener(final UUID id,
+                                                         List<? extends ReportProgressListener> listenerList ) {
         final AsyncReportState state = new AsyncReportState( id, getReportPath() );
         final AsyncReportStatusListener retval = mock( AsyncReportStatusListener.class );
         when( retval.getState() ).thenReturn( state );

@@ -12,7 +12,7 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2018 Hitachi Vantara..  All rights reserved.
+ * Copyright 2024 Hitachi Vantara.  All rights reserved.
  */
 
 package org.pentaho.reporting.platform.plugin;
@@ -31,12 +31,13 @@ import org.pentaho.platform.engine.services.actionsequence.ActionSequenceResourc
 import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
+import org.pentaho.reporting.engine.classic.core.event.async.AsyncExecutionStatus;
+import org.pentaho.reporting.engine.classic.core.event.async.ReportListenerThreadHolder;
 import org.pentaho.reporting.libraries.base.config.ModifiableConfiguration;
 import org.pentaho.reporting.libraries.repository.ContentIOException;
 import org.pentaho.reporting.libraries.resourceloader.ResourceException;
 import org.pentaho.reporting.libraries.resourceloader.ResourceManager;
-import org.pentaho.reporting.platform.plugin.async.AsyncExecutionStatus;
-import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
+
 import org.pentaho.reporting.platform.plugin.async.TestListener;
 import org.pentaho.reporting.platform.plugin.cache.FileSystemCacheBackend;
 import org.pentaho.reporting.platform.plugin.cache.IPluginCacheManager;

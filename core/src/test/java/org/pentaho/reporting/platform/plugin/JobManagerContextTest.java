@@ -29,9 +29,9 @@ import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
+import org.pentaho.reporting.engine.classic.core.event.async.AsyncExecutionStatus;
+import org.pentaho.reporting.engine.classic.core.event.async.IAsyncReportState;
 import org.pentaho.reporting.libraries.resourceloader.ResourceException;
-import org.pentaho.reporting.platform.plugin.async.AsyncExecutionStatus;
-import org.pentaho.reporting.platform.plugin.async.IAsyncReportState;
 import org.pentaho.reporting.platform.plugin.async.IPentahoAsyncExecutor;
 
 import java.io.IOException;
