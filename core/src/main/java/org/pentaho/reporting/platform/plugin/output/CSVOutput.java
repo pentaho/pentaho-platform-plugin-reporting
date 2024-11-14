@@ -19,9 +19,9 @@ import java.io.OutputStream;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
+import org.pentaho.reporting.engine.classic.core.event.async.ReportListenerThreadHolder;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.csv.CSVReportUtil;
 import org.pentaho.reporting.libraries.repository.ContentIOException;
-import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
 
 public class CSVOutput implements ReportOutputHandler {
   public CSVOutput() {

@@ -15,10 +15,10 @@ package org.pentaho.reporting.platform.plugin.output;
 
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
+import org.pentaho.reporting.engine.classic.core.event.async.IAsyncReportListener;
 import org.pentaho.reporting.engine.classic.core.layout.output.AbstractReportProcessor;
 import org.pentaho.reporting.engine.classic.core.layout.output.YieldReportListener;
 import org.pentaho.reporting.libraries.repository.ContentIOException;
-import org.pentaho.reporting.platform.plugin.async.IAsyncReportListener;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -52,7 +52,7 @@ public interface ReportOutputHandler {
   /**
    * Default report processing code
    */
-  default void doProcess( final IAsyncReportListener listener, final AbstractReportProcessor reportProcessor )
+  default void doProcess(final IAsyncReportListener listener, final AbstractReportProcessor reportProcessor )
     throws ReportProcessingException {
     if ( listener != null ) {
       try {

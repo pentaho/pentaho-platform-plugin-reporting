@@ -15,6 +15,8 @@ package org.pentaho.reporting.platform.plugin.async;
 
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressEvent;
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
+import org.pentaho.reporting.engine.classic.core.event.async.AsyncExecutionStatus;
+import org.pentaho.reporting.engine.classic.core.event.async.AsyncReportStatusListener;
 
 import java.util.Collections;
 import java.util.UUID;

@@ -15,12 +15,12 @@ package org.pentaho.reporting.platform.plugin.output;
 
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
+import org.pentaho.reporting.engine.classic.core.event.async.IAsyncReportListener;
+import org.pentaho.reporting.engine.classic.core.event.async.ReportListenerThreadHolder;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.base.AllPageFlowSelector;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.base.PageableReportProcessor;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.base.SinglePageFlowSelector;
 import org.pentaho.reporting.engine.classic.core.modules.output.pageable.xml.XmlPageOutputProcessor;
-import org.pentaho.reporting.platform.plugin.async.IAsyncReportListener;
-import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
 
 import java.io.IOException;
 import java.io.OutputStream;
