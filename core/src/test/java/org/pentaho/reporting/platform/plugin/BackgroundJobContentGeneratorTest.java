@@ -23,13 +23,13 @@ import org.pentaho.platform.api.engine.ObjectFactoryException;
 import org.pentaho.platform.engine.core.audit.MessageTypes;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
+import org.pentaho.reporting.engine.classic.core.event.async.IAsyncReportState;
+import org.pentaho.reporting.engine.classic.core.event.async.ReportListenerThreadHolder;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlTableModule;
 import org.pentaho.reporting.platform.plugin.async.IAsyncReportExecution;
-import org.pentaho.reporting.platform.plugin.async.IAsyncReportState;
 import org.pentaho.reporting.platform.plugin.async.IJobIdGenerator;
 import org.pentaho.reporting.platform.plugin.async.IPentahoAsyncExecutor;
 import org.pentaho.reporting.platform.plugin.async.PentahoAsyncExecutor;
-import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
 import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
 import org.pentaho.test.platform.engine.core.SimpleObjectFactory;
 
@@ -347,7 +347,7 @@ public class BackgroundJobContentGeneratorTest {
       return uuid1;
     }
 
-    @Override public IAsyncReportState getReportState( UUID id, IPentahoSession session ) {
+    @Override public IAsyncReportState getReportState(UUID id, IPentahoSession session ) {
       return null;
     }
 

@@ -35,6 +35,8 @@ import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.engine.security.SecurityHelper;
 import org.pentaho.platform.util.StringUtil;
+import org.pentaho.reporting.engine.classic.core.event.async.AsyncExecutionStatus;
+import org.pentaho.reporting.engine.classic.core.event.async.IAsyncReportState;
 import org.pentaho.reporting.libraries.base.util.ArgumentNullException;
 import org.pentaho.reporting.libraries.base.util.StringUtils;
 import org.pentaho.reporting.platform.plugin.staging.AsyncJobFileStagingHandler;

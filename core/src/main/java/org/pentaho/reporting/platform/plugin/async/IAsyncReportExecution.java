@@ -14,6 +14,7 @@
 package org.pentaho.reporting.platform.plugin.async;
 
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
+import org.pentaho.reporting.engine.classic.core.event.async.IAsyncReportState;
 import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
 
 import java.util.List;

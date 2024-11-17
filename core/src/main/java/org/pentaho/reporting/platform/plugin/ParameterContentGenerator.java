@@ -29,7 +29,7 @@ import org.pentaho.platform.api.repository2.unified.RepositoryFile;
 import org.pentaho.platform.engine.core.solution.SimpleParameterProvider;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.engine.services.solution.SimpleContentGenerator;
-import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
+import org.pentaho.reporting.engine.classic.core.event.async.ReportListenerThreadHolder;
 
 public class ParameterContentGenerator extends SimpleContentGenerator {
   /**

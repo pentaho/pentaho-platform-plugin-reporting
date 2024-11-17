@@ -21,6 +21,7 @@ import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
 import org.pentaho.platform.api.repository2.unified.RepositoryFile;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.engine.core.system.boot.PlatformInitializationException;
+import org.pentaho.reporting.engine.classic.core.event.async.IAsyncReportState;
 import org.pentaho.reporting.libraries.repository.ContentItem;
 import org.pentaho.reporting.libraries.repository.ContentLocation;
 import org.pentaho.reporting.platform.plugin.MicroPlatformFactory;

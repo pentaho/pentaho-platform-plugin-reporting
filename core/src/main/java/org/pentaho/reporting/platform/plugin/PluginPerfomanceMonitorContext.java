@@ -15,10 +15,10 @@ package org.pentaho.reporting.platform.plugin;
 
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
+import org.pentaho.reporting.engine.classic.core.event.async.ReportListenerThreadHolder;
 import org.pentaho.reporting.engine.classic.core.states.PerformanceMonitorContext;
 import org.pentaho.reporting.libraries.base.util.LoggingStopWatch;
 import org.pentaho.reporting.libraries.base.util.PerformanceLoggingStopWatch;
-import org.pentaho.reporting.platform.plugin.async.ReportListenerThreadHolder;
 
 import javax.swing.event.ChangeListener;
 
