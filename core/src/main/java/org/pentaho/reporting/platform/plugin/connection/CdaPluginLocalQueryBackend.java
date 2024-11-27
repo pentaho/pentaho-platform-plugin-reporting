@@ -33,6 +33,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpUpgradeHandler;
 import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.Part;
+import jakarta.servlet.ServletConnection;
 import jakarta.servlet.AsyncContext;
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.RequestDispatcher;
@@ -192,6 +193,21 @@ public class CdaPluginLocalQueryBackend extends CdaQueryBackend {
       }
 
       @Override
+      public String getRequestId() {
+        return null;
+      }
+
+      @Override
+      public String getProtocolRequestId() {
+        return null;
+      }
+
+      @Override
+      public ServletConnection getServletConnection() {
+        return null;
+      }
+
+      @Override
       public String changeSessionId() {
         return null;
       }
@@ -344,11 +360,6 @@ public class CdaPluginLocalQueryBackend extends CdaQueryBackend {
       }
 
       @Override
-      public boolean isRequestedSessionIdFromUrl() {
-        return false;
-      }
-
-      @Override
       public Object getAttribute( String s ) {
         return null;
       }
@@ -466,11 +477,6 @@ public class CdaPluginLocalQueryBackend extends CdaQueryBackend {
       }
 
       @Override
-      public String getRealPath( String s ) {
-        return null;
-      }
-
-      @Override
       public int getRemotePort() {
         return 0;
       }
@@ -545,16 +551,6 @@ public class CdaPluginLocalQueryBackend extends CdaQueryBackend {
       }
 
       @Override
-      public String encodeUrl( String s ) {
-        return null;
-      }
-
-      @Override
-      public String encodeRedirectUrl( String s ) {
-        return null;
-      }
-
-      @Override
       public void sendError( int i, String s ) throws IOException {
       }
 
@@ -592,11 +588,6 @@ public class CdaPluginLocalQueryBackend extends CdaQueryBackend {
 
       @Override
       public void setStatus( int i ) {
-      }
-
-      @Override
-      public void setStatus( int i, String s ) {
-
       }
 
       @Override
