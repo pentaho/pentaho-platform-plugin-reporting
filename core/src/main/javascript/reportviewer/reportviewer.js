@@ -15,9 +15,9 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
       "dojo/dom", "dojo/on", "dojo/_base/lang", "dijit/registry", "dojo/has", "dojo/sniff", "dojo/dom-class",
       'pentaho/reportviewer/ReportDialog', "dojo/dom-style",
       "dojo/query", "common-ui/util/_a11y", "dojo/dom-geometry", "dojo/parser", "dojo/window", "dojo/_base/window",
-      'cdf/lib/jquery', 'amd!cdf/lib/jquery.ui', "common-repo/pentaho-ajax", "dijit/ProgressBar", "common-data/xhr"],
+      'cdf/lib/jquery', 'amd!cdf/lib/jquery.ui', "common-repo/pentaho-ajax", "dijit/ProgressBar", "common-data/xhr", "common-ui/util/xss"],
     function(util, _timeutil, _formatting, _Messages, dom, on, lang, registry, has, sniff, domClass, ReportDialog,
-             domStyle, query, a11yUtil, geometry, parser, win, win2, $) {
+             domStyle, query, a11yUtil, geometry, parser, win, win2, $, xssUtil) {
   return function(reportPrompt) {
     if (!reportPrompt) {
       alert("report prompt is required");
@@ -818,7 +818,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
         if(isRunningIFrameInSameOrigin) {
           if (!top.mantle_initialized) {
             this._topMantleOpenTabRegistration = top.mantle_openTab = function(name, title, url) {
-              window.open(url, '_blank');
+              xssUtil.open(url, '_blank');
             };
           }
 
@@ -1189,7 +1189,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                     hideDlgAndPane(registry.byId('feedbackScreen'));
 
                     //Show loading screen
-                    $('#notification-message').html(_Messages.getString('LoadingPage') + " " + mainJobStatus.page + " " + _Messages.getString('Of') + " " + mainJobStatus.totalPages);
+                    xssUtil.setHtml($('#notification-message'), _Messages.getString('LoadingPage') + " " + mainJobStatus.page + " " + _Messages.getString('Of') + " " + mainJobStatus.totalPages);
                     $('#notification-screen').css("z-index", 100);
                     if (me._currentReportStatus == 'CONTENT_AVAILABLE') {
                       domClass.remove('notification-screen', 'hidden');
@@ -1232,7 +1232,7 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                       isPageCountUpdated = true;
                     }
 
-                    $('#notification-message').html(_Messages.getString('LoadingPage') + " " + mainJobStatus.page + " " + _Messages.getString('Of') + " " + mainJobStatus.totalPages);
+                    xssUtil.setHtml($('#notification-message'), _Messages.getString('LoadingPage') + " " + mainJobStatus.page + " " + _Messages.getString('Of') + " " + mainJobStatus.totalPages);
                     registry.byId('reportGlassPane').setText(_Messages.getString('LoadingPage') + " " + mainJobStatus.page + " " + _Messages.getString('Of') + " " + mainJobStatus.totalPages);
 
                     me._keepPolling(mainJobStatus.uuid, url, mainReportGeneration);
@@ -1242,13 +1242,13 @@ define([ 'common-ui/util/util', 'common-ui/util/timeutil', 'common-ui/util/forma
                 case "QUEUED":
                 case "WORKING":
                   // Although we are hiding the screen latter, update the label anyway;
-                  $('#notification-message').html(_Messages.getString('LoadingPage') + " " + mainJobStatus.page + " " + _Messages.getString('Of') + " " + mainJobStatus.totalPages);
+                  xssUtil.setHtml($('#notification-message'), _Messages.getString('LoadingPage') + " " + mainJobStatus.page + " " + _Messages.getString('Of') + " " + mainJobStatus.totalPages);
                   me._hideAsyncScreens();
                   me._keepPolling(mainJobStatus.uuid, url, mainReportGeneration);
                   break;
                 case "FINISHED":
                   // Although we are hiding the screen latter, update the label anyway;
-                  $('#notification-message').html(_Messages.getString('LoadingPage') + " " + mainJobStatus.page + " " + _Messages.getString('Of') + " " + mainJobStatus.totalPages);
+                  xssUtil.setHtml($('#notification-message'), _Messages.getString('LoadingPage') + " " + mainJobStatus.page + " " + _Messages.getString('Of') + " " + mainJobStatus.totalPages);
                   me._isFinished = true;
 
                   hideDlgAndPane(registry.byId('feedbackScreen'));
