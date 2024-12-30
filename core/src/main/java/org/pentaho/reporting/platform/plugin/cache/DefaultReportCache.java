@@ -15,6 +15,7 @@ package org.pentaho.reporting.platform.plugin.cache;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,6 +29,7 @@ import javax.cache.configuration.MutableConfiguration;
 import javax.cache.event.CacheEntryListener;
 import javax.cache.expiry.CreatedExpiryPolicy;
 import javax.cache.expiry.Duration;
+import javax.cache.spi.CachingProvider;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.pentaho.platform.api.engine.ILogoutListener;
@@ -260,8 +262,13 @@ public class DefaultReportCache implements ReportCache {
       final CacheManager manager;
       if ( attribute instanceof CacheManager == false ) {
         logger.debug( "id: " + session.getId() + " - Cache.put(..): No cache manager; creating one" );
-        manager = Caching.getCachingProvider().getCacheManager();
-        session.setAttribute( SESSION_ATTRIBUTE, manager );
+        CachingProvider cachingProvider = Caching.getCachingProvider();
+          try {
+              manager = cachingProvider.getCacheManager( getClass().getResource( "/ehcache.xml" ).toURI(), getClass().getClassLoader() );
+          } catch ( URISyntaxException e) {
+              throw new RuntimeException( e );
+          }
+          session.setAttribute( SESSION_ATTRIBUTE, manager );
       } else {
         manager = (CacheManager) attribute;
       }
