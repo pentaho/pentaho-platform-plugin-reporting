@@ -24,11 +24,11 @@ public final class OutputUtils {
   static final Log log = LogFactory.getLog( PDFOutput.class );
 
   public static void overrideQueryLimit( MasterReport report ) {
-    report.setQueryLimit( getPropertyValue( "export-query-limit", "-1" ) );
+    report.setQueryLimit( getPropertyValue( "export-query-limit", report.getQueryLimit()  ) );
   }
 
-  private static int getPropertyValue( String propName, String def ) {
-    String limit = PentahoSystem.getSystemSetting( "pentaho-interactive-reporting/settings.xml", propName, def );
+  private static int getPropertyValue( String propName, int def ) {
+    String limit = PentahoSystem.getSystemSetting( "pentaho-interactive-reporting/settings.xml", propName, String.valueOf( def ) );
     try {
       int iLimit = Integer.parseInt( limit );
       if ( iLimit <= 0 ) {
@@ -37,7 +37,7 @@ public final class OutputUtils {
       return iLimit;
     } catch ( NumberFormatException e ) {
       log.error( "'" + propName + "' defined incorrectly in the 'settings.xml'. Using default value: " + def );
-      return -1;
+      return def;
     }
   }
 }
