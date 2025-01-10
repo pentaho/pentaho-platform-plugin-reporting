@@ -23,21 +23,38 @@ public final class OutputUtils {
 
   static final Log log = LogFactory.getLog( PDFOutput.class );
 
-  public static void overrideQueryLimit( MasterReport report ) {
-    report.setQueryLimit( getPropertyValue( "export-query-limit", report.getQueryLimit()  ) );
+  public static void enforceQueryLimit( MasterReport report ) {
+    report.setQueryLimit( getPropertyValue( "export-query-limit", report.getQueryLimit() ) );
   }
 
-  private static int getPropertyValue( String propName, int def ) {
-    String limit = PentahoSystem.getSystemSetting( "pentaho-interactive-reporting/settings.xml", propName, String.valueOf( def ) );
+  private static int getPropertyValue( String propName, int reportLimit ) {
+    String setting = PentahoSystem.getSystemSetting( "pentaho-interactive-reporting/settings.xml", propName, "-1" );
+
+    int settingsLimit = -1;
     try {
-      int iLimit = Integer.parseInt( limit );
-      if ( iLimit <= 0 ) {
-        return -1;
-      }
-      return iLimit;
+      settingsLimit = Integer.parseInt( setting );
     } catch ( NumberFormatException e ) {
-      log.error( "'" + propName + "' defined incorrectly in the 'settings.xml'. Using default value: " + def );
-      return def;
+      log.error( "'" + propName + "' defined incorrectly in the 'settings.xml'");
     }
+
+    return getMinLimit(reportLimit, settingsLimit);
+  }
+
+  private static int getMinLimit ( int a, int b ) {
+    // Return -1 when both are "no limit"
+    if (a <= 0 && b <= 0) {
+      return -1;
+    }
+
+    // Return one if the other is "no limit"
+    if (a <= 0) {
+      return b;
+    }
+    if (b <= 0) {
+      return a;
+    }
+
+    // Return the minimum when both are positive
+    return Math.min(a, b);
   }
 }
