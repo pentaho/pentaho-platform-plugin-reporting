@@ -50,7 +50,7 @@ public class PDFOutput implements ReportOutputHandler {
 
   public int generate( final MasterReport report, final int acceptedPage, final OutputStream outputStream,
                        final int yieldRate ) throws ReportProcessingException, IOException {
-    OutputUtils.overrideQueryLimit( report );
+    OutputUtils.enforceQueryLimit( report );
     final PageableReportProcessor proc = createProcessor( report, yieldRate, outputStream );
     final IAsyncReportListener listener = ReportListenerThreadHolder.getListener();
     doProcess( listener, proc );
