@@ -34,7 +34,7 @@ public class FastStreamJcrHtmlOutput extends StreamJcrHtmlOutput {
                        final OutputStream outputStream,
                        final int yieldRate ) throws ReportProcessingException, IOException, ContentIOException {
     ReportStructureValidator validator = new ReportStructureValidator();
-    OutputUtils.overrideQueryLimit( report );
+    OutputUtils.enforceQueryLimit( report );
     if ( validator.isValidForFastProcessing( report ) == false ) {
       return super.generate( report, acceptedPage, outputStream, yieldRate );
     }
