@@ -38,7 +38,7 @@ public class FastXLSXOutput extends XLSXOutput {
                        final OutputStream outputStream,
                        final int yieldRate ) throws ReportProcessingException, IOException {
     proxyOutputStream.setParent( outputStream );
-    OutputUtils.overrideQueryLimit( report );
+    OutputUtils.enforceQueryLimit( report );
     final IAsyncReportListener listener = ReportListenerThreadHolder.getListener();
     ReportStructureValidator validator = new ReportStructureValidator();
     if ( validator.isValidForFastProcessing( report ) == false ) {

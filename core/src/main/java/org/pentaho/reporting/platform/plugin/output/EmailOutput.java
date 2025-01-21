@@ -63,7 +63,7 @@ public class EmailOutput implements ReportOutputHandler {
       return -1;
     }
 
-    OutputUtils.overrideQueryLimit( report );
+    OutputUtils.enforceQueryLimit( report );
     try {
 
       final Configuration configuration = report.getConfiguration();

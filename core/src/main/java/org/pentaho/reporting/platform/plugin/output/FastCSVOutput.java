@@ -42,7 +42,7 @@ public class FastCSVOutput extends CSVOutput {
                        final OutputStream outputStream,
                        final int yieldRate )
     throws ReportProcessingException, IOException, ContentIOException {
-    OutputUtils.overrideQueryLimit( report );
+    OutputUtils.enforceQueryLimit( report );
     final IAsyncReportListener listener = ReportListenerThreadHolder.getListener();
     final ReportStructureValidator validator = new ReportStructureValidator();
     if ( validator.isValidForFastProcessing( report ) == false ) {
