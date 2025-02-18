@@ -33,7 +33,7 @@ define(["dojo/_base/declare", "dijit/_WidgetBase", "dijit/_Templated", "dojo/on"
             xssUtil.setHtml(node, text);
           });
         },
-    
+
         templateString: templateStr,
 
         postCreate: function() {

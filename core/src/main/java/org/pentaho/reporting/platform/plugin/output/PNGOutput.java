@@ -55,7 +55,7 @@ public class PNGOutput implements ReportOutputHandler {
 
   public int generate( final MasterReport report, final int acceptedPage, final OutputStream outputStream,
                        final int yieldRate ) throws ReportProcessingException, IOException, ContentIOException {
-    OutputUtils.overrideQueryLimit( report );
+    OutputUtils.enforceQueryLimit( report );
     //TODO listener for async mode
     if ( proc == null ) {
       proc = create( report, yieldRate );
