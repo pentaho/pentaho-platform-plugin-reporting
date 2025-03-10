@@ -11,7 +11,7 @@
  ******************************************************************************/
 
 
-define(function() {
+define(["common-ui/util/xss"], function(xssUtil) {
   var levelIndentText = "&nbsp;&nbsp;&nbsp;&nbsp;";
   
   var S = function(s) { return s == null ? "" : String(s); };
@@ -68,7 +68,7 @@ define(function() {
     if(!enabled) { return null; }
     
     // May be null in case popups blocked
-    var logWin = window.open('', options.winname || 'report_viewer_log');
+    var logWin = xssUtil.open('', options.winname || 'report_viewer_log');
     if(!logWin) { return null; }
     
     var logDoc = logWin.document;
