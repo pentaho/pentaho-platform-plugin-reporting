@@ -10,46 +10,55 @@
  * Change Date: 2029-07-20
  ******************************************************************************/
 
+module.exports = (config) => {
+  config.set({
+    // base path that will be used to resolve all patterns (eg. files, exclude)
+    basePath: "",
 
-module.exports = function (config) {
-    config.set({
-        basePath: '',
+    // frameworks to use
+    // available frameworks: https://npmjs.org/browse/keyword/karma-adapter
+    frameworks: ["jasmine", "requirejs"],
 
-        frameworks: ['jasmine', 'requirejs'],
+    plugins: [
+      "karma-jasmine",
+      "karma-requirejs",
+      "karma-chrome-launcher",
+      "karma-mocha-reporter"
+    ],
 
-        // list of files / patterns to load in the browser
-        files: [
-            'context.js',
-            "**/*-require-js-cfg.js",
-            'karma-require-js-cfg.js',
-            {pattern: '*.+(js|min.js|xml|properties|html|css|png|gif)', included: false, watched: false},
-            {pattern: '**/*.+(js|min.js|xml|properties|html|css|png|gif)', included: false, watched: false}
-        ],
+    // list of files / patterns to load in the browser
+    files: [
+      "context.js",
+       "**/*-require-js-cfg.js",
+      "karma-require-js-cfg.js",
 
-        reporters: ["mocha"],
+      {pattern: "*.+(js|min.js|xml|properties|html|css|png|gif)", included: false, watched: false},
+      {pattern: "**/*.+(js|min.js|xml|properties|html|css|png|gif)", included: false, watched: false}
+    ],
 
-        colors: true,
+    reporters: ["mocha"],
 
-        // level of logging
-        // possible values: config.LOG_DISABLE || config.LOG_ERROR || config.LOG_WARN || config.LOG_INFO || config.LOG_DEBUG
-        logLevel: config.LOG_INFO,
+    colors: true,
 
-        // enable / disable watching file and executing tests whenever any file changes
-        autoWatch: true,
+    // level of logging
+    // possible values: config.LOG_DISABLE || config.LOG_ERROR || config.LOG_WARN || config.LOG_INFO || config.LOG_DEBUG
+    logLevel: config.LOG_INFO,
 
-        // The configuration setting tells Karma how long to wait (in milliseconds) after any changes have occurred before starting the test process again.
-        autoWatchBatchDelay: 250,
+    // enable / disable watching file and executing tests whenever any file changes
+    autoWatch: true,
 
-        browsers: ["Chrome"],
+    // The configuration setting tells Karma how long to wait (in milliseconds) after any changes have occurred before starting the test process again.
+    autoWatchBatchDelay: 250,
 
-        // If browser does not capture in given timeout [ms], kill it
-        captureTimeout: 600000,
+    browsers: ["Chrome"],
 
-        browserNoActivityTimeout: 600000,
+    // If browser does not capture in given timeout [ms], kill it
+    captureTimeout: 600000,
 
-        // Continuous Integration mode
-        // if true, it capture browsers, run tests and exit
-        singleRun: false
+    browserNoActivityTimeout: 600000,
 
-    });
+    // Continuous Integration mode
+    // if true, it capture browsers, run tests and exit
+    singleRun: false
+  });
 };

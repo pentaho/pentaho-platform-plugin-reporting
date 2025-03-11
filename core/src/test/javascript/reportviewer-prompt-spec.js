@@ -146,12 +146,12 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
           'showParameters': 'false'
         };
         var _oldParameterSet = {
-          'output-target': { 
+          'output-target': {
             'value': 'table/html;page-mode=page',
             'group': 'parameters',
             'name': 'output-target'
           },
-          'showParameters': { 
+          'showParameters': {
             'value': 'true',
             'group': 'system',
             'name': 'showParameters'
@@ -167,12 +167,12 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
           expect(reportPrompt.api.operation.getParameterValues).toHaveBeenCalled();
 
           reportPrompt._oldParameterSet = {
-            'output-target': { 
+            'output-target': {
               'value': 'table/excel;page-mode=flow',
               'group': 'parameters',
               'name': 'output-target'
             },
-            'showParameters': { 
+            'showParameters': {
               'value': 'false',
               'group': 'system',
               'name': 'showParameters'
@@ -181,12 +181,12 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
           expect(reportPrompt.canSkipParameterChange(["output-target"])).toBeFalsy(); // output target changes always trigger a server call
 
           reportPrompt._oldParameterSet = {
-            'output-target': { 
+            'output-target': {
               'value': 'table/html;page-mode=page',
               'group': 'parameters',
               'name': 'output-target'
             },
-            'showParameters': { 
+            'showParameters': {
               'value': 'false',
               'group': 'system',
               'name': 'showParameters'
@@ -204,17 +204,17 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
 
         it("should verify the parameter marked as 'always-validate' value changes trigger server call", function() {
           reportPrompt._oldParameterSet = {
-            'output-target': { 
+            'output-target': {
               'value': 'table/html;page-mode=page',
               'group': 'parameters',
               'name': 'output-target'
             },
-            'showParameters': { 
+            'showParameters': {
               'value': 'false',
               'group': 'system',
               'name': 'showParameters'
             }
-          };  
+          };
           var realParseParameterDefinition = reportPrompt.parseParameterDefinition.bind(reportPrompt);
           var paramDefn = realParseParameterDefinition(parameterDefinition);
           reportPrompt._oldParameterDefinition = paramDefn;
@@ -306,7 +306,6 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
           registryMock.unMock("pageControl");
           registryMock.unMock("toolbar-parameter-separator");
           reportPrompt = new Prompt();
-          jasmine.reset(domClass);
         });
 
         it("should show a control if the output is pageable HTML", function () {
@@ -458,7 +457,7 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
             var _timezoneHint = "-0800"
             expect( reportPrompt._compareDatesOnly( _oldValue, _newValue, _timezoneHint, undefined ) ).toBe(true);
           });
-        
+
         //This is true because if a string representation is matcheing then no timezone hints can affect the final result
         it("should treat a matching datepicker values as plaintext", function () {
           var param = {values: [{value: "2017-01-01"}], attributes: {"parameter-render-type": "datepicker"}};
@@ -496,6 +495,7 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
           expect(param.forceUpdate).toBe(undefined);
         });
 
+        // TODO review and fix/remove - started failing after issue [BISERVER-14919]
         it("should not force an update if the datepicker value is not changed, no timezone", function () {
           var param = {
             values: [{value: "2017-01-01T11:00:00.000-0100"}],
@@ -503,7 +503,7 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
             timezoneHint: "/-0100"
           };
           reportPrompt._applyUserInput("anyname", "2017-01-01T11:00:00.000", param);
-          expect(param.forceUpdate).toBe(undefined);
+          expect(param.forceUpdate).toBeUndefined();
         });
 
         it("should not force an update if the datepicker value is not changed, a timezone and a hint", function () {
@@ -535,13 +535,14 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
           expect(param.forceUpdate).toBe(undefined);
         });
 
+        // TODO review and fix/remove - started failing after issue [BISERVER-14919]
         it("should not force an update if only seconds and milliseconds changed", function () {
           var param = {
             values: [{value: "2017-01-01T00:0:44.010"}],
             attributes: {"parameter-render-type": "datepicker"}
           };
           reportPrompt._applyUserInput("anyname", "2017-01-01T11:00:00.000", param);
-          expect(param.forceUpdate).toBe(undefined);
+          expect(param.forceUpdate).toBeUndefined();
         });
 
         it("should force an update if the date changed, no hint", function () {

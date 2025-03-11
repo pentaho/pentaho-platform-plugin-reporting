@@ -575,8 +575,10 @@ define([ 'common-ui/util/util', "common-ui/util/xss", 'common-ui/util/timeutil',
         },
 
         _hideBlockById: function(id) {
-          var div = document.getElementById(id);
-          domStyle.set(div, 'display', 'none');
+          var element = document.getElementById(id);
+          if (element != null) {
+            domStyle.set(element, 'display', 'none');
+          }
         },
 
         isPageStyled: function() {
