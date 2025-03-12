@@ -34,7 +34,6 @@
     <pentaho-cdf-plugin.version>10.2.0.0-SNAPSHOT</pentaho-cdf-plugin.version>
     <dependency.osgi-bundles.revision>${project.version}</dependency.osgi-bundles.revision>
     <junit.version>4.13.2</junit.version>
-    <pentaho-js-build.version>1.0.0</pentaho-js-build.version>
     <pentaho-reporting.version>10.2.0.0-SNAPSHOT</pentaho-reporting.version>
     <platform.version>10.2.0.0-SNAPSHOT</platform.version>
     <commons-collections.version>3.2.2</commons-collections.version>
@@ -304,19 +303,6 @@
         <groupId>pentaho</groupId>
         <artifactId>pentaho-cdf-js</artifactId>
         <version>${pentaho-cdf-plugin.version}</version>
-        <type>zip</type>
-        <scope>compile</scope>
-        <exclusions>
-          <exclusion>
-            <artifactId>*</artifactId>
-            <groupId>*</groupId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>pentaho</groupId>
-        <artifactId>pentaho-js-build</artifactId>
-        <version>${pentaho-js-build.version}</version>
         <type>zip</type>
         <scope>compile</scope>
         <exclusions>
