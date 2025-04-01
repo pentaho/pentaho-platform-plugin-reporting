@@ -34,7 +34,7 @@ public class JobManagerResponseCodeTest {
     assertNotNull( response );
     assertEquals( 200, response.getStatus() );
 
-    final String json = response.readEntity( String.class );
+    final String json = response.getEntity().toString();
     final ObjectMapper objectMapper = new ObjectMapper();
     final Map config = objectMapper.readValue( json, Map.class );
     assertEquals( Boolean.TRUE, config.get( "supportAsync" ) );
