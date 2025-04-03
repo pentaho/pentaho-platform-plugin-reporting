@@ -18,7 +18,7 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
   function(Prompt, Logging, $, parameterDefinition, registryMock, PromptingAPI, domClass, util) {
 
     describe("Report Viewer Prompt", function() {
-      var reportPrompt;
+      var reportPrompt; //
 
       beforeAll(function() {
         window.inSchedulerDialog = false;
