@@ -18,7 +18,6 @@
     <js.build.optimizer>uglify</js.build.optimizer>
     <requirejs.config.files.pattern>**/*-require-js-cfg.js</requirejs.config.files.pattern>
     <build.javascriptTestConfigDirectory>${project.build.directory}/test-javascript</build.javascriptTestConfigDirectory>
-    <pentaho-js-build.dir>${build.dependenciesDirectory}/pentaho-js-build</pentaho-js-build.dir>
     <commons-compress.version>1.26.1</commons-compress.version>
   </properties>
   <dependencies>
@@ -159,11 +158,6 @@
     <dependency>
       <groupId>pentaho</groupId>
       <artifactId>pentaho-cdf-js</artifactId>
-      <type>zip</type>
-    </dependency>
-    <dependency>
-      <groupId>pentaho</groupId>
-      <artifactId>pentaho-js-build</artifactId>
       <type>zip</type>
     </dependency>
     <dependency>

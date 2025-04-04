@@ -14,12 +14,6 @@ testdata.script
 .settings
 projects/
 plugins/
-build-res/pentaho-js-build/
-build-res/pentaho-js-build.zip
-build-res/dojo-*
-build-res/module-scripts/
-build-res/requireCfg-raw.js
-build-res/requireCfg.js
 *.class
 *.jar
 *.war
@@ -32,4 +26,4 @@ node_modules/
 checkstyle/
 out/
 target/
-node_modules/
+.eslintcache

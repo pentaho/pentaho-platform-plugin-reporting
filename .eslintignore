@@ -1,0 +1,5 @@
+node_modules/
+target/
+config/
+assembly/
+resources/
