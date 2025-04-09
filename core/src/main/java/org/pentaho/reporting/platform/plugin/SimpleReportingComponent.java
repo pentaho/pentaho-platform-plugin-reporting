@@ -53,6 +53,7 @@ import org.pentaho.reporting.platform.plugin.output.FastExportReportOutputHandle
 import org.pentaho.reporting.platform.plugin.output.ReportOutputHandler;
 import org.pentaho.reporting.platform.plugin.output.ReportOutputHandlerFactory;
 import org.pentaho.reporting.platform.plugin.output.ReportOutputHandlerSelector;
+import org.pentaho.reporting.platform.plugin.output.util.ExportReportUtils;
 
 import javax.print.DocFlavor;
 import javax.print.PrintService;
@@ -68,7 +69,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
-public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntimeInputs {
+public class SimpleReportingComponent implements ExportReportUtils, IStreamingPojo, IAcceptsRuntimeInputs {
 
   /**
    * The logging for logging messages from this component
@@ -951,6 +952,10 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       if ( reportOutputHandler == null ) {
         log.warn( Messages.getInstance().getString( "ReportPlugin.warnUnprocessableRequest", outputType ) );
         return false;
+      }
+
+      if ( Boolean.parseBoolean( getInput( "includeReportSpecification", Boolean.FALSE ).toString() ) ) {
+        addReportDetailsPage( report, parameterContext );
       }
       synchronized ( reportOutputHandler.getReportLock() ) {
         try {
