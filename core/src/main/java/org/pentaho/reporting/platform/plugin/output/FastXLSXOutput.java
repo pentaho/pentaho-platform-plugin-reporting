@@ -19,7 +19,7 @@ import org.pentaho.reporting.engine.classic.core.event.async.ReportListenerThrea
 import org.pentaho.reporting.engine.classic.core.modules.output.fast.validator.ReportStructureValidator;
 import org.pentaho.reporting.engine.classic.core.modules.output.fast.xls.FastExcelExportProcessor;
 import org.pentaho.reporting.libraries.repository.ContentIOException;
-
+import org.pentaho.reporting.platform.plugin.output.util.ReportUtilsFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -38,6 +38,7 @@ public class FastXLSXOutput extends XLSXOutput {
                        final OutputStream outputStream,
                        final int yieldRate ) throws ReportProcessingException, IOException {
     proxyOutputStream.setParent( outputStream );
+    ReportUtilsFactory.getReportUtils().addFiltersAndPromptsPage( report );
     OutputUtils.enforceQueryLimit( report );
     final IAsyncReportListener listener = ReportListenerThreadHolder.getListener();
     ReportStructureValidator validator = new ReportStructureValidator();
