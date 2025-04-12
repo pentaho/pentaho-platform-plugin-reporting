@@ -17,8 +17,6 @@ import org.apache.commons.io.FileUtils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.pentaho.platform.api.engine.IApplicationContext;
-import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.platform.plugin.output.FastStreamHtmlOutput;
 import org.pentaho.test.platform.engine.core.MicroPlatform;
 
@@ -30,8 +28,7 @@ import java.util.HashMap;
 
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.stub;
+import static org.mockito.Mockito.*;
 
 public class Prd5659IT {
   private static MicroPlatform microPlatform;
@@ -69,7 +66,7 @@ public class Prd5659IT {
       .setConfigProperty( ExecuteReportContentHandler.FORCED_BUFFERED_WRITING, "false" );
 
     FastStreamHtmlOutput fastStreamHtmlOutput = new FastStreamHtmlOutput( "/pentaho/getImage?image={0}" );
-    stub( rc.createOutputHandlerForOutputType( any( String.class ) ) ).toReturn( fastStreamHtmlOutput );
+    when( rc.createOutputHandlerForOutputType( any( String.class ) ) ).thenReturn( fastStreamHtmlOutput );
 
     HashMap<String, Object> inputs = new HashMap<String, Object>();
     inputs.put( "page-mode", "stream" );
@@ -106,7 +103,7 @@ public class Prd5659IT {
       .setConfigProperty( ExecuteReportContentHandler.FORCED_BUFFERED_WRITING, "true" );
 
     FastStreamHtmlOutput fastStreamHtmlOutput = new FastStreamHtmlOutput( "/pentaho/getImage?image={0}" );
-    stub( rc.createOutputHandlerForOutputType( any( String.class ) ) ).toReturn( fastStreamHtmlOutput );
+    when( rc.createOutputHandlerForOutputType( any( String.class ) ) ).thenReturn( fastStreamHtmlOutput );
 
     HashMap<String, Object> inputs = new HashMap<String, Object>();
     inputs.put( "page-mode", "stream" );

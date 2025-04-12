@@ -20,7 +20,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.pentaho.platform.api.engine.IApplicationContext;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
 import org.pentaho.platform.api.repository2.unified.RepositoryFile;
@@ -31,6 +30,10 @@ import org.pentaho.platform.engine.core.system.boot.PlatformInitializationExcept
 import org.pentaho.platform.util.StringUtil;
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressEvent;
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
+import org.pentaho.reporting.engine.classic.core.event.async.AsyncExecutionStatus;
+import org.pentaho.reporting.engine.classic.core.event.async.AsyncReportState;
+import org.pentaho.reporting.engine.classic.core.event.async.AsyncReportStatusListener;
+import org.pentaho.reporting.engine.classic.core.event.async.IAsyncReportState;
 import org.pentaho.reporting.engine.classic.core.layout.output.AbstractReportProcessor;
 import org.pentaho.reporting.engine.classic.core.layout.output.ReportProcessorThreadHolder;
 import org.pentaho.reporting.libraries.repository.ContentIOException;
@@ -500,8 +503,8 @@ public class AsyncIT {
         exec.addTask( new PentahoAsyncReportExecution( "junit-path", component, handler, session, "not null",
           AuditWrapper.NULL ) {
           @Override
-          protected AsyncReportStatusListener createListener( final UUID id,
-                                                              final List<? extends ReportProgressListener>
+          protected AsyncReportStatusListener createListener(final UUID id,
+                                                             final List<? extends ReportProgressListener>
                                                                 callbackListener ) {
             return new AsyncReportStatusListener( getReportPath(), id, getMimeType(), callbackListener );
           }

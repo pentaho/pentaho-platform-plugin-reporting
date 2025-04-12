@@ -16,7 +16,7 @@ package org.pentaho.reporting.platform.plugin.async;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
@@ -25,19 +25,14 @@ import org.pentaho.platform.engine.core.system.boot.PlatformInitializationExcept
 import org.pentaho.reporting.platform.plugin.JobManager;
 import org.pentaho.reporting.platform.plugin.MicroPlatformFactory;
 import org.pentaho.test.platform.engine.core.MicroPlatform;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.when;
+
 
 import javax.ws.rs.core.Response;
 
 import static org.junit.Assert.*;
-import static org.powermock.api.mockito.PowerMockito.when;
 
-@RunWith( PowerMockRunner.class )
-@PowerMockIgnore( "jdk.internal.reflect.*" )
-@PrepareForTest( PentahoSessionHolder.class )
 public class ReservedIdIT {
 
 
@@ -61,12 +56,11 @@ public class ReservedIdIT {
 
   @Test
   public void testReserveId() throws Exception {
-
-    PowerMockito.mockStatic( PentahoSessionHolder.class );
-
-    when( PentahoSessionHolder.getSession() ).thenReturn( session );
-
-    assertEquals( session, PentahoSessionHolder.getSession() );
+    try( MockedStatic<PentahoSessionHolder> mockedClient = mockStatic( PentahoSessionHolder.class) ) {
+      mockedClient.when(PentahoSessionHolder::getSession).thenReturn( session );
+      when( PentahoSessionHolder.getSession() ).thenReturn( session );
+      assertEquals( session, PentahoSessionHolder.getSession() );
+    }
 
     final JobManager jobManager = new JobManager();
 
@@ -82,15 +76,15 @@ public class ReservedIdIT {
 
   @Test
   public void testReserveIdNoSession() throws Exception {
+    try( MockedStatic<PentahoSessionHolder> mockedClient = mockStatic( PentahoSessionHolder.class) ) {
+      mockedClient.when(PentahoSessionHolder::getSession).thenReturn( null );
+      when( PentahoSessionHolder.getSession() ).thenReturn( null );
 
-    PowerMockito.mockStatic( PentahoSessionHolder.class );
-
-    when( PentahoSessionHolder.getSession() ).thenReturn( null );
-    final JobManager jobManager = new JobManager();
-    assertNull( PentahoSessionHolder.getSession() );
-
-    final Response response = jobManager.reserveId();
-    assertEquals( 404, response.getStatus() );
+      final JobManager jobManager = new JobManager();
+      assertNull( PentahoSessionHolder.getSession() );
+      final Response response = jobManager.reserveId();
+      assertEquals( 404, response.getStatus() );
+    }
   }
 
 
@@ -103,18 +97,15 @@ public class ReservedIdIT {
 
     microPlatform.start();
 
-    PowerMockito.mockStatic( PentahoSessionHolder.class );
+    try( MockedStatic<PentahoSessionHolder> mockedClient = mockStatic( PentahoSessionHolder.class) ) {
+      mockedClient.when(PentahoSessionHolder::getSession).thenReturn( session );
 
-    when( PentahoSessionHolder.getSession() ).thenReturn( session );
-
-    assertEquals( session, PentahoSessionHolder.getSession() );
-
-    final JobManager jobManager = new JobManager();
-
-
-    final Response response = jobManager.reserveId();
-
-    assertEquals( 404, response.getStatus() );
+      when( PentahoSessionHolder.getSession() ).thenReturn( session );
+      assertEquals( session, PentahoSessionHolder.getSession() );
+      final JobManager jobManager = new JobManager();
+      final Response response = jobManager.reserveId();
+      assertEquals( 404, response.getStatus() );
+    }
   }
 
 }
