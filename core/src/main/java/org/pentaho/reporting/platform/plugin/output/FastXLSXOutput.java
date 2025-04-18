@@ -37,19 +37,23 @@ public class FastXLSXOutput extends XLSXOutput {
                        final int acceptedPage,
                        final OutputStream outputStream,
                        final int yieldRate ) throws ReportProcessingException, IOException {
-    proxyOutputStream.setParent( outputStream );
-    ReportUtilsFactory.getReportUtils().addFiltersAndPromptsPage( report );
-    OutputUtils.enforceQueryLimit( report );
-    final IAsyncReportListener listener = ReportListenerThreadHolder.getListener();
-    ReportStructureValidator validator = new ReportStructureValidator();
-    if ( validator.isValidForFastProcessing( report ) == false ) {
-      return super.generate( report, acceptedPage, outputStream, yieldRate );
+    try {
+      proxyOutputStream.setParent( outputStream );
+      ReportUtilsFactory.getReportUtils().addFiltersAndPromptsPage( report );
+      OutputUtils.enforceQueryLimit( report );
+      final IAsyncReportListener listener = ReportListenerThreadHolder.getListener();
+      ReportStructureValidator validator = new ReportStructureValidator();
+      if ( validator.isValidForFastProcessing( report ) == false ) {
+        return super.generate( report, acceptedPage, outputStream, yieldRate );
+      }
+
+      final FastExcelExportProcessor reportProcessor = new FastExcelExportProcessor( report, outputStream, true );
+
+      doProcess( listener, reportProcessor );
+      outputStream.flush();
+    } finally {
+      ReportUtilsFactory.clear();
     }
-
-    final FastExcelExportProcessor reportProcessor = new FastExcelExportProcessor( report, outputStream, true );
-
-    doProcess( listener, reportProcessor );
-    outputStream.flush();
     return 0;
   }
 
