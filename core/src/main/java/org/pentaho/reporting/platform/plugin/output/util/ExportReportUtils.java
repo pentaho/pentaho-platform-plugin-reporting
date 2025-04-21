@@ -20,7 +20,7 @@ import org.pentaho.reporting.engine.classic.core.elementfactory.LabelElementFact
 import org.pentaho.reporting.engine.classic.core.util.ReportParameterValues;
 
 import java.util.Arrays;
-import java.util.Date;
+import java.sql.Date;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -150,7 +150,7 @@ public class ExportReportUtils {
     return Arrays.stream( dates )
       .map( date ->
         // Convert java.sql.Date to LocalDate directly
-        ( (java.sql.Date) date ).toLocalDate().toString()
+        date.toLocalDate().toString()
       )
       .collect( Collectors.joining( ", " ) );
   }
