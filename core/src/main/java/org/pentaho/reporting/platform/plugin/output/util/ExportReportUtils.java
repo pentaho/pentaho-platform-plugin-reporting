@@ -13,13 +13,13 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class ReportUtils {
+public class ExportReportUtils {
   private static final String FILTERS_SUMMARY = "Filters Summary";
   private static final String PROMPTS_SUMMARY = "Prompts Summary";
   private static final String NO_FILTERS = "No filters used";
   private static final String NO_PROMPTS = "No prompts used";
   private String readableFilterDescription;
-  private boolean fromPIR;
+  private boolean pirExported;
   private final Map<Class<?>, Function<Object, String>> typeFormattingStrategies = Map.of(
     String.class, String.class::cast,
     Number.class, Object::toString,
@@ -29,9 +29,9 @@ public class ReportUtils {
     Date[].class, value -> formatDateArray( (Date[]) value )
   );
 
-  public ReportUtils() {
+  public ExportReportUtils() {
     this.readableFilterDescription = null;
-    this.fromPIR = false;
+    this.pirExported = false;
   }
 
   public String getReadableFilterDescription() {
@@ -42,16 +42,16 @@ public class ReportUtils {
     this.readableFilterDescription = readableFilterDescription;
   }
 
-  public boolean isFromPIR() {
-    return fromPIR;
+  public boolean isPirExported() {
+    return pirExported;
   }
 
-  public void setFromPIR( boolean fromPIR ) {
-    this.fromPIR = fromPIR;
+  public void setPirExported( boolean exportPIR ) {
+    this.pirExported = exportPIR;
   }
 
   public void addFiltersAndPromptsPage( MasterReport report ) {
-    if ( !isFromPIR() || report == null ) {
+    if ( !isPirExported() || report == null ) {
       return;
     }
 

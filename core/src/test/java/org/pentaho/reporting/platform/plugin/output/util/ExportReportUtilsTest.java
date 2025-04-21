@@ -24,9 +24,9 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class ReportUtilsTest {
+public class ExportReportUtilsTest {
 
-  private ReportUtils reportUtils;
+  private ExportReportUtils reportUtils;
   private MasterReport mockReport;
   private ReportHeader mockReportHeader;
   private Element mockLabel;
@@ -34,7 +34,7 @@ public class ReportUtilsTest {
 
   @Before
   public void setUp() {
-    reportUtils = spy( new ReportUtils() );
+    reportUtils = spy( new ExportReportUtils() );
     mockReport = mock( MasterReport.class );
     mockReportHeader = mock( ReportHeader.class );
     mockLabel = mock( Element.class );
@@ -46,7 +46,7 @@ public class ReportUtilsTest {
 
   @Test
   public void testAddFiltersAndPromptsPage_WithValidReport() {
-    reportUtils.setFromPIR( true );
+    reportUtils.setPirExported( true );
     reportUtils.setReadableFilterDescription( "Test Filter Description" );
 
     reportUtils.addFiltersAndPromptsPage( mockReport );
@@ -57,7 +57,7 @@ public class ReportUtilsTest {
 
   @Test( expected = IllegalStateException.class )
   public void testAddFiltersAndPromptsPage_WithNullReportHeader() {
-    reportUtils.setFromPIR( true );
+    reportUtils.setPirExported( true );
     when( mockReport.getReportHeader() ).thenReturn( null );
 
     reportUtils.addFiltersAndPromptsPage( mockReport );
@@ -65,7 +65,7 @@ public class ReportUtilsTest {
 
   @Test
   public void testAddFiltersAndPromptsPage_WithNullReport() {
-    reportUtils.setFromPIR( true );
+    reportUtils.setPirExported( true );
     reportUtils.addFiltersAndPromptsPage( null );
 
     verify( mockReportHeader, never() ).addElement( any( Element.class ) );
@@ -73,7 +73,7 @@ public class ReportUtilsTest {
 
   @Test
   public void testAddFiltersAndPromptsPage_NotFromPIR() {
-    reportUtils.setFromPIR( false );
+    reportUtils.setPirExported( false );
     reportUtils.addFiltersAndPromptsPage( mockReport );
 
     verify( mockReportHeader, never() ).addElement( any( Element.class ) );
@@ -153,8 +153,8 @@ public class ReportUtilsTest {
 
   @Test
   public void testReportUtilsFactoryReturnsSingletonInstance() {
-    ReportUtils instance1 = ReportUtilsFactory.getReportUtils();
-    ReportUtils instance2 = ReportUtilsFactory.getReportUtils();
+    ExportReportUtils instance1 = ExportReportUtilsFactory.getUtil();
+    ExportReportUtils instance2 = ExportReportUtilsFactory.getUtil();
 
     assertNotNull( instance1 );
     assertNotNull( instance2 );
