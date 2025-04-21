@@ -74,10 +74,10 @@ public class ExportReportUtils {
 
     reportHeader.setPagebreakAfterPrint( true );
 
-    addLabelToReportHeader( createLabel( FILTERS_SUMMARY ), reportHeader );
+    addElementToReportHeader( createLabel( FILTERS_SUMMARY ), reportHeader );
     addFilters( reportHeader );
 
-    addLabelToReportHeader( createLabel( PROMPTS_SUMMARY ), reportHeader );
+    addElementToReportHeader( createLabel( PROMPTS_SUMMARY ), reportHeader );
     addPrompts( reportHeader, report );
   }
 
@@ -88,7 +88,7 @@ public class ExportReportUtils {
       filterDesc = NO_FILTERS;
     }
 
-    addLabelToReportHeader( createText( filterDesc ), reportHeader );
+    addElementToReportHeader( createText( filterDesc ), reportHeader );
   }
 
   @VisibleForTesting
@@ -103,40 +103,40 @@ public class ExportReportUtils {
       Object parameterValue = parameterValues.get( parameterName );
       if ( parameterValue != null ) {
         parameterValueString = formatParameterValue( parameterValue );
-        addLabelToReportHeader( createText( parameterName + ": " + parameterValueString ), reportHeader );
+        addElementToReportHeader( createText( parameterName + ": " + parameterValueString ), reportHeader );
       }
     }
 
     if ( parameterValueString == null || parameterValueString.isEmpty() ) {
-      addLabelToReportHeader( createText( NO_PROMPTS ), reportHeader );
+      addElementToReportHeader( createText( NO_PROMPTS ), reportHeader );
     }
   }
 
-  private void addLabelToReportHeader( Element label, ReportHeader reportHeader ) {
-    if ( label != null && reportHeader != null ) {
-      reportHeader.addElement( label );
+  private void addElementToReportHeader( Element element, ReportHeader reportHeader ) {
+    if ( element != null && reportHeader != null ) {
+      reportHeader.addElement( element );
     }
   }
 
   @VisibleForTesting
   Element createLabel( String text ) {
-    LabelElementFactory labelFactory = new LabelElementFactory();
-    labelFactory.setText( text );
-    labelFactory.setMinimumHeight( 20f );
-    labelFactory.setBold( true );
-    labelFactory.setFontSize( 12 );
-    labelFactory.setDynamicHeight( true );
-    return labelFactory.createElement();
+    return createElement( text, 12, true );
   }
 
   @VisibleForTesting
   Element createText( String text ) {
-    LabelElementFactory textFactory = new LabelElementFactory();
-    textFactory.setText( text );
-    textFactory.setMinimumHeight( 20f );
-    textFactory.setDynamicHeight( true );
-    textFactory.setFontSize( 10 );
-    return textFactory.createElement();
+    return createElement( text, 10, false );
+  }
+
+  @VisibleForTesting
+  Element createElement( String text, int fontSize, boolean isBold ) {
+    LabelElementFactory elementFactory = new LabelElementFactory();
+    elementFactory.setText( text );
+    elementFactory.setMinimumHeight( 20f );
+    elementFactory.setFontSize( fontSize );
+    elementFactory.setDynamicHeight( true );
+    elementFactory.setBold( isBold );
+    return elementFactory.createElement();
   }
 
   private String formatNumberArray( Number[] array ) {
