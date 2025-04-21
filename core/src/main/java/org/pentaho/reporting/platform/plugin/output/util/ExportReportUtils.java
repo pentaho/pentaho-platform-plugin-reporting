@@ -94,7 +94,7 @@ public class ExportReportUtils {
   @VisibleForTesting
   void addPrompts( ReportHeader reportHeader, MasterReport report ) {
     ReportParameterValues parameterValues = report.getParameterValues();
-    String parameterValueString = null;
+    boolean promptsAdded = false;
     if ( parameterValues == null ) {
       return;
     }
@@ -102,12 +102,13 @@ public class ExportReportUtils {
     for ( String parameterName : parameterValues.getColumnNames() ) {
       Object parameterValue = parameterValues.get( parameterName );
       if ( parameterValue != null ) {
-        parameterValueString = formatParameterValue( parameterValue );
+        String parameterValueString = formatParameterValue( parameterValue );
         addElementToReportHeader( createText( parameterName + ": " + parameterValueString ), reportHeader );
+        promptsAdded = true;
       }
     }
 
-    if ( parameterValueString == null || parameterValueString.isEmpty() ) {
+    if ( !promptsAdded ) {
       addElementToReportHeader( createText( NO_PROMPTS ), reportHeader );
     }
   }
