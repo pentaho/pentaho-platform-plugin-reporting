@@ -40,7 +40,7 @@ public class FakeLocation implements ContentLocation {
     this.latch = firstLatch;
   }
 
-  private Set<String> files = new ConcurrentHashMap<String,Boolean>().keySet();
+  private Set<String> files = new ConcurrentHashMap<String,Boolean>().keySet( Boolean.TRUE );
 
   @Override public ContentEntity[] listContents() throws ContentIOException {
     throw new UnsupportedOperationException();

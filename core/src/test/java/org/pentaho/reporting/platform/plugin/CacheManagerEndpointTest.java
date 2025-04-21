@@ -14,7 +14,6 @@
 package org.pentaho.reporting.platform.plugin;
 
 import org.junit.Test;
-import org.junit.Ignore;
 import org.junit.runner.RunWith;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
@@ -38,7 +37,6 @@ import static org.mockito.Mockito.when;
 @RunWith( MockitoJUnitRunner.class )
 public class CacheManagerEndpointTest {
 
-  @Ignore
   @Test
   public void clear() throws Exception {
     try ( MockedStatic<DataCacheFactory> dataCacheFactoryMockedStatic = Mockito.mockStatic( DataCacheFactory.class ) ) {
@@ -63,7 +61,6 @@ public class CacheManagerEndpointTest {
     }
   }
 
-  @Ignore
   @Test
   public void clearError() throws Exception {
     final Response clear = new CacheManagerEndpoint().clear();
