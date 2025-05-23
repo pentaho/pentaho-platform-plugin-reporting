@@ -25,7 +25,11 @@ import org.pentaho.reporting.engine.classic.core.parameters.ParameterDefinitionE
 import org.pentaho.reporting.libraries.formula.EvaluationException;
 import org.pentaho.reporting.libraries.formula.parser.ParseException;
 
-import java.sql.Date;
+import java.util.Date;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.function.Function;
@@ -38,14 +42,31 @@ public interface ExportReportUtils {
   String NO_PROMPTS = "No prompts used";
   ReadableFilterUtil readableFilterUtil = new ReadableFilterUtil();
 
+  // ISO_LOCAL_DATE is yyyy-MM-dd
+  DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE;
+
   Map<Class<?>, Function<Object, String>> typeFormattingStrategies = Map.of(
     String.class, String.class::cast,
     Number.class, Object::toString,
-    Date.class, value -> ( (java.sql.Date) value ).toLocalDate().toString(),
+    Date.class, ExportReportUtils::formatDate,
     String[].class, value -> String.join( ", ", (String[]) value ),
     Number[].class, value -> formatNumberArray( (Number[]) value ),
     Date[].class, value -> formatDateArray( (Date[]) value )
   );
+
+  private static String formatDate( Object value ) {
+    if ( value instanceof java.sql.Date ) {
+      // java.sql.Date has toLocalDate()
+      return ( (java.sql.Date) value ).toLocalDate().format( DATE_FORMATTER );
+    } else if ( value instanceof java.util.Date ) {
+      // Convert util.Date to Instant, then to LocalDate
+      Instant instant = ( (java.util.Date) value ).toInstant();
+      LocalDate localDate = instant.atZone( ZoneId.systemDefault() ).toLocalDate();
+      return localDate.format( DATE_FORMATTER );
+    } else {
+      throw new IllegalArgumentException( "Not a Date: " + value );
+    }
+  }
 
   private static String formatNumberArray( Number[] array ) {
     return Arrays.stream( array )
@@ -55,10 +76,7 @@ public interface ExportReportUtils {
 
   private static String formatDateArray( Date[] dates ) {
     return Arrays.stream( dates )
-      .map( date ->
-        // Convert java.sql.Date to LocalDate directly
-        date.toLocalDate().toString()
-      )
+      .map( ExportReportUtils::formatDate )
       .collect( Collectors.joining( ", " ) );
   }
 
@@ -101,7 +119,7 @@ public interface ExportReportUtils {
 
     reportHeader.setPagebreakAfterPrint( true );
 
-    Query thinQuery = readableFilterUtil.getQueryFromString( report );
+    Query thinQuery = readableFilterUtil.extractQueryFromReport( report );
 
     addElementToReportHeader( createLabel( FILTERS_SUMMARY ), reportHeader );
     if ( thinQuery != null && !thinQuery.getConstraints().isEmpty() ) {
@@ -127,7 +145,7 @@ public interface ExportReportUtils {
   @VisibleForTesting
   default void addFiltersFromQuery( ReportHeader reportHeader, Query query )
     throws ParseException, EvaluationException {
-    String filterDesc = readableFilterUtil.toHumanReadableMql( query.getConstraints().get( 0 ).getFormula() );
+    String filterDesc = readableFilterUtil.toHumanReadableFilter( query.getConstraints().get( 0 ).getFormula() );
     if ( filterDesc.isEmpty() ) {
       filterDesc = NO_FILTERS;
     }

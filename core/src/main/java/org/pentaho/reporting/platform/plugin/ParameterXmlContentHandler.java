@@ -381,6 +381,16 @@ public class ParameterXmlContentHandler {
         hideOutputParameterIfLocked( report, reportParameters );
       }
 
+      // Hide the parameter, like output-target, if report opened in PIR (editor/viewer) or report is prpt.
+      if ( ( ( path.equals( "/" ) || path.endsWith( ".prpti" ) ) && ( requestParams.getParameter( "json" ) != null ) )
+        || path.endsWith( "prpt" ) ) {
+        final ParameterDefinitionEntry definitionEntry = reportParameters.get( "includeReportDetails" );
+        if ( definitionEntry instanceof AbstractParameter ) {
+          final AbstractParameter parameter = (AbstractParameter) definitionEntry;
+          parameter.setHidden( true );
+        }
+      }
+
       final Map<String, Object> inputs =
         computeParameterValueSet( reportComponent, parameterContext, vr, reportParameters );
 
@@ -1174,24 +1184,24 @@ public class ParameterXmlContentHandler {
       StaticListParameter( "includeReportDetails", false, true, Boolean.class );
 
     toggleButtonParameter.setParameterAttribute( ParameterAttributeNames.Core.NAMESPACE,
-      ParameterAttributeNames.Core.PREFERRED, String.valueOf( false ) );
+      ParameterAttributeNames.Core.PREFERRED, String.valueOf( true ) );
     toggleButtonParameter.setParameterAttribute( ParameterAttributeNames.Core.NAMESPACE,
-      ParameterAttributeNames.Core.PARAMETER_GROUP, GROUP_SYSTEM );
+      ParameterAttributeNames.Core.PARAMETER_GROUP, GROUP_PARAMETERS );
     toggleButtonParameter.setParameterAttribute( ParameterAttributeNames.Core.NAMESPACE,
       ParameterAttributeNames.Core.PARAMETER_GROUP_LABEL, Messages.getInstance().getString(
-        "ReportPlugin.SystemParameters" ) );
+        "ReportPlugin.ReportParameters" ) );
     toggleButtonParameter.setParameterAttribute( ParameterAttributeNames.Core.NAMESPACE,
       ParameterAttributeNames.Core.LABEL,
-      "Add Preamble" );
+      Messages.getInstance().getString( "ReportPlugin.addPreamble" ) );
     toggleButtonParameter.setParameterAttribute( ParameterAttributeNames.Core.NAMESPACE,
       ParameterAttributeNames.Core.TYPE,
       ParameterAttributeNames.Core.TYPE_TOGGLEBUTTON );
     toggleButtonParameter.setRole( ParameterAttributeNames.Core.ROLE_SYSTEM_PARAMETER );
 
     toggleButtonParameter.setValueType( Boolean.class );
-    toggleButtonParameter.setDefaultValue( Boolean.FALSE );
-    toggleButtonParameter.addValues( Boolean.FALSE, Boolean.FALSE );
+    toggleButtonParameter.setDefaultValue( Boolean.TRUE );
     toggleButtonParameter.addValues( Boolean.TRUE, Boolean.TRUE );
+    toggleButtonParameter.addValues( Boolean.FALSE, Boolean.FALSE );
 
     return toggleButtonParameter;
   }

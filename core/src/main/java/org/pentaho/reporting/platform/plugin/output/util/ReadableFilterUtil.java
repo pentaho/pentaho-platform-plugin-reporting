@@ -60,7 +60,7 @@ public class ReadableFilterUtil {
     return PentahoSystem.get( IMetadataDomainRepository.class, PentahoSessionHolder.getSession() );
   }
 
-  public Query getQueryFromString( MasterReport report ) throws PentahoMetadataException {
+  public Query extractQueryFromReport( MasterReport report ) throws PentahoMetadataException {
     if ( report == null || report.getDataFactory() == null || report.getQuery() == null ) {
       throw new IllegalArgumentException( "Report, DataFactory, or Query cannot be null" );
     }
@@ -94,7 +94,7 @@ public class ReadableFilterUtil {
 
   }
 
-  public String toHumanReadableMql( String mql ) throws ParseException, EvaluationException {
+  public String toHumanReadableFilter( String mql ) throws ParseException, EvaluationException {
     if ( mql == null || mql.isBlank() ) {
       return "";
     }
