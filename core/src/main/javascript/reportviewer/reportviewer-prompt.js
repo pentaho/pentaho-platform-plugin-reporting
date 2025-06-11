@@ -437,7 +437,7 @@ define([
 
       reauthenticate: function(f) {
 
-        if(isRunningIFrameInSameOrigin) {
+        if(isRunningIFrameInSameOrigin && typeof window.parent.authenticate === 'function') {
           var callback = {
             loginCallback : f
           }
