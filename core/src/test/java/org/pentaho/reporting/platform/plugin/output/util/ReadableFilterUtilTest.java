@@ -40,8 +40,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class ReadableFilterUtilTest {
-
-  private ReadableFilterUtil utilSpy;
+  private ReadableFilterUtil readableFilterUtilSpy;
   private Query queryMock;
   private LogicalModel logicalModelMock;
   private LogicalColumn logicalColumnMock;
@@ -50,50 +49,81 @@ public class ReadableFilterUtilTest {
 
   @Before
   public void setUp() {
-    utilSpy = Mockito.spy( new ReadableFilterUtil() );
+    readableFilterUtilSpy = Mockito.spy( ReadableFilterUtil.getInstance() );
     queryMock = mock( Query.class );
     logicalModelMock = mock( LogicalModel.class );
     logicalColumnMock = mock( LogicalColumn.class );
     masterReportMock = mock( MasterReport.class );
     metadataDomainRepositoryMock = mock( IMetadataDomainRepository.class );
-    utilSpy.setQuery( queryMock );
+
     when( queryMock.getLogicalModel() ).thenReturn( logicalModelMock );
 
-    doReturn( "Product Line" ).when( utilSpy ).cleanCol( "CAT_PRODUCTS.BC_PRODUCTS_PRODUCTLINE.NONE" );
-    doReturn( "Territory" ).when( utilSpy ).cleanCol( "BC_CUSTOMER_W_TER_.BC_CUSTOMER_W_TER_TERRITORY.NONE" );
-    doReturn( "Country" ).when( utilSpy ).cleanCol( "BC_CUSTOMER_W_TER_.BC_CUSTOMER_W_TER_COUNTRY.NONE" );
-    doReturn( "Buy Price (SUM)" ).when( utilSpy ).cleanCol( "CAT_PRODUCTS.BC_PRODUCTS_BUYPRICE.SUM" );
-    doReturn( "Required Date" ).when( utilSpy ).cleanCol( "CAT_ORDERS.BC_ORDERS_REQUIREDDATE.NONE" );
-    doReturn( "Payment Date" ).when( utilSpy ).cleanCol( "CAT_PAYMENTS.BC_PAYMENTS_PAYMENTDATE.NONE" );
-    doReturn( "City" ).when( utilSpy ).cleanCol( "BC_CUSTOMER_W_TER_.BC_CUSTOMER_W_TER_CITY.NONE" );
-    doReturn( "Status" ).when( utilSpy ).cleanCol( "CAT_ORDERS.BC_ORDERS_STATUS.NONE" );
-    doReturn( "Total (SUM)" ).when( utilSpy ).cleanCol( "CAT_ORDERS.BC_ORDERDETAILS_TOTAL.SUM" );
+    // Mock ReportEnvironment and locale
+    ReportEnvironment env = mock( ReportEnvironment.class );
+    when( masterReportMock.getReportEnvironment() ).thenReturn( env );
+    when( env.getLocale() ).thenReturn( Locale.US );
 
-    doReturn( DataType.STRING ).when( utilSpy ).getFieldDataType( "CAT_PRODUCTS.BC_PRODUCTS_PRODUCTLINE.NONE" );
-    doReturn( DataType.STRING ).when( utilSpy )
-      .getFieldDataType( "BC_CUSTOMER_W_TER_.BC_CUSTOMER_W_TER_TERRITORY.NONE" );
-    doReturn( DataType.STRING ).when( utilSpy ).getFieldDataType( "BC_CUSTOMER_W_TER_.BC_CUSTOMER_W_TER_COUNTRY.NONE" );
-    doReturn( DataType.NUMERIC ).when( utilSpy ).getFieldDataType( "CAT_ORDERS.BC_ORDERDETAILS_TOTAL.SUM" );
-    doReturn( DataType.NUMERIC ).when( utilSpy ).getFieldDataType( "CAT_PRODUCTS.BC_PRODUCTS_BUYPRICE.SUM" );
-    doReturn( DataType.DATE ).when( utilSpy ).getFieldDataType( "CAT_ORDERS.BC_ORDERS_REQUIREDDATE.NONE" );
-    doReturn( DataType.DATE ).when( utilSpy ).getFieldDataType( "CAT_PAYMENTS.BC_PAYMENTS_PAYMENTDATE.NONE" );
-    doReturn( DataType.STRING ).when( utilSpy ).getFieldDataType( "BC_CUSTOMER_W_TER_.BC_CUSTOMER_W_TER_CITY.NONE" );
-    doReturn( DataType.STRING ).when( utilSpy ).getFieldDataType( "CAT_ORDERS.BC_ORDERS_STATUS.NONE" );
-
+    // Mock LogicalColumn lookups and names
+    when( logicalModelMock.findLogicalColumn( anyString() ) ).thenAnswer( invocation -> {
+      String colName = invocation.getArgument( 0 );
+      LogicalColumn col = mock( LogicalColumn.class );
+      switch ( colName ) {
+        case "BC_PRODUCTS_PRODUCTLINE":
+          when( col.getName( anyString() ) ).thenReturn( "Product Line" );
+          when( col.getDataType() ).thenReturn( DataType.STRING );
+          break;
+        case "BC_CUSTOMER_W_TER_TERRITORY":
+          when( col.getName( anyString() ) ).thenReturn( "Territory" );
+          when( col.getDataType() ).thenReturn( DataType.STRING );
+          break;
+        case "BC_CUSTOMER_W_TER_COUNTRY":
+          when( col.getName( anyString() ) ).thenReturn( "Country" );
+          when( col.getDataType() ).thenReturn( DataType.STRING );
+          break;
+        case "BC_PRODUCTS_BUYPRICE":
+          when( col.getName( anyString() ) ).thenReturn( "Buy Price" );
+          when( col.getDataType() ).thenReturn( DataType.NUMERIC );
+          break;
+        case "BC_ORDERS_REQUIREDDATE":
+          when( col.getName( anyString() ) ).thenReturn( "Required Date" );
+          when( col.getDataType() ).thenReturn( DataType.DATE );
+          break;
+        case "BC_PAYMENTS_PAYMENTDATE":
+          when( col.getName( anyString() ) ).thenReturn( "Payment Date" );
+          when( col.getDataType() ).thenReturn( DataType.DATE );
+          break;
+        case "BC_CUSTOMER_W_TER_CITY":
+          when( col.getName( anyString() ) ).thenReturn( "City" );
+          when( col.getDataType() ).thenReturn( DataType.STRING );
+          break;
+        case "BC_ORDERS_STATUS":
+          when( col.getName( anyString() ) ).thenReturn( "Status" );
+          when( col.getDataType() ).thenReturn( DataType.STRING );
+          break;
+        case "BC_ORDERDETAILS_TOTAL":
+          when( col.getName( anyString() ) ).thenReturn( "Total" );
+          when( col.getDataType() ).thenReturn( DataType.NUMERIC );
+          break;
+        default:
+          when( col.getName( anyString() ) ).thenReturn( colName );
+          when( col.getDataType() ).thenReturn( DataType.UNKNOWN );
+      }
+      return col;
+    } );
   }
 
   @Test
   public void testRemoveDateValue() throws ParseException, EvaluationException {
     String mql = "DATEVALUE(\"2024-01-01\")";
-    String result = utilSpy.toHumanReadableFilter( mql );
+    String result = readableFilterUtilSpy.toHumanReadableFilter( mql, queryMock, masterReportMock );
     assertTrue( result.contains( "2024-01-01" ) );
   }
 
   @Test
   public void testToHumanReadableFilter_NullOrBlank() throws Exception {
-    assertEquals( "", utilSpy.toHumanReadableFilter( null ) );
-    assertEquals( "", utilSpy.toHumanReadableFilter( "" ) );
-    assertEquals( "", utilSpy.toHumanReadableFilter( "   " ) );
+    assertEquals( "", readableFilterUtilSpy.toHumanReadableFilter( null, queryMock, masterReportMock ) );
+    assertEquals( "", readableFilterUtilSpy.toHumanReadableFilter( "", queryMock, masterReportMock ) );
+    assertEquals( "", readableFilterUtilSpy.toHumanReadableFilter( "   ", queryMock, masterReportMock ) );
   }
 
   @Test
@@ -109,10 +139,10 @@ public class ReadableFilterUtilTest {
       "OR([CAT_ORDERS.BC_ORDERDETAILS_TOTAL.SUM] <=45;[CAT_PAYMENTS.BC_PAYMENTS_PAYMENTDATE.NONE] >DATEVALUE"
         + "(\"2025-05-05\"))";
 
-    String result1 = utilSpy.toHumanReadableFilter( mql1 );
-    String result2 = utilSpy.toHumanReadableFilter( mql2 );
-    String result3 = utilSpy.toHumanReadableFilter( mql3 );
-    String result4 = utilSpy.toHumanReadableFilter( mql4 );
+    String result1 = readableFilterUtilSpy.toHumanReadableFilter( mql1, queryMock, masterReportMock );
+    String result2 = readableFilterUtilSpy.toHumanReadableFilter( mql2, queryMock, masterReportMock );
+    String result3 = readableFilterUtilSpy.toHumanReadableFilter( mql3, queryMock, masterReportMock );
+    String result4 = readableFilterUtilSpy.toHumanReadableFilter( mql4, queryMock, masterReportMock );
 
     assertEquals( "Territory Excludes (\"APAC\", \"EMEA\")", result1 );
     assertEquals( "Territory Ends with \"A\" AND Country Begins with \"A\" AND City Is null AND Product Line Is not "
@@ -130,7 +160,7 @@ public class ReadableFilterUtilTest {
       + ".SUM] <10000;EQUALS([CAT_ORDERS.BC_ORDERS_REQUIREDDATE.NONE];DATEVALUE([param:Required Date]));[CAT_PAYMENTS"
       + ".BC_PAYMENTS_PAYMENTDATE.NONE] <=DATEVALUE([param:payDate]))";
 
-    String result = utilSpy.toHumanReadableFilter( mql );
+    String result = readableFilterUtilSpy.toHumanReadableFilter( mql, queryMock, masterReportMock );
 
     assertEquals( "((Product Line Exactly matches value of Prompt Product Line OR Country Excludes (\"Australia\", "
       + "\"Belgium\", \"Canada\", \"Finland\")) AND Territory Includes (value of Prompt Territory) "
@@ -147,34 +177,22 @@ public class ReadableFilterUtilTest {
     when( dataFactory.getDataFactoryForQuery( anyString() ) ).thenReturn( pmdDataFactory );
     when( pmdDataFactory.getQuery( anyString() ) ).thenReturn( "<mql>...</mql>" );
 
-    doReturn( metadataDomainRepositoryMock ).when( utilSpy ).getMetadataRepository();
-    doReturn( queryMock ).when( utilSpy ).parseQueryFromMql( anyString() );
+    doReturn( metadataDomainRepositoryMock ).when( readableFilterUtilSpy ).getMetadataRepository();
+    doReturn( queryMock ).when( readableFilterUtilSpy ).parseQueryFromMql( anyString() );
 
-    Query result = utilSpy.extractQueryFromReport( masterReportMock );
+    Query result = readableFilterUtilSpy.extractQueryFromReport( masterReportMock );
     assertEquals( queryMock, result );
   }
 
   @Test
   public void testExtractQueryFromReport_NullReportThrows() {
-    assertThrows( IllegalArgumentException.class, () -> utilSpy.extractQueryFromReport( null ) );
-  }
-
-  @Test
-  public void testGetAndSetQuery() {
-    utilSpy.setQuery( queryMock );
-    assertEquals( queryMock, utilSpy.getQuery() );
-  }
-
-  @Test
-  public void testGetAndSetReport() {
-    utilSpy.setReport( masterReportMock );
-    assertEquals( masterReportMock, utilSpy.getReport() );
+    assertThrows( IllegalArgumentException.class, () -> readableFilterUtilSpy.extractQueryFromReport( null ) );
   }
 
   @Test
   public void testParseQueryFromMql_NullOrEmptyThrows() {
-    assertThrows( IllegalArgumentException.class, () -> utilSpy.parseQueryFromMql( null ) );
-    assertThrows( IllegalArgumentException.class, () -> utilSpy.parseQueryFromMql( "" ) );
+    assertThrows( IllegalArgumentException.class, () -> readableFilterUtilSpy.parseQueryFromMql( null ) );
+    assertThrows( IllegalArgumentException.class, () -> readableFilterUtilSpy.parseQueryFromMql( "" ) );
   }
 
   @Test
@@ -185,7 +203,7 @@ public class ReadableFilterUtilTest {
     when( masterReportMock.getQuery() ).thenReturn( "myQuery" );
     when( dataFactory.getDataFactoryForQuery( anyString() ) ).thenReturn( notPmd );
 
-    Query result = utilSpy.extractQueryFromReport( masterReportMock );
+    Query result = readableFilterUtilSpy.extractQueryFromReport( masterReportMock );
     assertNull( result );
   }
 
@@ -194,92 +212,80 @@ public class ReadableFilterUtilTest {
     // Use reflection to call private method
     var method = ReadableFilterUtil.class.getDeclaredMethod( "removeDateValue", String.class );
     method.setAccessible( true );
-    assertEquals( "", method.invoke( utilSpy, (Object) null ) );
-    assertEquals( "", method.invoke( utilSpy, "" ) );
-    assertEquals( "", method.invoke( utilSpy, "   " ) );
+    assertEquals( "", method.invoke( readableFilterUtilSpy, (Object) null ) );
+    assertEquals( "", method.invoke( readableFilterUtilSpy, "" ) );
+    assertEquals( "", method.invoke( readableFilterUtilSpy, "   " ) );
   }
 
   @Test
   public void testCleanCol_WithThreeParts() {
-    ReportEnvironment env = mock( ReportEnvironment.class );
-
     when( logicalModelMock.findLogicalColumn( anyString() ) ).thenReturn( logicalColumnMock );
-    when( masterReportMock.getReportEnvironment() ).thenReturn( env );
-    when( env.getLocale() ).thenReturn( Locale.US );
     when( logicalColumnMock.getName( anyString() ) ).thenReturn( "My Column" );
 
-    utilSpy.setReport( masterReportMock );
-
-    String col = utilSpy.cleanCol( "[model.field1.SUM]" );
-    assertEquals( "My Column (SUM) ", col );
+    String col = readableFilterUtilSpy.cleanCol( "[model.field1.SUM]", queryMock, masterReportMock );
+    assertEquals( "My Column (SUM)", col );
   }
 
   @Test public void testCleanCol_WithTwoParts() {
-    ReportEnvironment env = mock( ReportEnvironment.class );
-
     when( logicalModelMock.findLogicalColumn( anyString() ) ).thenReturn( logicalColumnMock );
-    when( masterReportMock.getReportEnvironment() ).thenReturn( env );
-    when( env.getLocale() ).thenReturn( Locale.US );
     when( logicalColumnMock.getName( anyString() ) ).thenReturn( "My Column" );
 
-    utilSpy.setReport( masterReportMock );
-
-    String col = utilSpy.cleanCol( "[model.field1]" );
+    String col = readableFilterUtilSpy.cleanCol( "[model.field1]", queryMock, masterReportMock );
     assertEquals( "My Column", col );
   }
 
   @Test
   public void testGetFriendlyComparisonOperator_StringAndDate() {
     // DataType.STRING
-    assertEquals( "EXACTLY_MATCHES", utilSpy.getFriendlyComparisonOperator( "EQUALS", DataType.STRING ) );
-    assertEquals( "MORE_THAN", utilSpy.getFriendlyComparisonOperator( ">", DataType.STRING ) );
-    assertEquals( "LESS_THAN", utilSpy.getFriendlyComparisonOperator( "<", DataType.STRING ) );
-    assertEquals( "MORE_THAN_OR_EQUAL", utilSpy.getFriendlyComparisonOperator( ">=", DataType.STRING ) );
-    assertEquals( "LESS_THAN_OR_EQUAL", utilSpy.getFriendlyComparisonOperator( "<=", DataType.STRING ) );
+    assertEquals( "EXACTLY_MATCHES", readableFilterUtilSpy.getFriendlyComparisonOperator( "EQUALS", DataType.STRING ) );
+    assertEquals( "MORE_THAN", readableFilterUtilSpy.getFriendlyComparisonOperator( ">", DataType.STRING ) );
+    assertEquals( "LESS_THAN", readableFilterUtilSpy.getFriendlyComparisonOperator( "<", DataType.STRING ) );
+    assertEquals( "MORE_THAN_OR_EQUAL", readableFilterUtilSpy.getFriendlyComparisonOperator( ">=", DataType.STRING ) );
+    assertEquals( "LESS_THAN_OR_EQUAL", readableFilterUtilSpy.getFriendlyComparisonOperator( "<=", DataType.STRING ) );
     // DataType.DATE
-    assertEquals( "ON", utilSpy.getFriendlyComparisonOperator( "EQUALS", DataType.DATE ) );
-    assertEquals( "AFTER", utilSpy.getFriendlyComparisonOperator( ">", DataType.DATE ) );
-    assertEquals( "BEFORE", utilSpy.getFriendlyComparisonOperator( "<", DataType.DATE ) );
-    assertEquals( "ON_OR_AFTER", utilSpy.getFriendlyComparisonOperator( ">=", DataType.DATE ) );
-    assertEquals( "ON_OR_BEFORE", utilSpy.getFriendlyComparisonOperator( "<=", DataType.DATE ) );
+    assertEquals( "ON", readableFilterUtilSpy.getFriendlyComparisonOperator( "EQUALS", DataType.DATE ) );
+    assertEquals( "AFTER", readableFilterUtilSpy.getFriendlyComparisonOperator( ">", DataType.DATE ) );
+    assertEquals( "BEFORE", readableFilterUtilSpy.getFriendlyComparisonOperator( "<", DataType.DATE ) );
+    assertEquals( "ON_OR_AFTER", readableFilterUtilSpy.getFriendlyComparisonOperator( ">=", DataType.DATE ) );
+    assertEquals( "ON_OR_BEFORE", readableFilterUtilSpy.getFriendlyComparisonOperator( "<=", DataType.DATE ) );
     // DataType.NUMERIC
-    assertEquals( "EQUALS", utilSpy.getFriendlyComparisonOperator( "EQUALS", DataType.NUMERIC ) );
-    assertEquals( "MORE_THAN", utilSpy.getFriendlyComparisonOperator( ">", DataType.NUMERIC ) );
-    assertEquals( "LESS_THAN", utilSpy.getFriendlyComparisonOperator( "<", DataType.NUMERIC ) );
-    assertEquals( "MORE_THAN_OR_EQUAL", utilSpy.getFriendlyComparisonOperator( ">=", DataType.NUMERIC ) );
-    assertEquals( "LESS_THAN_OR_EQUAL", utilSpy.getFriendlyComparisonOperator( "<=", DataType.NUMERIC ) );
+    assertEquals( "EQUALS", readableFilterUtilSpy.getFriendlyComparisonOperator( "EQUALS", DataType.NUMERIC ) );
+    assertEquals( "MORE_THAN", readableFilterUtilSpy.getFriendlyComparisonOperator( ">", DataType.NUMERIC ) );
+    assertEquals( "LESS_THAN", readableFilterUtilSpy.getFriendlyComparisonOperator( "<", DataType.NUMERIC ) );
+    assertEquals( "MORE_THAN_OR_EQUAL", readableFilterUtilSpy.getFriendlyComparisonOperator( ">=", DataType.NUMERIC ) );
+    assertEquals( "LESS_THAN_OR_EQUAL", readableFilterUtilSpy.getFriendlyComparisonOperator( "<=", DataType.NUMERIC ) );
     // Unknown operator
-    assertEquals( "SOMETHING", utilSpy.getFriendlyComparisonOperator( "SOMETHING", DataType.STRING ) );
+    assertEquals( "SOMETHING", readableFilterUtilSpy.getFriendlyComparisonOperator( "SOMETHING", DataType.STRING ) );
     // Null dataType
-    assertEquals( "EQUALS", utilSpy.getFriendlyComparisonOperator( "EQUALS", null ) );
+    assertEquals( "EQUALS", readableFilterUtilSpy.getFriendlyComparisonOperator( "EQUALS", null ) );
   }
 
   @Test
   public void testGetFieldDataType_returnsUnknownIfFieldNameIsNullOrShort() {
-    assertEquals( DataType.UNKNOWN, utilSpy.getFieldDataType( "" ) );
-    assertEquals( DataType.UNKNOWN, utilSpy.getFieldDataType( "foo" ) );
-    assertEquals( DataType.UNKNOWN, utilSpy.getFieldDataType( "[foo]" ) );
+    assertEquals( DataType.UNKNOWN, readableFilterUtilSpy.getFieldDataType( "", queryMock ) );
+    assertEquals( DataType.UNKNOWN, readableFilterUtilSpy.getFieldDataType( "foo", queryMock ) );
+    assertEquals( DataType.UNKNOWN, readableFilterUtilSpy.getFieldDataType( "[foo]", queryMock ) );
   }
 
   @Test
   public void testGetFieldDataType_returnsUnknownIfLogicalColumnIsNull() {
     when( logicalModelMock.findLogicalColumn( "bar" ) ).thenReturn( null );
-    assertEquals( DataType.UNKNOWN, utilSpy.getFieldDataType( "foo.bar" ) );
+    assertEquals( DataType.UNKNOWN, readableFilterUtilSpy.getFieldDataType( "foo.bar", queryMock ) );
   }
 
   @Test
   public void testGetFieldDataType_returnsUnknownIfDataTypeIsNull() {
     when( logicalModelMock.findLogicalColumn( "bar" ) ).thenReturn( logicalColumnMock );
     when( logicalColumnMock.getDataType() ).thenReturn( null );
-    assertEquals( DataType.UNKNOWN, utilSpy.getFieldDataType( "foo.bar" ) );
+    assertEquals( DataType.UNKNOWN, readableFilterUtilSpy.getFieldDataType( "foo.bar", queryMock ) );
   }
 
   @Test
   public void testGetFieldDataType_returnsCorrectDataType() {
     when( logicalModelMock.findLogicalColumn( "bar" ) ).thenReturn( logicalColumnMock );
     when( logicalColumnMock.getDataType() ).thenReturn( DataType.DATE );
-    assertEquals( DataType.DATE, utilSpy.getFieldDataType( "foo.bar" ) );
+    assertEquals( DataType.DATE, readableFilterUtilSpy.getFieldDataType( "foo.bar", queryMock ) );
     when( logicalColumnMock.getDataType() ).thenReturn( DataType.STRING );
-    assertEquals( DataType.STRING, utilSpy.getFieldDataType( "foo.bar" ) );
+    assertEquals( DataType.STRING, readableFilterUtilSpy.getFieldDataType( "foo.bar", queryMock ) );
   }
 }

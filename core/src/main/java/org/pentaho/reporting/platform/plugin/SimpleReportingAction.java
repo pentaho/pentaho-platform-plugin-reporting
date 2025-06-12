@@ -71,7 +71,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
-public class SimpleReportingAction implements ExportReportUtils, IStreamProcessingAction, IStreamingAction, IVarArgsAction{
+public class SimpleReportingAction implements IStreamProcessingAction, IStreamingAction, IVarArgsAction{
 
   /**
    * The logging for logging messages from this component
@@ -142,6 +142,7 @@ public class SimpleReportingAction implements ExportReportUtils, IStreamProcessi
   private Boolean useJcr;
   private String jcrOutputPath;
   protected ReportContentUtil reportContentUtil;
+  private final ExportReportUtils exportReportUtils;
 
   /*
    * These fields are for enabling printing
@@ -153,6 +154,11 @@ public class SimpleReportingAction implements ExportReportUtils, IStreamProcessi
    * Default constructor
    */
   public SimpleReportingAction() {
+    this( ExportReportUtils.getInstance() );
+  }
+
+  public SimpleReportingAction( ExportReportUtils exportReportUtils ) {
+    this.exportReportUtils = exportReportUtils;
     this.inputs = Collections.emptyMap();
     acceptedPage = -1;
     pageCount = -1;
@@ -426,6 +432,10 @@ public class SimpleReportingAction implements ExportReportUtils, IStreamProcessi
     }
 
     this.inputs = inputs;
+  }
+
+  protected ExportReportUtils getExportReportUtils() {
+    return exportReportUtils;
   }
 
   // ----------------------------------------------------------------------------
@@ -930,7 +940,7 @@ public class SimpleReportingAction implements ExportReportUtils, IStreamProcessi
         return false;
       }
       if ( Boolean.parseBoolean( getInput( "includeReportSpecification", Boolean.FALSE ).toString() ) ) {
-        addReportDetailsPage( report, parameterContext );
+        getExportReportUtils().addReportDetailsPage( report, parameterContext );
       }
       synchronized ( reportOutputHandler.getReportLock() ) {
         try {
