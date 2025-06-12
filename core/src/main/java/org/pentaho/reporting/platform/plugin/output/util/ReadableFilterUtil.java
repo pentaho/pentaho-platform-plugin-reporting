@@ -13,6 +13,7 @@
 package org.pentaho.reporting.platform.plugin.output.util;
 
 import com.google.common.annotations.VisibleForTesting;
+import org.pentaho.metadata.model.LogicalColumn;
 import org.pentaho.metadata.model.concept.types.DataType;
 import org.pentaho.metadata.query.model.Query;
 import org.pentaho.metadata.query.model.util.QueryXmlHelper;
@@ -41,23 +42,14 @@ import java.util.stream.Collectors;
 public class ReadableFilterUtil {
   private static final String DATEVALUE = "\\(?DATEVALUE\\((.*?)\\)\\)?";
   private static final String SPACE = " ";
-  private Query query;
-  private MasterReport report;
 
-  public Query getQuery() {
-    return query;
+  private static final ReadableFilterUtil INSTANCE = new ReadableFilterUtil();
+
+  protected ReadableFilterUtil() {
   }
 
-  public void setQuery( Query query ) {
-    this.query = query;
-  }
-
-  public MasterReport getReport() {
-    return report;
-  }
-
-  public void setReport( MasterReport report ) {
-    this.report = report;
+  public static ReadableFilterUtil getInstance() {
+    return INSTANCE;
   }
 
   @VisibleForTesting
@@ -85,9 +77,6 @@ public class ReadableFilterUtil {
     if ( report == null || report.getDataFactory() == null || report.getQuery() == null ) {
       throw new IllegalArgumentException( "Report, DataFactory, or Query cannot be null" );
     }
-    setReport( report );
-
-
     CompoundDataFactory dataFactory = (CompoundDataFactory) report.getDataFactory();
     String[] tryNames = { report.getQuery(), "default" };
     for ( String dataSourceName : tryNames ) {
@@ -95,8 +84,7 @@ public class ReadableFilterUtil {
       if ( someDataFactory instanceof PmdDataFactory ) {
         PmdDataFactory pmdDataFactory = (PmdDataFactory) someDataFactory;
         String mql = pmdDataFactory.getQuery( dataSourceName );
-        setQuery( parseQueryFromMql( mql ) );
-        return query;
+        return parseQueryFromMql( mql );
       }
     }
     // If we reach here, we didn't find a PmdDataFactory or a valid MQL string
@@ -116,7 +104,8 @@ public class ReadableFilterUtil {
 
   }
 
-  public String toHumanReadableFilter( String mql ) throws ParseException, EvaluationException {
+  public String toHumanReadableFilter( String mql, Query query, MasterReport report )
+    throws ParseException, EvaluationException {
     if ( isNullOrBlank( mql ) ) {
       return "";
     }
@@ -124,7 +113,7 @@ public class ReadableFilterUtil {
     Formula formula = new Formula( mql );
     formula.initialize( new DefaultFormulaContext() );
     LValue root = formula.getRootReference();
-    return toHumanReadable( root );
+    return toHumanReadable( root, query, report );
   }
 
   private String removeDateValue( String mql ) {
@@ -134,25 +123,26 @@ public class ReadableFilterUtil {
     return mql.replaceAll( DATEVALUE, "$1" );
   }
 
-  private String toHumanReadable( LValue value ) {
-    return removeDateValue( createFriendlyFilterString( value, 0 ) );
+  private String toHumanReadable( LValue value, Query query, MasterReport report ) {
+    return removeDateValue( createFriendlyFilterString( value, 0, query, report ) );
   }
 
-  private String createFriendlyFilterString( LValue value, int depth ) {
+  private String createFriendlyFilterString( LValue value, int depth, Query query, MasterReport report ) {
     if ( value instanceof Term ) {
-      return handleTerm( (Term) value, depth );
+      return handleTerm( (Term) value, depth, query, report );
     }
     if ( value instanceof FormulaFunction ) {
-      return handleFormulaFunction( (FormulaFunction) value, depth );
+      return handleFormulaFunction( (FormulaFunction) value, depth, query, report );
     }
     if ( value instanceof StaticValue ) {
       return handleStaticValue( (StaticValue) value );
     }
     if ( value instanceof ContextLookup ) {
-      return handleContextLookup( (ContextLookup) value );
+      return handleContextLookup( (ContextLookup) value, query, report );
     }
     return value != null ? value.toString() : "";
   }
+
 
   /**
    * Generates a human-readable string representation of a filter term.
@@ -162,14 +152,16 @@ public class ReadableFilterUtil {
    *
    * @param term  the filter term to be processed
    * @param depth the current recursion depth, used for formatting nested terms
+   * @param query  the query object containing filter information
+   * @param report the master report context for localization and metadata
    * @return a localized, human-readable string representing the filter term
    */
-  private String handleTerm( Term term, int depth ) {
-    String head = createFriendlyFilterString( term.getHeadValue(), depth + 1 );
+  private String handleTerm( Term term, int depth, Query query, MasterReport report ) {
+    String head = createFriendlyFilterString( term.getHeadValue(), depth + 1, query, report );
     String rawCol = extractColumnName( term.getHeadValue() );
-    DataType dataType = getFieldDataType( rawCol );
+    DataType dataType = getFieldDataType( rawCol, query );
     String op = getFriendlyComparisonOperator( term.getOperators()[ 0 ].toString(), dataType );
-    String operand = createFriendlyFilterString( term.getOperands()[ 0 ], depth + 1 );
+    String operand = createFriendlyFilterString( term.getOperands()[ 0 ], depth + 1, query, report );
     return String.format( "%s %s %s", head, getLocaleString( op ), operand );
   }
 
@@ -184,21 +176,23 @@ public class ReadableFilterUtil {
    *
    * @param func  the {@link FormulaFunction} to process
    * @param depth the current recursion depth, used for formatting or limiting recursion
+   * @param query the query object containing filter information
+   * @param report the master report context for localization and metadata
    * @return a human-readable string representation of the formula function
    */
-  private String handleFormulaFunction( FormulaFunction func, int depth ) {
+  private String handleFormulaFunction( FormulaFunction func, int depth, Query query, MasterReport report ) {
     String fn = func.getFunctionName().toUpperCase();
     LValue[] params = func.getChildValues();
 
     // Special handling for NOT(IN(...)), NOT(CONTAINS(...)), NOT(ISNA(...))
     if ( "NOT".equals( fn ) && params.length > 0 && params[ 0 ] instanceof FormulaFunction ) {
-      return handleNotFunction( (FormulaFunction) params[ 0 ], depth + 1 );
+      return handleNotFunction( (FormulaFunction) params[ 0 ], depth + 1, query, report );
     }
 
     switch ( fn ) {
       case "AND":
       case "OR":
-        return handleLogicalFunction( fn, params, depth );
+        return handleLogicalFunction( fn, params, depth, query, report );
       case "EQUALS":
       case "BEGINSWITH":
       case "ENDSWITH":
@@ -207,22 +201,23 @@ public class ReadableFilterUtil {
       case ">=":
       case "<":
       case ">":
-        return handleComparisonFunction( fn, params, depth );
+        return handleComparisonFunction( fn, params, depth, query, report );
       case "IN":
-        return handleInFunction( params, getLocaleString( fn ), depth + 1 );
+        return handleInFunction( params, getLocaleString( fn ), depth + 1, query, report );
       case "NOT":
-        return "NOT (" + createFriendlyFilterString( params[ 0 ], depth + 1 ) + ")";
+        return "NOT (" + createFriendlyFilterString( params[ 0 ], depth + 1, query, report ) + ")";
       case "ISNA":
-        return createFriendlyFilterString( params[ 0 ], depth + 1 ) + SPACE + getLocaleString( fn );
+        return createFriendlyFilterString( params[ 0 ], depth + 1, query, report ) + SPACE + getLocaleString( fn );
       default:
-        return handleOtherFunction( fn, params, depth + 1 );
+        return handleOtherFunction( fn, params, depth + 1, query, report );
     }
   }
 
-  private String handleLogicalFunction( String fn, LValue[] params, int depth ) {
+  private String handleLogicalFunction( String fn, LValue[] params, int depth, Query query,
+                                               MasterReport report ) {
     String operatorType = "OPERATOR_TYPES_" + fn;
     String sep = SPACE + Messages.getInstance().getString( operatorType ) + SPACE;
-    String joined = joinParamsWithDepth( params, sep, depth + 1 );
+    String joined = joinParamsWithDepth( params, sep, depth + 1, query, report );
     boolean needsBrackets = needsBracketsForLogical( params, fn );
     // Only wrap in brackets if this logical op is nested (depth > 0) or has logical children
     if ( depth > 0 || needsBrackets ) {
@@ -231,14 +226,15 @@ public class ReadableFilterUtil {
     return joined;
   }
 
-  private String handleComparisonFunction( String fn, LValue[] params, int depth ) {
+  private String handleComparisonFunction( String fn, LValue[] params, int depth, Query query,
+                                                  MasterReport report ) {
     if ( params[ 0 ] instanceof Term || params[ 0 ] instanceof ContextLookup ) {
       String rawCol = extractColumnName( params[ 0 ] );
-      DataType dataType = getFieldDataType( rawCol );
+      DataType dataType = getFieldDataType( rawCol, query );
       String friendlyOp = getFriendlyComparisonOperator( fn, dataType );
-      return binaryOp( params, getLocaleString( friendlyOp ), depth + 1 );
+      return binaryOp( params, getLocaleString( friendlyOp ), depth + 1, query, report );
     } else {
-      return binaryOp( params, getLocaleString( fn ), depth + 1 );
+      return binaryOp( params, getLocaleString( fn ), depth + 1, query, report );
     }
   }
 
@@ -268,28 +264,31 @@ public class ReadableFilterUtil {
     return false;
   }
 
-  private String handleNotFunction( FormulaFunction inner, int depth ) {
+  private String handleNotFunction( FormulaFunction inner, int depth, Query query, MasterReport report ) {
     String innerFn = inner.getFunctionName().toUpperCase();
     LValue[] innerParams = inner.getChildValues();
     switch ( innerFn ) {
       case "IN":
         return handleInFunction( innerParams, Messages.getInstance().getString( "FilterCombinationTypeNotIn" ),
-          depth + 1 );
+          depth + 1, query, report );
       case "CONTAINS":
-        return binaryOp( innerParams, Messages.getInstance().getString( "DOES_NOT_CONTAIN" ), depth + 1 );
+        return binaryOp( innerParams, Messages.getInstance().getString( "DOES_NOT_CONTAIN" ), depth + 1, query,
+          report );
       case "ISNA":
-        return createFriendlyFilterString( innerParams[ 0 ], depth + 1 ) + SPACE + getLocaleString( "IS_NOT_NULL" );
+        return createFriendlyFilterString( innerParams[ 0 ], depth + 1, query, report ) + SPACE + getLocaleString(
+          "IS_NOT_NULL" );
       default:
         throw new IllegalStateException( "Unexpected value: " + innerFn );
     }
   }
 
-  private String handleInFunction( LValue[] params, String label, int depth ) {
+  private String handleInFunction( LValue[] params, String label, int depth, Query query, MasterReport report ) {
     if ( params.length < 2 ) {
       return "";
     }
-    String field = createFriendlyFilterString( params[ 0 ], depth + 1 );
-    String values = joinParamsWithDepth( Arrays.copyOfRange( params, 1, params.length ), ", ", depth + 1 );
+    String field = createFriendlyFilterString( params[ 0 ], depth + 1, query, report );
+    String values =
+      joinParamsWithDepth( Arrays.copyOfRange( params, 1, params.length ), ", ", depth + 1, query, report );
     return String.format( "%s %s (%s)", field, label, values );
   }
 
@@ -312,16 +311,17 @@ public class ReadableFilterUtil {
    * cannot be determined, {@link DataType#UNKNOWN} is returned.
    * </p>
    *
-   * @param fieldName the name of the field, potentially including table and column information (e.g., "[table].[column]")
+   * @param fieldName the name of the field, potentially including table and column information (e.g., "[table]
+   *                  .[column]")
    * @return the {@link DataType} of the specified field, or {@link DataType#UNKNOWN} if it cannot be determined
    */
   @VisibleForTesting
-  DataType getFieldDataType( String fieldName ) {
+  DataType getFieldDataType( String fieldName, Query query ) {
     String[] colName = fieldName.replaceAll( "[\\[\\]]", "" ).split( "\\." );
     if ( colName.length < 2 ) {
       return DataType.UNKNOWN;
     }
-    var logicalCol = getQuery().getLogicalModel().findLogicalColumn( colName[ 1 ] );
+    LogicalColumn logicalCol = query.getLogicalModel().findLogicalColumn( colName[ 1 ] );
     if ( logicalCol == null || logicalCol.getDataType() == null ) {
       return DataType.UNKNOWN;
     }
@@ -329,7 +329,8 @@ public class ReadableFilterUtil {
   }
 
   /**
-   * Returns a user-friendly string representation of a comparison operator based on the provided operator and data type.
+   * Returns a user-friendly string representation of a comparison operator based on the provided operator and data
+   * type.
    * <p>
    * This method maps technical comparison operators (such as "EQUALS", ">", "<", ">=", "<=") to more readable
    * descriptions, taking into account the data type context (e.g., STRING, DATE). If the data type is not specified,
@@ -381,12 +382,14 @@ public class ReadableFilterUtil {
     }
   }
 
-  private String binaryOp( LValue[] params, String opLabel, int depth ) {
+  private String binaryOp( LValue[] params, String opLabel, int depth, Query query, MasterReport report ) {
     if ( params.length < 2 ) {
       return "";
     }
-    return String.format( "%s %s %s", createFriendlyFilterString( params[ 0 ], depth + 1 ), opLabel,
-      createFriendlyFilterString( params[ 1 ], depth + 1 ) );
+    return String.format( "%s %s %s",
+      createFriendlyFilterString( params[ 0 ], depth + 1, query, report ),
+      opLabel,
+      createFriendlyFilterString( params[ 1 ], depth + 1, query, report ) );
   }
 
   /**
@@ -396,16 +399,19 @@ public class ReadableFilterUtil {
    * @param params the array of {@link LValue} parameters to join
    * @param sep the separator string to use between joined elements
    * @param depth the depth to use when creating the friendly filter string for each parameter
+   * @param query  the query object containing filter information
+   * @param report the master report context for localization and metadata
    * @return a single string with all parameters joined by the specified separator
    */
-  private String joinParamsWithDepth( LValue[] params, String sep, int depth ) {
+  private String joinParamsWithDepth( LValue[] params, String sep, int depth, Query query,
+                                             MasterReport report ) {
     return Arrays.stream( params )
-      .map( p -> createFriendlyFilterString( p, depth ) )
+      .map( p -> createFriendlyFilterString( p, depth, query, report ) )
       .collect( Collectors.joining( sep ) );
   }
 
-  private String handleOtherFunction( String fn, LValue[] params, int depth ) {
-    String joined = joinParamsWithDepth( params, ", ", depth );
+  private String handleOtherFunction( String fn, LValue[] params, int depth, Query query, MasterReport report ) {
+    String joined = joinParamsWithDepth( params, ", ", depth, query, report );
     return String.format( "%s(%s)", fn, joined );
   }
 
@@ -422,10 +428,12 @@ public class ReadableFilterUtil {
    * </p>
    *
    * @param value the {@link ContextLookup} object containing the context name to process
+   * @param query  the query object containing filter information
+   * @param report the master report context for localization and metadata
    * @return a human-readable string representation of the context name, formatted if it is a parameter reference,
    *         or a cleaned version otherwise
    */
-  private String handleContextLookup( ContextLookup value ) {
+  private String handleContextLookup( ContextLookup value, Query query, MasterReport report ) {
     String name = value.getName();
     if ( name.matches( "param:(.+)" ) ) {
       String[] parts = name.split( ":", 2 );
@@ -434,19 +442,18 @@ public class ReadableFilterUtil {
         return MessageFormat.format( pattern, parts[ 1 ] );
       }
     }
-    return cleanCol( name );
+    return cleanCol( name, query, report );
   }
 
   @VisibleForTesting
-  String cleanCol( String col ) {
+  String cleanCol( String col, Query query, MasterReport report ) {
     col = col.replaceAll( "[\\[\\]]", "" );
     col = col.replaceAll( "\\.NONE$", "" );
     String[] colName = col.split( "\\." );
-    var logicalCol = getQuery().getLogicalModel().findLogicalColumn( colName[ 1 ] );
-    String displayName = logicalCol.getName( getReport().getReportEnvironment().getLocale().toString() );
-
+    LogicalColumn logicalCol = query.getLogicalModel().findLogicalColumn( colName[ 1 ] );
+    String displayName = logicalCol.getName( report.getReportEnvironment().getLocale().toString() );
     if ( colName.length == 3 ) {
-      return displayName + " (" + colName[ 2 ] + ") ";
+      return displayName + " (" + colName[ 2 ] + ")";
     } else {
       return displayName;
     }
@@ -456,7 +463,7 @@ public class ReadableFilterUtil {
     return str == null || str.isBlank();
   }
 
-  public static String getLocaleString( String op ) {
+  public String getLocaleString( String op ) {
     if ( op == null ) {
       return Messages.getInstance().getString( "UNKNOWN" );
     }
