@@ -26,6 +26,8 @@ import org.pentaho.reporting.engine.classic.core.ReportHeader;
 import org.pentaho.reporting.engine.classic.core.parameters.DefaultParameterContext;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterDefinitionEntry;
 import org.pentaho.reporting.engine.classic.core.parameters.ReportParameterDefinition;
+import org.pentaho.reporting.libraries.formula.EvaluationException;
+import org.pentaho.reporting.libraries.formula.parser.ParseException;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -69,8 +71,7 @@ public class ExportReportUtilsTest {
 
   @Before
   public void setUp() {
-    TestExportReportUtils exportReportUtilsInst = new TestExportReportUtils();
-    exportReportUtilsSpy = spy( exportReportUtilsInst );
+    exportReportUtilsSpy = spy( ExportReportUtils.getInstance() );
     when( masterReportMock.getReportHeader() ).thenReturn( reportHeaderMock );
     when( masterReportMock.getDataFactory() ).thenReturn( mock( CompoundDataFactory.class ) );
     when( masterReportMock.getQuery() ).thenReturn( "query" );
@@ -132,10 +133,9 @@ public class ExportReportUtilsTest {
   @Test
   public void testAddReportDetailsPage_NoConstraints() throws Exception {
     exportReportUtilsSpy.addReportDetailsPage( masterReportMock, parameterContextMock );
-
     verify( reportHeaderMock ).setPagebreakAfterPrint( true );
     verify( reportHeaderMock, times( 4 ) ).addElement( any( Element.class ) );
-    verify( readableFilterUtilMock, never() ).toHumanReadableFilter( anyString() );
+    verify( readableFilterUtilMock, times( 0 ) ).toHumanReadableFilter( "foobar", queryMock, masterReportMock );
   }
 
   @Test
@@ -161,15 +161,14 @@ public class ExportReportUtilsTest {
   }
 
   @Test
-  public void testAddFiltersFromQuery_EmptyDescription() throws Exception {
-    when( readableFilterUtilMock.toHumanReadableFilter( anyString() ) ).thenReturn( "" );
+  public void testAddFiltersFromQuery_EmptyDescription() throws ParseException, EvaluationException {
     when( queryMock.getConstraints() ).thenReturn( Collections.singletonList( constraintMock ) );
     when( constraintMock.getFormula() ).thenReturn( "someFormula" );
 
-    exportReportUtilsSpy.addFiltersFromQuery( reportHeaderMock, queryMock, readableFilterUtilMock );
+    exportReportUtilsSpy.addFiltersFromQuery( reportHeaderMock, queryMock, masterReportMock );
 
     verify( reportHeaderMock ).addElement( any( Element.class ) );
-    verify( readableFilterUtilMock ).toHumanReadableFilter( "someFormula" );
+    verify( readableFilterUtilMock, times( 0 ) ).toHumanReadableFilter( "someFormula", queryMock, masterReportMock );
   }
 
   @Test
@@ -236,13 +235,5 @@ public class ExportReportUtilsTest {
     Element e2 = exportReportUtilsSpy.createElement( "Bold", 16, true );
     assertNotNull( e1 );
     assertNotNull( e2 );
-  }
-
-  // Concrete implementation for testing default methods
-  private class TestExportReportUtils implements ExportReportUtils {
-    @Override
-    public String getReadableFilterDescription() {
-      return ExportReportUtils.super.getReadableFilterDescription();
-    }
   }
 }
