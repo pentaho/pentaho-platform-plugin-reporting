@@ -92,6 +92,11 @@
       <version>${jakarta.ws.rs-api.version}</version>
     </dependency>
     <dependency>
+      <groupId>org.ehcache</groupId>
+      <artifactId>ehcache</artifactId>
+      <version>${ehcache-core.version}</version>
+    </dependency>
+    <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
       <version>${fasterxml-jackson.non-osgi.version}</version>
