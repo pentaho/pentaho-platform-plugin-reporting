@@ -5,10 +5,10 @@
   <parent>
     <groupId>org.pentaho.reporting.plugin</groupId>
     <artifactId>reporting-platform-plugin-assemblies</artifactId>
-    <version>10.2.0.3-335</version>
+    <version>10.2.0.3-C290</version>
   </parent>
   <artifactId>classic-core-platform-plugin-package</artifactId>
-  <version>10.2.0.3-335</version>
+  <version>10.2.0.3-C290</version>
   <packaging>pom</packaging>
   <name>Pentaho Platform Reporting Plugin Web Package</name>
   <properties>
@@ -18,7 +18,7 @@
     <dependency>
       <groupId>org.pentaho.reporting.plugin</groupId>
       <artifactId>classic-core-platform-plugin</artifactId>
-      <version>${project.version}</version>
+      <version>10.2.0.3-C290</version>
       <classifier>js-compressed</classifier>
       <exclusions>
         <exclusion>

@@ -8,7 +8,7 @@
     <version>10.2.0.3-335</version>
   </parent>
   <artifactId>classic-core-platform-plugin</artifactId>
-  <version>10.2.0.3-335</version>
+  <version>10.2.0.3-C290</version>
   <name>Pentaho Platform Reporting Plugin Core</name>
   <properties>
     <js.project.list>common-ui,pentaho-cdf-js</js.project.list>

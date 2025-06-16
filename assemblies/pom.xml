@@ -8,7 +8,7 @@
     <version>10.2.0.3-335</version>
   </parent>
   <artifactId>reporting-platform-plugin-assemblies</artifactId>
-  <version>10.2.0.3-335</version>
+  <version>10.2.0.3-C290</version>
   <packaging>pom</packaging>
   <name>Pentaho Platform Reporting Plugin Assemblies</name>
   <modules>

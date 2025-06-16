@@ -32,7 +32,7 @@
 
   <properties>
     <pentaho-cdf-plugin.version>10.2.0.3-335</pentaho-cdf-plugin.version>
-    <dependency.osgi-bundles.revision>${project.version}</dependency.osgi-bundles.revision>
+    <dependency.osgi-bundles.revision>10.2.0.3-335</dependency.osgi-bundles.revision>
     <junit.version>4.13.2</junit.version>
     <pentaho-reporting.version>10.2.0.3-335</pentaho-reporting.version>
     <platform.version>10.2.0.3-335</platform.version>
