@@ -35,16 +35,18 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public interface ExportReportUtils {
-  String FILTERS_SUMMARY = "Filters Summary";
-  String PROMPTS_SUMMARY = "Prompts Summary";
-  String NO_FILTERS = "No filters used";
-  String NO_PROMPTS = "No prompts used";
+public class ExportReportUtils {
+  private static final ExportReportUtils INSTANCE = new ExportReportUtils();
+  private final ReadableFilterUtil readableFilterUtil;
 
+  static final String FILTERS_SUMMARY = "Filters Summary";
+  static final String PROMPTS_SUMMARY = "Prompts Summary";
+  static final String NO_FILTERS = "No filters used";
+  static final String NO_PROMPTS = "No prompts used";
   // ISO_LOCAL_DATE is yyyy-MM-dd
-  DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE;
+  static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE;
 
-  Map<Class<?>, Function<Object, String>> TYPE_FORMATTING_STRATEGIES = Map.of(
+  static final Map<Class<?>, Function<Object, String>> TYPE_FORMATTING_STRATEGIES = Map.of(
     String.class, String.class::cast,
     Number.class, Object::toString,
     Date.class, ExportReportUtils::formatDate,
@@ -52,6 +54,18 @@ public interface ExportReportUtils {
     Number[].class, value -> formatNumberArray( (Number[]) value ),
     Date[].class, value -> formatDateArray( (Date[]) value )
   );
+
+  protected ExportReportUtils() {
+    this.readableFilterUtil = ReadableFilterUtil.getInstance();
+  }
+
+  public static ExportReportUtils getInstance() {
+    return INSTANCE;
+  }
+
+  protected ReadableFilterUtil getReadableFilterUtil() {
+    return readableFilterUtil;
+  }
 
   private static String formatDate( Object value ) {
     if ( value instanceof java.sql.Date ) {
@@ -95,18 +109,18 @@ public interface ExportReportUtils {
       ) );
   }
 
-  default String getReadableFilterDescription() {
+  String getReadableFilterDescription() {
     return null;
   }
 
   @VisibleForTesting
-  default void addElementToReportHeader( Element element, ReportHeader reportHeader ) {
+  public void addElementToReportHeader( Element element, ReportHeader reportHeader ) {
     if ( element != null && reportHeader != null ) {
       reportHeader.addElement( element );
     }
   }
 
-  default void addReportDetailsPage( MasterReport report, DefaultParameterContext parameterContext )
+  public void addReportDetailsPage( MasterReport report, DefaultParameterContext parameterContext )
     throws PentahoMetadataException, ReportDataFactoryException {
     if ( report == null ) {
       return;
@@ -119,13 +133,11 @@ public interface ExportReportUtils {
 
     reportHeader.setPagebreakAfterPrint( true );
 
-    ReadableFilterUtil readableFilterUtil = new ReadableFilterUtil();
-
-    Query thinQuery = readableFilterUtil.extractQueryFromReport( report );
+    Query thinQuery = getReadableFilterUtil().extractQueryFromReport( report );
 
     addElementToReportHeader( createLabel( FILTERS_SUMMARY ), reportHeader );
     if ( thinQuery != null && !thinQuery.getConstraints().isEmpty() ) {
-      addFiltersFromQuery( reportHeader, thinQuery, readableFilterUtil );
+      addFiltersFromQuery( reportHeader, thinQuery, report );
     } else {
       addFilters( reportHeader );
     }
@@ -135,7 +147,7 @@ public interface ExportReportUtils {
   }
 
   @VisibleForTesting
-  default void addFilters( ReportHeader reportHeader ) {
+  public void addFilters( ReportHeader reportHeader ) {
     String filterDesc = getReadableFilterDescription();
     if ( filterDesc == null || filterDesc.isEmpty() ) {
       filterDesc = NO_FILTERS;
@@ -145,12 +157,12 @@ public interface ExportReportUtils {
   }
 
   @VisibleForTesting
-  default void addFiltersFromQuery( ReportHeader reportHeader, Query query, ReadableFilterUtil readableFilterUtil ) {
-   // There is only one constraint, so only a single filter will be displayed.
+  public void addFiltersFromQuery( ReportHeader reportHeader, Query query, MasterReport report ) {
+    // There is only one constraint, so only a single filter will be displayed.
     String filterDesc = query.getConstraints().stream()
       .map( constraint -> {
         try {
-          return readableFilterUtil.toHumanReadableFilter( constraint.getFormula() );
+          return getReadableFilterUtil().toHumanReadableFilter( constraint.getFormula(), query, report );
         } catch ( ParseException | EvaluationException e ) {
           return "Error parsing filter: " + e.getMessage();
         }
@@ -165,7 +177,7 @@ public interface ExportReportUtils {
   }
 
   @VisibleForTesting
-  default void addPrompts( ReportHeader reportHeader, MasterReport report, DefaultParameterContext parameterContext )
+  public void addPrompts( ReportHeader reportHeader, MasterReport report, DefaultParameterContext parameterContext )
     throws ReportDataFactoryException {
     ParameterDefinitionEntry[] parameterDefinitions = report.getParameterDefinition().getParameterDefinitions();
     if ( parameterDefinitions == null || parameterDefinitions.length == 0 || parameterContext == null ) {
@@ -193,7 +205,7 @@ public interface ExportReportUtils {
   }
 
   @VisibleForTesting
-  default Element createElement( String text, int fontSize, boolean isBold ) {
+  public Element createElement( String text, int fontSize, boolean isBold ) {
     LabelElementFactory elementFactory = new LabelElementFactory();
     elementFactory.setText( text );
     elementFactory.setMinimumHeight( 20f );

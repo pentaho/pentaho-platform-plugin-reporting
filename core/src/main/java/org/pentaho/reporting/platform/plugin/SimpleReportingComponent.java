@@ -69,7 +69,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
-public class SimpleReportingComponent implements ExportReportUtils, IStreamingPojo, IAcceptsRuntimeInputs {
+public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntimeInputs {
 
   /**
    * The logging for logging messages from this component
@@ -105,6 +105,7 @@ public class SimpleReportingComponent implements ExportReportUtils, IStreamingPo
   private static final String MIME_GENERIC_FALLBACK = "application/octet-stream"; //$NON-NLS-1$
   public static final String PNG_EXPORT_TYPE = "pageable/X-AWT-Graphics;image-type=png";
   private ReportContentUtil reportContentUtil;
+  private final ExportReportUtils exportReportUtils;
 
   /**
    * Static initializer block to guarantee that the ReportingComponent will be in a state where the reporting engine
@@ -147,6 +148,11 @@ public class SimpleReportingComponent implements ExportReportUtils, IStreamingPo
    */
 
   public SimpleReportingComponent() {
+    this( ExportReportUtils.getInstance() );
+  }
+
+  public SimpleReportingComponent( ExportReportUtils exportReportUtils ) {
+    this.exportReportUtils = exportReportUtils;
     this.inputs = Collections.emptyMap();
     acceptedPage = -1;
     pageCount = -1;
@@ -466,6 +472,10 @@ public class SimpleReportingComponent implements ExportReportUtils, IStreamingPo
         log.warn( e.getMessage(), e );
       }
     }
+  }
+
+  protected ExportReportUtils getExportReportUtils() {
+    return exportReportUtils;
   }
 
   // ----------------------------------------------------------------------------
@@ -955,7 +965,7 @@ public class SimpleReportingComponent implements ExportReportUtils, IStreamingPo
       }
 
       if ( Boolean.parseBoolean( getInput( "includeReportSpecification", Boolean.FALSE ).toString() ) ) {
-        addReportDetailsPage( report, parameterContext );
+        getExportReportUtils().addReportDetailsPage( report, parameterContext );
       }
       synchronized ( reportOutputHandler.getReportLock() ) {
         try {
