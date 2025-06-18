@@ -165,7 +165,7 @@ public class ReadableFilterUtilTest {
     assertEquals( "((Product Line Exactly matches value of Prompt Product Line OR Country Excludes (\"Australia\", "
       + "\"Belgium\", \"Canada\", \"Finland\")) AND Territory Includes (value of Prompt Territory) "
       + "AND Buy Price (SUM) Less Than 10000 AND Required Date On "
-      + "value of Prompt Required Date AND Payment Date On or before value of Prompt payDate", result );
+      + "value of Prompt Required Date AND Payment Date On or before value of Prompt payDate)", result );
   }
 
   @Test
