@@ -40,7 +40,7 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 
 public class ReadableFilterUtil {
-  private static final String DATEVALUE = "\\(?DATEVALUE\\((.*?)\\)\\)?";
+  private static final String DATEVALUE = "\\bDATEVALUE\\((.*?)\\)";
   private static final String SPACE = " ";
 
   private static final ReadableFilterUtil INSTANCE = new ReadableFilterUtil();
