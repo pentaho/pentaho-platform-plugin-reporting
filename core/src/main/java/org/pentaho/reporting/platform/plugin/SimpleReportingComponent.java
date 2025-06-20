@@ -53,6 +53,7 @@ import org.pentaho.reporting.platform.plugin.output.FastExportReportOutputHandle
 import org.pentaho.reporting.platform.plugin.output.ReportOutputHandler;
 import org.pentaho.reporting.platform.plugin.output.ReportOutputHandlerFactory;
 import org.pentaho.reporting.platform.plugin.output.ReportOutputHandlerSelector;
+import org.pentaho.reporting.platform.plugin.output.util.ExportReportUtils;
 
 import javax.print.DocFlavor;
 import javax.print.PrintService;
@@ -104,6 +105,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   private static final String MIME_GENERIC_FALLBACK = "application/octet-stream"; //$NON-NLS-1$
   public static final String PNG_EXPORT_TYPE = "pageable/X-AWT-Graphics;image-type=png";
   private ReportContentUtil reportContentUtil;
+  private final ExportReportUtils exportReportUtils;
 
   /**
    * Static initializer block to guarantee that the ReportingComponent will be in a state where the reporting engine
@@ -146,6 +148,11 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    */
 
   public SimpleReportingComponent() {
+    this( ExportReportUtils.getInstance() );
+  }
+
+  public SimpleReportingComponent( ExportReportUtils exportReportUtils ) {
+    this.exportReportUtils = exportReportUtils;
     this.inputs = Collections.emptyMap();
     acceptedPage = -1;
     pageCount = -1;
@@ -465,6 +472,10 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
         log.warn( e.getMessage(), e );
       }
     }
+  }
+
+  protected ExportReportUtils getExportReportUtils() {
+    return exportReportUtils;
   }
 
   // ----------------------------------------------------------------------------
@@ -951,6 +962,10 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
       if ( reportOutputHandler == null ) {
         log.warn( Messages.getInstance().getString( "ReportPlugin.warnUnprocessableRequest", outputType ) );
         return false;
+      }
+
+      if ( Boolean.parseBoolean( getInput( "includeReportSpecification", Boolean.FALSE ).toString() ) ) {
+        getExportReportUtils().addReportDetailsPage( report, parameterContext );
       }
       synchronized ( reportOutputHandler.getReportLock() ) {
         try {

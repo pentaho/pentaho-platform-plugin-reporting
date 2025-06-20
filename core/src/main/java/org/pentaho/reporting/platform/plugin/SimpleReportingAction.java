@@ -56,6 +56,7 @@ import org.pentaho.reporting.platform.plugin.output.FastExportReportOutputHandle
 import org.pentaho.reporting.platform.plugin.output.ReportOutputHandler;
 import org.pentaho.reporting.platform.plugin.output.ReportOutputHandlerFactory;
 import org.pentaho.reporting.platform.plugin.output.ReportOutputHandlerSelector;
+import org.pentaho.reporting.platform.plugin.output.util.ExportReportUtils;
 
 import javax.print.DocFlavor;
 import javax.print.PrintService;
@@ -70,7 +71,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
-public class SimpleReportingAction implements IStreamProcessingAction, IStreamingAction, IVarArgsAction {
+public class SimpleReportingAction implements IStreamProcessingAction, IStreamingAction, IVarArgsAction{
 
   /**
    * The logging for logging messages from this component
@@ -141,6 +142,7 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
   private Boolean useJcr;
   private String jcrOutputPath;
   protected ReportContentUtil reportContentUtil;
+  private final ExportReportUtils exportReportUtils;
 
   /*
    * These fields are for enabling printing
@@ -152,6 +154,11 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
    * Default constructor
    */
   public SimpleReportingAction() {
+    this( ExportReportUtils.getInstance() );
+  }
+
+  public SimpleReportingAction( ExportReportUtils exportReportUtils ) {
+    this.exportReportUtils = exportReportUtils;
     this.inputs = Collections.emptyMap();
     acceptedPage = -1;
     pageCount = -1;
@@ -425,6 +432,10 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
     }
 
     this.inputs = inputs;
+  }
+
+  protected ExportReportUtils getExportReportUtils() {
+    return exportReportUtils;
   }
 
   // ----------------------------------------------------------------------------
@@ -927,6 +938,9 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
       if ( reportOutputHandler == null ) {
         log.warn( Messages.getInstance().getString( "ReportPlugin.warnUnprocessableRequest", outputType ) );
         return false;
+      }
+      if ( Boolean.parseBoolean( getInput( "includeReportSpecification", Boolean.FALSE ).toString() ) ) {
+        getExportReportUtils().addReportDetailsPage( report, parameterContext );
       }
       synchronized ( reportOutputHandler.getReportLock() ) {
         try {

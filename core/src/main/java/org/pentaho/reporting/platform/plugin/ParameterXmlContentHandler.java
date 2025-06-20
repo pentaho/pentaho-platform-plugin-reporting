@@ -26,7 +26,6 @@ import org.pentaho.reporting.engine.classic.core.AttributeNames;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportDataFactoryException;
 import org.pentaho.reporting.engine.classic.core.ReportElement;
-import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
 import org.pentaho.reporting.engine.classic.core.Section;
 import org.pentaho.reporting.engine.classic.core.function.Expression;
 import org.pentaho.reporting.engine.classic.core.function.FormulaExpression;
@@ -258,6 +257,7 @@ public class ParameterXmlContentHandler {
       parameter.put( SYS_PARAM_QUERY_LIMIT, createGenericIntSystemParameter( SYS_PARAM_QUERY_LIMIT, false, false ) );
       parameter
         .put( SYS_PARAM_MAX_QUERY_LIMIT, createGenericIntSystemParameter( SYS_PARAM_MAX_QUERY_LIMIT, false, false ) );
+      parameter.put( "includeReportSpecification", createAddPreambleParameter() );
 
       systemParameter = Collections.unmodifiableMap( parameter );
     }
@@ -379,6 +379,16 @@ public class ParameterXmlContentHandler {
         }
       } else {
         hideOutputParameterIfLocked( report, reportParameters );
+      }
+
+      // Hide the parameter, like output-target, if report opened in PIR (editor/viewer) or report is prpt.
+      if ( ( ( path.equals( "/" ) || path.endsWith( ".prpti" ) ) && ( requestParams.getParameter( "json" ) != null ) )
+        || path.endsWith( "prpt" ) ) {
+        final ParameterDefinitionEntry definitionEntry = reportParameters.get( "includeReportSpecification" );
+        if ( definitionEntry instanceof AbstractParameter ) {
+          final AbstractParameter parameter = (AbstractParameter) definitionEntry;
+          parameter.setHidden( true );
+        }
       }
 
       final Map<String, Object> inputs =
@@ -1167,6 +1177,33 @@ public class ParameterXmlContentHandler {
     }
 
     return listParameter;
+  }
+
+  private StaticListParameter createAddPreambleParameter() {
+    final StaticListParameter toggleButtonParameter = new
+      StaticListParameter( "includeReportSpecification", false, true, Boolean.class );
+
+    toggleButtonParameter.setParameterAttribute( ParameterAttributeNames.Core.NAMESPACE,
+      ParameterAttributeNames.Core.PREFERRED, String.valueOf( true ) );
+    toggleButtonParameter.setParameterAttribute( ParameterAttributeNames.Core.NAMESPACE,
+      ParameterAttributeNames.Core.PARAMETER_GROUP, GROUP_PARAMETERS );
+    toggleButtonParameter.setParameterAttribute( ParameterAttributeNames.Core.NAMESPACE,
+      ParameterAttributeNames.Core.PARAMETER_GROUP_LABEL, Messages.getInstance().getString(
+        "ReportPlugin.ReportParameters" ) );
+    toggleButtonParameter.setParameterAttribute( ParameterAttributeNames.Core.NAMESPACE,
+      ParameterAttributeNames.Core.LABEL,
+      Messages.getInstance().getString( "ReportPlugin.addPreamble" ) );
+    toggleButtonParameter.setParameterAttribute( ParameterAttributeNames.Core.NAMESPACE,
+      ParameterAttributeNames.Core.TYPE,
+      ParameterAttributeNames.Core.TYPE_TOGGLEBUTTON );
+    toggleButtonParameter.setRole( ParameterAttributeNames.Core.ROLE_SYSTEM_PARAMETER );
+
+    toggleButtonParameter.setValueType( Boolean.class );
+    toggleButtonParameter.setDefaultValue( Boolean.TRUE );
+    toggleButtonParameter.addValues( Boolean.TRUE, Boolean.TRUE );
+    toggleButtonParameter.addValues( Boolean.FALSE, Boolean.FALSE );
+
+    return toggleButtonParameter;
   }
 
   private ParameterDefinitionEntry createRenderModeSystemParameter() {

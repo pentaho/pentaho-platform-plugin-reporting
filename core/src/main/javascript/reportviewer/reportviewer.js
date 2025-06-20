@@ -1978,6 +1978,7 @@ define([ 'common-ui/util/util', "common-ui/util/xss", 'common-ui/util/timeutil',
 
       exportReport: function(outputTarget) {
         var options = this._buildReportContentOptions(outputTarget);
+        options['includeReportSpecification'] = true;
         var url = this._buildReportContentUrl(options);
 
         var exportForm = document.getElementById("exportform");
