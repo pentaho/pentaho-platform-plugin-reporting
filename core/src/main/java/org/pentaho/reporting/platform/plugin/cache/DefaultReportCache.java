@@ -127,8 +127,8 @@ public class DefaultReportCache implements ReportCache {
     }
   }
 
-  private static class CacheEvictionHandler implements CacheEntryListener {
-    private CacheEvictionHandler() {
+  public static class CacheEvictionHandler implements CacheEntryListener {
+    public CacheEvictionHandler() {
     }
 
     public void notifyElementRemoved( final Cache cache, final Object element ) throws CacheException {
