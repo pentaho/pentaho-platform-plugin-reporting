@@ -19,6 +19,7 @@
     <requirejs.config.files.pattern>**/*-require-js-cfg.js</requirejs.config.files.pattern>
     <build.javascriptTestConfigDirectory>${project.build.directory}/test-javascript</build.javascriptTestConfigDirectory>
     <commons-compress.version>1.26.1</commons-compress.version>
+    <angus-activation.version>2.0.2</angus-activation.version>
   </properties>
   <dependencies>
     <dependency>
@@ -100,6 +101,12 @@
       <groupId>jakarta.activation</groupId>
       <artifactId>jakarta.activation-api</artifactId>
       <version>${jakarta.activation.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.angus</groupId>
+      <artifactId>angus-activation</artifactId>
+      <version>${angus-activation.version}</version>
+      <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>org.ehcache</groupId>
