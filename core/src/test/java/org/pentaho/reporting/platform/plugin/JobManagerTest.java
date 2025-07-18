@@ -40,7 +40,7 @@ import org.pentaho.reporting.platform.plugin.async.JobIdGenerator;
 import org.pentaho.reporting.platform.plugin.async.PentahoAsyncExecutor;
 import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
 
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response;
 import java.io.IOException;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -145,7 +145,7 @@ public class JobManagerTest {
     assertNotNull( response );
     assertTrue( response.hasEntity() );
 
-    final String json = response.readEntity( String.class );
+    final String json = response.getEntity().toString();
 
     // currently no simple way to restore to AsyncReportState interface here
     // at least we get uuid in return.
@@ -194,7 +194,7 @@ public class JobManagerTest {
     assertNotNull( response );
     assertTrue( response.hasEntity() );
 
-    final String page = response.readEntity( String.class );
+    final String page = response.getEntity().toString();
 
     assertEquals( "100", page );
   }

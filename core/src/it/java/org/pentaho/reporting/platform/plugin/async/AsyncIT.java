@@ -51,7 +51,7 @@ import org.pentaho.reporting.platform.plugin.staging.AsyncJobFileStagingHandler;
 import org.pentaho.reporting.platform.plugin.staging.IFixedSizeStreamingContent;
 import org.pentaho.test.platform.engine.core.MicroPlatform;
 
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
@@ -129,7 +129,7 @@ public class AsyncIT {
   public void testDefaultConfig() {
     final JobManager jobManager = new JobManager();
     final Response response = jobManager.getConfig();
-    final String json = response.readEntity( String.class );
+    final String json = response.getEntity().toString();
     assertEquals( json,
       "{\"defaultOutputPath\":\"/home/unknown\",\"dialogThresholdMilliseconds\":1500,"
         + "\"pollingIntervalMilliseconds\":500,\"promptForLocation\":false,\"supportAsync\":true}" );
@@ -139,7 +139,7 @@ public class AsyncIT {
   public void testCustomConfig() throws Exception {
     final JobManager jobManager = new JobManager( false, 100L, 300L, true );
     final Response response = jobManager.getConfig();
-    final String json = response.readEntity( String.class );
+    final String json = response.getEntity().toString();
     assertEquals( json,
       "{\"defaultOutputPath\":\"/home/unknown\",\"dialogThresholdMilliseconds\":300,"
         + "\"pollingIntervalMilliseconds\":100,\"promptForLocation\":true,\"supportAsync\":false}" );
@@ -169,7 +169,7 @@ public class AsyncIT {
     final UUID uuid = executor.addTask( mock, PentahoSessionHolder.getSession() );
     final JobManager jobManager = new JobManager();
     final Response response = jobManager.getStatus( uuid.toString() );
-    final String json = response.readEntity( String.class );
+    final String json = response.getEntity().toString();
     assertFalse( StringUtil.isEmpty( json ) );
   }
 
@@ -184,7 +184,7 @@ public class AsyncIT {
     final Response response = jobManager.schedule( uuid.toString(), true );
     assertEquals( 200, response.getStatus() );
     final Response response1 = jobManager.getStatus( uuid.toString() );
-    final String json = response1.readEntity( String.class );
+    final String json =  response1.getEntity().toString();
     assertTrue( json.contains( "SCHEDULED" ) );
 
     STATUS = AsyncExecutionStatus.FAILED;
@@ -232,7 +232,7 @@ public class AsyncIT {
     assertEquals( 200, response.getStatus() );
 
     final Response response1 = jobManager.getStatus( uuid.toString() );
-    final String json = response1.readEntity( String.class );
+    final String json =  response1.getEntity().toString();
     assertTrue( json.contains( "SCHEDULED" ) );
 
 
@@ -265,7 +265,7 @@ public class AsyncIT {
     assertEquals( 200, response.getStatus() );
 
     response = jobManager.getStatus( uuid.toString() );
-    final String json = response.readEntity( String.class );
+    final String json = response.getEntity().toString();
     assertTrue( json.contains( "CANCELED" ) );
     STATUS = AsyncExecutionStatus.FAILED;
   }
@@ -311,7 +311,7 @@ public class AsyncIT {
     final JobManager jobManager = new JobManager();
     final Response response = jobManager.requestPage( uuid.toString(), 100 );
     assertEquals( 200, response.getStatus() );
-    assertEquals( "100", response.readEntity( String.class ) );
+    assertEquals( "100", response.getEntity().toString() );
 
     PAGE = 0;
   }

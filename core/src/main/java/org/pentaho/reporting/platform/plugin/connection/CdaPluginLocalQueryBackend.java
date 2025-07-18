@@ -25,13 +25,23 @@ import org.pentaho.reporting.engine.classic.core.util.TypedTableModel;
 import org.pentaho.reporting.engine.classic.extensions.datasources.cda.CdaQueryBackend;
 import org.pentaho.reporting.engine.classic.extensions.datasources.cda.CdaResponseParser;
 
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletInputStream;
-import javax.servlet.ServletOutputStream;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.WriteListener;
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpUpgradeHandler;
+import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.Part;
+import jakarta.servlet.ServletConnection;
+import jakarta.servlet.AsyncContext;
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.RequestDispatcher;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletInputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -49,6 +59,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Collection;
 
 /**
  * Class that implements CDA to be used LOCAL inside pentaho platform
@@ -141,6 +152,93 @@ public class CdaPluginLocalQueryBackend extends CdaQueryBackend {
   private static HttpServletRequest getRequest( final Map<String, Object> parameters ) {
     final IParameterProvider requestParameters = new SimpleParameterProvider( parameters );
     return new HttpServletRequest() {
+      @Override
+      public ServletContext getServletContext() {
+        return null;
+      }
+
+      @Override
+      public long getContentLengthLong() {
+        return 0;
+      }
+
+      @Override
+      public boolean isAsyncSupported() {
+        return false;
+      }
+
+      @Override
+      public boolean isAsyncStarted() {
+        return false;
+      }
+
+      @Override
+      public AsyncContext startAsync() throws IllegalStateException {
+        return null;
+      }
+
+      @Override
+      public AsyncContext startAsync( ServletRequest req, ServletResponse res ) throws IllegalStateException {
+        return null;
+      }
+
+      @Override
+      public AsyncContext getAsyncContext() {
+        return null;
+      }
+
+      @Override
+      public DispatcherType getDispatcherType() {
+        return null;
+      }
+
+      @Override
+      public String getRequestId() {
+        return null;
+      }
+
+      @Override
+      public String getProtocolRequestId() {
+        return null;
+      }
+
+      @Override
+      public ServletConnection getServletConnection() {
+        return null;
+      }
+
+      @Override
+      public String changeSessionId() {
+        return null;
+      }
+
+      @Override
+      public Collection<Part> getParts() throws IOException, ServletException {
+        return Collections.emptyList();
+      }
+      @Override
+      public boolean authenticate( HttpServletResponse response ) throws IOException, ServletException {
+        return false;
+      }
+
+      @Override
+      public void login( String username, String password ) throws ServletException {
+      }
+
+      @Override
+      public void logout() throws ServletException {
+
+      }
+      @Override
+      public <T extends HttpUpgradeHandler> T upgrade( Class<T> httpUpgradeHandlerClass ) throws IOException, ServletException {
+        return null;
+      }
+
+      @Override
+      public Part getPart( String name ) throws IOException, ServletException {
+        return null;
+      }
+
       @Override
       public String getAuthType() {
         return null;
@@ -262,11 +360,6 @@ public class CdaPluginLocalQueryBackend extends CdaQueryBackend {
       }
 
       @Override
-      public boolean isRequestedSessionIdFromUrl() {
-        return false;
-      }
-
-      @Override
       public Object getAttribute( String s ) {
         return null;
       }
@@ -384,11 +477,6 @@ public class CdaPluginLocalQueryBackend extends CdaQueryBackend {
       }
 
       @Override
-      public String getRealPath( String s ) {
-        return null;
-      }
-
-      @Override
       public int getRemotePort() {
         return 0;
       }
@@ -413,6 +501,30 @@ public class CdaPluginLocalQueryBackend extends CdaQueryBackend {
   private static HttpServletResponse getResponse( final OutputStream stream ) {
     return new HttpServletResponse() {
       @Override
+      public int getStatus() {
+        return 200;
+      }
+
+      @Override
+      public void setContentLengthLong( long len ) {
+      }
+
+      @Override
+      public String getHeader( String name ) {
+        return null;
+      }
+
+      @Override
+      public Collection<String> getHeaders( String name ) {
+        return Collections.emptyList();
+      }
+
+      @Override
+      public Collection<String> getHeaderNames() {
+        return Collections.emptyList();
+      }
+
+      @Override
       public ServletOutputStream getOutputStream() throws IOException {
         return new DelegatingServletOutputStream( stream );
       }
@@ -435,16 +547,6 @@ public class CdaPluginLocalQueryBackend extends CdaQueryBackend {
 
       @Override
       public String encodeRedirectURL( String s ) {
-        return null;
-      }
-
-      @Override
-      public String encodeUrl( String s ) {
-        return null;
-      }
-
-      @Override
-      public String encodeRedirectUrl( String s ) {
         return null;
       }
 
@@ -486,11 +588,6 @@ public class CdaPluginLocalQueryBackend extends CdaQueryBackend {
 
       @Override
       public void setStatus( int i ) {
-      }
-
-      @Override
-      public void setStatus( int i, String s ) {
-
       }
 
       @Override
@@ -569,7 +666,14 @@ public class CdaPluginLocalQueryBackend extends CdaQueryBackend {
     public DelegatingServletOutputStream( OutputStream targetStream ) {
       this.targetStream = targetStream;
     }
+    @Override
+    public void setWriteListener( WriteListener writeListener ) {
+    }
 
+    @Override
+    public boolean isReady() {
+      return true;
+    }
 
     public void write( int b ) throws IOException {
       this.targetStream.write( b );

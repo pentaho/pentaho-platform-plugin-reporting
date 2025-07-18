@@ -26,7 +26,7 @@ import org.pentaho.reporting.engine.classic.core.cache.DataCacheManager;
 import org.pentaho.reporting.platform.plugin.cache.IPluginCacheManager;
 import org.pentaho.reporting.platform.plugin.cache.IReportContentCache;
 
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
