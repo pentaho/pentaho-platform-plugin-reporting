@@ -265,7 +265,7 @@ public class DefaultReportCache implements ReportCache {
         CachingProvider cachingProvider = Caching.getCachingProvider();
           try {
               manager = cachingProvider.getCacheManager( getClass().getResource( "/ehcache.xml" ).toURI(), getClass().getClassLoader() );
-          } catch ( URISyntaxException e) {
+          } catch ( URISyntaxException e ) {
               throw new RuntimeException( e );
           }
           session.setAttribute( SESSION_ATTRIBUTE, manager );
@@ -276,7 +276,7 @@ public class DefaultReportCache implements ReportCache {
       if ( manager.getCache( CACHE_NAME ) == null ) {
         logger.debug( "id: " + session.getId() + " - Cache.put(..): No cache registered with manager; creating one" );
         MutableConfiguration configuration = new MutableConfiguration().setStoreByValue( false ).addCacheEntryListenerConfiguration( new MutableCacheEntryListenerConfiguration( FactoryBuilder.factoryOf( CacheEvictionHandler.class ), null, false, true ) );
-        manager.createCache( CACHE_NAME ,configuration );
+        manager.createCache( CACHE_NAME, configuration );
       }
 
       final Cache cache = manager.getCache( CACHE_NAME );
