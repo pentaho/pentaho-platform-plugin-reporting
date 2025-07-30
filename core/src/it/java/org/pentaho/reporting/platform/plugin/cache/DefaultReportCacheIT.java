@@ -13,7 +13,8 @@
 
 package org.pentaho.reporting.platform.plugin.cache;
 
-import net.sf.ehcache.CacheManager;
+import org.ehcache.CacheManager;
+import org.ehcache.config.builders.CacheManagerBuilder;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -59,9 +60,10 @@ public class DefaultReportCacheIT {
 
     setupDataCacheKey( "" );
     assertNull( dataCache.get( dataCacheKey ) );
-
+    CacheManager cacheManager = CacheManagerBuilder.newCacheManagerBuilder()
+            .build( true );
     addAttributeToPentahoSession( "org.pentaho.reporting.platform.plugin.cache.DefaultReportCache-Cache",
-      CacheManager.create() );
+      cacheManager );
     assertNull( dataCache.get( dataCacheKey ) );
 
     ReportOutputHandler report = mock( ReportOutputHandler.class );

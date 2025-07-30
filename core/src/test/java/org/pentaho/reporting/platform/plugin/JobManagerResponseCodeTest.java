@@ -16,7 +16,7 @@ package org.pentaho.reporting.platform.plugin;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response;
 import java.io.IOException;
 import java.util.Map;
 
@@ -34,7 +34,7 @@ public class JobManagerResponseCodeTest {
     assertNotNull( response );
     assertEquals( 200, response.getStatus() );
 
-    final String json = response.readEntity( String.class );
+    final String json = response.getEntity().toString();
     final ObjectMapper objectMapper = new ObjectMapper();
     final Map config = objectMapper.readValue( json, Map.class );
     assertEquals( Boolean.TRUE, config.get( "supportAsync" ) );
