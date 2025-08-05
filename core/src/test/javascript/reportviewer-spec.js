@@ -229,7 +229,7 @@ define(["reportviewer/reportviewer", "reportviewer/reportviewer-logging", "repor
             reportViewer._layoutInited = false;
             reportViewer.view._initLayout();
             expect(reportViewer.reportPrompt._getStateProperty).toHaveBeenCalledWith('paginate');
-          })
+          });
         });
       });
 
@@ -250,15 +250,77 @@ define(["reportviewer/reportviewer", "reportviewer/reportviewer-logging", "repor
       });
 
       describe("[EVENTS] checking subscription on prompt events", function() {
+        var originalRefreshPrompt;
+        var eventHandlers;
+
         beforeEach(function() {
           spyOn(reportViewer, "afterUpdateCallback");
           spyOn(reportViewer, "submitReport");
           spyOn(reportViewer.view, "promptReady");
           spyOn(reportViewer.view, "afterRender");
+
+          eventHandlers = {
+            ready: [],
+            submit: [],
+            beforeUpdate: [],
+            afterUpdate: [],
+            afterRender: []
+          };
+
+          spyOn(reportViewer.reportPrompt.api.event, 'ready').and.callFake(function(handler) {
+            eventHandlers.ready.push(handler);
+          });
+          spyOn(reportViewer.reportPrompt.api.event, 'submit').and.callFake(function(handler) {
+            eventHandlers.submit.push(handler);
+          });
+          spyOn(reportViewer.reportPrompt.api.event, 'beforeUpdate').and.callFake(function(handler) {
+            eventHandlers.beforeUpdate.push(handler);
+          });
+          spyOn(reportViewer.reportPrompt.api.event, 'afterUpdate').and.callFake(function(handler) {
+            eventHandlers.afterUpdate.push(handler);
+          });
+          spyOn(reportViewer.reportPrompt.api.event, 'afterRender').and.callFake(function(handler) {
+            eventHandlers.afterRender.push(handler);
+          });
+
+
           reportViewer._bindPromptEvents();
+          originalRefreshPrompt = reportViewer.reportPrompt.api.operation.refreshPrompt;
+
+          spyOn(reportViewer.reportPrompt.api.operation, 'refreshPrompt').and.callFake(function(isInit) {
+            setTimeout(function() {
+              eventHandlers.beforeUpdate.forEach(function(handler) {
+                handler();
+              });
+
+              eventHandlers.afterUpdate.forEach(function(handler) {
+                handler();
+              });
+
+              eventHandlers.ready.forEach(function(handler) {
+                handler();
+              });
+
+              var currentState = reportViewer.reportPrompt.api.operation.state();
+              var autoSubmit = currentState.autoSubmit !== false;
+
+              if (autoSubmit) {
+                eventHandlers.submit.forEach(function(handler) {
+                  handler({ isInit: true });
+                });
+
+                eventHandlers.afterRender.forEach(function(handler) {
+                  handler();
+                });
+              }
+            }, 10);
+          });
         });
 
         it("should check subscription on prompt events (with autoSubmit = true)", function (done) {
+          reportViewer.reportPrompt.api.operation.state({
+            "autoSubmit": true
+          });
           $.ajax.and.callFake(function (params) {
             var changedResult = parameterDefinition.replace("name=\"PROD_LINE\"", "name=\"test\"");
             params.success(changedResult);
