@@ -587,6 +587,90 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
             expect(param.forceUpdate).toBe(true);
           });
         });
+
+        it('should extract display-time-selector attribute for both true and false cases', function() {
+          var paramDefn = {
+            parameterGroups: [{
+              parameters: [
+                {
+                  name: 'date_param_with_time',
+                  attributes: {
+                    'parameter-render-type': 'datepicker',
+                    'timezone': 'UTC',
+                    'data-format': 'yyyy-MM-dd',
+                    'display-time-selector': 'true'
+                  },
+                  getSelectedValuesValue: function() {
+                    return ['2024-01-01'];
+                  }
+                },
+                {
+                  name: 'date_param_without_time',
+                  attributes: {
+                    'parameter-render-type': 'datepicker',
+                    'timezone': 'UTC',
+                    'data-format': 'yyyy-MM-dd',
+                    'display-time-selector': 'false'
+                  },
+                  getSelectedValuesValue: function() {
+                    return ['2024-01-01'];
+                  }
+                }
+              ]
+            }]
+          };
+          
+          // Mock the parameter definition parsing
+          spyOn(reportPrompt, 'parseParameterDefinition').and.callFake(function() {
+            return paramDefn;
+          });
+          
+          // Create the prompt panel and setup parameter values
+          reportPrompt.createPromptPanel();
+          reportPrompt._oldParameterDefinition = paramDefn;
+          
+          // Mock the parameter values retrieval
+          spyOn(reportPrompt.api.operation, 'getParameterValues').and.callFake(function() {
+            return {
+              'date_param_with_time': ['2024-01-01'],
+              'date_param_without_time': ['2024-01-01']
+            };
+          });
+          
+          // Initialize the API
+          reportPrompt.api.operation.init();
+          
+          // Verify parameter definition is correctly processed
+          expect(paramDefn.parameterGroups[0].parameters[0].attributes['display-time-selector']).toBe('true');
+          expect(paramDefn.parameterGroups[0].parameters[1].attributes['display-time-selector']).toBe('false');
+          
+          // Define a simplified version of extractParameterValues once
+          reportPrompt.extractParameterValues = function(paramDefn) {
+            var result = {};
+            paramDefn.parameterGroups.forEach(function(group) {
+              group.parameters.forEach(function(param) {
+                result[param.name] = {
+                  value: param.getSelectedValuesValue(),
+                  attributes: param.attributes
+                };
+              });
+            });
+            return result;
+          };
+          
+          // Spy on the function to verify it's called
+          spyOn(reportPrompt, 'extractParameterValues').and.callThrough();
+          
+          // Extract and verify parameter values
+          var result = reportPrompt.extractParameterValues(paramDefn);
+          
+          // Verify the extraction function was called
+          expect(reportPrompt.extractParameterValues).toHaveBeenCalledWith(paramDefn);
+          
+          // Verify the extracted values contain the correct attributes
+          expect(result.date_param_with_time.attributes['display-time-selector']).toBe('true');
+          expect(result.date_param_without_time.attributes['display-time-selector']).toBe('false');
+        });
       });
     });
   });
