@@ -144,7 +144,8 @@ define([
                 attributes:{
                     'timezone': parameters[i].attributes['timezone'],
                 	'data-format': parameters[i].attributes['data-format'],
-                	'post-processor-formula': parameters[i].attributes['post-processor-formula']
+                	'post-processor-formula': parameters[i].attributes['post-processor-formula'],
+                	'display-time-selector': parameters[i].attributes['display-time-selector']
                 }
               };
             }
