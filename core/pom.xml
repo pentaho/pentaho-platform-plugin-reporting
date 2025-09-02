@@ -87,6 +87,10 @@
       <artifactId>commons-collections</artifactId>
     </dependency>
     <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+    </dependency>
+    <dependency>
       <groupId>javax.ws.rs</groupId>
       <artifactId>javax.ws.rs-api</artifactId>
     </dependency>
@@ -118,14 +122,12 @@
       <artifactId>jaxws-spring</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.google.gwt</groupId>
+      <groupId>org.gwtproject</groupId>
       <artifactId>gwt-user</artifactId>
-      <version>${gwt.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.google.gwt</groupId>
+      <groupId>org.gwtproject</groupId>
       <artifactId>gwt-dev</artifactId>
-      <version>${gwt.version}</version>
     </dependency>
     <dependency>
       <groupId>org.pentaho</groupId>
