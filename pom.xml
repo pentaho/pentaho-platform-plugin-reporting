@@ -42,7 +42,6 @@
     <hsqldb.version>2.3.2</hsqldb.version>
     <mockito.version>5.10.0</mockito.version>
     <license.header.file>license/templates/licenseHeader.txt</license.header.file>
-    <gwt.version>2.4.0</gwt.version>
     <license-maven-plugin.version>2.3</license-maven-plugin.version>
     <plugin.sortpom.version>2.4.0</plugin.sortpom.version>
     <test.performance>false</test.performance>
@@ -66,7 +65,6 @@
         <groupId>commons-io</groupId>
         <artifactId>commons-io</artifactId>
         <version>${commons-io.version}</version>
-        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>com.google.guava</groupId>
@@ -216,6 +214,11 @@
         <scope>compile</scope>
       </dependency>
       <dependency>
+        <groupId>javax.servlet</groupId>
+        <artifactId>javax.servlet-api</artifactId>
+        <version>${javax.servlet-api.version}</version>
+      </dependency>
+      <dependency>
         <groupId>javax.ws.rs</groupId>
         <artifactId>javax.ws.rs-api</artifactId>
         <version>${javax.ws.rs-api.version}</version>
@@ -240,16 +243,6 @@
             <groupId>javax.servlet</groupId>
           </exclusion>
         </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>com.google.gwt</groupId>
-        <artifactId>gwt-user</artifactId>
-        <scope>compile</scope>
-      </dependency>
-      <dependency>
-        <groupId>com.google.gwt</groupId>
-        <artifactId>gwt-dev</artifactId>
-        <scope>compile</scope>
       </dependency>
       <dependency>
         <groupId>org.pentaho</groupId>
@@ -396,12 +389,6 @@
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf-rt-frontend-jaxrs</artifactId>
         <version>${cxf.version}</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>javax.servlet</groupId>
-        <artifactId>javax.servlet-api</artifactId>
-        <version>${javax.servlet-api.version}</version>
         <scope>test</scope>
       </dependency>
       <dependency>
