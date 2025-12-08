@@ -16,19 +16,12 @@ package org.pentaho.reporting.platform.plugin.cache;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.cache.Cache;
 import javax.cache.CacheException;
 import javax.cache.CacheManager;
 import javax.cache.Caching;
-import javax.cache.configuration.FactoryBuilder;
-import javax.cache.configuration.MutableCacheEntryListenerConfiguration;
-import javax.cache.configuration.MutableConfiguration;
 import javax.cache.event.CacheEntryListener;
-import javax.cache.expiry.CreatedExpiryPolicy;
-import javax.cache.expiry.Duration;
 import javax.cache.spi.CachingProvider;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -36,6 +29,7 @@ import org.pentaho.platform.api.engine.ILogoutListener;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
+import org.pentaho.platform.plugin.services.cache.PentahoCacheUtil;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
 import org.pentaho.reporting.libraries.repository.ContentIOException;
@@ -275,8 +269,8 @@ public class DefaultReportCache implements ReportCache {
 
       if ( manager.getCache( CACHE_NAME ) == null ) {
         logger.debug( "id: " + session.getId() + " - Cache.put(..): No cache registered with manager; creating one" );
-        MutableConfiguration configuration = new MutableConfiguration().setStoreByValue( false ).addCacheEntryListenerConfiguration( new MutableCacheEntryListenerConfiguration( FactoryBuilder.factoryOf( CacheEvictionHandler.class ), null, false, true ) );
-        manager.createCache( CACHE_NAME, configuration );
+        manager.createCache( CACHE_NAME,
+                PentahoCacheUtil.getDefaultCacheConfiguration( CACHE_NAME, DefaultReportCache.class.getResource( "ehcache.xml" ) ) );
       }
 
       final Cache cache = manager.getCache( CACHE_NAME );
