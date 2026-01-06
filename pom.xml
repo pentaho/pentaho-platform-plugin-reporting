@@ -50,7 +50,7 @@
     <commons-gwt.version>11.1.0.0-SNAPSHOT</commons-gwt.version>
     <common-ui.version>11.1.0.0-SNAPSHOT</common-ui.version>
     <runITs>false</runITs>
-    <commons-io.version>2.16.1</commons-io.version>
+    <commons-io.version>2.21.0</commons-io.version>
     <jcip-annotations.version>1.0-1</jcip-annotations.version>
 
     <nodejs.version>v18.20.2</nodejs.version>
