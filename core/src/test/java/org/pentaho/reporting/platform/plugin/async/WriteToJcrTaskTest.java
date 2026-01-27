@@ -147,13 +147,19 @@ public class WriteToJcrTaskTest {
     when( content.getStream() ).thenReturn( inputStream );
     final ReportContentRepository contentRepository = mock( ReportContentRepository.class );
     when( contentRepository.getRoot() ).thenReturn( fakeLocation );
-    final WriteToJcrTask toJcrTask = new WriteToJcrTask( reportExecution, inputStream ) {
+    WriteToJcrTask toJcrTask = new WriteToJcrTask( reportExecution, inputStream ) {
       @Override protected ReportContentRepository getReportContentRepository( final RepositoryFile outputFolder ) {
         return contentRepository;
       }
     };
     assertNotNull( toJcrTask.call() );
     assertTrue( fakeLocation.exists( "report.pdf" ) );
+    when(content.getStream()).thenReturn(new NullInputStream(100));
+    toJcrTask = new WriteToJcrTask( reportExecution, content.getStream() ) {
+      @Override protected ReportContentRepository getReportContentRepository( final RepositoryFile outputFolder ) {
+          return contentRepository;
+        }
+    };
     assertNotNull( toJcrTask.call() );
     assertTrue( fakeLocation.exists( "report.pdf" ) );
     assertTrue( fakeLocation.exists( "report(1).pdf" ) );
