@@ -27,6 +27,7 @@ import org.pentaho.platform.api.engine.IPluginManager;
 import org.pentaho.platform.api.repository2.unified.RepositoryFile;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.repository2.unified.fileio.RepositoryFileInputStream;
+import org.pentaho.platform.util.Emailer;
 import org.pentaho.reporting.engine.classic.core.AttributeNames;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.metadata.ReportProcessTaskRegistry;
@@ -70,9 +71,11 @@ import java.io.OutputStream;
 import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.net.URL;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Properties;
 
 public class SimpleReportingAction implements IStreamProcessingAction, IStreamingAction, IVarArgsAction {
 
@@ -80,7 +83,7 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
    * The logging for logging messages from this component
    */
   private static final Log log = LogFactory.getLog( SimpleReportingAction.class );
-
+ 
   public static final String OUTPUT_TARGET = "output-target";
 
   public static final String OUTPUT_TYPE = "output-type";
@@ -141,6 +144,7 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
   private boolean dashboardMode;
   private Boolean useJcr;
   private String jcrOutputPath;
+  private  Emailer myemailer;
 
   /*
    * These fields are for enabling printing
@@ -157,6 +161,7 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
     pageCount = -1;
     defaultOutputTarget = HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE;
     useJcr = Boolean.FALSE;
+   myemailer=new Emailer();
   }
 
   // ----------------------------------------------------------------------------
@@ -856,12 +861,147 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
     return true;
   }
 
+  
+  
+  public String getReportParameters( final ParameterContext context )
+throws IOException, ResourceException {
+	  String myparamstring="";
+// apply inputs to report
+if ( inputs != null ) {
+final MasterReport report = getReport();
+final ParameterDefinitionEntry[] params = report.getParameterDefinition().getParameterDefinitions();
+final ReportParameterValues parameterValues = report.getParameterValues();
+
+for ( final ParameterDefinitionEntry param : params ) {
+	final String paramName = param.getName();
+try {
+
+final Object computedParameter =
+ReportContentUtil.computeParameterValue( context, param, inputs.get( paramName ) );
+parameterValues.put( param.getName(), computedParameter );
+
+String myparamvalue=String.valueOf( computedParameter );
+myparamstring=myparamstring+paramName+":"+ myparamvalue+"\n";
+
+} catch ( Exception e ) {
+}
+}
+myparamstring=myparamstring+"\n";
+}
+
+return myparamstring;
+}
   public void execute() throws Exception {
     if ( !_execute() ) {
       throw new Exception( "execution failed for an unspecified reason" );
     }
   }
 
+  
+  private void sendFailureAdminEmail(String cause) {
+	
+  	if(myemailer.setup())
+  	{
+  		String to = "";
+ 	      String cc = "";
+ 	      String bcc = "";
+  		try {
+  			Properties props=new Properties();
+  			try{InputStream prop=SimpleReportingAction.class.getClassLoader().getResourceAsStream("email_failure.properties");
+  					if(prop==null) {
+  						//output log error here
+  					}
+  					else {
+  						props.load(prop);
+  						to=props.getProperty("EMAIL_TO");
+  						cc=props.getProperty("EMAIL_CC");
+  						bcc=props.getProperty("EMAIL_BCC");
+  						
+  					}
+  					
+  			}catch(Exception e){
+  	}
+  	      if ( ( to == null || "".equals( to ) ) && ( cc == null || "".equals( cc ) )
+  	          && ( bcc == null || "".equals( bcc ) ) ) {
+  	        // no destination
+  	        return;
+  	      }
+  	      myemailer.setTo( to );
+  	      myemailer.setCc( cc );
+  	      myemailer.setBcc( bcc );
+  	      
+  	    String reportname= getReport().getTitle();
+	      if(reportname==null || reportname=="") {
+	    	  reportname=getReport().getName();
+	      }
+//todo notify failure and report name in subject with date
+  	      String subject =  reportname + " failed on "+ LocalDateTime.now();
+  	      if ( subject != null && !"".equals( subject ) ) {
+  	    	  myemailer.setSubject( subject );
+  	      } else {
+  	    	  myemailer.setSubject( "Pentaho Report Failure" + ( myemailer.getAttachmentName() != null ? " : " + myemailer.getAttachmentName() : "" ) );
+  	      }
+  	      //todo notify failure with report name, date/time, and parameters and values
+  	      String message = "Parameters: \n" + getReportParameters( new DefaultParameterContext( getReport()));
+  	      message=message+"\n\n";
+  	      message=message+"Cause: " + cause;
+  	      if ( subject != null && !"".equals( subject ) ) {
+  	    	  myemailer.setBody( message );
+  	      }
+  	      myemailer.send();
+  	    } catch ( Exception e ) {
+  	      log.warn( e.getMessage(), e );
+  	    }
+  	}
+  }
+  
+  private void sendFailureScheduledUserEmail(String cause) {
+	  
+  	if(myemailer.setup())
+  	{
+  		String to = "";
+ 	      String cc = "";
+ 	      String bcc = "";
+  		try {
+  			if(inputs!=null) {
+  				to=(String)inputs.get("_SCH_EMAIL_TO");
+  				cc=(String)inputs.get("_SCH_EMAIL_CC");
+  				bcc=(String)inputs.get("_SCH_EMAIL_BCC");
+  			}
+  			
+  	      if ( ( to == null || "".equals( to ) ) && ( cc == null || "".equals( cc ) )
+  	          && ( bcc == null || "".equals( bcc ) ) ) {
+  	        // no destination
+  	        return;
+  	      }
+  	      myemailer.setTo( to );
+  	      myemailer.setCc( cc );
+  	      myemailer.setBcc( bcc );
+  	      String reportname= getReport().getTitle();
+  	      if(reportname==null || reportname=="") {
+  	    	  reportname=getReport().getName();
+  	      }
+  	     
+//todo notify failure and report name in subject with date
+  	      String subject =  reportname + " failed on "+ LocalDateTime.now();
+  	      if ( subject != null && !"".equals( subject ) ) {
+  	    	  myemailer.setSubject( subject );
+  	      } else {
+  	    	  myemailer.setSubject( "Pentaho Scheduler Report Failure" + ( myemailer.getAttachmentName() != null ? " : " + myemailer.getAttachmentName() : "" ) );
+  	      }
+  	      //todo notify failure with report name, date/time, and parameters and values
+  	      String message = "Selected Report Parameters: \n" + getReportParameters( new DefaultParameterContext( getReport()));
+  	      message=message+"\n";
+  	      message=message+"Cause of Failure: " + cause;
+  	      if ( subject != null && !"".equals( subject ) ) {
+  	    	  myemailer.setBody( message );
+  	      }
+  	      myemailer.send();
+  	    } catch ( Exception e ) {
+  	      log.warn( e.getMessage(), e );
+  	    }
+  	}
+  }
   /**
    * Perform the primary function of this component, this is, to execute. This method will be invoked immediately
    * following a successful validate().
@@ -939,6 +1079,8 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
         }
       }
     } catch ( Throwable t ) {
+    	sendFailureAdminEmail(t.getCause().getMessage());
+    	sendFailureScheduledUserEmail(t.getCause().getMessage());
       log.error( Messages.getInstance().getString( "ReportPlugin.executionFailed" ), t );
     }
     // lets not pretend we were successfull, if the export type was not a valid one.
