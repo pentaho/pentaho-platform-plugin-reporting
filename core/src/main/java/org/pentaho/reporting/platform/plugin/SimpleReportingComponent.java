@@ -16,6 +16,7 @@ package org.pentaho.reporting.platform.plugin;
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.commons.vfs2.FileObject;
 import org.pentaho.platform.api.engine.IAcceptsRuntimeInputs;
 import org.pentaho.platform.api.engine.IActionSequenceResource;
 import org.pentaho.platform.api.engine.IPentahoSession;
@@ -132,6 +133,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
   private InputStream reportDefinitionInputStream;
   private IActionSequenceResource reportDefinition;
   private Serializable fileId;
+  private FileObject fileObject;
   private String reportDefinitionPath;
   private boolean paginateOutput;
   private int acceptedPage;
@@ -265,6 +267,14 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    */
   public void setReportFileId( final Serializable fileId ) {
     this.fileId = fileId;
+  }
+
+  public void setFileObject( final FileObject fileObject ) {
+    this.fileObject = fileObject;
+  }
+
+  public FileObject getFileObject() {
+    return fileObject;
   }
 
   /**
@@ -511,6 +521,7 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
    * @throws ResourceException
    * @throws IOException
    */
+  @SuppressWarnings( "java:S3776" ) // Cognitive Complexity of 11 is acceptable here given the complexity of the report generation process and the need to handle multiple input types and configurations.
   public MasterReport getReport() throws ResourceException, IOException {
     if ( report == null ) {
       if ( reportDefinitionInputStream != null ) {
@@ -523,6 +534,8 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
         report = ReportCreator.createReportByName( reportDefinitionPath );
       } else if ( fileId != null ) {
         report = ReportCreator.createReport( fileId );
+      } else if ( fileObject != null ) {
+        report = ReportCreator.createReport( fileObject );
       } else {
         throw new ResourceException();
       }

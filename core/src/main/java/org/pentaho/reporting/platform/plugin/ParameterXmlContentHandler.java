@@ -17,6 +17,7 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.commons.vfs2.FileObject;
 import org.pentaho.platform.api.engine.IParameterProvider;
 import org.pentaho.platform.api.engine.IPluginManager;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
@@ -285,6 +286,7 @@ public class ParameterXmlContentHandler {
 
   public void createParameterContent( final OutputStream outputStream,
                                       final Serializable fileId,
+                                      final FileObject fileObject,
                                       final String path,
                                       boolean overrideOutputType,
                                       final MasterReport sourceReport ) throws Exception {
@@ -299,6 +301,7 @@ public class ParameterXmlContentHandler {
 
     final SimpleReportingComponent reportComponent = new SimpleReportingComponent();
     reportComponent.setReportFileId( fileId );
+    reportComponent.setFileObject( fileObject );
     if ( sourceReport != null ) {
       reportComponent.setReport( sourceReport );
     }
