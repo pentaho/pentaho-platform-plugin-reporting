@@ -22,6 +22,7 @@ import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.commons.vfs2.FileObject;
 import org.pentaho.platform.api.engine.IParameterProvider;
 import org.pentaho.platform.api.engine.IPentahoSession;
 import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
@@ -44,28 +45,27 @@ public class ParameterContentGenerator extends SimpleContentGenerator {
     ReportListenerThreadHolder.setRequestId( this.instanceId );
 
     final IParameterProvider requestParams = getRequestParameters();
+    final IParameterProvider pathParams = getPathParameters();
 
-    final RepositoryFile prptFile = resolvePrptFile( requestParams );
+    boolean isPvfs = isPvfs();
 
     final RenderType renderMode =
         RenderType
             .valueOf( requestParams.getStringParameter( "renderMode", RenderType.XML.toString() ).toUpperCase() ); //$NON-NLS-1$
 
-    switch ( renderMode ) {
-      case XML: {
-        final ParameterXmlContentHandler parameterXmlContentHandler = getParameterXmlContentHandler( this, true );
-        parameterXmlContentHandler.createParameterContent( outputStream, prptFile.getId(), prptFile.getPath(), false,
-            null );
-        break;
-      }
-      case PARAMETER: {
-        final ParameterXmlContentHandler parameterXmlContentHandler = getParameterXmlContentHandler( this, false );
-        parameterXmlContentHandler.createParameterContent( outputStream, prptFile.getId(), prptFile.getPath(), false,
-            null );
-        break;
-      }
-      default:
-        throw new IllegalArgumentException();
+    if ( renderMode != RenderType.XML && renderMode != RenderType.PARAMETER ) {
+      throw new IllegalArgumentException();
+    }
+
+    final ParameterXmlContentHandler parameterXmlContentHandler = getParameterXmlContentHandler( this, renderMode == RenderType.XML );
+    if ( isPvfs ) {
+      final FileObject fileObject = resolveFileObject( pathParams );
+      String filePath = pathParams.getStringParameter( "path", "" );
+      parameterXmlContentHandler.createParameterContent( outputStream, null, fileObject, filePath, false, null );
+    } else {
+      final RepositoryFile prptFile = resolvePrptFile( requestParams );
+      parameterXmlContentHandler.createParameterContent( outputStream, prptFile.getId(), null, prptFile.getPath(), false,
+        null );
     }
   }
 
@@ -88,6 +88,19 @@ public class ParameterContentGenerator extends SimpleContentGenerator {
     return unifiedRepository.getFile( path );
   }
 
+  protected FileObject resolveFileObject( final IParameterProvider pathParams ) {
+    if ( pathParams != null && pathParams.getParameter( "file" ) != null && pathParams.getParameter( "file" ) instanceof FileObject fileObject ) {
+      return fileObject;
+    }
+    return null;
+  }
+
+  protected boolean isPvfs() {
+    IParameterProvider pathParams = getPathParameters();
+    return pathParams != null && pathParams.getParameter( "file" ) != null && pathParams.getParameter(
+      "file" ) instanceof FileObject;
+  }
+
   @Override
   public String getMimeType() {
     return "text/xml";
@@ -99,7 +112,7 @@ public class ParameterContentGenerator extends SimpleContentGenerator {
   }
 
   protected String idTopath( String path ) {
-    if ( path != null && path.length() > 0 && path.charAt( 0 ) != '/' ) {
+    if ( path != null && !path.isEmpty() && path.charAt( 0 ) != '/' ) {
       path = "/" + path;
     }
     return path;

@@ -19,12 +19,15 @@ import java.io.Serializable;
 import java.net.URL;
 import java.util.HashMap;
 
+import org.apache.commons.vfs2.FileObject;
 import org.pentaho.platform.api.repository2.unified.IUnifiedRepository;
 import org.pentaho.platform.api.repository2.unified.RepositoryFile;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.modules.parser.base.ReportGenerator;
+import org.pentaho.reporting.libraries.resourceloader.FactoryParameterKey;
+import org.pentaho.reporting.libraries.resourceloader.ParameterKey;
 import org.pentaho.reporting.libraries.resourceloader.Resource;
 import org.pentaho.reporting.libraries.resourceloader.ResourceException;
 import org.pentaho.reporting.libraries.resourceloader.ResourceKey;
@@ -71,6 +74,29 @@ public class ReportCreator {
       key =
           resourceManager.createKey( RepositoryResourceLoader.SOLUTION_SCHEMA_NAME
               + RepositoryResourceLoader.SCHEMA_SEPARATOR + fileId, helperObjects );
+    }
+
+    final Resource resource = resourceManager.create( key, null, MasterReport.class );
+    return (MasterReport) resource.getResource();
+  }
+
+  public static MasterReport createReport( final FileObject fileObject ) throws ResourceException {
+    final ResourceManager resourceManager = new ResourceManager();
+    resourceManager.registerDefaults();
+    final HashMap<ParameterKey, Object> helperObjects = new HashMap<>();
+    // add the runtime context so that PentahoResourceData class can get access
+    // to the solution repo
+
+    ResourceKey key = null;
+
+    helperObjects.put( new FactoryParameterKey( VfsResourceData.FILE_OBJECT_KEY ), fileObject );
+
+    if ( fileObject != null ) {
+      key =
+        resourceManager.createKey( VfsResourceLoader.VFS_SCHEMA_NAME
+          + VfsResourceLoader.SCHEMA_SEPARATOR + fileObject.getName().getPath(), helperObjects );
+    } else {
+      throw new ResourceException( "File object is null" );
     }
 
     final Resource resource = resourceManager.create( key, null, MasterReport.class );
