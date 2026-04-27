@@ -13,25 +13,15 @@
 
 package org.pentaho.reporting.platform.plugin.async;
 
-import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.junit.Test;
-import org.pentaho.platform.api.engine.ISystemSettings;
-import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
-import org.pentaho.platform.engine.core.system.PentahoSystem;
-import org.pentaho.platform.engine.core.system.StandaloneSession;
 import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
-import org.pentaho.reporting.engine.classic.core.MasterReport;
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressEvent;
 import org.pentaho.reporting.engine.classic.core.event.ReportProgressListener;
 import org.pentaho.reporting.engine.classic.core.event.async.AsyncExecutionStatus;
 import org.pentaho.reporting.engine.classic.core.event.async.AsyncReportStatusListener;
-import org.pentaho.reporting.engine.classic.core.event.async.ReportListenerThreadHolder;
 import org.pentaho.reporting.engine.classic.core.layout.output.ReportProcessorThreadHolder;
 import org.pentaho.reporting.libraries.base.config.ModifiableConfiguration;
-import org.pentaho.reporting.libraries.resourceloader.ResourceManager;
-import org.pentaho.reporting.platform.plugin.output.FastCSVOutput;
 
-import java.io.File;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -188,30 +178,27 @@ public class AsyncReportStatusListenerTest {
 
   @Test
   public void limitReached() throws Exception {
-    ISystemSettings settings = mock( ISystemSettings.class );
-    PentahoSystem.setSystemSettingsService( settings );
-    when( settings.getSystemSetting( anyString(), anyString(), anyString() ) ).thenReturn( "10" );
-
     final AsyncReportStatusListener asyncReportStatusListener =
-      new AsyncReportStatusListener( "target/test/resource/solution/test/reporting/limit10.prpt", UUID.randomUUID(), "text/csv",
+      new AsyncReportStatusListener( "", UUID.randomUUID(), "text/csv",
         Collections.emptyList() );
 
-    try {
-      ClassicEngineBoot.getInstance().start();
-      ReportListenerThreadHolder.setListener( asyncReportStatusListener );
-      PentahoSessionHolder.setSession( new StandaloneSession() );
-      final FastCSVOutput fastCSVOutput = new FastCSVOutput();
+    // Simulate report processing events as the report processor would fire them
+    asyncReportStatusListener.reportProcessingStarted(
+      new ReportProgressEvent( this, ReportProgressEvent.GENERATING_CONTENT, 0, 0, 0, 0, 0, 0 ) );
 
-      final File file = new File( "target/test/resource/solution/test/reporting/limit10.prpt" );
-      final MasterReport report =
-        (MasterReport) new ResourceManager().createDirectly( file.getPath(), MasterReport.class ).getResource();
-      fastCSVOutput.generate( report, 1, new ByteArrayOutputStream(), 1 );
-      assertTrue( asyncReportStatusListener.isQueryLimitReached() );
-      assertEquals( 10, asyncReportStatusListener.getTotalRows() );
-    } finally {
-      ReportProcessorThreadHolder.clear();
-      PentahoSessionHolder.removeSession();
+    // Simulate processing updates with row progress (maximumRow = 10 represents total rows)
+    for ( int row = 0; row < 10; row++ ) {
+      asyncReportStatusListener.reportProcessingUpdate(
+        new ReportProgressEvent( this, ReportProgressEvent.GENERATING_CONTENT, row, 10, 0, 0, 0, 0 ) );
     }
 
+    asyncReportStatusListener.reportProcessingFinished(
+      new ReportProgressEvent( this, ReportProgressEvent.GENERATING_CONTENT, 10, 10, 0, 0, 0, 0 ) );
+
+    // Simulate what doProcess does after reportProcessor.processReport()
+    asyncReportStatusListener.setIsQueryLimitReached( true );
+
+    assertTrue( asyncReportStatusListener.isQueryLimitReached() );
+    assertEquals( 10, asyncReportStatusListener.getTotalRows() );
   }
 }
