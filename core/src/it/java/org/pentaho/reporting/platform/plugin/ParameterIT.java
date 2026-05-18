@@ -127,7 +127,7 @@ public class ParameterIT {
   public void testParameterProcessing() throws Exception {
     final ParameterContentGenerator contentGenerator = new ParameterContentGenerator();
     final ParameterXmlContentHandler handler = new ParameterXmlContentHandler( contentGenerator, false );
-    handler.createParameterContent( System.out, "target/test/solution/test/reporting/Product Sales.prpt",
+    handler.createParameterContent( System.out, "target/test/solution/test/reporting/Product Sales.prpt", null,
       PentahoSystem.getApplicationContext().getSolutionPath( "target/test/solution/test/reporting/Product Sales.prpt" ), false, null );
   }
 
@@ -147,7 +147,7 @@ public class ParameterIT {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     final ParameterContentGenerator contentGenerator = new ParameterContentGenerator();
     final ParameterXmlContentHandler handler = new ParameterXmlContentHandler( contentGenerator, false );
-    handler.createParameterContent( baos, "/test/reporting/prd3882.prpt",
+    handler.createParameterContent( baos, "/test/reporting/prd3882.prpt", null,
       "target/test/resource/solution/test/reporting/prd3882.prpt", false, null );
 
     DocumentBuilder db = DocumentBuilderFactory.newInstance().newDocumentBuilder();
