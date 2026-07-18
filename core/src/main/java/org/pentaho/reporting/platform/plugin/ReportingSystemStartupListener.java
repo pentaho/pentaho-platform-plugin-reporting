@@ -2,20 +2,21 @@
  *
  * Pentaho
  *
- * Copyright (C) 2024 by Hitachi Vantara, LLC : http://www.pentaho.com
+ * Copyright (C) 2024 - 2026 by Pentaho Canada Inc. : http://www.pentaho.com
  *
  * Use of this software is governed by the Business Source License included
  * in the LICENSE.TXT file.
  *
- * Change Date: 2029-07-20
+ * Change Date: 2030-06-15
  ******************************************************************************/
+
 
 
 package org.pentaho.reporting.platform.plugin;
 
 /*
- * Copyright 2006 - 2017 Hitachi Vantara.  All rights reserved. 
- * This software was developed by Hitachi Vantara and is provided under the terms 
+ * Copyright 2006 - 2026 Pentaho.  All rights reserved. 
+ * This software was developed by Pentaho and is provided under the terms 
  * of the Mozilla Public License, Version 1.1, or any later version. You may not use 
  * this file except in compliance with the license. If you need a copy of the license, 
  * please go to http://www.mozilla.org/MPL/MPL-1.1.txt. The Original Code is the Pentaho 
