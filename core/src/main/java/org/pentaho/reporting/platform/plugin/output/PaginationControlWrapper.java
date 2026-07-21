@@ -16,8 +16,8 @@ package org.pentaho.reporting.platform.plugin.output;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringEscapeUtils;
-import org.apache.commons.lang.text.StrSubstitutor;
+import org.apache.commons.text.StringEscapeUtils;
+import org.apache.commons.lang3.text.StrSubstitutor;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.pentaho.platform.api.engine.IApplicationContext;
@@ -81,7 +81,7 @@ class PaginationControlWrapper {
         logger.error( "Can't embed styles and images into scheduled HTML file: ", e );
       }
       builder.append( '\'' )
-        .append( Base64.encodeBase64String( StringEscapeUtils.escapeHtml( pageContent ).getBytes( "UTF-8" ) ) )
+        .append( Base64.encodeBase64String( StringEscapeUtils.escapeHtml4( pageContent ).getBytes( "UTF-8" ) ) )
         .append( '\'' )
         .append( ", \n" );
       index++;
