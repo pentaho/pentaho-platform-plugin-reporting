@@ -14,7 +14,7 @@
 
 package org.pentaho.reporting.platform.plugin;
 
-import org.apache.commons.lang.math.NumberUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.vfs2.FileObject;
