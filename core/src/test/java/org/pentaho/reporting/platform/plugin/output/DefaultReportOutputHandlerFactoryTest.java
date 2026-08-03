@@ -216,6 +216,10 @@ public class DefaultReportOutputHandlerFactoryTest {
     outputTypes.put( "table/html;page-mode=page", "text/html" ); //$NON-NLS-1$ //$NON-NLS-2$
     outputTypes.put( "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;page-mode=flow",
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ); //$NON-NLS-1$ //$NON-NLS-2$
+    outputTypes.put( "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;page-mode=page",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ); //$NON-NLS-1$ //$NON-NLS-2$
+    outputTypes.put( "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;page-mode=stream",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ); //$NON-NLS-1$ //$NON-NLS-2$
     outputTypes.put( "table/csv;page-mode=stream", "text/csv" ); //$NON-NLS-1$ //$NON-NLS-2$
     outputTypes.put( "table/rtf;page-mode=flow", "application/rtf" ); //$NON-NLS-1$ //$NON-NLS-2$
     outputTypes.put( "pageable/pdf", "application/pdf" ); //$NON-NLS-1$ //$NON-NLS-2$
@@ -288,6 +292,15 @@ public class DefaultReportOutputHandlerFactoryTest {
     selector.setOutputType(
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;page-mode=flow" ); //$NON-NLS-1$
     assertTrue( roh.createOutputHandlerForOutputType( selector ) instanceof XLSXOutput );
+
+    selector.setOutputType(
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;page-mode=page" ); //$NON-NLS-1$
+    assertTrue( roh.createOutputHandlerForOutputType( selector ) instanceof XLSXOutput );
+
+    selector.setOutputType(
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;page-mode=stream" ); //$NON-NLS-1$
+    assertTrue( roh.createOutputHandlerForOutputType( selector ) instanceof XLSXOutput );
+
     roh.setXlsxAvailable( false );
     assertNull( roh.createOutputHandlerForOutputType( selector ) );
 

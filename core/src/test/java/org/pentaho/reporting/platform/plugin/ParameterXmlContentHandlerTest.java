@@ -40,9 +40,11 @@ import org.pentaho.reporting.engine.classic.core.parameters.ParameterContext;
 import org.pentaho.reporting.engine.classic.core.parameters.ParameterDefinitionEntry;
 import org.pentaho.reporting.engine.classic.core.parameters.PlainParameter;
 import org.pentaho.reporting.engine.classic.core.parameters.ReportParameterDefinition;
+import org.pentaho.reporting.engine.classic.core.parameters.StaticListParameter;
 import org.pentaho.reporting.engine.classic.core.parameters.ValidationMessage;
 import org.pentaho.reporting.engine.classic.core.parameters.ValidationResult;
 import org.pentaho.reporting.engine.classic.core.util.ReportParameterValues;
+import org.pentaho.reporting.engine.classic.core.modules.output.table.xls.ExcelTableModule;
 import org.pentaho.reporting.engine.classic.core.util.beans.BeanException;
 import org.pentaho.reporting.libraries.base.config.Configuration;
 import org.pentaho.reporting.libraries.resourceloader.ResourceKey;
@@ -151,6 +153,40 @@ public class ParameterXmlContentHandlerTest {
     when( factory.isNormalized() ).thenReturn( true );
     when( factory.derive() ).thenReturn( factory );
     when( report.getDataFactory() ).thenReturn( factory );
+  }
+
+  @Test
+  public void addsPageAndStreamXlsxTargetsToOutputParameter() throws ReportDataFactoryException {
+    assertOutputTargetIsAdded( ExcelTableModule.XLSX_PAGE_EXPORT_TYPE );
+    assertOutputTargetIsAdded( ExcelTableModule.XLSX_STREAM_EXPORT_TYPE );
+  }
+
+  @Test
+  public void doesNotAddStandardOrUnrelatedOutputTargetsToOutputParameter() throws ReportDataFactoryException {
+    assertOutputTargetIsNotAdded( ExcelTableModule.XLSX_FLOW_EXPORT_TYPE );
+    assertOutputTargetIsNotAdded( "table/html;page-mode=stream" );
+  }
+
+  private void assertOutputTargetIsAdded( final String computedOutputTarget ) throws ReportDataFactoryException {
+    final StaticListParameter outputTarget = createOutputTargetParameter();
+    ParameterXmlContentHandler.addComputedOutputTarget(
+      Collections.<String, ParameterDefinitionEntry>singletonMap( SimpleReportingComponent.OUTPUT_TARGET,
+        outputTarget ), computedOutputTarget );
+
+    assertEquals( computedOutputTarget, outputTarget.getValues( mock( ParameterContext.class ) ).getKeyValue( 0 ) );
+  }
+
+  private void assertOutputTargetIsNotAdded( final String computedOutputTarget ) throws ReportDataFactoryException {
+    final StaticListParameter outputTarget = createOutputTargetParameter();
+    ParameterXmlContentHandler.addComputedOutputTarget(
+      Collections.<String, ParameterDefinitionEntry>singletonMap( SimpleReportingComponent.OUTPUT_TARGET,
+        outputTarget ), computedOutputTarget );
+
+    assertEquals( 0, outputTarget.getValues( mock( ParameterContext.class ) ).getRowCount() );
+  }
+
+  private StaticListParameter createOutputTargetParameter() {
+    return new StaticListParameter( SimpleReportingComponent.OUTPUT_TARGET, false, true, String.class );
   }
 
   @Test

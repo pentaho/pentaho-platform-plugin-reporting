@@ -14,6 +14,7 @@
 
 package org.pentaho.reporting.platform.plugin;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.logging.Log;
@@ -32,6 +33,7 @@ import org.pentaho.reporting.engine.classic.core.Section;
 import org.pentaho.reporting.engine.classic.core.function.Expression;
 import org.pentaho.reporting.engine.classic.core.function.FormulaExpression;
 import org.pentaho.reporting.engine.classic.core.modules.output.table.html.HtmlTableModule;
+import org.pentaho.reporting.engine.classic.core.modules.output.table.xls.ExcelTableModule;
 import org.pentaho.reporting.engine.classic.core.parameters.AbstractParameter;
 import org.pentaho.reporting.engine.classic.core.parameters.DefaultParameterContext;
 import org.pentaho.reporting.engine.classic.core.parameters.ListParameter;
@@ -452,8 +454,10 @@ public class ParameterXmlContentHandler {
                                                         Map<String, ParameterDefinitionEntry> parameterSet )
     throws IOException, ResourceException {
     final MasterReport report = reportComponent.getReport();
+    final String computedOutputTarget = reportComponent.getComputedOutputTarget();
+    addComputedOutputTarget( parameterSet, computedOutputTarget );
     final Map<String, Object> inputs =
-      computeRealInput( parameterContext, parameterSet, reportComponent.getComputedOutputTarget(), vr );
+      computeRealInput( parameterContext, parameterSet, computedOutputTarget, vr );
 
     final Boolean showParameterUI = requestFlag( "showParameters", report, // NON-NLS
       AttributeNames.Core.NAMESPACE, AttributeNames.Core.SHOW_PARAMETER_UI, null );
@@ -469,6 +473,22 @@ public class ParameterXmlContentHandler {
     inputs.put( SYS_PARAM_HTML_PROPORTIONAL_WIDTH, Boolean.valueOf( proportionalWidth ) );
     inputs.putAll( computeQueryControlParameterSet( report ) );
     return inputs;
+  }
+
+  @VisibleForTesting
+  static void addComputedOutputTarget( final Map<String, ParameterDefinitionEntry> parameterSet,
+                                       final String computedOutputTarget ) {
+    // Flow is already a standard supported target; page and stream are added only for legacy report compatibility.
+    if ( !ExcelTableModule.XLSX_PAGE_EXPORT_TYPE.equals( computedOutputTarget )
+      && !ExcelTableModule.XLSX_STREAM_EXPORT_TYPE.equals( computedOutputTarget ) ) {
+      return;
+    }
+
+    final ParameterDefinitionEntry outputTargetParameter = parameterSet.get( SYS_PARAM_OUTPUT_TARGET );
+    if ( outputTargetParameter instanceof StaticListParameter ) {
+      ( (StaticListParameter) outputTargetParameter ).addValues( computedOutputTarget,
+        Messages.getInstance().getString( "ReportPlugin.outputXLSX" ) );
+    }
   }
 
   private Map<String, Object> computeQueryControlParameterSet( MasterReport report ) {

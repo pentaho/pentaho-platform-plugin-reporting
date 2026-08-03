@@ -519,6 +519,7 @@ public class SimpleReportingAction implements IStreamProcessingAction, IStreamin
     } catch ( Throwable t ) {
       log.warn( t.getMessage(), t );
     }
+    SimpleReportingComponent.normalizeLegacyExcelOutput( report );
     report.setQueryLimit( -1 );
     return report;
   }

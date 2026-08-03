@@ -293,7 +293,7 @@ public class DefaultReportOutputHandlerFactory implements ReportOutputHandlerFac
     if ( isHtmlPageAvailable() && HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE.equals( outputTarget ) ) {
       return SimpleReportingComponent.MIME_TYPE_HTML;
     }
-    if ( isXlsxAvailable() && ExcelTableModule.XLSX_FLOW_EXPORT_TYPE.equals( outputTarget ) ) {
+    if ( isXlsxAvailable() && isXlsxExportType( outputTarget ) ) {
       return SimpleReportingComponent.MIME_TYPE_XLSX;
     }
     if ( isCsvAvailable() && CSVTableModule.TABLE_CSV_STREAM_EXPORT_TYPE.equals( outputTarget ) ) {
@@ -377,7 +377,7 @@ public class DefaultReportOutputHandlerFactory implements ReportOutputHandlerFac
     if ( PdfPageableModule.PDF_EXPORT_TYPE.equals( t ) ) {
       return createPdfOutput();
     }
-    if ( ExcelTableModule.XLSX_FLOW_EXPORT_TYPE.equals( t ) ) {
+    if ( isXlsxExportType( t ) ) {
       return createXlsxOutput( selector );
     }
     if ( CSVTableModule.TABLE_CSV_STREAM_EXPORT_TYPE.equals( t ) ) {
@@ -394,6 +394,12 @@ public class DefaultReportOutputHandlerFactory implements ReportOutputHandlerFac
     } else {
       return null;
     }
+  }
+
+  private boolean isXlsxExportType( final String outputTarget ) {
+    return ExcelTableModule.XLSX_FLOW_EXPORT_TYPE.equals( outputTarget )
+      || ExcelTableModule.XLSX_PAGE_EXPORT_TYPE.equals( outputTarget )
+      || ExcelTableModule.XLSX_STREAM_EXPORT_TYPE.equals( outputTarget );
   }
 
   protected ReportOutputHandler createTextOutput() {
