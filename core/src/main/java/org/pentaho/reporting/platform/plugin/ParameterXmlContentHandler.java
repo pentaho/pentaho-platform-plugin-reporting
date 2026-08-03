@@ -475,6 +475,7 @@ public class ParameterXmlContentHandler {
     return inputs;
   }
 
+  @SuppressWarnings( "deprecation" )
   @VisibleForTesting
   static void addComputedOutputTarget( final Map<String, ParameterDefinitionEntry> parameterSet,
                                        final String computedOutputTarget ) {
