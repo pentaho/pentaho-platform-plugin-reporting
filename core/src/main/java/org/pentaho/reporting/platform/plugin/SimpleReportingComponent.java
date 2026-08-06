@@ -570,7 +570,29 @@ public class SimpleReportingComponent implements IStreamingPojo, IAcceptsRuntime
     } catch ( Throwable t ) {
       log.warn( t.getMessage(), t );
     }
+    normalizeLegacyExcelOutput( report );
     return report;
+  }
+
+  /**
+   * Normalizes legacy XLS preferred output types to their XLSX counterparts while preserving the page mode.
+   *
+   * <p>The loaded report is modified in memory only. This runs before output selection so locked legacy preferences
+   * resolve to a supported XLSX target instead of preventing the report from opening.</p>
+   */
+  static void normalizeLegacyExcelOutput( final MasterReport report ) {
+    final Object preferredOutputType =
+      report.getAttribute( AttributeNames.Core.NAMESPACE, AttributeNames.Core.PREFERRED_OUTPUT_TYPE );
+    if ( ExcelTableModule.EXCEL_FLOW_EXPORT_TYPE.equals( preferredOutputType ) ) {
+      report.setAttribute( AttributeNames.Core.NAMESPACE, AttributeNames.Core.PREFERRED_OUTPUT_TYPE,
+        ExcelTableModule.XLSX_FLOW_EXPORT_TYPE );
+    } else if ( ExcelTableModule.EXCEL_PAGE_EXPORT_TYPE.equals( preferredOutputType ) ) {
+      report.setAttribute( AttributeNames.Core.NAMESPACE, AttributeNames.Core.PREFERRED_OUTPUT_TYPE,
+        ExcelTableModule.XLSX_PAGE_EXPORT_TYPE );
+    } else if ( ExcelTableModule.EXCEL_STREAM_EXPORT_TYPE.equals( preferredOutputType ) ) {
+      report.setAttribute( AttributeNames.Core.NAMESPACE, AttributeNames.Core.PREFERRED_OUTPUT_TYPE,
+        ExcelTableModule.XLSX_STREAM_EXPORT_TYPE );
+    }
   }
 
   private String extractContentLinkSpec() {

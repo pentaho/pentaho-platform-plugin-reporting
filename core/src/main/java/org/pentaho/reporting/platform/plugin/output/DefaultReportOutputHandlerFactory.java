@@ -286,14 +286,23 @@ public class DefaultReportOutputHandlerFactory implements ReportOutputHandlerFac
   }
 
   public String getMimeType( final ReportOutputHandlerSelector selector ) {
-    String outputTarget = selector.getOutputType();
+    final String outputTarget = selector.getOutputType();
+    final String documentMimeType = getDocumentMimeType( outputTarget );
+    if ( documentMimeType != null ) {
+      return documentMimeType;
+    }
+
+    return getOtherMimeType( outputTarget );
+  }
+
+  private String getDocumentMimeType( final String outputTarget ) {
     if ( isHtmlPageAvailable() && HtmlTableModule.TABLE_HTML_STREAM_EXPORT_TYPE.equals( outputTarget ) ) {
       return SimpleReportingComponent.MIME_TYPE_HTML;
     }
     if ( isHtmlPageAvailable() && HtmlTableModule.TABLE_HTML_PAGE_EXPORT_TYPE.equals( outputTarget ) ) {
       return SimpleReportingComponent.MIME_TYPE_HTML;
     }
-    if ( isXlsxAvailable() && ExcelTableModule.XLSX_FLOW_EXPORT_TYPE.equals( outputTarget ) ) {
+    if ( isXlsxOutputAvailable( outputTarget ) ) {
       return SimpleReportingComponent.MIME_TYPE_XLSX;
     }
     if ( isCsvAvailable() && CSVTableModule.TABLE_CSV_STREAM_EXPORT_TYPE.equals( outputTarget ) ) {
@@ -305,6 +314,10 @@ public class DefaultReportOutputHandlerFactory implements ReportOutputHandlerFac
     if ( isPdfAvailable() && PdfPageableModule.PDF_EXPORT_TYPE.equals( outputTarget ) ) {
       return SimpleReportingComponent.MIME_TYPE_PDF;
     }
+    return null;
+  }
+
+  private String getOtherMimeType( final String outputTarget ) {
     if ( isTextAvailable() && PlainTextPageableModule.PLAINTEXT_EXPORT_TYPE.equals( outputTarget ) ) {
       return SimpleReportingComponent.MIME_TYPE_TXT;
     }
@@ -377,7 +390,7 @@ public class DefaultReportOutputHandlerFactory implements ReportOutputHandlerFac
     if ( PdfPageableModule.PDF_EXPORT_TYPE.equals( t ) ) {
       return createPdfOutput();
     }
-    if ( ExcelTableModule.XLSX_FLOW_EXPORT_TYPE.equals( t ) ) {
+    if ( isXlsxExportType( t ) ) {
       return createXlsxOutput( selector );
     }
     if ( CSVTableModule.TABLE_CSV_STREAM_EXPORT_TYPE.equals( t ) ) {
@@ -394,6 +407,16 @@ public class DefaultReportOutputHandlerFactory implements ReportOutputHandlerFac
     } else {
       return null;
     }
+  }
+
+  private boolean isXlsxExportType( final String outputTarget ) {
+    return ExcelTableModule.XLSX_FLOW_EXPORT_TYPE.equals( outputTarget )
+      || ExcelTableModule.XLSX_PAGE_EXPORT_TYPE.equals( outputTarget )
+      || ExcelTableModule.XLSX_STREAM_EXPORT_TYPE.equals( outputTarget );
+  }
+
+  private boolean isXlsxOutputAvailable( final String outputTarget ) {
+    return isXlsxAvailable() && isXlsxExportType( outputTarget );
   }
 
   protected ReportOutputHandler createTextOutput() {
