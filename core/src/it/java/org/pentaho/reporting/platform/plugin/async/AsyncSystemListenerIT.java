@@ -35,6 +35,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -46,9 +47,7 @@ public class AsyncSystemListenerIT {
     new ReportContentImpl( 100, (Map<Integer, byte[]>) Collections.singletonMap( 1, new byte[] { 1, 3, 4, 5 } ) );
 
   private static final FileSystemCacheBackend cacheBackend = new FileSystemCacheBackend();
-  {
-    cacheBackend.setCachePath( "/tmp/" );
-  }
+  private static final String CACHE_DIRECTORY = "AsyncSystemListenerIT-" + UUID.randomUUID() + "/";
 
 
   public AsyncSystemListenerIT( final IReportContentCache cache,
@@ -73,12 +72,12 @@ public class AsyncSystemListenerIT {
 
   @AfterClass
   public static void cleanup() {
-    assertTrue( cacheBackend.purge( Collections.singletonList( "." ) ) );
+    assertTrue( cacheBackend.purge( Collections.emptyList() ) );
   }
 
   @BeforeClass
-  public static void setUp(){
-    System.setProperty( "java.io.tmpdir", "target/test" );
+  public static void setUp() {
+    cacheBackend.setCachePath( CACHE_DIRECTORY );
   }
 
 
