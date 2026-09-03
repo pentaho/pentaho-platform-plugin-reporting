@@ -60,16 +60,13 @@ public class ReservedIdIT {
       mockedClient.when(PentahoSessionHolder::getSession).thenReturn( session );
       when( PentahoSessionHolder.getSession() ).thenReturn( session );
       assertEquals( session, PentahoSessionHolder.getSession() );
+
+      final JobManager jobManager = new JobManager();
+      final Response response = jobManager.reserveId();
+
+      assertEquals( 200, response.getStatus() );
+      assertTrue( String.valueOf( response.getEntity() ).contains( "reservedId" ) );
     }
-
-    final JobManager jobManager = new JobManager();
-
-
-    final Response response = jobManager.reserveId();
-
-    assertEquals( 200, response.getStatus() );
-
-    assertNotNull( String.valueOf( response.getEntity() ).contains( "reservedId" ) );
 
   }
 
