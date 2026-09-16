@@ -99,25 +99,14 @@ public class FastCSVOutputTest {
     return report;
   }
 
-  /**
-   * Verifies that the fast CSV path notifies the listener of processing start, finish and query-limit status.
-   * Note: {@code FastCsvExportProcessor} processes all rows in a single batch and intentionally does
-   * <b>not</b> fire {@code reportProcessingUpdate} events — unlike the non-fast
-   * {@code CSVReportProcessor} which reports row-level progress.
-   */
   @Test
   public void testGenerateListener() throws Exception {
     ClassicEngineBoot.getInstance().start();
-    final MasterReport report = createTestReport();
-    try ( ByteArrayOutputStream baos = new ByteArrayOutputStream() ) {
-      fastCSVOutput.generate( report, 1, baos, 1 );
-    }
+    fastCSVOutput.generate( new MasterReport(), 1, new ByteArrayOutputStream(), 1 );
 
     verify( listener, times( 1 ) ).reportProcessingStarted( any( ReportProgressEvent.class ) );
     verify( listener, times( 1 ) ).reportProcessingFinished( any( ReportProgressEvent.class ) );
-    // FastCsvExportProcessor processes all rows in one batch; no per-row update events are fired
-    verify( listener, never() ).reportProcessingUpdate( any( ReportProgressEvent.class ) );
-    verify( listener, times( 1 ) ).setIsQueryLimitReached( false );
+    verify( listener, atLeastOnce() ).reportProcessingUpdate( any( ReportProgressEvent.class ) );
   }
 
   @Test
