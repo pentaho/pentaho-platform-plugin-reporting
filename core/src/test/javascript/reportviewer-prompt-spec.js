@@ -495,12 +495,10 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
           expect(param.forceUpdate).toBe(undefined);
         });
 
-        // TODO review and fix/remove - started failing after issue [BISERVER-14919]
         it("should not force an update if the datepicker value is not changed, no timezone", function () {
           var param = {
             values: [{value: "2017-01-01T11:00:00.000-0100"}],
-            attributes: {"parameter-render-type": "datepicker"},
-            timezoneHint: "/-0100"
+            attributes: {"parameter-render-type": "datepicker"}
           };
           reportPrompt._applyUserInput("anyname", "2017-01-01T11:00:00.000", param);
           expect(param.forceUpdate).toBeUndefined();
@@ -535,10 +533,9 @@ define(["reportviewer/reportviewer-prompt", "reportviewer/reportviewer-logging",
           expect(param.forceUpdate).toBe(undefined);
         });
 
-        // TODO review and fix/remove - started failing after issue [BISERVER-14919]
         it("should not force an update if only seconds and milliseconds changed", function () {
           var param = {
-            values: [{value: "2017-01-01T00:0:44.010"}],
+            values: [{value: "2017-01-01T11:00:44.010"}],
             attributes: {"parameter-render-type": "datepicker"}
           };
           reportPrompt._applyUserInput("anyname", "2017-01-01T11:00:00.000", param);
